@@ -25,12 +25,8 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
       setIsAuthed(true)
 
       if (requiredRole) {
-        try {
-          const { data } = await supabase.from('users').select('role').eq('id', user.id).single()
-          setUserRole(data?.role || 'client')
-        } catch {
-          setUserRole('client')
-        }
+        const { data } = await supabase.from('users').select('role').eq('id', user.id).maybeSingle()
+        setUserRole(data?.role || 'client')
       }
 
       setIsLoading(false)

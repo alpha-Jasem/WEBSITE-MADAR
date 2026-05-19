@@ -21,7 +21,21 @@ export const Login = () => {
 
   const afterLogin = async () => {
     const profile = await getCurrentUser()
-    navigate(profile?.role === 'admin' ? '/admin' : '/client')
+    const role = profile?.role ?? 'client'
+
+    if (portal === 'admin' && role !== 'admin') {
+      await signOut()
+      setError('ليس لديك صلاحية الوصول للوحة الإدارة')
+      return
+    }
+
+    if (portal === 'client' && role === 'admin') {
+      await signOut()
+      setError('حسابك مخصص للإدارة — استخدم بوابة الإدارة')
+      return
+    }
+
+    navigate(role === 'admin' ? '/admin' : '/client')
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
