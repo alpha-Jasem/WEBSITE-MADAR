@@ -46,8 +46,8 @@ export const Navbar = () => {
               : 'shadow-[0_2px_16px_rgba(0,0,0,0.3)]'
           }`}
           style={{
-            height: 64,
-            overflow: 'hidden',
+            height: 68,
+            overflow: 'visible',
             background: scrolled ? 'rgba(5,8,16,0.96)' : 'rgba(5,8,16,0.80)',
             border: '1px solid rgba(255,255,255,0.1)',
             backdropFilter: 'blur(20px)',
@@ -57,13 +57,14 @@ export const Navbar = () => {
           {/* Logo */}
           <motion.div
             whileHover={{ scale: 1.02 }}
-            className="flex items-center gap-2 cursor-pointer flex-shrink-0"
+            className="flex items-center cursor-pointer flex-shrink-0"
             onClick={() => handleNavClick('#hero')}
           >
-            <img src="/logo.png" alt="MADAR" style={{ height: 32, width: 32, objectFit: 'contain', display: 'block' }} />
-            <span className="font-sora font-bold text-white tracking-wide" style={{ fontSize: 18 }}>
-              MADAR
-            </span>
+            <img
+              src="/logo-main.png"
+              alt="Madar.software"
+              style={{ height: 56, width: 'auto', objectFit: 'contain', display: 'block' }}
+            />
           </motion.div>
 
           {/* Desktop Nav */}
