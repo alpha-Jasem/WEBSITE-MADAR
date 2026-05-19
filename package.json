@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "postbuild": "react-snap || true",
     "preview": "vite preview"
   },
   "reactSnap": {
