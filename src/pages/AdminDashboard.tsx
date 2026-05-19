@@ -9,14 +9,99 @@ import { AdminSettings } from '../components/dashboard/admin/AdminSettings'
 import { AdminN8n } from '../components/dashboard/admin/AdminN8n'
 
 export const AdminDashboard = () => (
-  <div className="flex h-screen overflow-hidden" style={{ background: '#0B0D12', direction: 'rtl' }}>
-    <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      <div style={{ position: 'absolute', top: '-10%', right: '20%', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(245,158,11,0.04) 0%, transparent 70%)', filter: 'blur(40px)' }} />
-      <div style={{ position: 'absolute', bottom: '10%', left: '10%', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,191,255,0.04) 0%, transparent 70%)', filter: 'blur(40px)' }} />
+  <div className="flex h-screen overflow-hidden" style={{ background: '#060810', direction: 'rtl', position: 'relative' }}>
+
+    {/* ── Aurora Mesh Background ── */}
+    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
+      {/* Base dark */}
+      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 0%, #0a0f1e 0%, #060810 60%)' }} />
+
+      {/* Aurora blob 1 — teal/cyan top-left */}
+      <div style={{
+        position: 'absolute', top: '-20%', left: '-10%',
+        width: 700, height: 700, borderRadius: '60% 40% 70% 30% / 50% 60% 40% 50%',
+        background: 'radial-gradient(ellipse, rgba(0,191,255,0.18) 0%, rgba(0,120,200,0.08) 40%, transparent 70%)',
+        filter: 'blur(60px)',
+        animation: 'aurora1 14s ease-in-out infinite alternate',
+      }} />
+
+      {/* Aurora blob 2 — purple center */}
+      <div style={{
+        position: 'absolute', top: '20%', left: '35%',
+        width: 600, height: 500, borderRadius: '40% 60% 30% 70% / 60% 40% 60% 40%',
+        background: 'radial-gradient(ellipse, rgba(120,80,255,0.14) 0%, rgba(80,40,200,0.06) 50%, transparent 70%)',
+        filter: 'blur(70px)',
+        animation: 'aurora2 18s ease-in-out infinite alternate',
+      }} />
+
+      {/* Aurora blob 3 — green bottom-right */}
+      <div style={{
+        position: 'absolute', bottom: '-10%', right: '-5%',
+        width: 650, height: 550, borderRadius: '50% 50% 40% 60% / 40% 60% 50% 50%',
+        background: 'radial-gradient(ellipse, rgba(0,220,120,0.12) 0%, rgba(0,160,80,0.05) 50%, transparent 70%)',
+        filter: 'blur(65px)',
+        animation: 'aurora3 16s ease-in-out infinite alternate',
+      }} />
+
+      {/* Aurora blob 4 — gold top-right accent */}
+      <div style={{
+        position: 'absolute', top: '5%', right: '10%',
+        width: 400, height: 350,
+        background: 'radial-gradient(ellipse, rgba(245,158,11,0.08) 0%, transparent 65%)',
+        filter: 'blur(50px)',
+        animation: 'aurora4 12s ease-in-out infinite alternate',
+      }} />
+
+      {/* Subtle dot grid */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)',
+        backgroundSize: '32px 32px',
+        maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)',
+      }} />
+
+      {/* Top beam */}
+      <div style={{
+        position: 'absolute', top: 0, left: '20%', right: '20%', height: 1,
+        background: 'linear-gradient(90deg, transparent, rgba(0,191,255,0.4), rgba(120,80,255,0.3), transparent)',
+      }} />
     </div>
 
-    <AdminSidebar />
-    <main className="flex-1 overflow-y-auto relative z-10" style={{ padding: '28px 32px' }}>
+    {/* Aurora keyframes */}
+    <style>{`
+      @keyframes aurora1 {
+        0%   { transform: translate(0,0) scale(1) rotate(0deg); }
+        100% { transform: translate(80px, 60px) scale(1.15) rotate(8deg); }
+      }
+      @keyframes aurora2 {
+        0%   { transform: translate(0,0) scale(1) rotate(0deg); }
+        100% { transform: translate(-60px, 80px) scale(1.1) rotate(-6deg); }
+      }
+      @keyframes aurora3 {
+        0%   { transform: translate(0,0) scale(1) rotate(0deg); }
+        100% { transform: translate(-80px, -50px) scale(1.2) rotate(10deg); }
+      }
+      @keyframes aurora4 {
+        0%   { transform: translate(0,0) scale(1); }
+        100% { transform: translate(40px, 30px) scale(1.15); }
+      }
+
+      /* Glass cards */
+      .glass-card {
+        background: rgba(255,255,255,0.04) !important;
+        backdrop-filter: blur(20px) saturate(150%) !important;
+        -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
+        border: 1px solid rgba(255,255,255,0.08) !important;
+      }
+    `}</style>
+
+    {/* Sidebar */}
+    <div style={{ position: 'relative', zIndex: 10 }}>
+      <AdminSidebar />
+    </div>
+
+    {/* Main content */}
+    <main className="flex-1 overflow-y-auto relative" style={{ zIndex: 10, padding: '28px 32px' }}>
       <Routes>
         <Route index              element={<AdminOverview />} />
         <Route path="companies"   element={<AdminCompanies />} />
