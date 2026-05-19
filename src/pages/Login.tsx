@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Eye, EyeOff, Loader2, Lock, Mail, ArrowLeft, Shield, User } from 'lucide-react'
 import { useNavigate, Link } from 'react-router-dom'
-import { signInWithPassword, getCurrentUser } from '../lib/supabase'
+import { signInWithPassword, getCurrentUser, signOut } from '../lib/supabase'
 
 type Portal = 'client' | 'admin'
 
