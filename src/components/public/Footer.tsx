@@ -39,8 +39,16 @@ export const Footer = () => {
 
           {/* Brand */}
           <div className="lg:col-span-1">
-            <div className="mb-5">
-              <img src="/logo.png" alt="MADAR" style={{ height: 72, width: 'auto', display: 'block' }} />
+            <div className="flex items-center gap-2 mb-5">
+              <img
+                src="/logo-main.png"
+                alt="Madar"
+                style={{ height: 44, width: 'auto', objectFit: 'contain', display: 'block' }}
+              />
+              <span style={{ fontFamily: 'Sora, sans-serif', fontSize: 19, fontWeight: 600, letterSpacing: '-0.3px', lineHeight: 1 }}>
+                <span style={{ color: '#ffffff' }}>Madar</span>
+                <span style={{ color: '#00BFFF' }}>.software</span>
+              </span>
             </div>
             <p className={`text-sm leading-relaxed mb-5 max-w-xs ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.55)' }}>
               {t(
