@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
-import { Calendar, ArrowRight, Sparkles, MessageSquare } from 'lucide-react'
+import { Calendar, ArrowRight, Sparkles } from 'lucide-react'
 import { useLanguage } from '../../context/LanguageContext'
 import { openWhatsAppChat } from '../../lib/whatsapp'
 
@@ -83,31 +83,18 @@ export const FinalCTA = () => {
             </p>
           </div>
 
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <motion.button
-              whileHover={{ scale: 1.03, boxShadow: '0 0 60px rgba(0,191,255,0.5)' }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => openWhatsAppChat()}
-              className={`flex items-center justify-center gap-2 px-6 py-4 sm:px-9 sm:py-5 rounded-2xl font-bold text-base sm:text-lg cursor-pointer w-full sm:w-auto ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
-              style={{ background: 'white', color: '#0D1B3E', boxShadow: '0 0 30px rgba(255,255,255,0.15)' }}
-            >
-              <Calendar size={20} />
-              <span>{t('احجز استشارة مجانية', 'Book a Free Consultation')}</span>
-              <ArrowRight size={18} className={language === 'ar' ? 'rotate-180' : ''} />
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.02, borderColor: 'rgba(0,191,255,0.6)' }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => openWhatsAppChat()}
-              className={`flex items-center justify-center gap-2 px-6 py-4 sm:px-8 sm:py-5 rounded-2xl font-semibold text-base cursor-pointer transition-all w-full sm:w-auto ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
-              style={{ background: 'transparent', border: '1px solid rgba(0,191,255,0.35)', color: 'rgba(255,255,255,0.85)' }}
-            >
-              <MessageSquare size={18} />
-              <span>{t('تواصل عبر واتساب', 'Chat on WhatsApp')}</span>
-            </motion.button>
-          </div>
+          {/* CTA */}
+          <motion.button
+            whileHover={{ scale: 1.03, boxShadow: '0 0 60px rgba(0,191,255,0.5)' }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => openWhatsAppChat()}
+            className={`flex items-center justify-center gap-2 px-10 py-5 rounded-2xl font-bold text-lg cursor-pointer ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
+            style={{ background: 'white', color: '#0D1B3E', boxShadow: '0 0 30px rgba(255,255,255,0.15)' }}
+          >
+            <Calendar size={20} />
+            <span>{t('احجز استشارة مجانية', 'Book a Free Consultation')}</span>
+            <ArrowRight size={18} className={language === 'ar' ? 'rotate-180' : ''} />
+          </motion.button>
 
           {/* Trust indicators */}
           <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 pt-2 sm:pt-4">
