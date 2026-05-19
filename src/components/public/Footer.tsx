@@ -46,8 +46,8 @@ export const Footer = () => {
                 style={{ height: 44, width: 'auto', objectFit: 'contain', display: 'block' }}
               />
               <span style={{ fontFamily: 'Sora, sans-serif', fontSize: 19, fontWeight: 600, letterSpacing: '-0.3px', lineHeight: 1 }}>
-                <span style={{ color: '#ffffff' }}>Madar</span>
-                <span style={{ color: '#00BFFF' }}>.software</span>
+                <span className="shimmer-text">Madar</span>
+                <span className="shimmer-text-blue">.software</span>
               </span>
             </div>
             <p className={`text-sm leading-relaxed mb-5 max-w-xs ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.55)' }}>

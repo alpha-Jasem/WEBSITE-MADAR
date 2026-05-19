@@ -66,8 +66,8 @@ export const Navbar = () => {
               style={{ height: 40, width: 'auto', objectFit: 'contain', display: 'block' }}
             />
             <span style={{ fontFamily: 'Sora, sans-serif', fontSize: 17, fontWeight: 600, letterSpacing: '-0.3px', lineHeight: 1 }}>
-              <span style={{ color: '#ffffff' }}>Madar</span>
-              <span style={{ color: '#00BFFF' }}>.software</span>
+              <span className="shimmer-text">Madar</span>
+              <span className="shimmer-text-blue">.software</span>
             </span>
           </motion.div>
 

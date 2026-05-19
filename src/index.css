@@ -76,6 +76,48 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   transform: translateY(-2px);
 }
 
+/* ── Silver shimmer wave text ─────── */
+@keyframes shimmer-wave {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.shimmer-text {
+  background: linear-gradient(
+    90deg,
+    #a0a8b8 0%,
+    #ffffff 20%,
+    #c8d0e0 35%,
+    #e8edf5 50%,
+    #c8d0e0 65%,
+    #ffffff 80%,
+    #a0a8b8 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer-wave 3s linear infinite;
+}
+
+.shimmer-text-blue {
+  background: linear-gradient(
+    90deg,
+    #00BFFF 0%,
+    #80dfff 20%,
+    #00BFFF 40%,
+    #b3eeff 55%,
+    #00BFFF 70%,
+    #80dfff 85%,
+    #00BFFF 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer-wave 3s linear infinite;
+}
+
 /* ── Gradient text (logo colors) ───── */
 .gradient-text {
   background: linear-gradient(135deg, #0D1B3E 0%, #1565C0 50%, #00BFFF 100%);
