@@ -64,7 +64,14 @@ export const FinalCTA = () => {
                 {t('عملك جاهز', 'Your Business')}
               </span>
               <br />
-              <span className="gradient-text-blue">
+              <span style={{
+                background: 'linear-gradient(135deg, #00BFFF 0%, #80dfff 50%, #00BFFF 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                textShadow: 'none',
+                filter: 'drop-shadow(0 0 30px rgba(0,191,255,0.4))',
+              }}>
                 {t('للأتمتة الذكية', 'Is Ready for AI')}
               </span>
             </h2>
