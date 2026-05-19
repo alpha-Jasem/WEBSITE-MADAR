@@ -57,14 +57,18 @@ export const Navbar = () => {
           {/* Logo */}
           <motion.div
             whileHover={{ scale: 1.02 }}
-            className="flex items-center cursor-pointer flex-shrink-0"
+            className="flex items-center gap-2 cursor-pointer flex-shrink-0"
             onClick={() => handleNavClick('#hero')}
           >
             <img
               src="/logo-main.png"
-              alt="Madar.software"
-              style={{ height: 56, width: 'auto', objectFit: 'contain', display: 'block' }}
+              alt="Madar"
+              style={{ height: 40, width: 'auto', objectFit: 'contain', display: 'block' }}
             />
+            <span style={{ fontFamily: 'Sora, sans-serif', fontSize: 17, fontWeight: 600, letterSpacing: '-0.3px', lineHeight: 1 }}>
+              <span style={{ color: '#ffffff' }}>Madar</span>
+              <span style={{ color: '#00BFFF' }}>.software</span>
+            </span>
           </motion.div>
 
           {/* Desktop Nav */}
