@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /client
+Disallow: /client/
+Disallow: /login
+Disallow: /auth/
+
+Sitemap: https://madar.software/sitemap.xml

@@ -1,0 +1,184 @@
+import { useLanguage } from '../../context/LanguageContext'
+import { openWhatsAppChat } from '../../lib/whatsapp'
+import { Mail, Phone, MapPin, ArrowUpRight } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
+
+const navLinks = [
+  { ar: 'الرئيسية',    en: 'Home',         href: '#hero' },
+  { ar: 'الخدمات',     en: 'Services',     href: '#services' },
+  { ar: 'كيف يعمل',   en: 'How It Works',  href: '#how-it-works' },
+  { ar: 'أعمالنا',     en: 'Case Studies', href: '#case-studies' },
+  { ar: 'القطاعات',   en: 'Industries',   href: '#industries' },
+]
+
+const services = [
+  { ar: 'وكلاء AI للعملاء',     en: 'AI Customer Agents' },
+  { ar: 'أتمتة واتساب',         en: 'WhatsApp Automation' },
+  { ar: 'حجز المواعيد AI',      en: 'AI Appointment Booking' },
+  { ar: 'أتمتة CRM',            en: 'CRM Automation' },
+  { ar: 'مساعد مبيعات AI',      en: 'AI Sales Assistant' },
+  { ar: 'تطبيقات الجوال',       en: 'Mobile Apps' },
+]
+
+export const Footer = () => {
+  const { language, t } = useLanguage()
+  const year = new Date().getFullYear()
+
+  const scrollTo = (href: string) => {
+    document.querySelector(href)?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  return (
+    <footer className="relative border-t" style={{ borderColor: 'rgba(255,255,255,0.07)', background: '#050810' }}>
+      {/* Top accent line */}
+      <div className="absolute top-0 inset-x-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(0,191,255,0.4), transparent)' }} />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
+
+          {/* Brand */}
+          <div className="lg:col-span-1">
+            <div className="mb-5">
+              <img src="/logo.png" alt="MADAR" style={{ height: 72, width: 'auto', display: 'block' }} />
+            </div>
+            <p className={`text-sm leading-relaxed mb-5 max-w-xs ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.55)' }}>
+              {t(
+                'نبني أنظمة ذكاء اصطناعي تحوّل الأعمال — من الردود التلقائية إلى المبيعات الكاملة.',
+                'We build AI systems that transform businesses — from automated responses to complete sales automation.'
+              )}
+            </p>
+            <p className={`text-xs italic ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.35)' }}>
+              {t('"نبني مستقبل أتمتة الأعمال"', '"Building the future of business automation"')}
+            </p>
+          </div>
+
+          {/* Quick links */}
+          <div>
+            <h4 className={`text-sm font-bold mb-4 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`} style={{ color: 'white' }}>
+              {t('روابط سريعة', 'Quick Links')}
+            </h4>
+            <ul className="space-y-2.5">
+              {navLinks.map(link => (
+                <li key={link.href}>
+                  <button
+                    onClick={() => scrollTo(link.href)}
+                    className={`text-sm transition-colors cursor-pointer ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
+                    style={{ color: 'rgba(255,255,255,0.55)' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = '#0D1B3E')}
+                    onMouseLeave={e => (e.currentTarget.style.color = '#3B5280')}
+                  >
+                    {language === 'ar' ? link.ar : link.en}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Services */}
+          <div>
+            <h4 className={`text-sm font-bold mb-4 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`} style={{ color: 'white' }}>
+              {t('خدماتنا', 'Our Services')}
+            </h4>
+            <ul className="space-y-2.5">
+              {services.map((svc, i) => (
+                <li key={i}>
+                  <span className={`text-sm ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.55)' }}>
+                    {language === 'ar' ? svc.ar : svc.en}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Contact */}
+          <div>
+            <h4 className={`text-sm font-bold mb-4 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`} style={{ color: 'white' }}>
+              {t('تواصل معنا', 'Contact Us')}
+            </h4>
+            <ul className="space-y-3">
+              <li>
+                <a href="mailto:info@madar.software"
+                  className="flex items-center gap-2.5 text-sm transition-colors group"
+                  style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  <Mail size={13} style={{ color: '#00BFFF' }} className="flex-shrink-0" />
+                  <span className="font-work">info@madar.software</span>
+                </a>
+              </li>
+              <li>
+                <button onClick={() => openWhatsAppChat()}
+                  className="flex items-center gap-2.5 text-sm transition-colors cursor-pointer"
+                  style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  <Phone size={13} style={{ color: '#00BFFF' }} className="flex-shrink-0" />
+                  <span className="font-work" dir="ltr">+966 54 666 6005</span>
+                </button>
+              </li>
+              <li className="flex items-center gap-2.5 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                <MapPin size={13} style={{ color: '#00BFFF' }} className="flex-shrink-0" />
+                <span className={language === 'ar' ? 'font-tajawal' : 'font-work'}>
+                  {t('جدة، المملكة العربية السعودية', 'Jeddah, Saudi Arabia')}
+                </span>
+              </li>
+            </ul>
+
+            <motion.button
+              whileHover={{ scale: 1.02, boxShadow: '0 0 25px rgba(0,191,255,0.35)' }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => openWhatsAppChat()}
+              className={`mt-5 flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
+              style={{ background: 'linear-gradient(135deg, #0D1B3E, #00BFFF)', boxShadow: '0 0 20px rgba(0,191,255,0.2)' }}
+            >
+              {t('احجز مكالمة', 'Book a Call')}
+              <ArrowUpRight size={14} />
+            </motion.button>
+          </div>
+        </div>
+
+        {/* Regulatory Logos */}
+        <div className="py-6 flex flex-wrap items-center justify-center gap-4" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+          <a href="https://www.cst.gov.sa" target="_blank" rel="noopener noreferrer"
+            className="flex items-center justify-center px-6 py-3 rounded-full transition-all duration-200"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.09)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)' }}
+          >
+            <div style={{ width: 145, height: 56, overflow: 'hidden', position: 'relative' }}>
+              <img
+                src="https://www.cst.gov.sa/-/jssmedia/cst-website-app/data/media/Global/Logos/Latest-logo.ashx?mw=640"
+                alt="هيئة الاتصالات والفضاء والتقنية"
+                style={{ height: 56, width: 'auto', position: 'absolute', right: 0 }}
+              />
+            </div>
+          </a>
+          <a href="https://www.monshaat.gov.sa" target="_blank" rel="noopener noreferrer"
+            className="flex items-center justify-center px-6 py-3 rounded-full transition-all duration-200"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.09)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)' }}
+          >
+            <img
+              src="https://www.monshaat.gov.sa/themes/eportal2_new/assets/imgs/m_Logo.png"
+              alt="منشآت — الهيئة العامة للمنشآت الصغيرة والمتوسطة"
+              style={{ height: 56, width: 'auto' }}
+            />
+          </a>
+        </div>
+
+        {/* Bottom bar */}
+        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+          <p className={`text-xs ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.35)' }}>
+            {t(`© ${year} MADAR AI Automation. جميع الحقوق محفوظة.`, `© ${year} MADAR AI Automation. All rights reserved.`)}
+          </p>
+          <div className="flex items-center gap-4">
+            <Link to="/privacy" className={`text-xs transition-colors hover:text-white ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.35)' }}>
+              {t('سياسة الخصوصية', 'Privacy Policy')}
+            </Link>
+            <Link to="/terms" className={`text-xs transition-colors hover:text-white ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.35)' }}>
+              {t('شروط الاستخدام', 'Terms of Service')}
+            </Link>
+          </div>
+        </div>
+      </div>
+    </footer>
+  )
+}

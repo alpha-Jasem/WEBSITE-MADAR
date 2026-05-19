@@ -1,0 +1,51 @@
+{
+  "name": "MADAR AI Automation",
+  "short_name": "MADAR AI",
+  "description": "أتمتة الأعمال بالذكاء الاصطناعي — واتساب، CRM، وكلاء AI",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#05060A",
+  "theme_color": "#4F6EF7",
+  "orientation": "portrait-primary",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/logo.jpeg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.jpg",
+      "sizes": "1200x630",
+      "type": "image/jpeg",
+      "label": "MADAR AI — الصفحة الرئيسية"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "احجز مكالمة",
+      "short_name": "حجز",
+      "description": "احجز استشارة مجانية",
+      "url": "https://wa.me/966546666005",
+      "icons": [{ "src": "/logo.jpeg", "sizes": "96x96" }]
+    },
+    {
+      "name": "تسجيل الدخول",
+      "short_name": "دخول",
+      "description": "الدخول للوحة التحكم",
+      "url": "/login",
+      "icons": [{ "src": "/logo.jpeg", "sizes": "96x96" }]
+    }
+  ]
+}
