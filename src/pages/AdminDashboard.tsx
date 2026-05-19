@@ -13,6 +13,7 @@ import { AdminLeads }       from '../components/dashboard/admin/AdminLeads'
 import { AdminLogs }        from '../components/dashboard/admin/AdminLogs'
 import { AdminSettings }    from '../components/dashboard/admin/AdminSettings'
 import { AdminN8n }         from '../components/dashboard/admin/AdminN8n'
+import { AdminPipeline }    from '../components/dashboard/admin/AdminPipeline'
 import { signOut }          from '../lib/supabase'
 
 const navItems = [
@@ -284,7 +285,7 @@ export const AdminDashboard = () => {
             <Route path="settings"    element={<AdminSettings />} />
             <Route path="n8n"         element={<AdminN8n />} />
             <Route path="analytics"   element={<AdminOverview />} />
-            <Route path="pipeline"    element={<AdminLeads />} />
+            <Route path="pipeline"    element={<AdminPipeline />} />
             <Route path="messages"    element={<AdminLogs />} />
             <Route path="*"           element={<AdminOverview />} />
           </Routes>
