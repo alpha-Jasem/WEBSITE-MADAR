@@ -344,9 +344,9 @@ export const AdminOverview = () => {
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '14px 20px', borderRadius: 16,
-            background: 'rgba(0,191,255,0.05)',
+            background: 'rgba(0,191,255,0.08)',
             backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(0,191,255,0.15)',
+            border: '1px solid rgba(0,191,255,0.22)',
           }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
             <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(0,191,255,0.12)', border: '1px solid rgba(0,191,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -398,7 +398,7 @@ export const AdminOverview = () => {
               whileHover={{ y: -3, boxShadow: `0 12px 40px ${kpi.color}18` }}
               style={{
                 padding: '20px 22px', borderRadius: 18,
-                background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.09)',
+                background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)', border: '1px solid rgba(255,255,255,0.14)',
                 position: 'relative', overflow: 'hidden', cursor: 'default',
               }}>
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${kpi.color}50, transparent)` }} />
@@ -426,7 +426,7 @@ export const AdminOverview = () => {
 
           {/* Area chart */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-            style={{ padding: '20px 20px 16px', borderRadius: 20, background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.09)', position: 'relative', overflow: 'hidden' }}>
+            style={{ padding: '20px 20px 16px', borderRadius: 20, background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)', border: '1px solid rgba(255,255,255,0.14)', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, rgba(0,191,255,0.4), transparent)' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <div>
@@ -458,7 +458,7 @@ export const AdminOverview = () => {
 
           {/* Donut */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
-            style={{ padding: '20px', borderRadius: 20, background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.09)', position: 'relative', overflow: 'hidden' }}>
+            style={{ padding: '20px', borderRadius: 20, background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)', border: '1px solid rgba(255,255,255,0.14)', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.4), transparent)' }} />
             <h3 style={{ fontSize: 14, fontWeight: 700, color: 'white', fontFamily: 'Cairo', margin: '0 0 2px' }}>توزيع الخدمات</h3>
             <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'Tajawal', margin: '0 0 8px' }}>نسبة الاستخدام</p>
@@ -491,7 +491,7 @@ export const AdminOverview = () => {
 
           {/* Bar chart */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
-            style={{ padding: '20px', borderRadius: 20, background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.09)', position: 'relative', overflow: 'hidden' }}>
+            style={{ padding: '20px', borderRadius: 20, background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)', border: '1px solid rgba(255,255,255,0.14)', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.4), transparent)' }} />
             <h3 style={{ fontSize: 14, fontWeight: 700, color: 'white', fontFamily: 'Cairo', margin: '0 0 2px' }}>الرسائل الأسبوعية</h3>
             <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'Tajawal', margin: '0 0 12px' }}>آخر 7 أيام</p>
@@ -510,7 +510,7 @@ export const AdminOverview = () => {
 
           {/* AI Predictions */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }}
-            style={{ padding: '20px', borderRadius: 20, background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.09)', position: 'relative', overflow: 'hidden' }}>
+            style={{ padding: '20px', borderRadius: 20, background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)', border: '1px solid rgba(255,255,255,0.14)', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, rgba(16,185,129,0.4), transparent)' }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
               <Brain size={14} color="#10B981" />
@@ -539,7 +539,7 @@ export const AdminOverview = () => {
 
           {/* Live Activity */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-            style={{ padding: '20px', borderRadius: 20, background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.09)', position: 'relative', overflow: 'hidden' }}>
+            style={{ padding: '20px', borderRadius: 20, background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)', border: '1px solid rgba(255,255,255,0.14)', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, rgba(244,63,94,0.4), transparent)' }} />
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

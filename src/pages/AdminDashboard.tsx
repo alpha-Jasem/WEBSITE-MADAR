@@ -13,41 +13,41 @@ export const AdminDashboard = () => (
 
     {/* ── Aurora Mesh Background ── */}
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
-      {/* Base dark */}
-      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 0%, #0a0f1e 0%, #060810 60%)' }} />
+      {/* Base — أفتح من السابق */}
+      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 0%, #0d1530 0%, #080c1a 60%)' }} />
 
-      {/* Aurora blob 1 — teal/cyan top-left */}
+      {/* Aurora blob 1 — cyan top-left */}
       <div style={{
         position: 'absolute', top: '-20%', left: '-10%',
-        width: 700, height: 700, borderRadius: '60% 40% 70% 30% / 50% 60% 40% 50%',
-        background: 'radial-gradient(ellipse, rgba(0,191,255,0.18) 0%, rgba(0,120,200,0.08) 40%, transparent 70%)',
-        filter: 'blur(60px)',
+        width: 750, height: 750, borderRadius: '60% 40% 70% 30% / 50% 60% 40% 50%',
+        background: 'radial-gradient(ellipse, rgba(0,191,255,0.45) 0%, rgba(0,140,220,0.2) 40%, transparent 70%)',
+        filter: 'blur(55px)',
         animation: 'aurora1 14s ease-in-out infinite alternate',
       }} />
 
       {/* Aurora blob 2 — purple center */}
       <div style={{
         position: 'absolute', top: '20%', left: '35%',
-        width: 600, height: 500, borderRadius: '40% 60% 30% 70% / 60% 40% 60% 40%',
-        background: 'radial-gradient(ellipse, rgba(120,80,255,0.14) 0%, rgba(80,40,200,0.06) 50%, transparent 70%)',
-        filter: 'blur(70px)',
+        width: 650, height: 550, borderRadius: '40% 60% 30% 70% / 60% 40% 60% 40%',
+        background: 'radial-gradient(ellipse, rgba(140,80,255,0.38) 0%, rgba(100,50,220,0.15) 50%, transparent 70%)',
+        filter: 'blur(65px)',
         animation: 'aurora2 18s ease-in-out infinite alternate',
       }} />
 
       {/* Aurora blob 3 — green bottom-right */}
       <div style={{
         position: 'absolute', bottom: '-10%', right: '-5%',
-        width: 650, height: 550, borderRadius: '50% 50% 40% 60% / 40% 60% 50% 50%',
-        background: 'radial-gradient(ellipse, rgba(0,220,120,0.12) 0%, rgba(0,160,80,0.05) 50%, transparent 70%)',
-        filter: 'blur(65px)',
+        width: 700, height: 600, borderRadius: '50% 50% 40% 60% / 40% 60% 50% 50%',
+        background: 'radial-gradient(ellipse, rgba(0,220,130,0.32) 0%, rgba(0,180,90,0.14) 50%, transparent 70%)',
+        filter: 'blur(60px)',
         animation: 'aurora3 16s ease-in-out infinite alternate',
       }} />
 
-      {/* Aurora blob 4 — gold top-right accent */}
+      {/* Aurora blob 4 — gold top-right */}
       <div style={{
         position: 'absolute', top: '5%', right: '10%',
-        width: 400, height: 350,
-        background: 'radial-gradient(ellipse, rgba(245,158,11,0.08) 0%, transparent 65%)',
+        width: 450, height: 380,
+        background: 'radial-gradient(ellipse, rgba(245,158,11,0.28) 0%, rgba(230,120,0,0.1) 50%, transparent 70%)',
         filter: 'blur(50px)',
         animation: 'aurora4 12s ease-in-out infinite alternate',
       }} />
