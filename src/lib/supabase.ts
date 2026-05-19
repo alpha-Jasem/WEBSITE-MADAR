@@ -22,8 +22,8 @@ export const signOut = () => supabase.auth.signOut()
 export const getCurrentUser = async () => {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
-  const { data } = await supabase.from('users').select('*').eq('id', user.id).maybeSingle()
-  return data ?? null
+  const { data } = await supabase.from('users').select('*').eq('id', user.id).single()
+  return data ?? { id: user.id, email: user.email, role: 'client', full_name: '' }
 }
 
 // ── Admin queries ─────────────────────────────────────────────────────────────

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Eye, EyeOff, Loader2, Lock, Mail, ArrowLeft, Shield, User } from 'lucide-react'
 import { useNavigate, Link } from 'react-router-dom'
-import { signInWithPassword, getCurrentUser, signOut } from '../lib/supabase'
+import { signInWithPassword, getCurrentUser } from '../lib/supabase'
 
 type Portal = 'client' | 'admin'
 
@@ -21,15 +21,7 @@ export const Login = () => {
 
   const afterLogin = async () => {
     const profile = await getCurrentUser()
-
-    // No profile in DB → reject
-    if (!profile) {
-      await signOut()
-      setError('الحساب غير مفعّل، تواصل مع الإدارة')
-      return
-    }
-
-    const role = profile.role as string
+    const role = profile?.role ?? 'client'
 
     if (portal === 'admin' && role !== 'admin') {
       await signOut()
