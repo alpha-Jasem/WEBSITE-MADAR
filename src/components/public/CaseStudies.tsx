@@ -95,43 +95,66 @@ export const CaseStudies = () => {
               initial={{ opacity: 0, y: 40 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] }}
-              whileHover={{ y: -5, transition: { duration: 0.22 } }}
-              className="flex flex-col gap-0 rounded-2xl overflow-hidden bg-white"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+              whileHover={{ y: -5, boxShadow: `0 20px 60px ${c.glow}, 0 0 0 1px ${i === 0 ? 'rgba(0,191,255,0.25)' : 'rgba(21,101,192,0.3)'}`, transition: { duration: 0.22 } }}
+              className="flex flex-col gap-0 rounded-2xl overflow-hidden"
+              style={{
+                background: i === 0
+                  ? 'linear-gradient(160deg, rgba(0,191,255,0.07) 0%, rgba(5,8,16,0.95) 50%)'
+                  : 'linear-gradient(160deg, rgba(21,101,192,0.1) 0%, rgba(5,8,16,0.95) 50%)',
+                border: i === 0 ? '1px solid rgba(0,191,255,0.2)' : '1px solid rgba(21,101,192,0.25)',
+                boxShadow: i === 0 ? '0 4px 32px rgba(0,191,255,0.06)' : '0 4px 32px rgba(21,101,192,0.08)',
+              }}
             >
               {/* Header */}
-              <div className="p-5 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+              <div className="p-5 flex items-center justify-between"
+                style={{
+                  borderBottom: i === 0 ? '1px solid rgba(0,191,255,0.12)' : '1px solid rgba(21,101,192,0.18)',
+                  background: i === 0 ? 'rgba(0,191,255,0.04)' : 'rgba(21,101,192,0.06)',
+                }}>
                 <div>
-                  <h3 className={`text-base font-bold ${language === 'ar' ? 'font-cairo' : 'font-sora'}`} style={{ color: 'white' }}>
+                  <h3 className={`text-base font-bold mb-1 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`} style={{ color: 'white' }}>
                     {language === 'ar' ? c.industry.ar : c.industry.en}
                   </h3>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
-                    style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.38)' }}>
+                  <span className={`text-[10px] px-2.5 py-1 rounded-full ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
+                    style={{
+                      background: i === 0 ? 'rgba(0,191,255,0.12)' : 'rgba(21,101,192,0.18)',
+                      color: i === 0 ? '#00BFFF' : '#4d9fff',
+                      border: i === 0 ? '1px solid rgba(0,191,255,0.2)' : '1px solid rgba(77,159,255,0.25)',
+                    }}>
                     {language === 'ar' ? c.tag.ar : c.tag.en}
                   </span>
                 </div>
-                <div className="w-10 h-10 rounded-xl" style={{ background: c.gradient, opacity: 0.8 }} />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{ background: c.gradient, boxShadow: `0 4px 16px ${c.glow}` }} />
               </div>
 
               {/* Metrics: Before → After */}
               <div className="p-5 flex flex-col gap-3">
                 {c.metrics.map((m, mi) => {
                   const Icon = m.icon
+                  const accentColor = i === 0
+                    ? ['#00BFFF', '#00e5ff', '#1565C0'][mi]
+                    : ['#4d9fff', '#0099CC', '#3d7fd6'][mi]
                   return (
-                    <div key={mi} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${m.color}20` }}>
-                        <Icon size={13} style={{ color: m.color }} />
+                    <div key={mi} className="flex items-center gap-3 p-3 rounded-xl"
+                      style={{
+                        background: `rgba(${i === 0 ? '0,191,255' : '21,101,192'},0.05)`,
+                        border: `1px solid rgba(${i === 0 ? '0,191,255' : '21,101,192'},0.1)`,
+                      }}>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{ background: `${accentColor}22`, border: `1px solid ${accentColor}33` }}>
+                        <Icon size={14} style={{ color: accentColor }} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className={`text-[10px] mb-0.5 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.35)' }}>
+                        <p className={`text-[10px] mb-0.5 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.45)' }}>
                           {language === 'ar' ? m.label.ar : m.label.en}
                         </p>
                         <div className="flex items-center gap-2">
-                          <span className={`text-xs line-through ${language === 'ar' ? 'font-cairo' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.35)' }}>
+                          <span className={`text-xs line-through ${language === 'ar' ? 'font-cairo' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.3)' }}>
                             {language === 'ar' ? m.before.ar : m.before.en}
                           </span>
-                          <ArrowRight size={10} style={{ color: m.color }} />
-                          <span className={`text-sm font-bold ${language === 'ar' ? 'font-cairo' : 'font-sora'}`} style={{ color: m.color }}>
+                          <ArrowRight size={10} style={{ color: accentColor }} />
+                          <span className={`text-sm font-bold ${language === 'ar' ? 'font-cairo' : 'font-sora'}`} style={{ color: accentColor, textShadow: `0 0 12px ${accentColor}66` }}>
                             {language === 'ar' ? m.after.ar : m.after.en}
                           </span>
                         </div>
@@ -143,11 +166,15 @@ export const CaseStudies = () => {
 
               {/* Testimony */}
               <div className="px-5 pb-5 mt-auto">
-                <div className="p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                  <p className={`text-xs leading-relaxed mb-3 italic ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.55)' }}>
+                <div className="p-4 rounded-xl"
+                  style={{
+                    background: i === 0 ? 'rgba(0,191,255,0.05)' : 'rgba(21,101,192,0.08)',
+                    border: i === 0 ? '1px solid rgba(0,191,255,0.12)' : '1px solid rgba(21,101,192,0.2)',
+                  }}>
+                  <p className={`text-xs leading-relaxed mb-3 italic ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.7)' }}>
                     {language === 'ar' ? c.testimony.ar : c.testimony.en}
                   </p>
-                  <p className={`text-[10px] ${language === 'ar' ? 'font-cairo' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>
+                  <p className={`text-[10px] font-semibold ${language === 'ar' ? 'font-cairo' : 'font-work'}`} style={{ color: i === 0 ? 'rgba(0,191,255,0.7)' : 'rgba(77,159,255,0.75)' }}>
                     — {language === 'ar' ? c.author.ar : c.author.en}
                   </p>
                 </div>

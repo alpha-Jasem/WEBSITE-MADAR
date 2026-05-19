@@ -138,28 +138,23 @@ export const LoadingScreen = ({ onDone }: { onDone: () => void }) => {
           initial={{ opacity: 0, scale: 0.82 }}
           animate={showText ? { opacity: 1, scale: 1 } : {}}
           transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
-          className="flex flex-col items-center gap-3"
+          className="flex flex-col items-center gap-4"
         >
-          <h1
-            className="text-5xl sm:text-6xl font-bold tracking-[0.22em] uppercase"
-            style={{
-              fontFamily: 'Sora, sans-serif',
-              color: 'white',
-              textShadow: '0 0 70px rgba(0,191,255,0.75), 0 0 25px rgba(0,191,255,0.35)',
-            }}
-          >
-            MADAR
-          </h1>
-
-          <p
-            className="text-[11px] tracking-[0.45em] uppercase"
-            style={{ color: 'rgba(0,191,255,0.65)', fontFamily: 'Work Sans, sans-serif' }}
-          >
-            AI Automation
-          </p>
+          {/* Logo: icon + shimmer text */}
+          <div className="flex items-center gap-3">
+            <img
+              src="/logo-main.png"
+              alt="Madar"
+              style={{ height: 56, width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 0 20px rgba(0,191,255,0.5))' }}
+            />
+            <span style={{ fontFamily: 'Sora, sans-serif', fontSize: 32, fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1 }}>
+              <span className="shimmer-text">Madar</span>
+              <span className="shimmer-text-blue">.software</span>
+            </span>
+          </div>
 
           <motion.div
-            className="w-14 h-px mt-1"
+            className="w-20 h-px mt-1"
             style={{ background: 'linear-gradient(90deg, transparent, rgba(0,191,255,0.7), transparent)' }}
             animate={{ opacity: [0.3, 1, 0.3], scaleX: [0.4, 1, 0.4] }}
             transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
