@@ -1,25 +1,31 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import { motion, AnimatePresence, useSpring, useMotionValue, useTransform } from 'framer-motion'
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import {
   Building2, Zap, Users2, TrendingUp, ArrowUpRight,
-  ArrowDownRight, AlertTriangle, Activity
+  AlertTriangle, Activity, Brain, Sparkles, Play,
+  ChevronRight, Send, X, Maximize2, Video,
+  Target, MessageSquare, BarChart2, Wifi,
 } from 'lucide-react'
-import { StatusBadge } from '../shared/StatusBadge'
+import { Player } from '@remotion/player'
+import { WeeklyReport } from './remotion/WeeklyReport'
 import { fetchAdminStats, fetchCompanies, fetchLogs } from '../../../lib/supabase'
 import { mockAdminStats, mockCompanies, mockLogs } from '../../../lib/mockData'
 import type { DashboardStats, Company, Log } from '../../../types'
 
+// ─── Data ────────────────────────────────────────────────────────────────────
+
 const revenueData = [
-  { month: 'يناير', revenue: 42, leads: 180, messages: 1200 },
-  { month: 'فبراير', revenue: 58, leads: 220, messages: 1800 },
-  { month: 'مارس',  revenue: 51, leads: 190, messages: 1500 },
-  { month: 'أبريل', revenue: 74, leads: 310, messages: 2400 },
-  { month: 'مايو',  revenue: 89, leads: 420, messages: 3100 },
-  { month: 'يونيو', revenue: 102, leads: 380, messages: 2800 },
-  { month: 'يوليو', revenue: 118, leads: 460, messages: 3420 },
+  { month: 'يناير', revenue: 42, leads: 180 },
+  { month: 'فبراير', revenue: 58, leads: 220 },
+  { month: 'مارس',  revenue: 51, leads: 190 },
+  { month: 'أبريل', revenue: 74, leads: 310 },
+  { month: 'مايو',  revenue: 89, leads: 420 },
+  { month: 'يونيو', revenue: 102, leads: 380 },
+  { month: 'يوليو', revenue: 118, leads: 460 },
 ]
 
 const serviceData = [
@@ -39,294 +45,540 @@ const weeklyBar = [
   { day: 'الجمعة',   msgs: 310 },
 ]
 
+const predictions = [
+  { label: 'الإيراد المتوقع — أغسطس', value: '145K ريال', prob: 87, color: '#00BFFF', icon: TrendingUp },
+  { label: 'عملاء جدد متوقعون',        value: '520 عميل', prob: 74, color: '#F59E0B', icon: Users2 },
+  { label: 'نمو رسائل واتساب',          value: '+34%',     prob: 91, color: '#10B981', icon: MessageSquare },
+]
+
+const aiInsights = [
+  { text: 'إيراد يوليو ارتفع 16% عن يونيو — أعلى أداء منذ التأسيس', type: 'success' },
+  { text: 'شركة Alpha Corp لم تفتح تقاريرها منذ 12 يوم — تواصل معها', type: 'warning' },
+  { text: 'خدمة CRM بنسبة 20% فقط — فرصة توسع كبيرة', type: 'info' },
+]
+
+const liveActivity = [
+  { id: 1, text: 'عميل جديد — شركة النور للتجارة', time: 'الآن',   color: '#10B981', icon: Building2 },
+  { id: 2, text: 'أتمتة واتساب نفّذت 48 رسالة',      time: 'دقيقتان', color: '#00BFFF', icon: Zap },
+  { id: 3, text: 'تقرير أسبوعي جُهِّز تلقائياً',     time: '5 دقائق', color: '#F59E0B', icon: BarChart2 },
+  { id: 4, text: 'تنبيه: استخدام API قارب الحد',      time: '8 دقائق', color: '#F43F5E', icon: AlertTriangle },
+  { id: 5, text: 'حجز جديد — عيادة الرعاية',          time: '12 دق',   color: '#8B5CF6', icon: Target },
+]
+
+const aiMessages = [
+  'الإيراد في تصاعد مستمر — نمو 16% شهرياً 📈',
+  'أنصح بزيادة ميزانية واتساب AI بسبب أعلى ROI',
+  'شركة Alpha Corp بحاجة متابعة فورية',
+  'أفضل وقت للتواصل مع العملاء: الأربعاء 10-12 ص',
+]
+
+// ─── Animated Counter ────────────────────────────────────────────────────────
+
+function AnimatedNumber({ value, suffix = '' }: { value: number; suffix?: string }) {
+  const [display, setDisplay] = useState(0)
+  useEffect(() => {
+    let start = 0
+    const end = value
+    const duration = 1200
+    const step = (end / duration) * 16
+    const timer = setInterval(() => {
+      start += step
+      if (start >= end) { setDisplay(end); clearInterval(timer) }
+      else setDisplay(Math.floor(start))
+    }, 16)
+    return () => clearInterval(timer)
+  }, [value])
+  return <>{display.toLocaleString('en')}{suffix}</>
+}
+
+// ─── Sparkline ───────────────────────────────────────────────────────────────
+
+function Sparkline({ data, color }: { data: number[]; color: string }) {
+  const max = Math.max(...data)
+  const min = Math.min(...data)
+  const w = 80, h = 32
+  const pts = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * w
+    const y = h - ((v - min) / (max - min || 1)) * h
+    return `${x},${y}`
+  }).join(' ')
+  return (
+    <svg width={w} height={h} style={{ direction: 'ltr' }}>
+      <polyline points={pts} fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" opacity={0.7} />
+    </svg>
+  )
+}
+
+// ─── Custom Tooltip ───────────────────────────────────────────────────────────
+
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null
   return (
     <div className="px-3 py-2 rounded-xl text-xs font-tajawal"
-      style={{ background: '#1A1D26', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}>
-      <p className="mb-1 opacity-60">{label}</p>
+      style={{ background: '#1A1D26', border: '1px solid rgba(255,255,255,0.1)', color: 'white', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+      <p className="mb-1 opacity-50">{label}</p>
       {payload.map((p: any) => (
-        <p key={p.dataKey} style={{ color: p.color }}>{p.name}: {p.value}</p>
+        <p key={p.dataKey} style={{ color: p.color }}>{p.name}: <strong>{p.value}</strong></p>
       ))}
     </div>
   )
 }
 
-const KpiCard = ({ label, value, sub, trend, accent, icon: Icon }: {
-  label: string; value: string; sub?: string; trend: number; accent: string; icon: React.ElementType
-}) => (
-  <div className="p-5 rounded-2xl flex flex-col gap-3 relative overflow-hidden cursor-pointer transition-all"
-    style={{ background: '#13161E', border: '1px solid rgba(255,255,255,0.07)' }}
-    onMouseEnter={e => (e.currentTarget.style.border = `1px solid ${accent}40`)}
-    onMouseLeave={e => (e.currentTarget.style.border = '1px solid rgba(255,255,255,0.07)')}>
-    <div className="absolute top-0 left-0 right-0 h-px"
-      style={{ background: `linear-gradient(90deg, transparent, ${accent}60, transparent)` }} />
-    <div className="flex items-start justify-between">
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-        style={{ background: `${accent}15`, border: `1px solid ${accent}25` }}>
-        <Icon size={18} style={{ color: accent }} />
+// ─── AI Copilot Panel ────────────────────────────────────────────────────────
+
+function AICopilot({ onClose }: { onClose: () => void }) {
+  const [input, setInput] = useState('')
+  const [messages, setMessages] = useState([
+    { role: 'ai', text: 'مرحباً! أنا مساعدك الذكي. سألتُ الأرقام — هذا الأسبوع استثنائي 🚀' },
+    { role: 'ai', text: aiMessages[0] },
+  ])
+  const [typing, setTyping] = useState(false)
+  const bottomRef = useRef<HTMLDivElement>(null)
+
+  const send = () => {
+    if (!input.trim()) return
+    const userMsg = input.trim()
+    setMessages(m => [...m, { role: 'user', text: userMsg }])
+    setInput('')
+    setTyping(true)
+    setTimeout(() => {
+      const reply = aiMessages[Math.floor(Math.random() * aiMessages.length)]
+      setMessages(m => [...m, { role: 'ai', text: reply }])
+      setTyping(false)
+    }, 1400)
+  }
+
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, typing])
+
+  return (
+    <motion.div
+      initial={{ x: 360, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      exit={{ x: 360, opacity: 0 }}
+      transition={{ type: 'spring', damping: 22, stiffness: 200 }}
+      style={{
+        position: 'fixed', top: 0, right: 0, bottom: 0, width: 340, zIndex: 50,
+        background: 'rgba(13,16,23,0.97)',
+        borderLeft: '1px solid rgba(0,191,255,0.15)',
+        backdropFilter: 'blur(24px)',
+        display: 'flex', flexDirection: 'column',
+      }}
+    >
+      {/* Header */}
+      <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 12, background: 'rgba(0,191,255,0.12)', border: '1px solid rgba(0,191,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Brain size={16} color="#00BFFF" />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'white', fontFamily: 'Cairo' }}>AI Copilot</div>
+            <div style={{ fontSize: 11, color: '#10B981', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
+              مباشر
+            </div>
+          </div>
+        </div>
+        <button onClick={onClose} style={{ color: 'rgba(255,255,255,0.3)', cursor: 'pointer', background: 'none', border: 'none' }}>
+          <X size={16} />
+        </button>
       </div>
-      <div className="flex items-center gap-1 text-xs font-work px-2 py-1 rounded-full"
-        style={{
-          background: trend >= 0 ? 'rgba(16,185,129,0.1)' : 'rgba(244,63,94,0.1)',
-          color: trend >= 0 ? '#10B981' : '#F43F5E'
-        }}>
-        {trend >= 0 ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />}
-        {Math.abs(trend)}%
+
+      {/* Messages */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {messages.map((m, i) => (
+          <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+            style={{
+              alignSelf: m.role === 'user' ? 'flex-start' : 'flex-end',
+              maxWidth: '85%',
+              padding: '10px 14px',
+              borderRadius: m.role === 'ai' ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
+              background: m.role === 'ai' ? 'rgba(0,191,255,0.08)' : 'rgba(245,158,11,0.1)',
+              border: `1px solid ${m.role === 'ai' ? 'rgba(0,191,255,0.15)' : 'rgba(245,158,11,0.2)'}`,
+              fontSize: 13, color: 'rgba(255,255,255,0.85)',
+              fontFamily: 'Tajawal', lineHeight: 1.6, direction: 'rtl',
+            }}>
+            {m.text}
+          </motion.div>
+        ))}
+        {typing && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            style={{ alignSelf: 'flex-end', padding: '10px 14px', borderRadius: '16px 4px 16px 16px', background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.15)' }}>
+            <div style={{ display: 'flex', gap: 4 }}>
+              {[0, 1, 2].map(i => (
+                <motion.div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: '#00BFFF' }}
+                  animate={{ y: [0, -6, 0] }} transition={{ duration: 0.6, delay: i * 0.15, repeat: Infinity }} />
+              ))}
+            </div>
+          </motion.div>
+        )}
+        <div ref={bottomRef} />
       </div>
-    </div>
-    <div>
-      <p className="text-3xl font-bold font-sora" style={{ color: 'white' }}>{value}</p>
-      {sub && <p className="text-xs font-tajawal mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>{sub}</p>}
-    </div>
-    <p className="text-xs font-tajawal" style={{ color: 'rgba(255,255,255,0.4)' }}>{label}</p>
-  </div>
-)
+
+      {/* Input */}
+      <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && send()}
+            placeholder="اسأل عن أي شيء..."
+            style={{
+              flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 12, padding: '10px 14px', fontSize: 13, color: 'white',
+              fontFamily: 'Tajawal', outline: 'none', direction: 'rtl',
+            }}
+          />
+          <button onClick={send} style={{
+            width: 36, height: 36, borderRadius: 10, background: 'rgba(0,191,255,0.15)',
+            border: '1px solid rgba(0,191,255,0.3)', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', cursor: 'pointer', flexShrink: 0,
+          }}>
+            <Send size={14} color="#00BFFF" />
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+// ─── Remotion Modal ───────────────────────────────────────────────────────────
+
+function VideoModal({ data, onClose }: { data: any; onClose: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+        transition={{ type: 'spring', damping: 20 }}
+        onClick={e => e.stopPropagation()}
+        style={{ width: 800, background: '#0B0D12', borderRadius: 24, border: '1px solid rgba(0,191,255,0.2)', overflow: 'hidden', boxShadow: '0 0 80px rgba(0,191,255,0.1)' }}
+      >
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Video size={16} color="#F59E0B" />
+            <span style={{ fontSize: 15, fontWeight: 700, color: 'white', fontFamily: 'Cairo' }}>التقرير الأسبوعي — Remotion</span>
+          </div>
+          <button onClick={onClose} style={{ color: 'rgba(255,255,255,0.4)', background: 'none', border: 'none', cursor: 'pointer' }}>
+            <X size={18} />
+          </button>
+        </div>
+        <div style={{ padding: 24 }}>
+          <Player
+            component={WeeklyReport}
+            inputProps={{ data }}
+            durationInFrames={150}
+            compositionWidth={720}
+            compositionHeight={405}
+            fps={30}
+            style={{ width: '100%', borderRadius: 16, overflow: 'hidden' }}
+            controls
+            autoPlay
+          />
+          <p style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 12, fontFamily: 'Tajawal' }}>
+            تم التوليد تلقائياً بواسطة Madar AI — يمكن تصدير الفيديو بجودة 4K
+          </p>
+        </div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export const AdminOverview = () => {
-  const [stats, setStats]         = useState<DashboardStats>(mockAdminStats)
-  const [companies, setCompanies] = useState<Company[]>(mockCompanies.slice(0, 5))
-  const [logs, setLogs]           = useState<Log[]>(mockLogs)
+  const [stats, setStats] = useState<DashboardStats>(mockAdminStats)
+  const [companies, setCompanies] = useState<Company[]>(mockCompanies)
+  const [logs, setLogs] = useState<Log[]>(mockLogs)
+  const [copilotOpen, setCopilotOpen] = useState(false)
+  const [videoOpen, setVideoOpen] = useState(false)
+  const [activeInsight, setActiveInsight] = useState(0)
+  const [liveItems, setLiveItems] = useState(liveActivity.slice(0, 3))
 
   useEffect(() => {
     fetchAdminStats().then(d => { if (d) setStats(d) })
-    fetchCompanies().then(d => { if (d.length) setCompanies(d.slice(0, 5)) })
-    fetchLogs(6).then(d => { if (d.length) setLogs(d) })
+    fetchCompanies().then(d => { if (d.length) setCompanies(d) })
+    fetchLogs(20).then(d => { if (d.length) setLogs(d) })
   }, [])
 
-  const dateStr = new Date().toLocaleDateString('ar-SA', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-  })
+  // rotate AI insights
+  useEffect(() => {
+    const t = setInterval(() => setActiveInsight(i => (i + 1) % aiInsights.length), 4000)
+    return () => clearInterval(t)
+  }, [])
+
+  // simulate live activity
+  useEffect(() => {
+    const t = setInterval(() => {
+      const next = liveActivity[Math.floor(Math.random() * liveActivity.length)]
+      setLiveItems(prev => [{ ...next, id: Date.now() }, ...prev].slice(0, 5))
+    }, 5000)
+    return () => clearInterval(t)
+  }, [])
+
+  const kpis = [
+    { label: 'الإيراد الشهري', value: stats.total_revenue ?? 142, suffix: 'K', color: '#00BFFF', icon: TrendingUp, delta: '+34%', spark: [42, 58, 51, 74, 89, 102, 118] },
+    { label: 'عملاء محتملون',  value: stats.total_leads ?? 1840,  suffix: '',  color: '#F59E0B', icon: Users2,    delta: '+18%', spark: [120, 180, 160, 240, 310, 280, 350] },
+    { label: 'أنظمة أتمتة',    value: stats.active_automations ?? 67, suffix: '', color: '#8B5CF6', icon: Zap, delta: '+8%',  spark: [40, 45, 50, 55, 58, 63, 67] },
+    { label: 'إجمالي الشركات', value: stats.total_companies ?? 24, suffix: '',  color: '#10B981', icon: Building2, delta: '+12%', spark: [10, 13, 15, 17, 19, 21, 24] },
+  ]
+
+  const videoData = {
+    revenue: stats.total_revenue ?? 142,
+    leads: stats.total_leads ?? 1840,
+    automations: stats.active_automations ?? 67,
+    companies: stats.total_companies ?? 24,
+    growth: 34,
+    topService: 'واتساب AI',
+    weeklyMsgs: 3420,
+  }
 
   return (
-    <div className="space-y-5">
+    <>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 40 }}>
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white font-cairo">لوحة التحكم</h1>
-          <p className="text-xs font-tajawal mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>{dateStr}</p>
-        </div>
-        <div className="flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer"
-          style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}>
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-xs font-tajawal text-emerald-400">مباشر الآن</span>
-        </div>
-      </div>
-
-      {/* KPI Row */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <KpiCard label="إجمالي الشركات"  value={String(stats.total_companies)}                        sub="شركة مسجلة"      trend={12}               accent="#F59E0B" icon={Building2}  />
-        <KpiCard label="أتمتة نشطة"       value={String(stats.active_automations)}                      sub="نظام يعمل الآن"  trend={8}                accent="#00BFFF" icon={Zap}        />
-        <KpiCard label="عملاء محتملون"    value={String(stats.total_leads)}                             sub="في هذا الشهر"    trend={34}               accent="#8B5CF6" icon={Users2}     />
-        <KpiCard label="إيراد الشهر"      value={`${(stats.revenue_month / 1000).toFixed(0)}K`}         sub="ريال سعودي"      trend={stats.growth_pct} accent="#10B981" icon={TrendingUp} />
-      </div>
-
-      {/* Main charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-
-        {/* Area chart — revenue trend */}
-        <div className="lg:col-span-2 p-5 rounded-2xl relative overflow-hidden"
-          style={{ background: '#13161E', border: '1px solid rgba(255,255,255,0.07)' }}>
-          <div className="absolute top-0 left-0 right-0 h-px"
-            style={{ background: 'linear-gradient(90deg, transparent, rgba(0,191,255,0.5), transparent)' }} />
-          {/* subtle glow */}
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-96 h-32 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse, rgba(0,191,255,0.06) 0%, transparent 70%)', filter: 'blur(20px)' }} />
-
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h3 className="text-sm font-bold text-white font-cairo">الإيراد الشهري</h3>
-              <p className="text-xs font-tajawal mt-0.5" style={{ color: 'rgba(255,255,255,0.3)' }}>آخر 7 أشهر — بالألف ريال</p>
+        {/* ── Top bar: AI insight + actions ── */}
+        <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '14px 20px', borderRadius: 16,
+            background: 'rgba(0,191,255,0.04)',
+            border: '1px solid rgba(0,191,255,0.12)',
+          }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
+            <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(0,191,255,0.12)', border: '1px solid rgba(0,191,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Sparkles size={13} color="#00BFFF" />
             </div>
-            <div className="flex gap-4 text-xs font-tajawal">
-              <span className="flex items-center gap-1.5" style={{ color: '#00BFFF' }}>
-                <span className="w-2 h-2 rounded-full" style={{ background: '#00BFFF' }} />إيراد
-              </span>
-              <span className="flex items-center gap-1.5" style={{ color: '#F59E0B' }}>
-                <span className="w-2 h-2 rounded-full" style={{ background: '#F59E0B' }} />عملاء
-              </span>
-            </div>
+            <AnimatePresence mode="wait">
+              <motion.p key={activeInsight}
+                initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', fontFamily: 'Tajawal', margin: 0 }}>
+                <span style={{ color: aiInsights[activeInsight].type === 'success' ? '#10B981' : aiInsights[activeInsight].type === 'warning' ? '#F59E0B' : '#00BFFF', fontWeight: 700 }}>
+                  {aiInsights[activeInsight].type === 'success' ? '✓ ' : aiInsights[activeInsight].type === 'warning' ? '⚠ ' : '◈ '}
+                </span>
+                {aiInsights[activeInsight].text}
+              </motion.p>
+            </AnimatePresence>
           </div>
-
-          <div dir="ltr" style={{ direction: 'ltr', width: '100%' }}>
-            <ResponsiveContainer width="100%" height={200}>
-              <AreaChart data={revenueData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                <XAxis dataKey="month" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
-                <Tooltip content={<CustomTooltip />} />
-                <Area type="monotone" dataKey="revenue" name="الإيراد" stroke="#00BFFF" strokeWidth={2} fill="rgba(0,191,255,0.12)" isAnimationActive={false} dot={false} />
-                <Area type="monotone" dataKey="leads"   name="العملاء" stroke="#F59E0B" strokeWidth={2} fill="rgba(245,158,11,0.1)"  isAnimationActive={false} dot={false} />
-              </AreaChart>
-            </ResponsiveContainer>
+          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+              onClick={() => setVideoOpen(true)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px',
+                borderRadius: 10, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)',
+                color: '#F59E0B', fontSize: 12, fontFamily: 'Cairo', fontWeight: 600, cursor: 'pointer',
+              }}>
+              <Video size={13} />
+              تقرير أسبوعي
+            </motion.button>
+            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+              onClick={() => setCopilotOpen(o => !o)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px',
+                borderRadius: 10,
+                background: copilotOpen ? 'rgba(0,191,255,0.15)' : 'rgba(0,191,255,0.08)',
+                border: `1px solid rgba(0,191,255,${copilotOpen ? '0.4' : '0.2'})`,
+                color: '#00BFFF', fontSize: 12, fontFamily: 'Cairo', fontWeight: 600, cursor: 'pointer',
+              }}>
+              <Brain size={13} />
+              AI Copilot
+            </motion.button>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Donut chart — service distribution */}
-        <div className="p-5 rounded-2xl relative overflow-hidden"
-          style={{ background: '#13161E', border: '1px solid rgba(255,255,255,0.07)' }}>
-          <div className="absolute top-0 left-0 right-0 h-px"
-            style={{ background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.5), transparent)' }} />
-
-          <h3 className="text-sm font-bold text-white font-cairo mb-1">توزيع الخدمات</h3>
-          <p className="text-xs font-tajawal mb-4" style={{ color: 'rgba(255,255,255,0.3)' }}>نسبة الاستخدام</p>
-
-          <div dir="ltr" style={{ direction: 'ltr', width: '100%' }}>
-            <ResponsiveContainer width="100%" height={160}>
-              <PieChart>
-                <Pie data={serviceData} cx="50%" cy="50%" innerRadius={45} outerRadius={72}
-                  dataKey="value" paddingAngle={3} strokeWidth={0}>
-                  {serviceData.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="space-y-2 mt-2">
-            {serviceData.map((s, i) => (
-              <div key={i} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{ background: s.color }} />
-                  <span className="text-xs font-tajawal" style={{ color: 'rgba(255,255,255,0.6)' }}>{s.name}</span>
+        {/* ── KPI Cards ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+          {kpis.map((kpi, i) => (
+            <motion.div key={i}
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.07, type: 'spring', damping: 20 }}
+              whileHover={{ y: -3, boxShadow: `0 12px 40px ${kpi.color}18` }}
+              style={{
+                padding: '20px 22px', borderRadius: 18,
+                background: '#13161E', border: '1px solid rgba(255,255,255,0.07)',
+                position: 'relative', overflow: 'hidden', cursor: 'default',
+              }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${kpi.color}50, transparent)` }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+                <div style={{ width: 34, height: 34, borderRadius: 10, background: `${kpi.color}14`, border: `1px solid ${kpi.color}25`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <kpi.icon size={15} color={kpi.color} />
                 </div>
-                <span className="text-xs font-work font-bold" style={{ color: s.color }}>{s.value}%</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#10B981', background: 'rgba(16,185,129,0.1)', padding: '3px 8px', borderRadius: 20, fontFamily: 'Work Sans' }}>
+                  {kpi.delta}
+                </span>
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Second charts row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-
-        {/* Bar chart — weekly messages */}
-        <div className="lg:col-span-2 p-5 rounded-2xl relative overflow-hidden"
-          style={{ background: '#13161E', border: '1px solid rgba(255,255,255,0.07)' }}>
-          <div className="absolute top-0 left-0 right-0 h-px"
-            style={{ background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.5), transparent)' }} />
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h3 className="text-sm font-bold text-white font-cairo">الرسائل الأسبوعية</h3>
-              <p className="text-xs font-tajawal mt-0.5" style={{ color: 'rgba(255,255,255,0.3)' }}>آخر 7 أيام</p>
-            </div>
-            <span className="text-2xl font-bold font-sora" style={{ color: '#8B5CF6' }}>
-              {weeklyBar.reduce((a, b) => a + b.msgs, 0).toLocaleString()}
-            </span>
-          </div>
-          <div dir="ltr" style={{ direction: 'ltr', width: '100%' }}>
-            <ResponsiveContainer width="100%" height={140}>
-              <BarChart data={weeklyBar} margin={{ top: 0, right: 0, left: -25, bottom: 0 }} barSize={24}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-                <XAxis dataKey="day" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-                <Bar dataKey="msgs" name="الرسائل" fill="#8B5CF6" radius={[4, 4, 0, 0]} isAnimationActive={false} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: 'white', letterSpacing: -0.5, fontFamily: 'Sora', lineHeight: 1.1, marginBottom: 4 }}>
+                <AnimatedNumber value={kpi.value} suffix={kpi.suffix} />
+              </div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', fontFamily: 'Tajawal', marginBottom: 12 }}>{kpi.label}</div>
+              <div style={{ direction: 'ltr' }}>
+                <Sparkline data={kpi.spark} color={kpi.color} />
+              </div>
+            </motion.div>
+          ))}
         </div>
 
-        {/* Alert + live feed mini */}
-        <div className="flex flex-col gap-4">
-          <div className="flex-1 p-5 rounded-2xl relative overflow-hidden"
-            style={{ background: '#13161E', border: '1px solid rgba(255,255,255,0.07)' }}>
-            <div className="absolute top-0 left-0 right-0 h-px"
-              style={{ background: 'linear-gradient(90deg, transparent, rgba(244,63,94,0.5), transparent)' }} />
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold text-white font-cairo">التنبيهات</h3>
-              <AlertTriangle size={14} style={{ color: '#F43F5E' }} />
+        {/* ── Main Charts Row ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
+
+          {/* Area chart */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
+            style={{ padding: '20px 20px 16px', borderRadius: 20, background: '#13161E', border: '1px solid rgba(255,255,255,0.07)', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, rgba(0,191,255,0.4), transparent)' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <div>
+                <h3 style={{ fontSize: 14, fontWeight: 700, color: 'white', fontFamily: 'Cairo', margin: 0 }}>الإيراد الشهري</h3>
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'Tajawal', margin: '2px 0 0' }}>آخر 7 أشهر — بالألف ريال</p>
+              </div>
+              <div style={{ display: 'flex', gap: 14 }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#00BFFF', fontFamily: 'Tajawal' }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#00BFFF', display: 'inline-block' }} />إيراد
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#F59E0B', fontFamily: 'Tajawal' }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#F59E0B', display: 'inline-block' }} />عملاء
+                </span>
+              </div>
             </div>
-            <p className="text-4xl font-bold font-sora" style={{ color: '#F43F5E' }}>
-              {logs.filter(l => l.level === 'error' || l.level === 'warning').length}
-            </p>
-            <p className="text-xs font-tajawal mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>تنبيه يحتاج مراجعة</p>
-          </div>
-
-          <div className="flex-1 p-5 rounded-2xl relative overflow-hidden"
-            style={{ background: '#13161E', border: '1px solid rgba(255,255,255,0.07)' }}>
-            <div className="absolute top-0 left-0 right-0 h-px"
-              style={{ background: 'linear-gradient(90deg, transparent, rgba(16,185,129,0.5), transparent)' }} />
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold text-white font-cairo">نشاط مباشر</h3>
-              <Activity size={14} style={{ color: '#10B981' }} />
+            <div dir="ltr" style={{ direction: 'ltr', width: '100%', marginTop: 12 }}>
+              <ResponsiveContainer width="100%" height={180}>
+                <AreaChart data={revenueData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                  <XAxis dataKey="month" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area type="monotone" dataKey="revenue" name="الإيراد" stroke="#00BFFF" strokeWidth={2} fill="rgba(0,191,255,0.1)" isAnimationActive={false} dot={false} />
+                  <Area type="monotone" dataKey="leads"   name="العملاء" stroke="#F59E0B" strokeWidth={2} fill="rgba(245,158,11,0.08)" isAnimationActive={false} dot={false} />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
-            <p className="text-4xl font-bold font-sora text-white">{stats.active_automations}</p>
-            <p className="text-xs font-tajawal mt-1" style={{ color: '#10B981' }}>نظام أتمتة نشط الآن</p>
-          </div>
-        </div>
-      </div>
+          </motion.div>
 
-      {/* Bottom Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-
-        {/* Companies */}
-        <div className="p-5 rounded-2xl" style={{ background: '#13161E', border: '1px solid rgba(255,255,255,0.07)' }}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold text-white font-cairo">آخر الشركات</h3>
-            <span className="text-xs font-tajawal px-2 py-1 rounded-lg"
-              style={{ background: 'rgba(0,191,255,0.08)', color: '#00BFFF', border: '1px solid rgba(0,191,255,0.15)' }}>
-              {stats.total_companies} شركة
-            </span>
-          </div>
-          <div className="space-y-2">
-            {companies.map((c, i) => {
-              const accents = ['#F59E0B', '#00BFFF', '#8B5CF6', '#10B981', '#F43F5E']
-              const accent = accents[i % 5]
-              return (
-                <div key={c.id} className="flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-all"
-                  style={{ background: 'rgba(255,255,255,0.02)' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}>
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
-                    style={{ background: `${accent}20`, color: accent, border: `1px solid ${accent}30` }}>
-                    {i + 1}
+          {/* Donut */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
+            style={{ padding: '20px', borderRadius: 20, background: '#13161E', border: '1px solid rgba(255,255,255,0.07)', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.4), transparent)' }} />
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'white', fontFamily: 'Cairo', margin: '0 0 2px' }}>توزيع الخدمات</h3>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'Tajawal', margin: '0 0 8px' }}>نسبة الاستخدام</p>
+            <div dir="ltr" style={{ direction: 'ltr', width: '100%' }}>
+              <ResponsiveContainer width="100%" height={150}>
+                <PieChart>
+                  <Pie data={serviceData} cx="50%" cy="50%" innerRadius={42} outerRadius={68} dataKey="value" paddingAngle={3} strokeWidth={0} isAnimationActive={false}>
+                    {serviceData.map((e, i) => <Cell key={i} fill={e.color} />)}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+              {serviceData.map((s, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: s.color }} />
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', fontFamily: 'Tajawal' }}>{s.name}</span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white font-tajawal truncate">{c.name}</p>
-                    <p className="text-xs font-tajawal" style={{ color: 'rgba(255,255,255,0.3)' }}>{c.industry}</p>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <StatusBadge status={c.status} />
-                    <span className="text-[10px] font-work" style={{ color: 'rgba(255,255,255,0.25)' }}>{c.plan}</span>
-                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: s.color, fontFamily: 'Work Sans' }}>{s.value}%</span>
                 </div>
-              )
-            })}
-          </div>
+              ))}
+            </div>
+          </motion.div>
         </div>
 
-        {/* Activity feed */}
-        <div className="p-5 rounded-2xl" style={{ background: '#13161E', border: '1px solid rgba(255,255,255,0.07)' }}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold text-white font-cairo">آخر الأحداث</h3>
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          </div>
-          <div className="space-y-2">
-            {logs.map(log => {
-              const color = log.level === 'error' ? '#F43F5E' : log.level === 'warning' ? '#F59E0B' : '#10B981'
-              return (
-                <div key={log.id} className="flex items-start gap-3 p-2.5 rounded-xl transition-all cursor-pointer"
-                  style={{ background: 'rgba(255,255,255,0.02)' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}>
-                  <div className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: color }} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-slate-300 font-tajawal leading-relaxed">{log.message}</p>
-                    <p className="text-[10px] mt-0.5 font-work" style={{ color: 'rgba(255,255,255,0.25)' }}>
-                      {new Date(log.created_at).toLocaleTimeString('ar-SA')}
-                    </p>
+        {/* ── Bar + Predictions + Live ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+
+          {/* Bar chart */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
+            style={{ padding: '20px', borderRadius: 20, background: '#13161E', border: '1px solid rgba(255,255,255,0.07)', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.4), transparent)' }} />
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'white', fontFamily: 'Cairo', margin: '0 0 2px' }}>الرسائل الأسبوعية</h3>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'Tajawal', margin: '0 0 12px' }}>آخر 7 أيام</p>
+            <div dir="ltr" style={{ direction: 'ltr', width: '100%' }}>
+              <ResponsiveContainer width="100%" height={130}>
+                <BarChart data={weeklyBar} margin={{ top: 0, right: 0, left: -25, bottom: 0 }} barSize={20}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                  <XAxis dataKey="day" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 9, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 9 }} axisLine={false} tickLine={false} />
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+                  <Bar dataKey="msgs" name="الرسائل" fill="#8B5CF6" radius={[4, 4, 0, 0]} isAnimationActive={false} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </motion.div>
+
+          {/* AI Predictions */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }}
+            style={{ padding: '20px', borderRadius: 20, background: '#13161E', border: '1px solid rgba(255,255,255,0.07)', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, rgba(16,185,129,0.4), transparent)' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+              <Brain size={14} color="#10B981" />
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: 'white', fontFamily: 'Cairo', margin: 0 }}>توقعات AI</h3>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {predictions.map((p, i) => (
+                <motion.div key={i} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 + i * 0.1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontFamily: 'Tajawal' }}>{p.label}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: p.color, fontFamily: 'Work Sans' }}>{p.value}</span>
                   </div>
-                  <StatusBadge status={log.level} />
-                </div>
-              )
-            })}
-          </div>
+                  <div style={{ height: 4, borderRadius: 999, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${p.prob}%` }}
+                      transition={{ delay: 0.7 + i * 0.1, duration: 0.8, ease: 'easeOut' }}
+                      style={{ height: '100%', borderRadius: 999, background: p.color }}
+                    />
+                  </div>
+                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', fontFamily: 'Tajawal', marginTop: 3 }}>احتمالية {p.prob}%</div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Live Activity */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+            style={{ padding: '20px', borderRadius: 20, background: '#13161E', border: '1px solid rgba(255,255,255,0.07)', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, rgba(244,63,94,0.4), transparent)' }} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <motion.div animate={{ scale: [1, 1.4, 1] }} transition={{ duration: 1.5, repeat: Infinity }}
+                  style={{ width: 7, height: 7, borderRadius: '50%', background: '#10B981' }} />
+                <h3 style={{ fontSize: 14, fontWeight: 700, color: 'white', fontFamily: 'Cairo', margin: 0 }}>نشاط مباشر</h3>
+              </div>
+              <Wifi size={13} color="#10B981" />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <AnimatePresence>
+                {liveItems.map((item) => (
+                  <motion.div key={item.id}
+                    initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 8, background: `${item.color}14`, border: `1px solid ${item.color}25`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <item.icon size={12} color={item.color} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', fontFamily: 'Tajawal', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.text}</p>
+                      <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', fontFamily: 'Tajawal', margin: 0 }}>{item.time}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          </motion.div>
         </div>
+
       </div>
-    </div>
+
+      {/* ── AI Copilot Panel ── */}
+      <AnimatePresence>
+        {copilotOpen && <AICopilot onClose={() => setCopilotOpen(false)} />}
+      </AnimatePresence>
+
+      {/* ── Video Modal ── */}
+      <AnimatePresence>
+        {videoOpen && <VideoModal data={videoData} onClose={() => setVideoOpen(false)} />}
+      </AnimatePresence>
+    </>
   )
 }
