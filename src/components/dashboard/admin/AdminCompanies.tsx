@@ -3,7 +3,6 @@ import { Search, Plus, Building2, MessageSquare, Users2, Zap } from 'lucide-reac
 import { motion } from 'framer-motion'
 import { StatusBadge } from '../shared/StatusBadge'
 import { fetchCompanies } from '../../../lib/supabase'
-import { mockCompanies } from '../../../lib/mockData'
 import type { Company } from '../../../types'
 
 const planColors: Record<string, string> = {
@@ -13,7 +12,7 @@ const planColors: Record<string, string> = {
 }
 
 export const AdminCompanies = () => {
-  const [companies, setCompanies] = useState<Company[]>(mockCompanies)
+  const [companies, setCompanies] = useState<Company[]>([])
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'all' | 'active' | 'trial' | 'suspended'>('all')
 

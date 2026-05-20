@@ -3,11 +3,10 @@ import { Activity, Search, RefreshCw } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { StatusBadge } from '../shared/StatusBadge'
 import { fetchLogs } from '../../../lib/supabase'
-import { mockLogs } from '../../../lib/mockData'
 import type { Log, LogLevel } from '../../../types'
 
 export const AdminLogs = () => {
-  const [logs, setLogs] = useState<Log[]>(mockLogs)
+  const [logs, setLogs] = useState<Log[]>([])
   const [search, setSearch] = useState('')
   const [levelFilter, setLevelFilter] = useState<LogLevel | 'all'>('all')
   const [loading, setLoading] = useState(false)

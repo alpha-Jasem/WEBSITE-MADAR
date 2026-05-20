@@ -1,76 +1,45 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import {
-  Building2, Zap, Users2, TrendingUp, ArrowUpRight,
-  AlertTriangle, Activity, Brain, Sparkles, Play,
-  ChevronRight, Send, X, Maximize2, Video,
+  Building2, Zap, Users2, TrendingUp,
+  AlertTriangle, Brain, Sparkles,
+  Send, X, Video,
   Target, MessageSquare, BarChart2, Wifi,
 } from 'lucide-react'
-import { Player } from '@remotion/player'
-import { WeeklyReport } from './remotion/WeeklyReport'
-import { fetchAdminStats, fetchCompanies, fetchLogs } from '../../../lib/supabase'
-import { mockAdminStats, mockCompanies, mockLogs } from '../../../lib/mockData'
-import type { DashboardStats, Company, Log } from '../../../types'
+import { supabase } from '../../../lib/supabase'
 
-// ─── Data ────────────────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
 
-const revenueData = [
-  { month: 'يناير', revenue: 42, leads: 180 },
-  { month: 'فبراير', revenue: 58, leads: 220 },
-  { month: 'مارس',  revenue: 51, leads: 190 },
-  { month: 'أبريل', revenue: 74, leads: 310 },
-  { month: 'مايو',  revenue: 89, leads: 420 },
-  { month: 'يونيو', revenue: 102, leads: 380 },
-  { month: 'يوليو', revenue: 118, leads: 460 },
-]
+const MONTHS_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر']
+const DAYS_AR   = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت']
+const PIE_COLORS = ['#00BFFF','#F59E0B','#8B5CF6','#10B981','#F43F5E','#6B7280','#EC4899']
 
-const serviceData = [
-  { name: 'واتساب AI', value: 38, color: '#00BFFF' },
-  { name: 'حجوزات',    value: 27, color: '#F59E0B' },
-  { name: 'CRM',        value: 20, color: '#8B5CF6' },
-  { name: 'تقارير',     value: 15, color: '#10B981' },
-]
+const STAGE_AR: Record<string, string> = {
+  new_lead: 'جديد', contacted: 'تم التواصل', qualified: 'مؤهل',
+  meeting_booked: 'موعد محجوز', demo_done: 'تم العرض', proposal_sent: 'عرض أُرسل',
+  negotiation: 'تفاوض', won: 'مغلق ✅', lost: 'خسارة ❌', on_hold: 'معلّق',
+}
+const STAGE_COLORS: Record<string, string> = {
+  won: '#10B981', lost: '#F43F5E', meeting_booked: '#8B5CF6',
+  new_lead: '#6B7280', contacted: '#00BFFF', default: '#F59E0B',
+}
 
-const weeklyBar = [
-  { day: 'السبت',    msgs: 320 },
-  { day: 'الأحد',    msgs: 480 },
-  { day: 'الاثنين',  msgs: 560 },
-  { day: 'الثلاثاء', msgs: 390 },
-  { day: 'الأربعاء', msgs: 720 },
-  { day: 'الخميس',   msgs: 640 },
-  { day: 'الجمعة',   msgs: 310 },
-]
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const predictions = [
-  { label: 'الإيراد المتوقع — أغسطس', value: '145K ريال', prob: 87, color: '#00BFFF', icon: TrendingUp },
-  { label: 'عملاء جدد متوقعون',        value: '520 عميل', prob: 74, color: '#F59E0B', icon: Users2 },
-  { label: 'نمو رسائل واتساب',          value: '+34%',     prob: 91, color: '#10B981', icon: MessageSquare },
-]
-
-const aiInsights = [
-  { text: 'إيراد يوليو ارتفع 16% عن يونيو — أعلى أداء منذ التأسيس', type: 'success' },
-  { text: 'شركة Alpha Corp لم تفتح تقاريرها منذ 12 يوم — تواصل معها', type: 'warning' },
-  { text: 'خدمة CRM بنسبة 20% فقط — فرصة توسع كبيرة', type: 'info' },
-]
-
-const liveActivity = [
-  { id: 1, text: 'عميل جديد — شركة النور للتجارة', time: 'الآن',   color: '#10B981', icon: Building2 },
-  { id: 2, text: 'أتمتة واتساب نفّذت 48 رسالة',      time: 'دقيقتان', color: '#00BFFF', icon: Zap },
-  { id: 3, text: 'تقرير أسبوعي جُهِّز تلقائياً',     time: '5 دقائق', color: '#F59E0B', icon: BarChart2 },
-  { id: 4, text: 'تنبيه: استخدام API قارب الحد',      time: '8 دقائق', color: '#F43F5E', icon: AlertTriangle },
-  { id: 5, text: 'حجز جديد — عيادة الرعاية',          time: '12 دق',   color: '#8B5CF6', icon: Target },
-]
-
-const aiMessages = [
-  'الإيراد في تصاعد مستمر — نمو 16% شهرياً 📈',
-  'أنصح بزيادة ميزانية واتساب AI بسبب أعلى ROI',
-  'شركة Alpha Corp بحاجة متابعة فورية',
-  'أفضل وقت للتواصل مع العملاء: الأربعاء 10-12 ص',
-]
+function monthKey(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+function dayKey(d: Date) {
+  return d.toISOString().slice(0, 10)
+}
+function timeAgo(iso: string) {
+  const h = Math.floor((Date.now() - new Date(iso).getTime()) / 3600000)
+  return h < 1 ? 'منذ أقل من ساعة' : h < 24 ? `منذ ${h} ساعة` : `منذ ${Math.floor(h / 24)} يوم`
+}
 
 // ─── Animated Counter ────────────────────────────────────────────────────────
 
@@ -78,12 +47,10 @@ function AnimatedNumber({ value, suffix = '' }: { value: number; suffix?: string
   const [display, setDisplay] = useState(0)
   useEffect(() => {
     let start = 0
-    const end = value
-    const duration = 1200
-    const step = (end / duration) * 16
+    const step = (value / 1200) * 16
     const timer = setInterval(() => {
       start += step
-      if (start >= end) { setDisplay(end); clearInterval(timer) }
+      if (start >= value) { setDisplay(value); clearInterval(timer) }
       else setDisplay(Math.floor(start))
     }, 16)
     return () => clearInterval(timer)
@@ -94,6 +61,7 @@ function AnimatedNumber({ value, suffix = '' }: { value: number; suffix?: string
 // ─── Sparkline ───────────────────────────────────────────────────────────────
 
 function Sparkline({ data, color }: { data: number[]; color: string }) {
+  if (!data.length || data.every(v => v === 0)) return null
   const max = Math.max(...data)
   const min = Math.min(...data)
   const w = 80, h = 32
@@ -126,29 +94,41 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 // ─── AI Copilot Panel ────────────────────────────────────────────────────────
 
-function AICopilot({ onClose }: { onClose: () => void }) {
+function AICopilot({ stats, onClose }: { stats: any; onClose: () => void }) {
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState([
-    { role: 'ai', text: 'مرحباً! أنا مساعدك الذكي. سألتُ الأرقام — هذا الأسبوع استثنائي 🚀' },
-    { role: 'ai', text: aiMessages[0] },
+    { role: 'ai', text: `مرحباً! عندي ${stats.totalLeads} عميل في قاعدة البيانات و${stats.wonLeads} صفقة مغلقة.` },
+    { role: 'ai', text: stats.revenueThis > 0 ? `الإيراد هذا الشهر ${stats.revenueThis.toLocaleString('ar')} ريال.` : 'لا توجد صفقات مغلقة هذا الشهر بعد — حسّن مرحلة الإغلاق.' },
   ])
   const [typing, setTyping] = useState(false)
-  const bottomRef = useRef<HTMLDivElement>(null)
 
-  const send = () => {
-    if (!input.trim()) return
+  const send = async () => {
+    if (!input.trim() || typing) return
     const userMsg = input.trim()
     setMessages(m => [...m, { role: 'user', text: userMsg }])
     setInput('')
     setTyping(true)
-    setTimeout(() => {
-      const reply = aiMessages[Math.floor(Math.random() * aiMessages.length)]
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-copilot`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ message: userMsg, stats }),
+        }
+      )
+      const { reply } = await res.json()
       setMessages(m => [...m, { role: 'ai', text: reply }])
+    } catch {
+      setMessages(m => [...m, { role: 'ai', text: 'تعذّر الاتصال بـ Claude API.' }])
+    } finally {
       setTyping(false)
-    }, 1400)
+    }
   }
-
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, typing])
 
   return (
     <motion.div
@@ -164,7 +144,6 @@ function AICopilot({ onClose }: { onClose: () => void }) {
         display: 'flex', flexDirection: 'column',
       }}
     >
-      {/* Header */}
       <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 36, height: 36, borderRadius: 12, background: 'rgba(0,191,255,0.12)', border: '1px solid rgba(0,191,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -172,30 +151,23 @@ function AICopilot({ onClose }: { onClose: () => void }) {
           </div>
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, color: 'white', fontFamily: 'Cairo' }}>AI Copilot</div>
-            <div style={{ fontSize: 11, color: '#10B981', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
-              مباشر
-            </div>
+            <div style={{ fontSize: 11, color: '#10B981' }}>بيانات حقيقية</div>
           </div>
         </div>
         <button onClick={onClose} style={{ color: 'rgba(255,255,255,0.3)', cursor: 'pointer', background: 'none', border: 'none' }}>
           <X size={16} />
         </button>
       </div>
-
-      {/* Messages */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         {messages.map((m, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             style={{
-              alignSelf: m.role === 'user' ? 'flex-start' : 'flex-end',
-              maxWidth: '85%',
+              alignSelf: m.role === 'user' ? 'flex-start' : 'flex-end', maxWidth: '85%',
               padding: '10px 14px',
               borderRadius: m.role === 'ai' ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
               background: m.role === 'ai' ? 'rgba(0,191,255,0.08)' : 'rgba(245,158,11,0.1)',
               border: `1px solid ${m.role === 'ai' ? 'rgba(0,191,255,0.15)' : 'rgba(245,158,11,0.2)'}`,
-              fontSize: 13, color: 'rgba(255,255,255,0.85)',
-              fontFamily: 'Tajawal', lineHeight: 1.6, direction: 'rtl',
+              fontSize: 13, color: 'rgba(255,255,255,0.85)', fontFamily: 'Tajawal', lineHeight: 1.6, direction: 'rtl',
             }}>
             {m.text}
           </motion.div>
@@ -211,17 +183,14 @@ function AICopilot({ onClose }: { onClose: () => void }) {
             </div>
           </motion.div>
         )}
-        <div ref={bottomRef} />
       </div>
-
-      {/* Input */}
       <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <input
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && send()}
-            placeholder="اسأل عن أي شيء..."
+            placeholder="اسأل عن البيانات..."
             style={{
               flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
               borderRadius: 12, padding: '10px 14px', fontSize: 13, color: 'white',
@@ -241,111 +210,150 @@ function AICopilot({ onClose }: { onClose: () => void }) {
   )
 }
 
-// ─── Remotion Modal ───────────────────────────────────────────────────────────
-
-function VideoModal({ data, onClose }: { data: any; onClose: () => void }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-        transition={{ type: 'spring', damping: 20 }}
-        onClick={e => e.stopPropagation()}
-        style={{ width: 800, background: 'rgba(6,8,20,0.92)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', borderRadius: 24, border: '1px solid rgba(0,191,255,0.2)', overflow: 'hidden', boxShadow: '0 0 80px rgba(0,191,255,0.12), 0 40px 120px rgba(0,0,0,0.7)' }}
-      >
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Video size={16} color="#F59E0B" />
-            <span style={{ fontSize: 15, fontWeight: 700, color: 'white', fontFamily: 'Cairo' }}>التقرير الأسبوعي — Remotion</span>
-          </div>
-          <button onClick={onClose} style={{ color: 'rgba(255,255,255,0.4)', background: 'none', border: 'none', cursor: 'pointer' }}>
-            <X size={18} />
-          </button>
-        </div>
-        <div style={{ padding: 24 }}>
-          <Player
-            component={WeeklyReport}
-            inputProps={{ data }}
-            durationInFrames={150}
-            compositionWidth={720}
-            compositionHeight={405}
-            fps={30}
-            style={{ width: '100%', borderRadius: 16, overflow: 'hidden' }}
-            controls
-            autoPlay
-          />
-          <p style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 12, fontFamily: 'Tajawal' }}>
-            تم التوليد تلقائياً بواسطة Madar AI — يمكن تصدير الفيديو بجودة 4K
-          </p>
-        </div>
-      </motion.div>
-    </motion.div>
-  )
-}
-
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export const AdminOverview = () => {
-  const [stats, setStats] = useState<DashboardStats>(mockAdminStats)
-  const [companies, setCompanies] = useState<Company[]>(mockCompanies)
-  const [logs, setLogs] = useState<Log[]>(mockLogs)
+  const [leads, setLeads] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [copilotOpen, setCopilotOpen] = useState(false)
-  const [videoOpen, setVideoOpen] = useState(false)
   const [activeInsight, setActiveInsight] = useState(0)
-  const [liveItems, setLiveItems] = useState(liveActivity.slice(0, 3))
 
   useEffect(() => {
-    fetchAdminStats().then(d => { if (d) setStats(d) })
-    fetchCompanies().then(d => { if (d.length) setCompanies(d) })
-    fetchLogs(20).then(d => { if (d.length) setLogs(d) })
-  }, [])
-
-  // rotate AI insights
-  useEffect(() => {
-    const t = setInterval(() => setActiveInsight(i => (i + 1) % aiInsights.length), 4000)
+    const t = setInterval(() => setActiveInsight(i => (i + 1) % 3), 4000)
     return () => clearInterval(t)
   }, [])
 
-  // simulate live activity
+  // ── Fetch + Realtime ──
   useEffect(() => {
-    const t = setInterval(() => {
-      const next = liveActivity[Math.floor(Math.random() * liveActivity.length)]
-      setLiveItems(prev => [{ ...next, id: Date.now() }, ...prev].slice(0, 5))
-    }, 5000)
-    return () => clearInterval(t)
+    const load = async () => {
+      const { data } = await supabase
+        .from('crm_leads')
+        .select('*')
+        .order('updated_at', { ascending: false })
+      setLeads(data || [])
+      setLoading(false)
+    }
+    load()
+    const channel = supabase.channel('admin_overview_rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'crm_leads' }, load)
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
   }, [])
 
-  const kpis = [
-    { label: 'الإيراد الشهري', value: stats.total_revenue ?? 142, suffix: 'K', color: '#00BFFF', icon: TrendingUp, delta: '+34%', spark: [42, 58, 51, 74, 89, 102, 118] },
-    { label: 'عملاء محتملون',  value: stats.total_leads ?? 1840,  suffix: '',  color: '#F59E0B', icon: Users2,    delta: '+18%', spark: [120, 180, 160, 240, 310, 280, 350] },
-    { label: 'أنظمة أتمتة',    value: stats.active_automations ?? 67, suffix: '', color: '#8B5CF6', icon: Zap, delta: '+8%',  spark: [40, 45, 50, 55, 58, 63, 67] },
-    { label: 'إجمالي الشركات', value: stats.total_companies ?? 24, suffix: '',  color: '#10B981', icon: Building2, delta: '+12%', spark: [10, 13, 15, 17, 19, 21, 24] },
+  // ── Compute stats ──
+  const now = new Date()
+  const thisMonthKey = monthKey(now)
+  const prevDate = new Date(now); prevDate.setMonth(prevDate.getMonth() - 1)
+  const prevMonthKey = monthKey(prevDate)
+
+  const wonLeads     = leads.filter(l => l.stage === 'won')
+  const revenueThis  = wonLeads.filter(l => (l.updated_at || '').startsWith(thisMonthKey)).reduce((s, l) => s + (l.price_sold || 0), 0)
+  const revenuePrev  = wonLeads.filter(l => (l.updated_at || '').startsWith(prevMonthKey)).reduce((s, l) => s + (l.price_sold || 0), 0)
+  const revChgPct    = revenuePrev ? Math.round((revenueThis - revenuePrev) / revenuePrev * 100) : 0
+  const totalLeads   = leads.length
+  const leadsThisMonth = leads.filter(l => (l.created_at || '').startsWith(thisMonthKey)).length
+  const leadsPrev    = leads.filter(l => (l.created_at || '').startsWith(prevMonthKey)).length
+  const leadChgPct   = leadsPrev ? Math.round((leadsThisMonth - leadsPrev) / leadsPrev * 100) : 0
+
+  // ── Revenue chart — last 7 months ──
+  const revenueData = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(now); d.setMonth(d.getMonth() - (6 - i))
+    const key = monthKey(d)
+    const rev = wonLeads.filter(l => (l.updated_at || '').startsWith(key)).reduce((s, l) => s + (l.price_sold || 0), 0) / 1000
+    return {
+      month: MONTHS_AR[d.getMonth()],
+      revenue: Math.round(rev * 10) / 10,
+      leads: leads.filter(l => (l.created_at || '').startsWith(key)).length,
+    }
+  })
+
+  // ── Sector distribution ──
+  const sectorMap: Record<string, number> = {}
+  leads.forEach(l => { const s = l.sector || 'أخرى'; sectorMap[s] = (sectorMap[s] || 0) + 1 })
+  const serviceData = Object.entries(sectorMap).map(([name, count], i) => ({
+    name,
+    value: leads.length ? Math.round(count / leads.length * 100) : 0,
+    color: PIE_COLORS[i % PIE_COLORS.length],
+  }))
+
+  // ── Weekly new leads (last 7 days) ──
+  const weeklyBar = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(now); d.setDate(d.getDate() - (6 - i))
+    const key = dayKey(d)
+    return { day: DAYS_AR[d.getDay()], leads: leads.filter(l => (l.created_at || '').startsWith(key)).length }
+  })
+
+  // ── Live activity — 5 most recently updated ──
+  const liveItems = leads.slice(0, 5).map(l => ({
+    id: l.id,
+    text: `${l.company_name || 'عميل'} — ${STAGE_AR[l.stage] || l.stage}${l.price_sold ? ' · ' + l.price_sold.toLocaleString('ar') + ' ر.س' : ''}`,
+    time: timeAgo(l.updated_at || l.created_at),
+    color: STAGE_COLORS[l.stage] || STAGE_COLORS.default,
+    icon: l.stage === 'won' ? Target : l.stage === 'lost' ? AlertTriangle : Building2,
+  }))
+
+  // ── AI insights (from real data) ──
+  const closeRate = leads.filter(l => ['qualified','meeting_booked','demo_done','proposal_sent','negotiation','won','lost'].includes(l.stage)).length
+    ? Math.round(wonLeads.length / leads.filter(l => ['qualified','meeting_booked','demo_done','proposal_sent','negotiation','won','lost'].includes(l.stage)).length * 100)
+    : 0
+  const aiInsights = [
+    { text: totalLeads > 0 ? `${totalLeads} عميل إجمالاً · ${wonLeads.length} صفقة مغلقة · نسبة إغلاق ${closeRate}%` : 'لا توجد بيانات بعد — أضف أول عميل من CRM', type: 'info' },
+    { text: leadsThisMonth > 0 ? `${leadsThisMonth} عميل جديد هذا الشهر` : 'لم يُضف أي عميل هذا الشهر بعد', type: leadsThisMonth > 0 ? 'success' : 'warning' },
+    { text: revenueThis > 0 ? `إيراد ${(revenueThis / 1000).toFixed(1)}K ريال من صفقات هذا الشهر` : 'لا توجد صفقات مغلقة هذا الشهر بعد', type: revenueThis > 0 ? 'success' : 'info' },
   ]
 
-  const videoData = {
-    revenue: stats.total_revenue ?? 142,
-    leads: stats.total_leads ?? 1840,
-    automations: stats.active_automations ?? 67,
-    companies: stats.total_companies ?? 24,
-    growth: 34,
-    topService: 'واتساب AI',
-    weeklyMsgs: 3420,
+  // ── KPI cards ──
+  const kpis = [
+    {
+      label: 'الإيراد الشهري', value: Math.round(revenueThis / 1000), suffix: revenueThis >= 1000 ? 'K' : '',
+      color: '#00BFFF', icon: TrendingUp,
+      delta: revChgPct ? `${revChgPct > 0 ? '+' : ''}${revChgPct}%` : '—',
+      spark: revenueData.map(d => d.revenue),
+    },
+    {
+      label: 'عملاء محتملون', value: totalLeads, suffix: '',
+      color: '#F59E0B', icon: Users2,
+      delta: leadChgPct ? `${leadChgPct > 0 ? '+' : ''}${leadChgPct}%` : '—',
+      spark: revenueData.map(d => d.leads),
+    },
+    {
+      label: 'صفقات مغلقة', value: wonLeads.length, suffix: '',
+      color: '#8B5CF6', icon: Zap,
+      delta: `${closeRate}% إغلاق`,
+      spark: Array(7).fill(wonLeads.length > 0 ? 1 : 0),
+    },
+    {
+      label: 'هذا الشهر', value: leadsThisMonth, suffix: '',
+      color: '#10B981', icon: Building2,
+      delta: leadsThisMonth > 0 ? `${leadsThisMonth} جديد` : '—',
+      spark: weeklyBar.map(d => d.leads),
+    },
+  ]
+
+  const statsForCopilot = { totalLeads, wonLeads: wonLeads.length, revenueThis, leadsThisMonth, closeRate }
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300 }}>
+        <div style={{ textAlign: 'center' }}>
+          <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+            style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid rgba(0,191,255,0.2)', borderTopColor: '#00BFFF', margin: '0 auto 12px' }} />
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', fontFamily: 'Tajawal' }}>جاري تحميل البيانات...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
     <>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 40 }}>
 
-        {/* ── Top bar: AI insight + actions ── */}
+        {/* ── Top bar: AI insight ── */}
         <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '14px 20px', borderRadius: 16,
-            background: 'rgba(0,191,255,0.08)',
-            backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+            background: 'rgba(0,191,255,0.08)', backdropFilter: 'blur(20px)',
             border: '1px solid rgba(0,191,255,0.22)',
           }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
@@ -363,30 +371,17 @@ export const AdminOverview = () => {
               </motion.p>
             </AnimatePresence>
           </div>
-          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-              onClick={() => setVideoOpen(true)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px',
-                borderRadius: 10, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)',
-                color: '#F59E0B', fontSize: 12, fontFamily: 'Cairo', fontWeight: 600, cursor: 'pointer',
-              }}>
-              <Video size={13} />
-              تقرير أسبوعي
-            </motion.button>
-            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-              onClick={() => setCopilotOpen(o => !o)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px',
-                borderRadius: 10,
-                background: copilotOpen ? 'rgba(0,191,255,0.15)' : 'rgba(0,191,255,0.08)',
-                border: `1px solid rgba(0,191,255,${copilotOpen ? '0.4' : '0.2'})`,
-                color: '#00BFFF', fontSize: 12, fontFamily: 'Cairo', fontWeight: 600, cursor: 'pointer',
-              }}>
-              <Brain size={13} />
-              AI Copilot
-            </motion.button>
-          </div>
+          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+            onClick={() => setCopilotOpen(o => !o)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10,
+              background: copilotOpen ? 'rgba(0,191,255,0.15)' : 'rgba(0,191,255,0.08)',
+              border: `1px solid rgba(0,191,255,${copilotOpen ? '0.4' : '0.2'})`,
+              color: '#00BFFF', fontSize: 12, fontFamily: 'Cairo', fontWeight: 600, cursor: 'pointer', flexShrink: 0,
+            }}>
+            <Brain size={13} />
+            AI Copilot
+          </motion.button>
         </motion.div>
 
         {/* ── KPI Cards ── */}
@@ -398,7 +393,8 @@ export const AdminOverview = () => {
               whileHover={{ y: -3, boxShadow: `0 12px 40px ${kpi.color}18` }}
               style={{
                 padding: '20px 22px', borderRadius: 18,
-                background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)', border: '1px solid rgba(255,255,255,0.14)',
+                background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(28px)',
+                border: '1px solid rgba(255,255,255,0.14)',
                 position: 'relative', overflow: 'hidden', cursor: 'default',
               }}>
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${kpi.color}50, transparent)` }} />
@@ -406,7 +402,7 @@ export const AdminOverview = () => {
                 <div style={{ width: 34, height: 34, borderRadius: 10, background: `${kpi.color}14`, border: `1px solid ${kpi.color}25`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <kpi.icon size={15} color={kpi.color} />
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#10B981', background: 'rgba(16,185,129,0.1)', padding: '3px 8px', borderRadius: 20, fontFamily: 'Work Sans' }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: kpi.delta === '—' ? '#666' : '#10B981', background: kpi.delta === '—' ? 'rgba(255,255,255,0.05)' : 'rgba(16,185,129,0.1)', padding: '3px 8px', borderRadius: 20, fontFamily: 'Work Sans' }}>
                   {kpi.delta}
                 </span>
               </div>
@@ -426,12 +422,12 @@ export const AdminOverview = () => {
 
           {/* Area chart */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-            style={{ padding: '20px 20px 16px', borderRadius: 20, background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)', border: '1px solid rgba(255,255,255,0.14)', position: 'relative', overflow: 'hidden' }}>
+            style={{ padding: '20px 20px 16px', borderRadius: 20, background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(28px)', border: '1px solid rgba(255,255,255,0.14)', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, rgba(0,191,255,0.4), transparent)' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <div>
                 <h3 style={{ fontSize: 14, fontWeight: 700, color: 'white', fontFamily: 'Cairo', margin: 0 }}>الإيراد الشهري</h3>
-                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'Tajawal', margin: '2px 0 0' }}>آخر 7 أشهر — بالألف ريال</p>
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'Tajawal', margin: '2px 0 0' }}>آخر 7 أشهر — بالألف ريال (صفقات مغلقة)</p>
               </div>
               <div style={{ display: 'flex', gap: 14 }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#00BFFF', fontFamily: 'Tajawal' }}>
@@ -442,104 +438,89 @@ export const AdminOverview = () => {
                 </span>
               </div>
             </div>
-            <div dir="ltr" style={{ direction: 'ltr', width: '100%', marginTop: 12 }}>
-              <ResponsiveContainer width="100%" height={180}>
-                <AreaChart data={revenueData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                  <XAxis dataKey="month" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Area type="monotone" dataKey="revenue" name="الإيراد" stroke="#00BFFF" strokeWidth={2} fill="rgba(0,191,255,0.1)" isAnimationActive={false} dot={false} />
-                  <Area type="monotone" dataKey="leads"   name="العملاء" stroke="#F59E0B" strokeWidth={2} fill="rgba(245,158,11,0.08)" isAnimationActive={false} dot={false} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+            {revenueData.every(d => d.revenue === 0 && d.leads === 0) ? (
+              <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', fontFamily: 'Tajawal' }}>لا توجد بيانات بعد — أغلق صفقات لترى الرسم البياني</p>
+              </div>
+            ) : (
+              <div dir="ltr" style={{ direction: 'ltr', width: '100%', marginTop: 12 }}>
+                <ResponsiveContainer width="100%" height={180}>
+                  <AreaChart data={revenueData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                    <XAxis dataKey="month" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Area type="monotone" dataKey="revenue" name="الإيراد" stroke="#00BFFF" strokeWidth={2} fill="rgba(0,191,255,0.1)" isAnimationActive={false} dot={false} />
+                    <Area type="monotone" dataKey="leads" name="العملاء" stroke="#F59E0B" strokeWidth={2} fill="rgba(245,158,11,0.08)" isAnimationActive={false} dot={false} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </motion.div>
 
-          {/* Donut */}
+          {/* Donut — sector distribution */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
-            style={{ padding: '20px', borderRadius: 20, background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)', border: '1px solid rgba(255,255,255,0.14)', position: 'relative', overflow: 'hidden' }}>
+            style={{ padding: '20px', borderRadius: 20, background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(28px)', border: '1px solid rgba(255,255,255,0.14)', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.4), transparent)' }} />
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'white', fontFamily: 'Cairo', margin: '0 0 2px' }}>توزيع الخدمات</h3>
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'Tajawal', margin: '0 0 8px' }}>نسبة الاستخدام</p>
-            <div dir="ltr" style={{ direction: 'ltr', width: '100%' }}>
-              <ResponsiveContainer width="100%" height={150}>
-                <PieChart>
-                  <Pie data={serviceData} cx="50%" cy="50%" innerRadius={42} outerRadius={68} dataKey="value" paddingAngle={3} strokeWidth={0} isAnimationActive={false}>
-                    {serviceData.map((e, i) => <Cell key={i} fill={e.color} />)}
-                  </Pie>
-                  <Tooltip content={<CustomTooltip />} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-              {serviceData.map((s, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: s.color }} />
-                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', fontFamily: 'Tajawal' }}>{s.name}</span>
-                  </div>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: s.color, fontFamily: 'Work Sans' }}>{s.value}%</span>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'white', fontFamily: 'Cairo', margin: '0 0 2px' }}>توزيع القطاعات</h3>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'Tajawal', margin: '0 0 8px' }}>من بيانات العملاء الفعلية</p>
+            {serviceData.length === 0 ? (
+              <div style={{ height: 150, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', fontFamily: 'Tajawal', textAlign: 'center' }}>لا توجد بيانات بعد</p>
+              </div>
+            ) : (
+              <>
+                <div dir="ltr" style={{ direction: 'ltr', width: '100%' }}>
+                  <ResponsiveContainer width="100%" height={150}>
+                    <PieChart>
+                      <Pie data={serviceData} cx="50%" cy="50%" innerRadius={42} outerRadius={68} dataKey="value" paddingAngle={3} strokeWidth={0} isAnimationActive={false}>
+                        {serviceData.map((e, i) => <Cell key={i} fill={e.color} />)}
+                      </Pie>
+                      <Tooltip content={<CustomTooltip />} />
+                    </PieChart>
+                  </ResponsiveContainer>
                 </div>
-              ))}
-            </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                  {serviceData.map((s, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                        <div style={{ width: 7, height: 7, borderRadius: '50%', background: s.color }} />
+                        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', fontFamily: 'Tajawal' }}>{s.name}</span>
+                      </div>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: s.color, fontFamily: 'Work Sans' }}>{s.value}%</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </motion.div>
         </div>
 
-        {/* ── Bar + Predictions + Live ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+        {/* ── Bar + Live Activity ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
 
-          {/* Bar chart */}
+          {/* Weekly new leads bar chart */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
-            style={{ padding: '20px', borderRadius: 20, background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)', border: '1px solid rgba(255,255,255,0.14)', position: 'relative', overflow: 'hidden' }}>
+            style={{ padding: '20px', borderRadius: 20, background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(28px)', border: '1px solid rgba(255,255,255,0.14)', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.4), transparent)' }} />
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'white', fontFamily: 'Cairo', margin: '0 0 2px' }}>الرسائل الأسبوعية</h3>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'white', fontFamily: 'Cairo', margin: '0 0 2px' }}>العملاء الجدد يومياً</h3>
             <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'Tajawal', margin: '0 0 12px' }}>آخر 7 أيام</p>
             <div dir="ltr" style={{ direction: 'ltr', width: '100%' }}>
               <ResponsiveContainer width="100%" height={130}>
                 <BarChart data={weeklyBar} margin={{ top: 0, right: 0, left: -25, bottom: 0 }} barSize={20}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
                   <XAxis dataKey="day" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 9, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 9 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 9 }} axisLine={false} tickLine={false} allowDecimals={false} />
                   <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-                  <Bar dataKey="msgs" name="الرسائل" fill="#8B5CF6" radius={[4, 4, 0, 0]} isAnimationActive={false} />
+                  <Bar dataKey="leads" name="عملاء جدد" fill="#8B5CF6" radius={[4, 4, 0, 0]} isAnimationActive={false} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </motion.div>
 
-          {/* AI Predictions */}
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }}
-            style={{ padding: '20px', borderRadius: 20, background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)', border: '1px solid rgba(255,255,255,0.14)', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, rgba(16,185,129,0.4), transparent)' }} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-              <Brain size={14} color="#10B981" />
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: 'white', fontFamily: 'Cairo', margin: 0 }}>توقعات AI</h3>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {predictions.map((p, i) => (
-                <motion.div key={i} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 + i * 0.1 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontFamily: 'Tajawal' }}>{p.label}</span>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: p.color, fontFamily: 'Work Sans' }}>{p.value}</span>
-                  </div>
-                  <div style={{ height: 4, borderRadius: 999, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${p.prob}%` }}
-                      transition={{ delay: 0.7 + i * 0.1, duration: 0.8, ease: 'easeOut' }}
-                      style={{ height: '100%', borderRadius: 999, background: p.color }}
-                    />
-                  </div>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', fontFamily: 'Tajawal', marginTop: 3 }}>احتمالية {p.prob}%</div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-
           {/* Live Activity */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-            style={{ padding: '20px', borderRadius: 20, background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)', border: '1px solid rgba(255,255,255,0.14)', position: 'relative', overflow: 'hidden' }}>
+            style={{ padding: '20px', borderRadius: 20, background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(28px)', border: '1px solid rgba(255,255,255,0.14)', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, rgba(244,63,94,0.4), transparent)' }} />
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -549,11 +530,15 @@ export const AdminOverview = () => {
               </div>
               <Wifi size={13} color="#10B981" />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <AnimatePresence>
+            {liveItems.length === 0 ? (
+              <div style={{ padding: '20px 0', textAlign: 'center' }}>
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', fontFamily: 'Tajawal' }}>لا يوجد نشاط بعد</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {liveItems.map((item) => (
                   <motion.div key={item.id}
-                    initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
+                    initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
                     style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{ width: 28, height: 28, borderRadius: 8, background: `${item.color}14`, border: `1px solid ${item.color}25`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <item.icon size={12} color={item.color} />
@@ -564,8 +549,8 @@ export const AdminOverview = () => {
                     </div>
                   </motion.div>
                 ))}
-              </AnimatePresence>
-            </div>
+              </div>
+            )}
           </motion.div>
         </div>
 
@@ -573,12 +558,7 @@ export const AdminOverview = () => {
 
       {/* ── AI Copilot Panel ── */}
       <AnimatePresence>
-        {copilotOpen && <AICopilot onClose={() => setCopilotOpen(false)} />}
-      </AnimatePresence>
-
-      {/* ── Video Modal ── */}
-      <AnimatePresence>
-        {videoOpen && <VideoModal data={videoData} onClose={() => setVideoOpen(false)} />}
+        {copilotOpen && <AICopilot stats={statsForCopilot} onClose={() => setCopilotOpen(false)} />}
       </AnimatePresence>
     </>
   )

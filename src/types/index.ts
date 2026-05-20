@@ -30,6 +30,9 @@ export interface Company {
   monthly_messages: number
   monthly_leads: number
   automations_count: number
+  message_limit: number
+  messages_used: number
+  plan_reset_at: string
   created_at: string
 }
 

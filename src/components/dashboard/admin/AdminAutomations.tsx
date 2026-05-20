@@ -3,7 +3,6 @@ import { Zap, Search, Play, Pause, AlertTriangle, MessageSquare, Users2, Clock }
 import { motion } from 'framer-motion'
 import { StatusBadge } from '../shared/StatusBadge'
 import { fetchAllAutomations, updateAutomationStatus } from '../../../lib/supabase'
-import { mockAutomations } from '../../../lib/mockData'
 import type { Automation } from '../../../types'
 
 const typeIcons: Record<string, string> = {
@@ -14,7 +13,7 @@ const typeLabels: Record<string, string> = {
 }
 
 export const AdminAutomations = () => {
-  const [automations, setAutomations] = useState<Automation[]>(mockAutomations)
+  const [automations, setAutomations] = useState<Automation[]>([])
   const [search, setSearch] = useState('')
 
   useEffect(() => {
