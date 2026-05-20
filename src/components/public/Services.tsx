@@ -11,8 +11,8 @@ const services = [
     glow: 'rgba(0,191,255,0.12)',
     glowHover: 'rgba(0,191,255,0.22)',
     featured: true,
-    ar: { tag: 'الأقوى للتحويل', title: 'موظف مبيعات AI على واتساب', desc: 'يرد فوراً، يفهم احتياج العميل، يجاوب الاعتراضات، ويأخذه للخطوة التالية: حجز، عرض سعر، أو مكالمة.', features: ['رد < 1 ثانية', 'بيع 24/7', 'CRM متكامل'] },
-    en: { tag: 'Best for Conversion', title: 'AI WhatsApp Sales Agent', desc: 'Replies instantly, understands intent, handles objections, and moves the customer to the next step: booking, quote, or call.', features: ['< 1s response', '24/7 selling', 'CRM integrated'] },
+    ar: { tag: 'الأقوى للتحويل', title: 'موظف مبيعات AI للرسائل والمكالمات', desc: 'يرد على واتساب والاتصالات، يفهم احتياج العميل، يجاوب الاعتراضات، ويأخذه للخطوة التالية: حجز، عرض سعر، أو مكالمة.', features: ['رد فوري', 'مكالمات 24/7', 'CRM متكامل'] },
+    en: { tag: 'Best for Conversion', title: 'AI Sales Agent for Messages and Calls', desc: 'Handles WhatsApp and phone calls, understands intent, answers objections, and moves the customer to the next step: booking, quote, or call.', features: ['Instant response', '24/7 calls', 'CRM integrated'] },
   },
   {
     icon: MessageSquare,
@@ -20,8 +20,8 @@ const services = [
     glow: 'rgba(0,191,255,0.12)',
     glowHover: 'rgba(0,191,255,0.22)',
     featured: false,
-    ar: { tag: 'واتساب', title: 'مسار كامل من الرسالة إلى الحجز', desc: 'نحوّل محادثة واتساب إلى رحلة واضحة: ترحيب، أسئلة تأهيل، عرض مناسب، تأكيد حجز، ثم متابعة.', features: ['تأهيل تلقائي', 'متابعة مبيعات', 'تحليلات حية'] },
-    en: { tag: 'WhatsApp', title: 'Full Path From Message to Booking', desc: 'We turn a WhatsApp chat into a clear journey: greeting, qualification, offer, booking confirmation, then follow-up.', features: ['Auto qualification', 'Sales follow-ups', 'Live analytics'] },
+    ar: { tag: 'قنوات التواصل', title: 'واتساب + Voice Agent في مسار واحد', desc: 'نحوّل الرسالة أو المكالمة إلى رحلة واضحة: ترحيب، أسئلة تأهيل، عرض مناسب، تأكيد حجز، ثم متابعة.', features: ['واتساب', 'Voice Agent', 'تحليلات حية'] },
+    en: { tag: 'Channels', title: 'WhatsApp + Voice Agent in One Flow', desc: 'We turn a message or phone call into a clear journey: greeting, qualification, offer, booking confirmation, then follow-up.', features: ['WhatsApp', 'Voice Agent', 'Live analytics'] },
   },
   {
     icon: Calendar,
@@ -86,10 +86,10 @@ export const Services = () => {
             </span>
           </div>
           <h2 className={`text-4xl sm:text-5xl font-bold mb-4 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`} style={{ color: 'white' }}>
-            {t(<>نظام واحد يمسك<br /><span className="gradient-text-blue">الرد والحجز والمتابعة</span></>, <>One System Handles<br /><span className="gradient-text-blue">Replies, Booking, Follow-Up</span></>)}
+            {t(<>نظام واحد يمسك<br /><span className="gradient-text-blue">الرسائل والمكالمات والحجوزات</span></>, <>One System Handles<br /><span className="gradient-text-blue">Messages, Calls, Bookings</span></>)}
           </h2>
           <p className={`text-lg max-w-xl mx-auto ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.55)' }}>
-            {t('بدل ما تشتري أدوات كثيرة، نبني لك مسار تشغيل واحد يحوّل الرسائل إلى نتائج قابلة للقياس.', 'Instead of buying scattered tools, we build one operating flow that turns messages into measurable outcomes.')}
+            {t('بدل ما تشتري أدوات كثيرة، نبني لك مسار تشغيل واحد يحوّل الرسائل والمكالمات إلى نتائج قابلة للقياس.', 'Instead of buying scattered tools, we build one operating flow that turns messages and calls into measurable outcomes.')}
           </p>
         </motion.div>
 

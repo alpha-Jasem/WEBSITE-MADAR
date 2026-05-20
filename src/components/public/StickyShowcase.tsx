@@ -8,11 +8,11 @@ const features = [
   {
     num: '01', icon: MessageSquare, color: '#00BFFF', bg: 'rgba(0,191,255,0.1)',
     tag: { ar: 'رد ذكي', en: 'Smart Reply' },
-    title: { ar: 'كل رسالة تتحول لخطوة بيع', en: 'Every Message Becomes a Sales Step' },
-    desc: { ar: 'النظام يرد فوراً، يفهم نية العميل، ويسأله السؤال التالي الصحيح بدل ردود عامة لا تبيع.', en: 'The system replies instantly, understands intent, and asks the right next question instead of sending generic replies that do not sell.' },
+    title: { ar: 'كل رسالة أو مكالمة تتحول لخطوة بيع', en: 'Every Message or Call Becomes a Sales Step' },
+    desc: { ar: 'النظام يرد فوراً، يفهم نية العميل في الرسالة أو الاتصال، ويسأله السؤال التالي الصحيح بدل ردود عامة لا تبيع.', en: 'The system replies instantly, understands intent in messages or calls, and asks the right next question instead of generic replies that do not sell.' },
     checks: {
-      ar: ['رد خلال 0.8 ثانية في المتوسط', 'تأهيل العميل من أول محادثة', 'توجيه واضح للحجز أو العرض'],
-      en: ['0.8s average response time', 'Qualifies customers from the first chat', 'Clear path to booking or quote'],
+      ar: ['رد خلال 0.8 ثانية في المتوسط', 'تأهيل العميل من أول تواصل', 'توجيه واضح للحجز أو العرض'],
+      en: ['0.8s average response time', 'Qualifies customers from first contact', 'Clear path to booking or quote'],
     },
     stat: { val: '0.8s', label: { ar: 'متوسط الرد', en: 'Avg response' } },
   },
@@ -31,7 +31,7 @@ const features = [
     num: '03', icon: TrendingUp, color: '#00BFFF', bg: 'rgba(0,191,255,0.1)',
     tag: { ar: 'تحليلات حية', en: 'Live Analytics' },
     title: { ar: 'تعرف أين تزيد الإيراد', en: 'Know Where Revenue Can Grow' },
-    desc: { ar: 'لوحة توضح الرسائل، الحجوزات، التحويل، والخدمات الأقوى حتى تقرر بناءً على بيانات لا إحساس.', en: 'A dashboard shows messages, bookings, conversion, and top services so decisions come from data, not instinct.' },
+    desc: { ar: 'لوحة توضح الرسائل، المكالمات، الحجوزات، التحويل، والخدمات الأقوى حتى تقرر بناءً على بيانات لا إحساس.', en: 'A dashboard shows messages, calls, bookings, conversion, and top services so decisions come from data, not instinct.' },
     checks: {
       ar: ['إحصاءات حية في الوقت الفعلي', 'تقارير أسبوعية تلقائية', 'نمو 172% في الإيرادات'],
       en: ['Real-time live statistics', 'Automatic weekly reports', '172% revenue growth tracked'],
@@ -285,10 +285,10 @@ export const StickyShowcase = () => {
             )}
           </h2>
           <p className={`hidden lg:block text-lg max-w-lg mx-auto ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.5)' }}>
-            {t('مرر للأسفل لترى كيف يتحول واتساب من صندوق رسائل إلى مسار مبيعات', 'Scroll down to see how WhatsApp turns from an inbox into a sales flow')}
+            {t('مرر للأسفل لترى كيف تتحول الرسائل والمكالمات إلى مسار مبيعات', 'Scroll down to see how messages and calls turn into a sales flow')}
           </p>
           <p className={`lg:hidden text-base max-w-lg mx-auto ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.5)' }}>
-            {t('٤ أجزاء تعمل معاً لتحويل الرسائل إلى حجوزات', '4 parts working together to turn messages into bookings')}
+            {t('٤ أجزاء تعمل معاً لتحويل التواصل إلى حجوزات', '4 parts working together to turn contact into bookings')}
           </p>
         </motion.div>
       </div>

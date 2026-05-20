@@ -14,10 +14,10 @@ const industries = [
     ar: {
       label: 'العيادات',
       name: 'العيادات والمستشفيات',
-      tagline: 'مريض يرسل، النظام يرد ويحجز',
-      desc: 'لا تخسر مريضاً لأن الخط مشغول أو الرسالة تأخرت. النظام يرد، يحدد الخدمة، يحجز الموعد، ويذكّر قبل الحضور.',
+      tagline: 'مريض يرسل أو يتصل، النظام يرد ويحجز',
+      desc: 'لا تخسر مريضاً لأن الخط مشغول أو الرسالة تأخرت. النظام يرد على واتساب أو الاتصال، يحدد الخدمة، يحجز الموعد، ويذكّر قبل الحضور.',
       features: [
-        { icon: CalendarCheck, text: 'حجز مواعيد تلقائي ٢٤/٧ عبر واتساب' },
+        { icon: CalendarCheck, text: 'حجز مواعيد تلقائي ٢٤/٧ عبر واتساب أو الاتصال' },
         { icon: MessageCircle, text: 'إجابات فورية على الأسعار والخدمات والمواعيد' },
         { icon: Bell, text: 'تذكيرات تقلل الغياب وتحرر موظفي الاستقبال' },
         { icon: BarChart3, text: 'لوحة توضح الحجوزات والعودة ومصادر الطلب' },
@@ -30,10 +30,10 @@ const industries = [
     en: {
       label: 'Healthcare',
       name: 'Clinics & Hospitals',
-      tagline: 'Patient Messages, System Replies and Books',
-      desc: 'Do not lose a patient because the line is busy or a reply is late. The system answers, identifies the service, books the appointment, and reminds before arrival.',
+      tagline: 'Patient Messages or Calls, System Replies and Books',
+      desc: 'Do not lose a patient because the line is busy or a reply is late. The system answers WhatsApp or calls, identifies the service, books the appointment, and reminds before arrival.',
       features: [
-        { icon: CalendarCheck, text: '24/7 automatic appointment booking via WhatsApp' },
+        { icon: CalendarCheck, text: '24/7 automatic appointment booking via WhatsApp or phone call' },
         { icon: MessageCircle, text: 'Instant answers about prices, services, and availability' },
         { icon: Bell, text: 'Reminders that reduce no-shows and free reception time' },
         { icon: BarChart3, text: 'Dashboard for bookings, returning patients, and demand sources' },
@@ -170,8 +170,8 @@ export const Industries = () => {
           </h2>
           <p className={`text-base sm:text-lg max-w-xl mx-auto ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.5)' }}>
             {t(
-              'المنصة واحدة، لكن الرسائل، الأسئلة، الحجوزات، والتقارير تتغيّر حسب طريقة بيعك وخدمة عملائك.',
-              'One platform, but messages, questions, bookings, and reports adapt to how your business sells and serves customers.'
+              'المنصة واحدة، لكن الرسائل، المكالمات، الأسئلة، الحجوزات، والتقارير تتغيّر حسب طريقة بيعك وخدمة عملائك.',
+              'One platform, but messages, calls, questions, bookings, and reports adapt to how your business sells and serves customers.'
             )}
           </p>
         </motion.div>
@@ -319,7 +319,7 @@ export const Industries = () => {
           className={`text-center text-sm mt-10 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
           style={{ color: 'rgba(255,255,255,0.28)' }}
         >
-          {t('قطاعك مختلف؟ نطبق نفس المنطق على أي عمل يعتمد على الرسائل والحجوزات والمتابعة', 'Different industry? We apply the same logic to any business driven by messages, bookings, and follow-up')}
+          {t('قطاعك مختلف؟ نطبق نفس المنطق على أي عمل يعتمد على الرسائل أو المكالمات أو الحجوزات والمتابعة', 'Different industry? We apply the same logic to any business driven by messages, calls, bookings, and follow-up')}
         </motion.p>
       </div>
     </section>

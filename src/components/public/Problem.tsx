@@ -10,8 +10,8 @@ const problems = [
     color: '#EF4444',
     glowColor: 'rgba(239,68,68,0.12)',
     borderColor: 'rgba(239,68,68,0.2)',
-    ar: { title: 'كل تأخير يسرّب عميل', desc: 'العميل الذي لا يجد رد سريع غالباً يراسل منافسك قبل أن ينتظر موظفك.' },
-    en: { title: 'Every Delay Leaks Revenue', desc: 'A customer who waits for a reply often messages your competitor before your team responds.' },
+    ar: { title: 'كل تأخير يسرّب عميل', desc: 'العميل الذي لا يجد رد سريع في واتساب أو الاتصال غالباً ينتقل لمنافسك قبل أن ينتظر موظفك.' },
+    en: { title: 'Every Delay Leaks Revenue', desc: 'A customer who does not get a fast WhatsApp or call response often moves to your competitor before your team responds.' },
   },
   {
     icon: DollarSign,
@@ -26,8 +26,8 @@ const problems = [
     color: '#8B5CF6',
     glowColor: 'rgba(139,92,246,0.12)',
     borderColor: 'rgba(139,92,246,0.2)',
-    ar: { title: 'رسائل خارج الدوام بلا بيع', desc: 'أكثر العملاء جدية يرسلون في وقتهم هم، وليس وقت دوامك. النظام لازم يبيع حتى وأنت مغلق.' },
-    en: { title: 'After-Hours Messages Do Not Sell', desc: 'Serious buyers message on their schedule, not yours. Your system should sell even when the office is closed.' },
+    ar: { title: 'رسائل ومكالمات خارج الدوام', desc: 'أكثر العملاء جدية يتواصلون في وقتهم هم، وليس وقت دوامك. النظام لازم يرد ويحجز حتى وأنت مغلق.' },
+    en: { title: 'After-Hours Messages and Calls', desc: 'Serious buyers contact you on their schedule, not yours. Your system should answer and book even when the office is closed.' },
   },
   {
     icon: RefreshCw,
@@ -42,8 +42,8 @@ const problems = [
     color: '#10B981',
     glowColor: 'rgba(16,185,129,0.12)',
     borderColor: 'rgba(16,185,129,0.2)',
-    ar: { title: 'لا تعرف أين يضيع المال', desc: 'كم رسالة تحولت لحجز؟ من أفضل خدمة؟ أي يوم ضعيف؟ بدون لوحة واضحة أنت تقرر بالحدس.' },
-    en: { title: 'You Cannot See Where Money Leaks', desc: 'How many messages became bookings? Which service sells best? Which day is weak? Without a clear dashboard, decisions are guesses.' },
+    ar: { title: 'لا تعرف أين يضيع المال', desc: 'كم رسالة أو مكالمة تحولت لحجز؟ من أفضل خدمة؟ أي يوم ضعيف؟ بدون لوحة واضحة أنت تقرر بالحدس.' },
+    en: { title: 'You Cannot See Where Money Leaks', desc: 'How many messages or calls became bookings? Which service sells best? Which day is weak? Without a clear dashboard, decisions are guesses.' },
   },
 ]
 
@@ -85,14 +85,14 @@ export const Problem = () => {
           </p>
           <h2 className={`text-4xl sm:text-5xl font-bold mb-5 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`} style={{ color: 'white' }}>
             {t(
-              <>العملاء لا يضيعون فجأة<br /><span className="gradient-text">يضيعون في الرسائل</span></>,
-              <>Customers Do Not Vanish<br /><span className="gradient-text">They Leak in Conversations</span></>
+              <>العملاء لا يضيعون فجأة<br /><span className="gradient-text">يضيعون في الردود والمكالمات</span></>,
+              <>Customers Do Not Vanish<br /><span className="gradient-text">They Leak in Replies and Calls</span></>
             )}
           </h2>
           <p className={`text-lg max-w-2xl mx-auto ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.55)' }}>
             {t(
-              'إذا كان واتساب هو باب البيع عندك، فكل رد متأخر وكل متابعة منسية تعني حجز ضائع أو عميل ذهب لغيرك.',
-              'If WhatsApp is your sales front door, every late reply and forgotten follow-up means a lost booking or a customer moving elsewhere.'
+              'إذا كانت الرسائل والمكالمات هي باب البيع عندك، فكل رد متأخر وكل اتصال فائت وكل متابعة منسية تعني حجز ضائع.',
+              'If messages and calls are your sales front door, every late reply, missed call, and forgotten follow-up means a lost booking.'
             )}
           </p>
         </motion.div>

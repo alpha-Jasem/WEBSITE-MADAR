@@ -10,15 +10,15 @@ import type { LeadFormData } from '../../types'
 const serviceOptions = {
   ar: [
     { value: 'website', label: 'موقع أو بوابة مرتبطة بالمبيعات' },
-    { value: 'ai', label: 'موظف AI يرد ويحجز' },
-    { value: 'automation', label: 'أتمتة واتساب وCRM' },
+    { value: 'ai', label: 'موظف AI يرد على الرسائل والمكالمات' },
+    { value: 'automation', label: 'أتمتة واتساب + مكالمات + CRM' },
     { value: 'package', label: 'نظام كامل للرد والحجز والمتابعة' },
     { value: 'other', label: 'أحتاج تشخيص مناسب' },
   ],
   en: [
     { value: 'website', label: 'Website or sales-connected portal' },
-    { value: 'ai', label: 'AI agent that replies and books' },
-    { value: 'automation', label: 'WhatsApp and CRM automation' },
+    { value: 'ai', label: 'AI agent for messages and calls' },
+    { value: 'automation', label: 'WhatsApp + calls + CRM automation' },
     { value: 'package', label: 'Full reply, booking, follow-up system' },
     { value: 'other', label: 'I need the right diagnosis' },
   ],
@@ -88,7 +88,7 @@ export const LeadForm = () => {
             {t('احصل على خريطة نمو مجانية لشركتك', 'Get a Free Growth Map for Your Business')}
           </h2>
           <p className={`text-slate-400 text-lg ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
-            {t('أرسل لنا وضعك الحالي، ونرجع لك بتشخيص واضح: أين تضيع الرسائل، ماذا نؤتمت أولاً، وكيف نحولها إلى حجوزات.', 'Send us your current situation and we will return with a clear diagnosis: where messages leak, what to automate first, and how to turn them into bookings.')}
+            {t('أرسل لنا وضعك الحالي، ونرجع لك بتشخيص واضح: أين تضيع الرسائل والمكالمات، ماذا نؤتمت أولاً، وكيف نحولها إلى حجوزات.', 'Send us your current situation and we will return with a clear diagnosis: where messages and calls leak, what to automate first, and how to turn them into bookings.')}
           </p>
         </motion.div>
 
@@ -109,8 +109,8 @@ export const LeadForm = () => {
                 desc: t('تعرف ما سنبنيه وما الرقم المستهدف', 'Know what we will build and what number we target'),
               },
               {
-                title: t('واتساب لمن يريد السرعة', 'WhatsApp for Faster Action'),
-                desc: t('نبدأ النقاش من رسالة واحدة', 'Start from one message'),
+                title: t('واتساب أو اتصال لمن يريد السرعة', 'WhatsApp or Call for Faster Action'),
+                desc: t('نبدأ النقاش من رسالة أو مكالمة', 'Start from one message or call'),
               },
             ].map((item) => (
               <div key={item.title} className="rounded-2xl border border-white/8 bg-white/[0.02] p-4">
@@ -241,7 +241,7 @@ export const LeadForm = () => {
                 <textarea
                   value={form.message}
                   onChange={(e) => setForm({ ...form, message: e.target.value })}
-                  placeholder={t('مثال: عندنا واتساب تجينا عليه استفسارات كثيرة ونحتاج رد وحجز ومتابعة...', 'Example: We receive many WhatsApp inquiries and need replies, booking, and follow-up...')}
+                  placeholder={t('مثال: عندنا واتساب واتصالات كثيرة ونحتاج رد وحجز ومتابعة تلقائية...', 'Example: We receive many WhatsApp inquiries and calls and need replies, booking, and automatic follow-up...')}
                   rows={4}
                   className={`w-full bg-navy-800/60 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-primary-500/60 transition-all resize-none text-sm ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
                 />
@@ -273,7 +273,7 @@ export const LeadForm = () => {
 
               <button
                 type="button"
-                onClick={() => openWhatsAppChat(t('مرحباً، أريد خريطة نمو لنظام يرد ويحجز ويتابع العملاء تلقائياً', 'Hello, I want a growth map for a system that replies, books, and follows up automatically'))}
+                onClick={() => openWhatsAppChat(t('مرحباً، أريد خريطة نمو لنظام يرد على الرسائل والمكالمات ويحجز ويتابع العملاء تلقائياً', 'Hello, I want a growth map for a system that handles messages and calls, books, and follows up automatically'))}
                 className={`mt-4 w-full rounded-2xl border border-white/12 bg-white/[0.03] px-5 py-3 text-sm text-slate-200 transition-all hover:bg-white/[0.06] ${language === 'ar' ? 'font-cairo' : 'font-outfit'}`}
               >
                 {t('أو ابدأ مباشرة من واتساب', 'Or Start Directly on WhatsApp')}

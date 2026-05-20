@@ -240,7 +240,7 @@ export const Hero = () => {
   const opacity = useTransform(scrollY, [0, 400], [1, 0])
   const heroRef = useRef(null)
   const heroInView = useInView(heroRef, { once: true })
-  const headlineAr = useTextScramble('حوّل واتساب شركتك', heroInView, 0.3)
+  const headlineAr = useTextScramble('حوّل رسائل ومكالمات شركتك', heroInView, 0.3)
   const headlineAr2 = useTextScramble('إلى موظف مبيعات', heroInView, 0.6)
   const headlineAr3 = useTextScramble('يعمل 24/7', heroInView, 0.9)
 
@@ -252,7 +252,7 @@ export const Hero = () => {
 
   const stats = [
     { val: 10, suffix: 'x', ar: 'أسرع في الرد',       en: 'Faster response' },
-    { val: 80, suffix: '%', ar: 'تقليل الرسائل الضائعة', en: 'Fewer missed messages' },
+    { val: 80, suffix: '%', ar: 'تقليل الفرص الضائعة', en: 'Fewer missed opportunities' },
     { val: 3,  suffix: 'x', ar: 'فرص حجز أكثر',       en: 'More booking opportunities' },
   ]
 
@@ -298,7 +298,7 @@ export const Hero = () => {
             >
               <Sparkles size={13} style={{ color: '#00BFFF' }} />
               <span className={`text-xs font-medium ${language === 'ar' ? 'font-cairo' : 'font-work'}`} style={{ color: '#0099CC' }}>
-                {t('نظام مبيعات وحجز يعمل من واتساب', 'WhatsApp Sales and Booking System')}
+                {t('مساعد AI يرد على واتساب والمكالمات', 'AI Assistant for WhatsApp and Calls')}
               </span>
             </motion.div>
 
@@ -317,7 +317,7 @@ export const Hero = () => {
                     {headlineAr3}
                   </>
                 ) : (
-                  <><span className="gradient-text-blue">Turn WhatsApp</span><br />Into a 24/7<br />Sales Agent</>
+                  <><span className="gradient-text-blue">Turn Messages and Calls</span><br />Into a 24/7<br />Sales Agent</>
                 )}
               </h1>
             </motion.div>
@@ -330,8 +330,8 @@ export const Hero = () => {
               className={`text-base sm:text-lg leading-relaxed max-w-lg ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.62)' }}
             >
               {t(
-                'نركّب لك نظام AI يرد على العملاء، يحجز المواعيد، يتابع المهتمين، ويحوّل الرسائل اليومية إلى حجوزات ومبيعات من لوحة واحدة — بدون توظيف موظف جديد.',
-                'We install an AI system that replies to customers, books appointments, follows up with leads, and turns daily messages into bookings and sales from one dashboard — without hiring another employee.'
+                'نركّب لك مساعد AI يرد على واتساب والمكالمات، يحجز المواعيد، يتابع المهتمين، ويحوّل كل تواصل يومي إلى حجوزات ومبيعات من لوحة واحدة — بدون توظيف موظف جديد.',
+                'We install an AI assistant that handles WhatsApp and phone calls, books appointments, follows up with leads, and turns daily conversations into bookings and sales from one dashboard — without hiring another employee.'
               )}
             </motion.p>
 

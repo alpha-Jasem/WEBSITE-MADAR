@@ -10,16 +10,16 @@ const plans = [
     gradient: 'linear-gradient(135deg, rgba(13,27,62,0.03), rgba(0,191,255,0.03))',
     border: '#E2EBF8',
     featured: false,
-    ar: { name: 'Starter', tagline: 'لبداية الردود الذكية', price: 'حسب المشروع', priceNote: 'يبدأ من', desc: 'نظام واتساب ذكي يوقف ضياع الرسائل ويعطيك بداية واضحة', features: ['نظام رد واتساب ذكي', 'حتى ١٠٠٠ رسالة شهرياً', 'تكامل مع منصة واحدة', 'لوحة تحليلات بسيطة', 'دعم تقني شهر واحد'], cta: 'ابدأ بإيقاف التسرب' },
-    en: { name: 'Starter', tagline: 'Start Smart Replies', price: 'Project-Based', priceNote: 'Starting from', desc: 'A smart WhatsApp system that stops missed messages and gives you a clear starting point', features: ['Smart WhatsApp response system', 'Up to 1,000 messages/month', 'Single platform integration', 'Basic analytics dashboard', '1 month technical support'], cta: 'Stop the Leak' },
+    ar: { name: 'Starter', tagline: 'لبداية الردود الذكية', price: 'حسب المشروع', priceNote: 'يبدأ من', desc: 'نظام رد ذكي يوقف ضياع الرسائل والمكالمات ويعطيك بداية واضحة', features: ['رد واتساب أو مكالمات AI', 'حتى ١٠٠٠ تفاعل شهرياً', 'تكامل مع منصة واحدة', 'لوحة تحليلات بسيطة', 'دعم تقني شهر واحد'], cta: 'ابدأ بإيقاف التسرب' },
+    en: { name: 'Starter', tagline: 'Start Smart Replies', price: 'Project-Based', priceNote: 'Starting from', desc: 'A smart response system that stops missed messages and calls and gives you a clear starting point', features: ['WhatsApp or AI call response', 'Up to 1,000 interactions/month', 'Single platform integration', 'Basic analytics dashboard', '1 month technical support'], cta: 'Stop the Leak' },
   },
   {
     key: 'growth',
     gradient: 'linear-gradient(135deg, rgba(13,27,62,0.03), rgba(0,191,255,0.05))',
     border: '#00BFFF',
     featured: true,
-    ar: { name: 'Growth', tagline: 'لتحويل الرسائل إلى حجوزات', price: 'حسب المشروع', priceNote: 'الأكثر شيوعاً', desc: 'النظام الكامل للرد، الحجز، المتابعة، والتحليلات في مكان واحد', features: ['وكيل AI للعملاء + واتساب', 'نظام حجز مواعيد متكامل', 'أتمتة CRM كاملة', 'رسائل غير محدودة', 'تكامل مع ٣ منصات', 'لوحة تحليلات متقدمة', 'دعم تقني ٦ أشهر', 'تقارير أداء أسبوعية'], cta: 'ابنِ محرك النمو' },
-    en: { name: 'Growth', tagline: 'Turn Messages Into Bookings', price: 'Project-Based', priceNote: 'Most Popular', desc: 'The complete system for replies, booking, follow-up, and analytics in one place', features: ['AI Customer Agent + WhatsApp', 'Integrated appointment booking', 'Full CRM automation', 'Unlimited messages', 'Integration with 3 platforms', 'Advanced analytics dashboard', '6 months technical support', 'Weekly performance reports'], cta: 'Build the Growth Engine' },
+    ar: { name: 'Growth', tagline: 'لتحويل التواصل إلى حجوزات', price: 'حسب المشروع', priceNote: 'الأكثر شيوعاً', desc: 'النظام الكامل للرد على الرسائل والمكالمات، الحجز، المتابعة، والتحليلات في مكان واحد', features: ['وكيل AI واتساب + مكالمات', 'نظام حجز مواعيد متكامل', 'أتمتة CRM كاملة', 'تفاعلات غير محدودة', 'تكامل مع ٣ منصات', 'لوحة تحليلات متقدمة', 'دعم تقني ٦ أشهر', 'تقارير أداء أسبوعية'], cta: 'ابنِ محرك النمو' },
+    en: { name: 'Growth', tagline: 'Turn Contact Into Bookings', price: 'Project-Based', priceNote: 'Most Popular', desc: 'The complete system for messages, calls, booking, follow-up, and analytics in one place', features: ['AI WhatsApp + voice agent', 'Integrated appointment booking', 'Full CRM automation', 'Unlimited interactions', 'Integration with 3 platforms', 'Advanced analytics dashboard', '6 months technical support', 'Weekly performance reports'], cta: 'Build the Growth Engine' },
   },
   {
     key: 'enterprise',
@@ -53,7 +53,7 @@ export const Pricing = () => {
             {t(<>لا تشتري تقنية<br /><span className="gradient-text-blue">اشترِ نظام يجلب حجوزات</span></>, <>Do Not Buy Technology<br /><span className="gradient-text-blue">Buy a System That Brings Bookings</span></>)}
           </h2>
           <p className={`text-lg max-w-xl mx-auto ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: '#3B5280' }}>
-            {t('نحدد السعر بعد فهم حجم الرسائل، مسار البيع، وعدد التكاملات المطلوبة حتى يكون المشروع واضح العائد.', 'Pricing is defined after we understand message volume, sales flow, and required integrations so the project has a clear return.')}
+            {t('نحدد السعر بعد فهم حجم الرسائل والمكالمات، مسار البيع، وعدد التكاملات المطلوبة حتى يكون المشروع واضح العائد.', 'Pricing is defined after we understand message and call volume, sales flow, and required integrations so the project has a clear return.')}
           </p>
         </motion.div>
 

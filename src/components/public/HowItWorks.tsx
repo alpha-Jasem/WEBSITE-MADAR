@@ -12,13 +12,13 @@ const steps = [
     glow: 'rgba(0,191,255,0.25)',
     ar: {
       title: 'نحدد أين تضيع المبيعات',
-      desc: 'نراجع رسائل العملاء، طريقة الحجز، المتابعة، ونقاط التسرب. بعدها نطلع بخريطة واضحة لما يجب أتمتته أولاً لتحقيق أسرع أثر.',
+      desc: 'نراجع رسائل العملاء، المكالمات، طريقة الحجز، المتابعة، ونقاط التسرب. بعدها نطلع بخريطة واضحة لما يجب أتمتته أولاً لتحقيق أسرع أثر.',
       duration: '٣٠ دقيقة',
       checks: ['فهم مسار العميل الحالي', 'كشف نقاط التسرب', 'تحديد رقم نمو قابل للقياس'],
     },
     en: {
       title: 'Find Where Revenue Is Leaking',
-      desc: 'We review customer messages, booking flow, follow-up, and leakage points. Then we map what to automate first for the fastest business impact.',
+      desc: 'We review customer messages, calls, booking flow, follow-up, and leakage points. Then we map what to automate first for the fastest business impact.',
       duration: '30 Minutes',
       checks: ['Map the customer journey', 'Find leakage points', 'Set a measurable growth target'],
     },
@@ -32,13 +32,13 @@ const steps = [
       title: 'نبني مسار البيع الآلي',
       desc: 'نجهز الردود، الحجز، الـ CRM، المتابعة، ولوحة الإدارة. كل جزء يكون مربوط بهدف واضح: تحويل الرسالة إلى عميل.',
       duration: '٧–١٤ يوم',
-      checks: ['سيناريوهات محادثة مخصصة', 'ربط واتساب والـ CRM', 'اختبار قبل الإطلاق'],
+      checks: ['سيناريوهات محادثة ومكالمات', 'ربط واتساب والمكالمات والـ CRM', 'اختبار قبل الإطلاق'],
     },
     en: {
       title: 'Build the Automated Sales Flow',
       desc: 'We set up replies, booking, CRM, follow-up, and the management dashboard. Every piece has one goal: turn the message into a customer.',
       duration: '7–14 Days',
-      checks: ['Custom conversation flows', 'WhatsApp and CRM integration', 'Pre-launch testing'],
+      checks: ['Custom chat and call flows', 'WhatsApp, calls, and CRM integration', 'Pre-launch testing'],
     },
   },
   {
@@ -75,7 +75,7 @@ export const HowItWorks = () => {
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 30 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.7 }} className="text-center mb-20">
           <p className={`text-xs font-semibold tracking-[0.25em] uppercase mb-3 ${language === 'ar' ? 'font-cairo' : 'font-work'}`} style={{ color: '#00BFFF' }}>
-            {t('من فوضى الرسائل إلى نظام يبيع', 'From Message Chaos to a Selling System')}
+            {t('من فوضى التواصل إلى نظام يبيع', 'From Communication Chaos to a Selling System')}
           </p>
           <h2 className={`text-4xl sm:text-5xl font-bold mb-4 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`} style={{ color: 'white' }}>
             {t(<>كيف نركّب نظامك<br /><span className="gradient-text-blue">بدون تعطيل شغلك</span></>, <>How We Install Your System<br /><span className="gradient-text-blue">Without Disrupting Work</span></>)}

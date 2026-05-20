@@ -13,8 +13,8 @@ const navLinks = [
 ]
 
 const services = [
-  { ar: 'موظف مبيعات AI على واتساب', en: 'AI WhatsApp Sales Agent' },
-  { ar: 'مسار الرسالة إلى الحجز',     en: 'Message-to-Booking Flow' },
+  { ar: 'موظف مبيعات AI للرسائل والمكالمات', en: 'AI Sales Agent for Messages and Calls' },
+  { ar: 'مسار التواصل إلى الحجز',     en: 'Contact-to-Booking Flow' },
   { ar: 'حجوزات وتذكيرات تلقائية',    en: 'Automatic Booking and Reminders' },
   { ar: 'CRM يعرف من تتابع',          en: 'CRM Follow-Up Engine' },
   { ar: 'اقتراحات حملات لزيادة الإيراد', en: 'Revenue Campaign Suggestions' },
@@ -52,8 +52,8 @@ export const Footer = () => {
             </div>
             <p className={`text-sm leading-relaxed mb-5 max-w-xs ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.55)' }}>
               {t(
-                'نحوّل واتساب شركتك إلى نظام يرد، يحجز، يتابع، ويكشف أين تزيد المبيعات.',
-                'We turn your company WhatsApp into a system that replies, books, follows up, and shows where sales can grow.'
+                'نحوّل رسائل ومكالمات شركتك إلى نظام يرد، يحجز، يتابع، ويكشف أين تزيد المبيعات.',
+                'We turn your company messages and calls into a system that replies, books, follows up, and shows where sales can grow.'
               )}
             </p>
             <p className={`text-xs italic ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.35)' }}>

@@ -7,17 +7,17 @@ import { useLanguage } from '../../context/LanguageContext'
 type Msg = { id: number; from: 'user' | 'ai'; text: string; time: string }
 
 const chatScriptAr: Msg[] = [
-  { id: 1, from: 'user', text: 'السلام عليكم، عندي عيادة وتجينا رسائل كثيرة على واتساب', time: '10:41' },
-  { id: 2, from: 'ai',   text: 'وعليكم السلام! ممتاز. أقدر أساعدك بنظام يرد على المرضى، يحدد الخدمة المطلوبة، ويحجز الموعد تلقائياً.\n\nكم متوسط الرسائل اليومية تقريباً؟', time: '10:41' },
-  { id: 3, from: 'user', text: 'تقريباً 40 إلى 60 رسالة يومياً وأغلبها عن المواعيد والأسعار', time: '10:42' },
+  { id: 1, from: 'user', text: 'السلام عليكم، عندي عيادة وتجينا رسائل واتصالات كثيرة', time: '10:41' },
+  { id: 2, from: 'ai',   text: 'وعليكم السلام! ممتاز. أقدر أساعدك بنظام يرد على المرضى في واتساب والمكالمات، يحدد الخدمة المطلوبة، ويحجز الموعد تلقائياً.\n\nكم متوسط التواصل اليومي تقريباً؟', time: '10:41' },
+  { id: 3, from: 'user', text: 'تقريباً 40 إلى 60 تواصل يومياً وأغلبها عن المواعيد والأسعار', time: '10:42' },
   { id: 4, from: 'ai',   text: 'واضح عندك فرصة نمو قوية.\n\nالنظام المقترح:\n✅ رد فوري على الأسعار والخدمات\n✅ حجز تلقائي 24/7\n✅ تذكير قبل الموعد\n✅ متابعة المريض بعد الزيارة\n\nأرسل لك خريطة نمو مبدئية؟', time: '10:42' },
   { id: 5, from: 'user', text: 'نعم، متى تقدرون؟', time: '10:43' },
   { id: 6, from: 'ai',   text: 'أرسلت لك رابط مكالمة قصيرة. نطلع منها بتشخيص واضح: أين تضيع الحجوزات، وما أول مسار نؤتمته.', time: '10:43' },
 ]
 
 const chatScriptEn: Msg[] = [
-  { id: 1, from: 'user', text: 'Hi, I run a clinic and we get many WhatsApp messages', time: '10:41' },
-  { id: 2, from: 'ai',   text: 'Great. We can help with a system that replies to patients, identifies the service they need, and books appointments automatically.\n\nHow many messages do you get per day?', time: '10:41' },
+  { id: 1, from: 'user', text: 'Hi, I run a clinic and we get many WhatsApp messages and calls', time: '10:41' },
+  { id: 2, from: 'ai',   text: 'Great. We can help with a system that answers patients on WhatsApp and phone calls, identifies the service they need, and books appointments automatically.\n\nHow many daily interactions do you get?', time: '10:41' },
   { id: 3, from: 'user', text: 'Around 40 to 60 daily, mostly about appointments and prices', time: '10:42' },
   { id: 4, from: 'ai',   text: 'That is a strong growth opportunity.\n\nRecommended system:\n✅ Instant price and service replies\n✅ 24/7 automatic booking\n✅ Appointment reminders\n✅ Post-visit follow-up\n\nWant a first growth map?', time: '10:42' },
   { id: 5, from: 'user', text: 'Yes, when can we talk?', time: '10:43' },
@@ -293,7 +293,7 @@ export const LiveDemo = () => {
             </span>
           </div>
           <h2 className={`text-4xl sm:text-5xl font-bold text-white mb-4 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>
-            {t(<>من رسالة عادية<br /><span className="gradient-text-blue">إلى حجز مؤكد</span></>, <>From a Normal Message<br /><span className="gradient-text-blue">To a Confirmed Booking</span></>)}
+            {t(<>من رسالة أو مكالمة<br /><span className="gradient-text-blue">إلى حجز مؤكد</span></>, <>From a Message or Call<br /><span className="gradient-text-blue">To a Confirmed Booking</span></>)}
           </h2>
           <p className={`text-slate-400 text-lg max-w-xl mx-auto ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
             {t('هذا هو الفرق بين بوت يرد ونظام يعرف كيف يحوّل العميل للخطوة التالية', 'This is the difference between a bot that replies and a system that moves customers to the next step')}
@@ -353,7 +353,7 @@ export const LiveDemo = () => {
 
           {/* Note */}
           <p className={`text-center text-xs text-slate-600 mt-4 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
-            {t('نفس المنطق يتخصص لقطاعك ورسائلك وخدماتك', 'The same logic adapts to your industry, messages, and services')}
+            {t('نفس المنطق يتخصص لقطاعك ورسائلك ومكالماتك وخدماتك', 'The same logic adapts to your industry, messages, calls, and services')}
           </p>
         </motion.div>
       </div>

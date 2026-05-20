@@ -61,7 +61,7 @@ export const FinalCTA = () => {
           <div className="space-y-3">
             <h2 className={`text-3xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>
               <span className="text-white">
-                {t('واتسابك جاهز', 'Your WhatsApp Is Ready')}
+                {t('قنواتك جاهزة', 'Your Channels Are Ready')}
               </span>
               <br />
               <span style={{
@@ -78,14 +78,14 @@ export const FinalCTA = () => {
             <p className={`text-base sm:text-xl max-w-2xl mx-auto leading-relaxed ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.7)' }}>
               {t(
                 <>
-                  كل يوم بدون رد سريع ومتابعة منظمة يعني رسائل مهتمة تتحول لمنافسك. ابدأ بخريطة واضحة عبر{' '}
+                  كل يوم بدون رد سريع ومتابعة منظمة يعني رسائل ومكالمات مهتمة تتحول لمنافسك. ابدأ بخريطة واضحة عبر{' '}
                   <a href="#services" style={{ color: '#00BFFF', textDecoration: 'underline', textUnderlineOffset: '3px' }}>خدماتنا الذكية</a>
                   {' '}أو شاهد{' '}
                   <a href="#how-it-works" style={{ color: '#00BFFF', textDecoration: 'underline', textUnderlineOffset: '3px' }}>آلية عملنا</a>
                   {' '}— مكالمة واحدة تكشف أين تضيع الحجوزات.
                 </>,
                 <>
-                  Every day without fast replies and structured follow-up means interested messages move to competitors. Start with a clear map through our{' '}
+                  Every day without fast replies and structured follow-up means interested messages and calls move to competitors. Start with a clear map through our{' '}
                   <a href="#services" style={{ color: '#00BFFF', textDecoration: 'underline', textUnderlineOffset: '3px' }}>AI services</a>
                   {' '}or see{' '}
                   <a href="#how-it-works" style={{ color: '#00BFFF', textDecoration: 'underline', textUnderlineOffset: '3px' }}>how it works</a>
