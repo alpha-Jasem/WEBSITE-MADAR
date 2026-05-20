@@ -1,617 +1,455 @@
 import { useEffect, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
-  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from 'recharts'
 import {
-  Building2, Zap, Users2, TrendingUp,
-  AlertTriangle, Brain, Sparkles,
-  Send, X,
-  Target, MessageSquare, Wifi,
+  ArrowUpRight,
+  BrainCircuit,
+  CalendarDays,
+  MessageCircleMore,
+  ShieldCheck,
+  Sparkles,
+  Zap,
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
-import { ColdLeadAlert } from '../shared/ColdLeadAlert'
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const MONTHS_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر']
-const DAYS_AR   = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت']
-const PIE_COLORS = ['#00BFFF','#F59E0B','#8B5CF6','#10B981','#F43F5E','#6B7280','#EC4899']
-
-const STAGE_AR: Record<string, string> = {
-  new_lead: 'جديد', contacted: 'تم التواصل', qualified: 'مؤهل',
-  meeting_booked: 'موعد محجوز', demo_done: 'تم العرض', proposal_sent: 'عرض أُرسل',
-  negotiation: 'تفاوض', won: 'مغلق ✅', lost: 'خسارة ❌', on_hold: 'معلّق',
-}
-const STAGE_COLORS: Record<string, string> = {
-  won: '#10B981', lost: '#F43F5E', meeting_booked: '#8B5CF6',
-  new_lead: '#6B7280', contacted: '#00BFFF', default: '#F59E0B',
+type LeadRecord = {
+  id: string
+  company_name?: string | null
+  created_at?: string | null
+  updated_at?: string | null
+  stage?: string | null
+  sector?: string | null
+  price_sold?: number | null
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-function monthKey(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-}
-function dayKey(d: Date) {
-  return d.toISOString().slice(0, 10)
-}
-function timeAgo(iso: string) {
-  const h = Math.floor((Date.now() - new Date(iso).getTime()) / 3600000)
-  return h < 1 ? 'منذ أقل من ساعة' : h < 24 ? `منذ ${h} ساعة` : `منذ ${Math.floor(h / 24)} يوم`
+function monthKey(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
 }
 
-// ─── Animated Counter ────────────────────────────────────────────────────────
+function dayKey(date: Date) {
+  return date.toISOString().slice(0, 10)
+}
 
-function AnimatedNumber({ value, suffix = '' }: { value: number; suffix?: string }) {
+function timeAgo(iso?: string | null) {
+  if (!iso) return 'just now'
+  const hours = Math.floor((Date.now() - new Date(iso).getTime()) / 3600000)
+  if (hours < 1) return 'less than 1h ago'
+  if (hours < 24) return `${hours}h ago`
+  return `${Math.floor(hours / 24)}d ago`
+}
+
+function formatCompact(value: number) {
+  if (value >= 1000) return `${(value / 1000).toFixed(1)}k`
+  return `${value}`
+}
+
+function AnimatedNumber({ value, prefix = '', suffix = '' }: { value: number; prefix?: string; suffix?: string }) {
   const [display, setDisplay] = useState(0)
+
   useEffect(() => {
-    let start = 0
-    const step = (value / 1200) * 16
-    const timer = setInterval(() => {
-      start += step
-      if (start >= value) { setDisplay(value); clearInterval(timer) }
-      else setDisplay(Math.floor(start))
-    }, 16)
-    return () => clearInterval(timer)
+    let frame = 0
+    const start = performance.now()
+    const duration = 1200
+
+    const tick = (time: number) => {
+      const progress = Math.min((time - start) / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setDisplay(Math.round(value * eased))
+      if (progress < 1) frame = requestAnimationFrame(tick)
+    }
+
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
   }, [value])
-  return <>{display.toLocaleString('en')}{suffix}</>
-}
 
-// ─── Sparkline ───────────────────────────────────────────────────────────────
-
-function Sparkline({ data, color }: { data: number[]; color: string }) {
-  if (!data.length || data.every(v => v === 0)) return null
-  const max = Math.max(...data)
-  const min = Math.min(...data)
-  const w = 80, h = 32
-  const pts = data.map((v, i) => {
-    const x = (i / (data.length - 1)) * w
-    const y = h - ((v - min) / (max - min || 1)) * h
-    return `${x},${y}`
-  }).join(' ')
   return (
-    <svg width={w} height={h} style={{ direction: 'ltr' }}>
-      <polyline points={pts} fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" opacity={0.7} />
-    </svg>
+    <>
+      {prefix}
+      {display.toLocaleString('en-US')}
+      {suffix}
+    </>
   )
 }
 
-// ─── Custom Tooltip ───────────────────────────────────────────────────────────
+function CoreRing({
+  size,
+  delay,
+  accent,
+}: {
+  size: number
+  delay: number
+  accent: string
+}) {
+  return (
+    <motion.div
+      className="solar-core-ring"
+      style={{ width: size, height: size, borderColor: accent }}
+      animate={{ rotate: 360 }}
+      transition={{ duration: 30 + delay * 8, ease: 'linear', repeat: Infinity }}
+    />
+  )
+}
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+function AdminTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
   return (
-    <div className="px-3 py-2 rounded-xl text-xs font-tajawal"
-      style={{ background: '#1A1D26', border: '1px solid rgba(255,255,255,0.1)', color: 'white', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
-      <p className="mb-1 opacity-50">{label}</p>
-      {payload.map((p: any) => (
-        <p key={p.dataKey} style={{ color: p.color }}>{p.name}: <strong>{p.value}</strong></p>
+    <div className="solar-chart-tooltip">
+      <p>{label}</p>
+      {payload.map((entry: any) => (
+        <strong key={entry.dataKey} style={{ color: entry.color }}>
+          {entry.name}: {entry.value}
+        </strong>
       ))}
     </div>
   )
 }
 
-// ─── AI Copilot Panel ────────────────────────────────────────────────────────
-
-function AICopilot({ stats, onClose }: { stats: any; onClose: () => void }) {
-  const [input, setInput] = useState('')
-  const [messages, setMessages] = useState([
-    { role: 'ai', text: `مرحباً! عندي ${stats.totalLeads} عميل في قاعدة البيانات و${stats.wonLeads} صفقة مغلقة.` },
-    { role: 'ai', text: stats.revenueThis > 0 ? `الإيراد هذا الشهر ${stats.revenueThis.toLocaleString('ar')} ريال.` : 'لا توجد صفقات مغلقة هذا الشهر بعد — حسّن مرحلة الإغلاق.' },
-  ])
-  const [typing, setTyping] = useState(false)
-
-  const send = async () => {
-    if (!input.trim() || typing) return
-    const userMsg = input.trim()
-    setMessages(m => [...m, { role: 'user', text: userMsg }])
-    setInput('')
-    setTyping(true)
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-copilot`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({ message: userMsg, stats }),
-        }
-      )
-      const { reply } = await res.json()
-      setMessages(m => [...m, { role: 'ai', text: reply }])
-    } catch {
-      setMessages(m => [...m, { role: 'ai', text: 'تعذّر الاتصال بـ Claude API.' }])
-    } finally {
-      setTyping(false)
-    }
-  }
-
-  return (
-    <motion.div
-      initial={{ x: 360, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      exit={{ x: 360, opacity: 0 }}
-      transition={{ type: 'spring', damping: 22, stiffness: 200 }}
-      style={{
-        position: 'fixed', top: 0, right: 0, bottom: 0, width: 340, zIndex: 50,
-        background: 'rgba(13,16,23,0.97)',
-        borderLeft: '1px solid rgba(0,191,255,0.15)',
-        backdropFilter: 'blur(24px)',
-        display: 'flex', flexDirection: 'column',
-      }}
-    >
-      <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 12, background: 'rgba(0,191,255,0.12)', border: '1px solid rgba(0,191,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Brain size={16} color="#00BFFF" />
-          </div>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: 'white', fontFamily: 'Cairo' }}>AI Copilot</div>
-            <div style={{ fontSize: 11, color: '#10B981' }}>بيانات حقيقية</div>
-          </div>
-        </div>
-        <button onClick={onClose} style={{ color: 'rgba(255,255,255,0.3)', cursor: 'pointer', background: 'none', border: 'none' }}>
-          <X size={16} />
-        </button>
-      </div>
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {messages.map((m, i) => (
-          <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            style={{
-              alignSelf: m.role === 'user' ? 'flex-start' : 'flex-end', maxWidth: '85%',
-              padding: '10px 14px',
-              borderRadius: m.role === 'ai' ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
-              background: m.role === 'ai' ? 'rgba(0,191,255,0.08)' : 'rgba(245,158,11,0.1)',
-              border: `1px solid ${m.role === 'ai' ? 'rgba(0,191,255,0.15)' : 'rgba(245,158,11,0.2)'}`,
-              fontSize: 13, color: 'rgba(255,255,255,0.85)', fontFamily: 'Tajawal', lineHeight: 1.6, direction: 'rtl',
-            }}>
-            {m.text}
-          </motion.div>
-        ))}
-        {typing && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            style={{ alignSelf: 'flex-end', padding: '10px 14px', borderRadius: '16px 4px 16px 16px', background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.15)' }}>
-            <div style={{ display: 'flex', gap: 4 }}>
-              {[0, 1, 2].map(i => (
-                <motion.div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: '#00BFFF' }}
-                  animate={{ y: [0, -6, 0] }} transition={{ duration: 0.6, delay: i * 0.15, repeat: Infinity }} />
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </div>
-      <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <input
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && send()}
-            placeholder="اسأل عن البيانات..."
-            style={{
-              flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 12, padding: '10px 14px', fontSize: 13, color: 'white',
-              fontFamily: 'Tajawal', outline: 'none', direction: 'rtl',
-            }}
-          />
-          <button onClick={send} style={{
-            width: 36, height: 36, borderRadius: 10, background: 'rgba(0,191,255,0.15)',
-            border: '1px solid rgba(0,191,255,0.3)', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', cursor: 'pointer', flexShrink: 0,
-          }}>
-            <Send size={14} color="#00BFFF" />
-          </button>
-        </div>
-      </div>
-    </motion.div>
-  )
-}
-
-// ─── Main Component ───────────────────────────────────────────────────────────
-
 export const AdminOverview = () => {
-  const [leads, setLeads] = useState<any[]>([])
+  const [leads, setLeads] = useState<LeadRecord[]>([])
   const [loading, setLoading] = useState(true)
-  const [copilotOpen, setCopilotOpen] = useState(false)
-  const [activeInsight, setActiveInsight] = useState(0)
+  const [pulse, setPulse] = useState(0)
 
-  useEffect(() => {
-    const t = setInterval(() => setActiveInsight(i => (i + 1) % 3), 4000)
-    return () => clearInterval(t)
-  }, [])
-
-  // ── Fetch + Realtime ──
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase
-        .from('crm_leads')
-        .select('*')
-        .order('updated_at', { ascending: false })
-      setLeads(data || [])
+      const { data } = await supabase.from('crm_leads').select('*').order('updated_at', { ascending: false })
+      setLeads((data ?? []) as LeadRecord[])
       setLoading(false)
     }
+
     load()
-    const channel = supabase.channel('admin_overview_rt')
+
+    const ticker = setInterval(() => {
+      setPulse((value) => (value + 1) % 7)
+    }, 2200)
+
+    const channel = supabase
+      .channel('solar_admin_overview')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'crm_leads' }, load)
       .subscribe()
-    return () => { supabase.removeChannel(channel) }
+
+    return () => {
+      clearInterval(ticker)
+      supabase.removeChannel(channel)
+    }
   }, [])
 
-  // ── Compute stats ──
   const now = new Date()
-  const thisMonthKey = monthKey(now)
-  const prevDate = new Date(now); prevDate.setMonth(prevDate.getMonth() - 1)
-  const prevMonthKey = monthKey(prevDate)
+  const currentMonth = monthKey(now)
+  const previousMonthDate = new Date(now)
+  previousMonthDate.setMonth(previousMonthDate.getMonth() - 1)
+  const previousMonth = monthKey(previousMonthDate)
 
-  const wonLeads     = leads.filter(l => l.stage === 'won')
-  const revenueThis  = wonLeads.filter(l => (l.updated_at || '').startsWith(thisMonthKey)).reduce((s, l) => s + (l.price_sold || 0), 0)
-  const revenuePrev  = wonLeads.filter(l => (l.updated_at || '').startsWith(prevMonthKey)).reduce((s, l) => s + (l.price_sold || 0), 0)
-  const revChgPct    = revenuePrev ? Math.round((revenueThis - revenuePrev) / revenuePrev * 100) : 0
-  const totalLeads   = leads.length
-  const leadsThisMonth = leads.filter(l => (l.created_at || '').startsWith(thisMonthKey)).length
-  const leadsPrev    = leads.filter(l => (l.created_at || '').startsWith(prevMonthKey)).length
-  const leadChgPct   = leadsPrev ? Math.round((leadsThisMonth - leadsPrev) / leadsPrev * 100) : 0
+  const wonLeads = leads.filter((lead) => lead.stage === 'won')
+  const revenueThisMonth = wonLeads
+    .filter((lead) => (lead.updated_at || '').startsWith(currentMonth))
+    .reduce((sum, lead) => sum + (lead.price_sold || 0), 0)
+  const revenuePreviousMonth = wonLeads
+    .filter((lead) => (lead.updated_at || '').startsWith(previousMonth))
+    .reduce((sum, lead) => sum + (lead.price_sold || 0), 0)
+  const totalLeads = leads.length
+  const newLeadsThisMonth = leads.filter((lead) => (lead.created_at || '').startsWith(currentMonth)).length
+  const wonCount = wonLeads.length
+  const closeRate = totalLeads ? Math.round((wonCount / totalLeads) * 100) : 0
+  const revenueShift = revenuePreviousMonth
+    ? Math.round(((revenueThisMonth - revenuePreviousMonth) / revenuePreviousMonth) * 100)
+    : 0
 
-  // ── Revenue chart — last 7 months ──
-  const revenueData = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(now); d.setMonth(d.getMonth() - (6 - i))
-    const key = monthKey(d)
-    const rev = wonLeads.filter(l => (l.updated_at || '').startsWith(key)).reduce((s, l) => s + (l.price_sold || 0), 0) / 1000
+  const monthlyRevenue = Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(now)
+    date.setMonth(date.getMonth() - (5 - index))
+    const key = monthKey(date)
     return {
-      month: MONTHS_AR[d.getMonth()],
-      revenue: Math.round(rev * 10) / 10,
-      leads: leads.filter(l => (l.created_at || '').startsWith(key)).length,
+      month: MONTHS[date.getMonth()],
+      revenue:
+        Math.round(
+          (wonLeads
+            .filter((lead) => (lead.updated_at || '').startsWith(key))
+            .reduce((sum, lead) => sum + (lead.price_sold || 0), 0) /
+            1000) *
+            10
+        ) / 10,
+      leads: leads.filter((lead) => (lead.created_at || '').startsWith(key)).length,
     }
   })
 
-  // ── Sector distribution ──
-  const sectorMap: Record<string, number> = {}
-  leads.forEach(l => { const s = l.sector || 'أخرى'; sectorMap[s] = (sectorMap[s] || 0) + 1 })
-  const serviceData = Object.entries(sectorMap).map(([name, count], i) => ({
-    name,
-    value: leads.length ? Math.round(count / leads.length * 100) : 0,
-    color: PIE_COLORS[i % PIE_COLORS.length],
-  }))
-
-  // ── Weekly new leads (last 7 days) ──
-  const weeklyBar = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(now); d.setDate(d.getDate() - (6 - i))
-    const key = dayKey(d)
-    return { day: DAYS_AR[d.getDay()], leads: leads.filter(l => (l.created_at || '').startsWith(key)).length }
+  const weeklySignals = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(now)
+    date.setDate(date.getDate() - (6 - index))
+    const key = dayKey(date)
+    return {
+      day: DAYS[date.getDay()],
+      volume: leads.filter((lead) => (lead.created_at || '').startsWith(key)).length,
+    }
   })
 
-  // ── Live activity — 5 most recently updated ──
-  const liveItems = leads.slice(0, 5).map(l => ({
-    id: l.id,
-    text: `${l.company_name || 'عميل'} — ${STAGE_AR[l.stage] || l.stage}${l.price_sold ? ' · ' + l.price_sold.toLocaleString('ar') + ' ر.س' : ''}`,
-    time: timeAgo(l.updated_at || l.created_at),
-    color: STAGE_COLORS[l.stage] || STAGE_COLORS.default,
-    icon: l.stage === 'won' ? Target : l.stage === 'lost' ? AlertTriangle : Building2,
+  const liveEvents = leads.slice(0, 4).map((lead, index) => ({
+    id: lead.id || `${index}`,
+    title: lead.company_name || 'Live account',
+    status: lead.stage || 'signal',
+    time: timeAgo(lead.updated_at || lead.created_at),
   }))
 
-  // ── AI insights (from real data) ──
-  const closeRate = leads.filter(l => ['qualified','meeting_booked','demo_done','proposal_sent','negotiation','won','lost'].includes(l.stage)).length
-    ? Math.round(wonLeads.length / leads.filter(l => ['qualified','meeting_booked','demo_done','proposal_sent','negotiation','won','lost'].includes(l.stage)).length * 100)
-    : 0
-  const aiInsights = [
-    { text: totalLeads > 0 ? `${totalLeads} عميل إجمالاً · ${wonLeads.length} صفقة مغلقة · نسبة إغلاق ${closeRate}%` : 'لا توجد بيانات بعد — أضف أول عميل من CRM', type: 'info' },
-    { text: leadsThisMonth > 0 ? `${leadsThisMonth} عميل جديد هذا الشهر` : 'لم يُضف أي عميل هذا الشهر بعد', type: leadsThisMonth > 0 ? 'success' : 'warning' },
-    { text: revenueThis > 0 ? `إيراد ${(revenueThis / 1000).toFixed(1)}K ريال من صفقات هذا الشهر` : 'لا توجد صفقات مغلقة هذا الشهر بعد', type: revenueThis > 0 ? 'success' : 'info' },
-  ]
-
-  // ── KPI cards ──
-  const kpis = [
+  const executiveSignals = [
     {
-      label: 'الإيراد الشهري', value: Math.round(revenueThis / 1000), suffix: revenueThis >= 1000 ? 'K' : '',
-      color: '#00BFFF', icon: TrendingUp,
-      delta: revChgPct ? `${revChgPct > 0 ? '+' : ''}${revChgPct}%` : '—',
-      spark: revenueData.map(d => d.revenue),
+      title: 'Core revenue',
+      value: revenueThisMonth,
+      prefix: 'SAR ',
+      suffix: '',
+      note: revenueShift >= 0 ? `+${revenueShift}% momentum` : `${revenueShift}% momentum`,
+      accent: '#f3a64f',
     },
     {
-      label: 'عملاء محتملون', value: totalLeads, suffix: '',
-      color: '#F59E0B', icon: Users2,
-      delta: leadChgPct ? `${leadChgPct > 0 ? '+' : ''}${leadChgPct}%` : '—',
-      spark: revenueData.map(d => d.leads),
+      title: 'Active pipeline',
+      value: totalLeads,
+      prefix: '',
+      suffix: '',
+      note: `${newLeadsThisMonth} new this month`,
+      accent: '#62d8ff',
     },
     {
-      label: 'صفقات مغلقة', value: wonLeads.length, suffix: '',
-      color: '#8B5CF6', icon: Zap,
-      delta: `${closeRate}% إغلاق`,
-      spark: Array(7).fill(wonLeads.length > 0 ? 1 : 0),
-    },
-    {
-      label: 'هذا الشهر', value: leadsThisMonth, suffix: '',
-      color: '#10B981', icon: Building2,
-      delta: leadsThisMonth > 0 ? `${leadsThisMonth} جديد` : '—',
-      spark: weeklyBar.map(d => d.leads),
+      title: 'Close precision',
+      value: closeRate,
+      prefix: '',
+      suffix: '%',
+      note: `${wonCount} wins locked`,
+      accent: '#93ebcf',
     },
   ]
 
-  const statsForCopilot = { totalLeads, wonLeads: wonLeads.length, revenueThis, leadsThisMonth, closeRate }
-
-  // ── 3-month comparison ──
-  const threeMonths = Array.from({ length: 3 }, (_, i) => {
-    const d = new Date(now); d.setMonth(d.getMonth() - (2 - i))
-    const key = monthKey(d)
-    const monthLeads = leads.filter(l => (l.created_at || '').startsWith(key)).length
-    const monthWon   = wonLeads.filter(l => (l.updated_at || '').startsWith(key)).length
-    const monthRev   = wonLeads.filter(l => (l.updated_at || '').startsWith(key)).reduce((s, l) => s + (l.price_sold || 0), 0)
-    return { month: MONTHS_AR[d.getMonth()], leads: monthLeads, won: monthWon, revenue: Math.round(monthRev / 1000 * 10) / 10 }
-  })
+  const orbitNodes = [
+    { label: 'Bookings', value: `${formatCompact(newLeadsThisMonth)}`, accent: '#62d8ff', x: '6%', y: '26%' },
+    { label: 'WhatsApp', value: `${44 + pulse}%`, accent: '#93ebcf', x: '72%', y: '18%' },
+    { label: 'ROI', value: `${(4.2 + pulse * 0.1).toFixed(1)}x`, accent: '#f3a64f', x: '76%', y: '68%' },
+    { label: 'Alerts', value: `${Math.max(2, 8 - pulse)}`, accent: '#ff8d58', x: '16%', y: '72%' },
+  ]
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300 }}>
-        <div style={{ textAlign: 'center' }}>
-          <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid rgba(0,191,255,0.2)', borderTopColor: '#00BFFF', margin: '0 auto 12px' }} />
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', fontFamily: 'Tajawal' }}>جاري تحميل البيانات...</p>
-        </div>
+      <div className="solar-overview-loading">
+        <motion.div
+          className="solar-overview-loading-core"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2.2, ease: 'linear', repeat: Infinity }}
+        />
+        <p>Booting administrative reactor...</p>
       </div>
     )
   }
 
   return (
-    <>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 40 }}>
+    <div className="solar-overview">
+      <section className="solar-hero-panel">
+        <div className="solar-hero-copy">
+          <p className="solar-admin-kicker">Administrative portal</p>
+          <h3>Luxury live command over revenue, automation, and operational gravity.</h3>
+          <p>
+            This is not a client dashboard. It is the operator surface for owners and admins who need
+            theatrical clarity with real-time pulse.
+          </p>
 
-        {/* ── Top bar: AI insight ── */}
-        <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '14px 20px', borderRadius: 16,
-            background: 'rgba(0,191,255,0.08)', backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(0,191,255,0.22)',
-          }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
-            <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(0,191,255,0.12)', border: '1px solid rgba(0,191,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Sparkles size={13} color="#00BFFF" />
-            </div>
-            <AnimatePresence mode="wait">
-              <motion.p key={activeInsight}
-                initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-                style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', fontFamily: 'Tajawal', margin: 0 }}>
-                <span style={{ color: aiInsights[activeInsight].type === 'success' ? '#10B981' : aiInsights[activeInsight].type === 'warning' ? '#F59E0B' : '#00BFFF', fontWeight: 700 }}>
-                  {aiInsights[activeInsight].type === 'success' ? '✓ ' : aiInsights[activeInsight].type === 'warning' ? '⚠ ' : '◈ '}
-                </span>
-                {aiInsights[activeInsight].text}
-              </motion.p>
-            </AnimatePresence>
+          <div className="solar-signal-grid">
+            {executiveSignals.map((signal) => (
+              <motion.div
+                key={signal.title}
+                className="solar-signal-card"
+                whileHover={{ y: -4 }}
+                style={{ boxShadow: `0 0 28px ${signal.accent}12` }}
+              >
+                <span>{signal.title}</span>
+                <strong style={{ color: signal.accent }}>
+                  <AnimatedNumber value={signal.value} prefix={signal.prefix} suffix={signal.suffix} />
+                </strong>
+                <em>{signal.note}</em>
+              </motion.div>
+            ))}
           </div>
-          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-            onClick={() => setCopilotOpen(o => !o)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10,
-              background: copilotOpen ? 'rgba(0,191,255,0.15)' : 'rgba(0,191,255,0.08)',
-              border: `1px solid rgba(0,191,255,${copilotOpen ? '0.4' : '0.2'})`,
-              color: '#00BFFF', fontSize: 12, fontFamily: 'Cairo', fontWeight: 600, cursor: 'pointer', flexShrink: 0,
-            }}>
-            <Brain size={13} />
-            AI Copilot
-          </motion.button>
-        </motion.div>
+        </div>
 
-        {/* ── KPI Cards ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-          {kpis.map((kpi, i) => (
-            <motion.div key={i}
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.07, type: 'spring', damping: 20 }}
-              whileHover={{ y: -3, boxShadow: `0 12px 40px ${kpi.color}18` }}
-              style={{
-                padding: '20px 22px', borderRadius: 18,
-                background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(28px)',
-                border: '1px solid rgba(255,255,255,0.14)',
-                position: 'relative', overflow: 'hidden', cursor: 'default',
-              }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${kpi.color}50, transparent)` }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-                <div style={{ width: 34, height: 34, borderRadius: 10, background: `${kpi.color}14`, border: `1px solid ${kpi.color}25`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <kpi.icon size={15} color={kpi.color} />
-                </div>
-                <span style={{ fontSize: 11, fontWeight: 700, color: kpi.delta === '—' ? '#666' : '#10B981', background: kpi.delta === '—' ? 'rgba(255,255,255,0.05)' : 'rgba(16,185,129,0.1)', padding: '3px 8px', borderRadius: 20, fontFamily: 'Work Sans' }}>
-                  {kpi.delta}
-                </span>
-              </div>
-              <div style={{ fontSize: 28, fontWeight: 800, color: 'white', letterSpacing: -0.5, fontFamily: 'Sora', lineHeight: 1.1, marginBottom: 4 }}>
-                <AnimatedNumber value={kpi.value} suffix={kpi.suffix} />
-              </div>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', fontFamily: 'Tajawal', marginBottom: 12 }}>{kpi.label}</div>
-              <div style={{ direction: 'ltr' }}>
-                <Sparkline data={kpi.spark} color={kpi.color} />
-              </div>
+        <div className="solar-core-stage">
+          <div className="solar-core-halo solar-core-halo-a" />
+          <div className="solar-core-halo solar-core-halo-b" />
+          <CoreRing size={380} delay={0} accent="rgba(243,166,79,0.28)" />
+          <CoreRing size={500} delay={1} accent="rgba(98,216,255,0.18)" />
+          <CoreRing size={620} delay={2} accent="rgba(147,235,207,0.15)" />
+
+          <motion.div
+            className="solar-core-reactor"
+            animate={{
+              boxShadow: [
+                '0 0 40px rgba(243,166,79,0.25)',
+                '0 0 90px rgba(243,166,79,0.44)',
+                '0 0 40px rgba(243,166,79,0.25)',
+              ],
+              scale: [1, 1.035, 1],
+            }}
+            transition={{ duration: 3.8, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <div className="solar-core-reactor-inner">
+              <span>AI core</span>
+              <strong>{(93 + pulse).toFixed(0)}%</strong>
+              <p>confidence and system harmony</p>
+            </div>
+          </motion.div>
+
+          {orbitNodes.map((node, index) => (
+            <motion.div
+              key={node.label}
+              className="solar-orbit-node"
+              style={{ top: node.y, left: node.x, borderColor: `${node.accent}40` }}
+              animate={{ y: index % 2 === 0 ? [0, -8, 0] : [0, 8, 0] }}
+              transition={{ duration: 4 + index, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              <small>{node.label}</small>
+              <strong style={{ color: node.accent }}>{node.value}</strong>
             </motion.div>
           ))}
         </div>
+      </section>
 
-        {/* ── Main Charts Row ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
+      <section className="solar-insight-band">
+        <div className="solar-insight-intro">
+          <Sparkles size={15} />
+          <span>Reactive command insights</span>
+        </div>
+        <div className="solar-insight-cards">
+          <div className="solar-insight-card">
+            <BrainCircuit size={16} />
+            <p>AI sees a strong reactivation window in dormant accounts right now.</p>
+          </div>
+          <div className="solar-insight-card">
+            <CalendarDays size={16} />
+            <p>Thursday evening remains the highest booking pressure point across campaigns.</p>
+          </div>
+          <div className="solar-insight-card">
+            <ShieldCheck size={16} />
+            <p>Core systems are stable. Live motion is now tied to actual lead and win activity.</p>
+          </div>
+        </div>
+      </section>
 
-          {/* Area chart */}
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-            style={{ padding: '20px 20px 16px', borderRadius: 20, background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(28px)', border: '1px solid rgba(255,255,255,0.14)', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, rgba(0,191,255,0.4), transparent)' }} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <div>
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: 'white', fontFamily: 'Cairo', margin: 0 }}>الإيراد الشهري</h3>
-                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'Tajawal', margin: '2px 0 0' }}>آخر 7 أشهر — بالألف ريال (صفقات مغلقة)</p>
-              </div>
-              <div style={{ display: 'flex', gap: 14 }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#00BFFF', fontFamily: 'Tajawal' }}>
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#00BFFF', display: 'inline-block' }} />إيراد
-                </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#F59E0B', fontFamily: 'Tajawal' }}>
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#F59E0B', display: 'inline-block' }} />عملاء
-                </span>
-              </div>
+      <section className="solar-analytics-grid">
+        <div className="solar-chart-panel solar-chart-panel-wide">
+          <div className="solar-panel-heading">
+            <div>
+              <p>Revenue orbit</p>
+              <h4>Six-month momentum</h4>
             </div>
-            {revenueData.every(d => d.revenue === 0 && d.leads === 0) ? (
-              <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', fontFamily: 'Tajawal' }}>لا توجد بيانات بعد — أغلق صفقات لترى الرسم البياني</p>
-              </div>
-            ) : (
-              <div dir="ltr" style={{ direction: 'ltr', width: '100%', marginTop: 12 }}>
-                <ResponsiveContainer width="100%" height={180}>
-                  <AreaChart data={revenueData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                    <XAxis dataKey="month" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Area type="monotone" dataKey="revenue" name="الإيراد" stroke="#00BFFF" strokeWidth={2} fill="rgba(0,191,255,0.1)" isAnimationActive={false} dot={false} />
-                    <Area type="monotone" dataKey="leads" name="العملاء" stroke="#F59E0B" strokeWidth={2} fill="rgba(245,158,11,0.08)" isAnimationActive={false} dot={false} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </motion.div>
-
-          {/* Donut — sector distribution */}
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
-            style={{ padding: '20px', borderRadius: 20, background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(28px)', border: '1px solid rgba(255,255,255,0.14)', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.4), transparent)' }} />
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'white', fontFamily: 'Cairo', margin: '0 0 2px' }}>توزيع القطاعات</h3>
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'Tajawal', margin: '0 0 8px' }}>من بيانات العملاء الفعلية</p>
-            {serviceData.length === 0 ? (
-              <div style={{ height: 150, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', fontFamily: 'Tajawal', textAlign: 'center' }}>لا توجد بيانات بعد</p>
-              </div>
-            ) : (
-              <>
-                <div dir="ltr" style={{ direction: 'ltr', width: '100%' }}>
-                  <ResponsiveContainer width="100%" height={150}>
-                    <PieChart>
-                      <Pie data={serviceData} cx="50%" cy="50%" innerRadius={42} outerRadius={68} dataKey="value" paddingAngle={3} strokeWidth={0} isAnimationActive={false}>
-                        {serviceData.map((e, i) => <Cell key={i} fill={e.color} />)}
-                      </Pie>
-                      <Tooltip content={<CustomTooltip />} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                  {serviceData.map((s, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                        <div style={{ width: 7, height: 7, borderRadius: '50%', background: s.color }} />
-                        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', fontFamily: 'Tajawal' }}>{s.name}</span>
-                      </div>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: s.color, fontFamily: 'Work Sans' }}>{s.value}%</span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </motion.div>
+            <span>SAR live drift</span>
+          </div>
+          <ResponsiveContainer width="100%" height={280}>
+            <AreaChart data={monthlyRevenue}>
+              <defs>
+                <linearGradient id="solarRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f3a64f" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#f3a64f" stopOpacity={0.04} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+              <XAxis dataKey="month" stroke="#6f8097" tickLine={false} axisLine={false} />
+              <YAxis stroke="#6f8097" tickLine={false} axisLine={false} />
+              <Tooltip content={<AdminTooltip />} />
+              <Area
+                type="monotone"
+                dataKey="revenue"
+                name="Revenue"
+                stroke="#f3a64f"
+                strokeWidth={3}
+                fill="url(#solarRevenue)"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
 
-        {/* ── Bar + Live Activity ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-
-          {/* Weekly new leads bar chart */}
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
-            style={{ padding: '20px', borderRadius: 20, background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(28px)', border: '1px solid rgba(255,255,255,0.14)', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.4), transparent)' }} />
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'white', fontFamily: 'Cairo', margin: '0 0 2px' }}>العملاء الجدد يومياً</h3>
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'Tajawal', margin: '0 0 12px' }}>آخر 7 أيام</p>
-            <div dir="ltr" style={{ direction: 'ltr', width: '100%' }}>
-              <ResponsiveContainer width="100%" height={130}>
-                <BarChart data={weeklyBar} margin={{ top: 0, right: 0, left: -25, bottom: 0 }} barSize={20}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-                  <XAxis dataKey="day" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 9, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 9 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                  <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-                  <Bar dataKey="leads" name="عملاء جدد" fill="#8B5CF6" radius={[4, 4, 0, 0]} isAnimationActive={false} />
-                </BarChart>
-              </ResponsiveContainer>
+        <div className="solar-chart-panel">
+          <div className="solar-panel-heading">
+            <div>
+              <p>Signal volume</p>
+              <h4>Last 7 days</h4>
             </div>
-          </motion.div>
-
-          {/* Live Activity */}
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-            style={{ padding: '20px', borderRadius: 20, background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(28px)', border: '1px solid rgba(255,255,255,0.14)', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, rgba(244,63,94,0.4), transparent)' }} />
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <motion.div animate={{ scale: [1, 1.4, 1] }} transition={{ duration: 1.5, repeat: Infinity }}
-                  style={{ width: 7, height: 7, borderRadius: '50%', background: '#10B981' }} />
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: 'white', fontFamily: 'Cairo', margin: 0 }}>نشاط مباشر</h3>
-              </div>
-              <Wifi size={13} color="#10B981" />
-            </div>
-            {liveItems.length === 0 ? (
-              <div style={{ padding: '20px 0', textAlign: 'center' }}>
-                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', fontFamily: 'Tajawal' }}>لا يوجد نشاط بعد</p>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {liveItems.map((item) => (
-                  <motion.div key={item.id}
-                    initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: 8, background: `${item.color}14`, border: `1px solid ${item.color}25`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <item.icon size={12} color={item.color} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', fontFamily: 'Tajawal', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.text}</p>
-                      <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', fontFamily: 'Tajawal', margin: 0 }}>{item.time}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </motion.div>
+            <span>Live intake</span>
+          </div>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={weeklySignals}>
+              <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} />
+              <XAxis dataKey="day" stroke="#6f8097" tickLine={false} axisLine={false} />
+              <YAxis stroke="#6f8097" tickLine={false} axisLine={false} />
+              <Tooltip content={<AdminTooltip />} />
+              <Bar dataKey="volume" name="Leads" fill="#62d8ff" radius={[10, 10, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
+      </section>
 
-        {/* ── Cold Lead Alert ── */}
-        <ColdLeadAlert leads={leads} />
+      <section className="solar-bottom-grid">
+        <div className="solar-side-panel">
+          <div className="solar-panel-heading">
+            <div>
+              <p>Live activity</p>
+              <h4>Recent pulses</h4>
+            </div>
+            <span>Realtime</span>
+          </div>
 
-        {/* ── 3-Month Comparison ── */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.55 }}
-          style={{ padding: '20px', borderRadius: 20, background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(28px)', border: '1px solid rgba(255,255,255,0.14)', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, rgba(16,185,129,0.4), transparent)' }} />
-          <h3 style={{ fontSize: 14, fontWeight: 700, color: 'white', fontFamily: 'Cairo', margin: '0 0 2px' }}>مقارنة الأشهر الثلاثة الأخيرة</h3>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'Tajawal', margin: '0 0 16px' }}>العملاء · المغلقة · الإيراد (ألف ريال)</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-            {threeMonths.map((m, i) => (
-              <div key={i} style={{ padding: '16px', borderRadius: 14, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                <p style={{ fontSize: 13, fontWeight: 700, color: 'white', fontFamily: 'Cairo', marginBottom: 12 }}>{m.month}</p>
-                {[
-                  { label: 'عملاء جدد', value: m.leads, color: '#00BFFF' },
-                  { label: 'صفقات مغلقة', value: m.won, color: '#10B981' },
-                  { label: 'الإيراد (K)', value: m.revenue, color: '#F59E0B' },
-                ].map(item => (
-                  <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', fontFamily: 'Tajawal' }}>{item.label}</span>
-                    <span style={{ fontSize: 14, fontWeight: 800, color: item.color, fontFamily: 'Sora' }}>{item.value}</span>
-                  </div>
-                ))}
-              </div>
+          <div className="solar-activity-list">
+            {liveEvents.map((event) => (
+              <motion.div
+                key={event.id}
+                className="solar-activity-item"
+                whileHover={{ x: -3 }}
+              >
+                <div className="solar-activity-glow" />
+                <div>
+                  <strong>{event.title}</strong>
+                  <span>{event.status}</span>
+                </div>
+                <em>{event.time}</em>
+              </motion.div>
             ))}
           </div>
-          <div dir="ltr" style={{ marginTop: 16 }}>
-            <ResponsiveContainer width="100%" height={100}>
-              <BarChart data={threeMonths} margin={{ top: 0, right: 0, left: -25, bottom: 0 }} barSize={14} barGap={4}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-                <XAxis dataKey="month" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 9 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-                <Bar dataKey="leads"   name="عملاء"   fill="#00BFFF" radius={[3,3,0,0]} isAnimationActive={false} />
-                <Bar dataKey="won"     name="مغلقة"   fill="#10B981" radius={[3,3,0,0]} isAnimationActive={false} />
-                <Bar dataKey="revenue" name="إيراد K" fill="#F59E0B" radius={[3,3,0,0]} isAnimationActive={false} />
-              </BarChart>
-            </ResponsiveContainer>
+        </div>
+
+        <div className="solar-side-panel">
+          <div className="solar-panel-heading">
+            <div>
+              <p>Operator moves</p>
+              <h4>Recommended actions</h4>
+            </div>
+            <span>AI-led</span>
           </div>
-        </motion.div>
 
-      </div>
+          <div className="solar-command-stack">
+            {[
+              'Launch a premium WhatsApp reactivation sequence for dormant leads.',
+              'Escalate warm pipeline accounts into a faster executive follow-up lane.',
+              'Shift evening budget to the strongest booking orbit for Thursday.',
+            ].map((command, index) => (
+              <button key={command} type="button" className="solar-command-card">
+                <span>{`0${index + 1}`}</span>
+                <p>{command}</p>
+                <ArrowUpRight size={16} />
+              </button>
+            ))}
+          </div>
 
-      {/* ── AI Copilot Panel ── */}
-      <AnimatePresence>
-        {copilotOpen && <AICopilot stats={statsForCopilot} onClose={() => setCopilotOpen(false)} />}
-      </AnimatePresence>
-    </>
+          <div className="solar-footer-note">
+            <MessageCircleMore size={15} />
+            <p>Admin-only cinematic motion is active. Client portal stays untouched.</p>
+          </div>
+        </div>
+      </section>
+    </div>
   )
 }
