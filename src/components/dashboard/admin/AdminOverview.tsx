@@ -7,10 +7,11 @@ import {
 import {
   Building2, Zap, Users2, TrendingUp,
   AlertTriangle, Brain, Sparkles,
-  Send, X, Video,
-  Target, MessageSquare, BarChart2, Wifi,
+  Send, X,
+  Target, MessageSquare, Wifi,
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
+import { ColdLeadAlert } from '../shared/ColdLeadAlert'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -332,6 +333,16 @@ export const AdminOverview = () => {
 
   const statsForCopilot = { totalLeads, wonLeads: wonLeads.length, revenueThis, leadsThisMonth, closeRate }
 
+  // ── 3-month comparison ──
+  const threeMonths = Array.from({ length: 3 }, (_, i) => {
+    const d = new Date(now); d.setMonth(d.getMonth() - (2 - i))
+    const key = monthKey(d)
+    const monthLeads = leads.filter(l => (l.created_at || '').startsWith(key)).length
+    const monthWon   = wonLeads.filter(l => (l.updated_at || '').startsWith(key)).length
+    const monthRev   = wonLeads.filter(l => (l.updated_at || '').startsWith(key)).reduce((s, l) => s + (l.price_sold || 0), 0)
+    return { month: MONTHS_AR[d.getMonth()], leads: monthLeads, won: monthWon, revenue: Math.round(monthRev / 1000 * 10) / 10 }
+  })
+
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300 }}>
@@ -553,6 +564,47 @@ export const AdminOverview = () => {
             )}
           </motion.div>
         </div>
+
+        {/* ── Cold Lead Alert ── */}
+        <ColdLeadAlert leads={leads} />
+
+        {/* ── 3-Month Comparison ── */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.55 }}
+          style={{ padding: '20px', borderRadius: 20, background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(28px)', border: '1px solid rgba(255,255,255,0.14)', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, rgba(16,185,129,0.4), transparent)' }} />
+          <h3 style={{ fontSize: 14, fontWeight: 700, color: 'white', fontFamily: 'Cairo', margin: '0 0 2px' }}>مقارنة الأشهر الثلاثة الأخيرة</h3>
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'Tajawal', margin: '0 0 16px' }}>العملاء · المغلقة · الإيراد (ألف ريال)</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+            {threeMonths.map((m, i) => (
+              <div key={i} style={{ padding: '16px', borderRadius: 14, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <p style={{ fontSize: 13, fontWeight: 700, color: 'white', fontFamily: 'Cairo', marginBottom: 12 }}>{m.month}</p>
+                {[
+                  { label: 'عملاء جدد', value: m.leads, color: '#00BFFF' },
+                  { label: 'صفقات مغلقة', value: m.won, color: '#10B981' },
+                  { label: 'الإيراد (K)', value: m.revenue, color: '#F59E0B' },
+                ].map(item => (
+                  <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', fontFamily: 'Tajawal' }}>{item.label}</span>
+                    <span style={{ fontSize: 14, fontWeight: 800, color: item.color, fontFamily: 'Sora' }}>{item.value}</span>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+          <div dir="ltr" style={{ marginTop: 16 }}>
+            <ResponsiveContainer width="100%" height={100}>
+              <BarChart data={threeMonths} margin={{ top: 0, right: 0, left: -25, bottom: 0 }} barSize={14} barGap={4}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                <XAxis dataKey="month" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 9 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+                <Bar dataKey="leads"   name="عملاء"   fill="#00BFFF" radius={[3,3,0,0]} isAnimationActive={false} />
+                <Bar dataKey="won"     name="مغلقة"   fill="#10B981" radius={[3,3,0,0]} isAnimationActive={false} />
+                <Bar dataKey="revenue" name="إيراد K" fill="#F59E0B" radius={[3,3,0,0]} isAnimationActive={false} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
 
       </div>
 

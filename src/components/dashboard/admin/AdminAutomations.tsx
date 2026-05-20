@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Zap, Search, Play, Pause, AlertTriangle, MessageSquare, Users2, Clock } from 'lucide-react'
+import { Zap, Search, Play, Pause, AlertTriangle, MessageSquare, Users2, Clock, ExternalLink } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { StatusBadge } from '../shared/StatusBadge'
 import { fetchAllAutomations, updateAutomationStatus } from '../../../lib/supabase'
@@ -74,7 +74,18 @@ export const AdminAutomations = () => {
                   <p className="text-xs text-slate-600 font-tajawal">{typeLabels[a.type]}</p>
                 </div>
               </div>
-              <StatusBadge status={a.status} />
+              <div className="flex items-center gap-2">
+                <StatusBadge status={a.status} />
+                {a.n8n_workflow_id && (
+                  <a
+                    href={`${a.n8n_instance_url || 'https://keepcalm.app.n8n.cloud'}/workflow/${a.n8n_workflow_id}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="p-1 rounded-lg transition-colors hover:bg-white/10" title="فتح في n8n"
+                    style={{ color: 'rgba(245,158,11,0.7)' }}>
+                    <ExternalLink size={11} />
+                  </a>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
