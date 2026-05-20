@@ -14,13 +14,13 @@ const industries = [
     ar: {
       label: 'العيادات',
       name: 'العيادات والمستشفيات',
-      tagline: 'رعاية ذكية، حجز تلقائي',
-      desc: 'نحوّل عيادتك إلى منظومة ذكية تعمل على مدار الساعة — من أول رسالة للمريض حتى المتابعة بعد الزيارة.',
+      tagline: 'مريض يرسل، النظام يرد ويحجز',
+      desc: 'لا تخسر مريضاً لأن الخط مشغول أو الرسالة تأخرت. النظام يرد، يحدد الخدمة، يحجز الموعد، ويذكّر قبل الحضور.',
       features: [
         { icon: CalendarCheck, text: 'حجز مواعيد تلقائي ٢٤/٧ عبر واتساب' },
-        { icon: MessageCircle, text: 'ردود فورية على استفسارات المرضى' },
-        { icon: Bell, text: 'تذكيرات تلقائية قبل الموعد بـ ٢٤ ساعة' },
-        { icon: BarChart3, text: 'تقارير ومتابعة الحالات الصحية' },
+        { icon: MessageCircle, text: 'إجابات فورية على الأسعار والخدمات والمواعيد' },
+        { icon: Bell, text: 'تذكيرات تقلل الغياب وتحرر موظفي الاستقبال' },
+        { icon: BarChart3, text: 'لوحة توضح الحجوزات والعودة ومصادر الطلب' },
       ],
       metrics: [
         { value: '٣×', label: 'حجوزات أكثر', icon: TrendingUp },
@@ -30,13 +30,13 @@ const industries = [
     en: {
       label: 'Healthcare',
       name: 'Clinics & Hospitals',
-      tagline: 'Smart Care, Auto Booking',
-      desc: 'Transform your clinic into a 24/7 smart system — from the first patient message to post-visit follow-up.',
+      tagline: 'Patient Messages, System Replies and Books',
+      desc: 'Do not lose a patient because the line is busy or a reply is late. The system answers, identifies the service, books the appointment, and reminds before arrival.',
       features: [
         { icon: CalendarCheck, text: '24/7 automatic appointment booking via WhatsApp' },
-        { icon: MessageCircle, text: 'Instant responses to patient inquiries' },
-        { icon: Bell, text: 'Automated reminders 24 hours before appointment' },
-        { icon: BarChart3, text: 'Health case tracking and reporting' },
+        { icon: MessageCircle, text: 'Instant answers about prices, services, and availability' },
+        { icon: Bell, text: 'Reminders that reduce no-shows and free reception time' },
+        { icon: BarChart3, text: 'Dashboard for bookings, returning patients, and demand sources' },
       ],
       metrics: [
         { value: '3×', label: 'More Bookings', icon: TrendingUp },
@@ -54,11 +54,11 @@ const industries = [
     ar: {
       label: 'العقارات',
       name: 'العقارات والتطوير',
-      tagline: 'عملاء مؤهَّلون، جولات مجدولة',
-      desc: 'وكيلك العقاري الذكي يعمل طوال اليوم — يستقبل المحتملين، يؤهّلهم، ويجدول الجولات تلقائياً.',
+      tagline: 'عميل مؤهل، جولة مجدولة',
+      desc: 'بدل محادثات طويلة بلا نتيجة، النظام يسأل الأسئلة الصح، يؤهل العميل، ويرسل العرض المناسب ثم يحجز جولة.',
       features: [
-        { icon: Users, text: 'متابعة العملاء المحتملين فوراً تلقائياً' },
-        { icon: Star, text: 'تصنيف وتأهيل العملاء بدقة' },
+        { icon: Users, text: 'متابعة فورية لكل عميل مهتم قبل أن يبرد' },
+        { icon: Star, text: 'تصنيف العملاء حسب الجدية والميزانية' },
         { icon: CalendarCheck, text: 'جدولة جولات العقارات أوتوماتيكياً' },
         { icon: MessageCircle, text: 'إرسال عروض مخصصة لكل عميل' },
       ],
@@ -70,11 +70,11 @@ const industries = [
     en: {
       label: 'Real Estate',
       name: 'Real Estate & Development',
-      tagline: 'Qualified Leads, Scheduled Tours',
-      desc: 'Your smart real estate agent works all day — receives prospects, qualifies them, and schedules tours automatically.',
+      tagline: 'Qualified Lead, Scheduled Tour',
+      desc: 'Instead of long chats with no outcome, the system asks the right questions, qualifies the lead, sends the right offer, then books a tour.',
       features: [
-        { icon: Users, text: 'Instant automatic lead follow-up' },
-        { icon: Star, text: 'Accurate client qualification and scoring' },
+        { icon: Users, text: 'Instant follow-up before interested leads go cold' },
+        { icon: Star, text: 'Lead scoring by seriousness and budget' },
         { icon: CalendarCheck, text: 'Automatic property tour scheduling' },
         { icon: MessageCircle, text: 'Personalized offer delivery per client' },
       ],
@@ -164,14 +164,14 @@ export const Industries = () => {
 
           <h2 className={`text-3xl sm:text-5xl font-bold mb-4 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`} style={{ color: 'white' }}>
             {t(
-              <><span className="gradient-text-blue">حلول مخصصة</span> لقطاعَين رائدَين</>,
-              <>Tailored Solutions for <span className="gradient-text-blue">Two Leading</span> Industries</>
+              <><span className="gradient-text-blue">نفس النظام</span> يتكلم لغة قطاعك</>,
+              <>The Same System Speaks <span className="gradient-text-blue">Your Industry Language</span></>
             )}
           </h2>
           <p className={`text-base sm:text-lg max-w-xl mx-auto ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.5)' }}>
             {t(
-              'صمّمنا منظومة ذكاء اصطناعي متكاملة خصيصاً للعيادات والعقارات — بعمق في كل تفصيلة.',
-              'We built a complete AI system specifically for healthcare and real estate — deep in every detail.'
+              'المنصة واحدة، لكن الرسائل، الأسئلة، الحجوزات، والتقارير تتغيّر حسب طريقة بيعك وخدمة عملائك.',
+              'One platform, but messages, questions, bookings, and reports adapt to how your business sells and serves customers.'
             )}
           </p>
         </motion.div>
@@ -319,7 +319,7 @@ export const Industries = () => {
           className={`text-center text-sm mt-10 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
           style={{ color: 'rgba(255,255,255,0.28)' }}
         >
-          {t('قطاعك مختلف؟ نبني حلولاً مخصصة لأي عمل — تواصل معنا', "Different industry? We build custom solutions for any business — contact us")}
+          {t('قطاعك مختلف؟ نطبق نفس المنطق على أي عمل يعتمد على الرسائل والحجوزات والمتابعة', 'Different industry? We apply the same logic to any business driven by messages, bookings, and follow-up')}
         </motion.p>
       </div>
     </section>

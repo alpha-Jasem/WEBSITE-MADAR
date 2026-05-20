@@ -11,16 +11,16 @@ const steps = [
     gradient: 'linear-gradient(135deg, #0D1B3E, #00BFFF)',
     glow: 'rgba(0,191,255,0.25)',
     ar: {
-      title: 'تحليل عملك',
-      desc: 'نبدأ بجلسة استراتيجية عميقة نفهم فيها عمليات شركتك، نقاط الضعف، وأهدافك. نحدد أين يمكن للـ AI أن يحقق أكبر تأثير.',
+      title: 'نحدد أين تضيع المبيعات',
+      desc: 'نراجع رسائل العملاء، طريقة الحجز، المتابعة، ونقاط التسرب. بعدها نطلع بخريطة واضحة لما يجب أتمتته أولاً لتحقيق أسرع أثر.',
       duration: '٣٠ دقيقة',
-      checks: ['فهم العمليات الحالية', 'تحديد نقاط التحسين', 'وضع أهداف قابلة للقياس'],
+      checks: ['فهم مسار العميل الحالي', 'كشف نقاط التسرب', 'تحديد رقم نمو قابل للقياس'],
     },
     en: {
-      title: 'Business Analysis',
-      desc: 'We start with a deep strategy session to understand your operations, pain points, and goals. We identify exactly where AI will have the most impact.',
+      title: 'Find Where Revenue Is Leaking',
+      desc: 'We review customer messages, booking flow, follow-up, and leakage points. Then we map what to automate first for the fastest business impact.',
       duration: '30 Minutes',
-      checks: ['Map current processes', 'Identify improvement areas', 'Set measurable goals'],
+      checks: ['Map the customer journey', 'Find leakage points', 'Set a measurable growth target'],
     },
   },
   {
@@ -29,16 +29,16 @@ const steps = [
     gradient: 'linear-gradient(135deg, #0D1B3E, #0099CC)',
     glow: 'rgba(0,153,204,0.25)',
     ar: {
-      title: 'تصميم وبناء النظام',
-      desc: 'فريقنا يصمم ويبني نظام AI مخصص لعملك — من الكود إلى الواجهات والتكاملات. كل شيء يُبنى ويُختبر قبل التسليم.',
+      title: 'نبني مسار البيع الآلي',
+      desc: 'نجهز الردود، الحجز، الـ CRM، المتابعة، ولوحة الإدارة. كل جزء يكون مربوط بهدف واضح: تحويل الرسالة إلى عميل.',
       duration: '٧–١٤ يوم',
-      checks: ['تصميم معمارية النظام', 'برمجة مخصصة', 'اختبار شامل'],
+      checks: ['سيناريوهات محادثة مخصصة', 'ربط واتساب والـ CRM', 'اختبار قبل الإطلاق'],
     },
     en: {
-      title: 'Design & Build',
-      desc: 'Our team designs and builds a custom AI system for your business — from code to interfaces and integrations. Everything is built and tested before delivery.',
+      title: 'Build the Automated Sales Flow',
+      desc: 'We set up replies, booking, CRM, follow-up, and the management dashboard. Every piece has one goal: turn the message into a customer.',
       duration: '7–14 Days',
-      checks: ['System architecture design', 'Custom development', 'Comprehensive testing'],
+      checks: ['Custom conversation flows', 'WhatsApp and CRM integration', 'Pre-launch testing'],
     },
   },
   {
@@ -47,16 +47,16 @@ const steps = [
     gradient: 'linear-gradient(135deg, #00BFFF, #0D1B3E)',
     glow: 'rgba(0,191,255,0.25)',
     ar: {
-      title: 'الإطلاق والأتمتة',
-      desc: 'نطلق النظام ونتابع أداءه، ونُدرّب فريقك، ونوفر دعماً مستمراً لضمان أفضل النتائج. نظامك يشتغل حتى وأنت نايم.',
+      title: 'نطلق ونحسن بالأرقام',
+      desc: 'بعد الإطلاق نراقب الردود والحجوزات والتحويلات، ونحسن الرسائل والحملات حسب البيانات حتى يصير النظام أصل ربحي.',
       duration: 'مستمر',
-      checks: ['إطلاق تدريجي آمن', 'تدريب الفريق', 'دعم ومراقبة مستمرة'],
+      checks: ['إطلاق تدريجي آمن', 'تدريب الفريق', 'تحسينات مبنية على البيانات'],
     },
     en: {
-      title: 'Deploy & Automate',
-      desc: 'We launch the system, monitor performance, train your team, and provide ongoing support. Your AI system works even while you sleep.',
+      title: 'Launch and Improve by the Numbers',
+      desc: 'After launch, we monitor replies, bookings, and conversions, then improve messages and campaigns from real data until the system becomes a revenue asset.',
       duration: 'Ongoing',
-      checks: ['Safe gradual launch', 'Team training', 'Ongoing support & monitoring'],
+      checks: ['Safe gradual launch', 'Team training', 'Data-driven optimization'],
     },
   },
 ]
@@ -75,13 +75,13 @@ export const HowItWorks = () => {
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 30 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.7 }} className="text-center mb-20">
           <p className={`text-xs font-semibold tracking-[0.25em] uppercase mb-3 ${language === 'ar' ? 'font-cairo' : 'font-work'}`} style={{ color: '#00BFFF' }}>
-            {t('العملية', 'The Process')}
+            {t('من فوضى الرسائل إلى نظام يبيع', 'From Message Chaos to a Selling System')}
           </p>
           <h2 className={`text-4xl sm:text-5xl font-bold mb-4 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`} style={{ color: 'white' }}>
-            {t(<>كيف نحوّل عملك<br /><span className="gradient-text-blue">في ٣ خطوات</span></>, <>How We Transform<br /><span className="gradient-text-blue">In 3 Steps</span></>)}
+            {t(<>كيف نركّب نظامك<br /><span className="gradient-text-blue">بدون تعطيل شغلك</span></>, <>How We Install Your System<br /><span className="gradient-text-blue">Without Disrupting Work</span></>)}
           </h2>
           <p className={`text-lg max-w-xl mx-auto ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.55)' }}>
-            {t('عملية واضحة وشفافة من التحليل إلى التشغيل الكامل', 'A clear, transparent process from analysis to full operation')}
+            {t('خطة قصيرة وواضحة: نكتشف التسرب، نبني المسار، ثم نحسّن النتائج بالأرقام.', 'A short, clear plan: find the leak, build the flow, then improve results by the numbers.')}
           </p>
         </motion.div>
 
@@ -161,10 +161,10 @@ export const HowItWorks = () => {
             className={`inline-flex items-center gap-2 px-8 py-4 rounded-xl text-white font-semibold text-base cursor-pointer ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
             style={{ background: 'linear-gradient(135deg, #0D1B3E, #0099CC)', boxShadow: '0 0 30px rgba(0,153,204,0.3)' }}
           >
-            {t('ابدأ رحلتك مع AI', 'Start Your AI Journey')}
+            {t('ابدأ بخطة نمو مجانية', 'Start With a Free Growth Plan')}
           </motion.button>
           <p className={`text-xs mt-3 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.38)' }}>
-            {t('مكالمة مجانية بلا التزام', 'Free call, no commitment')}
+            {t('نخرج منها بخريطة واضحة لما يجب أتمتته أولاً', 'You leave with a clear map of what to automate first')}
           </p>
         </motion.div>
       </div>

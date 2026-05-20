@@ -7,21 +7,21 @@ import { useLanguage } from '../../context/LanguageContext'
 type Msg = { id: number; from: 'user' | 'ai'; text: string; time: string }
 
 const chatScriptAr: Msg[] = [
-  { id: 1, from: 'user', text: 'السلام عليكم، أبي أعرف عن خدماتكم', time: '10:41' },
-  { id: 2, from: 'ai',   text: 'وعليكم السلام! أهلاً بك في مدار للذكاء الاصطناعي 👋 يسعدني مساعدتك. نحن نبني أنظمة AI مخصصة للشركات — من ردود واتساب الذكية إلى أتمتة المبيعات الكاملة. ما هو نوع عملك؟', time: '10:41' },
-  { id: 3, from: 'user', text: 'عندي عيادة طبية وأبي أتمتة الحجوزات', time: '10:42' },
-  { id: 4, from: 'ai',   text: '🏥 ممتاز! نظام حجز المواعيد AI من مدار هو الأنسب لك.\n\n✅ حجز تلقائي 24/7\n✅ تذكير بالمواعيد\n✅ تقليل الغياب 80%\n✅ تكامل مع جدولك الحالي\n\nهل تريد مكالمة سريعة لنناقش تفاصيل عيادتك؟', time: '10:42' },
+  { id: 1, from: 'user', text: 'السلام عليكم، عندي عيادة وتجينا رسائل كثيرة على واتساب', time: '10:41' },
+  { id: 2, from: 'ai',   text: 'وعليكم السلام! ممتاز. أقدر أساعدك بنظام يرد على المرضى، يحدد الخدمة المطلوبة، ويحجز الموعد تلقائياً.\n\nكم متوسط الرسائل اليومية تقريباً؟', time: '10:41' },
+  { id: 3, from: 'user', text: 'تقريباً 40 إلى 60 رسالة يومياً وأغلبها عن المواعيد والأسعار', time: '10:42' },
+  { id: 4, from: 'ai',   text: 'واضح عندك فرصة نمو قوية.\n\nالنظام المقترح:\n✅ رد فوري على الأسعار والخدمات\n✅ حجز تلقائي 24/7\n✅ تذكير قبل الموعد\n✅ متابعة المريض بعد الزيارة\n\nأرسل لك خريطة نمو مبدئية؟', time: '10:42' },
   { id: 5, from: 'user', text: 'نعم، متى تقدرون؟', time: '10:43' },
-  { id: 6, from: 'ai',   text: '🗓️ أرسلت لك رابط حجز المكالمة الاستراتيجية — اختر الوقت المناسب لك.\n\nعادةً نرد في نفس اليوم ونبني النظام خلال أسبوعين! 🚀', time: '10:43' },
+  { id: 6, from: 'ai',   text: 'أرسلت لك رابط مكالمة قصيرة. نطلع منها بتشخيص واضح: أين تضيع الحجوزات، وما أول مسار نؤتمته.', time: '10:43' },
 ]
 
 const chatScriptEn: Msg[] = [
-  { id: 1, from: 'user', text: 'Hi! I want to learn about your services', time: '10:41' },
-  { id: 2, from: 'ai',   text: 'Hello! Welcome to MADAR AI 👋 We build custom AI systems for businesses — from smart WhatsApp automation to complete sales automation. What kind of business do you run?', time: '10:41' },
-  { id: 3, from: 'user', text: 'I have a medical clinic and need appointment automation', time: '10:42' },
-  { id: 4, from: 'ai',   text: '🏥 Perfect! Our AI Appointment Booking system is exactly what you need.\n\n✅ 24/7 automatic booking\n✅ Appointment reminders\n✅ 80% less no-shows\n✅ Integrates with your calendar\n\nWould you like a quick call to discuss your clinic\'s needs?', time: '10:42' },
+  { id: 1, from: 'user', text: 'Hi, I run a clinic and we get many WhatsApp messages', time: '10:41' },
+  { id: 2, from: 'ai',   text: 'Great. We can help with a system that replies to patients, identifies the service they need, and books appointments automatically.\n\nHow many messages do you get per day?', time: '10:41' },
+  { id: 3, from: 'user', text: 'Around 40 to 60 daily, mostly about appointments and prices', time: '10:42' },
+  { id: 4, from: 'ai',   text: 'That is a strong growth opportunity.\n\nRecommended system:\n✅ Instant price and service replies\n✅ 24/7 automatic booking\n✅ Appointment reminders\n✅ Post-visit follow-up\n\nWant a first growth map?', time: '10:42' },
   { id: 5, from: 'user', text: 'Yes, when can we talk?', time: '10:43' },
-  { id: 6, from: 'ai',   text: '🗓️ I\'ve sent you a link to book a strategy call — pick a time that works for you.\n\nWe typically respond the same day and build the system in two weeks! 🚀', time: '10:43' },
+  { id: 6, from: 'ai',   text: 'I sent a short-call link. You will leave with a clear diagnosis: where bookings leak and what flow to automate first.', time: '10:43' },
 ]
 
 const ChatDemo = ({ started }: { started: boolean }) => {
@@ -289,14 +289,14 @@ export const LiveDemo = () => {
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4" style={{ background: 'rgba(0,191,255,0.1)', border: '1px solid rgba(0,191,255,0.25)' }}>
             <Sparkles size={12} style={{ color: '#00BFFF' }} />
             <span className={`text-xs font-medium ${language === 'ar' ? 'font-cairo' : 'font-work'}`} style={{ color: '#7DD3FC' }}>
-              {t('تجربة مباشرة', 'Live Demo')}
+            {t('شاهد النتيجة', 'See the Outcome')}
             </span>
           </div>
           <h2 className={`text-4xl sm:text-5xl font-bold text-white mb-4 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>
-            {t(<>شاهد النظام<br /><span className="gradient-text-blue">وهو يعمل الآن</span></>, <>See The System<br /><span className="gradient-text-blue">Working Live</span></>)}
+            {t(<>من رسالة عادية<br /><span className="gradient-text-blue">إلى حجز مؤكد</span></>, <>From a Normal Message<br /><span className="gradient-text-blue">To a Confirmed Booking</span></>)}
           </h2>
           <p className={`text-slate-400 text-lg max-w-xl mx-auto ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
-            {t('هذا ليس عرض تقديمي — هذا نظام حقيقي يعمل', "This isn't a presentation — it's a real system in action")}
+            {t('هذا هو الفرق بين بوت يرد ونظام يعرف كيف يحوّل العميل للخطوة التالية', 'This is the difference between a bot that replies and a system that moves customers to the next step')}
           </p>
         </motion.div>
 
@@ -353,7 +353,7 @@ export const LiveDemo = () => {
 
           {/* Note */}
           <p className={`text-center text-xs text-slate-600 mt-4 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
-            {t('هذا النظام يمكن تخصيصه بالكامل لعلامتك التجارية وخدماتك', 'This system can be fully customized for your brand and services')}
+            {t('نفس المنطق يتخصص لقطاعك ورسائلك وخدماتك', 'The same logic adapts to your industry, messages, and services')}
           </p>
         </motion.div>
       </div>

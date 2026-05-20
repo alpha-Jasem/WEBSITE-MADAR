@@ -9,18 +9,18 @@ import type { LeadFormData } from '../../types'
 
 const serviceOptions = {
   ar: [
-    { value: 'website', label: 'تطوير موقع إلكتروني' },
-    { value: 'ai', label: 'استشارات AI' },
-    { value: 'automation', label: 'أتمتة ذكية (n8n)' },
-    { value: 'package', label: 'باقة متكاملة' },
-    { value: 'other', label: 'غير متأكد' },
+    { value: 'website', label: 'موقع أو بوابة مرتبطة بالمبيعات' },
+    { value: 'ai', label: 'موظف AI يرد ويحجز' },
+    { value: 'automation', label: 'أتمتة واتساب وCRM' },
+    { value: 'package', label: 'نظام كامل للرد والحجز والمتابعة' },
+    { value: 'other', label: 'أحتاج تشخيص مناسب' },
   ],
   en: [
-    { value: 'website', label: 'Website Development' },
-    { value: 'ai', label: 'AI Consulting' },
-    { value: 'automation', label: 'Smart Automation (n8n)' },
-    { value: 'package', label: 'Full Package' },
-    { value: 'other', label: 'Not Sure' },
+    { value: 'website', label: 'Website or sales-connected portal' },
+    { value: 'ai', label: 'AI agent that replies and books' },
+    { value: 'automation', label: 'WhatsApp and CRM automation' },
+    { value: 'package', label: 'Full reply, booking, follow-up system' },
+    { value: 'other', label: 'I need the right diagnosis' },
   ],
 }
 
@@ -82,13 +82,13 @@ export const LeadForm = () => {
           className="text-center mb-12"
         >
           <span className={`inline-block text-sm text-primary-400 font-semibold tracking-widest uppercase mb-3 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
-            {t('الخطوة التالية', 'Next Step')}
+            {t('ابدأ من أين يضيع العميل', 'Start Where Customers Leak')}
           </span>
           <h2 className={`text-4xl sm:text-5xl font-bold text-white mb-4 ${language === 'ar' ? 'font-cairo' : 'font-outfit'}`}>
-            {t('اطلب عرضك أو الاستشارة المناسبة', 'Request Your Proposal or the Right Consultation')}
+            {t('احصل على خريطة نمو مجانية لشركتك', 'Get a Free Growth Map for Your Business')}
           </h2>
           <p className={`text-slate-400 text-lg ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
-            {t('املأ النموذج وسنعود لك خلال 24 ساعة، أو افتح واتساب مباشرة إذا كنت تريد بدء النقاش الآن.', 'Fill the form and we will get back to you within 24 hours, or jump to WhatsApp now if you want to start immediately.')}
+            {t('أرسل لنا وضعك الحالي، ونرجع لك بتشخيص واضح: أين تضيع الرسائل، ماذا نؤتمت أولاً، وكيف نحولها إلى حجوزات.', 'Send us your current situation and we will return with a clear diagnosis: where messages leak, what to automate first, and how to turn them into bookings.')}
           </p>
         </motion.div>
 
@@ -101,16 +101,16 @@ export const LeadForm = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
             {[
               {
-                title: t('رد خلال 24 ساعة', 'Reply Within 24 Hours'),
-                desc: t('على الجوال أو البريد', 'Via phone or email'),
+                title: t('تشخيص عملي خلال 24 ساعة', 'Practical Diagnosis Within 24 Hours'),
+                desc: t('وليس كلام عام عن الذكاء الاصطناعي', 'No generic AI talk'),
               },
               {
-                title: t('شرح واضح قبل البدء', 'Clear Scope Before Starting'),
-                desc: t('حتى تكون الصورة كاملة من البداية', 'So expectations stay clear from day one'),
+                title: t('خطة واضحة قبل الدفع', 'Clear Plan Before Payment'),
+                desc: t('تعرف ما سنبنيه وما الرقم المستهدف', 'Know what we will build and what number we target'),
               },
               {
-                title: t('واتساب متاح مباشرة', 'WhatsApp Is Available Instantly'),
-                desc: t('لمن يريد محادثة أسرع', 'For faster conversations'),
+                title: t('واتساب لمن يريد السرعة', 'WhatsApp for Faster Action'),
+                desc: t('نبدأ النقاش من رسالة واحدة', 'Start from one message'),
               },
             ].map((item) => (
               <div key={item.title} className="rounded-2xl border border-white/8 bg-white/[0.02] p-4">
@@ -130,10 +130,10 @@ export const LeadForm = () => {
                 <CheckCircle size={36} className="text-emerald-400" />
               </div>
               <h3 className={`text-2xl font-bold text-white mb-3 ${language === 'ar' ? 'font-cairo' : 'font-outfit'}`}>
-                {t('شكراً! تم الاستلام', 'Thank You! Received')}
+                {t('وصلتنا الرسالة. الخطوة التالية تشخيص النمو', 'Received. Next Step: Growth Diagnosis')}
               </h3>
               <p className={`text-slate-400 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
-                {t('سنتواصل معك خلال 24 ساعة عبر الجوال أو البريد الإلكتروني', 'We\'ll contact you within 24 hours via phone or email')}
+                {t('سنتواصل معك خلال 24 ساعة بخطوة واضحة لما يمكن أتمتته أولاً', 'We will contact you within 24 hours with a clear first automation step')}
               </p>
               <motion.button
                 whileHover={{ scale: 1.02 }}
@@ -207,7 +207,7 @@ export const LeadForm = () => {
                 <div>
                   <label className={`block text-sm font-medium text-slate-300 mb-1.5 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
                     <Briefcase size={13} className="inline me-1.5 opacity-60" />
-                    {t('الخدمة المطلوبة', 'Service Needed')} <span className="text-red-400">*</span>
+                    {t('ما النتيجة التي تريدها؟', 'What outcome do you want?')} <span className="text-red-400">*</span>
                   </label>
                   <select
                     value={form.service}
@@ -217,7 +217,7 @@ export const LeadForm = () => {
                     } ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
                   >
                     <option value="" className="bg-navy-800">
-                      {t('اختر الخدمة...', 'Select service...')}
+                      {t('اختر الهدف...', 'Select outcome...')}
                     </option>
                     {opts.map((opt) => (
                       <option key={opt.value} value={opt.value} className="bg-navy-800">
@@ -233,7 +233,7 @@ export const LeadForm = () => {
               <div className="mb-6">
                 <label className={`block text-sm font-medium text-slate-300 mb-1.5 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
                   <MessageSquare size={13} className="inline me-1.5 opacity-60" />
-                  {t('رسالة مختصرة', 'Brief Message')}
+                  {t('صف الوضع الحالي باختصار', 'Briefly Describe the Current Situation')}
                   <span className={`text-slate-600 text-xs ms-1 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
                     {t('(اختياري)', '(optional)')}
                   </span>
@@ -241,7 +241,7 @@ export const LeadForm = () => {
                 <textarea
                   value={form.message}
                   onChange={(e) => setForm({ ...form, message: e.target.value })}
-                  placeholder={t('أخبرنا عن مشروعك أو استفسارك...', 'Tell us about your project or inquiry...')}
+                  placeholder={t('مثال: عندنا واتساب تجينا عليه استفسارات كثيرة ونحتاج رد وحجز ومتابعة...', 'Example: We receive many WhatsApp inquiries and need replies, booking, and follow-up...')}
                   rows={4}
                   className={`w-full bg-navy-800/60 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-primary-500/60 transition-all resize-none text-sm ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
                 />
@@ -262,21 +262,21 @@ export const LeadForm = () => {
                 ) : (
                   <>
                     <Send size={18} />
-                    {t('احجز استشارتي المجانية', 'Book My Free Consultation')}
+                    {t('احصل على خريطة النمو المجانية', 'Get My Free Growth Map')}
                   </>
                 )}
               </motion.button>
 
               <p className={`text-center text-xs text-slate-600 mt-4 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
-                {t('سنتواصل معك خلال 24 ساعة. بياناتك محمية وسرية تماماً.', 'We\'ll contact you within 24 hours. Your data is completely protected and confidential.')}
+                {t('سنراجع وضعك ونرسل لك الخطوة الأعلى أثراً. بياناتك محمية وسرية تماماً.', 'We will review your situation and send the highest-impact next step. Your data is protected and confidential.')}
               </p>
 
               <button
                 type="button"
-                onClick={() => openWhatsAppChat(t('مرحباً، أريد التحدث مباشرة حول الخدمات والباقات المناسبة', 'Hello, I want to discuss the best-fit service and pricing directly'))}
+                onClick={() => openWhatsAppChat(t('مرحباً، أريد خريطة نمو لنظام يرد ويحجز ويتابع العملاء تلقائياً', 'Hello, I want a growth map for a system that replies, books, and follows up automatically'))}
                 className={`mt-4 w-full rounded-2xl border border-white/12 bg-white/[0.03] px-5 py-3 text-sm text-slate-200 transition-all hover:bg-white/[0.06] ${language === 'ar' ? 'font-cairo' : 'font-outfit'}`}
               >
-                {t('أو تواصل معنا مباشرة على واتساب', 'Or Contact Us Directly on WhatsApp')}
+                {t('أو ابدأ مباشرة من واتساب', 'Or Start Directly on WhatsApp')}
               </button>
             </form>
           )}

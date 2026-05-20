@@ -53,7 +53,7 @@ export const FinalCTA = () => {
           >
             <Sparkles size={14} style={{ color: '#00BFFF' }} />
             <span className={`text-sm font-medium ${language === 'ar' ? 'font-cairo' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.9)' }}>
-              {t('استشارة مجانية — بلا التزام', 'Free Consultation — No Commitment')}
+              {t('خريطة نمو مجانية — بدون التزام', 'Free Growth Map — No Commitment')}
             </span>
           </motion.div>
 
@@ -61,7 +61,7 @@ export const FinalCTA = () => {
           <div className="space-y-3">
             <h2 className={`text-3xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>
               <span className="text-white">
-                {t('عملك جاهز', 'Your Business')}
+                {t('واتسابك جاهز', 'Your WhatsApp Is Ready')}
               </span>
               <br />
               <span style={{
@@ -72,24 +72,24 @@ export const FinalCTA = () => {
                 textShadow: 'none',
                 filter: 'drop-shadow(0 0 30px rgba(0,191,255,0.4))',
               }}>
-                {t('للأتمتة الذكية', 'Is Ready for AI')}
+                {t('يصير قناة مبيعات', 'To Become a Sales Channel')}
               </span>
             </h2>
             <p className={`text-base sm:text-xl max-w-2xl mx-auto leading-relaxed ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.7)' }}>
               {t(
                 <>
-                  كل يوم بدون أتمتة هو يوم تخسر فيه وقتاً ومالاً وعملاء. استكشف{' '}
+                  كل يوم بدون رد سريع ومتابعة منظمة يعني رسائل مهتمة تتحول لمنافسك. ابدأ بخريطة واضحة عبر{' '}
                   <a href="#services" style={{ color: '#00BFFF', textDecoration: 'underline', textUnderlineOffset: '3px' }}>خدماتنا الذكية</a>
-                  {' '}أو تعرّف على{' '}
+                  {' '}أو شاهد{' '}
                   <a href="#how-it-works" style={{ color: '#00BFFF', textDecoration: 'underline', textUnderlineOffset: '3px' }}>آلية عملنا</a>
-                  {' '}— مكالمة واحدة تغيّر كل شيء.
+                  {' '}— مكالمة واحدة تكشف أين تضيع الحجوزات.
                 </>,
                 <>
-                  Every day without automation is a day you lose time, money, and customers. Explore our{' '}
+                  Every day without fast replies and structured follow-up means interested messages move to competitors. Start with a clear map through our{' '}
                   <a href="#services" style={{ color: '#00BFFF', textDecoration: 'underline', textUnderlineOffset: '3px' }}>AI services</a>
                   {' '}or see{' '}
                   <a href="#how-it-works" style={{ color: '#00BFFF', textDecoration: 'underline', textUnderlineOffset: '3px' }}>how it works</a>
-                  {' '}— one call changes everything.
+                  {' '}— one call shows where bookings are leaking.
                 </>
               )}
             </p>
@@ -104,16 +104,16 @@ export const FinalCTA = () => {
             style={{ background: 'white', color: '#0D1B3E', boxShadow: '0 0 30px rgba(255,255,255,0.15)' }}
           >
             <Calendar size={20} />
-            <span>{t('احجز استشارة مجانية', 'Book a Free Consultation')}</span>
+            <span>{t('احصل على خريطة النمو', 'Get the Growth Map')}</span>
             <ArrowRight size={18} className={language === 'ar' ? 'rotate-180' : ''} />
           </motion.button>
 
           {/* Trust indicators */}
           <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 pt-2 sm:pt-4">
             {[
-              { ar: 'استجابة خلال ساعة', en: 'Response within 1 hour' },
-              { ar: 'لا رسوم خفية', en: 'No hidden fees' },
-              { ar: 'نتائج مضمونة', en: 'Guaranteed results' },
+              { ar: 'تشخيص واضح خلال 24 ساعة', en: 'Clear diagnosis within 24 hours' },
+              { ar: 'خطة قبل أي دفع', en: 'Plan before any payment' },
+              { ar: 'تركيز على الحجوزات لا المصطلحات', en: 'Booking-focused, not buzzword-focused' },
             ].map((item, i) => (
               <motion.div
                 key={i}

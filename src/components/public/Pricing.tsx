@@ -10,24 +10,24 @@ const plans = [
     gradient: 'linear-gradient(135deg, rgba(13,27,62,0.03), rgba(0,191,255,0.03))',
     border: '#E2EBF8',
     featured: false,
-    ar: { name: 'Starter', tagline: 'للشركات الناشئة', price: 'حسب المشروع', priceNote: 'يبدأ من', desc: 'نظام AI واحد متكامل لبدء رحلة الأتمتة', features: ['نظام رد واتساب ذكي', 'حتى ١٠٠٠ رسالة شهرياً', 'تكامل مع منصة واحدة', 'لوحة تحليلات بسيطة', 'دعم تقني شهر واحد'], cta: 'ابدأ الآن' },
-    en: { name: 'Starter', tagline: 'For Startups', price: 'Project-Based', priceNote: 'Starting from', desc: 'One complete AI system to begin your automation journey', features: ['Smart WhatsApp response system', 'Up to 1,000 messages/month', 'Single platform integration', 'Basic analytics dashboard', '1 month technical support'], cta: 'Get Started' },
+    ar: { name: 'Starter', tagline: 'لبداية الردود الذكية', price: 'حسب المشروع', priceNote: 'يبدأ من', desc: 'نظام واتساب ذكي يوقف ضياع الرسائل ويعطيك بداية واضحة', features: ['نظام رد واتساب ذكي', 'حتى ١٠٠٠ رسالة شهرياً', 'تكامل مع منصة واحدة', 'لوحة تحليلات بسيطة', 'دعم تقني شهر واحد'], cta: 'ابدأ بإيقاف التسرب' },
+    en: { name: 'Starter', tagline: 'Start Smart Replies', price: 'Project-Based', priceNote: 'Starting from', desc: 'A smart WhatsApp system that stops missed messages and gives you a clear starting point', features: ['Smart WhatsApp response system', 'Up to 1,000 messages/month', 'Single platform integration', 'Basic analytics dashboard', '1 month technical support'], cta: 'Stop the Leak' },
   },
   {
     key: 'growth',
     gradient: 'linear-gradient(135deg, rgba(13,27,62,0.03), rgba(0,191,255,0.05))',
     border: '#00BFFF',
     featured: true,
-    ar: { name: 'Growth', tagline: 'للشركات المتنامية', price: 'حسب المشروع', priceNote: 'الأكثر شيوعاً', desc: 'نظام AI شامل لتسريع النمو وتوسيع العمليات', features: ['وكيل AI للعملاء + واتساب', 'نظام حجز مواعيد متكامل', 'أتمتة CRM كاملة', 'رسائل غير محدودة', 'تكامل مع ٣ منصات', 'لوحة تحليلات متقدمة', 'دعم تقني ٦ أشهر', 'تقارير أداء أسبوعية'], cta: 'ابدأ المشروع' },
-    en: { name: 'Growth', tagline: 'For Growing Businesses', price: 'Project-Based', priceNote: 'Most Popular', desc: 'Comprehensive AI system to accelerate growth and scale operations', features: ['AI Customer Agent + WhatsApp', 'Integrated appointment booking', 'Full CRM automation', 'Unlimited messages', 'Integration with 3 platforms', 'Advanced analytics dashboard', '6 months technical support', 'Weekly performance reports'], cta: 'Start Project' },
+    ar: { name: 'Growth', tagline: 'لتحويل الرسائل إلى حجوزات', price: 'حسب المشروع', priceNote: 'الأكثر شيوعاً', desc: 'النظام الكامل للرد، الحجز، المتابعة، والتحليلات في مكان واحد', features: ['وكيل AI للعملاء + واتساب', 'نظام حجز مواعيد متكامل', 'أتمتة CRM كاملة', 'رسائل غير محدودة', 'تكامل مع ٣ منصات', 'لوحة تحليلات متقدمة', 'دعم تقني ٦ أشهر', 'تقارير أداء أسبوعية'], cta: 'ابنِ محرك النمو' },
+    en: { name: 'Growth', tagline: 'Turn Messages Into Bookings', price: 'Project-Based', priceNote: 'Most Popular', desc: 'The complete system for replies, booking, follow-up, and analytics in one place', features: ['AI Customer Agent + WhatsApp', 'Integrated appointment booking', 'Full CRM automation', 'Unlimited messages', 'Integration with 3 platforms', 'Advanced analytics dashboard', '6 months technical support', 'Weekly performance reports'], cta: 'Build the Growth Engine' },
   },
   {
     key: 'enterprise',
     gradient: 'linear-gradient(135deg, rgba(245,158,11,0.05), rgba(239,68,68,0.03))',
     border: '#E2EBF8',
     featured: false,
-    ar: { name: 'Enterprise', tagline: 'للشركات الكبيرة', price: 'تسعير مخصص', priceNote: 'تواصل معنا', desc: 'منظومة AI كاملة مع دعم مخصص وتكاملات غير محدودة', features: ['جميع مزايا Growth', 'أنظمة AI غير محدودة', 'تكاملات مخصصة بلا حدود', 'مدير حساب مخصص', 'SLA مضمون ٩٩.٩٪', 'تدريب الفريق الكامل', 'دعم أولوية ٢٤/٧', 'تقارير تنفيذية متقدمة'], cta: 'تواصل معنا' },
-    en: { name: 'Enterprise', tagline: 'For Large Companies', price: 'Custom Pricing', priceNote: 'Contact Us', desc: 'Complete AI ecosystem with dedicated support and unlimited integrations', features: ['Everything in Growth', 'Unlimited AI systems', 'Unlimited custom integrations', 'Dedicated account manager', '99.9% guaranteed SLA', 'Full team training', '24/7 priority support', 'Advanced executive reports'], cta: 'Contact Us' },
+    ar: { name: 'Enterprise', tagline: 'لمن يريد نظام تشغيل كامل', price: 'تسعير مخصص', priceNote: 'تواصل معنا', desc: 'منظومة تشغيل ومبيعات متعددة الفروع مع دعم مخصص وتكاملات بلا حدود', features: ['جميع مزايا Growth', 'أنظمة AI غير محدودة', 'تكاملات مخصصة بلا حدود', 'مدير حساب مخصص', 'SLA مضمون ٩٩.٩٪', 'تدريب الفريق الكامل', 'دعم أولوية ٢٤/٧', 'تقارير تنفيذية متقدمة'], cta: 'ناقش التوسع' },
+    en: { name: 'Enterprise', tagline: 'For a Full Operating System', price: 'Custom Pricing', priceNote: 'Contact Us', desc: 'Multi-branch sales and operations system with dedicated support and unlimited integrations', features: ['Everything in Growth', 'Unlimited AI systems', 'Unlimited custom integrations', 'Dedicated account manager', '99.9% guaranteed SLA', 'Full team training', '24/7 priority support', 'Advanced executive reports'], cta: 'Discuss Scale' },
   },
 ]
 
@@ -46,14 +46,14 @@ export const Pricing = () => {
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4" style={{ background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.2)' }}>
             <Zap size={12} style={{ color: '#00BFFF' }} />
             <span className={`text-xs font-medium ${language === 'ar' ? 'font-cairo' : 'font-work'}`} style={{ color: '#0D1B3E' }}>
-              {t('باقات مرنة', 'Flexible Plans')}
+              {t('استثمار مبني على العائد', 'ROI-Based Investment')}
             </span>
           </div>
           <h2 className={`text-4xl sm:text-5xl font-bold mb-4 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`} style={{ color: '#0D1B3E' }}>
-            {t(<>استثمار يعود عليك<br /><span className="gradient-text-blue">بأضعاف قيمته</span></>, <>Investment That Returns<br /><span className="gradient-text-blue">Multiple Times Over</span></>)}
+            {t(<>لا تشتري تقنية<br /><span className="gradient-text-blue">اشترِ نظام يجلب حجوزات</span></>, <>Do Not Buy Technology<br /><span className="gradient-text-blue">Buy a System That Brings Bookings</span></>)}
           </h2>
           <p className={`text-lg max-w-xl mx-auto ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: '#3B5280' }}>
-            {t('كل مشروع مخصص — نصمم الحل المناسب لحجم عملك وميزانيتك.', 'Every project is custom — we design the right solution for your business size and budget.')}
+            {t('نحدد السعر بعد فهم حجم الرسائل، مسار البيع، وعدد التكاملات المطلوبة حتى يكون المشروع واضح العائد.', 'Pricing is defined after we understand message volume, sales flow, and required integrations so the project has a clear return.')}
           </p>
         </motion.div>
 
@@ -123,7 +123,7 @@ export const Pricing = () => {
 
         <motion.p initial={{ opacity: 0 }} animate={inView ? { opacity: 1 } : {}} transition={{ delay: 0.6 }}
           className={`text-center text-xs mt-8 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: '#7A96BE' }}>
-          {t('جميع المشاريع تشمل: تحليل مجاني، بناء مخصص، واختبار شامل قبل التسليم', 'All projects include: free analysis, custom build, and comprehensive testing before delivery')}
+          {t('جميع المشاريع تشمل: تحليل تسرب مجاني، بناء مخصص، اختبار قبل الإطلاق، وخطة تحسين بعد التشغيل', 'All projects include: free leakage analysis, custom build, pre-launch testing, and a post-launch optimization plan')}
         </motion.p>
       </div>
     </section>

@@ -240,20 +240,20 @@ export const Hero = () => {
   const opacity = useTransform(scrollY, [0, 400], [1, 0])
   const heroRef = useRef(null)
   const heroInView = useInView(heroRef, { once: true })
-  const headlineAr = useTextScramble('حوّل عملك', heroInView, 0.3)
-  const headlineAr2 = useTextScramble('بقوة الذكاء', heroInView, 0.6)
-  const headlineAr3 = useTextScramble('الاصطناعي', heroInView, 0.9)
+  const headlineAr = useTextScramble('حوّل واتساب شركتك', heroInView, 0.3)
+  const headlineAr2 = useTextScramble('إلى موظف مبيعات', heroInView, 0.6)
+  const headlineAr3 = useTextScramble('يعمل 24/7', heroInView, 0.9)
 
   const trustPoints = [
-    { icon: Zap,       ar: 'رد فوري 24/7',         en: '24/7 Instant Response' },
-    { icon: TrendingUp, ar: 'رفع معدل التحويل',    en: 'Higher Conversion Rate' },
-    { icon: Shield,    ar: 'نتائج مضمونة',          en: 'Guaranteed Results' },
+    { icon: Zap,       ar: 'رد وحجز خلال ثواني',        en: 'Replies and books in seconds' },
+    { icon: TrendingUp, ar: 'متابعة تلقائية للمهتمين',  en: 'Automatic lead follow-up' },
+    { icon: Shield,    ar: 'تشغيل بدون تعقيد',           en: 'Launched without complexity' },
   ]
 
   const stats = [
-    { val: 10, suffix: 'x', ar: 'أسرع في الرد',    en: 'Faster Response' },
-    { val: 65, suffix: '%', ar: 'تخفيض التكاليف',  en: 'Cost Reduction' },
-    { val: 3,  suffix: 'x', ar: 'رفع المبيعات',    en: 'More Sales' },
+    { val: 10, suffix: 'x', ar: 'أسرع في الرد',       en: 'Faster response' },
+    { val: 80, suffix: '%', ar: 'تقليل الرسائل الضائعة', en: 'Fewer missed messages' },
+    { val: 3,  suffix: 'x', ar: 'فرص حجز أكثر',       en: 'More booking opportunities' },
   ]
 
   return (
@@ -298,7 +298,7 @@ export const Hero = () => {
             >
               <Sparkles size={13} style={{ color: '#00BFFF' }} />
               <span className={`text-xs font-medium ${language === 'ar' ? 'font-cairo' : 'font-work'}`} style={{ color: '#0099CC' }}>
-                {t('وكالة أتمتة الذكاء الاصطناعي', 'AI Automation Agency')}
+                {t('نظام مبيعات وحجز يعمل من واتساب', 'WhatsApp Sales and Booking System')}
               </span>
             </motion.div>
 
@@ -317,7 +317,7 @@ export const Hero = () => {
                     {headlineAr3}
                   </>
                 ) : (
-                  <><span className="gradient-text-blue">AI-Powered</span><br />Business<br />Automation</>
+                  <><span className="gradient-text-blue">Turn WhatsApp</span><br />Into a 24/7<br />Sales Agent</>
                 )}
               </h1>
             </motion.div>
@@ -330,8 +330,8 @@ export const Hero = () => {
               className={`text-base sm:text-lg leading-relaxed max-w-lg ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.62)' }}
             >
               {t(
-                'نبني أنظمة ذكاء اصطناعي تستبدل العمل اليدوي، وتزيد المبيعات، وتوسّع عملياتك — دون توظيف موظفين إضافيين.',
-                'We build AI systems that replace manual work, increase sales, and scale your operations — without hiring more staff.'
+                'نركّب لك نظام AI يرد على العملاء، يحجز المواعيد، يتابع المهتمين، ويحوّل الرسائل اليومية إلى حجوزات ومبيعات من لوحة واحدة — بدون توظيف موظف جديد.',
+                'We install an AI system that replies to customers, books appointments, follows up with leads, and turns daily messages into bookings and sales from one dashboard — without hiring another employee.'
               )}
             </motion.p>
 
@@ -370,7 +370,7 @@ export const Hero = () => {
                 className={`flex items-center justify-center gap-2.5 px-6 py-3.5 sm:px-7 sm:py-4 rounded-xl text-white font-semibold text-base cursor-pointer ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
                 style={{ background: 'linear-gradient(135deg, #0D1B3E 0%, #0099CC 100%)', boxShadow: '0 4px 24px rgba(0,153,204,0.35)' }}
               >
-                <span>{t('احجز مكالمة استراتيجية', 'Book a Strategy Call')}</span>
+                <span>{t('احصل على خطة نمو مجانية', 'Get a Free Growth Plan')}</span>
                 <ArrowRight size={16} className={language === 'ar' ? 'rotate-180' : ''} />
               </motion.button>
 
@@ -382,7 +382,7 @@ export const Hero = () => {
                 style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)', background: 'rgba(255,255,255,0.04)' }}
               >
                 <Play size={14} style={{ color: '#00BFFF' }} />
-                <span>{t('كيف يعمل النظام', 'See How It Works')}</span>
+                <span>{t('شاهد كيف تزيد الحجوزات', 'See How Bookings Grow')}</span>
               </motion.button>
             </motion.div>
 

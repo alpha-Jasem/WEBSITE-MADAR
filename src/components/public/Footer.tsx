@@ -13,12 +13,12 @@ const navLinks = [
 ]
 
 const services = [
-  { ar: 'وكلاء AI للعملاء',     en: 'AI Customer Agents' },
-  { ar: 'أتمتة واتساب',         en: 'WhatsApp Automation' },
-  { ar: 'حجز المواعيد AI',      en: 'AI Appointment Booking' },
-  { ar: 'أتمتة CRM',            en: 'CRM Automation' },
-  { ar: 'مساعد مبيعات AI',      en: 'AI Sales Assistant' },
-  { ar: 'تطبيقات الجوال',       en: 'Mobile Apps' },
+  { ar: 'موظف مبيعات AI على واتساب', en: 'AI WhatsApp Sales Agent' },
+  { ar: 'مسار الرسالة إلى الحجز',     en: 'Message-to-Booking Flow' },
+  { ar: 'حجوزات وتذكيرات تلقائية',    en: 'Automatic Booking and Reminders' },
+  { ar: 'CRM يعرف من تتابع',          en: 'CRM Follow-Up Engine' },
+  { ar: 'اقتراحات حملات لزيادة الإيراد', en: 'Revenue Campaign Suggestions' },
+  { ar: 'لوحات وبوابات متصلة',        en: 'Connected Dashboards and Portals' },
 ]
 
 export const Footer = () => {
@@ -52,12 +52,12 @@ export const Footer = () => {
             </div>
             <p className={`text-sm leading-relaxed mb-5 max-w-xs ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.55)' }}>
               {t(
-                'نبني أنظمة ذكاء اصطناعي تحوّل الأعمال — من الردود التلقائية إلى المبيعات الكاملة.',
-                'We build AI systems that transform businesses — from automated responses to complete sales automation.'
+                'نحوّل واتساب شركتك إلى نظام يرد، يحجز، يتابع، ويكشف أين تزيد المبيعات.',
+                'We turn your company WhatsApp into a system that replies, books, follows up, and shows where sales can grow.'
               )}
             </p>
             <p className={`text-xs italic ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.35)' }}>
-              {t('"نبني مستقبل أتمتة الأعمال"', '"Building the future of business automation"')}
+              {t('"لا نبيع AI. نبني نتيجة تشغيلية واضحة."', '"We do not sell AI. We build a clear business outcome."')}
             </p>
           </div>
 
@@ -136,7 +136,7 @@ export const Footer = () => {
               className={`mt-5 flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
               style={{ background: 'linear-gradient(135deg, #0D1B3E, #00BFFF)', boxShadow: '0 0 20px rgba(0,191,255,0.2)' }}
             >
-              {t('احجز مكالمة', 'Book a Call')}
+              {t('احصل على خريطة نمو', 'Get a Growth Map')}
               <ArrowUpRight size={14} />
             </motion.button>
           </div>

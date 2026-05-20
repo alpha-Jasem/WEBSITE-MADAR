@@ -11,8 +11,8 @@ const services = [
     glow: 'rgba(0,191,255,0.12)',
     glowHover: 'rgba(0,191,255,0.22)',
     featured: true,
-    ar: { tag: 'الأكثر طلباً', title: 'وكلاء ذكاء اصطناعي للعملاء', desc: 'ردود فورية، ذكية، وشخصية على مدار الساعة. وكيل AI يرد على كل استفسار، ويتعامل مع الاعتراضات، ويوجّه العميل نحو الشراء.', features: ['رد < 1 ثانية', 'عربي وإنجليزي', 'CRM متكامل'] },
-    en: { tag: 'Most Popular', title: 'AI Customer Support Agents', desc: 'Instant, intelligent, personalized responses 24/7. An AI agent that handles inquiries, overcomes objections, and guides customers to purchase.', features: ['< 1s response', 'AR & EN support', 'CRM integrated'] },
+    ar: { tag: 'الأقوى للتحويل', title: 'موظف مبيعات AI على واتساب', desc: 'يرد فوراً، يفهم احتياج العميل، يجاوب الاعتراضات، ويأخذه للخطوة التالية: حجز، عرض سعر، أو مكالمة.', features: ['رد < 1 ثانية', 'بيع 24/7', 'CRM متكامل'] },
+    en: { tag: 'Best for Conversion', title: 'AI WhatsApp Sales Agent', desc: 'Replies instantly, understands intent, handles objections, and moves the customer to the next step: booking, quote, or call.', features: ['< 1s response', '24/7 selling', 'CRM integrated'] },
   },
   {
     icon: MessageSquare,
@@ -20,8 +20,8 @@ const services = [
     glow: 'rgba(0,191,255,0.12)',
     glowHover: 'rgba(0,191,255,0.22)',
     featured: false,
-    ar: { tag: 'واتساب', title: 'أتمتة واتساب الذكية', desc: 'نردّ على عملائك في واتساب تلقائياً — من أول رسالة وحتى إتمام الحجز والمتابعة.', features: ['ردود تلقائية', 'متابعة مبيعات', 'تحليلات حية'] },
-    en: { tag: 'WhatsApp', title: 'Smart WhatsApp Automation', desc: 'Automatically respond on WhatsApp — from the first message all the way to booking confirmation and follow-up.', features: ['Auto responses', 'Sales follow-ups', 'Live analytics'] },
+    ar: { tag: 'واتساب', title: 'مسار كامل من الرسالة إلى الحجز', desc: 'نحوّل محادثة واتساب إلى رحلة واضحة: ترحيب، أسئلة تأهيل، عرض مناسب، تأكيد حجز، ثم متابعة.', features: ['تأهيل تلقائي', 'متابعة مبيعات', 'تحليلات حية'] },
+    en: { tag: 'WhatsApp', title: 'Full Path From Message to Booking', desc: 'We turn a WhatsApp chat into a clear journey: greeting, qualification, offer, booking confirmation, then follow-up.', features: ['Auto qualification', 'Sales follow-ups', 'Live analytics'] },
   },
   {
     icon: Calendar,
@@ -29,8 +29,8 @@ const services = [
     glow: 'rgba(0,153,204,0.12)',
     glowHover: 'rgba(0,153,204,0.22)',
     featured: false,
-    ar: { tag: 'جدولة', title: 'نظام حجز المواعيد AI', desc: 'عملاؤك يحجزون مواعيدهم تلقائياً — التذكير، إعادة الجدولة، والتأكيد يحدث بلا موظفين.', features: ['حجز 24/7', 'تذكير تلقائي', 'تقليل الغياب 80%'] },
-    en: { tag: 'Scheduling', title: 'AI Appointment Booking', desc: 'Customers book automatically — reminders, rescheduling, and confirmations happen without staff involvement.', features: ['24/7 booking', 'Auto reminders', '80% less no-shows'] },
+    ar: { tag: 'جدولة', title: 'حجوزات تلقائية بدون ضغط على الفريق', desc: 'العميل يختار الخدمة والوقت، والنظام يؤكد ويرسل التذكيرات ويقلل الغياب بدون مكالمات متكررة.', features: ['حجز 24/7', 'تذكير تلقائي', 'تقليل الغياب'] },
+    en: { tag: 'Scheduling', title: 'Automatic Bookings Without Team Pressure', desc: 'Customers choose the service and time, then the system confirms, reminds, and reduces no-shows without repeated calls.', features: ['24/7 booking', 'Auto reminders', 'Fewer no-shows'] },
   },
   {
     icon: Database,
@@ -38,8 +38,8 @@ const services = [
     glow: 'rgba(21,101,192,0.12)',
     glowHover: 'rgba(21,101,192,0.22)',
     featured: false,
-    ar: { tag: 'CRM', title: 'أتمتة إدارة العلاقات', desc: 'تسجيل تلقائي للعملاء، متابعة المبيعات، وتحليل سلوك العملاء في لوحة واحدة.', features: ['إدخال تلقائي', 'تقارير مبيعات', 'تقسيم العملاء'] },
-    en: { tag: 'CRM', title: 'CRM Automation', desc: 'Automatic customer registration, sales tracking, and behavior analysis in one unified dashboard.', features: ['Auto data entry', 'Sales reports', 'Segmentation'] },
+    ar: { tag: 'CRM', title: 'CRM يعرف من يجب متابعته', desc: 'كل عميل يدخل تلقائياً مع حالته واهتمامه وآخر تواصل، حتى لا تضيع فرصة بسبب نسيان أو فوضى.', features: ['إدخال تلقائي', 'تقارير مبيعات', 'تقسيم العملاء'] },
+    en: { tag: 'CRM', title: 'CRM That Knows Who Needs Follow-Up', desc: 'Every customer is captured with status, interest, and last touchpoint so opportunities do not disappear in messy handoffs.', features: ['Auto data entry', 'Sales reports', 'Segmentation'] },
   },
   {
     icon: TrendingUp,
@@ -47,8 +47,8 @@ const services = [
     glow: 'rgba(0,191,255,0.12)',
     glowHover: 'rgba(0,191,255,0.22)',
     featured: false,
-    ar: { tag: 'مبيعات AI', title: 'مساعد المبيعات الذكي', desc: 'وكيل AI يتابع المحتملين، يرسل عروضاً مخصصة، ويغلق الصفقات — موظف مبيعات لا يتعب.', features: ['متابعة تلقائية', 'عروض مخصصة', 'تحليل pipeline'] },
-    en: { tag: 'AI Sales', title: 'AI Sales Assistant', desc: 'An AI agent that follows up with prospects, sends personalized offers, and closes deals — a sales rep that never sleeps.', features: ['Auto follow-ups', 'Custom offers', 'Pipeline analysis'] },
+    ar: { tag: 'نمو', title: 'محرك اقتراحات لزيادة الإيراد', desc: 'يكشف العملاء الخاملين، الأيام الضعيفة، والخدمات الأكثر طلباً، ثم يقترح حملة جاهزة بضغطة واحدة.', features: ['متابعة تلقائية', 'عروض مخصصة', 'تحليل pipeline'] },
+    en: { tag: 'Growth', title: 'Revenue Suggestion Engine', desc: 'Detects inactive customers, weak booking days, and top services, then suggests a campaign you can launch in one click.', features: ['Auto follow-ups', 'Custom offers', 'Pipeline analysis'] },
   },
   {
     icon: Smartphone,
@@ -56,8 +56,8 @@ const services = [
     glow: 'rgba(21,101,192,0.12)',
     glowHover: 'rgba(21,101,192,0.22)',
     featured: false,
-    ar: { tag: 'تطبيقات', title: 'تطبيقات الجوال iOS & Android', desc: 'نبني تطبيقات احترافية لعملك على iOS وAndroid — سريعة، جميلة، ومتكاملة مع أنظمة AI وواتساب.', features: ['iOS & Android', 'UI/UX احترافي', 'ربط AI كامل'] },
-    en: { tag: 'Mobile Apps', title: 'iOS & Android Mobile Apps', desc: 'We build professional mobile apps for your business on iOS & Android — fast, beautiful, and fully integrated with AI systems and WhatsApp.', features: ['iOS & Android', 'Professional UI/UX', 'Full AI integration'] },
+    ar: { tag: 'تطبيقات', title: 'بوابات وتطبيقات متصلة بالنظام', desc: 'لوحة إدارة، بوابة عميل، أو تطبيق جوال مرتب ومربوط بالحجوزات والـ CRM وواتساب حسب احتياجك.', features: ['iOS & Android', 'UI/UX احترافي', 'ربط AI كامل'] },
+    en: { tag: 'Apps', title: 'Dashboards and Apps Connected to the System', desc: 'Admin dashboard, customer portal, or mobile app connected to bookings, CRM, and WhatsApp based on your needs.', features: ['iOS & Android', 'Professional UI/UX', 'Full AI integration'] },
   },
 ]
 
@@ -82,14 +82,14 @@ export const Services = () => {
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4" style={{ background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.2)' }}>
             <Sparkles size={12} style={{ color: '#00BFFF' }} />
             <span className={`text-xs font-medium ${language === 'ar' ? 'font-cairo' : 'font-work'}`} style={{ color: 'white' }}>
-              {t('حلول مدار AI', 'MADAR AI Solutions')}
+              {t('ما الذي يشتغل بدل فريقك', 'What Works Instead of Your Team')}
             </span>
           </div>
           <h2 className={`text-4xl sm:text-5xl font-bold mb-4 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`} style={{ color: 'white' }}>
-            {t(<>ما نبنيه لك<br /><span className="gradient-text-blue">من أنظمة AI</span></>, <>What We Build<br /><span className="gradient-text-blue">For Your Business</span></>)}
+            {t(<>نظام واحد يمسك<br /><span className="gradient-text-blue">الرد والحجز والمتابعة</span></>, <>One System Handles<br /><span className="gradient-text-blue">Replies, Booking, Follow-Up</span></>)}
           </h2>
           <p className={`text-lg max-w-xl mx-auto ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.55)' }}>
-            {t('أنظمة جاهزة للتشغيل، مخصصة لعملك، ومُتكاملة مع أدواتك الحالية.', 'Production-ready systems, customized for your business, integrated with your existing tools.')}
+            {t('بدل ما تشتري أدوات كثيرة، نبني لك مسار تشغيل واحد يحوّل الرسائل إلى نتائج قابلة للقياس.', 'Instead of buying scattered tools, we build one operating flow that turns messages into measurable outcomes.')}
           </p>
         </motion.div>
 
@@ -146,7 +146,7 @@ export const Services = () => {
         {/* CTA */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.6, delay: 0.5 }} className="text-center mt-12">
           <p className={`text-sm mb-4 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: '#7A96BE' }}>
-            {t('كل هذه الأنظمة مخصصة لعملك — لا حلول جاهزة عامة', 'All systems are custom-built — no generic templates')}
+            {t('نبدأ من هدفك التجاري، ثم نبني النظام الذي يحقق الرقم المطلوب', 'We start from your business goal, then build the system that moves the number')}
           </p>
           <motion.button
             whileHover={{ scale: 1.02, boxShadow: '0 0 40px rgba(0,191,255,0.35)' }}
@@ -155,7 +155,7 @@ export const Services = () => {
             className={`inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-white font-semibold cursor-pointer ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
             style={{ background: 'linear-gradient(135deg, #0D1B3E, #0099CC)', boxShadow: '0 0 25px rgba(0,153,204,0.3)' }}
           >
-            {t('ناقش مشروعك معنا', 'Discuss Your Project')}
+            {t('ابنِ نظام المبيعات الآلي', 'Build My Automated Sales System')}
             <ArrowUpRight size={16} />
           </motion.button>
         </motion.div>

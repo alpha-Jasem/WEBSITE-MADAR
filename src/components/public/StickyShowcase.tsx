@@ -7,20 +7,20 @@ import { openWhatsAppChat } from '../../lib/whatsapp'
 const features = [
   {
     num: '01', icon: MessageSquare, color: '#00BFFF', bg: 'rgba(0,191,255,0.1)',
-    tag: { ar: 'وكيل AI', en: 'AI Agent' },
-    title: { ar: 'ردود فورية في أقل من ثانية', en: 'Instant Replies Under 1 Second' },
-    desc: { ar: 'وكيل AI يرد على عملائك 24/7 بعربي أو إنجليزي — من أول رسالة حتى إتمام الصفقة بدون أي تدخل بشري.', en: 'AI agent responds 24/7 in Arabic or English — from first message to closed deal, zero human input.' },
+    tag: { ar: 'رد ذكي', en: 'Smart Reply' },
+    title: { ar: 'كل رسالة تتحول لخطوة بيع', en: 'Every Message Becomes a Sales Step' },
+    desc: { ar: 'النظام يرد فوراً، يفهم نية العميل، ويسأله السؤال التالي الصحيح بدل ردود عامة لا تبيع.', en: 'The system replies instantly, understands intent, and asks the right next question instead of sending generic replies that do not sell.' },
     checks: {
-      ar: ['رد خلال 0.8 ثانية في المتوسط', 'يتعامل مع الاعتراضات ذكياً', 'يوجّه العميل للشراء تلقائياً'],
-      en: ['0.8s average response time', 'Handles objections intelligently', 'Guides customers to purchase automatically'],
+      ar: ['رد خلال 0.8 ثانية في المتوسط', 'تأهيل العميل من أول محادثة', 'توجيه واضح للحجز أو العرض'],
+      en: ['0.8s average response time', 'Qualifies customers from the first chat', 'Clear path to booking or quote'],
     },
     stat: { val: '0.8s', label: { ar: 'متوسط الرد', en: 'Avg response' } },
   },
   {
     num: '02', icon: Calendar, color: '#4A9EFF', bg: 'rgba(74,158,255,0.1)',
     tag: { ar: 'حجز تلقائي', en: 'Auto Booking' },
-    title: { ar: 'جدولك يمتلئ بدون موظفين', en: 'Schedule Fills Without Staff' },
-    desc: { ar: 'النظام يحجز المواعيد، يرسل التذكيرات، ويعيد الجدولة تلقائياً — جدولك يمتلئ وأنت نايم.', en: 'The system books, reminds, and reschedules automatically — your calendar fills while you sleep.' },
+    title: { ar: 'الحجز يتم قبل ما يتدخل موظفك', en: 'Booking Happens Before Staff Step In' },
+    desc: { ar: 'العميل يختار الوقت المناسب، والنظام يؤكد الموعد ويرسل التذكيرات ويقلل الغياب.', en: 'Customers choose a time, then the system confirms, reminds, and reduces no-shows.' },
     checks: {
       ar: ['حجز 24/7 بدون انقطاع', 'تذكير تلقائي قبل الموعد', 'تقليل الغياب بنسبة 80%'],
       en: ['24/7 uninterrupted booking', 'Auto reminder before each appointment', '80% no-show reduction'],
@@ -30,8 +30,8 @@ const features = [
   {
     num: '03', icon: TrendingUp, color: '#00BFFF', bg: 'rgba(0,191,255,0.1)',
     tag: { ar: 'تحليلات حية', en: 'Live Analytics' },
-    title: { ar: 'أرقامك تكبر وهمّك يقل', en: 'Numbers Grow, Stress Shrinks' },
-    desc: { ar: 'لوحة تحكم تُظهر نمو المحادثات، معدل التحويل، والإيرادات في الوقت الفعلي — كل شيء في مكان واحد.', en: 'Dashboard showing conversation growth, conversion rates, and revenue in real time — all in one place.' },
+    title: { ar: 'تعرف أين تزيد الإيراد', en: 'Know Where Revenue Can Grow' },
+    desc: { ar: 'لوحة توضح الرسائل، الحجوزات، التحويل، والخدمات الأقوى حتى تقرر بناءً على بيانات لا إحساس.', en: 'A dashboard shows messages, bookings, conversion, and top services so decisions come from data, not instinct.' },
     checks: {
       ar: ['إحصاءات حية في الوقت الفعلي', 'تقارير أسبوعية تلقائية', 'نمو 172% في الإيرادات'],
       en: ['Real-time live statistics', 'Automatic weekly reports', '172% revenue growth tracked'],
@@ -41,8 +41,8 @@ const features = [
   {
     num: '04', icon: Users, color: '#4A9EFF', bg: 'rgba(74,158,255,0.1)',
     tag: { ar: 'متابعة مبيعات', en: 'Sales Follow-up' },
-    title: { ar: 'لا عميل يضيع بعد اليوم', en: 'No Lead Slips Through Again' },
-    desc: { ar: 'النظام يتابع كل محتمل تلقائياً، يرسل عروضاً مخصصة، ويغلق الصفقات — موظف مبيعات لا يتعب.', en: 'Auto-follows every lead, sends personalized offers, closes deals — a tireless sales rep that never sleeps.' },
+    title: { ar: 'المهتم لا يبرد بعد أول رسالة', en: 'Interested Leads Do Not Go Cold' },
+    desc: { ar: 'النظام يتابع كل مهتم برسائل مناسبة، عروض مخصصة، وتذكيرات ذكية حتى يعود للحجز أو الشراء.', en: 'The system follows up with interested leads using relevant messages, tailored offers, and smart reminders until they book or buy.' },
     checks: {
       ar: ['متابعة تلقائية بعد كل تفاعل', 'عروض مخصصة لكل عميل', 'معدل إغلاق 42%'],
       en: ['Auto follow-up after every interaction', 'Personalized offers per lead', '42% close rate achieved'],
@@ -275,7 +275,7 @@ export const StickyShowcase = () => {
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-5" style={{ background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.2)' }}>
             <BarChart2 size={12} style={{ color: '#00BFFF' }} />
             <span className={`text-xs font-medium ${language === 'ar' ? 'font-cairo' : 'font-work'}`} style={{ color: '#00BFFF' }}>
-              {t('كيف يعمل النظام', 'How The System Works')}
+            {t('محرك التحويل', 'Conversion Engine')}
             </span>
           </div>
           <h2 className={`text-4xl sm:text-5xl font-bold mb-4 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`} style={{ color: 'white' }}>
@@ -285,10 +285,10 @@ export const StickyShowcase = () => {
             )}
           </h2>
           <p className={`hidden lg:block text-lg max-w-lg mx-auto ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.5)' }}>
-            {t('مرر للأسفل لترى كيف يعمل كل جزء من النظام', 'Scroll down to see how each part of the system works')}
+            {t('مرر للأسفل لترى كيف يتحول واتساب من صندوق رسائل إلى مسار مبيعات', 'Scroll down to see how WhatsApp turns from an inbox into a sales flow')}
           </p>
           <p className={`lg:hidden text-base max-w-lg mx-auto ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.5)' }}>
-            {t('٤ أنظمة تعمل معاً لتحويل عملك', '4 systems working together to transform your business')}
+            {t('٤ أجزاء تعمل معاً لتحويل الرسائل إلى حجوزات', '4 parts working together to turn messages into bookings')}
           </p>
         </motion.div>
       </div>
@@ -370,7 +370,7 @@ export const StickyShowcase = () => {
                               onClick={() => openWhatsAppChat()}
                               className={`px-5 py-3 rounded-2xl text-sm font-semibold text-white cursor-pointer ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
                               style={{ background: 'linear-gradient(135deg,#0D1B3E,#0099CC)', boxShadow: '0 0 20px rgba(0,153,204,0.25)' }}>
-                              {t('احجز مكالمة', 'Book a Call')}
+                              {t('احصل على خريطة نمو', 'Get a Growth Map')}
                             </motion.button>
                           </div>
                         </>
