@@ -10,6 +10,7 @@ import { Terms } from './pages/Terms'
 
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
 const ClientPortal = lazy(() => import('./pages/ClientPortal').then(m => ({ default: m.ClientPortal })))
+const SolarEngine = lazy(() => import('./pages/SolarEngine').then(m => ({ default: m.SolarEngine })))
 
 function App() {
   return (
@@ -33,6 +34,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRole="client">
                   <ClientPortal />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/solar/*"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <SolarEngine />
                 </ProtectedRoute>
               }
             />

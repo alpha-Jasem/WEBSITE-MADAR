@@ -5,6 +5,7 @@ import {
   BarChart3,
   BrainCircuit,
   Building2,
+  FlameKindling,
   GitBranch,
   LayoutDashboard,
   LogOut,
@@ -15,6 +16,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { AdminOverview } from '../components/dashboard/admin/AdminOverview'
+import { AdminCommandDeck } from '../components/dashboard/admin/AdminCommandDeck'
 import { AdminCompanies } from '../components/dashboard/admin/AdminCompanies'
 import { AdminAutomations } from '../components/dashboard/admin/AdminAutomations'
 import { AdminLeads } from '../components/dashboard/admin/AdminLeads'
@@ -22,10 +24,12 @@ import { AdminLogs } from '../components/dashboard/admin/AdminLogs'
 import { AdminSettings } from '../components/dashboard/admin/AdminSettings'
 import { AdminN8n } from '../components/dashboard/admin/AdminN8n'
 import { AdminPipeline } from '../components/dashboard/admin/AdminPipeline'
+import { SolarOverview } from '../components/solar/SolarOverview'
 import { signOut } from '../lib/supabase'
 
 const navItems = [
   { to: '/admin', icon: LayoutDashboard, label: 'Command Deck', accent: '#f3a64f', end: true },
+  { to: '/admin/forge', icon: FlameKindling, label: 'Celestial Forge', accent: '#f3a64f' },
   { to: '/admin/analytics', icon: BarChart3, label: 'Signal Analytics', accent: '#65d6ff' },
   { to: '/admin/companies', icon: Building2, label: 'Accounts', accent: '#8de2cb' },
   { to: '/admin/leads', icon: Users2, label: 'Live Pipeline', accent: '#f3a64f' },
@@ -119,18 +123,23 @@ function AdminRail() {
 
 export const AdminDashboard = () => {
   const location = useLocation()
+  const isForge = location.pathname.startsWith('/admin/forge')
+  const isCommand = location.pathname === '/admin' || location.pathname === '/admin/'
+  const isHud = isForge || isCommand
   const currentPage = navItems.find((item) =>
     item.end ? location.pathname === item.to : location.pathname.startsWith(item.to)
   )
 
   return (
-    <div className="solar-admin-shell" dir="ltr">
-      <div className="solar-admin-background">
-        <div className="solar-admin-ambient solar-admin-ambient-a" />
-        <div className="solar-admin-ambient solar-admin-ambient-b" />
-        <div className="solar-admin-ambient solar-admin-ambient-c" />
-        <div className="solar-admin-grid" />
-      </div>
+    <div className={`solar-admin-shell${isHud ? ' is-forge' : ''}`} dir="ltr">
+      {!isHud && (
+        <div className="solar-admin-background">
+          <div className="solar-admin-ambient solar-admin-ambient-a" />
+          <div className="solar-admin-ambient solar-admin-ambient-b" />
+          <div className="solar-admin-ambient solar-admin-ambient-c" />
+          <div className="solar-admin-grid" />
+        </div>
+      )}
 
       <AdminRail />
 
@@ -149,7 +158,8 @@ export const AdminDashboard = () => {
 
         <main className="solar-admin-content">
           <Routes>
-            <Route index element={<AdminOverview />} />
+            <Route index element={<AdminCommandDeck />} />
+            <Route path="forge" element={<SolarOverview />} />
             <Route path="companies" element={<AdminCompanies />} />
             <Route path="automations" element={<AdminAutomations />} />
             <Route path="leads" element={<AdminLeads />} />
