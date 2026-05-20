@@ -158,7 +158,7 @@ export const AdminDashboard = () => {
             <Route path="n8n" element={<AdminN8n />} />
             <Route path="analytics" element={<AdminOverview />} />
             <Route path="pipeline" element={<AdminPipeline />} />
-            <Route path="messages" element={<AdminLogs />} />
+            <Route path="messages" element={<AdminOverview />} />
             <Route path="*" element={<AdminOverview />} />
           </Routes>
         </main>
