@@ -10,10 +10,12 @@ import { Navbar }        from '../components/public/Navbar'
 import { Hero }          from '../components/public/Hero'
 import { StickyShowcase } from '../components/public/StickyShowcase'
 import { Problem }       from '../components/public/Problem'
+import { ConversionOffer } from '../components/public/ConversionOffer'
 import { Services }      from '../components/public/Services'
 import { HowItWorks }    from '../components/public/HowItWorks'
 import { CaseStudies }   from '../components/public/CaseStudies'
 import { Industries }    from '../components/public/Industries'
+import { LeadForm }      from '../components/public/LeadForm'
 
 import { FinalCTA }      from '../components/public/FinalCTA'
 import { Footer }        from '../components/public/Footer'
@@ -37,10 +39,12 @@ export const HomePage = () => {
             <Hero />
             <StickyShowcase />
             <Problem />
+            <ConversionOffer />
             <Services />
             <HowItWorks />
             <CaseStudies />
             <Industries />
+            <LeadForm />
             <FinalCTA />
           </main>
           <Footer />
