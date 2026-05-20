@@ -149,7 +149,10 @@ export const Problem = () => {
         >
           <div className="inline-flex flex-col items-center gap-3">
             <p className={`text-base ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.55)' }}>
-              {t('مدار تحل كل هذا بأنظمة الذكاء الاصطناعي', 'MADAR solves all of this with AI systems')}
+              {t('مدار تحل كل هذا بأنظمة الذكاء الاصطناعي — ', 'MADAR solves all of this with AI systems — ')}
+              <a href="#services" className={`underline underline-offset-2 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: '#00BFFF' }}>
+                {t('اكتشف خدماتنا', 'Explore our services')}
+              </a>
             </p>
             <motion.div
               animate={{ y: [0, 6, 0] }}
@@ -160,6 +163,32 @@ export const Problem = () => {
               <ArrowRight size={18} className="rotate-90" />
             </motion.div>
           </div>
+
+          {/* External citations */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={inView ? { opacity: 1 } : {}}
+            transition={{ duration: 0.7, delay: 0.9 }}
+            className={`mt-8 text-xs max-w-2xl mx-auto leading-relaxed ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
+            style={{ color: 'rgba(255,255,255,0.28)' }}
+          >
+            {t(
+              <>
+                وفقاً لـ{' '}
+                <a href="https://www.mckinsey.com/capabilities/mckinsey-digital/our-insights/the-economic-potential-of-generative-ai" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(0,191,255,0.5)' }}>McKinsey Global Institute</a>
+                {' '}، يمكن للأتمتة توفير ما يصل إلى 30% من تكاليف التشغيل. وتُشير{' '}
+                <a href="https://www.gartner.com/en/information-technology/insights/artificial-intelligence" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(0,191,255,0.5)' }}>Gartner</a>
+                {' '}إلى أن 80% من الشركات ستعتمد الذكاء الاصطناعي بحلول 2026.
+              </>,
+              <>
+                According to{' '}
+                <a href="https://www.mckinsey.com/capabilities/mckinsey-digital/our-insights/the-economic-potential-of-generative-ai" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(0,191,255,0.5)' }}>McKinsey Global Institute</a>
+                , automation can save up to 30% of operating costs. {' '}
+                <a href="https://www.gartner.com/en/information-technology/insights/artificial-intelligence" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(0,191,255,0.5)' }}>Gartner</a>
+                {' '}reports that 80% of companies will adopt AI by 2026.
+              </>
+            )}
+          </motion.p>
         </motion.div>
       </div>
     </section>

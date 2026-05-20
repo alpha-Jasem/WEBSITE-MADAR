@@ -77,8 +77,20 @@ export const FinalCTA = () => {
             </h2>
             <p className={`text-base sm:text-xl max-w-2xl mx-auto leading-relaxed ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.7)' }}>
               {t(
-                'كل يوم بدون أتمتة هو يوم تخسر فيه وقتاً ومالاً وعملاء. ابدأ اليوم — مكالمة واحدة تغيّر كل شيء.',
-                'Every day without automation is a day you lose time, money, and customers. Start today — one call changes everything.'
+                <>
+                  كل يوم بدون أتمتة هو يوم تخسر فيه وقتاً ومالاً وعملاء. استكشف{' '}
+                  <a href="#services" style={{ color: '#00BFFF', textDecoration: 'underline', textUnderlineOffset: '3px' }}>خدماتنا الذكية</a>
+                  {' '}أو تعرّف على{' '}
+                  <a href="#how-it-works" style={{ color: '#00BFFF', textDecoration: 'underline', textUnderlineOffset: '3px' }}>آلية عملنا</a>
+                  {' '}— مكالمة واحدة تغيّر كل شيء.
+                </>,
+                <>
+                  Every day without automation is a day you lose time, money, and customers. Explore our{' '}
+                  <a href="#services" style={{ color: '#00BFFF', textDecoration: 'underline', textUnderlineOffset: '3px' }}>AI services</a>
+                  {' '}or see{' '}
+                  <a href="#how-it-works" style={{ color: '#00BFFF', textDecoration: 'underline', textUnderlineOffset: '3px' }}>how it works</a>
+                  {' '}— one call changes everything.
+                </>
               )}
             </p>
           </div>
