@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 
 const LATIN = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%&*'
-const AR    = 'ابتثجحخدذرزسشصضطظعغفقكلمنهوي'
 
 export const useTextScramble = (text: string, trigger: boolean, delay = 0) => {
   const [output, setOutput] = useState(text)
@@ -11,8 +10,15 @@ export const useTextScramble = (text: string, trigger: boolean, delay = 0) => {
   useEffect(() => {
     if (!trigger) return
 
-    const isArabic = /[؀-ۿ]/.test(text)
-    const chars = isArabic ? AR : LATIN
+    const isArabic = /[\u0600-\u06FF]/.test(text)
+    // Randomizing Arabic glyphs, especially near mixed LTR text like "24/7",
+    // creates bidirectional reordering and a broken first-load animation.
+    if (isArabic) {
+      setOutput(text)
+      return
+    }
+
+    const chars = LATIN
     const len = text.length
 
     const start = () => {
