@@ -1850,7 +1850,6 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   align-items: stretch;
   position: relative;
   z-index: 1;
-  margin-top: 100px;
 }
 .se-left-col, .se-right-col { display: flex; flex-direction: column; gap: 14px; }
 
