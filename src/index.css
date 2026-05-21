@@ -568,6 +568,12 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   margin: 0 auto;
   padding: 28px 34px 48px;
 }
+/* HUD pages (Command Deck + Forge) — no padding, hero goes edge-to-edge */
+.solar-admin-shell.is-forge .solar-admin-content {
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
+}
 
 .solar-overview {
   display: flex;
@@ -1730,39 +1736,55 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   padding: 28px 32px;
 }
 
-/* Overview */
+/* HUD page — hero video then scrollable content */
+.se-hud-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+/* Hero: full viewport height video, nothing on top */
+.se-hero {
+  width: 100%;
+  height: calc(100vh - 82px);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.se-hero-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+}
+/* Subtle gradient at bottom to blend into content section */
+.se-hero-grad {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(to bottom, transparent, #050510);
+  pointer-events: none;
+}
+
+/* Content section — dark background, cards inside */
+.se-content-section {
+  background: #050510;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Legacy overview class — keep for any remaining references */
 .se-overview {
   display: flex;
   flex-direction: column;
   gap: 10px;
   position: relative;
   z-index: 2;
-}
-
-/* Fixed video background — contained within content area (after sidebar, below topbar) */
-.se-overview-bg-fixed {
-  position: fixed;
-  top: 82px;
-  left: 286px;
-  right: 0;
-  bottom: 0;
-  z-index: 1;
-  pointer-events: none;
-  overflow: hidden;
-}
-.se-overview-bg-fixed video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 18%;
-  opacity: 0.85;
-  display: block;
-}
-@media (max-width: 1023px) {
-  .se-overview-bg-fixed { left: 60px; }
-}
-@media (max-width: 767px) {
-  .se-overview-bg-fixed { left: 0; top: 60px; }
 }
 
 /* All sections float above the video */
