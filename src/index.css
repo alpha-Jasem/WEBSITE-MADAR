@@ -568,11 +568,12 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   margin: 0 auto;
   padding: 28px 34px 48px;
 }
-/* HUD pages (Command Deck + Forge) — no padding, hero goes edge-to-edge */
 .solar-admin-shell.is-forge .solar-admin-content {
-  padding: 0;
-  width: 100%;
+  padding: 12px 16px;
+  height: calc(100vh - 82px);
+  overflow: hidden;
   max-width: 100%;
+  width: 100%;
 }
 
 .solar-overview {
@@ -1736,49 +1737,96 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   padding: 28px 32px;
 }
 
-/* HUD page — hero video then scrollable content */
+/* HUD page — video fixed behind, cards float on top, NO scroll */
 .se-hud-page {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  position: relative;
+  z-index: 2;
+  height: calc(100vh - 82px);
+  overflow: hidden;
 }
 
-/* Hero: full viewport height video, nothing on top */
-.se-hero {
-  width: 100%;
-  height: calc(100vh - 82px);
+/* Content section — 2 rows */
+.se-content-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   position: relative;
+  z-index: 2;
+  flex: 1;
   overflow: hidden;
+}
+
+/* Row 1 — KPIs | center open | Metrics */
+.se-row1 {
+  display: grid;
+  grid-template-columns: 180px 1fr 200px;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+}
+.se-col-kpi, .se-col-metrics { display: flex; flex-direction: column; gap: 8px; }
+.se-col-center { flex: 1; }
+
+/* Row 2 — compact strip of 5 panels */
+.se-row2 {
+  display: flex;
+  gap: 8px;
+  height: 140px;
   flex-shrink: 0;
+}
+.se-strip-panel {
+  background: rgba(8,10,18,0.52);
+  border: 1px solid rgba(243,166,79,0.2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  backdrop-filter: blur(14px);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+.se-strip-ai-conf {
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 90px;
+  max-width: 110px;
+  flex: none;
+}
+
+/* Fixed video background — contained within content area */
+.se-hero {
+  position: fixed;
+  top: 82px;
+  left: 286px;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
 }
 .se-hero-video {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center center;
+  object-position: center 0%;
+  opacity: 0.92;
   display: block;
 }
-/* Subtle gradient at bottom to blend into content section */
-.se-hero-grad {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 120px;
-  background: linear-gradient(to bottom, transparent, #050510);
-  pointer-events: none;
-}
+.se-hero-grad { display: none; }
 
-/* Content section — dark background, cards inside */
+/* Content section — transparent, cards float over video */
 .se-content-section {
-  background: #050510;
-  padding: 32px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  position: relative;
+  z-index: 2;
 }
 
-/* Legacy overview class — keep for any remaining references */
+/* Overview — legacy */
 .se-overview {
   display: flex;
   flex-direction: column;
@@ -1867,21 +1915,20 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 /* Main Grid */
 .se-main-grid {
   display: grid;
-  grid-template-columns: 210px 1fr 230px;
-  gap: 16px;
+  grid-template-columns: 190px 1fr 210px;
+  gap: 10px;
   align-items: stretch;
   position: relative;
   z-index: 1;
 }
-.se-left-col, .se-right-col { display: flex; flex-direction: column; gap: 14px; }
-
+.se-left-col, .se-right-col { display: flex; flex-direction: column; gap: 8px; }
 
 /* KPI Cards */
 .se-kpi-card {
   background: rgba(8,10,18,0.42);
   border: 1px solid rgba(243,166,79,0.28);
-  border-radius: 14px;
-  padding: 16px;
+  border-radius: 12px;
+  padding: 10px 12px;
   backdrop-filter: blur(14px);
   flex: 1;
 }
@@ -1894,23 +1941,23 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   letter-spacing: 0.1em;
   color: rgba(243,166,79,0.6);
   text-transform: uppercase;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 .se-kpi-big {
-  font-size: 36px;
+  font-size: 28px;
   font-weight: 800;
   color: #fff;
   line-height: 1;
   display: block;
   text-shadow: 0 2px 12px rgba(0,0,0,0.9);
 }
-.se-kpi-sub { font-size: 12px; color: rgba(255,255,255,0.4); margin: 4px 0 10px; }
+.se-kpi-sub { font-size: 11px; color: rgba(255,255,255,0.4); margin: 2px 0 6px; }
 .se-positive { color: #4ade80 !important; }
 .se-mini-bars {
   display: flex;
   align-items: flex-end;
   gap: 3px;
-  height: 44px;
+  height: 32px;
 }
 .se-mini-bar {
   flex: 1;
@@ -1924,8 +1971,8 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 .se-metric-card {
   background: rgba(8,10,18,0.42);
   border: 1px solid rgba(243,166,79,0.28);
-  border-radius: 14px;
-  padding: 14px 16px;
+  border-radius: 12px;
+  padding: 8px 12px;
   backdrop-filter: blur(14px);
   flex: 1;
 }
@@ -1938,21 +1985,21 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   letter-spacing: 0.08em;
   color: rgba(243,166,79,0.55);
   text-transform: uppercase;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 .se-metric-val {
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 800;
   display: block;
   margin-bottom: 2px;
   text-shadow: 0 2px 12px rgba(0,0,0,0.9);
 }
 
-/* Action Row — 2 columns (AI panel + Automations) */
+/* Action Row */
 .se-action-row {
   display: grid;
-  grid-template-columns: 1fr 280px;
-  gap: 16px;
+  grid-template-columns: 1fr 220px;
+  gap: 10px;
 }
 
 /* Radar panel */
@@ -1976,21 +2023,21 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 
 .se-ai-panel {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   background: rgba(8,10,18,0.42);
   border: 1px solid rgba(243,166,79,0.28);
-  border-radius: 16px;
-  padding: 20px;
+  border-radius: 12px;
+  padding: 12px;
   backdrop-filter: blur(14px);
 }
 .se-robot-wrap {
-  width: 180px;
+  width: 120px;
   flex-shrink: 0;
-  border-radius: 14px;
+  border-radius: 10px;
   overflow: hidden;
 }
-.se-robot-video { width: 180px; height: 230px; object-fit: cover; border-radius: 14px; }
-.se-ai-content { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.se-robot-video { width: 120px; height: 150px; object-fit: cover; border-radius: 10px; }
+.se-ai-content { flex: 1; display: flex; flex-direction: column; gap: 6px; }
 .se-ai-title {
   font-size: 11px;
   font-weight: 700;
@@ -2059,11 +2106,11 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 .se-auto-panel {
   background: rgba(8,10,18,0.42);
   border: 1px solid rgba(243,166,79,0.28);
-  border-radius: 16px;
-  padding: 20px;
+  border-radius: 12px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
   backdrop-filter: blur(14px);
 }
 .se-panel-label {
@@ -2103,15 +2150,15 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 .se-cal-card span { font-size: 11px; color: #f3a64f; }
 
 /* Bottom Grid */
-.se-bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.se-bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .se-services-panel, .se-staff-panel {
   background: rgba(8,10,18,0.44);
   border: 1px solid rgba(243,166,79,0.22);
-  border-radius: 16px;
-  padding: 20px;
+  border-radius: 12px;
+  padding: 10px 14px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 8px;
   backdrop-filter: blur(14px);
 }
 .se-svc-row { display: flex; align-items: center; gap: 10px; }
