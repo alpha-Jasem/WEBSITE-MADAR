@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useLayoutEffect } from 'react'
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion'
 import { ArrowRight, Play, Sparkles, Zap, Shield, TrendingUp, Building2, Stethoscope } from 'lucide-react'
 import { useLanguage } from '../../context/LanguageContext'
@@ -45,6 +45,7 @@ const industries = [
 const WaChatMockup = ({ language, t }: { language: string; t: (ar: string, en: string) => string }) => {
   const [active, setActive]   = useState(0)
   const [visible, setVisible] = useState(1)
+  const [isRestarting, setIsRestarting] = useState(false)
   const chatContainerRef = useRef<HTMLDivElement>(null)
 
   const industry = industries[active]
@@ -52,7 +53,10 @@ const WaChatMockup = ({ language, t }: { language: string; t: (ar: string, en: s
   const isAiTyping = Boolean(nextMsg && nextMsg.from === 'ai')
 
   useEffect(() => {
+    setIsRestarting(true)
     setVisible(1)
+    const timer = setTimeout(() => setIsRestarting(false), 120)
+    return () => clearTimeout(timer)
   }, [active])
 
   useEffect(() => {
@@ -64,18 +68,16 @@ const WaChatMockup = ({ language, t }: { language: string; t: (ar: string, en: s
     return () => clearTimeout(timer)
   }, [visible, active, industry])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = chatContainerRef.current
     if (!el) return
-    requestAnimationFrame(() => {
-      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
-    })
+    el.scrollTop = el.scrollHeight
   }, [visible])
 
-  /* auto-cycle after the conversation has had time to complete */
+  /* Auto-cycle only after the full script is visible, with a calm pause. */
   useEffect(() => {
     if (visible < industry.msgs.length) return
-    const timer = setTimeout(() => setActive(a => (a + 1) % industries.length), 2800)
+    const timer = setTimeout(() => setActive(a => (a + 1) % industries.length), 5200)
     return () => clearTimeout(timer)
   }, [visible, industry.msgs.length])
 
@@ -129,8 +131,8 @@ const WaChatMockup = ({ language, t }: { language: string; t: (ar: string, en: s
         {/* Chat area */}
         <div
           ref={chatContainerRef}
-          className="px-3 py-3 flex flex-col gap-2 overflow-y-auto"
-          style={{ background: '#ECE5DD', height: 320 }}
+          className="px-3 pt-3 pb-5 flex flex-col gap-2 overflow-y-auto"
+          style={{ background: '#ECE5DD', height: 360 }}
         >
           {/* Date chip */}
           <div className="flex justify-center">
@@ -144,9 +146,9 @@ const WaChatMockup = ({ language, t }: { language: string; t: (ar: string, en: s
             {industry.msgs.slice(0, visible).map((msg, i) => (
               <motion.div
                 key={`${industry.id}-${i}`}
-                initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                initial={isRestarting ? false : { opacity: 0, y: 8, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.25 }}
+                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                 className={`flex ${msg.from === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
