@@ -44,36 +44,40 @@ const industries = [
 
 const WaChatMockup = ({ language, t }: { language: string; t: (ar: string, en: string) => string }) => {
   const [active, setActive]   = useState(0)
-  const [visible, setVisible] = useState(0)
-  const [key, setKey]         = useState(0)
+  const [visible, setVisible] = useState(1)
   const chatContainerRef = useRef<HTMLDivElement>(null)
 
   const industry = industries[active]
+  const nextMsg = industry.msgs[visible]
+  const isAiTyping = Boolean(nextMsg && nextMsg.from === 'ai')
 
   useEffect(() => {
-    setVisible(0)
-    setKey(k => k + 1)
+    setVisible(1)
   }, [active])
 
   useEffect(() => {
     if (visible >= industry.msgs.length) return
-    const delay = visible === 0
-      ? industry.msgs[0].delay * 1000
-      : (industry.msgs[visible].delay - industry.msgs[visible - 1].delay) * 1000
-    const t = setTimeout(() => setVisible(v => v + 1), delay)
-    return () => clearTimeout(t)
-  }, [visible, active, industry.msgs])
+    const next = industry.msgs[visible]
+    const previous = industry.msgs[visible - 1]
+    const delay = Math.max(650, (next.delay - previous.delay) * 1000)
+    const timer = setTimeout(() => setVisible(v => Math.min(v + 1, industry.msgs.length)), delay)
+    return () => clearTimeout(timer)
+  }, [visible, active, industry])
 
   useEffect(() => {
     const el = chatContainerRef.current
-    if (el) el.scrollTop = el.scrollHeight
+    if (!el) return
+    requestAnimationFrame(() => {
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+    })
   }, [visible])
 
-  /* auto-cycle every 8 s */
+  /* auto-cycle after the conversation has had time to complete */
   useEffect(() => {
-    const id = setInterval(() => setActive(a => (a + 1) % industries.length), 8000)
-    return () => clearInterval(id)
-  }, [])
+    if (visible < industry.msgs.length) return
+    const timer = setTimeout(() => setActive(a => (a + 1) % industries.length), 2800)
+    return () => clearTimeout(timer)
+  }, [visible, industry.msgs.length])
 
   return (
     <div className="w-full max-w-[340px]">
@@ -127,7 +131,6 @@ const WaChatMockup = ({ language, t }: { language: string; t: (ar: string, en: s
           ref={chatContainerRef}
           className="px-3 py-3 flex flex-col gap-2 overflow-y-auto"
           style={{ background: '#ECE5DD', height: 320 }}
-          key={key}
         >
           {/* Date chip */}
           <div className="flex justify-center">
@@ -140,7 +143,7 @@ const WaChatMockup = ({ language, t }: { language: string; t: (ar: string, en: s
           <AnimatePresence>
             {industry.msgs.slice(0, visible).map((msg, i) => (
               <motion.div
-                key={`${key}-${i}`}
+                key={`${industry.id}-${i}`}
                 initial={{ opacity: 0, y: 8, scale: 0.96 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ duration: 0.25 }}
@@ -163,7 +166,7 @@ const WaChatMockup = ({ language, t }: { language: string; t: (ar: string, en: s
           </AnimatePresence>
 
           {/* Typing indicator */}
-          {visible < industry.msgs.length && (
+          {isAiTyping && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
               <div className="px-3 py-2 rounded-xl bg-white flex items-center gap-1" style={{ borderRadius: '0 12px 12px 12px' }}>
                 {[0, 1, 2].map(i => (
