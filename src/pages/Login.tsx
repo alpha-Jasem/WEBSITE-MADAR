@@ -1,14 +1,22 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Eye, EyeOff, Loader2, Lock, Mail, ArrowLeft, Shield, User } from 'lucide-react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { signInWithPassword, getCurrentUser, signOut } from '../lib/supabase'
 
 type Portal = 'client' | 'admin'
 
 export const Login = () => {
   const navigate = useNavigate()
-  const [portal, setPortal]     = useState<Portal>('client')
+  const [searchParams] = useSearchParams()
+  const initialPortal = searchParams.get('portal') === 'admin' ? 'admin' : 'client'
+  const redirectTo = useMemo(() => {
+    const redirect = searchParams.get('redirect')
+    if (!redirect || !redirect.startsWith('/')) return null
+    return redirect
+  }, [searchParams])
+
+  const [portal, setPortal]     = useState<Portal>(initialPortal)
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
@@ -35,7 +43,7 @@ export const Login = () => {
       return
     }
 
-    navigate(role === 'admin' ? '/admin' : '/client')
+    navigate(redirectTo || (role === 'admin' ? '/admin' : '/client'), { replace: true })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

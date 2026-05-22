@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
@@ -9,6 +9,7 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
+  const location = useLocation()
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthed, setIsAuthed] = useState(false)
   const [userRole, setUserRole] = useState<string | null>(null)
@@ -50,7 +51,9 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
   }
 
   if (!isAuthed) {
-    return <Navigate to="/login" replace />
+    const redirect = encodeURIComponent(`${location.pathname}${location.search}`)
+    const portal = requiredRole ? `&portal=${requiredRole}` : ''
+    return <Navigate to={`/login?redirect=${redirect}${portal}`} replace />
   }
 
   if (requiredRole && userRole !== requiredRole) {
