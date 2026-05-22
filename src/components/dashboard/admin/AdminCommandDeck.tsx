@@ -1,80 +1,142 @@
-import { useEffect, useState, useCallback } from 'react'
-import { motion } from 'framer-motion'
-import { Area, AreaChart, ResponsiveContainer } from 'recharts'
-import { Activity, Building2, ChevronRight, Cpu, GripHorizontal, Sparkles, TrendingUp, Users2, Workflow, Zap } from 'lucide-react'
-import GridLayout, { Layout } from 'react-grid-layout'
-import 'react-grid-layout/css/styles.css'
-import 'react-resizable/css/styles.css'
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
+import {
+  Area,
+  AreaChart,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
+import {
+  Bell,
+  BriefcaseBusiness,
+  ChevronDown,
+  Crown,
+  DollarSign,
+  FolderKanban,
+  Mail,
+  MoreVertical,
+  Search,
+  Sparkles,
+  TrendingUp,
+  UserRound,
+  Users2,
+  Zap,
+} from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 
-type Lead = { id: string; stage?: string | null; price_sold?: number | null }
-type Company = { id: string; name?: string | null; is_active?: boolean | null }
-type Automation = { id: string; status?: string | null }
+type Lead = {
+  id: string
+  company_name?: string | null
+  stage?: string | null
+  price_sold?: number | null
+  created_at?: string | null
+  updated_at?: string | null
+}
 
-const STORAGE_KEY = 'cmd-deck-layout-v2'
+type Company = {
+  id: string
+  name?: string | null
+  is_active?: boolean | null
+}
 
-// PlayStation Classic bento — big feature card left, stacked KPIs right
-const DEFAULT_LAYOUT: Layout[] = [
-  // Row 1: hero left (companies) + 2 KPIs stacked right
-  { i: 'companies',  x: 0, y: 0,  w: 7, h: 8,  minW: 1, minH: 2 },
-  { i: 'revenue',    x: 7, y: 0,  w: 5, h: 4,  minW: 1, minH: 2 },
-  { i: 'autos',      x: 7, y: 4,  w: 5, h: 4,  minW: 1, minH: 2 },
-  // Row 2: small left + wide right
-  { i: 'leads',      x: 0, y: 8,  w: 4, h: 6,  minW: 1, minH: 2 },
-  { i: 'messages',   x: 4, y: 8,  w: 8, h: 6,  minW: 1, minH: 2 },
-  // Row 3: full-width pipeline
-  { i: 'pipeline',   x: 0, y: 14, w: 12, h: 5, minW: 1, minH: 2 },
-  // Row 4: 3 equal panels
-  { i: 'ai-conf',    x: 0, y: 19, w: 3, h: 5,  minW: 1, minH: 2 },
-  { i: 'command',    x: 3, y: 19, w: 6, h: 5,  minW: 1, minH: 2 },
-  { i: 'uptime',     x: 9, y: 19, w: 3, h: 5,  minW: 1, minH: 2 },
-  // Row 5: full-width companies list
-  { i: 'companies2', x: 0, y: 24, w: 12, h: 6, minW: 1, minH: 2 },
+type Automation = {
+  id: string
+  status?: string | null
+}
+
+const revenueData = [
+  { day: 'May 10', revenue: 30000, expenses: 10000 },
+  { day: 'May 11', revenue: 68000, expenses: 23000 },
+  { day: 'May 12', revenue: 72000, expenses: 31000 },
+  { day: 'May 13', revenue: 100000, expenses: 48000 },
+  { day: 'May 14', revenue: 78000, expenses: 56000 },
+  { day: 'May 15', revenue: 128000, expenses: 57000 },
+  { day: 'May 16', revenue: 146000, expenses: 70000 },
 ]
 
-function loadLayout(): Layout[] {
-  try {
-    const s = localStorage.getItem(STORAGE_KEY)
-    return s ? JSON.parse(s) : DEFAULT_LAYOUT
-  } catch { return DEFAULT_LAYOUT }
+const sparkLines = [
+  'M0 42 L18 39 L36 43 L54 37 L72 28 L90 35 L108 31 L126 18 L144 12 L162 20 L180 9 L198 15 L216 4',
+  'M0 44 L18 40 L36 42 L54 34 L72 24 L90 29 L108 21 L126 30 L144 20 L162 12 L180 18 L198 7 L216 4',
+  'M0 43 L18 38 L36 39 L54 28 L72 34 L90 26 L108 38 L126 24 L144 30 L162 14 L180 20 L198 8 L216 3',
+  'M0 46 L18 42 L36 44 L54 37 L72 24 L90 31 L108 27 L126 36 L144 29 L162 22 L180 13 L198 18 L216 5',
+]
+
+const projectStatus = [
+  { name: 'In Progress', value: 10, color: '#1277ff' },
+  { name: 'Completed', value: 8, color: '#8b35ff' },
+  { name: 'On Hold', value: 4, color: '#19d5d1' },
+  { name: 'Cancelled', value: 2, color: '#44506e' },
+]
+
+const visitorPins = [
+  ['12%', '36%', '#7c3cff'],
+  ['18%', '45%', '#0ea5ff'],
+  ['27%', '32%', '#7c3cff'],
+  ['46%', '42%', '#0ea5ff'],
+  ['52%', '38%', '#7c3cff'],
+  ['58%', '47%', '#0ea5ff'],
+  ['67%', '39%', '#7c3cff'],
+  ['74%', '56%', '#0ea5ff'],
+  ['82%', '72%', '#7c3cff'],
+]
+
+function formatMoney(value: number) {
+  return `$${Math.round(value).toLocaleString('en-US')}`
 }
 
-function SparkLine({ color }: { color: string }) {
-  const data = Array.from({ length: 8 }, (_, i) => ({ v: 20 + i * 8 + Math.random() * 20 }))
+function timeAgo(iso?: string | null) {
+  if (!iso) return 'Just now'
+  const minutes = Math.floor((Date.now() - new Date(iso).getTime()) / 60000)
+  if (minutes < 60) return `${Math.max(minutes, 1)} min ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours} hr ago`
+  return `${Math.floor(hours / 24)} day ago`
+}
+
+function MetricCard({
+  title,
+  value,
+  change,
+  icon: Icon,
+  color,
+  path,
+}: {
+  title: string
+  value: string
+  change: string
+  icon: typeof DollarSign
+  color: string
+  path: string
+}) {
   return (
-    <ResponsiveContainer width="100%" height={32}>
-      <AreaChart data={data}>
+    <article className="mosaic-stat-card">
+      <div className="mosaic-stat-head">
+        <span>{title}</span>
+        <div className="mosaic-stat-icon" style={{ '--accent': color } as CSSProperties}>
+          <Icon size={20} />
+        </div>
+      </div>
+      <strong>{value}</strong>
+      <p>
+        <TrendingUp size={13} />
+        <span>{change}</span>
+        from last month
+      </p>
+      <svg className="mosaic-sparkline" viewBox="0 0 216 52" preserveAspectRatio="none">
         <defs>
-          <linearGradient id={`sp-${color.replace('#','')}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={color} stopOpacity={0.35} />
-            <stop offset="95%" stopColor={color} stopOpacity={0} />
+          <linearGradient id={`spark-${title.replace(/\s/g, '-')}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.7" />
+            <stop offset="100%" stopColor={color} stopOpacity="0" />
           </linearGradient>
         </defs>
-        <Area type="monotone" dataKey="v" stroke={color} strokeWidth={1.5} fill={`url(#sp-${color.replace('#','')})`} dot={false} />
-      </AreaChart>
-    </ResponsiveContainer>
-  )
-}
-
-function AnimNum({ value, prefix = '', suffix = '' }: { value: number; prefix?: string; suffix?: string }) {
-  const [d, setD] = useState(0)
-  useEffect(() => {
-    let f = 0; const s = performance.now()
-    const tick = (t: number) => { const p = Math.min((t-s)/1200,1); setD(Math.round(value*(1-Math.pow(1-p,3)))); if(p<1) f=requestAnimationFrame(tick) }
-    f = requestAnimationFrame(tick); return () => cancelAnimationFrame(f)
-  }, [value])
-  return <>{prefix}{d.toLocaleString('en-US')}{suffix}</>
-}
-
-function Widget({ title, children }: { title?: string; children: React.ReactNode }) {
-  return (
-    <div className="hud-widget">
-      <div className="hud-drag-handle">
-        <GripHorizontal size={12} color="rgba(255,255,255,0.25)" />
-        {title && <span className="hud-widget-title">{title}</span>}
-      </div>
-      <div className="hud-widget-body">{children}</div>
-    </div>
+        <path d={`${path} L216 52 L0 52 Z`} fill={`url(#spark-${title.replace(/\s/g, '-')})`} />
+        <path d={path} fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </article>
   )
 }
 
@@ -83,19 +145,11 @@ export const AdminCommandDeck = () => {
   const [companies, setCompanies] = useState<Company[]>([])
   const [automations, setAutomations] = useState<Automation[]>([])
   const [messages, setMessages] = useState(0)
-  const [layout, setLayout] = useState<Layout[]>(loadLayout)
-  const [width, setWidth] = useState(window.innerWidth - 286 - 32)
-
-  useEffect(() => {
-    const onResize = () => setWidth(window.innerWidth - 286 - 32)
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [])
 
   useEffect(() => {
     const load = async () => {
       const [{ data: l }, { data: c }, { data: a }, { count: m }] = await Promise.all([
-        supabase.from('crm_leads').select('id,stage,price_sold'),
+        supabase.from('crm_leads').select('id,company_name,stage,price_sold,created_at,updated_at'),
         supabase.from('companies').select('id,name,is_active'),
         supabase.from('automations').select('id,status'),
         supabase.from('message_logs').select('id', { count: 'exact', head: true }),
@@ -105,188 +159,250 @@ export const AdminCommandDeck = () => {
       setAutomations((a ?? []) as Automation[])
       setMessages(m ?? 0)
     }
+
     load()
-    const ch = supabase.channel('cmd_deck').on('postgres_changes', { event:'*', schema:'public', table:'crm_leads' }, load).subscribe()
-    return () => { supabase.removeChannel(ch) }
+    const channel = supabase
+      .channel('mosaic_admin_deck')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'crm_leads' }, load)
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
-  const onLayoutChange = useCallback((l: Layout[]) => {
-    setLayout(l)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(l))
-  }, [])
+  const wonLeads = leads.filter((lead) => lead.stage === 'won')
+  const revenue = wonLeads.reduce((sum, lead) => sum + (lead.price_sold || 0), 0) || 124560
+  const activeCompanies = companies.filter((company) => company.is_active !== false).length || companies.length || 1256
+  const activeAutomations = automations.filter((automation) => ['active', 'running'].includes(automation.status || '')).length || 28
+  const activeUsers = Math.max(messages || leads.length * 9 || 1842, 1842)
+  const profit = Math.round(revenue * 0.367) || 45680
 
-  const wonLeads = leads.filter(l => l.stage === 'won')
-  const revenue = wonLeads.reduce((s, l) => s + (l.price_sold || 0), 0)
-  const activeCompanies = companies.filter(c => c.is_active !== false).length
-  const activeAutos = automations.filter(a => a.status === 'active' || a.status === 'running').length
-  const cyan = '#65d6ff'
+  const products = [
+    { name: 'Madar ERP', amount: 62540, percent: 52, color: '#1478ff' },
+    { name: 'Madar CRM', amount: 38420, percent: 31, color: '#9347ff' },
+    { name: 'Madar POS', amount: 15600, percent: 13, color: '#16d4d1' },
+    { name: 'Madar HR', amount: 8000, percent: 4, color: '#6d55ff' },
+  ]
 
-  const miniBarsCyan = [5,7,6,9,7,10,8,11]
+  const activities = useMemo(() => {
+    const live = leads.slice(0, 2).map((lead) => ({
+      title: `${lead.company_name || 'New account'} moved to ${lead.stage || 'pipeline'}`,
+      time: timeAgo(lead.updated_at || lead.created_at),
+      value: '',
+      color: '#16d4d1',
+    }))
+
+    return [
+      ...live,
+      { title: 'AI booking flow updated', time: '15 min ago', value: '', color: '#8b35ff' },
+      { title: 'Payment received from Acme Inc.', time: '1 hr ago', value: '+$2,850', color: '#00e0b8' },
+      { title: 'Voice agent deployment completed', time: '2 hr ago', value: '', color: '#1277ff' },
+      { title: 'New team member joined', time: '3 hr ago', value: '', color: '#6f35ff' },
+    ].slice(0, 5)
+  }, [leads])
+
+  const metrics = [
+    { title: 'Total Revenue', value: formatMoney(revenue), change: '+18.6%', icon: DollarSign, color: '#1277ff' },
+    { title: 'New Projects', value: String(activeAutomations), change: '+12.4%', icon: BriefcaseBusiness, color: '#9336ff' },
+    { title: 'Active Users', value: activeUsers.toLocaleString('en-US'), change: '+8.7%', icon: Users2, color: '#0097ff' },
+    { title: 'Profit', value: formatMoney(profit), change: '+14.2%', icon: FolderKanban, color: '#a43cff' },
+  ]
 
   return (
-    <div className="se-hud-page">
-      <div className="se-hero">
-        <video src="/assets/command-deck-bg.mp4" autoPlay loop muted playsInline className="se-hero-video" />
-      </div>
+    <div className="mosaic-dashboard" dir="ltr">
+      <header className="mosaic-header">
+        <div>
+          <h1>Welcome back, Aiden</h1>
+          <p>Here&apos;s what&apos;s happening with your business today.</p>
+        </div>
 
-      <button type="button" className="hud-reset-btn" onClick={() => { localStorage.removeItem(STORAGE_KEY); setLayout(DEFAULT_LAYOUT) }}>
-        ↺ Reset Layout
-      </button>
+        <label className="mosaic-search">
+          <Search size={19} />
+          <input type="search" placeholder="Search anything..." />
+          <kbd>⌘ K</kbd>
+        </label>
 
-      <div className="hud-grid-wrapper">
-        <GridLayout
-          layout={layout}
-          cols={12}
-          rowHeight={36}
-          width={width}
-          margin={[6, 6]}
-          isDraggable
-          isResizable
-          resizeHandles={['se', 'sw', 'ne', 'nw', 's', 'e']}
-          draggableHandle=".hud-drag-handle"
-          onLayoutChange={onLayoutChange}
-        >
-          {/* Companies */}
-          <div key="companies">
-            <Widget title="COMPANIES">
-              <div className="hud-kpi-header"><Building2 size={12} color={cyan} /></div>
-              <strong className="hud-kpi-big" style={{ color:'#fff' }}><AnimNum value={activeCompanies || companies.length || 47} /></strong>
-              <p className="hud-kpi-sub" style={{ color:'rgba(101,214,255,0.6)' }}>Active accounts</p>
-              <div className="se-mini-bars" style={{ height:28 }}>
-                {miniBarsCyan.map((v,i) => (
-                  <motion.div key={i} className="se-mini-bar" style={{ height: v*2.5, background:'rgba(101,214,255,0.55)' }} initial={{ scaleY:0 }} animate={{ scaleY:1 }} transition={{ delay: i*0.04 }} />
+        <div className="mosaic-actions">
+          <button type="button" aria-label="Notifications">
+            <Bell size={20} />
+            <span>3</span>
+          </button>
+          <button type="button" aria-label="Messages">
+            <Mail size={20} />
+            <span>7</span>
+          </button>
+          <button type="button" className="mosaic-orb" aria-label="AI command">
+            <Sparkles size={23} />
+          </button>
+        </div>
+      </header>
+
+      <section className="mosaic-kpi-grid">
+        {metrics.map((metric, index) => (
+          <MetricCard key={metric.title} {...metric} path={sparkLines[index]} />
+        ))}
+      </section>
+
+      <section className="mosaic-main-grid">
+        <article className="mosaic-panel mosaic-revenue">
+          <div className="mosaic-panel-head">
+            <div>
+              <h2>Revenue Overview</h2>
+              <div className="mosaic-legend">
+                <span><i className="blue" /> Revenue</span>
+                <span><i className="purple" /> Expenses</span>
+              </div>
+            </div>
+            <div className="mosaic-panel-tools">
+              <button type="button">This Week <ChevronDown size={14} /></button>
+              <MoreVertical size={18} />
+            </div>
+          </div>
+
+          <ResponsiveContainer width="100%" height={285}>
+            <AreaChart data={revenueData} margin={{ top: 18, right: 12, left: 4, bottom: 0 }}>
+              <defs>
+                <linearGradient id="mosaicRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#1287ff" stopOpacity={0.55} />
+                  <stop offset="100%" stopColor="#1287ff" stopOpacity={0.02} />
+                </linearGradient>
+                <linearGradient id="mosaicExpenses" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#a63cff" stopOpacity={0.45} />
+                  <stop offset="100%" stopColor="#a63cff" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="day" stroke="#7d86a8" tickLine={false} axisLine={false} fontSize={12} />
+              <YAxis stroke="#7d86a8" tickLine={false} axisLine={false} fontSize={12} tickFormatter={(value) => `$${value / 1000}K`} />
+              <Tooltip
+                contentStyle={{
+                  background: 'rgba(6, 10, 24, 0.92)',
+                  border: '1px solid rgba(120, 136, 255, 0.24)',
+                  borderRadius: 12,
+                  color: '#fff',
+                  boxShadow: '0 18px 60px rgba(0, 0, 0, 0.38)',
+                }}
+                formatter={(value: number, name: string) => [formatMoney(value), name]}
+              />
+              <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#1287ff" strokeWidth={3} fill="url(#mosaicRevenue)" dot={false} activeDot={{ r: 5 }} />
+              <Area type="monotone" dataKey="expenses" name="Expenses" stroke="#a63cff" strokeWidth={3} fill="url(#mosaicExpenses)" dot={false} activeDot={{ r: 5 }} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </article>
+
+        <aside className="mosaic-side-stack">
+          <article className="mosaic-panel mosaic-status">
+            <div className="mosaic-panel-head compact">
+              <h2>Project Status</h2>
+              <a href="/admin/pipeline">View All</a>
+            </div>
+            <div className="mosaic-status-body">
+              <div className="mosaic-donut">
+                <ResponsiveContainer width="100%" height={190}>
+                  <PieChart>
+                    <Pie data={projectStatus} dataKey="value" innerRadius={58} outerRadius={78} paddingAngle={1}>
+                      {projectStatus.map((item) => <Cell key={item.name} fill={item.color} />)}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                <div>
+                  <strong>24</strong>
+                  <span>Total Projects</span>
+                </div>
+              </div>
+              <div className="mosaic-status-list">
+                {projectStatus.map((item) => (
+                  <p key={item.name}>
+                    <i style={{ background: item.color }} />
+                    <strong>{item.value}</strong>
+                    {item.name}
+                  </p>
                 ))}
               </div>
-            </Widget>
-          </div>
+            </div>
+          </article>
 
-          {/* Leads */}
-          <div key="leads">
-            <Widget title="ACTIVE LEADS">
-              <div className="hud-kpi-header"><Users2 size={12} color={cyan} /></div>
-              <strong className="hud-kpi-big" style={{ color:'#fff' }}><AnimNum value={leads.length || 1284} /></strong>
-              <p className="hud-kpi-sub" style={{ color:'#4ade80' }}>+12.4%</p>
-              <div className="se-mini-bars" style={{ height:28 }}>
-                {[6,8,7,10,9,11,13,10].map((v,i) => (
-                  <motion.div key={i} className="se-mini-bar" style={{ height: v*2.5, background:'rgba(101,214,255,0.55)' }} initial={{ scaleY:0 }} animate={{ scaleY:1 }} transition={{ delay: i*0.04 }} />
-                ))}
-              </div>
-            </Widget>
-          </div>
+          <article className="mosaic-panel mosaic-client-card">
+            <div>
+              <span>Total Clients</span>
+              <strong>{activeCompanies.toLocaleString('en-US')}</strong>
+              <p><TrendingUp size={13} /> +9.4% from last month</p>
+            </div>
+            <div className="mosaic-client-icon"><UserRound size={23} /></div>
+          </article>
 
-          {/* Revenue */}
-          <div key="revenue">
-            <Widget title="TOTAL REVENUE">
-              <div className="hud-kpi-header"><TrendingUp size={12} color={cyan} /></div>
-              <strong className="hud-kpi-big" style={{ color: cyan, fontSize:20 }}><AnimNum value={revenue || 284560} prefix="SAR " /></strong>
-              <p className="hud-kpi-sub" style={{ color:'#4ade80' }}>+34.2%</p>
-              <SparkLine color={cyan} />
-            </Widget>
-          </div>
-
-          {/* Automations */}
-          <div key="autos">
-            <Widget title="AUTOMATIONS">
-              <div className="hud-kpi-header"><Workflow size={12} color={cyan} /></div>
-              <strong className="hud-kpi-big" style={{ color: cyan }}><AnimNum value={activeAutos || automations.length || 18} /></strong>
-              <p className="hud-kpi-sub" style={{ color:'rgba(101,214,255,0.6)' }}>Running</p>
-              <SparkLine color={cyan} />
-            </Widget>
-          </div>
-
-          {/* Messages */}
-          <div key="messages">
-            <Widget title="MESSAGES TODAY">
-              <div className="hud-kpi-header"><Activity size={12} color={cyan} /></div>
-              <strong className="hud-kpi-big" style={{ color: cyan }}><AnimNum value={messages || 1248} /></strong>
-              <p className="hud-kpi-sub" style={{ color:'#4ade80' }}>+8.1%</p>
-              <SparkLine color={cyan} />
-            </Widget>
-          </div>
-
-          {/* AI Confidence */}
-          <div key="ai-conf">
-            <Widget>
-              <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', gap:4 }}>
-                <Sparkles size={20} color={cyan} />
-                <strong style={{ fontSize:28, fontWeight:800, color:'#fff' }}><AnimNum value={94} suffix="%" /></strong>
-                <span style={{ fontSize:9, color:'rgba(101,214,255,0.6)', letterSpacing:'0.12em', textTransform:'uppercase', textAlign:'center' }}>AI Confidence</span>
-              </div>
-            </Widget>
-          </div>
-
-          {/* Supreme Command */}
-          <div key="command">
-            <Widget title="SUPREME COMMAND">
-              <p style={{ fontSize:12, color:'rgba(255,255,255,0.7)', lineHeight:1.5, marginBottom:10 }}>
-                {activeAutos||18} automations running across {activeCompanies||47} companies.
-                All systems nominal. {wonLeads.length||156} deals closed this period.
-              </p>
-              <div style={{ display:'flex', gap:8 }}>
-                <button type="button" className="se-ai-btn" style={{ borderColor:'rgba(101,214,255,0.5)', color:cyan, fontSize:10, padding:'6px 14px' }}>VIEW PIPELINE</button>
-                <button type="button" className="se-ai-btn" style={{ borderColor:'rgba(101,214,255,0.5)', color:cyan, fontSize:10, padding:'6px 14px' }}>BROADCAST</button>
-              </div>
-            </Widget>
-          </div>
-
-          {/* Uptime */}
-          <div key="uptime">
-            <Widget title="UPTIME">
-              <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
-                <Cpu size={16} color={cyan} />
-                <strong style={{ fontSize:22, color:cyan }}>99.9%</strong>
-              </div>
-              <p style={{ fontSize:10, color:'rgba(255,255,255,0.4)' }}>All services live</p>
-              <div className="se-auto-bar-wrap" style={{ marginTop:8 }}>
-                <motion.div className="se-auto-bar" style={{ background:`linear-gradient(90deg,${cyan},#4f6ef7)` }} initial={{ width:0 }} animate={{ width:'99%' }} transition={{ duration:1.2 }} />
-              </div>
-            </Widget>
-          </div>
-
-          {/* Pipeline Funnel */}
-          <div key="pipeline">
-            <Widget title="PIPELINE FUNNEL">
-              {[
-                { stage:'New',      count: leads.filter(l=>l.stage==='new').length      || 248 },
-                { stage:'Qualified',count: leads.filter(l=>l.stage==='qualified').length|| 142 },
-                { stage:'Proposal', count: leads.filter(l=>l.stage==='proposal').length || 87  },
-                { stage:'Won',      count: wonLeads.length || 56 },
-              ].map(s => (
-                <div key={s.stage} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
-                  <Zap size={10} color={cyan} />
-                  <span style={{ fontSize:11, color:'rgba(255,255,255,0.65)', width:64 }}>{s.stage}</span>
-                  <div style={{ flex:1, height:5, background:'rgba(101,214,255,0.1)', borderRadius:3, overflow:'hidden' }}>
-                    <motion.div style={{ height:'100%', background:`linear-gradient(90deg,${cyan},#4f6ef7)`, borderRadius:3 }}
-                      initial={{ width:0 }} animate={{ width:`${Math.round(s.count/248*100)}%` }} transition={{ duration:1 }} />
+          <article className="mosaic-panel mosaic-activity">
+            <div className="mosaic-panel-head compact">
+              <h2>Recent Activity</h2>
+              <a href="/admin/logs">View All</a>
+            </div>
+            <div className="mosaic-activity-list">
+              {activities.map((activity) => (
+                <div className="mosaic-activity-row" key={`${activity.title}-${activity.time}`}>
+                    <span style={{ '--accent': activity.color } as CSSProperties}><Zap size={15} /></span>
+                  <div>
+                    <strong>{activity.title}</strong>
+                    <small>{activity.time}</small>
                   </div>
-                  <span style={{ fontSize:11, color:'rgba(255,255,255,0.5)', width:36, textAlign:'right' }}>{s.count}</span>
+                  {activity.value && <em>{activity.value}</em>}
                 </div>
               ))}
-            </Widget>
-          </div>
+            </div>
+          </article>
+        </aside>
+      </section>
 
-          {/* Recent Companies */}
-          <div key="companies2">
-            <Widget title="RECENT COMPANIES">
-              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-                {(companies.length ? companies.slice(0,4) : [
-                  { id:'1', name:'Madar Solutions' }, { id:'2', name:'Solar Tech Co.' },
-                  { id:'3', name:'Digital Forge' },   { id:'4', name:'Bright Future Ltd.' },
-                ]).map(c => (
-                  <div key={c.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'6px 0', borderBottom:'1px solid rgba(101,214,255,0.08)' }}>
-                    <div style={{ width:28, height:28, borderRadius:8, background:'rgba(101,214,255,0.1)', border:'1px solid rgba(101,214,255,0.25)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                      <Building2 size={12} color={cyan} />
-                    </div>
-                    <span style={{ fontSize:12, color:'rgba(255,255,255,0.8)', flex:1 }}>{c.name}</span>
-                    <span style={{ fontSize:10, color:'#4ade80' }}>● Active</span>
-                    <ChevronRight size={12} color="rgba(255,255,255,0.2)" />
-                  </div>
-                ))}
-              </div>
-            </Widget>
+      <section className="mosaic-bottom-grid">
+        <article className="mosaic-panel mosaic-products">
+          <div className="mosaic-panel-head compact">
+            <h2>Top Products</h2>
+            <a href="/admin/analytics">View All</a>
           </div>
-        </GridLayout>
-      </div>
+          <div className="mosaic-products-list">
+            {products.map((product) => (
+              <div className="mosaic-product-row" key={product.name}>
+                <div className="mosaic-product-icon" style={{ '--accent': product.color } as CSSProperties}>
+                  <Sparkles size={15} />
+                </div>
+                <div>
+                  <p>
+                    <span>{product.name}</span>
+                    <em>{formatMoney(product.amount)}</em>
+                    <strong>{product.percent}%</strong>
+                  </p>
+                  <div><span style={{ width: `${product.percent}%`, background: product.color }} /></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <article className="mosaic-panel mosaic-map-panel">
+          <div className="mosaic-panel-head compact">
+            <h2>Global Visitors</h2>
+            <a href="/admin/analytics">View Full Report</a>
+          </div>
+          <div className="mosaic-map">
+            {visitorPins.map(([left, top, color]) => (
+              <span key={`${left}-${top}`} style={{ left, top, '--pin': color } as CSSProperties} />
+            ))}
+          </div>
+          <div className="mosaic-visitor-stats">
+            {[
+              ['12,540', 'Total Visitors', '+15.3%'],
+              ['8,920', 'Unique Visitors', '+11.7%'],
+              ['5m 24s', 'Avg. Session', '+6.4%'],
+              ['68%', 'Bounce Rate', '-4.1%'],
+            ].map(([value, label, shift]) => (
+              <div key={label}>
+                <strong>{value}</strong>
+                <span>{label}</span>
+                <em>{shift}</em>
+              </div>
+            ))}
+          </div>
+        </article>
+      </section>
     </div>
   )
 }
