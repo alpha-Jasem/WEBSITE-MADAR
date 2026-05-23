@@ -1,11 +1,14 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
-import { BarChart3, Calendar, Car, Droplets, LayoutDashboard, MessageSquare, Settings, Users2, Wrench, Zap, ClipboardList } from 'lucide-react'
+import { BarChart3, Calendar, Car, Droplets, LayoutDashboard, MessageSquare, Settings, Users2, Wrench, Zap, ClipboardList, Wallet } from 'lucide-react'
 import { DashShell } from '../components/dash/DashShell'
 import type { NavItem } from '../components/dash/DashSidebar'
 import { ClientOverview } from '../components/dashboard/client/ClientOverview'
 import { CarWashOverview } from '../components/dashboard/client/CarWashOverview'
 import { CarWashLeads } from '../components/dashboard/client/CarWashLeads'
 import { CarWashReports } from '../components/dashboard/client/CarWashReports'
+import { CarWashQueue } from '../components/dashboard/client/CarWashQueue'
+import { CarWashWorkers } from '../components/dashboard/client/CarWashWorkers'
+import { CarWashFinance } from '../components/dashboard/client/CarWashFinance'
 import { ClientAutomations } from '../components/dashboard/client/ClientAutomations'
 import { ClientLeads } from '../components/dashboard/client/ClientLeads'
 import { ClientReports } from '../components/dashboard/client/ClientReports'
@@ -23,11 +26,14 @@ function buildNavItems(template: ReturnType<typeof getClientIndustryTemplate>): 
   if (template.type === 'car_wash') {
     return [
       { to: '/client',               icon: Droplets,      label: 'لوحة المغسلة',    end: true },
+      { to: '/client/queue',         icon: Car,           label: 'لوحة التشغيل'   },
       { to: '/client/leads',         icon: Users2,        label: 'عملاء المغسلة'  },
+      { to: '/client/workers',       icon: Users2,        label: 'الموظفون'        },
+      { to: '/client/finance',       icon: Wallet,        label: 'المالية'          },
       { to: '/client/conversations', icon: MessageSquare, label: 'طلبات واتساب'   },
       { to: '/client/automations',   icon: Zap,           label: 'تذكيرات وولاء'  },
       { to: '/client/reports',       icon: BarChart3,     label: 'التقارير'        },
-      { to: '/client/setup',         icon: ClipboardList, label: 'باقات الغسيل'   },
+      { to: '/client/setup',         icon: ClipboardList, label: 'الإعداد'         },
       { to: '/client/settings',      icon: Settings,      label: 'الإعدادات'       },
     ]
   }
@@ -71,6 +77,9 @@ export const ClientPortal = () => {
     <DashShell navItems={navItems} role="client" pageTitle={pageTitle}>
       <Routes>
         <Route index element={isCarWash ? <CarWashOverview /> : <ClientOverview />} />
+        <Route path="queue" element={<CarWashQueue />} />
+        <Route path="workers" element={<CarWashWorkers />} />
+        <Route path="finance" element={<CarWashFinance />} />
         <Route path="setup" element={isCarWash ? <CarWashSetup /> : <ClientSetup />} />
         <Route path="appointments" element={<ClientAppointments />} />
         <Route path="conversations" element={<ClientConversations />} />
@@ -78,7 +87,7 @@ export const ClientPortal = () => {
         <Route path="leads" element={isCarWash ? <CarWashLeads /> : <ClientLeads />} />
         <Route path="reports" element={isCarWash ? <CarWashReports /> : <ClientReports />} />
         <Route path="settings" element={<ClientSettings />} />
-        <Route path="*" element={<ClientOverview />} />
+        <Route path="*" element={isCarWash ? <CarWashOverview /> : <ClientOverview />} />
       </Routes>
     </DashShell>
   )

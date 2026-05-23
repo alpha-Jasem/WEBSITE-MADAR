@@ -1,6 +1,7 @@
 export type Language = 'ar' | 'en'
 export type UserRole = 'admin' | 'client'
 export type Plan = 'starter' | 'growth' | 'enterprise'
+export type BusinessType = 'clinic' | 'car_wash' | 'real_estate' | 'other'
 export type AutomationType = 'whatsapp' | 'crm' | 'ai_agent' | 'booking' | 'sales'
 export type AutomationStatus = 'active' | 'paused' | 'error' | 'building'
 export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'converted' | 'lost'
@@ -22,6 +23,7 @@ export interface Company {
   id: string
   name: string
   industry: string
+  business_type?: BusinessType
   plan: Plan
   status: CompanyStatus
   owner_name: string
@@ -33,6 +35,7 @@ export interface Company {
   message_limit: number
   messages_used: number
   plan_reset_at: string
+  auth_user_id?: string
   created_at: string
 }
 
@@ -118,4 +121,46 @@ export interface LeadFormData {
   phone: string
   service: string
   message: string
+}
+
+// Car Wash types
+export type QueueStatus = 'received' | 'washing' | 'drying' | 'ready' | 'delivered'
+export type CommissionType = 'fixed' | 'percentage'
+export type ExpenseCategory = 'tools' | 'electricity' | 'rent' | 'other'
+
+export interface CWWorker {
+  id: string
+  company_id: string
+  name: string
+  phone?: string
+  commission_type: CommissionType
+  commission_value: number
+  active: boolean
+  created_at: string
+}
+
+export interface CWQueueItem {
+  id: string
+  company_id: string
+  customer_name: string
+  phone?: string
+  car_type?: string
+  service_name?: string
+  price: number
+  worker_id?: string
+  status: QueueStatus
+  started_at?: string
+  delivered_at?: string
+  created_at: string
+  worker?: CWWorker
+}
+
+export interface CWExpense {
+  id: string
+  company_id: string
+  amount: number
+  category: ExpenseCategory
+  description?: string
+  expense_date: string
+  created_at: string
 }
