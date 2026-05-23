@@ -24,31 +24,18 @@ export function useClientCompany(): ClientCompanyState {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user || !mounted) { setState(s => ({ ...s, loading: false })); return }
 
-      const { data: userRow } = await supabase
-        .from('users')
-        .select('role, company_id')
-        .eq('id', user.id)
-        .single()
+      const [{ data: userRow }, { data: company }] = await Promise.all([
+        supabase.from('users').select('role').eq('id', user.id).single(),
+        supabase.from('companies').select('*').eq('auth_user_id', user.id).single(),
+      ])
 
       if (!mounted) return
 
       const isAdmin = userRow?.role === 'admin'
 
-      if (!userRow?.company_id) {
-        setState({ company: null, companyId: null, loading: false, isAdmin })
-        return
-      }
-
-      const { data: company } = await supabase
-        .from('companies')
-        .select('*')
-        .eq('id', userRow.company_id)
-        .single()
-
-      if (!mounted) return
       setState({
         company: company ?? null,
-        companyId: userRow.company_id,
+        companyId: company?.id ?? null,
         loading: false,
         isAdmin,
       })
