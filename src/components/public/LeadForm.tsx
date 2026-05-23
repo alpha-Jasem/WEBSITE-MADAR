@@ -65,7 +65,7 @@ export const LeadForm = () => {
   const opts = language === 'ar' ? serviceOptions.ar : serviceOptions.en
 
   return (
-    <section id="contact" className="py-24 px-4 sm:px-6 lg:px-8 relative" ref={ref}>
+    <section id="contact" className="lead-growth-section py-24 px-4 sm:px-6 lg:px-8 relative" ref={ref}>
       {/* Background glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div
@@ -79,15 +79,15 @@ export const LeadForm = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12"
+          className="lead-growth-heading text-center mb-12"
         >
-          <span className={`inline-block text-sm text-primary-400 font-semibold tracking-widest uppercase mb-3 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
+          <span className={`lead-growth-eyebrow inline-block text-sm font-semibold tracking-widest uppercase mb-3 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
             {t('ابدأ من أين يضيع العميل', 'Start Where Customers Leak')}
           </span>
-          <h2 className={`text-4xl sm:text-5xl font-bold text-white mb-4 ${language === 'ar' ? 'font-cairo' : 'font-outfit'}`}>
+          <h2 className={`lead-growth-title text-4xl sm:text-5xl font-bold mb-4 ${language === 'ar' ? 'font-cairo' : 'font-outfit'}`}>
             {t('احصل على خريطة نمو مجانية لشركتك', 'Get a Free Growth Map for Your Business')}
           </h2>
-          <p className={`text-slate-400 text-lg ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
+          <p className={`lead-growth-copy text-lg ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
             {t('أرسل لنا وضعك الحالي، ونرجع لك بتشخيص واضح: أين تضيع الرسائل والمكالمات، ماذا نؤتمت أولاً، وكيف نحولها إلى حجوزات.', 'Send us your current situation and we will return with a clear diagnosis: where messages and calls leak, what to automate first, and how to turn them into bookings.')}
           </p>
         </motion.div>
@@ -96,7 +96,7 @@ export const LeadForm = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="glass rounded-2xl p-8 md:p-10 border border-white/10"
+          className="lead-growth-card glass rounded-2xl p-8 md:p-10"
         >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
             {[

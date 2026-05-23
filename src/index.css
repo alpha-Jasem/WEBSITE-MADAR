@@ -76,6 +76,65 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   transform: translateY(-2px);
 }
 
+.lead-growth-section {
+  isolation: isolate;
+}
+
+.lead-growth-section::before {
+  content: "";
+  position: absolute;
+  inset: 9% 4% auto;
+  height: 360px;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(0, 191, 255, 0.14), transparent 36%),
+    radial-gradient(circle at 25% 44%, rgba(79, 110, 247, 0.12), transparent 30%),
+    radial-gradient(circle at 76% 50%, rgba(16, 185, 129, 0.08), transparent 28%);
+  filter: blur(10px);
+}
+
+.lead-growth-heading {
+  max-width: 850px;
+  margin-inline: auto;
+}
+
+.lead-growth-eyebrow {
+  padding: 8px 15px;
+  border-radius: 999px;
+  color: #7ee7ff;
+  background: rgba(0, 191, 255, 0.08);
+  border: 1px solid rgba(0, 191, 255, 0.22);
+  box-shadow: 0 0 24px rgba(0, 191, 255, 0.1);
+}
+
+.lead-growth-title {
+  color: #f8fbff;
+  text-shadow: 0 0 26px rgba(0, 191, 255, 0.1);
+}
+
+.lead-growth-title::first-letter {
+  color: #7ee7ff;
+}
+
+.lead-growth-copy {
+  max-width: 760px;
+  margin-inline: auto;
+  color: #b7c5d8;
+  line-height: 1.9;
+}
+
+.lead-growth-card {
+  border: 1px solid rgba(126, 231, 255, 0.16);
+  background:
+    radial-gradient(circle at 8% 0%, rgba(0, 191, 255, 0.1), transparent 32%),
+    radial-gradient(circle at 94% 12%, rgba(79, 110, 247, 0.12), transparent 28%),
+    rgba(8, 14, 34, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 26px 80px rgba(0,0,0,0.24);
+}
+
 /* ── Silver shimmer wave text ─────── */
 @keyframes shimmer-wave {
   0%   { background-position: -200% center; }
