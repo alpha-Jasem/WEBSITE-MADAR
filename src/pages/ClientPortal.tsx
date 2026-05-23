@@ -11,6 +11,7 @@ import { ClientLeads } from '../components/dashboard/client/ClientLeads'
 import { ClientReports } from '../components/dashboard/client/ClientReports'
 import { ClientSettings } from '../components/dashboard/client/ClientSettings'
 import { ClientSetup } from '../components/dashboard/client/ClientSetup'
+import { CarWashSetup } from '../components/dashboard/client/CarWashSetup'
 import { ClientAppointments } from '../components/dashboard/client/ClientAppointments'
 import { ClientConversations } from '../components/dashboard/client/ClientConversations'
 import { useClientCompany } from '../hooks/useClientCompany'
@@ -63,7 +64,7 @@ export const ClientPortal = () => {
     <DashShell navItems={navItems} role="client" pageTitle={pageTitle}>
       <Routes>
         <Route index element={isCarWash ? <CarWashOverview /> : <ClientOverview />} />
-        <Route path="setup" element={<ClientSetup />} />
+        <Route path="setup" element={isCarWash ? <CarWashSetup /> : <ClientSetup />} />
         <Route path="appointments" element={<ClientAppointments />} />
         <Route path="conversations" element={<ClientConversations />} />
         <Route path="automations" element={<ClientAutomations />} />
