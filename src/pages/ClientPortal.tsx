@@ -53,12 +53,19 @@ function usePageTitle(navItems: NavItem[]) {
 }
 
 export const ClientPortal = () => {
-  const { company } = useClientCompany()
+  const { company, loading } = useClientCompany()
   const template = getClientIndustryTemplate(company?.business_type, company?.industry)
   const navItems = buildNavItems(template)
   const pageTitle = usePageTitle(navItems)
 
   const isCarWash = template.type === 'car_wash'
+
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#080C14', gap: 12 }}>
+      <div style={{ width: 20, height: 20, border: '2px solid rgba(255,255,255,0.1)', borderTopColor: '#22D3EE', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      <span style={{ color: '#475569', fontFamily: 'Tajawal, sans-serif', fontSize: 14 }}>جاري التحميل...</span>
+    </div>
+  )
 
   return (
     <DashShell navItems={navItems} role="client" pageTitle={pageTitle}>
