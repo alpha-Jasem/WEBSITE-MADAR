@@ -170,6 +170,8 @@ type Toast = { id: number; message: string; type: 'milestone' | 'success' }
 
 const SERVICES = ['غسيل عادي', 'غسيل بريميوم', 'غسيل داخلي وخارجي', 'تلميع', 'غسيل سريع']
 
+type QueueSummary = { received: number; washing: number; drying: number; ready: number }
+
 export function CarWashOverview() {
   const { companyId, loading: authLoading } = useClientCompany()
   const [customers, setCustomers] = useState<CWCustomer[]>([])
@@ -177,6 +179,7 @@ export function CarWashOverview() {
   const [pendingReviews, setPendingReviews] = useState(0)
   const [todayVisits, setTodayVisits] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [queueSummary, setQueueSummary] = useState<QueueSummary>({ received: 0, washing: 0, drying: 0, ready: 0 })
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -232,6 +235,21 @@ export function CarWashOverview() {
     setTodayVisits(todayCount || 0)
     setPendingReviews(pendingCount || 0)
     setRecentVisits((visitsData as unknown as CWVisit[]) || [])
+
+    // Load live queue summary
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
+    const { data: queueData } = await supabase
+      .from('cw_queue')
+      .select('status')
+      .eq('company_id', companyId)
+      .neq('status', 'delivered')
+      .gte('created_at', todayStart.toISOString())
+    const q: QueueSummary = { received: 0, washing: 0, drying: 0, ready: 0 }
+    for (const r of queueData || []) {
+      if (r.status in q) q[r.status as keyof QueueSummary]++
+    }
+    setQueueSummary(q)
+
     setLoading(false)
   }
 
@@ -243,6 +261,7 @@ export function CarWashOverview() {
       .channel(`cw_overview_${companyId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cw_visits' }, load)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cw_customers' }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cw_queue', filter: `company_id=eq.${companyId}` }, load)
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
@@ -489,6 +508,24 @@ export function CarWashOverview() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Live Queue Summary Bar */}
+      {(queueSummary.received + queueSummary.washing + queueSummary.drying + queueSummary.ready) > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 18px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginLeft: 4 }}>🔴 مباشر:</span>
+          {[
+            { label: 'استلام',  value: queueSummary.received, color: '#94A3B8' },
+            { label: 'غسيل',   value: queueSummary.washing,  color: '#4F6EF7' },
+            { label: 'تجفيف',  value: queueSummary.drying,   color: '#8B5CF6' },
+            { label: 'جاهزة',  value: queueSummary.ready,    color: '#10B981' },
+          ].map(s => (
+            <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 8, background: s.color + '15', border: `1px solid ${s.color}30` }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: s.color, fontFamily: 'Sora, sans-serif' }}>{s.value}</span>
+              <span style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>{s.label}</span>
+            </div>
+          ))}
         </div>
       )}
 

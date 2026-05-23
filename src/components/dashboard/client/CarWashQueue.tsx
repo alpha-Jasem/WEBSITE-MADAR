@@ -1,15 +1,17 @@
 import { useEffect, useState, useRef } from 'react'
-import { Plus, X, Loader2, Clock, ChevronRight, Car } from 'lucide-react'
+import { Plus, X, Loader2, Clock, ChevronRight, Car, Pencil, Check } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import type { CWQueueItem, CWWorker, QueueStatus } from '../../../types'
 
+const N8N_WEBHOOK = 'https://keepcalm.app.n8n.cloud/webhook/cw-car-ready'
+
 const COLUMNS: { status: QueueStatus; label: string; color: string; bg: string }[] = [
-  { status: 'received',  label: 'استلام',   color: '#94A3B8', bg: 'rgba(148,163,184,0.1)' },
-  { status: 'washing',   label: 'غسيل',     color: '#4F6EF7', bg: 'rgba(79,110,247,0.1)'  },
-  { status: 'drying',    label: 'تجفيف',    color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)'  },
-  { status: 'ready',     label: 'جاهزة',    color: '#10B981', bg: 'rgba(16,185,129,0.1)'  },
-  { status: 'delivered', label: 'تسليم',    color: '#F59E0B', bg: 'rgba(245,158,11,0.1)'  },
+  { status: 'received',  label: 'استلام',  color: '#94A3B8', bg: 'rgba(148,163,184,0.1)' },
+  { status: 'washing',   label: 'غسيل',    color: '#4F6EF7', bg: 'rgba(79,110,247,0.1)'  },
+  { status: 'drying',    label: 'تجفيف',   color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)'  },
+  { status: 'ready',     label: 'جاهزة',   color: '#10B981', bg: 'rgba(16,185,129,0.1)'  },
+  { status: 'delivered', label: 'تسليم',   color: '#F59E0B', bg: 'rgba(245,158,11,0.1)'  },
 ]
 
 const NEXT_STATUS: Partial<Record<QueueStatus, QueueStatus>> = {
@@ -28,11 +30,12 @@ function elapsed(created_at: string) {
 const EMPTY_FORM = { customer_name: '', phone: '', car_type: '', service_name: '', price: '', worker_id: '' }
 
 export const CarWashQueue = () => {
-  const { companyId, loading: authLoading } = useClientCompany()
+  const { companyId, company, loading: authLoading } = useClientCompany()
   const [items, setItems] = useState<CWQueueItem[]>([])
   const [workers, setWorkers] = useState<CWWorker[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [editingItem, setEditingItem] = useState<CWQueueItem | null>(null)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [movingId, setMovingId] = useState<string | null>(null)
@@ -77,21 +80,49 @@ export const CarWashQueue = () => {
     return () => { channelRef.current?.unsubscribe() }
   }, [authLoading, companyId])
 
-  const addCar = async () => {
+  const openAdd = () => { setEditingItem(null); setForm(EMPTY_FORM); setShowForm(true) }
+  const openEdit = (item: CWQueueItem) => {
+    setEditingItem(item)
+    setForm({
+      customer_name: item.customer_name,
+      phone: item.phone || '',
+      car_type: item.car_type || '',
+      service_name: item.service_name || '',
+      price: item.price > 0 ? String(item.price) : '',
+      worker_id: item.worker_id || '',
+    })
+    setShowForm(true)
+  }
+
+  const saveForm = async () => {
     if (!companyId || !form.customer_name.trim()) return
     setSaving(true)
-    await supabase.from('cw_queue').insert({
-      company_id: companyId,
-      customer_name: form.customer_name.trim(),
-      phone: form.phone || null,
-      car_type: form.car_type || null,
-      service_name: form.service_name || null,
-      price: Number(form.price) || 0,
-      worker_id: form.worker_id || null,
-      status: 'received',
-    })
+
+    if (editingItem) {
+      await supabase.from('cw_queue').update({
+        customer_name: form.customer_name.trim(),
+        phone: form.phone || null,
+        car_type: form.car_type || null,
+        service_name: form.service_name || null,
+        price: Number(form.price) || 0,
+        worker_id: form.worker_id || null,
+      }).eq('id', editingItem.id)
+    } else {
+      await supabase.from('cw_queue').insert({
+        company_id: companyId,
+        customer_name: form.customer_name.trim(),
+        phone: form.phone || null,
+        car_type: form.car_type || null,
+        service_name: form.service_name || null,
+        price: Number(form.price) || 0,
+        worker_id: form.worker_id || null,
+        status: 'received',
+      })
+    }
+
     setForm(EMPTY_FORM)
     setShowForm(false)
+    setEditingItem(null)
     setSaving(false)
   }
 
@@ -102,9 +133,9 @@ export const CarWashQueue = () => {
 
     const updates: Record<string, unknown> = { status: next }
     if (item.status === 'washing' && !item.started_at) updates.started_at = new Date().toISOString()
+
     if (next === 'delivered') {
       updates.delivered_at = new Date().toISOString()
-      // Auto-insert into cw_visits
       await supabase.from('cw_visits').insert({
         company_id: item.company_id,
         service_name: item.service_name,
@@ -114,6 +145,21 @@ export const CarWashQueue = () => {
     }
 
     await supabase.from('cw_queue').update(updates).eq('id', item.id)
+
+    // WhatsApp notification when car is ready
+    if (next === 'ready' && item.phone) {
+      const phone = item.phone.replace(/^0/, '966').replace(/\D/g, '')
+      fetch(N8N_WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone,
+          customer_name: item.customer_name,
+          company_name: company?.name || 'المغسلة',
+        }),
+      }).catch(() => {}) // fire and forget
+    }
+
     setMovingId(null)
   }
 
@@ -122,6 +168,7 @@ export const CarWashQueue = () => {
   }
 
   const colItems = (status: QueueStatus) => items.filter(i => i.status === status)
+  const totalActive = items.length
 
   if (authLoading || loading) return (
     <div className="flex items-center justify-center h-64 gap-3">
@@ -135,9 +182,11 @@ export const CarWashQueue = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white font-cairo">لوحة التشغيل</h1>
-          <p className="text-sm text-slate-500 font-tajawal">سيارات اليوم — مباشر</p>
+          <p className="text-sm text-slate-500 font-tajawal">
+            {totalActive > 0 ? `${totalActive} سيارة نشطة الآن — مباشر` : 'سيارات اليوم — مباشر'}
+          </p>
         </div>
-        <button onClick={() => setShowForm(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-tajawal font-medium text-white" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
+        <button onClick={openAdd} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-tajawal font-medium text-white" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
           <Plus size={16} /> إضافة سيارة
         </button>
       </div>
@@ -160,9 +209,14 @@ export const CarWashQueue = () => {
                         <p className="text-sm font-bold text-white font-cairo truncate">{item.customer_name}</p>
                         {item.car_type && <p className="text-xs text-slate-500 font-tajawal truncate">{item.car_type}</p>}
                       </div>
-                      <button onClick={() => removeItem(item.id)} className="text-slate-600 hover:text-red-400 transition-colors mr-1 flex-shrink-0">
-                        <X size={12} />
-                      </button>
+                      <div className="flex items-center gap-1 mr-1 flex-shrink-0">
+                        <button onClick={() => openEdit(item)} className="text-slate-600 hover:text-slate-300 transition-colors">
+                          <Pencil size={11} />
+                        </button>
+                        <button onClick={() => removeItem(item.id)} className="text-slate-600 hover:text-red-400 transition-colors">
+                          <X size={12} />
+                        </button>
+                      </div>
                     </div>
 
                     {item.service_name && (
@@ -179,7 +233,12 @@ export const CarWashQueue = () => {
                     </div>
 
                     {item.worker && (
-                      <p className="text-xs text-slate-500 font-tajawal mb-2 truncate">👤 {item.worker.name}</p>
+                      <p className="text-xs text-slate-500 font-tajawal mb-2 truncate">👤 {(item.worker as any).name}</p>
+                    )}
+
+                    {/* WhatsApp indicator when ready */}
+                    {col.status === 'ready' && item.phone && (
+                      <p className="text-xs text-emerald-500 font-tajawal mb-1.5">📱 تم إشعار العميل</p>
                     )}
 
                     {col.status !== 'delivered' && NEXT_STATUS[col.status] && (
@@ -205,17 +264,17 @@ export const CarWashQueue = () => {
         <div className="flex flex-col items-center justify-center h-40 gap-3" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16 }}>
           <Car size={32} className="text-slate-700" />
           <p className="text-slate-500 font-tajawal text-sm">لا توجد سيارات في القائمة</p>
-          <button onClick={() => setShowForm(true)} className="text-primary-400 text-sm font-tajawal underline">أضف أول سيارة</button>
+          <button onClick={openAdd} className="text-primary-400 text-sm font-tajawal underline">أضف أول سيارة</button>
         </div>
       )}
 
-      {/* Add car form modal */}
+      {/* Add / Edit car form modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)' }}>
           <div className="w-full max-w-md p-6 rounded-2xl" style={{ background: '#0D1422', border: '1px solid rgba(255,255,255,0.1)' }}>
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold text-white font-cairo">إضافة سيارة</h2>
-              <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-white"><X size={18} /></button>
+              <h2 className="text-lg font-bold text-white font-cairo">{editingItem ? 'تعديل السيارة' : 'إضافة سيارة'}</h2>
+              <button onClick={() => { setShowForm(false); setEditingItem(null) }} className="text-slate-400 hover:text-white"><X size={18} /></button>
             </div>
 
             <div className="space-y-3">
@@ -263,10 +322,10 @@ export const CarWashQueue = () => {
             </div>
 
             <div className="flex gap-3 mt-5">
-              <button onClick={() => setShowForm(false)} className="flex-1 py-2.5 rounded-xl text-sm font-tajawal text-slate-400" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>إلغاء</button>
-              <button onClick={addCar} disabled={saving || !form.customer_name.trim()} className="flex-1 py-2.5 rounded-xl text-sm font-tajawal text-white flex items-center justify-center gap-2 disabled:opacity-50" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
-                {saving ? <Loader2 size={14} className="animate-spin" /> : <Car size={14} />}
-                {saving ? 'جاري الإضافة...' : 'إضافة'}
+              <button onClick={() => { setShowForm(false); setEditingItem(null) }} className="flex-1 py-2.5 rounded-xl text-sm font-tajawal text-slate-400" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>إلغاء</button>
+              <button onClick={saveForm} disabled={saving || !form.customer_name.trim()} className="flex-1 py-2.5 rounded-xl text-sm font-tajawal text-white flex items-center justify-center gap-2 disabled:opacity-50" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
+                {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                {saving ? 'جاري الحفظ...' : editingItem ? 'حفظ التعديل' : 'إضافة'}
               </button>
             </div>
           </div>
