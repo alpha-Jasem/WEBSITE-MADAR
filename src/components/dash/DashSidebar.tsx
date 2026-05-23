@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { ChevronDown, Crown, LogOut } from 'lucide-react'
+import { ChevronDown, Crown, Headphones, LogOut } from 'lucide-react'
 import { signOut } from '../../lib/supabase'
 
 export interface NavItem {
@@ -23,7 +23,7 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin' }: Props) 
     <>
       {open && <div className="dash-overlay" onClick={onClose} />}
 
-      <aside className={`dash-sidebar${open ? ' open' : ''}`}>
+      <aside className={`dash-sidebar dash-sidebar-${role}${open ? ' open' : ''}`}>
         <div className="dash-sidebar-brand">
           <img className="dash-sidebar-logo-img" src="/logo-main.png" alt="Madar.software" />
           <div>
@@ -53,14 +53,18 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin' }: Props) 
           ))}
         </nav>
 
-        {role === 'admin' && (
+        {(role === 'admin' || role === 'client') && (
           <div className="dash-upgrade-card">
             <div className="dash-upgrade-icon">
-              <Crown size={18} />
+              {role === 'admin' ? <Crown size={18} /> : <Headphones size={18} />}
             </div>
-            <strong>Upgrade to Pro</strong>
-            <p>Unlock advanced AI operations, voice agents, and revenue automation.</p>
-            <button type="button">Upgrade Now</button>
+            <strong>{role === 'admin' ? 'Upgrade to Pro' : 'Need Help?'}</strong>
+            <p>
+              {role === 'admin'
+                ? 'Unlock advanced AI operations, voice agents, and revenue automation.'
+                : 'Our support team is here for you whenever you need setup help.'}
+            </p>
+            <button type="button">{role === 'admin' ? 'Upgrade Now' : 'Contact Support'}</button>
           </div>
         )}
 

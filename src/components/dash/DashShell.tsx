@@ -19,7 +19,7 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
   useEffect(() => { setMenuOpen(false) }, [location.pathname])
 
   return (
-    <div className="dash-shell">
+    <div className={`dash-shell dash-shell-${role}`}>
       <DashSidebar
         navItems={navItems}
         open={menuOpen}
