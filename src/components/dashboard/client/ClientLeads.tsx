@@ -56,7 +56,8 @@ export const ClientLeads = () => {
   }, [authLoading, companyId])
 
   const filtered = leads.filter(l => {
-    const matchSearch = (l.company_name || '').includes(search) || (l.contact_name || '').includes(search) || (l.phone || '').includes(search)
+    const s = search.toLowerCase()
+    const matchSearch = (l.company_name || '').toLowerCase().includes(s) || (l.contact_name || '').toLowerCase().includes(s) || (l.phone || '').includes(s)
     const matchStage = stageFilter === 'all' || l.stage === stageFilter
     return matchSearch && matchStage
   })
@@ -195,8 +196,8 @@ export const ClientLeads = () => {
       </div>
 
       {/* Table */}
-      <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
-        <table className="w-full">
+      <div className="rounded-2xl overflow-hidden overflow-x-auto" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
+        <table className="w-full min-w-[600px]">
           <thead>
             <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
               {['العميل', 'المرحلة', 'القيمة', 'الدرجة', 'آخر تحديث', 'إجراءات'].map(h => (

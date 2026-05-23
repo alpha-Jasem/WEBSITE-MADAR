@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis,
@@ -7,8 +7,9 @@ import {
 import {
   TrendingUp, DollarSign, Target, Clock,
   Phone, Mail, FileText, CheckCircle2, ChevronLeft,
-  Building2, ArrowUpRight, MoreHorizontal, Plus,
+  Building2, ArrowUpRight, MoreHorizontal, Plus, Loader2,
 } from 'lucide-react'
+import { supabase } from '../../../lib/supabase'
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 
@@ -105,7 +106,7 @@ function KanbanBoard({ deals, onMove }: { deals: Deal[]; onMove: (id: string, st
   const [dragOver, setDragOver] = useState<Stage | null>(null)
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, overflowX: 'auto' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth < 640 ? '1fr' : 'repeat(5, 1fr)', gap: 12, overflowX: 'auto' }}>
       {stages.map(stage => {
         const col = deals.filter(d => d.stage === stage.id)
         const total = col.reduce((s, d) => s + d.value, 0)
@@ -192,12 +193,57 @@ function KanbanBoard({ deals, onMove }: { deals: Deal[]; onMove: (id: string, st
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
+const STAGE_MAP: Record<string, Stage> = {
+  new_lead: 'new',
+  contacted: 'contacted',
+  qualified: 'proposal',
+  meeting_booked: 'negotiation',
+  won: 'won',
+  lost: 'won',
+}
+
+const DB_STAGE_MAP: Record<Stage, string> = {
+  new: 'new_lead',
+  contacted: 'contacted',
+  proposal: 'qualified',
+  negotiation: 'meeting_booked',
+  won: 'won',
+}
+
 export const AdminPipeline = () => {
-  const [deals, setDeals] = useState<Deal[]>(initialDeals)
+  const [deals, setDeals] = useState<Deal[]>([])
+  const [loadingDeals, setLoadingDeals] = useState(true)
   const [activeTab, setActiveTab] = useState<'kanban' | 'table'>('kanban')
 
-  const moveDeal = (id: string, stage: Stage) => {
+  useEffect(() => {
+    const load = async () => {
+      setLoadingDeals(true)
+      const { data } = await supabase
+        .from('crm_leads')
+        .select('id, company_name, contact_name, stage, price_sold, price_expected, sector, created_at')
+        .not('stage', 'in', '(lost)')
+        .order('updated_at', { ascending: false })
+        .limit(100)
+      if (data) {
+        setDeals(data.map(l => ({
+          id: l.id,
+          company: l.company_name || l.contact_name || '—',
+          value: l.price_sold || l.price_expected || 0,
+          owner: '—',
+          closeDate: l.created_at?.slice(0, 10) || '',
+          probability: l.stage === 'won' ? 100 : l.stage === 'meeting_booked' ? 75 : l.stage === 'qualified' ? 50 : l.stage === 'contacted' ? 25 : 10,
+          stage: STAGE_MAP[l.stage] ?? 'new',
+          service: l.sector || '—',
+        })))
+      }
+      setLoadingDeals(false)
+    }
+    load()
+  }, [])
+
+  const moveDeal = async (id: string, stage: Stage) => {
     setDeals(prev => prev.map(d => d.id === id ? { ...d, stage } : d))
+    await supabase.from('crm_leads').update({ stage: DB_STAGE_MAP[stage], updated_at: new Date().toISOString() }).eq('id', id)
   }
 
   const totalPipeline = deals.reduce((s, d) => s + d.value * (d.probability / 100), 0)
@@ -210,6 +256,13 @@ export const AdminPipeline = () => {
     { label: 'إيراد محقق',         value: `${(wonValue / 1000).toFixed(0)}K`,       suffix: 'ريال', color: '#F59E0B', icon: DollarSign },
     { label: 'متوسط دورة البيع',   value: '18',                                     suffix: 'يوم',  color: '#8B5CF6', icon: Clock },
   ]
+
+  if (loadingDeals) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, gap: 10 }}>
+      <Loader2 size={18} className="animate-spin" color="#00BFFF" />
+      <span style={{ color: '#475569', fontFamily: 'Tajawal', fontSize: 14 }}>جاري تحميل البيانات...</span>
+    </div>
+  )
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 40 }}>
@@ -233,7 +286,7 @@ export const AdminPipeline = () => {
       </div>
 
       {/* KPIs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth < 640 ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 14 }}>
         {kpis.map((kpi, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>
             <GlassCard style={{ padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
@@ -252,7 +305,7 @@ export const AdminPipeline = () => {
       </div>
 
       {/* Charts row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth < 640 ? '1fr' : '3fr 2fr', gap: 16 }}>
 
         {/* Forecast */}
         <GlassCard style={{ padding: '20px' }}>
