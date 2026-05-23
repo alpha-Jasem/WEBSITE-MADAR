@@ -3621,6 +3621,170 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 @media (max-width:1200px){.mosaic-kpi-grid{grid-template-columns:repeat(2,minmax(220px,1fr))}.mosaic-main-grid,.mosaic-bottom-grid{grid-template-columns:1fr}.mosaic-side-stack{display:grid;grid-template-columns:repeat(2,1fr)}.mosaic-activity{grid-column:1/-1}}
 @media (max-width:768px){.mosaic-header{grid-template-columns:1fr}.mosaic-search{order:3}.mosaic-actions{justify-content:flex-start}.mosaic-kpi-grid,.mosaic-side-stack,.mosaic-status-body,.mosaic-visitor-stats{grid-template-columns:1fr}.mosaic-dashboard{gap:14px}.mosaic-panel,.mosaic-stat-card{padding:18px}.mosaic-header h1{font-size:21px}}
 
+/* Client Industry Templates */
+.client-industry-hero,
+.client-panel {
+  border: 1px solid rgba(255,255,255,0.07);
+  background:
+    radial-gradient(circle at 10% 0%, color-mix(in srgb, var(--industry-accent, #4F6EF7) 18%, transparent), transparent 42%),
+    rgba(255,255,255,0.03);
+  border-radius: 20px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.045);
+}
+
+.client-industry-hero {
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  gap: 16px;
+  align-items: center;
+  padding: 20px;
+}
+
+.client-industry-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  color: var(--industry-accent, #4F6EF7);
+  background: color-mix(in srgb, var(--industry-accent, #4F6EF7) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--industry-accent, #4F6EF7) 38%, transparent);
+}
+
+.client-industry-hero span {
+  display: inline-flex;
+  color: var(--industry-accent, #4F6EF7);
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.client-industry-hero h1 {
+  color: #fff;
+  font-family: 'Cairo', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.client-industry-hero p,
+.client-hint,
+.client-empty-state {
+  color: #8c96ad;
+  font-size: 13px;
+  margin-top: 5px;
+}
+
+.client-panel {
+  padding: 20px;
+}
+
+.client-panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.client-panel-title h3 {
+  color: #fff;
+  font-family: 'Cairo', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.client-panel-title span {
+  color: #7f8aa5;
+  font-size: 12px;
+}
+
+.client-live-row,
+.client-won-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.055);
+}
+
+.client-live-row strong,
+.client-won-row p {
+  display: block;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.client-live-row span {
+  display: block;
+  color: #7f8aa5;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.client-live-row em,
+.client-won-row span {
+  color: #10B981;
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.client-ai-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.client-ai-actions button {
+  display: grid;
+  grid-template-columns: 32px 1fr 18px;
+  gap: 10px;
+  align-items: center;
+  text-align: right;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--industry-accent, #4F6EF7) 24%, rgba(255,255,255,0.06));
+  background: color-mix(in srgb, var(--industry-accent, #4F6EF7) 7%, rgba(255,255,255,0.025));
+  color: #dbe3f3;
+  cursor: pointer;
+}
+
+.client-ai-actions button span {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--industry-accent, #4F6EF7);
+  background: color-mix(in srgb, var(--industry-accent, #4F6EF7) 16%, transparent);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.client-ai-actions button p {
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.client-setup-focus {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.client-setup-focus span {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.045);
+  border: 1px solid rgba(255,255,255,0.075);
+  color: #dbe3f3;
+  font-size: 12px;
+}
+
 @media (min-width:1201px){
   .dash-content{padding-top:30px}
   .dash-sidebar{padding-top:24px;gap:14px}
