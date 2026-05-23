@@ -10,6 +10,7 @@ import {
   CreditCard,
   DollarSign,
   FileText,
+  Gift,
   Loader2,
   MessageCircle,
   Sparkles,
@@ -173,6 +174,7 @@ export const ClientOverview = () => {
   const [loading, setLoading] = useState(true)
 
   const template = getClientIndustryTemplate(company?.business_type, company?.industry)
+  const isCarWash = template.type === 'car_wash'
   const ownerName = company?.owner_name || company?.name || 'Sarah Johnson'
   const planName = company?.plan ? `${company.plan[0].toUpperCase()}${company.plan.slice(1)} Plan` : 'Premium Plan'
 
@@ -338,6 +340,28 @@ export const ClientOverview = () => {
         <MetricCard icon={Bot} label="AI Conversations" value={`${metrics.aiMessages.toLocaleString('en-US')}`} change="24.7%" color="#168dff" data={aiSpark} />
       </section>
 
+      {isCarWash && (
+        <section className="client-orbit-card client-carwash-loyalty" dir="rtl">
+          <div className="client-loyalty-copy">
+            <span>اشتراك ولاء المغسلة</span>
+            <h2>كل 4 غسلات والخامسة مجاناً</h2>
+            <p>النظام يحسب زيارات العميل تلقائياً، وبعد الغسلة الرابعة يجهز عرض الغسلة المجانية ويرسله عبر واتساب.</p>
+          </div>
+          <div className="client-wash-progress" aria-label="تقدم غسلات الولاء">
+            {[1, 2, 3, 4].map((wash) => (
+              <div key={wash} className="complete">
+                <span>{wash}</span>
+                <small>غسلة</small>
+              </div>
+            ))}
+            <div className="free">
+              <Gift size={22} />
+              <small>الخامسة مجاناً</small>
+            </div>
+          </div>
+        </section>
+      )}
+
       <section className="client-main-grid">
         <article className="client-orbit-card client-ai-performance">
           <div className="client-card-head">
@@ -481,7 +505,10 @@ export const ClientOverview = () => {
             <div>
               <strong>{planName}</strong>
               <span>Renews on Jun 14, 2026</span>
-              {['AI Assistant', 'WhatsApp Automation', 'Voice Agent', 'Advanced Analytics', 'Priority Support'].map((item) => (
+              {(isCarWash
+                ? ['AI Assistant', 'WhatsApp Automation', 'Voice Agent', '4 Washes + 5th Free', 'Priority Support']
+                : ['AI Assistant', 'WhatsApp Automation', 'Voice Agent', 'Advanced Analytics', 'Priority Support']
+              ).map((item) => (
                 <p key={item}><Check size={13} /> {item}</p>
               ))}
             </div>

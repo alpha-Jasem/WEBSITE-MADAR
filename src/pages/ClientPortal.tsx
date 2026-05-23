@@ -1,5 +1,5 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
-import { BarChart3, Calendar, LayoutDashboard, MessageSquare, Settings, Users2, Wrench, Zap } from 'lucide-react'
+import { BarChart3, Calendar, Car, Droplets, LayoutDashboard, MessageSquare, Settings, Users2, Wrench, Zap } from 'lucide-react'
 import { DashShell } from '../components/dash/DashShell'
 import type { NavItem } from '../components/dash/DashSidebar'
 import { ClientOverview } from '../components/dashboard/client/ClientOverview'
@@ -13,7 +13,22 @@ import { ClientConversations } from '../components/dashboard/client/ClientConver
 import { useClientCompany } from '../hooks/useClientCompany'
 import { getClientIndustryTemplate } from '../lib/clientIndustryTemplates'
 
-function buildNavItems(labels: ReturnType<typeof getClientIndustryTemplate>['navLabels']): NavItem[] {
+function buildNavItems(template: ReturnType<typeof getClientIndustryTemplate>): NavItem[] {
+  const labels = template.navLabels
+
+  if (template.type === 'car_wash') {
+    return [
+      { to: '/client', icon: Droplets, label: labels.overview, end: true },
+      { to: '/client/setup', icon: Car, label: labels.setup },
+      { to: '/client/appointments', icon: Calendar, label: labels.appointments },
+      { to: '/client/conversations', icon: MessageSquare, label: labels.conversations },
+      { to: '/client/automations', icon: Zap, label: labels.automations },
+      { to: '/client/leads', icon: Users2, label: labels.leads },
+      { to: '/client/reports', icon: BarChart3, label: labels.reports },
+      { to: '/client/settings', icon: Settings, label: labels.settings },
+    ]
+  }
+
   return [
     { to: '/client', icon: LayoutDashboard, label: labels.overview, end: true },
     { to: '/client/setup', icon: Wrench, label: labels.setup },
@@ -37,7 +52,7 @@ function usePageTitle(navItems: NavItem[]) {
 export const ClientPortal = () => {
   const { company } = useClientCompany()
   const template = getClientIndustryTemplate(company?.business_type, company?.industry)
-  const navItems = buildNavItems(template.navLabels)
+  const navItems = buildNavItems(template)
   const pageTitle = usePageTitle(navItems)
 
   return (
