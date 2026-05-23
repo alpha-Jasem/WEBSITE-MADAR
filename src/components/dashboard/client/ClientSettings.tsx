@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { User, Bell, Shield, Link2, Copy, Check, Mail, Loader2 } from 'lucide-react'
+import { User, Bell, Shield, Link2, Copy, Check, Mail, Loader2, MapPin } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
+import { getClientIndustryTemplate } from '../../../lib/clientIndustryTemplates'
 
 const PLAN_LIMITS: Record<string, string> = {
   starter: '2,000 رسالة/شهر',
@@ -19,6 +20,27 @@ export const ClientSettings = () => {
   const [sendingEmail, setSendingEmail] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
   const [notifGranted, setNotifGranted] = useState(Notification.permission === 'granted')
+  const [mapsUrl, setMapsUrl] = useState('')
+  const [savingMaps, setSavingMaps] = useState(false)
+  const [mapsSaved, setMapsSaved] = useState(false)
+
+  const template = getClientIndustryTemplate(company?.business_type, company?.industry)
+  const isCarWash = template.type === 'car_wash'
+
+  useEffect(() => {
+    if (company && (company as any).google_maps_url) {
+      setMapsUrl((company as any).google_maps_url)
+    }
+  }, [company])
+
+  const saveMapsUrl = async () => {
+    if (!companyId || !mapsUrl) return
+    setSavingMaps(true)
+    await supabase.from('companies').update({ google_maps_url: mapsUrl } as any).eq('id', companyId)
+    setSavingMaps(false)
+    setMapsSaved(true)
+    setTimeout(() => setMapsSaved(false), 3000)
+  }
 
   const webhookUrl = companyId && company?.webhook_token
     ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/inbound-lead?token=${company.webhook_token}`
@@ -137,6 +159,39 @@ export const ClientSettings = () => {
           {sendingEmail ? <Loader2 size={14} className="animate-spin mx-auto" /> : emailSent ? 'تم الإرسال ✅' : 'إرسال الإيميل'}
         </button>
       </div>
+
+      {/* Car Wash: Google Maps URL */}
+      {isCarWash && (
+        <div className="p-5 rounded-2xl space-y-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+          <div className="flex items-center gap-2.5 mb-1">
+            <MapPin size={16} className="text-cyan-400" />
+            <h3 className="text-sm font-bold text-white font-cairo">رابط Google Maps للمغسلة</h3>
+          </div>
+          <p className="text-xs text-slate-500 font-tajawal">سيُرسل هذا الرابط تلقائياً للعملاء بعد كل غسلة لطلب التقييم.</p>
+          <div className="flex items-center gap-2">
+            <input
+              value={mapsUrl}
+              onChange={e => setMapsUrl(e.target.value)}
+              placeholder="https://maps.app.goo.gl/..."
+              dir="ltr"
+              className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 outline-none focus:border-cyan-500/50 font-mono transition-colors"
+            />
+            <motion.button
+              whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+              onClick={saveMapsUrl}
+              disabled={savingMaps || !mapsUrl}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold font-cairo cursor-pointer disabled:opacity-40"
+              style={{ background: mapsSaved ? 'rgba(16,185,129,0.15)' : 'rgba(34,211,238,0.12)', border: `1px solid ${mapsSaved ? 'rgba(16,185,129,0.3)' : 'rgba(34,211,238,0.25)'}`, color: mapsSaved ? '#10B981' : '#22D3EE' }}
+            >
+              {savingMaps ? <Loader2 size={14} className="animate-spin" /> : mapsSaved ? <Check size={14} /> : <Check size={14} />}
+              {mapsSaved ? 'تم الحفظ ✓' : 'حفظ'}
+            </motion.button>
+          </div>
+          {mapsUrl && (
+            <p className="text-xs text-slate-600 font-mono break-all" dir="ltr">{mapsUrl}</p>
+          )}
+        </div>
+      )}
 
       {/* Notifications */}
       <div className="p-5 rounded-2xl space-y-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
