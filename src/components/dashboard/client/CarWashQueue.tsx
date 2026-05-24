@@ -241,7 +241,7 @@ export const CarWashQueue = () => {
       fetch(N8N_READY_WEBHOOK, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, customer_name: item.customer_name, company_name: company?.name || 'المغسلة' }),
+        body: JSON.stringify({ phone, customer_name: item.customer_name, company_name: company?.name || 'المغسلة', company_id: companyId }),
       }).catch(() => {})
     }
     setMovingId(null)
@@ -327,6 +327,7 @@ export const CarWashQueue = () => {
               phone: ph,
               customer_name: item.customer_name,
               company_name: company?.name || 'المغسلة',
+              company_id: companyId,
               free_washes: 1,
             }),
           }).catch(() => {})
@@ -344,6 +345,7 @@ export const CarWashQueue = () => {
           phone: ph,
           customer_name: item.customer_name,
           company_name: company?.name || 'المغسلة',
+          company_id: companyId,
           service: item.service_name,
           payment_method: selectedPayment,
           subtotal: vat.subtotal,

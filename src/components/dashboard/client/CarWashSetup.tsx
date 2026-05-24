@@ -1,31 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Car, Clock, Star, Plus, Trash2, Check, Loader2, MapPin, Save } from 'lucide-react'
+import { Car, Clock, Star, Plus, Trash2, Check, Loader2, MapPin, Save, Receipt, MessageSquare, RotateCcw } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
+import { logAudit } from '../../../lib/auditLog'
+import type { CWService } from '../../../types'
 
-type Service = {
-  id?: string
-  name: string
-  price: number
-  duration_minutes: number
-  active: boolean
-}
-
-type WorkingHours = {
-  open: string
-  close: string
-  closed: boolean
-}
-
+type WorkingHours = { open: string; close: string; closed: boolean }
 type DayHours = Record<string, WorkingHours>
-
-const DEFAULT_SERVICES: Service[] = [
-  { name: 'غسيل عادي', price: 25, duration_minutes: 20, active: true },
-  { name: 'غسيل بريميوم', price: 45, duration_minutes: 35, active: true },
-  { name: 'غسيل داخلي وخارجي', price: 70, duration_minutes: 60, active: true },
-  { name: 'تلميع', price: 120, duration_minutes: 90, active: true },
-  { name: 'غسيل محرك', price: 50, duration_minutes: 45, active: false },
-]
 
 const DAYS = [
   { key: 'saturday',  label: 'السبت'    },
@@ -41,6 +22,20 @@ const DEFAULT_HOURS: DayHours = Object.fromEntries(
   DAYS.map(d => [d.key, { open: '08:00', close: '22:00', closed: d.key === 'friday' }])
 )
 
+const DEFAULT_TEMPLATES: Record<string, string> = {
+  delivery_receipt: '🧾 فاتورة غسيل سيارة\n{{company_name}}\n\nالخدمة: {{service}}\nالإجمالي: {{total}} ر.س\nطريقة الدفع: {{payment_method}} ✅\n\nشكراً لزيارتكم — نراكم قريباً 🙏',
+  delivery_receipt_free: '🎁 غسلة مجانية!\n{{company_name}}\n\nالخدمة: {{service}}\nالإجمالي: 0 ر.س 🎉\n\nشكراً على ولاؤك — نراكم قريباً 🙏',
+  loyalty_milestone: '🎉 مبروك {{customer_name}}!\n\nاستكملت 5 غسلات في {{company_name}} 🚗✨\nغسلتك القادمة مجانية!\n\nما عليك إلا تذكر الموظف عند وصولك 😊',
+  car_ready: '🚗 سيارتك جاهزة {{customer_name}}!\n\nتفضل استلامها من {{company_name}} 😊',
+}
+
+const TEMPLATE_DEFS = [
+  { key: 'delivery_receipt',      label: 'فاتورة التسليم',  when: 'عند تسليم السيارة (مدفوعة)',         color: '#22D3EE', vars: ['{{customer_name}}', '{{company_name}}', '{{service}}', '{{total}}', '{{payment_method}}'] },
+  { key: 'delivery_receipt_free', label: 'غسلة مجانية',     when: 'عند استخدام غسلة الولاء',             color: '#10B981', vars: ['{{customer_name}}', '{{company_name}}', '{{service}}'] },
+  { key: 'loyalty_milestone',     label: 'إنجاز الولاء',    when: 'عند اكتمال 5 غسلات وربح غسلة مجانية', color: '#F59E0B', vars: ['{{customer_name}}', '{{company_name}}'] },
+  { key: 'car_ready',             label: 'السيارة جاهزة',   when: 'عند وصول السيارة لحالة "جاهزة"',       color: '#8B5CF6', vars: ['{{customer_name}}', '{{company_name}}'] },
+] as const
+
 const SECTION_STYLE = {
   background: 'rgba(255,255,255,0.03)',
   border: '1px solid rgba(255,255,255,0.07)',
@@ -49,12 +44,13 @@ const SECTION_STYLE = {
 }
 
 export function CarWashSetup() {
-  const { companyId, loading: authLoading } = useClientCompany()
+  const { companyId, company, loading: authLoading } = useClientCompany()
 
-  const [tab, setTab] = useState<'services' | 'hours' | 'loyalty'>('services')
+  const [tab, setTab] = useState<'services' | 'hours' | 'loyalty' | 'vat' | 'messages'>('services')
 
-  // Services
-  const [services, setServices] = useState<Service[]>(DEFAULT_SERVICES)
+  // Services (table-based)
+  const [services, setServices] = useState<CWService[]>([])
+  const [removedIds, setRemovedIds] = useState<string[]>([])
   const [savingServices, setSavingServices] = useState(false)
   const [servicesSaved, setServicesSaved] = useState(false)
 
@@ -69,39 +65,86 @@ export function CarWashSetup() {
   const [savingLoyalty, setSavingLoyalty] = useState(false)
   const [loyaltySaved, setLoyaltySaved] = useState(false)
 
+  // VAT
+  const [taxEnabled, setTaxEnabled] = useState(false)
+  const [vatRate, setVatRate] = useState(15)
+  const [priceIncludesVat, setPriceIncludesVat] = useState(false)
+  const [savingVat, setSavingVat] = useState(false)
+  const [vatSaved, setVatSaved] = useState(false)
+
+  // Message templates
+  const [templates, setTemplates] = useState<Record<string, string>>(DEFAULT_TEMPLATES)
+  const [savingTemplates, setSavingTemplates] = useState(false)
+  const [templatesSaved, setTemplatesSaved] = useState(false)
+
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (authLoading || !companyId) return
     const load = async () => {
       setLoading(true)
-      const { data: company } = await supabase
-        .from('companies')
-        .select('cw_services, cw_hours, cw_loyalty_threshold, google_maps_url')
-        .eq('id', companyId)
-        .single()
 
-      if (company) {
-        const c = company as any
-        if (c.cw_services) setServices(c.cw_services)
+      const [{ data: svcData }, { data: co }] = await Promise.all([
+        supabase.from('cw_services').select('*').eq('company_id', companyId).order('created_at'),
+        supabase.from('companies')
+          .select('cw_hours, cw_loyalty_threshold, google_maps_url, tax_enabled, vat_rate, price_includes_vat, cw_message_templates')
+          .eq('id', companyId).single(),
+      ])
+
+      if (svcData) setServices(svcData as CWService[])
+
+      if (co) {
+        const c = co as any
         if (c.cw_hours) setHours(c.cw_hours)
         if (c.cw_loyalty_threshold) setLoyaltyThreshold(c.cw_loyalty_threshold)
         if (c.google_maps_url) setReviewUrl(c.google_maps_url)
+        setTaxEnabled(!!c.tax_enabled)
+        if (c.vat_rate) setVatRate(c.vat_rate)
+        setPriceIncludesVat(!!c.price_includes_vat)
+        if (c.cw_message_templates && Object.keys(c.cw_message_templates).length > 0) {
+          setTemplates({ ...DEFAULT_TEMPLATES, ...c.cw_message_templates })
+        }
       }
-
       setLoading(false)
     }
     load()
   }, [authLoading, companyId])
 
+  // Services: save all (INSERT new, UPDATE existing, DELETE removed)
   const saveServices = async () => {
     if (!companyId) return
     setSavingServices(true)
-    await supabase.from('companies').update({ cw_services: services } as any).eq('id', companyId)
+
+    const toInsert = services.filter(s => !s.id || s.id === '')
+    const toUpdate = services.filter(s => s.id && s.id !== '')
+
+    await Promise.all([
+      ...toInsert.map(s => supabase.from('cw_services').insert({ company_id: companyId, name: s.name, price: s.price, duration_minutes: s.duration_minutes, active: s.active })),
+      ...toUpdate.map(s => supabase.from('cw_services').update({ name: s.name, price: s.price, duration_minutes: s.duration_minutes, active: s.active }).eq('id', s.id)),
+      ...removedIds.map(id => supabase.from('cw_services').delete().eq('id', id)),
+    ])
+
+    setRemovedIds([])
+    // Reload services to get fresh IDs
+    const { data } = await supabase.from('cw_services').select('*').eq('company_id', companyId).order('created_at')
+    if (data) setServices(data as CWService[])
+
+    logAudit(companyId, 'service_updated')
     setSavingServices(false)
     setServicesSaved(true)
     setTimeout(() => setServicesSaved(false), 3000)
   }
+
+  const addService = () => setServices(prev => [...prev, { id: '', company_id: companyId ?? '', name: '', price: 0, duration_minutes: 20, active: true, created_at: '' }])
+
+  const removeService = (i: number) => {
+    const svc = services[i]
+    if (svc.id) setRemovedIds(prev => [...prev, svc.id])
+    setServices(prev => prev.filter((_, idx) => idx !== i))
+  }
+
+  const updateService = (i: number, field: keyof CWService, val: string | number | boolean) =>
+    setServices(prev => prev.map((s, idx) => idx === i ? { ...s, [field]: val } : s))
 
   const saveHours = async () => {
     if (!companyId) return
@@ -121,15 +164,36 @@ export function CarWashSetup() {
     setTimeout(() => setLoyaltySaved(false), 3000)
   }
 
-  const addService = () => setServices(prev => [...prev, { name: '', price: 0, duration_minutes: 20, active: true }])
-  const removeService = (i: number) => setServices(prev => prev.filter((_, idx) => idx !== i))
-  const updateService = (i: number, field: keyof Service, val: string | number | boolean) =>
-    setServices(prev => prev.map((s, idx) => idx === i ? { ...s, [field]: val } : s))
+  const saveVat = async () => {
+    if (!companyId) return
+    setSavingVat(true)
+    await supabase.from('companies').update({ tax_enabled: taxEnabled, vat_rate: vatRate, price_includes_vat: priceIncludesVat } as any).eq('id', companyId)
+    logAudit(companyId, 'tax_settings_changed', { newValue: { tax_enabled: taxEnabled, vat_rate: vatRate, price_includes_vat: priceIncludesVat } })
+    setSavingVat(false)
+    setVatSaved(true)
+    setTimeout(() => setVatSaved(false), 3000)
+  }
+
+  const saveTemplates = async () => {
+    if (!companyId) return
+    setSavingTemplates(true)
+    await supabase.from('companies').update({ cw_message_templates: templates } as any).eq('id', companyId)
+    logAudit(companyId, 'message_templates_updated', { newValue: templates })
+    setSavingTemplates(false)
+    setTemplatesSaved(true)
+    setTimeout(() => setTemplatesSaved(false), 3000)
+  }
+
+  const resetTemplate = (key: string) => {
+    setTemplates(prev => ({ ...prev, [key]: DEFAULT_TEMPLATES[key] }))
+  }
 
   const TABS = [
-    { key: 'services', label: 'الخدمات والأسعار', icon: Car },
-    { key: 'hours',    label: 'أوقات العمل',      icon: Clock },
-    { key: 'loyalty',  label: 'الولاء والتقييم',   icon: Star },
+    { key: 'services',  label: 'الخدمات',     icon: Car            },
+    { key: 'hours',     label: 'أوقات العمل', icon: Clock          },
+    { key: 'loyalty',   label: 'الولاء',       icon: Star           },
+    { key: 'vat',       label: 'الضريبة',      icon: Receipt        },
+    { key: 'messages',  label: 'الرسائل',      icon: MessageSquare  },
   ] as const
 
   if (authLoading || loading) return (
@@ -143,24 +207,24 @@ export function CarWashSetup() {
     <div dir="rtl" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
       <div>
         <h1 style={{ fontSize: 22, fontWeight: 800, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>إعداد المغسلة</h1>
-        <p style={{ fontSize: 13, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginTop: 4 }}>أضف خدماتك وأوقات عملك وإعدادات الولاء</p>
+        <p style={{ fontSize: 13, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginTop: 4 }}>الخدمات، أوقات العمل، الولاء، والضريبة</p>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 8, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: 6 }}>
+      <div style={{ display: 'flex', gap: 6, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: 6, flexWrap: 'wrap' }}>
         {TABS.map(t => {
           const active = tab === t.key
           return (
             <button key={t.key} onClick={() => setTab(t.key)}
               style={{
-                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-                padding: '9px 12px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                flex: 1, minWidth: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                padding: '9px 10px', borderRadius: 10, border: 'none', cursor: 'pointer',
                 background: active ? 'rgba(34,211,238,0.12)' : 'transparent',
                 color: active ? '#22D3EE' : '#475569',
-                fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: active ? 700 : 500,
+                fontFamily: 'Cairo, sans-serif', fontSize: 12, fontWeight: active ? 700 : 500,
                 transition: 'all 0.15s',
               }}>
-              <t.icon size={14} />
+              <t.icon size={13} />
               {t.label}
             </button>
           )
@@ -181,36 +245,38 @@ export function CarWashSetup() {
             </button>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {/* Header */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 60px 32px', gap: 10, padding: '0 4px' }}>
-              {['اسم الخدمة', 'السعر (ر.س)', 'الوقت (دقيقة)', 'مفعّل', ''].map(h => (
-                <span key={h} style={{ fontSize: 11, color: '#475569', fontFamily: 'Tajawal, sans-serif', fontWeight: 600 }}>{h}</span>
-              ))}
-            </div>
-
-            {services.map((s, i) => (
-              <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 60px 32px', gap: 10, alignItems: 'center' }}>
-                <input value={s.name} onChange={e => updateService(i, 'name', e.target.value)}
-                  placeholder="اسم الخدمة"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '8px 12px', color: '#E2E8F0', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
-                <input type="number" value={s.price} onChange={e => updateService(i, 'price', Number(e.target.value))}
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '8px 12px', color: '#E2E8F0', fontSize: 13, fontFamily: 'Sora, sans-serif', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
-                <input type="number" value={s.duration_minutes} onChange={e => updateService(i, 'duration_minutes', Number(e.target.value))}
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '8px 12px', color: '#E2E8F0', fontSize: 13, fontFamily: 'Sora, sans-serif', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
-                  <button onClick={() => updateService(i, 'active', !s.active)}
-                    style={{ width: 28, height: 28, borderRadius: 8, border: 'none', cursor: 'pointer', background: s.active ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.04)', color: s.active ? '#10B981' : '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Check size={13} />
+          {services.length === 0 ? (
+            <p style={{ textAlign: 'center', color: '#475569', fontFamily: 'Tajawal, sans-serif', fontSize: 13, padding: '20px 0' }}>لا توجد خدمات — أضف خدمتك الأولى</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 60px 32px', gap: 10, padding: '0 4px' }}>
+                {['اسم الخدمة', 'السعر (ر.س)', 'الوقت (دقيقة)', 'مفعّل', ''].map(h => (
+                  <span key={h} style={{ fontSize: 11, color: '#475569', fontFamily: 'Tajawal, sans-serif', fontWeight: 600 }}>{h}</span>
+                ))}
+              </div>
+              {services.map((s, i) => (
+                <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 60px 32px', gap: 10, alignItems: 'center' }}>
+                  <input value={s.name} onChange={e => updateService(i, 'name', e.target.value)}
+                    placeholder="اسم الخدمة"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '8px 12px', color: '#E2E8F0', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+                  <input type="number" value={s.price} onChange={e => updateService(i, 'price', Number(e.target.value))}
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '8px 12px', color: '#E2E8F0', fontSize: 13, fontFamily: 'Sora, sans-serif', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+                  <input type="number" value={s.duration_minutes} onChange={e => updateService(i, 'duration_minutes', Number(e.target.value))}
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '8px 12px', color: '#E2E8F0', fontSize: 13, fontFamily: 'Sora, sans-serif', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+                  <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <button onClick={() => updateService(i, 'active', !s.active)}
+                      style={{ width: 28, height: 28, borderRadius: 8, border: 'none', cursor: 'pointer', background: s.active ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.04)', color: s.active ? '#10B981' : '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Check size={13} />
+                    </button>
+                  </div>
+                  <button onClick={() => removeService(i)}
+                    style={{ width: 28, height: 28, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(239,68,68,0.08)', color: '#EF4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Trash2 size={12} />
                   </button>
                 </div>
-                <button onClick={() => removeService(i)}
-                  style={{ width: 28, height: 28, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(239,68,68,0.08)', color: '#EF4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           <button onClick={saveServices} disabled={savingServices}
             style={{ marginTop: 20, display: 'flex', alignItems: 'center', gap: 7, padding: '10px 22px', borderRadius: 12, border: 'none', cursor: 'pointer', background: servicesSaved ? 'rgba(16,185,129,0.15)' : 'rgba(34,211,238,0.12)', color: servicesSaved ? '#10B981' : '#22D3EE', fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: 700 }}>
@@ -227,7 +293,6 @@ export function CarWashSetup() {
             <Clock size={15} color="#8B5CF6" />
             <span style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif' }}>أوقات العمل</span>
           </div>
-
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {DAYS.map(d => {
               const h = hours[d.key] || { open: '08:00', close: '22:00', closed: false }
@@ -254,7 +319,6 @@ export function CarWashSetup() {
               )
             })}
           </div>
-
           <button onClick={saveHours} disabled={savingHours}
             style={{ marginTop: 20, display: 'flex', alignItems: 'center', gap: 7, padding: '10px 22px', borderRadius: 12, border: 'none', cursor: 'pointer', background: hoursSaved ? 'rgba(16,185,129,0.15)' : 'rgba(139,92,246,0.12)', color: hoursSaved ? '#10B981' : '#8B5CF6', fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: 700 }}>
             {savingHours ? <Loader2 size={14} className="animate-spin" /> : hoursSaved ? <Check size={14} /> : <Save size={14} />}
@@ -269,54 +333,174 @@ export function CarWashSetup() {
           <div style={SECTION_STYLE}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
               <Star size={15} color="#F59E0B" />
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif' }}>برنامج الولاء</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif' }}>برنامج الولاء (5+1 مجاناً)</span>
             </div>
-
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', marginBottom: 8 }}>
-                  عدد الزيارات للحصول على الغسيل المجاني
+                  عدد الغسلات المدفوعة للحصول على الغسلة المجانية
                 </label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <input type="number" min={2} max={20} value={loyaltyThreshold}
                     onChange={e => setLoyaltyThreshold(Number(e.target.value))}
                     style={{ width: 80, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '8px 12px', color: '#F1F5F9', fontSize: 18, fontFamily: 'Sora, sans-serif', fontWeight: 700, outline: 'none', textAlign: 'center' }} />
                   <div style={{ fontSize: 13, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>
-                    كل <strong style={{ color: '#F59E0B' }}>{loyaltyThreshold - 1}</strong> زيارات والـ<strong style={{ color: '#10B981' }}>{loyaltyThreshold}</strong> مجانية
+                    كل <strong style={{ color: '#F59E0B' }}>{loyaltyThreshold}</strong> غسلات مدفوعة = الغسلة <strong style={{ color: '#10B981' }}>التالية مجانية</strong>
                   </div>
                 </div>
               </div>
-
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
-                {Array.from({ length: loyaltyThreshold }, (_, i) => (
-                  <div key={i} style={{ width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: i === loyaltyThreshold - 1 ? 'rgba(245,158,11,0.15)' : 'rgba(34,211,238,0.1)', border: `1px solid ${i === loyaltyThreshold - 1 ? 'rgba(245,158,11,0.4)' : 'rgba(34,211,238,0.25)'}` }}>
-                    {i === loyaltyThreshold - 1
-                      ? <Star size={14} color="#F59E0B" fill="#F59E0B" />
-                      : <Car size={12} color="#22D3EE" />}
+                {Array.from({ length: loyaltyThreshold + 1 }, (_, i) => (
+                  <div key={i} style={{ width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: i === loyaltyThreshold ? 'rgba(245,158,11,0.15)' : 'rgba(34,211,238,0.1)', border: `1px solid ${i === loyaltyThreshold ? 'rgba(245,158,11,0.4)' : 'rgba(34,211,238,0.25)'}` }}>
+                    {i === loyaltyThreshold ? <Star size={14} color="#F59E0B" fill="#F59E0B" /> : <Car size={12} color="#22D3EE" />}
                   </div>
                 ))}
               </div>
             </div>
           </div>
-
           <div style={SECTION_STYLE}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
               <MapPin size={15} color="#22D3EE" />
               <span style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif' }}>رابط Google Maps للتقييم</span>
             </div>
             <p style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginBottom: 12 }}>
-              سيُرسل هذا الرابط تلقائياً للعملاء بعد كل زيارة لطلب التقييم على Google.
+              سيُرسل هذا الرابط للعملاء بعد الزيارة لطلب التقييم على Google.
             </p>
             <input value={reviewUrl} onChange={e => setReviewUrl(e.target.value)}
-              placeholder="https://maps.app.goo.gl/..."
-              dir="ltr"
+              placeholder="https://maps.app.goo.gl/..." dir="ltr"
               style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '10px 14px', color: '#E2E8F0', fontSize: 13, fontFamily: 'monospace', outline: 'none', boxSizing: 'border-box' }} />
           </div>
-
           <button onClick={saveLoyalty} disabled={savingLoyalty}
             style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '11px 22px', borderRadius: 12, border: 'none', cursor: 'pointer', background: loyaltySaved ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.12)', color: loyaltySaved ? '#10B981' : '#F59E0B', fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: 700 }}>
             {savingLoyalty ? <Loader2 size={14} className="animate-spin" /> : loyaltySaved ? <Check size={14} /> : <Save size={14} />}
             {loyaltySaved ? 'تم الحفظ ✓' : 'حفظ إعدادات الولاء'}
+          </button>
+        </div>
+      )}
+
+      {/* VAT Tab */}
+      {tab === 'vat' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={SECTION_STYLE}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+              <Receipt size={15} color="#6366F1" />
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif' }}>إعدادات ضريبة القيمة المضافة (VAT)</span>
+            </div>
+
+            {/* Enable/Disable toggle */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: 'rgba(255,255,255,0.02)', borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', marginBottom: 14 }}>
+              <div>
+                <p style={{ fontSize: 14, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', fontWeight: 600, margin: 0 }}>تفعيل الضريبة</p>
+                <p style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', margin: '4px 0 0' }}>هل مغسلتك مسجّلة في هيئة الزكاة والضريبة؟</p>
+              </div>
+              <button
+                onClick={() => setTaxEnabled(v => !v)}
+                style={{ width: 48, height: 26, borderRadius: 99, border: 'none', cursor: 'pointer', background: taxEnabled ? '#6366F1' : 'rgba(255,255,255,0.1)', position: 'relative', transition: 'background 0.2s' }}>
+                <span style={{ position: 'absolute', top: 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'right 0.2s, left 0.2s', right: taxEnabled ? 3 : 'auto', left: taxEnabled ? 'auto' : 3 }} />
+              </button>
+            </div>
+
+            {taxEnabled && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {/* VAT Rate */}
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', marginBottom: 8 }}>نسبة الضريبة %</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <input type="number" value={vatRate} min={0} max={100}
+                      onChange={e => setVatRate(Number(e.target.value))}
+                      style={{ width: 80, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '8px 12px', color: '#F1F5F9', fontSize: 20, fontFamily: 'Sora, sans-serif', fontWeight: 700, outline: 'none', textAlign: 'center' }} />
+                    <span style={{ fontSize: 18, color: '#6366F1', fontFamily: 'Sora, sans-serif', fontWeight: 700 }}>%</span>
+                    <p style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>الضريبة المعتمدة في المملكة 15%</p>
+                  </div>
+                </div>
+
+                {/* Price includes VAT */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: 'rgba(255,255,255,0.02)', borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div>
+                    <p style={{ fontSize: 13, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', fontWeight: 600, margin: 0 }}>الأسعار تشمل الضريبة</p>
+                    <p style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', margin: '4px 0 0' }}>
+                      {priceIncludesVat
+                        ? `مثال: سعر 115 ر.س = ${(115 / 1.15).toFixed(2)} ر.س + ${(115 - 115/1.15).toFixed(2)} ر.س ضريبة`
+                        : `مثال: سعر 100 ر.س + ${vatRate}% = ${(100 * (1 + vatRate/100)).toFixed(2)} ر.س للعميل`}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setPriceIncludesVat(v => !v)}
+                    style={{ width: 48, height: 26, borderRadius: 99, border: 'none', cursor: 'pointer', background: priceIncludesVat ? '#6366F1' : 'rgba(255,255,255,0.1)', position: 'relative', transition: 'background 0.2s' }}>
+                    <span style={{ position: 'absolute', top: 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'right 0.2s, left 0.2s', right: priceIncludesVat ? 3 : 'auto', left: priceIncludesVat ? 'auto' : 3 }} />
+                  </button>
+                </div>
+
+                {/* Summary */}
+                <div style={{ padding: '14px 16px', background: 'rgba(99,102,241,0.08)', borderRadius: 14, border: '1px solid rgba(99,102,241,0.2)' }}>
+                  <p style={{ fontSize: 12, color: '#A5B4FC', fontFamily: 'Tajawal, sans-serif', margin: 0, lineHeight: 1.8 }}>
+                    ✓ ستظهر الضريبة في الإيصالات والتقارير<br/>
+                    ✓ صافي الربح يُحسب على المبلغ قبل الضريبة<br/>
+                    ✓ يمكنك تغيير الإعداد في أي وقت
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <button onClick={saveVat} disabled={savingVat}
+            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '11px 22px', borderRadius: 12, border: 'none', cursor: 'pointer', background: vatSaved ? 'rgba(16,185,129,0.15)' : 'rgba(99,102,241,0.15)', color: vatSaved ? '#10B981' : '#6366F1', fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: 700 }}>
+            {savingVat ? <Loader2 size={14} className="animate-spin" /> : vatSaved ? <Check size={14} /> : <Save size={14} />}
+            {vatSaved ? 'تم الحفظ ✓' : 'حفظ إعدادات الضريبة'}
+          </button>
+        </div>
+      )}
+
+      {/* Messages Tab */}
+      {tab === 'messages' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ padding: '14px 16px', background: 'rgba(34,211,238,0.05)', borderRadius: 14, border: '1px solid rgba(34,211,238,0.15)' }}>
+            <p style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', margin: 0, lineHeight: 1.9 }}>
+              خصّص نصوص رسائل الواتساب التي تُرسل تلقائياً لعملائك. استخدم المتغيرات بالنقر عليها لإدراجها في النص.
+            </p>
+          </div>
+
+          {TEMPLATE_DEFS.map(def => (
+            <div key={def.key} style={SECTION_STYLE}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <MessageSquare size={14} color={def.color} />
+                  <div>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif' }}>{def.label}</span>
+                    <p style={{ fontSize: 11, color: '#475569', fontFamily: 'Tajawal, sans-serif', margin: '2px 0 0' }}>{def.when}</p>
+                  </div>
+                </div>
+                <button onClick={() => resetTemplate(def.key)}
+                  title="استعادة الافتراضي"
+                  style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#475569', cursor: 'pointer', fontSize: 11, fontFamily: 'Tajawal, sans-serif' }}>
+                  <RotateCcw size={11} /> افتراضي
+                </button>
+              </div>
+
+              {/* Variable chips */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                {def.vars.map(v => (
+                  <button key={v} onClick={() => setTemplates(prev => ({ ...prev, [def.key]: (prev[def.key] || '') + v }))}
+                    style={{ padding: '3px 9px', borderRadius: 6, border: `1px solid ${def.color}33`, background: `${def.color}11`, color: def.color, fontSize: 11, fontFamily: 'monospace', cursor: 'pointer', direction: 'ltr' }}>
+                    {v}
+                  </button>
+                ))}
+              </div>
+
+              <textarea
+                value={templates[def.key] || DEFAULT_TEMPLATES[def.key]}
+                onChange={e => setTemplates(prev => ({ ...prev, [def.key]: e.target.value }))}
+                rows={5}
+                dir="auto"
+                style={{ width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '12px 14px', color: '#E2E8F0', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', resize: 'vertical', boxSizing: 'border-box', lineHeight: 1.8 }}
+              />
+            </div>
+          ))}
+
+          <button onClick={saveTemplates} disabled={savingTemplates}
+            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '11px 22px', borderRadius: 12, border: 'none', cursor: 'pointer', background: templatesSaved ? 'rgba(16,185,129,0.15)' : 'rgba(34,211,238,0.12)', color: templatesSaved ? '#10B981' : '#22D3EE', fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: 700 }}>
+            {savingTemplates ? <Loader2 size={14} className="animate-spin" /> : templatesSaved ? <Check size={14} /> : <Save size={14} />}
+            {templatesSaved ? 'تم الحفظ ✓' : 'حفظ القوالب'}
           </button>
         </div>
       )}

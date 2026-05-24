@@ -37,6 +37,16 @@ export interface Company {
   plan_reset_at: string
   auth_user_id?: string
   created_at: string
+  // VAT settings
+  tax_enabled?: boolean
+  vat_rate?: number
+  price_includes_vat?: boolean
+  // Car wash config (JSONB columns kept for legacy compat)
+  cw_services?: unknown
+  cw_hours?: unknown
+  cw_loyalty_threshold?: number
+  google_maps_url?: string
+  cw_message_templates?: Record<string, string>
 }
 
 export interface Automation {
@@ -124,9 +134,22 @@ export interface LeadFormData {
 }
 
 // Car Wash types
-export type QueueStatus = 'received' | 'washing' | 'drying' | 'ready' | 'delivered'
+export type QueueStatus = 'received' | 'washing' | 'drying' | 'ready' | 'delivered' | 'cancelled'
 export type CommissionType = 'fixed' | 'percentage'
 export type ExpenseCategory = 'tools' | 'electricity' | 'rent' | 'other'
+export type PaymentMethod = 'cash' | 'mada' | 'visa' | 'bank_transfer' | 'stc_pay' | 'other'
+export type PaymentStatus = 'unpaid' | 'paid' | 'refunded' | 'cancelled'
+export type SalaryType = 'fixed' | 'commission' | 'mixed'
+
+export interface CWService {
+  id: string
+  company_id: string
+  name: string
+  price: number
+  duration_minutes: number
+  active: boolean
+  created_at: string
+}
 
 export interface CWWorker {
   id: string
@@ -135,6 +158,9 @@ export interface CWWorker {
   phone?: string
   commission_type: CommissionType
   commission_value: number
+  salary_type?: SalaryType
+  fixed_salary?: number
+  salary_period?: 'monthly' | 'weekly'
   active: boolean
   created_at: string
 }
@@ -145,10 +171,21 @@ export interface CWQueueItem {
   customer_name: string
   phone?: string
   car_type?: string
+  plate?: string
+  service_id?: string
   service_name?: string
   price: number
+  subtotal?: number
+  vat_amount?: number
+  total_amount?: number
   worker_id?: string
   status: QueueStatus
+  payment_method?: PaymentMethod
+  payment_status?: PaymentStatus
+  is_free_wash?: boolean
+  original_price?: number
+  discount_amount?: number
+  notes?: string
   started_at?: string
   delivered_at?: string
   created_at: string
@@ -162,5 +199,40 @@ export interface CWExpense {
   category: ExpenseCategory
   description?: string
   expense_date: string
+  created_at: string
+}
+
+export interface CWDailyClosing {
+  id: string
+  company_id: string
+  closing_date: string
+  total_cars: number
+  total_sales: number
+  subtotal_sales: number
+  vat_amount: number
+  cash_sales: number
+  mada_sales: number
+  visa_sales: number
+  bank_transfer_sales: number
+  stc_pay_sales: number
+  other_sales: number
+  total_expenses: number
+  worker_salaries: number
+  worker_commissions: number
+  total_worker_cost: number
+  net_profit: number
+  free_washes_count: number
+  loyalty_discount_amount: number
+  notes?: string
+  closed_by?: string
+  created_at: string
+}
+
+export interface CompanyUser {
+  id: string
+  company_id: string
+  auth_user_id: string
+  role: 'owner' | 'manager' | 'staff'
+  full_name?: string
   created_at: string
 }
