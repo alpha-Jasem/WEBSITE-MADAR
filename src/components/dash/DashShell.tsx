@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import { DashSidebar, type NavItem } from './DashSidebar'
+import { useClientCompany } from '../../hooks/useClientCompany'
 
 interface Props {
   navItems: NavItem[]
@@ -15,6 +16,7 @@ interface Props {
 export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topbarRight }: Props) => {
   const [menuOpen, setMenuOpen] = useState(false)
   const location = useLocation()
+  const { company } = useClientCompany()
 
   useEffect(() => { setMenuOpen(false) }, [location.pathname])
 
@@ -25,6 +27,7 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
         role={role}
+        company={role === 'client' ? company : undefined}
       />
 
       <div className="dash-main">

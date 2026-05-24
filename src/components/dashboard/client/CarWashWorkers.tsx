@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2, Trophy, Car, Loader2, X, Check } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
+import { usePlanGate } from '../../../hooks/usePlanGate'
+import { FeatureLock } from '../../dash/FeatureLock'
 import type { CWWorker, CommissionType } from '../../../types'
 
 interface WorkerStats {
@@ -13,7 +15,8 @@ interface WorkerStats {
 const EMPTY_FORM = { name: '', phone: '', commission_type: 'fixed' as CommissionType, commission_value: 5 }
 
 export const CarWashWorkers = () => {
-  const { companyId, loading: authLoading } = useClientCompany()
+  const { companyId, company, loading: authLoading } = useClientCompany()
+  const { can, planLabel } = usePlanGate()
   const [workers, setWorkers] = useState<CWWorker[]>([])
   const [stats, setStats] = useState<WorkerStats[]>([])
   const [loading, setLoading] = useState(true)
@@ -123,7 +126,7 @@ export const CarWashWorkers = () => {
             const r = rank(w.id)
             return (
               <div key={w.id} className="p-5 rounded-2xl relative" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                {r === 1 && (
+                {can.workerRanking && r === 1 && (
                   <div className="absolute top-3 left-3">
                     <Trophy size={16} style={{ color: '#F59E0B' }} />
                   </div>
@@ -143,28 +146,61 @@ export const CarWashWorkers = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                  <div className="p-3 rounded-xl text-center" style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)' }}>
-                    <Car size={14} style={{ color: '#6366F1', margin: '0 auto 4px' }} />
-                    <p className="text-xl font-bold font-sora text-white">{s.carsToday}</p>
-                    <p className="text-xs text-slate-500 font-tajawal">سيارة اليوم</p>
-                  </div>
-                  <div className="p-3 rounded-xl text-center" style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)' }}>
-                    <p className="text-xl font-bold font-sora" style={{ color: '#10B981' }}>{s.commissionToday.toFixed(0)}</p>
-                    <p className="text-xs text-slate-500 font-tajawal">ر.س عمولة</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-500 font-tajawal">العمولة:</span>
-                  <span className="text-xs font-sora text-slate-300">
-                    {w.commission_type === 'fixed' ? `${w.commission_value} ر.س / سيارة` : `${w.commission_value}% من السعر`}
-                  </span>
-                </div>
+                {can.workerRanking && (
+                  <>
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div className="p-3 rounded-xl text-center" style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)' }}>
+                        <Car size={14} style={{ color: '#6366F1', margin: '0 auto 4px' }} />
+                        <p className="text-xl font-bold font-sora text-white">{s.carsToday}</p>
+                        <p className="text-xs text-slate-500 font-tajawal">سيارة اليوم</p>
+                      </div>
+                      <div className="p-3 rounded-xl text-center" style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)' }}>
+                        <p className="text-xl font-bold font-sora" style={{ color: '#10B981' }}>{s.commissionToday.toFixed(0)}</p>
+                        <p className="text-xs text-slate-500 font-tajawal">ر.س عمولة</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-500 font-tajawal">العمولة:</span>
+                      <span className="text-xs font-sora text-slate-300">
+                        {w.commission_type === 'fixed' ? `${w.commission_value} ر.س / سيارة` : `${w.commission_value}% من السعر`}
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
             )
           })}
         </div>
+      )}
+
+      {/* Performance section — Pro feature */}
+      {!can.workerRanking && workers.length > 0 && (
+        <FeatureLock
+          locked={true}
+          requiredPlan="pro"
+          featureName="أداء الموظفين والعمولات"
+          benefit="تتبع إنتاجية كل موظف، عدد السيارات، والعمولات اليومية — احفّز فريقك بالبيانات"
+          companyName={company?.name}
+          currentPlan={planLabel}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {workers.slice(0, 3).map(w => (
+              <div key={w.id} className="p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <p className="text-white font-bold font-cairo text-base mb-4">{w.name}</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 rounded-xl text-center" style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)' }}>
+                    <p className="text-xl font-bold font-sora text-white">—</p>
+                    <p className="text-xs text-slate-500 font-tajawal">سيارة اليوم</p>
+                  </div>
+                  <div className="p-3 rounded-xl text-center" style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)' }}>
+                    <p className="text-xl font-bold font-sora" style={{ color: '#10B981' }}>—</p>
+                    <p className="text-xs text-slate-500 font-tajawal">ر.س عمولة</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </FeatureLock>
       )}
 
       {/* Form modal */}

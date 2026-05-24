@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Plus, X, Loader2, TrendingUp, TrendingDown, Wallet, Users, DollarSign } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
+import { usePlanGate } from '../../../hooks/usePlanGate'
+import { FeatureLock } from '../../dash/FeatureLock'
 import type { CWExpense, ExpenseCategory } from '../../../types'
 
 const CATEGORIES: { value: ExpenseCategory; label: string }[] = [
@@ -29,7 +31,8 @@ function StatCard({ icon: Icon, label, value, color, sub }: { icon: typeof Walle
 }
 
 export const CarWashFinance = () => {
-  const { companyId, loading: authLoading } = useClientCompany()
+  const { companyId, company, loading: authLoading } = useClientCompany()
+  const { can, planLabel } = usePlanGate()
   const [loading, setLoading] = useState(true)
   const [expenses, setExpenses] = useState<CWExpense[]>([])
   const [revenue, setRevenue] = useState(0)
@@ -113,73 +116,91 @@ export const CarWashFinance = () => {
           <h1 className="text-2xl font-bold text-white font-cairo">المالية</h1>
           <p className="text-sm text-slate-500 font-tajawal">إغلاق يوم {new Date().toLocaleDateString('ar-SA', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
         </div>
-        <button onClick={() => setShowForm(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-tajawal font-medium text-white" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
-          <Plus size={16} /> إضافة مصروف
-        </button>
-      </div>
-
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={TrendingUp}   label="الإيرادات"      value={`${revenue.toFixed(0)} ر.س`}      color="#10B981" sub={`من الغسيل اليوم`} />
-        <StatCard icon={TrendingDown} label="المصاريف"       value={`${totalExpenses.toFixed(0)} ر.س`} color="#EF4444" sub={`${expenses.length} بند`} />
-        <StatCard icon={Users}        label="تكاليف الموظفين" value={`${workerCost.toFixed(0)} ر.س`}   color="#F59E0B" sub="عمولات اليوم" />
-        <StatCard
-          icon={DollarSign}
-          label="صافي الربح"
-          value={`${netProfit.toFixed(0)} ر.س`}
-          color={netProfit >= 0 ? '#6366F1' : '#EF4444'}
-          sub={netProfit >= 0 ? 'ممتاز اليوم' : 'خسارة — راجع المصاريف'}
-        />
-      </div>
-
-      {/* Profit bar */}
-      <div className="p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-        <p className="text-sm font-bold text-white font-cairo mb-4">توزيع الإيرادات</p>
-        {revenue > 0 ? (
-          <div className="space-y-3">
-            {[
-              { label: 'الربح الصافي',   val: Math.max(0, netProfit),   color: '#10B981' },
-              { label: 'تكاليف الموظفين', val: workerCost,               color: '#F59E0B' },
-              { label: 'مصاريف التشغيل', val: totalExpenses,            color: '#EF4444' },
-            ].map(item => (
-              <div key={item.label}>
-                <div className="flex justify-between mb-1">
-                  <span className="text-xs text-slate-400 font-tajawal">{item.label}</span>
-                  <span className="text-xs font-sora" style={{ color: item.color }}>{item.val.toFixed(0)} ر.س</span>
-                </div>
-                <div className="h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                  <div className="h-2 rounded-full transition-all" style={{ width: `${Math.min(100, (item.val / revenue) * 100)}%`, background: item.color }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-slate-600 font-tajawal text-sm text-center py-4">لا توجد إيرادات بعد</p>
+        {can.financeExpenses && (
+          <button onClick={() => setShowForm(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-tajawal font-medium text-white" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
+            <Plus size={16} /> إضافة مصروف
+          </button>
         )}
       </div>
 
-      {/* Expenses list */}
-      <div className="p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-        <p className="text-sm font-bold text-white font-cairo mb-4">مصاريف اليوم</p>
-        {expenses.length === 0 ? (
-          <p className="text-slate-600 font-tajawal text-sm text-center py-4">لا توجد مصاريف مسجّلة</p>
-        ) : (
-          <div className="space-y-2">
-            {expenses.map(e => (
-              <div key={e.id} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <div className="flex-1">
-                  <p className="text-sm text-white font-tajawal">{e.description || CATEGORIES.find(c => c.value === e.category)?.label}</p>
-                  <p className="text-xs text-slate-500 font-tajawal">{CATEGORIES.find(c => c.value === e.category)?.label}</p>
-                </div>
-                <p className="text-sm font-sora font-bold" style={{ color: '#EF4444' }}>{e.amount.toFixed(0)} ر.س</p>
-                <button onClick={() => deleteExpense(e.id)} disabled={deleting === e.id} className="text-slate-600 hover:text-red-400 transition-colors">
-                  {deleting === e.id ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />}
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+      {/* Revenue card — always visible */}
+      <div className="grid grid-cols-1 gap-4">
+        <StatCard icon={TrendingUp} label="الإيرادات" value={`${revenue.toFixed(0)} ر.س`} color="#10B981" sub="من الغسيل اليوم" />
       </div>
+
+      {/* Expenses, profit bar, workers cost — Pro feature */}
+      <FeatureLock
+        locked={!can.financeExpenses}
+        requiredPlan="pro"
+        featureName="تتبع المصاريف والربح الصافي"
+        benefit="راقب تكاليف التشغيل واحسب أرباحك اليومية بدقة — مصاريف، عمولات، وصافي الربح في مكان واحد"
+        companyName={company?.name}
+        currentPlan={planLabel}
+      >
+        <div className="space-y-6">
+          {/* Summary cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <StatCard icon={TrendingDown} label="المصاريف"       value={`${totalExpenses.toFixed(0)} ر.س`} color="#EF4444" sub={`${expenses.length} بند`} />
+            <StatCard icon={Users}        label="تكاليف الموظفين" value={`${workerCost.toFixed(0)} ر.س`}   color="#F59E0B" sub="عمولات اليوم" />
+            <StatCard
+              icon={DollarSign}
+              label="صافي الربح"
+              value={`${netProfit.toFixed(0)} ر.س`}
+              color={netProfit >= 0 ? '#6366F1' : '#EF4444'}
+              sub={netProfit >= 0 ? 'ممتاز اليوم' : 'خسارة — راجع المصاريف'}
+            />
+          </div>
+
+          {/* Profit bar */}
+          <div className="p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <p className="text-sm font-bold text-white font-cairo mb-4">توزيع الإيرادات</p>
+            {revenue > 0 ? (
+              <div className="space-y-3">
+                {[
+                  { label: 'الربح الصافي',   val: Math.max(0, netProfit),   color: '#10B981' },
+                  { label: 'تكاليف الموظفين', val: workerCost,               color: '#F59E0B' },
+                  { label: 'مصاريف التشغيل', val: totalExpenses,            color: '#EF4444' },
+                ].map(item => (
+                  <div key={item.label}>
+                    <div className="flex justify-between mb-1">
+                      <span className="text-xs text-slate-400 font-tajawal">{item.label}</span>
+                      <span className="text-xs font-sora" style={{ color: item.color }}>{item.val.toFixed(0)} ر.س</span>
+                    </div>
+                    <div className="h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                      <div className="h-2 rounded-full transition-all" style={{ width: `${Math.min(100, (item.val / revenue) * 100)}%`, background: item.color }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-slate-600 font-tajawal text-sm text-center py-4">لا توجد إيرادات بعد</p>
+            )}
+          </div>
+
+          {/* Expenses list */}
+          <div className="p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <p className="text-sm font-bold text-white font-cairo mb-4">مصاريف اليوم</p>
+            {expenses.length === 0 ? (
+              <p className="text-slate-600 font-tajawal text-sm text-center py-4">لا توجد مصاريف مسجّلة</p>
+            ) : (
+              <div className="space-y-2">
+                {expenses.map(e => (
+                  <div key={e.id} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div className="flex-1">
+                      <p className="text-sm text-white font-tajawal">{e.description || CATEGORIES.find(c => c.value === e.category)?.label}</p>
+                      <p className="text-xs text-slate-500 font-tajawal">{CATEGORIES.find(c => c.value === e.category)?.label}</p>
+                    </div>
+                    <p className="text-sm font-sora font-bold" style={{ color: '#EF4444' }}>{e.amount.toFixed(0)} ر.س</p>
+                    <button onClick={() => deleteExpense(e.id)} disabled={deleting === e.id} className="text-slate-600 hover:text-red-400 transition-colors">
+                      {deleting === e.id ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </FeatureLock>
 
       {/* Add expense modal */}
       {showForm && (

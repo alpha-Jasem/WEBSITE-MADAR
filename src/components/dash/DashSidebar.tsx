@@ -1,6 +1,8 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { ChevronDown, Crown, Headphones, LogOut } from 'lucide-react'
+import { ChevronDown, Crown, Headphones, LogOut, Sparkles, TrendingUp } from 'lucide-react'
 import { signOut } from '../../lib/supabase'
+import type { Company } from '../../types'
+import { PLAN_LABELS } from '../../lib/constants'
 
 export interface NavItem {
   to: string
@@ -14,10 +16,21 @@ interface Props {
   open: boolean
   onClose: () => void
   role?: 'admin' | 'client'
+  company?: Company | null
 }
 
-export const DashSidebar = ({ navItems, open, onClose, role = 'admin' }: Props) => {
+const PLAN_COLORS: Record<string, string> = {
+  starter: '#06B6D4',
+  growth: '#6366F1',
+  enterprise: '#F59E0B',
+}
+
+export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }: Props) => {
   const navigate = useNavigate()
+  const plan = company?.plan ?? 'starter'
+  const planLabel = PLAN_LABELS[plan] ?? 'Starter'
+  const isPremium = plan === 'enterprise'
+  const planColor = PLAN_COLORS[plan] ?? '#06B6D4'
 
   return (
     <>
@@ -53,27 +66,69 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin' }: Props) 
           ))}
         </nav>
 
-        {(role === 'admin' || role === 'client') && (
+        {/* Upgrade card — plan-aware for clients */}
+        {role === 'client' && company ? (
+          <div className="dash-upgrade-card" style={{ borderColor: planColor + '44' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <div className="dash-upgrade-icon" style={{ background: planColor + '22', border: `1px solid ${planColor}44` }}>
+                {isPremium ? <Crown size={16} style={{ color: planColor }} /> : <TrendingUp size={16} style={{ color: planColor }} />}
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 700, color: planColor, fontFamily: 'Sora, sans-serif', background: planColor + '18', padding: '2px 8px', borderRadius: 99 }}>
+                {planLabel}
+              </span>
+            </div>
+            {isPremium ? (
+              <>
+                <strong style={{ color: '#F1F5F9' }}>Premium Active ✅</strong>
+                <p style={{ color: '#475569' }}>جميع الميزات مفعّلة. استمتع بـ Madar OS الكامل.</p>
+              </>
+            ) : (
+              <>
+                <strong style={{ color: '#F1F5F9' }}>
+                  {plan === 'starter' ? 'ارتقِ إلى Pro' : 'ارتقِ إلى Premium'}
+                </strong>
+                <p style={{ color: '#475569' }}>
+                  {plan === 'starter'
+                    ? 'افتح التقارير الكاملة، المالية، وأداء الموظفين.'
+                    : 'افتح رؤى AI، تعدد الفروع، والتقارير المتقدمة.'}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => { navigate('/client/upgrade'); onClose() }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', border: 'none', color: '#fff', borderRadius: 8, padding: '8px 12px', fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer', width: '100%', justifyContent: 'center', marginTop: 4 }}
+                >
+                  <Sparkles size={12} />
+                  {plan === 'starter' ? 'ترقية إلى Pro' : 'ترقية إلى Premium'}
+                </button>
+              </>
+            )}
+          </div>
+        ) : role === 'admin' ? (
           <div className="dash-upgrade-card">
             <div className="dash-upgrade-icon">
-              {role === 'admin' ? <Crown size={18} /> : <Headphones size={18} />}
+              <Crown size={18} />
             </div>
-            <strong>{role === 'admin' ? 'Upgrade to Pro' : 'Need Help?'}</strong>
-            <p>
-              {role === 'admin'
-                ? 'Unlock advanced AI operations, voice agents, and revenue automation.'
-                : 'Our support team is here for you whenever you need setup help.'}
-            </p>
-            <button type="button">{role === 'admin' ? 'Upgrade Now' : 'Contact Support'}</button>
+            <strong>Upgrade to Pro</strong>
+            <p>Unlock advanced AI operations, voice agents, and revenue automation.</p>
+            <button type="button">Upgrade Now</button>
+          </div>
+        ) : (
+          <div className="dash-upgrade-card">
+            <div className="dash-upgrade-icon">
+              <Headphones size={18} />
+            </div>
+            <strong>Need Help?</strong>
+            <p>Our support team is here for you whenever you need setup help.</p>
+            <button type="button">Contact Support</button>
           </div>
         )}
 
         <div className="dash-sidebar-footer">
           <div className="dash-user-card">
-            <div className="dash-user-avatar">A</div>
+            <div className="dash-user-avatar">{company?.owner_name?.[0] ?? 'A'}</div>
             <div>
-              <strong>Aiden Carter</strong>
-              <span>{role === 'admin' ? 'Admin' : 'Client'}</span>
+              <strong>{company?.owner_name ?? 'Admin'}</strong>
+              <span>{role === 'admin' ? 'Admin' : planLabel}</span>
             </div>
             <ChevronDown size={15} />
           </div>

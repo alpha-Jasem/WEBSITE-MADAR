@@ -1,5 +1,5 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
-import { BarChart3, Calendar, Car, Droplets, LayoutDashboard, MessageSquare, Settings, Users2, Wrench, Zap, ClipboardList, Wallet } from 'lucide-react'
+import { BarChart3, Calendar, Car, Droplets, LayoutDashboard, MessageSquare, Settings, Users2, Wrench, Zap, ClipboardList, Wallet, Sparkles } from 'lucide-react'
 import { DashShell } from '../components/dash/DashShell'
 import type { NavItem } from '../components/dash/DashSidebar'
 import { ClientOverview } from '../components/dashboard/client/ClientOverview'
@@ -17,6 +17,7 @@ import { ClientSetup } from '../components/dashboard/client/ClientSetup'
 import { CarWashSetup } from '../components/dashboard/client/CarWashSetup'
 import { ClientAppointments } from '../components/dashboard/client/ClientAppointments'
 import { ClientConversations } from '../components/dashboard/client/ClientConversations'
+import { PricingPage } from '../components/dashboard/client/PricingPage'
 import { useClientCompany } from '../hooks/useClientCompany'
 import { getClientIndustryTemplate } from '../lib/clientIndustryTemplates'
 
@@ -34,6 +35,7 @@ function buildNavItems(template: ReturnType<typeof getClientIndustryTemplate>): 
       { to: '/client/automations',   icon: Zap,           label: 'تذكيرات وولاء'  },
       { to: '/client/reports',       icon: BarChart3,     label: 'التقارير'        },
       { to: '/client/setup',         icon: ClipboardList, label: 'الإعداد'         },
+      { to: '/client/upgrade',       icon: Sparkles,      label: 'ترقية الباقة'   },
       { to: '/client/settings',      icon: Settings,      label: 'الإعدادات'       },
     ]
   }
@@ -46,6 +48,7 @@ function buildNavItems(template: ReturnType<typeof getClientIndustryTemplate>): 
     { to: '/client/automations', icon: Zap, label: labels.automations },
     { to: '/client/leads', icon: Users2, label: labels.leads },
     { to: '/client/reports', icon: BarChart3, label: labels.reports },
+    { to: '/client/upgrade', icon: Sparkles, label: 'ترقية الباقة' },
     { to: '/client/settings', icon: Settings, label: labels.settings },
   ]
 }
@@ -86,6 +89,7 @@ export const ClientPortal = () => {
         <Route path="automations" element={<ClientAutomations />} />
         <Route path="leads" element={isCarWash ? <CarWashLeads /> : <ClientLeads />} />
         <Route path="reports" element={isCarWash ? <CarWashReports /> : <ClientReports />} />
+        <Route path="upgrade" element={<PricingPage />} />
         <Route path="settings" element={<ClientSettings />} />
         <Route path="*" element={isCarWash ? <CarWashOverview /> : <ClientOverview />} />
       </Routes>

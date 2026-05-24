@@ -46,7 +46,7 @@ export const AdminLogs = () => {
       </div>
 
       {/* Level summary */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {levelCounts.map(({ level, count }) => (
           <button key={level} onClick={() => setLevelFilter(levelFilter === level ? 'all' : level)}
             className={`p-3 rounded-xl text-center cursor-pointer transition-all ${levelFilter === level ? 'ring-1 ring-white/20' : ''}`}

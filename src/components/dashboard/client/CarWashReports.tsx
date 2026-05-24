@@ -3,6 +3,8 @@ import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tool
 import { BarChart3, Car, DollarSign, FileDown, Loader2, Star, TrendingUp, Users } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
+import { usePlanGate } from '../../../hooks/usePlanGate'
+import { FeatureLock } from '../../dash/FeatureLock'
 
 type CWVisit = {
   id: string
@@ -54,6 +56,7 @@ function ChartTooltip({ active, payload, label }: any) {
 
 export function CarWashReports() {
   const { companyId, company, loading: authLoading } = useClientCompany()
+  const { can, planLabel } = usePlanGate()
   const [visits, setVisits] = useState<CWVisit[]>([])
   const [customers, setCustomers] = useState<CWCustomer[]>([])
   const [loading, setLoading] = useState(true)
@@ -223,6 +226,14 @@ export function CarWashReports() {
   )
 
   return (
+    <FeatureLock
+      locked={!can.reports}
+      requiredPlan="pro"
+      featureName="التقارير الكاملة"
+      benefit="احصل على تقارير PDF مفصّلة، رسوم بيانية للإيرادات، وتحليلات أداء المغسلة — كل شيء في مكان واحد"
+      companyName={company?.name}
+      currentPlan={planLabel}
+    >
     <div dir="rtl" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -364,5 +375,6 @@ export function CarWashReports() {
         )}
       </div>
     </div>
+    </FeatureLock>
   )
 }
