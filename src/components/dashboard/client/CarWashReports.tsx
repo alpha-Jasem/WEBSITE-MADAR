@@ -1,15 +1,22 @@
 import { useEffect, useMemo, useState } from 'react'
-import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts'
-import { BarChart3, Car, DollarSign, FileDown, Loader2, Star, TrendingUp, Users } from 'lucide-react'
+import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell } from 'recharts'
+import { BarChart3, Car, DollarSign, FileDown, Gift, Loader2, Star, TrendingUp, Users, ChevronDown } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
 import { FeatureLock } from '../../dash/FeatureLock'
+import { downloadCSV, formatDateForCSV } from '../../../lib/exportUtils'
+import type { PaymentMethod } from '../../../types'
 
 type CWVisit = {
   id: string
   created_at: string
   price: number | null
+  subtotal: number | null
+  vat_amount: number | null
+  payment_method: string | null
+  is_free_wash: boolean | null
+  discount_amount: number | null
   service_name: string | null
   customer_id: string
 }
@@ -61,6 +68,7 @@ export function CarWashReports() {
   const [customers, setCustomers] = useState<CWCustomer[]>([])
   const [loading, setLoading] = useState(true)
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [showExportMenu, setShowExportMenu] = useState(false)
 
   useEffect(() => {
     if (authLoading || !companyId) return
@@ -69,7 +77,7 @@ export function CarWashReports() {
       const since = new Date()
       since.setDate(since.getDate() - 30)
       const [{ data: v }, { data: c }] = await Promise.all([
-        supabase.from('cw_visits').select('id, created_at, price, service_name, customer_id')
+        supabase.from('cw_visits').select('id, created_at, price, subtotal, vat_amount, payment_method, is_free_wash, discount_amount, service_name, customer_id')
           .eq('company_id', companyId)
           .gte('created_at', since.toISOString())
           .order('created_at', { ascending: true }),
@@ -93,8 +101,17 @@ export function CarWashReports() {
     const todayVisits = visits.filter(v => v.created_at.startsWith(todayStr)).length
     const monthVisits = visits.filter(v => v.created_at.startsWith(thisMonthStr)).length
     const revenue = visits.filter(v => v.created_at.startsWith(thisMonthStr))
-      .reduce((sum, v) => sum + (v.price || 0), 0)
+      .reduce((sum, v) => sum + (v.subtotal ?? v.price ?? 0), 0)
     const milestones = customers.filter(c => c.total_visits > 0 && c.total_visits % 5 === 0).length
+    const freeWashCount = visits.filter(v => v.is_free_wash).length
+    const freeWashDiscount = visits.filter(v => v.is_free_wash).reduce((s, v) => s + (v.discount_amount || 0), 0)
+
+    // Payment breakdown for month
+    const paymentBreakdown: Record<string, number> = {}
+    for (const v of visits.filter(v => v.created_at.startsWith(thisMonthStr))) {
+      const pm = v.payment_method || 'cash'
+      paymentBreakdown[pm] = (paymentBreakdown[pm] || 0) + (v.subtotal ?? v.price ?? 0)
+    }
 
     // Daily chart (last 14 days)
     const dailyChart = Array.from({ length: 14 }, (_, i) => {
@@ -105,7 +122,7 @@ export function CarWashReports() {
       return {
         date: d.toLocaleDateString('ar-SA', { weekday: 'short', day: 'numeric' }),
         visits: dayVisits.length,
-        revenue: dayVisits.reduce((s, v) => s + (v.price || 0), 0),
+        revenue: dayVisits.reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0),
       }
     })
 
@@ -119,10 +136,24 @@ export function CarWashReports() {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
 
-    return { todayVisits, monthVisits, revenue, milestones, dailyChart, services }
+    return { todayVisits, monthVisits, revenue, milestones, dailyChart, services, freeWashCount, freeWashDiscount, paymentBreakdown }
   }, [visits, customers])
 
   const topCustomers = customers.slice(0, 8)
+
+  const exportSalesCSV = () => {
+    const rows = visits.map(v => ({
+      'التاريخ': formatDateForCSV(v.created_at),
+      'الخدمة': v.service_name || '',
+      'قبل الضريبة': (v.subtotal ?? v.price ?? 0).toFixed(2),
+      'الضريبة': (v.vat_amount ?? 0).toFixed(2),
+      'الإجمالي': (v.is_free_wash ? 0 : (v.subtotal ?? v.price ?? 0)).toFixed(2),
+      'طريقة الدفع': v.payment_method || 'cash',
+      'غسلة مجانية': v.is_free_wash ? 'نعم' : 'لا',
+      'خصم الولاء': (v.discount_amount ?? 0).toFixed(2),
+    }))
+    downloadCSV(rows, `madar-sales-${new Date().toISOString().slice(0, 10)}.csv`)
+  }
 
   const exportPDF = async () => {
     setPdfLoading(true)
@@ -241,22 +272,43 @@ export function CarWashReports() {
           <h1 style={{ fontSize: 22, fontWeight: 800, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>تقارير المغسلة</h1>
           <p style={{ fontSize: 13, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginTop: 4 }}>آخر 30 يوم</p>
         </div>
-        <button
-          onClick={exportPDF}
-          disabled={pdfLoading}
-          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 12, background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', border: 'none', color: '#fff', fontSize: 13, fontFamily: 'Tajawal, sans-serif', cursor: pdfLoading ? 'not-allowed' : 'pointer', opacity: pdfLoading ? 0.6 : 1 }}
-        >
-          {pdfLoading ? <Loader2 size={15} className="animate-spin" /> : <FileDown size={15} />}
-          {pdfLoading ? 'جاري التوليد...' : 'تصدير PDF'}
-        </button>
+        <div style={{ position: 'relative' }}>
+          <button
+            onClick={() => setShowExportMenu(v => !v)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 12, background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', border: 'none', color: '#fff', fontSize: 13, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer' }}
+          >
+            <FileDown size={15} />
+            تصدير
+            <ChevronDown size={13} />
+          </button>
+          {showExportMenu && (
+            <div style={{ position: 'absolute', top: '110%', left: 0, background: '#0D1422', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, overflow: 'hidden', zIndex: 50, minWidth: 180 }}>
+              {[
+                { label: 'تصدير المبيعات CSV', action: () => { exportSalesCSV(); setShowExportMenu(false) } },
+                { label: 'تصدير PDF', action: () => { exportPDF(); setShowExportMenu(false) } },
+              ].map(item => (
+                <button
+                  key={item.label}
+                  onClick={item.action}
+                  style={{ display: 'block', width: '100%', textAlign: 'right', padding: '10px 16px', background: 'none', border: 'none', color: '#94A3B8', fontSize: 13, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
         <StatCard icon={Car} label="زيارات اليوم" value={stats.todayVisits} color="#22D3EE" />
         <StatCard icon={TrendingUp} label="زيارات هذا الشهر" value={stats.monthVisits} color="#4F6EF7" />
-        <StatCard icon={DollarSign} label="إيرادات الشهر" value={stats.revenue > 0 ? `${stats.revenue.toLocaleString()} ر.س` : '—'} sub="من الزيارات المُسعَّرة" color="#10B981" />
+        <StatCard icon={DollarSign} label="إيرادات الشهر" value={stats.revenue > 0 ? `${stats.revenue.toLocaleString()} ر.س` : '—'} sub="قبل الضريبة" color="#10B981" />
         <StatCard icon={Star} label="مكافآت ولاء" value={stats.milestones} sub="وصلوا الزيارة الخامسة" color="#F59E0B" />
+        <StatCard icon={Gift} label="غسلات مجانية" value={stats.freeWashCount} sub={stats.freeWashDiscount > 0 ? `خصم ${stats.freeWashDiscount.toFixed(0)} ر.س` : undefined} color="#F97316" />
         <StatCard icon={Users} label="إجمالي العملاء" value={customers.length} sub="مسجلون في النظام" color="#8B5CF6" />
       </div>
 
@@ -286,6 +338,28 @@ export function CarWashReports() {
           </AreaChart>
         </ResponsiveContainer>
       </div>
+
+      {/* Payment breakdown */}
+      {Object.keys(stats.paymentBreakdown).length > 0 && (
+        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 18, padding: '20px 22px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
+            <DollarSign size={15} color="#6366F1" />
+            <h2 style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>توزيع طرق الدفع — هذا الشهر</h2>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 12 }}>
+            {Object.entries(stats.paymentBreakdown).map(([pm, amount]) => {
+              const labels: Record<string, string> = { cash: 'كاش', mada: 'مدى', visa: 'فيزا', bank_transfer: 'تحويل', stc_pay: 'STC Pay', other: 'أخرى' }
+              return (
+                <div key={pm} style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
+                  <p style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', marginBottom: 4 }}>{labels[pm] || pm}</p>
+                  <p style={{ fontSize: 18, fontWeight: 800, color: '#F1F5F9', fontFamily: 'Sora, sans-serif' }}>{amount.toFixed(0)}</p>
+                  <p style={{ fontSize: 10, color: '#475569', fontFamily: 'Tajawal, sans-serif' }}>ر.س</p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
 

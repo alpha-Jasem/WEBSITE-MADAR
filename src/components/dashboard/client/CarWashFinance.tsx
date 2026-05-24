@@ -4,7 +4,8 @@ import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
 import { FeatureLock } from '../../dash/FeatureLock'
-import type { CWExpense, ExpenseCategory } from '../../../types'
+import { logAudit } from '../../../lib/auditLog'
+import type { CWExpense, ExpenseCategory, PaymentMethod } from '../../../types'
 
 const CATEGORIES: { value: ExpenseCategory; label: string }[] = [
   { value: 'tools',       label: 'أدوات ومواد'  },
@@ -37,6 +38,9 @@ export const CarWashFinance = () => {
   const [expenses, setExpenses] = useState<CWExpense[]>([])
   const [revenue, setRevenue] = useState(0)
   const [workerCost, setWorkerCost] = useState(0)
+  const [paymentBreakdown, setPaymentBreakdown] = useState<Record<string, number>>({})
+  const [freeWashCount, setFreeWashCount] = useState(0)
+  const [freeWashDiscount, setFreeWashDiscount] = useState(0)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
@@ -52,20 +56,41 @@ export const CarWashFinance = () => {
     todayStart.setHours(0, 0, 0, 0)
 
     const [{ data: visits }, { data: queue }, { data: workers }, { data: exps }] = await Promise.all([
-      supabase.from('cw_visits').select('price').eq('company_id', companyId).gte('created_at', todayStart.toISOString()),
-      supabase.from('cw_queue').select('price, worker_id, status').eq('company_id', companyId).eq('status', 'delivered').gte('delivered_at', todayStart.toISOString()),
-      supabase.from('cw_workers').select('id, commission_type, commission_value').eq('company_id', companyId),
+      supabase.from('cw_visits')
+        .select('price, subtotal, vat_amount, payment_method, is_free_wash, discount_amount, payment_status')
+        .eq('company_id', companyId)
+        .gte('created_at', todayStart.toISOString())
+        .not('payment_status', 'in', '("refunded","cancelled")'),
+      supabase.from('cw_queue').select('price, subtotal, worker_id, status').eq('company_id', companyId).eq('status', 'delivered').gte('delivered_at', todayStart.toISOString()),
+      supabase.from('cw_workers').select('id, commission_type, commission_value, salary_type, fixed_salary').eq('company_id', companyId),
       supabase.from('cw_expenses').select('*').eq('company_id', companyId).eq('expense_date', today).order('created_at', { ascending: false }),
     ])
 
-    const totalRevenue = (visits || []).reduce((s, v) => s + (v.price || 0), 0)
+    const totalRevenue = (visits || []).reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0)
     setRevenue(totalRevenue)
+
+    const breakdown: Record<string, number> = {}
+    let freeCount = 0
+    let freeDiscount = 0
+    for (const v of visits || []) {
+      const pm = (v.payment_method as PaymentMethod) || 'cash'
+      breakdown[pm] = (breakdown[pm] || 0) + (v.subtotal ?? v.price ?? 0)
+      if (v.is_free_wash) {
+        freeCount++
+        freeDiscount += v.discount_amount || 0
+      }
+    }
+    setPaymentBreakdown(breakdown)
+    setFreeWashCount(freeCount)
+    setFreeWashDiscount(freeDiscount)
 
     const workersMap = Object.fromEntries((workers || []).map(w => [w.id, w]))
     const totalWorkerCost = (queue || []).reduce((s, q) => {
       const w = q.worker_id ? workersMap[q.worker_id] : null
       if (!w) return s
-      return s + (w.commission_type === 'fixed' ? w.commission_value : (q.price * w.commission_value) / 100)
+      if (w.salary_type === 'fixed') return s + (w.fixed_salary || 0) / 30
+      const commission = w.commission_type === 'fixed' ? w.commission_value : ((q.subtotal ?? q.price) * w.commission_value) / 100
+      return s + commission
     }, 0)
     setWorkerCost(totalWorkerCost)
     setExpenses((exps || []) as CWExpense[])
@@ -82,13 +107,14 @@ export const CarWashFinance = () => {
   const addExpense = async () => {
     if (!companyId || !form.amount || Number(form.amount) <= 0) return
     setSaving(true)
-    await supabase.from('cw_expenses').insert({
+    const { data: inserted } = await supabase.from('cw_expenses').insert({
       company_id: companyId,
       amount: Number(form.amount),
       category: form.category,
       description: form.description || null,
       expense_date: today,
-    })
+    }).select().single()
+    if (inserted) logAudit(companyId, 'expense_added', { entityType: 'cw_expenses', entityId: inserted.id, newValue: { amount: inserted.amount, category: inserted.category } })
     setForm(EMPTY_FORM)
     setShowForm(false)
     setSaving(false)
@@ -97,7 +123,9 @@ export const CarWashFinance = () => {
 
   const deleteExpense = async (id: string) => {
     setDeleting(id)
+    const expense = expenses.find(e => e.id === id)
     await supabase.from('cw_expenses').delete().eq('id', id)
+    if (companyId && expense) logAudit(companyId, 'expense_deleted', { entityType: 'cw_expenses', entityId: id, oldValue: { amount: expense.amount, category: expense.category } })
     setDeleting(null)
     loadData()
   }
@@ -176,6 +204,36 @@ export const CarWashFinance = () => {
               <p className="text-slate-600 font-tajawal text-sm text-center py-4">لا توجد إيرادات بعد</p>
             )}
           </div>
+
+          {/* Payment method breakdown */}
+          {Object.keys(paymentBreakdown).length > 0 && (
+            <div className="p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <p className="text-sm font-bold text-white font-cairo mb-4">توزيع طرق الدفع</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {Object.entries(paymentBreakdown).map(([pm, amount]) => {
+                  const labels: Record<string, string> = { cash: 'كاش', mada: 'مدى', visa: 'فيزا', bank_transfer: 'تحويل', stc_pay: 'STC Pay', other: 'أخرى' }
+                  return (
+                    <div key={pm} className="p-3 rounded-xl text-center" style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.15)' }}>
+                      <p className="text-xs text-slate-400 font-tajawal mb-1">{labels[pm] || pm}</p>
+                      <p className="text-base font-bold text-white font-sora">{amount.toFixed(0)}</p>
+                      <p className="text-xs text-slate-600 font-tajawal">ر.س</p>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Free washes */}
+          {freeWashCount > 0 && (
+            <div className="flex items-center gap-3 p-4 rounded-2xl" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}>
+              <span className="text-amber-400 text-lg">🎁</span>
+              <div className="flex-1">
+                <p className="text-sm text-amber-400 font-tajawal">{freeWashCount} غسلة مجانية اليوم</p>
+                <p className="text-xs text-slate-500 font-tajawal">خصم ولاء: {freeWashDiscount.toFixed(0)} ر.س</p>
+              </div>
+            </div>
+          )}
 
           {/* Expenses list */}
           <div className="p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>

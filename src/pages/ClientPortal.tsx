@@ -1,5 +1,5 @@
-import { Routes, Route, useLocation } from 'react-router-dom'
-import { BarChart3, Calendar, Car, Droplets, LayoutDashboard, MessageSquare, Settings, Users2, Wrench, Zap, ClipboardList, Wallet, Sparkles } from 'lucide-react'
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
+import { BarChart3, Calendar, Car, ClipboardCheck, Droplets, LayoutDashboard, MessageSquare, Settings, Users2, Wrench, Zap, ClipboardList, Wallet, Sparkles } from 'lucide-react'
 import { DashShell } from '../components/dash/DashShell'
 import type { NavItem } from '../components/dash/DashSidebar'
 import { ClientOverview } from '../components/dashboard/client/ClientOverview'
@@ -9,6 +9,8 @@ import { CarWashReports } from '../components/dashboard/client/CarWashReports'
 import { CarWashQueue } from '../components/dashboard/client/CarWashQueue'
 import { CarWashWorkers } from '../components/dashboard/client/CarWashWorkers'
 import { CarWashFinance } from '../components/dashboard/client/CarWashFinance'
+import { CarWashDailyClosing } from '../components/dashboard/client/CarWashDailyClosing'
+import { CarWashSeedDemo } from '../components/dashboard/client/CarWashSeedDemo'
 import { ClientAutomations } from '../components/dashboard/client/ClientAutomations'
 import { ClientLeads } from '../components/dashboard/client/ClientLeads'
 import { ClientReports } from '../components/dashboard/client/ClientReports'
@@ -20,6 +22,8 @@ import { ClientConversations } from '../components/dashboard/client/ClientConver
 import { PricingPage } from '../components/dashboard/client/PricingPage'
 import { useClientCompany } from '../hooks/useClientCompany'
 import { getClientIndustryTemplate } from '../lib/clientIndustryTemplates'
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 
 function buildNavItems(template: ReturnType<typeof getClientIndustryTemplate>): NavItem[] {
   const labels = template.navLabels
@@ -33,7 +37,8 @@ function buildNavItems(template: ReturnType<typeof getClientIndustryTemplate>): 
       { to: '/client/finance',       icon: Wallet,        label: 'المالية'          },
       { to: '/client/conversations', icon: MessageSquare, label: 'طلبات واتساب'   },
       { to: '/client/automations',   icon: Zap,           label: 'تذكيرات وولاء'  },
-      { to: '/client/reports',       icon: BarChart3,     label: 'التقارير'        },
+      { to: '/client/reports',       icon: BarChart3,      label: 'التقارير'        },
+      { to: '/client/closing',       icon: ClipboardCheck, label: 'إغلاق اليوم'    },
       { to: '/client/setup',         icon: ClipboardList, label: 'الإعداد'         },
       { to: '/client/upgrade',       icon: Sparkles,      label: 'ترقية الباقة'   },
       { to: '/client/settings',      icon: Settings,      label: 'الإعدادات'       },
@@ -62,12 +67,31 @@ function usePageTitle(navItems: NavItem[]) {
 }
 
 export const ClientPortal = () => {
-  const { company, loading } = useClientCompany()
+  const { company, companyId, loading } = useClientCompany()
+  const navigate = useNavigate()
   const template = getClientIndustryTemplate(company?.business_type, company?.industry)
   const navItems = buildNavItems(template)
   const pageTitle = usePageTitle(navItems)
-
   const isCarWash = template.type === 'car_wash'
+
+  const [showSeedDemo, setShowSeedDemo] = useState(false)
+  const [seedChecked, setSeedChecked] = useState(false)
+
+  // Show seed demo if fresh car wash account (no services, no workers)
+  useEffect(() => {
+    if (!isCarWash || !companyId || loading || seedChecked) return
+    setSeedChecked(true)
+    const check = async () => {
+      const [{ count: svcCount }, { count: wrkCount }] = await Promise.all([
+        supabase.from('cw_services').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+        supabase.from('cw_workers').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+      ])
+      if ((svcCount || 0) === 0 && (wrkCount || 0) === 0) {
+        setShowSeedDemo(true)
+      }
+    }
+    check()
+  }, [isCarWash, companyId, loading, seedChecked])
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#080C14', gap: 12 }}>
@@ -83,6 +107,7 @@ export const ClientPortal = () => {
         <Route path="queue" element={<CarWashQueue />} />
         <Route path="workers" element={<CarWashWorkers />} />
         <Route path="finance" element={<CarWashFinance />} />
+        <Route path="closing" element={<CarWashDailyClosing />} />
         <Route path="setup" element={isCarWash ? <CarWashSetup /> : <ClientSetup />} />
         <Route path="appointments" element={<ClientAppointments />} />
         <Route path="conversations" element={<ClientConversations />} />
@@ -93,6 +118,14 @@ export const ClientPortal = () => {
         <Route path="settings" element={<ClientSettings />} />
         <Route path="*" element={isCarWash ? <CarWashOverview /> : <ClientOverview />} />
       </Routes>
+
+      {showSeedDemo && companyId && (
+        <CarWashSeedDemo
+          companyId={companyId}
+          onDone={() => { setShowSeedDemo(false); navigate('/client/queue') }}
+          onClose={() => setShowSeedDemo(false)}
+        />
+      )}
     </DashShell>
   )
 }

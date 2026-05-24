@@ -4,7 +4,8 @@ import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
 import { FeatureLock } from '../../dash/FeatureLock'
-import type { CWWorker, CommissionType } from '../../../types'
+import { logAudit } from '../../../lib/auditLog'
+import type { CWWorker, CommissionType, SalaryType } from '../../../types'
 
 interface WorkerStats {
   workerId: string
@@ -12,7 +13,14 @@ interface WorkerStats {
   commissionToday: number
 }
 
-const EMPTY_FORM = { name: '', phone: '', commission_type: 'fixed' as CommissionType, commission_value: 5 }
+const EMPTY_FORM = {
+  name: '',
+  phone: '',
+  salary_type: 'commission' as SalaryType,
+  fixed_salary: 0,
+  commission_type: 'fixed' as CommissionType,
+  commission_value: 5,
+}
 
 export const CarWashWorkers = () => {
   const { companyId, company, loading: authLoading } = useClientCompany()
@@ -69,15 +77,36 @@ export const CarWashWorkers = () => {
   }, [authLoading, companyId])
 
   const openAdd = () => { setEditing(null); setForm(EMPTY_FORM); setShowForm(true) }
-  const openEdit = (w: CWWorker) => { setEditing(w); setForm({ name: w.name, phone: w.phone || '', commission_type: w.commission_type, commission_value: w.commission_value }); setShowForm(true) }
+  const openEdit = (w: CWWorker) => {
+    setEditing(w)
+    setForm({
+      name: w.name,
+      phone: w.phone || '',
+      salary_type: w.salary_type || 'commission',
+      fixed_salary: w.fixed_salary || 0,
+      commission_type: w.commission_type,
+      commission_value: w.commission_value,
+    })
+    setShowForm(true)
+  }
 
   const save = async () => {
     if (!companyId || !form.name.trim()) return
     setSaving(true)
+    const payload = {
+      name: form.name.trim(),
+      phone: form.phone || null,
+      salary_type: form.salary_type,
+      fixed_salary: Number(form.fixed_salary),
+      commission_type: form.commission_type,
+      commission_value: Number(form.commission_value),
+    }
     if (editing) {
-      await supabase.from('cw_workers').update({ ...form, commission_value: Number(form.commission_value) }).eq('id', editing.id)
+      await supabase.from('cw_workers').update(payload).eq('id', editing.id)
+      logAudit(companyId, 'worker_updated', { entityType: 'cw_workers', entityId: editing.id, newValue: payload })
     } else {
-      await supabase.from('cw_workers').insert({ ...form, commission_value: Number(form.commission_value), company_id: companyId })
+      const { data: inserted } = await supabase.from('cw_workers').insert({ ...payload, company_id: companyId }).select().single()
+      if (inserted) logAudit(companyId, 'worker_updated', { entityType: 'cw_workers', entityId: inserted.id, newValue: payload })
     }
     setShowForm(false)
     setSaving(false)
@@ -160,9 +189,13 @@ export const CarWashWorkers = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-500 font-tajawal">العمولة:</span>
-                      <span className="text-xs font-sora text-slate-300">
-                        {w.commission_type === 'fixed' ? `${w.commission_value} ر.س / سيارة` : `${w.commission_value}% من السعر`}
+                      <span className="text-xs text-slate-500 font-tajawal">الراتب:</span>
+                      <span className="text-xs font-tajawal text-slate-300">
+                        {w.salary_type === 'fixed'
+                          ? `${w.fixed_salary} ر.س / شهر`
+                          : w.salary_type === 'mixed'
+                          ? `${w.fixed_salary} ر.س + ${w.commission_type === 'fixed' ? `${w.commission_value} ر.س / سيارة` : `${w.commission_value}%`}`
+                          : w.commission_type === 'fixed' ? `${w.commission_value} ر.س / سيارة` : `${w.commission_value}% من السعر`}
                       </span>
                     </div>
                   </>
@@ -221,22 +254,82 @@ export const CarWashWorkers = () => {
                 <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">رقم الجوال</label>
                 <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="05xxxxxxxx" className="w-full px-4 py-2.5 rounded-xl text-sm font-sora text-white placeholder-slate-600 outline-none" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }} dir="ltr" />
               </div>
+
+              {/* Salary type */}
               <div>
-                <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">نوع العمولة</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {(['fixed', 'percentage'] as CommissionType[]).map(t => (
-                    <button key={t} onClick={() => setForm(f => ({ ...f, commission_type: t }))} className="py-2.5 rounded-xl text-sm font-tajawal transition-all" style={{ background: form.commission_type === t ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.05)', border: `1px solid ${form.commission_type === t ? '#6366F1' : 'rgba(255,255,255,0.1)'}`, color: form.commission_type === t ? '#A5B4FC' : '#94A3B8' }}>
-                      {t === 'fixed' ? 'ثابت / سيارة' : 'نسبة مئوية'}
+                <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">نوع الراتب</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['fixed', 'commission', 'mixed'] as SalaryType[]).map(t => (
+                    <button
+                      key={t}
+                      onClick={() => setForm(f => ({ ...f, salary_type: t }))}
+                      className="py-2.5 rounded-xl text-xs font-tajawal transition-all"
+                      style={{
+                        background: form.salary_type === t ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.05)',
+                        border: `1px solid ${form.salary_type === t ? '#6366F1' : 'rgba(255,255,255,0.1)'}`,
+                        color: form.salary_type === t ? '#A5B4FC' : '#94A3B8',
+                      }}
+                    >
+                      {t === 'fixed' ? 'ثابت' : t === 'commission' ? 'عمولة' : 'مختلط'}
                     </button>
                   ))}
                 </div>
               </div>
-              <div>
-                <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">
-                  {form.commission_type === 'fixed' ? 'قيمة العمولة (ر.س / سيارة)' : 'نسبة العمولة (%)'}
-                </label>
-                <input type="number" value={form.commission_value} onChange={e => setForm(f => ({ ...f, commission_value: Number(e.target.value) }))} min={0} className="w-full px-4 py-2.5 rounded-xl text-sm font-sora text-white outline-none" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }} dir="ltr" />
-              </div>
+
+              {/* Fixed salary */}
+              {(form.salary_type === 'fixed' || form.salary_type === 'mixed') && (
+                <div>
+                  <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">الراتب الثابت (ر.س / شهر)</label>
+                  <input
+                    type="number"
+                    value={form.fixed_salary}
+                    onChange={e => setForm(f => ({ ...f, fixed_salary: Number(e.target.value) }))}
+                    min={0}
+                    className="w-full px-4 py-2.5 rounded-xl text-sm font-sora text-white outline-none"
+                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                    dir="ltr"
+                  />
+                </div>
+              )}
+
+              {/* Commission fields */}
+              {(form.salary_type === 'commission' || form.salary_type === 'mixed') && (
+                <>
+                  <div>
+                    <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">نوع العمولة</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {(['fixed', 'percentage'] as CommissionType[]).map(t => (
+                        <button
+                          key={t}
+                          onClick={() => setForm(f => ({ ...f, commission_type: t }))}
+                          className="py-2.5 rounded-xl text-sm font-tajawal transition-all"
+                          style={{
+                            background: form.commission_type === t ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.05)',
+                            border: `1px solid ${form.commission_type === t ? '#6366F1' : 'rgba(255,255,255,0.1)'}`,
+                            color: form.commission_type === t ? '#A5B4FC' : '#94A3B8',
+                          }}
+                        >
+                          {t === 'fixed' ? 'ثابت / سيارة' : 'نسبة مئوية'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">
+                      {form.commission_type === 'fixed' ? 'قيمة العمولة (ر.س / سيارة)' : 'نسبة العمولة (%)'}
+                    </label>
+                    <input
+                      type="number"
+                      value={form.commission_value}
+                      onChange={e => setForm(f => ({ ...f, commission_value: Number(e.target.value) }))}
+                      min={0}
+                      className="w-full px-4 py-2.5 rounded-xl text-sm font-sora text-white outline-none"
+                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                      dir="ltr"
+                    />
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="flex gap-3 mt-6">
