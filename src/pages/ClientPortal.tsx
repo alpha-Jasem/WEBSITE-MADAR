@@ -12,6 +12,7 @@ import { CarWashFinance } from '../components/dashboard/client/CarWashFinance'
 import { CarWashDailyClosing } from '../components/dashboard/client/CarWashDailyClosing'
 import { CarWashSeedDemo } from '../components/dashboard/client/CarWashSeedDemo'
 import { ClientAutomations } from '../components/dashboard/client/ClientAutomations'
+import { CarWashAutomations } from '../components/dashboard/client/CarWashAutomations'
 import { ClientLeads } from '../components/dashboard/client/ClientLeads'
 import { ClientReports } from '../components/dashboard/client/ClientReports'
 import { ClientSettings } from '../components/dashboard/client/ClientSettings'
@@ -111,7 +112,7 @@ export const ClientPortal = () => {
         <Route path="setup" element={isCarWash ? <CarWashSetup /> : <ClientSetup />} />
         <Route path="appointments" element={<ClientAppointments />} />
         <Route path="conversations" element={<ClientConversations />} />
-        <Route path="automations" element={<ClientAutomations />} />
+        <Route path="automations" element={isCarWash ? <CarWashAutomations /> : <ClientAutomations />} />
         <Route path="leads" element={isCarWash ? <CarWashLeads /> : <ClientLeads />} />
         <Route path="reports" element={isCarWash ? <CarWashReports /> : <ClientReports />} />
         <Route path="upgrade" element={<PricingPage />} />

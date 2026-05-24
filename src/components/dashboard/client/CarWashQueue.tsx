@@ -236,7 +236,8 @@ export const CarWashQueue = () => {
     if (item.status === 'washing' && !item.started_at) updates.started_at = new Date().toISOString()
     await supabase.from('cw_queue').update(updates).eq('id', item.id)
 
-    if (next === 'ready' && item.phone) {
+    const cwAuto = (company as any)?.cw_automations || {}
+    if (next === 'ready' && item.phone && cwAuto.car_ready?.enabled !== false) {
       const phone = item.phone.replace(/^0/, '966').replace(/\D/g, '')
       fetch(N8N_READY_WEBHOOK, {
         method: 'POST',
@@ -318,7 +319,7 @@ export const CarWashQueue = () => {
           last_visit_at: now,
         }).eq('id', customer.id)
 
-        if (loyaltyMilestone && item.phone) {
+        if (loyaltyMilestone && item.phone && (company as any)?.cw_automations?.loyalty_milestone?.enabled !== false) {
           const ph = item.phone.replace(/^0/, '966').replace(/\D/g, '')
           fetch(N8N_LOYALTY_WEBHOOK, {
             method: 'POST',
@@ -336,7 +337,7 @@ export const CarWashQueue = () => {
     }
 
     // Delivery receipt webhook
-    if (item.phone) {
+    if (item.phone && (company as any)?.cw_automations?.delivery_receipt?.enabled !== false) {
       const ph = item.phone.replace(/^0/, '966').replace(/\D/g, '')
       fetch(N8N_DELIVERY_WEBHOOK, {
         method: 'POST',
