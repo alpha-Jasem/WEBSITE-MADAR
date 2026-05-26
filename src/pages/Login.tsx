@@ -90,18 +90,18 @@ export const Login = () => {
           <div className="relative max-w-md">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-sky-300/20 bg-sky-300/10 px-3 py-1.5 text-xs font-tajawal text-sky-100">
               <Building2 size={14} />
-              ماضر OS للمغاسل والعيادات
+              ماضر OS للمغاسل ومراكز العناية بالسيارات
             </div>
             <h1 className="font-cairo text-4xl font-bold leading-[1.25] text-white">
-              ادخل إلى لوحة تشغيل مرتبة، واضحة، وجاهزة ليوم العمل.
+              ادخل إلى لوحة تشغيل واضحة لإدارة مغسلتك من أول سيارة إلى آخر تسليم.
             </h1>
             <p className="mt-5 font-tajawal text-base leading-8 text-sky-50/70">
-              دخول واحد لإدارة السيارات، العملاء، المالية، الأتمتة، وتقارير واتساب من مكان واحد.
+              دخول واحد لإدارة السيارات، العملاء، المالية، الأتمتة، رسائل واتساب، وبرامج الولاء من مكان واحد.
             </p>
           </div>
 
           <div className="relative grid gap-3">
-            {['مسار تشغيل سريع للسيارات', 'تقارير مالية وضريبة VAT', 'واتساب وولاء العملاء تلقائياً'].map(item => (
+            {['مسار سريع لاستقبال وتسليم السيارات', 'حسابات وتقارير مالية مع VAT', 'واتساب وولاء العملاء تلقائياً'].map(item => (
               <div key={item} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/10 px-4 py-3">
                 <CheckCircle2 size={17} className="text-sky-300" />
                 <span className="font-tajawal text-sm text-white/80">{item}</span>
