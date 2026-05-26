@@ -90,7 +90,7 @@ export const Login = () => {
           <div className="relative max-w-md">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-sky-300/20 bg-sky-300/10 px-3 py-1.5 text-xs font-tajawal text-sky-100">
               <Building2 size={14} />
-              ماضر OS للمغاسل ومراكز العناية بالسيارات
+              مدار OS للمغاسل ومراكز العناية بالسيارات
             </div>
             <h1 className="font-cairo text-4xl font-bold leading-[1.25] text-white">
               ادخل إلى لوحة تشغيل واضحة لإدارة مغسلتك من أول سيارة إلى آخر تسليم.
