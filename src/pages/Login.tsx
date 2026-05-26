@@ -23,8 +23,8 @@ export const Login = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const adminAccent = '#B7791F'
-  const clientAccent = '#0F766E'
+  const adminAccent = '#0D1B3E'
+  const clientAccent = '#00BFFF'
   const accent = portal === 'admin' ? adminAccent : clientAccent
 
   const afterLogin = async () => {
@@ -72,29 +72,30 @@ export const Login = () => {
   ]
 
   return (
-    <div dir="rtl" className="min-h-screen bg-[#F6F7F9] text-slate-950">
+    <div dir="rtl" className="min-h-screen bg-[#F0F4FA] text-slate-950">
       <div className="grid min-h-screen lg:grid-cols-[minmax(420px,0.88fr)_minmax(520px,1.12fr)]">
-        <aside className="relative hidden overflow-hidden bg-[#07231F] p-10 lg:flex lg:flex-col lg:justify-between">
+        <aside className="relative hidden overflow-hidden bg-[#0D1B3E] p-10 lg:flex lg:flex-col lg:justify-between">
           <div className="absolute inset-0 opacity-35" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)', backgroundSize: '42px 42px' }} />
+          <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 22% 18%, rgba(0,191,255,0.28), transparent 34%), radial-gradient(circle at 88% 78%, rgba(21,101,192,0.34), transparent 38%)' }} />
           <div className="relative">
             <Link to="/" className="inline-flex items-center gap-3">
               <img src="/logo-main.png" alt="Madar" className="h-11 w-auto object-contain" />
               <div>
                 <p className="font-sora text-xl font-bold text-white">Madar.software</p>
-                <p className="mt-1 text-xs font-tajawal text-emerald-100/55">منصة تشغيل الأعمال العربية</p>
+                <p className="mt-1 text-xs font-tajawal text-sky-100/65">منصة تشغيل الأعمال العربية</p>
               </div>
             </Link>
           </div>
 
           <div className="relative max-w-md">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/8 px-3 py-1.5 text-xs font-tajawal text-emerald-100">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-sky-300/20 bg-sky-300/10 px-3 py-1.5 text-xs font-tajawal text-sky-100">
               <Building2 size={14} />
               ماضر OS للمغاسل والعيادات
             </div>
             <h1 className="font-cairo text-4xl font-bold leading-[1.25] text-white">
               ادخل إلى لوحة تشغيل مرتبة، واضحة، وجاهزة ليوم العمل.
             </h1>
-            <p className="mt-5 font-tajawal text-base leading-8 text-emerald-50/65">
+            <p className="mt-5 font-tajawal text-base leading-8 text-sky-50/70">
               دخول واحد لإدارة السيارات، العملاء، المالية، الأتمتة، وتقارير واتساب من مكان واحد.
             </p>
           </div>
@@ -102,7 +103,7 @@ export const Login = () => {
           <div className="relative grid gap-3">
             {['مسار تشغيل سريع للسيارات', 'تقارير مالية وضريبة VAT', 'واتساب وولاء العملاء تلقائياً'].map(item => (
               <div key={item} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/8 px-4 py-3">
-                <CheckCircle2 size={17} className="text-emerald-300" />
+                <CheckCircle2 size={17} className="text-sky-300" />
                 <span className="font-tajawal text-sm text-white/82">{item}</span>
               </div>
             ))}
@@ -123,7 +124,7 @@ export const Login = () => {
             </div>
 
             <div className="mb-5">
-              <p className="text-sm font-bold text-teal-700 font-cairo">تسجيل الدخول</p>
+              <p className="text-sm font-bold text-[#0099CC] font-cairo">تسجيل الدخول</p>
               <h2 className="mt-2 text-3xl font-bold tracking-normal text-slate-950 font-cairo">
                 {portal === 'admin' ? 'مرحباً بك في الإدارة' : 'مرحباً بك في بوابتك'}
               </h2>
@@ -141,8 +142,8 @@ export const Login = () => {
                   className="flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold font-tajawal transition-all"
                   style={{
                     background: portal === p.id ? p.accent : 'transparent',
-                    color: portal === p.id ? 'white' : '#64748B',
-                    boxShadow: portal === p.id ? '0 10px 24px rgba(15,118,110,0.18)' : 'none',
+                    color: portal === p.id && p.id === 'client' ? '#0D1B3E' : portal === p.id ? 'white' : '#64748B',
+                    boxShadow: portal === p.id ? '0 10px 24px rgba(0,191,255,0.22)' : 'none',
                   }}
                 >
                   <p.icon size={16} />
@@ -186,7 +187,7 @@ export const Login = () => {
                         placeholder="name@company.com"
                         required
                         dir="ltr"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 text-left text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-4 focus:ring-teal-600/10 font-sora"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 text-left text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-[#00BFFF] focus:bg-white focus:ring-4 focus:ring-sky-400/15 font-sora"
                       />
                     </div>
                   </div>
@@ -203,7 +204,7 @@ export const Login = () => {
                         required
                         dir="ltr"
                         minLength={6}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-11 py-3.5 text-left text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-4 focus:ring-teal-600/10 font-sora"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-11 py-3.5 text-left text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-[#00BFFF] focus:bg-white focus:ring-4 focus:ring-sky-400/15 font-sora"
                       />
                       <button
                         type="button"
@@ -230,7 +231,10 @@ export const Login = () => {
                     type="submit"
                     disabled={loading}
                     className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold text-white transition-all disabled:opacity-60 font-cairo"
-                    style={{ background: accent, boxShadow: '0 16px 34px ' + accent + '30' }}
+                    style={{
+                      background: portal === 'client' ? 'linear-gradient(135deg, #00BFFF, #1565C0)' : 'linear-gradient(135deg, #0D1B3E, #1565C0)',
+                      boxShadow: '0 16px 34px rgba(0,191,255,0.24)',
+                    }}
                   >
                     {loading && <Loader2 size={17} className="animate-spin" />}
                     {loading ? 'جاري الدخول...' : portal === 'admin' ? 'دخول لوحة الإدارة' : 'دخول البوابة'}
@@ -238,7 +242,7 @@ export const Login = () => {
                 </form>
 
                 <p className="mt-6 text-center text-xs text-slate-400 font-tajawal">
-                  للدعم: <a href="mailto:info@madar.software" className="font-bold text-teal-700 hover:text-teal-900">info@madar.software</a>
+                  للدعم: <a href="mailto:info@madar.software" className="font-bold text-[#0099CC] hover:text-[#0D1B3E]">info@madar.software</a>
                 </p>
               </motion.section>
             </AnimatePresence>
