@@ -44,7 +44,7 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
               Madar<span>.software</span>
             </p>
             <p className="dash-sidebar-sub">
-              {role === 'admin' ? 'Admin command center' : 'Client portal'}
+              {role === 'admin' ? 'Admin command center' : 'بوابة العميل'}
             </p>
           </div>
         </div>
@@ -115,7 +115,7 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
             }}
           >
             <LogOut size={15} />
-            Sign out
+            تسجيل الخروج
           </button>
         </div>
       </aside>

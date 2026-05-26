@@ -21,7 +21,7 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
   useEffect(() => { setMenuOpen(false) }, [location.pathname])
 
   return (
-    <div className={`dash-shell dash-shell-${role}`}>
+    <div className={`dash-shell dash-shell-${role}`} dir={role === 'client' ? 'rtl' : 'ltr'}>
       <DashSidebar
         navItems={navItems}
         open={menuOpen}
@@ -47,7 +47,7 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
           <div className="dash-topbar-right">
             {topbarRight}
             <span className="dash-topbar-badge">
-              {role === 'admin' ? 'Admin' : 'Client'}
+              {role === 'admin' ? 'Admin' : 'عميل'}
             </span>
           </div>
         </header>

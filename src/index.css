@@ -3876,6 +3876,59 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   .mosaic-product-row{padding:8px 0}
 }
 
+/* ── RTL Client Portal ─────────────────────────────────── */
+.dash-shell-client .dash-sidebar {
+  border-radius: 24px 0 0 24px;
+  border-right: none;
+  border-left: 1px solid rgba(94, 111, 255, 0.22);
+  box-shadow: inset 1px 0 0 rgba(255,255,255,0.04), -18px 0 80px rgba(0,0,0,0.28);
+}
+
+.dash-shell-client .dash-sidebar-brand {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.dash-shell-client .dash-sidebar-sub {
+  text-align: right;
+  letter-spacing: 0;
+  font-family: 'Tajawal', sans-serif;
+  font-size: 12px;
+}
+
+.dash-shell-client .dash-nav-link.active {
+  background:
+    radial-gradient(circle at 8% 50%, rgba(81, 57, 255, 0.95), transparent 5%),
+    linear-gradient(270deg, rgba(100, 55, 255, 0.24), rgba(17, 116, 255, 0.12));
+}
+
+.dash-shell-client .dash-user-card {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.dash-shell-client .dash-user-card > div {
+  text-align: right;
+}
+
+.dash-shell-client .dash-logout-btn {
+  flex-direction: row-reverse;
+}
+
+@media (max-width: 900px) {
+  .dash-shell-client .dash-sidebar {
+    left: -260px;
+    right: auto;
+    border-radius: 0 24px 24px 0;
+    border-left: none;
+    border-right: 1px solid rgba(94, 111, 255, 0.22);
+  }
+  .dash-shell-client .dash-sidebar.open {
+    left: 0;
+    right: auto;
+  }
+}
+
 /* Premium client portal */
 .dash-shell-client {
   --d-sidebar-w: 246px;
@@ -3894,7 +3947,7 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 }
 
 .dash-sidebar-client {
-  border-radius: 0 24px 24px 0;
+  border-radius: 24px 0 0 24px;
   background:
     radial-gradient(circle at 60% 2%, rgba(78, 72, 255, 0.13), transparent 28%),
     linear-gradient(180deg, rgba(4, 9, 23, 0.98), rgba(5, 10, 24, 0.95));
@@ -3903,9 +3956,10 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 .dash-sidebar-client .dash-sidebar-sub {
   margin-top: 22px;
   color: #6f7891;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 12px;
+  font-family: 'Tajawal', sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .dash-sidebar-client .dash-nav-link {
