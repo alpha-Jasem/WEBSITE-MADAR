@@ -3921,25 +3921,30 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 
 @media (max-width: 900px) {
   .dash-shell-client .dash-sidebar {
-    left: -260px;
-    right: auto;
-    border-radius: 0 24px 24px 0;
-    border-left: none;
-    border-right: 1px solid rgba(94, 111, 255, 0.22);
+    right: -260px;
+    left: auto;
+    border-radius: 24px 0 0 24px;
+    border-right: none;
+    border-left: 1px solid rgba(94, 111, 255, 0.22);
   }
   .dash-shell-client .dash-sidebar.open {
-    left: 0;
-    right: auto;
+    right: 0;
+    left: auto;
   }
 }
 
 /* Premium client portal */
 .dash-shell-client {
   --d-sidebar-w: 246px;
+  direction: rtl;
   background:
     radial-gradient(circle at 82% 3%, rgba(79, 62, 255, 0.16), transparent 28%),
     radial-gradient(circle at 46% 20%, rgba(14, 103, 255, 0.11), transparent 32%),
     linear-gradient(135deg, #030713 0%, #050816 48%, #020512 100%);
+}
+
+.dash-shell-client .dash-main {
+  direction: rtl;
 }
 
 .dash-shell-client .dash-content {
