@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Eye, EyeOff, Loader2, Lock, Mail, ArrowLeft, Shield, User } from 'lucide-react'
+import { Eye, EyeOff, Loader2, Lock, Mail, ArrowLeft, Shield, User, CheckCircle2, Building2 } from 'lucide-react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { signInWithPassword, getCurrentUser, signOut } from '../lib/supabase'
 
@@ -16,15 +16,15 @@ export const Login = () => {
     return redirect
   }, [searchParams])
 
-  const [portal, setPortal]     = useState<Portal>(initialPortal)
-  const [email, setEmail]       = useState('')
+  const [portal, setPortal] = useState<Portal>(initialPortal)
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
-  const [loading, setLoading]   = useState(false)
-  const [error, setError]       = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const adminAccent  = '#F59E0B'
-  const clientAccent = '#00BFFF'
+  const adminAccent = '#B7791F'
+  const clientAccent = '#0F766E'
   const accent = portal === 'admin' ? adminAccent : clientAccent
 
   const afterLogin = async () => {
@@ -39,7 +39,7 @@ export const Login = () => {
 
     if (portal === 'client' && role === 'admin') {
       await signOut()
-      setError('حسابك مخصص للإدارة — استخدم بوابة الإدارة')
+      setError('حسابك مخصص للإدارة، استخدم بوابة الإدارة')
       return
     }
 
@@ -58,7 +58,7 @@ export const Login = () => {
       const msg = err?.message || ''
       setError(
         msg.includes('Invalid') || msg.includes('credentials')
-          ? 'بريد إلكتروني أو كلمة مرور غير صحيحة'
+          ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة'
           : 'حدث خطأ، حاول مجدداً'
       )
     } finally {
@@ -66,192 +66,184 @@ export const Login = () => {
     }
   }
 
+  const portalOptions: { id: Portal; label: string; sub: string; icon: typeof User; accent: string }[] = [
+    { id: 'client', label: 'بوابة العملاء', sub: 'تشغيل المغسلة والحسابات', icon: User, accent: clientAccent },
+    { id: 'admin', label: 'لوحة الإدارة', sub: 'إدارة ماضر والاشتراكات', icon: Shield, accent: adminAccent },
+  ]
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden" style={{ background: '#050810' }}>
-
-      {/* Ambient background */}
-      <div className="absolute inset-0 pointer-events-none">
-        <motion.div
-          className="absolute top-[-15%] left-[-10%] w-[700px] h-[700px] rounded-full"
-          animate={{ scale: [1, 1.08, 1], opacity: [0.5, 0.8, 0.5] }}
-          transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
-          style={{ background: `radial-gradient(circle, ${accent}12 0%, transparent 65%)`, filter: 'blur(70px)', transition: 'background 0.5s' }}
-        />
-        <motion.div
-          className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full"
-          animate={{ scale: [1, 1.12, 1] }}
-          transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut', delay: 3 }}
-          style={{ background: 'radial-gradient(circle, rgba(13,27,62,0.8) 0%, transparent 65%)', filter: 'blur(60px)' }}
-        />
-        <div className="absolute inset-0" style={{
-          backgroundImage: 'linear-gradient(rgba(0,191,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(0,191,255,0.025) 1px, transparent 1px)',
-          backgroundSize: '64px 64px',
-        }} />
-      </div>
-
-      <div className="w-full max-w-lg relative z-10">
-
-        {/* Back */}
-        <Link to="/">
-          <motion.div whileHover={{ x: -4 }}
-            className="flex items-center gap-2 text-sm mb-8 w-fit font-tajawal transition-colors"
-            style={{ color: 'rgba(255,255,255,0.35)' }}
-            onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.75)')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.35)')}
-          >
-            <ArrowLeft size={14} />
-            العودة للرئيسية
-          </motion.div>
-        </Link>
-
-        {/* Portal Selector */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          {([
-            { id: 'client', label: 'بوابة العملاء', sub: 'تتبع مشروعك وأتمتتك', icon: User,   accent: clientAccent },
-            { id: 'admin',  label: 'لوحة الإدارة',  sub: 'التحكم الكامل بالنظام', icon: Shield, accent: adminAccent  },
-          ] as { id: Portal; label: string; sub: string; icon: typeof User; accent: string }[]).map(p => (
-            <motion.button
-              key={p.id}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => { setPortal(p.id); setError('') }}
-              className="relative p-4 rounded-2xl text-right cursor-pointer transition-all overflow-hidden"
-              style={{
-                background: portal === p.id ? `${p.accent}10` : 'rgba(255,255,255,0.03)',
-                border: portal === p.id ? `1px solid ${p.accent}40` : '1px solid rgba(255,255,255,0.07)',
-                boxShadow: portal === p.id ? `0 0 24px ${p.accent}15` : 'none',
-              }}
-            >
-              {portal === p.id && (
-                <div className="absolute top-0 inset-x-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${p.accent}80, transparent)` }} />
-              )}
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
-                  style={{ background: portal === p.id ? `${p.accent}20` : 'rgba(255,255,255,0.05)', border: `1px solid ${portal === p.id ? p.accent + '30' : 'rgba(255,255,255,0.08)'}` }}>
-                  <p.icon size={16} style={{ color: portal === p.id ? p.accent : 'rgba(255,255,255,0.3)' }} />
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold font-cairo" style={{ color: portal === p.id ? 'white' : 'rgba(255,255,255,0.45)' }}>
-                    {p.label}
-                  </p>
-                  <p className="text-[11px] font-tajawal mt-0.5" style={{ color: portal === p.id ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.2)' }}>
-                    {p.sub}
-                  </p>
-                </div>
+    <div dir="rtl" className="min-h-screen bg-[#F6F7F9] text-slate-950">
+      <div className="grid min-h-screen lg:grid-cols-[minmax(420px,0.88fr)_minmax(520px,1.12fr)]">
+        <aside className="relative hidden overflow-hidden bg-[#07231F] p-10 lg:flex lg:flex-col lg:justify-between">
+          <div className="absolute inset-0 opacity-35" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)', backgroundSize: '42px 42px' }} />
+          <div className="relative">
+            <Link to="/" className="inline-flex items-center gap-3">
+              <img src="/logo-main.png" alt="Madar" className="h-11 w-auto object-contain" />
+              <div>
+                <p className="font-sora text-xl font-bold text-white">Madar.software</p>
+                <p className="mt-1 text-xs font-tajawal text-emerald-100/55">منصة تشغيل الأعمال العربية</p>
               </div>
-              {portal === p.id && (
-                <div className="absolute top-3 left-3 w-2 h-2 rounded-full animate-pulse" style={{ background: p.accent }} />
-              )}
-            </motion.button>
-          ))}
-        </div>
+            </Link>
+          </div>
 
-        {/* Login Card */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={portal}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            className="relative rounded-3xl p-8"
-            style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: `1px solid ${accent}20`,
-              backdropFilter: 'blur(24px)',
-              boxShadow: `0 0 0 1px ${accent}08, 0 32px 80px rgba(0,0,0,0.4), 0 0 60px ${accent}06`,
-            }}
-          >
-            <div className="absolute top-0 inset-x-8 h-px rounded-full"
-              style={{ background: `linear-gradient(90deg, transparent, ${accent}60, transparent)` }} />
+          <div className="relative max-w-md">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/8 px-3 py-1.5 text-xs font-tajawal text-emerald-100">
+              <Building2 size={14} />
+              ماضر OS للمغاسل والعيادات
+            </div>
+            <h1 className="font-cairo text-4xl font-bold leading-[1.25] text-white">
+              ادخل إلى لوحة تشغيل مرتبة، واضحة، وجاهزة ليوم العمل.
+            </h1>
+            <p className="mt-5 font-tajawal text-base leading-8 text-emerald-50/65">
+              دخول واحد لإدارة السيارات، العملاء، المالية، الأتمتة، وتقارير واتساب من مكان واحد.
+            </p>
+          </div>
 
-            {/* Header */}
-            <div className="flex flex-col items-center mb-8">
-              <div className="flex items-center gap-2.5 mb-4">
-                <img src="/logo-main.png" alt="Madar"
-                  style={{ height: 42, width: 'auto', objectFit: 'contain', filter: `drop-shadow(0 0 12px ${accent}50)` }} />
-                <span style={{ fontFamily: 'Sora, sans-serif', fontSize: 21, fontWeight: 700, letterSpacing: '-0.3px', lineHeight: 1 }}>
-                  <span className="shimmer-text">Madar</span>
-                  <span className="shimmer-text-blue">.software</span>
-                </span>
+          <div className="relative grid gap-3">
+            {['مسار تشغيل سريع للسيارات', 'تقارير مالية وضريبة VAT', 'واتساب وولاء العملاء تلقائياً'].map(item => (
+              <div key={item} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/8 px-4 py-3">
+                <CheckCircle2 size={17} className="text-emerald-300" />
+                <span className="font-tajawal text-sm text-white/82">{item}</span>
               </div>
-              <div className="w-10 h-px mb-4" style={{ background: `linear-gradient(90deg, transparent, ${accent}60, transparent)` }} />
-              <h1 className="text-xl font-bold text-white font-cairo mb-1">
-                {portal === 'admin' ? 'دخول الإدارة' : 'دخول العملاء'}
-              </h1>
-              <p className="text-sm font-tajawal" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                {portal === 'admin' ? 'صلاحيات كاملة للتحكم بالنظام' : 'تتبع مشاريعك وأتمتتك'}
+            ))}
+          </div>
+        </aside>
+
+        <main className="flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 lg:px-12">
+          <div className="w-full max-w-[460px]">
+            <div className="mb-8 flex items-center justify-between gap-4">
+              <Link to="/" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-tajawal text-slate-500 shadow-sm transition-colors hover:text-slate-900">
+                <ArrowLeft size={15} />
+                العودة للرئيسية
+              </Link>
+              <div className="flex items-center gap-2 lg:hidden">
+                <img src="/logo-main.png" alt="Madar" className="h-9 w-auto object-contain" />
+                <span className="font-sora text-lg font-bold text-slate-950">Madar</span>
+              </div>
+            </div>
+
+            <div className="mb-5">
+              <p className="text-sm font-bold text-teal-700 font-cairo">تسجيل الدخول</p>
+              <h2 className="mt-2 text-3xl font-bold tracking-normal text-slate-950 font-cairo">
+                {portal === 'admin' ? 'مرحباً بك في الإدارة' : 'مرحباً بك في بوابتك'}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-500 font-tajawal">
+                اختر البوابة المناسبة ثم أدخل بيانات الحساب للمتابعة.
               </p>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="relative">
-                <Mail size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2" style={{ color: 'rgba(255,255,255,0.25)' }} />
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                  placeholder="البريد الإلكتروني" required dir="ltr"
-                  className="w-full rounded-xl px-4 py-3.5 pr-10 text-sm text-white placeholder-slate-600 outline-none font-work transition-all"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
-                  onFocus={e => (e.currentTarget.style.border = `1px solid ${accent}50`)}
-                  onBlur={e => (e.currentTarget.style.border = '1px solid rgba(255,255,255,0.08)')}
-                />
-              </div>
-
-              <div className="relative">
-                <Lock size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2" style={{ color: 'rgba(255,255,255,0.25)' }} />
-                <input type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
-                  placeholder="••••••••" required dir="ltr" minLength={6}
-                  className="w-full rounded-xl px-4 py-3.5 pr-10 pl-11 text-sm text-white placeholder-slate-600 outline-none font-work transition-all"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
-                  onFocus={e => (e.currentTarget.style.border = `1px solid ${accent}50`)}
-                  onBlur={e => (e.currentTarget.style.border = '1px solid rgba(255,255,255,0.08)')}
-                />
-                <button type="button" onClick={() => setShowPass(!showPass)}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 cursor-pointer transition-colors"
-                  style={{ color: 'rgba(255,255,255,0.25)' }}
-                  onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.25)')}>
-                  {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
+            <div className="mb-4 grid grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm">
+              {portalOptions.map(p => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => { setPortal(p.id); setError('') }}
+                  className="flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold font-tajawal transition-all"
+                  style={{
+                    background: portal === p.id ? p.accent : 'transparent',
+                    color: portal === p.id ? 'white' : '#64748B',
+                    boxShadow: portal === p.id ? '0 10px 24px rgba(15,118,110,0.18)' : 'none',
+                  }}
+                >
+                  <p.icon size={16} />
+                  {p.label}
                 </button>
-              </div>
+              ))}
+            </div>
 
-              {error && (
-                <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-2 px-4 py-3 rounded-xl"
-                  style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
-                  <div className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
-                  <p className="text-xs text-red-400 font-tajawal">{error}</p>
-                </motion.div>
-              )}
-
-              <motion.button
-                whileHover={{ scale: 1.02, boxShadow: `0 0 35px ${accent}40` }}
-                whileTap={{ scale: 0.97 }}
-                type="submit" disabled={loading}
-                className="w-full py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 mt-2 cursor-pointer font-cairo disabled:opacity-60 transition-all"
-                style={{
-                  background: portal === 'admin'
-                    ? 'linear-gradient(135deg, #92400e, #F59E0B)'
-                    : 'linear-gradient(135deg, #0D1B3E, #0099CC)',
-                  color: 'white',
-                  boxShadow: portal === 'admin' ? '0 4px 20px rgba(245,158,11,0.25)' : '0 4px 20px rgba(0,153,204,0.25)',
-                }}
+            <AnimatePresence mode="wait">
+              <motion.section
+                key={portal}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.22 }}
+                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)]"
               >
-                {loading && <Loader2 size={15} className="animate-spin" />}
-                {loading ? 'جاري الدخول...' : portal === 'admin' ? 'دخول لوحة الإدارة' : 'دخول البوابة'}
-              </motion.button>
-            </form>
+                <div className="mb-6 flex items-center gap-3">
+                  <div className="grid h-12 w-12 place-items-center rounded-2xl" style={{ background: accent + '12', color: accent }}>
+                    {portal === 'admin' ? <Shield size={22} /> : <User size={22} />}
+                  </div>
+                  <div>
+                    <h3 className="font-cairo text-lg font-bold text-slate-950">
+                      {portal === 'admin' ? 'دخول لوحة الإدارة' : 'دخول بوابة العملاء'}
+                    </h3>
+                    <p className="mt-1 text-xs font-tajawal text-slate-500">
+                      {portalOptions.find(p => p.id === portal)?.sub}
+                    </p>
+                  </div>
+                </div>
 
-            <p className="text-center text-xs mt-6 font-tajawal" style={{ color: 'rgba(255,255,255,0.18)' }}>
-              للدعم:{' '}
-              <a href="mailto:info@madar.software" style={{ color: `${accent}70` }}
-                onMouseEnter={e => (e.currentTarget.style.color = accent)}
-                onMouseLeave={e => (e.currentTarget.style.color = `${accent}70`)}>
-                info@madar.software
-              </a>
-            </p>
-          </motion.div>
-        </AnimatePresence>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="mb-2 block text-sm font-bold text-slate-700 font-tajawal">البريد الإلكتروني</label>
+                    <div className="relative">
+                      <Mail size={17} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        placeholder="name@company.com"
+                        required
+                        dir="ltr"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 text-left text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-4 focus:ring-teal-600/10 font-sora"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-bold text-slate-700 font-tajawal">كلمة المرور</label>
+                    <div className="relative">
+                      <Lock size={17} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type={showPass ? 'text' : 'password'}
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        dir="ltr"
+                        minLength={6}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-11 py-3.5 text-left text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-4 focus:ring-teal-600/10 font-sora"
+                      />
+                      <button
+                        type="button"
+                        aria-label={showPass ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
+                        onClick={() => setShowPass(!showPass)}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-700"
+                      >
+                        {showPass ? <EyeOff size={17} /> : <Eye size={17} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 font-tajawal"
+                    >
+                      {error}
+                    </motion.div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold text-white transition-all disabled:opacity-60 font-cairo"
+                    style={{ background: accent, boxShadow: '0 16px 34px ' + accent + '30' }}
+                  >
+                    {loading && <Loader2 size={17} className="animate-spin" />}
+                    {loading ? 'جاري الدخول...' : portal === 'admin' ? 'دخول لوحة الإدارة' : 'دخول البوابة'}
+                  </button>
+                </form>
+
+                <p className="mt-6 text-center text-xs text-slate-400 font-tajawal">
+                  للدعم: <a href="mailto:info@madar.software" className="font-bold text-teal-700 hover:text-teal-900">info@madar.software</a>
+                </p>
+              </motion.section>
+            </AnimatePresence>
+          </div>
+        </main>
       </div>
     </div>
   )
