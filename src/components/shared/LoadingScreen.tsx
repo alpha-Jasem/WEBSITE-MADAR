@@ -11,7 +11,7 @@ interface Node {
   speed: number
 }
 
-export const LoadingScreen = ({ onDone }: { onDone: () => void }) => {
+export const LoadingScreen = ({ onDone }: { onDone?: () => void }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [showText, setShowText] = useState(false)
 
@@ -53,7 +53,7 @@ export const LoadingScreen = ({ onDone }: { onDone: () => void }) => {
       setShowText(true)
     }, 1400)
 
-    const doneTimer = setTimeout(onDone, 2900)
+    const doneTimer = onDone ? setTimeout(onDone, 2900) : null
 
     const draw = () => {
       const t = Date.now() - start
@@ -120,7 +120,7 @@ export const LoadingScreen = ({ onDone }: { onDone: () => void }) => {
     return () => {
       cancelAnimationFrame(raf)
       clearTimeout(textTimer)
-      clearTimeout(doneTimer)
+      if (doneTimer) clearTimeout(doneTimer)
     }
   }, [onDone])
 

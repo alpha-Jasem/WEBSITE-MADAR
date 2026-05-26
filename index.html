@@ -323,8 +323,69 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Pre-JS loading screen — replaced instantly when React mounts -->
+      <div id="pre-loader" style="
+        position:fixed;inset:0;background:#080C14;
+        display:flex;flex-direction:column;align-items:center;justify-content:center;
+        gap:32px;z-index:9999;font-family:'Sora',system-ui,sans-serif;
+      ">
+        <!-- Ambient glow -->
+        <div style="
+          position:absolute;top:35%;left:50%;transform:translate(-50%,-50%);
+          width:500px;height:500px;border-radius:50%;
+          background:radial-gradient(circle,rgba(34,211,238,0.07) 0%,transparent 65%);
+          filter:blur(60px);pointer-events:none;
+        "></div>
+        <!-- Logo row -->
+        <div style="display:flex;align-items:center;gap:12px;position:relative;">
+          <img src="/logo-main.png" alt="Madar"
+            style="height:48px;width:auto;object-fit:contain;filter:drop-shadow(0 0 16px rgba(34,211,238,0.4));"
+            onerror="this.style.display='none'" />
+          <span style="font-size:24px;font-weight:700;letter-spacing:-0.3px;line-height:1;">
+            <span style="color:#fff;">Madar</span><span style="color:#22D3EE;">.software</span>
+          </span>
+        </div>
+        <!-- Spinner -->
+        <div style="position:relative;width:44px;height:44px;">
+          <div style="
+            position:absolute;inset:0;border-radius:50%;
+            border:2px solid rgba(34,211,238,0.1);
+          "></div>
+          <div style="
+            position:absolute;inset:0;border-radius:50%;
+            border:2px solid transparent;border-top-color:#22D3EE;
+            animation:preload-spin 0.9s linear infinite;
+          "></div>
+          <div style="
+            position:absolute;inset:6px;border-radius:50%;
+            border:2px solid transparent;border-top-color:rgba(99,102,241,0.5);
+            animation:preload-spin 1.4s linear infinite reverse;
+          "></div>
+        </div>
+        <p style="color:rgba(71,85,105,0.85);font-size:13px;font-family:'Tajawal',sans-serif;">جاري التحميل...</p>
+      </div>
+      <style>
+        @keyframes preload-spin { to { transform: rotate(360deg); } }
+      </style>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Remove pre-loader once React mounts
+      document.addEventListener('DOMContentLoaded', function() {
+        const observer = new MutationObserver(function() {
+          const root = document.getElementById('root')
+          const loader = document.getElementById('pre-loader')
+          if (root && loader && root.children.length > 1) {
+            loader.style.transition = 'opacity 0.4s ease'
+            loader.style.opacity = '0'
+            setTimeout(function() { if (loader.parentNode) loader.parentNode.removeChild(loader) }, 400)
+            observer.disconnect()
+          }
+        })
+        observer.observe(document.getElementById('root'), { childList: true })
+      })
+    </script>
 
     <!-- ══════════════════════════════════════════════════
          NOSCRIPT FALLBACK — مرئي لمحركات البحث التي لا تشغّل JS
