@@ -19,17 +19,26 @@ function fireWebhook(url: string, body: Record<string, unknown>) {
     .catch(e => console.warn('[n8n]', url, e))
 }
 
-const COLUMNS: { status: QueueStatus; label: string; color: string; bg: string }[] = [
-  { status: 'received',  label: 'استلام',  color: '#94A3B8', bg: 'rgba(148,163,184,0.1)' },
-  { status: 'washing',   label: 'غسيل',    color: '#4F6EF7', bg: 'rgba(79,110,247,0.1)'  },
-  { status: 'drying',    label: 'تجفيف',   color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)'  },
-  { status: 'ready',     label: 'جاهزة',   color: '#10B981', bg: 'rgba(16,185,129,0.1)'  },
-  { status: 'delivered', label: 'تسليم',   color: '#F59E0B', bg: 'rgba(245,158,11,0.1)'  },
+type FastLane = {
+  key: 'received' | 'in_service' | 'ready' | 'delivered'
+  statuses: QueueStatus[]
+  label: string
+  eyebrow: string
+  actionLabel?: string
+  color: string
+  bg: string
+}
+
+const FAST_LANES: FastLane[] = [
+  { key: 'received', statuses: ['received'], label: 'استلام', eyebrow: 'سيارات وصلت للتو', actionLabel: 'بدء الخدمة', color: '#38BDF8', bg: 'rgba(56,189,248,0.10)' },
+  { key: 'in_service', statuses: ['washing', 'drying'], label: 'قيد الخدمة', eyebrow: 'يتم العمل عليها الآن', actionLabel: 'السيارة جاهزة', color: '#8B5CF6', bg: 'rgba(139,92,246,0.12)' },
+  { key: 'ready', statuses: ['ready'], label: 'جاهزة', eyebrow: 'بانتظار التسليم', actionLabel: 'تسليم واستلام الدفع', color: '#10B981', bg: 'rgba(16,185,129,0.12)' },
+  { key: 'delivered', statuses: ['delivered'], label: 'تم التسليم', eyebrow: 'منجزة اليوم', color: '#F59E0B', bg: 'rgba(245,158,11,0.11)' },
 ]
 
 const NEXT_STATUS: Partial<Record<QueueStatus, QueueStatus>> = {
   received: 'washing',
-  washing: 'drying',
+  washing: 'ready',
   drying: 'ready',
   ready: 'delivered',
 }
@@ -99,7 +108,6 @@ export const CarWashQueue = () => {
       .from('cw_queue')
       .select('*, worker:cw_workers(id, name, commission_type, commission_value)')
       .eq('company_id', cid)
-      .neq('status', 'delivered')
       .gte('created_at', todayStart.toISOString())
       .order('created_at')
     setItems((data as CWQueueItem[]) || [])
@@ -276,7 +284,7 @@ export const CarWashQueue = () => {
 
     setMovingId(item.id)
     const updates: Record<string, unknown> = { status: next }
-    if (item.status === 'washing' && !item.started_at) updates.started_at = new Date().toISOString()
+    if (item.status === 'received' && next === 'washing' && !item.started_at) updates.started_at = new Date().toISOString()
     await supabase.from('cw_queue').update(updates).eq('id', item.id)
 
     const cwAuto = (company as any)?.cw_automations || {}
@@ -427,7 +435,12 @@ export const CarWashQueue = () => {
 
   const activeItems = items.filter(i => i.status !== 'cancelled')
   const cancelledItems = items.filter(i => i.status === 'cancelled')
-  const colItems = (status: QueueStatus) => activeItems.filter(i => i.status === status)
+  const laneItems = (lane: FastLane) => activeItems.filter(i => lane.statuses.includes(i.status))
+  const pendingItems = activeItems.filter(i => i.status !== 'delivered')
+  const deliveredItems = activeItems.filter(i => i.status === 'delivered')
+  const readyItems = activeItems.filter(i => i.status === 'ready')
+  const inServiceItems = activeItems.filter(i => i.status === 'washing' || i.status === 'drying')
+  const todayRevenue = deliveredItems.reduce((sum, item) => sum + (item.total_amount ?? item.price ?? 0), 0)
 
   if (authLoading || loading) return (
     <div className="flex items-center justify-center h-64 gap-3">
@@ -437,105 +450,178 @@ export const CarWashQueue = () => {
   )
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white font-cairo">لوحة التشغيل</h1>
-          <p className="text-sm text-slate-500 font-tajawal">
-            {activeItems.length > 0 ? `${activeItems.length} سيارة نشطة الآن — مباشر` : 'سيارات اليوم — مباشر'}
-          </p>
+    <div className="space-y-5" dir="rtl">
+      <div
+        className="relative overflow-hidden rounded-2xl p-5 md:p-6"
+        style={{
+          background: 'linear-gradient(135deg, rgba(15,23,42,0.98), rgba(3,7,18,0.96) 55%, rgba(20,83,45,0.34))',
+          border: '1px solid rgba(148,163,184,0.16)',
+          boxShadow: '0 22px 70px rgba(0,0,0,0.26)',
+        }}
+      >
+        <div className="absolute inset-x-0 top-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(16,185,129,0.8), transparent)' }} />
+        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-xs font-bold font-cairo text-emerald-300">مركز تشغيل اليوم</p>
+            <h1 className="mt-2 text-2xl md:text-3xl font-bold text-white font-cairo">مسار السيارات السريع</h1>
+            <p className="mt-2 text-sm md:text-base text-slate-400 font-tajawal leading-7">
+              أربع خطوات واضحة للموظف: استلام، قيد الخدمة، جاهزة، ثم تسليم. كل سيارة تتحرك بزر واحد بدون تفاصيل زائدة.
+            </p>
+          </div>
+          <button
+            onClick={openAdd}
+            className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-slate-950 font-tajawal transition-transform hover:-translate-y-0.5"
+            style={{ background: 'linear-gradient(135deg, #D9F99D, #34D399)' }}
+          >
+            <Plus size={17} />
+            إضافة سيارة
+          </button>
         </div>
-        <button
-          onClick={openAdd}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-tajawal font-medium text-white"
-          style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}
-        >
-          <Plus size={16} /> إضافة سيارة
-        </button>
+
+        <div className="relative mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {[
+            { label: 'في المسار', value: pendingItems.length, hint: 'غير مسلمة', tone: '#38BDF8' },
+            { label: 'قيد الخدمة', value: inServiceItems.length, hint: 'داخل المغسلة', tone: '#8B5CF6' },
+            { label: 'جاهزة', value: readyItems.length, hint: 'تنتظر العميل', tone: '#10B981' },
+            { label: 'إيراد اليوم', value: todayRevenue.toLocaleString('ar-SA'), hint: 'ر.س مستلمة', tone: '#F59E0B' },
+          ].map(stat => (
+            <div
+              key={stat.label}
+              className="rounded-xl px-4 py-3"
+              style={{ background: 'rgba(255,255,255,0.045)', border: '1px solid rgba(255,255,255,0.08)' }}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs text-slate-500 font-tajawal">{stat.label}</span>
+                <span className="h-2 w-2 rounded-full" style={{ background: stat.tone, boxShadow: '0 0 18px ' + stat.tone + 'AA' }} />
+              </div>
+              <p className="mt-2 text-2xl font-bold text-white font-sora">{stat.value}</p>
+              <p className="mt-1 text-xs text-slate-600 font-tajawal">{stat.hint}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Kanban board */}
-      <div className="overflow-x-auto pb-2">
-        <div className="flex gap-4 min-w-max">
-          {COLUMNS.map(col => (
-            <div key={col.status} className="w-52 flex-shrink-0">
-              <div className="flex items-center gap-2 mb-3 px-1">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ background: col.color }} />
-                <span className="text-sm font-bold font-cairo" style={{ color: col.color }}>{col.label}</span>
-                <span className="text-xs text-slate-600 font-sora ml-auto">{colItems(col.status).length}</span>
+      <div className="grid gap-4 xl:grid-cols-4 lg:grid-cols-2">
+        {FAST_LANES.map(lane => {
+          const cars = laneItems(lane)
+          return (
+            <section
+              key={lane.key}
+              className="min-h-[420px] rounded-2xl p-3"
+              style={{ background: lane.bg, border: '1px solid ' + lane.color + '33' }}
+            >
+              <div className="mb-3 flex items-center justify-between gap-3 px-1">
+                <div className="flex items-center gap-2">
+                  <span className="h-9 w-1 rounded-full" style={{ background: lane.color, boxShadow: '0 0 24px ' + lane.color + '88' }} />
+                  <div>
+                    <h2 className="text-base font-bold font-cairo" style={{ color: lane.color }}>{lane.label}</h2>
+                    <p className="text-xs text-slate-500 font-tajawal">{lane.eyebrow}</p>
+                  </div>
+                </div>
+                <span className="rounded-full px-2.5 py-1 text-xs font-bold font-sora" style={{ color: lane.color, background: 'rgba(255,255,255,0.06)' }}>
+                  {cars.length}
+                </span>
               </div>
-              <div className="space-y-2 min-h-32">
-                {colItems(col.status).map(item => (
-                  <div key={item.id} className="p-3 rounded-xl" style={{ background: col.bg, border: `1px solid ${col.color}33` }}>
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-white font-cairo truncate">{item.customer_name}</p>
-                        {item.car_type && <p className="text-xs text-slate-500 font-tajawal truncate">{item.car_type}{item.plate ? ` · ${item.plate}` : ''}</p>}
+
+              <div className="space-y-3">
+                {cars.map(item => (
+                  <div
+                    key={item.id}
+                    className="rounded-xl p-3.5 transition-transform hover:-translate-y-0.5"
+                    style={{ background: 'rgba(3,7,18,0.72)', border: '1px solid rgba(255,255,255,0.09)', boxShadow: '0 16px 36px rgba(0,0,0,0.20)' }}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-base font-bold text-white font-cairo">{item.customer_name}</p>
+                        <p className="mt-1 truncate text-xs text-slate-500 font-tajawal">
+                          {item.car_type || 'سيارة'}{item.plate ? ' · ' + item.plate : ''}
+                        </p>
                       </div>
-                      <div className="flex items-center gap-1 mr-1 flex-shrink-0">
-                        {col.status !== 'delivered' && (
-                          <button onClick={() => openEdit(item)} className="text-slate-600 hover:text-slate-300 transition-colors">
-                            <Pencil size={11} />
+                      {lane.key !== 'delivered' && (
+                        <div className="flex items-center gap-1">
+                          <button
+                            aria-label="تعديل السيارة"
+                            onClick={() => openEdit(item)}
+                            className="grid h-7 w-7 place-items-center rounded-lg text-slate-500 transition-colors hover:text-white"
+                            style={{ background: 'rgba(255,255,255,0.05)' }}
+                          >
+                            <Pencil size={12} />
                           </button>
-                        )}
-                        {col.status !== 'delivered' && (
-                          <button onClick={() => setCancelConfirm(item.id)} className="text-slate-600 hover:text-red-400 transition-colors">
-                            <X size={12} />
+                          <button
+                            aria-label="إلغاء السيارة"
+                            onClick={() => setCancelConfirm(item.id)}
+                            className="grid h-7 w-7 place-items-center rounded-lg text-slate-500 transition-colors hover:text-red-300"
+                            style={{ background: 'rgba(255,255,255,0.05)' }}
+                          >
+                            <X size={13} />
                           </button>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
 
-                    {item.is_free_wash && (
-                      <div className="flex items-center gap-1 mb-1.5">
-                        <Gift size={11} className="text-amber-400" />
-                        <span className="text-xs text-amber-400 font-tajawal">غسلة مجانية</span>
-                      </div>
-                    )}
-
-                    {item.service_name && (
-                      <p className="text-xs font-tajawal mb-2 truncate" style={{ color: col.color }}>{item.service_name}</p>
-                    )}
-
-                    <div className="flex items-center justify-between mb-2">
-                      {item.price > 0 && !item.is_free_wash && (
-                        <span className="text-xs font-sora text-slate-400">{item.price} ر.س</span>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      {item.service_name && (
+                        <span className="rounded-full px-2.5 py-1 text-xs font-medium font-tajawal" style={{ color: lane.color, background: lane.bg }}>
+                          {item.service_name}
+                        </span>
                       )}
                       {item.is_free_wash && (
-                        <span className="text-xs font-tajawal text-amber-400 line-through">{item.original_price} ر.س</span>
+                        <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs text-amber-300 font-tajawal" style={{ background: 'rgba(245,158,11,0.12)' }}>
+                          <Gift size={11} /> مجانية
+                        </span>
                       )}
-                      <span className="text-xs text-slate-600 font-sora flex items-center gap-1 ml-auto">
-                        <Clock size={10} /> {elapsed(item.created_at)}
-                      </span>
                     </div>
 
-                    {item.worker && (
-                      <p className="text-xs text-slate-500 font-tajawal mb-2 truncate">👤 {(item.worker as { name: string }).name}</p>
+                    <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
+                      <div>
+                        <p className="text-slate-600 font-tajawal">القيمة</p>
+                        <p className="mt-1 text-slate-300 font-sora">{item.is_free_wash ? '0' : (item.total_amount ?? item.price ?? 0)} ر.س</p>
+                      </div>
+                      <div>
+                        <p className="text-slate-600 font-tajawal">الوقت</p>
+                        <p className="mt-1 inline-flex items-center gap-1 text-slate-300 font-sora"><Clock size={11} />{elapsed(item.created_at)}</p>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-slate-600 font-tajawal">الموظف</p>
+                        <p className="mt-1 truncate text-slate-300 font-tajawal">{item.worker ? (item.worker as { name: string }).name : 'غير محدد'}</p>
+                      </div>
+                    </div>
+
+                    {lane.key === 'ready' && item.phone && (company as any)?.cw_automations?.car_ready?.enabled !== false && (
+                      <p className="mt-3 rounded-lg px-3 py-2 text-xs text-emerald-300 font-tajawal" style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.18)' }}>
+                        تم إشعار العميل عبر واتساب
+                      </p>
                     )}
 
-                    {col.status === 'ready' && item.phone && (company as any)?.cw_automations?.car_ready?.enabled !== false && (
-                      <p className="text-xs text-emerald-500 font-tajawal mb-1.5">📱 تم إشعار العميل</p>
-                    )}
-
-                    {col.status !== 'delivered' && NEXT_STATUS[col.status] && (
+                    {lane.actionLabel && NEXT_STATUS[item.status] && (
                       <button
                         onClick={() => moveNext(item)}
                         disabled={movingId === item.id}
-                        className="w-full py-1.5 rounded-lg text-xs font-tajawal flex items-center justify-center gap-1 transition-all hover:opacity-80 disabled:opacity-50"
-                        style={{ background: col.color + '22', color: col.color, border: `1px solid ${col.color}44` }}
+                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold font-tajawal transition-all hover:opacity-90 disabled:opacity-50"
+                        style={{ background: lane.color, color: '#020617' }}
                       >
-                        {movingId === item.id ? <Loader2 size={10} className="animate-spin" /> : (
-                          col.status === 'ready' ? <Receipt size={10} /> : <ChevronRight size={10} />
+                        {movingId === item.id ? <Loader2 size={14} className="animate-spin" /> : (
+                          lane.key === 'ready' ? <Receipt size={14} /> : <ChevronRight size={14} />
                         )}
-                        {col.status === 'ready' ? 'تسليم ودفع' : COLUMNS.find(c => c.status === NEXT_STATUS[col.status])?.label}
+                        {lane.actionLabel}
                       </button>
                     )}
                   </div>
                 ))}
+
+                {cars.length === 0 && (
+                  <div
+                    className="flex h-40 flex-col items-center justify-center rounded-xl text-center"
+                    style={{ background: 'rgba(3,7,18,0.34)', border: '1px dashed rgba(255,255,255,0.12)' }}
+                  >
+                    <Car size={24} className="text-slate-700" />
+                    <p className="mt-2 text-sm text-slate-600 font-tajawal">لا توجد سيارات هنا</p>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
-        </div>
+            </section>
+          )
+        })}
       </div>
 
       {activeItems.length === 0 && (
@@ -544,8 +630,8 @@ export const CarWashQueue = () => {
           style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16 }}
         >
           <Car size={32} className="text-slate-700" />
-          <p className="text-slate-500 font-tajawal text-sm">لا توجد سيارات في القائمة</p>
-          <button onClick={openAdd} className="text-primary-400 text-sm font-tajawal underline">أضف أول سيارة</button>
+          <p className="text-slate-500 font-tajawal text-sm">لا توجد سيارات في قائمة اليوم</p>
+          <button onClick={openAdd} className="text-emerald-300 text-sm font-tajawal underline">أضف أول سيارة</button>
         </div>
       )}
 
