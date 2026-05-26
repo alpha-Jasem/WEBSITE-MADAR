@@ -344,14 +344,14 @@ export function CarWashReports() {
           <AreaChart data={stats.dailyChart}>
             <defs>
               <linearGradient id="cwVisitGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#22D3EE" stopOpacity={0.35} />
-                <stop offset="100%" stopColor="#22D3EE" stopOpacity={0} />
+                <stop offset="0%" stopColor="#1565C0" stopOpacity={0.55} />
+                <stop offset="100%" stopColor="#1565C0" stopOpacity={0.04} />
               </linearGradient>
             </defs>
-            <XAxis dataKey="date" tick={{ fill: '#475569', fontSize: 10, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: '#475569', fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
+            <XAxis dataKey="date" tick={{ fill: '#415169', fontSize: 10, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fill: '#415169', fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
             <Tooltip content={<ChartTooltip />} />
-            <Area type="monotone" dataKey="visits" name="visits" stroke="#22D3EE" strokeWidth={2} fill="url(#cwVisitGrad)" />
+            <Area type="monotone" dataKey="visits" name="visits" stroke="#1565C0" strokeWidth={2.5} fill="url(#cwVisitGrad)" />
           </AreaChart>
         </ResponsiveContainer>
       </div>
@@ -391,10 +391,10 @@ export function CarWashReports() {
           </div>
           <ResponsiveContainer width="100%" height={150}>
             <BarChart data={stats.dailyChart.slice(-7)}>
-              <XAxis dataKey="date" tick={{ fill: '#475569', fontSize: 10 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: '#475569', fontSize: 10 }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="date" tick={{ fill: '#415169', fontSize: 10 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#415169', fontSize: 10 }} axisLine={false} tickLine={false} />
               <Tooltip content={<ChartTooltip />} />
-              <Bar dataKey="revenue" name="revenue" fill="#10B981" radius={[4, 4, 0, 0]} fillOpacity={0.8} />
+              <Bar dataKey="revenue" name="revenue" fill="#059669" radius={[4, 4, 0, 0]} fillOpacity={0.88} />
             </BarChart>
           </ResponsiveContainer>
         </div>

@@ -5199,3 +5199,58 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 .dash-shell-client .dash-content .font-cairo  { font-family: 'Cairo', 'Alexandria', sans-serif !important; }
 .dash-shell-client .dash-content .font-tajawal { font-family: 'IBM Plex Sans Arabic', 'Tajawal', sans-serif !important; }
 
+/* 19 ── Dark-theme inline text colors → light-friendly overrides */
+.dash-shell-client .dash-content [style*="color: #F1F5F9"],
+.dash-shell-client .dash-content [style*="color:#F1F5F9"]  { color: #0D1B3E !important; }
+.dash-shell-client .dash-content [style*="color: #E2E8F0"],
+.dash-shell-client .dash-content [style*="color:#E2E8F0"]  { color: #1E2F44 !important; }
+.dash-shell-client .dash-content [style*="color: #CBD5E1"],
+.dash-shell-client .dash-content [style*="color:#CBD5E1"]  { color: #374F6A !important; }
+.dash-shell-client .dash-content [style*="color: #94A3B8"],
+.dash-shell-client .dash-content [style*="color:#94A3B8"]  { color: #5A6E85 !important; }
+.dash-shell-client .dash-content [style*="color: #64748B"],
+.dash-shell-client .dash-content [style*="color:#64748B"]  { color: #374F6A !important; }
+.dash-shell-client .dash-content [style*="color: #475569"],
+.dash-shell-client .dash-content [style*="color:#475569"]  { color: #415169 !important; }
+.dash-shell-client .dash-content [style*="color: #334155"],
+.dash-shell-client .dash-content [style*="color:#334155"]  { color: #1E2F44 !important; }
+
+/* 20 ── Recharts SVG colors — light background corrections */
+.dash-shell-client .recharts-area-curve  { stroke-width: 2.5px; }
+.dash-shell-client .recharts-bar-rectangle path { fill-opacity: 0.9 !important; }
+.dash-shell-client .recharts-cartesian-grid line { stroke: rgba(13,27,62,0.07) !important; }
+.dash-shell-client .recharts-xAxis .recharts-text,
+.dash-shell-client .recharts-yAxis .recharts-text { fill: #415169 !important; }
+
+/* 21 ── Card-level dark backgrounds used as inline styles */
+.dash-shell-client .dash-content [style*="rgba(255,255,255,0.02)"],
+.dash-shell-client .dash-content [style*="rgba(255,255,255,0.01)"] {
+  background: #FFFFFF !important;
+  border-color: rgba(0,191,255,0.18) !important;
+  box-shadow: 0 2px 18px rgba(13,27,62,0.06) !important;
+}
+
+/* 22 ── Section dividers / border-bottom inside cards */
+.dash-shell-client .dash-content [style*="rgba(255,255,255,0.06)"],
+.dash-shell-client .dash-content [style*="rgba(255,255,255,0.08)"],
+.dash-shell-client .dash-content [style*="rgba(255,255,255,0.10)"] {
+  border-color: rgba(0,191,255,0.15) !important;
+}
+
+/* 23 ── Loyalty / plan badge inline backgrounds */
+.dash-shell-client .dash-content [style*="rgba(234,179,8"],
+.dash-shell-client .dash-content [style*="rgba(168,85,247"] {
+  border-radius: 8px;
+}
+
+/* 24 ── Table row hover on light background */
+.dash-shell-client .dash-table tbody tr:hover {
+  background: rgba(0,191,255,0.06) !important;
+  transition: background 0.15s;
+}
+
+/* 25 ── إخفاء التعديلات التي تظهر بشكل غريب: border-bottom القاتمة */
+.dash-shell-client .dash-content [style*="borderBottom"][style*="rgba(255,255,255"] {
+  border-bottom-color: rgba(0,191,255,0.15) !important;
+}
+
