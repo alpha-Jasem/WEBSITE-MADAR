@@ -4937,13 +4937,37 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 .dash-shell-client .dash-content [style*="rgba(255,255,255,0.02)"],
 .dash-shell-client .dash-content [style*="rgba(255,255,255,0.045)"],
 .dash-shell-client .dash-content [style*="#0D1422"],
+.dash-shell-client .dash-content [style*="#0C0D14"],
+.dash-shell-client .dash-content [style*="#0D1017"],
+.dash-shell-client .dash-content [style*="#020617"],
+.dash-shell-client .dash-content [style*="rgba(15, 23, 42"],
+.dash-shell-client .dash-content [style*="rgba(3, 7, 18"],
+.dash-shell-client .dash-content [style*="rgba(3,7,18"],
+.dash-shell-client .dash-content [style*="rgba(5, 10, 23"],
+.dash-shell-client .dash-content [style*="rgba(7, 13, 30"],
+.dash-shell-client .dash-content [style*="rgba(9, 16, 35"],
 .dash-shell-client .dash-content [style*="rgba(3,7,18"] {
   background: #FFFFFF !important;
   border-color: rgba(13,27,62,0.10) !important;
   box-shadow: 0 14px 38px rgba(13,27,62,0.06);
 }
 
+.dash-shell-client .dash-content [style*="linear-gradient(135deg, rgba(15, 23, 42"],
+.dash-shell-client .dash-content [style*="linear-gradient(135deg, rgba(15,23,42"],
+.dash-shell-client .dash-content [style*="linear-gradient(180deg, rgba(9, 16, 35"],
+.dash-shell-client .dash-content [style*="linear-gradient(180deg, rgba(5, 10, 23"] {
+  background:
+    radial-gradient(circle at 92% 0%, rgba(0,191,255,0.14), transparent 28%),
+    linear-gradient(135deg, #FFFFFF, #F7FAFD) !important;
+  border-color: rgba(13,27,62,0.10) !important;
+  box-shadow: 0 18px 55px rgba(13,27,62,0.08) !important;
+}
+
 .dash-shell-client .dash-content .text-white,
+.dash-shell-client .dash-content [style*="color: rgb(241, 245, 249)"],
+.dash-shell-client .dash-content [style*="color: #F1F5F9"],
+.dash-shell-client .dash-content [style*="color: #fff"],
+.dash-shell-client .dash-content [style*="color: white"],
 .dash-shell-client .client-orbit-header h1,
 .dash-shell-client .client-metric-head span,
 .dash-shell-client .client-card-head h2,
@@ -4956,6 +4980,11 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 .dash-shell-client .client-invoice-list strong,
 .dash-shell-client .client-plan-body strong {
   color: #0D1B3E !important;
+}
+
+.dash-shell-client .dash-content .text-slate-300,
+.dash-shell-client .dash-content .text-slate-400 {
+  color: #52627A !important;
 }
 
 .dash-shell-client .dash-content .text-slate-500,
@@ -4984,6 +5013,16 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   background: #F7FAFD !important;
   border-color: rgba(13,27,62,0.12) !important;
   color: #0D1B3E !important;
+}
+
+.dash-shell-client .dash-content [style*="border: 1px solid rgba(255, 255, 255"],
+.dash-shell-client .dash-content [style*="border-bottom: 1px solid rgba(255, 255, 255"],
+.dash-shell-client .dash-content [style*="borderTop: 1px solid rgba(255,255,255"],
+.dash-shell-client .dash-content .border-white\/\[0\.04\],
+.dash-shell-client .dash-content .border-white\/\[0\.07\],
+.dash-shell-client .dash-content .border-white\/\[0\.08\],
+.dash-shell-client .dash-content .border-white\/10 {
+  border-color: rgba(13,27,62,0.10) !important;
 }
 
 .dash-shell-client input::placeholder,
