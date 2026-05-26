@@ -5016,3 +5016,186 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 .dash-shell-client .client-wash-progress small {
   color: #0D1B3E;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   MADAR Client Portal — Visual Polish v2
+   ═══════════════════════════════════════════════════════════ */
+
+/* 1 ── Background: أعمق وأكثر حيوية */
+.dash-shell-client {
+  background:
+    radial-gradient(ellipse 70% 50% at 92% 0%,   rgba(0,191,255,0.22), transparent),
+    radial-gradient(ellipse 55% 60% at 8%  55%,  rgba(21,101,192,0.12), transparent),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(0,150,255,0.08),  transparent),
+    linear-gradient(160deg, #E4EFFF 0%, #F0F7FF 45%, #E8F4FF 100%) !important;
+}
+
+/* 2 ── Content padding */
+.dash-shell-client .dash-content {
+  padding: 28px 30px 44px !important;
+}
+
+/* 3 ── كل الكروت والبانلات — حدود سيان خفيفة + ظل */
+.dash-shell-client .dash-card,
+.dash-shell-client .dash-stat,
+.dash-shell-client .dash-table-wrap,
+.dash-shell-client .client-orbit-card,
+.dash-shell-client .client-plan-pill {
+  background: #FFFFFF !important;
+  border: 1px solid rgba(0,191,255,0.22) !important;
+  box-shadow: 0 2px 16px rgba(13,27,62,0.07), 0 0 0 1px rgba(0,191,255,0.04) !important;
+  border-radius: 18px !important;
+}
+
+/* 4 ── inline-style panels — شبكة أوسع لمسك كل القيم */
+.dash-shell-client .dash-content [style*="rgba(255,255,255,0.03)"],
+.dash-shell-client .dash-content [style*="rgba(255,255,255,0.02)"],
+.dash-shell-client .dash-content [style*="rgba(255,255,255,0.04)"],
+.dash-shell-client .dash-content [style*="rgba(255,255,255,0.045)"],
+.dash-shell-client .dash-content [style*="rgba(255,255,255,0.05)"],
+.dash-shell-client .dash-content [style*="rgba(255,255,255,0.06)"],
+.dash-shell-client .dash-content [style*="rgba(255,255,255,0.07)"],
+.dash-shell-client .dash-content [style*="#0D1422"],
+.dash-shell-client .dash-content [style*="rgba(3,7,18"],
+.dash-shell-client .dash-content [style*="background: 'rgba(255"] {
+  background: #FFFFFF !important;
+  border-color: rgba(0,191,255,0.18) !important;
+  box-shadow: 0 2px 18px rgba(13,27,62,0.07) !important;
+}
+
+/* 5 ── إصلاح نصوص الـ slate على خلفية فاتحة */
+.dash-shell-client .dash-content .text-slate-400 { color: #5A6E85 !important; }
+.dash-shell-client .dash-content .text-slate-500 { color: #415169 !important; }
+.dash-shell-client .dash-content .text-slate-600 { color: #2E3F55 !important; }
+.dash-shell-client .dash-content .text-slate-700 { color: #1E2F44 !important; }
+.dash-shell-client .dash-content .text-slate-800 { color: #0D1B3E !important; }
+.dash-shell-client .dash-content .text-white     { color: #0D1B3E !important; }
+.dash-shell-client .dash-content .text-gray-400  { color: #5A6E85 !important; }
+.dash-shell-client .dash-content .text-gray-300  { color: #7A8FA8 !important; }
+
+/* 6 ── عناوين قوية */
+.dash-shell-client .dash-content h1 { color: #071428 !important; font-weight: 800 !important; }
+.dash-shell-client .dash-content h2 { color: #0D1B3E !important; font-weight: 700 !important; }
+.dash-shell-client .dash-content h3 { color: #1A2E50 !important; font-weight: 700 !important; }
+
+/* 7 ── جدول: رأس مميز + صفوف متناوبة */
+.dash-shell-client .dash-table thead tr,
+.dash-shell-client .dash-table thead {
+  background: linear-gradient(90deg, #EAF4FF, #F0F7FF) !important;
+}
+.dash-shell-client .dash-table thead th,
+.dash-shell-client .dash-table th {
+  color: #1A3060 !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  letter-spacing: 0.01em;
+  border-bottom: 2px solid rgba(0,191,255,0.25) !important;
+}
+.dash-shell-client .dash-table tbody tr:nth-child(even) {
+  background: rgba(235,247,255,0.6) !important;
+}
+.dash-shell-client .dash-table td { color: #1E3254 !important; }
+
+/* 8 ── حقول الإدخال */
+.dash-shell-client input,
+.dash-shell-client textarea,
+.dash-shell-client select,
+.dash-shell-client .dash-input {
+  background: #F4F9FF !important;
+  border: 1px solid rgba(13,27,62,0.18) !important;
+  color: #0D1B3E !important;
+  border-radius: 12px;
+}
+.dash-shell-client input:focus,
+.dash-shell-client textarea:focus,
+.dash-shell-client select:focus {
+  border-color: rgba(0,191,255,0.55) !important;
+  box-shadow: 0 0 0 3px rgba(0,191,255,0.10) !important;
+  outline: none !important;
+}
+.dash-shell-client input::placeholder,
+.dash-shell-client textarea::placeholder {
+  color: #8EA4C0 !important;
+}
+
+/* 9 ── أزرار أساسية */
+.dash-shell-client .dash-btn-primary {
+  background: linear-gradient(135deg, #00BFFF, #1565C0) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 8px 24px rgba(0,191,255,0.30);
+  border: none !important;
+}
+.dash-shell-client .dash-content button[style*="#6366F1"],
+.dash-shell-client .dash-content button[style*="#8B5CF6"],
+.dash-shell-client .dash-content button[style*="6366F1"] {
+  background: linear-gradient(135deg, #00BFFF, #1565C0) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 8px 24px rgba(0,191,255,0.28) !important;
+  border: none !important;
+}
+
+/* 10 ── Queue كانبان: ألوان أعمدة مميزة */
+.dash-shell-client .dash-content [style*="border-radius"][style*="background"] {
+  border: 1px solid rgba(0,191,255,0.15) !important;
+}
+
+/* 11 ── Scrollbar: أزرق فاتح */
+.dash-shell-client .dash-main::-webkit-scrollbar       { width: 5px; }
+.dash-shell-client .dash-main::-webkit-scrollbar-track { background: #E4EFFF; }
+.dash-shell-client .dash-main::-webkit-scrollbar-thumb { background: rgba(0,191,255,0.40); border-radius: 4px; }
+.dash-shell-client .dash-main::-webkit-scrollbar-thumb:hover { background: rgba(0,191,255,0.70); }
+
+/* 12 ── Topbar (mobile) */
+.dash-shell-client .dash-topbar {
+  background: rgba(228,239,255,0.95) !important;
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(0,191,255,0.20) !important;
+  box-shadow: 0 4px 24px rgba(13,27,62,0.08) !important;
+}
+.dash-shell-client .dash-topbar-title { color: #0D1B3E !important; }
+
+/* 13 ── ألوان الحالة (status badges) تبقى ملونة */
+.dash-shell-client .dash-content [style*="#10B981"] { color: #059669 !important; }
+.dash-shell-client .dash-content [style*="#F59E0B"] { color: #B45309 !important; }
+.dash-shell-client .dash-content [style*="#EF4444"] { color: #DC2626 !important; }
+.dash-shell-client .dash-content [style*="#22D3EE"] { color: #0099CC !important; }
+.dash-shell-client .dash-content [style*="#6366F1"] { color: #4338CA !important; }
+
+/* 14 ── Recharts (رسوم بيانية) على خلفية فاتحة */
+.dash-shell-client .recharts-cartesian-grid-horizontal line,
+.dash-shell-client .recharts-cartesian-grid-vertical line {
+  stroke: rgba(13,27,62,0.08) !important;
+}
+.dash-shell-client .recharts-text { fill: #415169 !important; }
+.dash-shell-client .recharts-legend-item-text { color: #415169 !important; }
+.dash-shell-client .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: #FFFFFF !important;
+  border: 1px solid rgba(0,191,255,0.25) !important;
+  box-shadow: 0 8px 32px rgba(13,27,62,0.12) !important;
+  border-radius: 12px !important;
+  color: #0D1B3E !important;
+}
+
+/* 15 ── بادجات الخطط */
+.dash-shell-client [style*="background: 'rgba(6,182,212"],
+.dash-shell-client [style*="background:'rgba(6,182,212"] {
+  background: rgba(0,191,255,0.12) !important;
+  color: #0077AA !important;
+}
+
+/* 16 ── كروت KPI/Stats: حد علوي ملون */
+.dash-shell-client .dash-content > div > div[style*="border"],
+.dash-shell-client .dash-stat {
+  border-top: 3px solid rgba(0,191,255,0.35) !important;
+}
+
+/* 17 ── empty-state text */
+.dash-shell-client .dash-content p[style*="color: '#475569'"],
+.dash-shell-client .dash-content span[style*="color: '#475569'"] {
+  color: #415169 !important;
+}
+
+/* 18 ── font-cairo & font-tajawal داخل الكونتنت */
+.dash-shell-client .dash-content .font-cairo  { font-family: 'Cairo', 'Alexandria', sans-serif !important; }
+.dash-shell-client .dash-content .font-tajawal { font-family: 'IBM Plex Sans Arabic', 'Tajawal', sans-serif !important; }
+
