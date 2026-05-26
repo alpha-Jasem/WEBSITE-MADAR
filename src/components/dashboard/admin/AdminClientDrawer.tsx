@@ -1,12 +1,47 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, Building2, Car, Stethoscope, Briefcase, Check, Copy,
   Mail, Phone, Calendar, Zap, Users2, MessageSquare,
-  ShieldOff, ShieldCheck, TrendingUp, AlertTriangle, Loader2,
+  ShieldOff, ShieldCheck, TrendingUp, AlertTriangle, Loader2, RotateCcw,
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import type { Company, Plan, CompanyStatus } from '../../../types'
+
+// ─── Car wash message templates ───────────────────────────────────────────────
+
+const CW_VAR_TO_DISPLAY: Record<string, string> = {
+  '{{customer_name}}':  '[اسم العميل]',
+  '{{company_name}}':   '[اسم المغسلة]',
+  '{{service}}':        '[اسم الخدمة]',
+  '{{total}}':          '[المبلغ الإجمالي]',
+  '{{payment_method}}': '[طريقة الدفع]',
+}
+const CW_DISPLAY_TO_VAR = Object.fromEntries(Object.entries(CW_VAR_TO_DISPLAY).map(([k, v]) => [v, k]))
+const cwToDisplay = (t: string) => Object.entries(CW_VAR_TO_DISPLAY).reduce((s, [k, v]) => s.split(k).join(v), t)
+const cwToTemplate = (t: string) => Object.entries(CW_DISPLAY_TO_VAR).reduce((s, [k, v]) => s.split(k).join(v), t)
+
+const CW_PREVIEW: Record<string, string> = {
+  '[اسم العميل]': 'فهد', '[اسم المغسلة]': 'مغسلة الوفاء',
+  '[اسم الخدمة]': 'غسيل بريميوم', '[المبلغ الإجمالي]': '60.00', '[طريقة الدفع]': 'مدى',
+}
+const cwRenderPreview = (t: string) => Object.entries(CW_PREVIEW).reduce((s, [k, v]) => s.split(k).join(v), t)
+
+const CW_DEFAULT_TEMPLATES: Record<string, string> = {
+  car_ready:             '🚗 سيارتك جاهزة [اسم العميل]!\n\nتفضل استلامها من [اسم المغسلة] 😊',
+  delivery_receipt:      '🧾 فاتورة غسيل سيارة\n[اسم المغسلة]\n\nالخدمة: [اسم الخدمة]\nالإجمالي: [المبلغ الإجمالي] ر.س\nطريقة الدفع: [طريقة الدفع] ✅\n\nشكراً لزيارتكم — نراكم قريباً 🙏',
+  delivery_receipt_free: '🎁 غسلة مجانية!\n[اسم المغسلة]\n\nالخدمة: [اسم الخدمة]\nالإجمالي: 0 ر.س 🎉\n\nشكراً على ولاؤك — نراكم قريباً 🙏',
+  loyalty_milestone:     '🎉 مبروك [اسم العميل]!\n\nاستكملت 5 غسلات في [اسم المغسلة] 🚗✨\nغسلتك القادمة مجانية!\n\nما عليك إلا تذكر الموظف عند وصولك 😊',
+  review_request:        '⭐ شكراً لزيارة [اسم المغسلة] [اسم العميل]!\n\nرأيك يهمنا — قيّمنا على Google في ثانية واحدة 🙏',
+}
+
+const CW_TEMPLATE_DEFS = [
+  { key: 'car_ready',             label: 'السيارة جاهزة',  color: '#8B5CF6', vars: ['[اسم العميل]', '[اسم المغسلة]'], note: '' },
+  { key: 'delivery_receipt',      label: 'فاتورة التسليم', color: '#22D3EE', vars: ['[اسم العميل]', '[اسم المغسلة]', '[اسم الخدمة]', '[المبلغ الإجمالي]', '[طريقة الدفع]'], note: '' },
+  { key: 'delivery_receipt_free', label: 'غسلة مجانية',    color: '#10B981', vars: ['[اسم العميل]', '[اسم المغسلة]', '[اسم الخدمة]'], note: '' },
+  { key: 'loyalty_milestone',     label: 'إنجاز الولاء',   color: '#F59E0B', vars: ['[اسم العميل]', '[اسم المغسلة]'], note: '' },
+  { key: 'review_request',        label: 'طلب التقييم',    color: '#F59E0B', vars: ['[اسم العميل]', '[اسم المغسلة]'], note: 'رابط Google Maps يُضاف تلقائياً من إعداد الولاء' },
+] as const
 
 const PLAN_CONFIG: Record<Plan, { label: string; color: string; limit: number; price: string }> = {
   starter:    { label: 'ابتدائي', color: '#06B6D4', limit: 1000,  price: '299'   },
@@ -56,6 +91,27 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
   const [activePlan, setActivePlan] = useState<Plan>(company.plan)
   const [planChanged, setPlanChanged] = useState(false)
   const [feedback, setFeedback] = useState('')
+
+  const [cwTemplates, setCwTemplates] = useState<Record<string, string>>(CW_DEFAULT_TEMPLATES)
+  const [savingTmpl, setSavingTmpl] = useState(false)
+  const [tmplSaved, setTmplSaved] = useState(false)
+
+  useEffect(() => {
+    if (company?.business_type !== 'car_wash') return
+    const raw = (company as any).cw_message_templates || {}
+    const display: Record<string, string> = {}
+    for (const [k, v] of Object.entries(raw)) display[k] = cwToDisplay(v as string)
+    setCwTemplates({ ...CW_DEFAULT_TEMPLATES, ...display })
+  }, [company])
+
+  const saveCwTemplates = async () => {
+    setSavingTmpl(true)
+    const toSave: Record<string, string> = {}
+    for (const [k, v] of Object.entries(cwTemplates)) toSave[k] = cwToTemplate(v)
+    await supabase.from('companies').update({ cw_message_templates: toSave } as any).eq('id', company.id)
+    setSavingTmpl(false); setTmplSaved(true)
+    setTimeout(() => setTmplSaved(false), 3000)
+  }
 
   const PLAN_LIMIT: Record<Plan, number> = { starter: 1000, growth: 4000, enterprise: 10000 }
 
@@ -202,6 +258,57 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
                 </div>
               ))}
             </div>
+
+            {/* Car wash message templates (admin only) */}
+            {company.business_type === 'car_wash' && (
+              <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
+                <div className="flex items-center justify-between px-4 py-2.5"
+                  style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div className="flex items-center gap-2">
+                    <MessageSquare size={11} className="text-slate-500" />
+                    <p className="text-xs text-slate-500 font-tajawal">رسائل الواتساب</p>
+                  </div>
+                  <button onClick={saveCwTemplates} disabled={savingTmpl}
+                    className="flex items-center gap-1.5 text-xs font-bold font-cairo px-3 py-1 rounded-lg cursor-pointer transition-all"
+                    style={{ background: tmplSaved ? 'rgba(16,185,129,0.15)' : 'rgba(34,211,238,0.1)', color: tmplSaved ? '#10B981' : '#22D3EE', border: `1px solid ${tmplSaved ? 'rgba(16,185,129,0.2)' : 'rgba(34,211,238,0.2)'}` }}>
+                    {savingTmpl ? <Loader2 size={10} className="animate-spin" /> : tmplSaved ? <Check size={10} /> : null}
+                    {tmplSaved ? 'تم الحفظ' : 'حفظ'}
+                  </button>
+                </div>
+                <div className="p-3 space-y-4" dir="rtl">
+                  {CW_TEMPLATE_DEFS.map(def => (
+                    <div key={def.key}>
+                      <p className="text-xs font-bold font-cairo mb-1.5" style={{ color: def.color }}>{def.label}</p>
+                      <div className="flex flex-wrap gap-1 mb-1.5">
+                        {def.vars.map(v => (
+                          <button key={v} onClick={() => setCwTemplates(p => ({ ...p, [def.key]: (p[def.key] ?? '') + v }))}
+                            className="text-xs font-tajawal px-2 py-0.5 rounded cursor-pointer"
+                            style={{ border: `1px solid ${def.color}33`, background: `${def.color}11`, color: def.color }}>
+                            {v}
+                          </button>
+                        ))}
+                        <button onClick={() => setCwTemplates(p => ({ ...p, [def.key]: CW_DEFAULT_TEMPLATES[def.key] }))}
+                          className="flex items-center gap-1 text-xs font-tajawal px-2 py-0.5 rounded cursor-pointer ml-auto"
+                          style={{ border: '1px solid rgba(255,255,255,0.08)', color: '#475569' }}>
+                          <RotateCcw size={9} /> افتراضي
+                        </button>
+                      </div>
+                      <textarea
+                        value={cwTemplates[def.key] ?? ''}
+                        onChange={e => setCwTemplates(p => ({ ...p, [def.key]: e.target.value }))}
+                        rows={3} dir="auto"
+                        className="w-full text-xs font-tajawal rounded-lg outline-none resize-none"
+                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', padding: '8px 10px', color: '#E2E8F0', lineHeight: 1.8, boxSizing: 'border-box' }}
+                      />
+                      <pre className="text-xs font-tajawal mt-1 px-2"
+                        style={{ color: '#334155', whiteSpace: 'pre-wrap', lineHeight: 1.7, margin: 0 }}>
+                        {cwRenderPreview(cwTemplates[def.key] ?? '')}
+                      </pre>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Change plan */}
             <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>

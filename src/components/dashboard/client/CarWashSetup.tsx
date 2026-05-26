@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Car, Clock, Star, Plus, Trash2, Check, Loader2, MapPin, Save, Receipt, MessageSquare, RotateCcw } from 'lucide-react'
+import { Car, Clock, Star, Plus, Trash2, Check, Loader2, MapPin, Save, Receipt } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { logAudit } from '../../../lib/auditLog'
@@ -22,19 +22,6 @@ const DEFAULT_HOURS: DayHours = Object.fromEntries(
   DAYS.map(d => [d.key, { open: '08:00', close: '22:00', closed: d.key === 'friday' }])
 )
 
-const DEFAULT_TEMPLATES: Record<string, string> = {
-  delivery_receipt: '🧾 فاتورة غسيل سيارة\n{{company_name}}\n\nالخدمة: {{service}}\nالإجمالي: {{total}} ر.س\nطريقة الدفع: {{payment_method}} ✅\n\nشكراً لزيارتكم — نراكم قريباً 🙏',
-  delivery_receipt_free: '🎁 غسلة مجانية!\n{{company_name}}\n\nالخدمة: {{service}}\nالإجمالي: 0 ر.س 🎉\n\nشكراً على ولاؤك — نراكم قريباً 🙏',
-  loyalty_milestone: '🎉 مبروك {{customer_name}}!\n\nاستكملت 5 غسلات في {{company_name}} 🚗✨\nغسلتك القادمة مجانية!\n\nما عليك إلا تذكر الموظف عند وصولك 😊',
-  car_ready: '🚗 سيارتك جاهزة {{customer_name}}!\n\nتفضل استلامها من {{company_name}} 😊',
-}
-
-const TEMPLATE_DEFS = [
-  { key: 'delivery_receipt',      label: 'فاتورة التسليم',  when: 'عند تسليم السيارة (مدفوعة)',         color: '#22D3EE', vars: ['{{customer_name}}', '{{company_name}}', '{{service}}', '{{total}}', '{{payment_method}}'] },
-  { key: 'delivery_receipt_free', label: 'غسلة مجانية',     when: 'عند استخدام غسلة الولاء',             color: '#10B981', vars: ['{{customer_name}}', '{{company_name}}', '{{service}}'] },
-  { key: 'loyalty_milestone',     label: 'إنجاز الولاء',    when: 'عند اكتمال 5 غسلات وربح غسلة مجانية', color: '#F59E0B', vars: ['{{customer_name}}', '{{company_name}}'] },
-  { key: 'car_ready',             label: 'السيارة جاهزة',   when: 'عند وصول السيارة لحالة "جاهزة"',       color: '#8B5CF6', vars: ['{{customer_name}}', '{{company_name}}'] },
-] as const
 
 const SECTION_STYLE = {
   background: 'rgba(255,255,255,0.03)',
@@ -46,7 +33,7 @@ const SECTION_STYLE = {
 export function CarWashSetup() {
   const { companyId, company, loading: authLoading } = useClientCompany()
 
-  const [tab, setTab] = useState<'services' | 'hours' | 'loyalty' | 'vat' | 'messages'>('services')
+  const [tab, setTab] = useState<'services' | 'hours' | 'loyalty' | 'vat'>('services')
 
   // Services (table-based)
   const [services, setServices] = useState<CWService[]>([])
@@ -72,10 +59,6 @@ export function CarWashSetup() {
   const [savingVat, setSavingVat] = useState(false)
   const [vatSaved, setVatSaved] = useState(false)
 
-  // Message templates
-  const [templates, setTemplates] = useState<Record<string, string>>(DEFAULT_TEMPLATES)
-  const [savingTemplates, setSavingTemplates] = useState(false)
-  const [templatesSaved, setTemplatesSaved] = useState(false)
 
   const [loading, setLoading] = useState(true)
 
@@ -101,9 +84,6 @@ export function CarWashSetup() {
         setTaxEnabled(!!c.tax_enabled)
         if (c.vat_rate) setVatRate(c.vat_rate)
         setPriceIncludesVat(!!c.price_includes_vat)
-        if (c.cw_message_templates && Object.keys(c.cw_message_templates).length > 0) {
-          setTemplates({ ...DEFAULT_TEMPLATES, ...c.cw_message_templates })
-        }
       }
       setLoading(false)
     }
@@ -174,26 +154,11 @@ export function CarWashSetup() {
     setTimeout(() => setVatSaved(false), 3000)
   }
 
-  const saveTemplates = async () => {
-    if (!companyId) return
-    setSavingTemplates(true)
-    await supabase.from('companies').update({ cw_message_templates: templates } as any).eq('id', companyId)
-    logAudit(companyId, 'message_templates_updated', { newValue: templates })
-    setSavingTemplates(false)
-    setTemplatesSaved(true)
-    setTimeout(() => setTemplatesSaved(false), 3000)
-  }
-
-  const resetTemplate = (key: string) => {
-    setTemplates(prev => ({ ...prev, [key]: DEFAULT_TEMPLATES[key] }))
-  }
-
   const TABS = [
-    { key: 'services',  label: 'الخدمات',     icon: Car            },
-    { key: 'hours',     label: 'أوقات العمل', icon: Clock          },
-    { key: 'loyalty',   label: 'الولاء',       icon: Star           },
-    { key: 'vat',       label: 'الضريبة',      icon: Receipt        },
-    { key: 'messages',  label: 'الرسائل',      icon: MessageSquare  },
+    { key: 'services', label: 'الخدمات',     icon: Car     },
+    { key: 'hours',    label: 'أوقات العمل', icon: Clock   },
+    { key: 'loyalty',  label: 'الولاء',       icon: Star    },
+    { key: 'vat',      label: 'الضريبة',      icon: Receipt },
   ] as const
 
   if (authLoading || loading) return (
@@ -451,59 +416,6 @@ export function CarWashSetup() {
         </div>
       )}
 
-      {/* Messages Tab */}
-      {tab === 'messages' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ padding: '14px 16px', background: 'rgba(34,211,238,0.05)', borderRadius: 14, border: '1px solid rgba(34,211,238,0.15)' }}>
-            <p style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', margin: 0, lineHeight: 1.9 }}>
-              خصّص نصوص رسائل الواتساب التي تُرسل تلقائياً لعملائك. استخدم المتغيرات بالنقر عليها لإدراجها في النص.
-            </p>
-          </div>
-
-          {TEMPLATE_DEFS.map(def => (
-            <div key={def.key} style={SECTION_STYLE}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <MessageSquare size={14} color={def.color} />
-                  <div>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif' }}>{def.label}</span>
-                    <p style={{ fontSize: 11, color: '#475569', fontFamily: 'Tajawal, sans-serif', margin: '2px 0 0' }}>{def.when}</p>
-                  </div>
-                </div>
-                <button onClick={() => resetTemplate(def.key)}
-                  title="استعادة الافتراضي"
-                  style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#475569', cursor: 'pointer', fontSize: 11, fontFamily: 'Tajawal, sans-serif' }}>
-                  <RotateCcw size={11} /> افتراضي
-                </button>
-              </div>
-
-              {/* Variable chips */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
-                {def.vars.map(v => (
-                  <button key={v} onClick={() => setTemplates(prev => ({ ...prev, [def.key]: (prev[def.key] || '') + v }))}
-                    style={{ padding: '3px 9px', borderRadius: 6, border: `1px solid ${def.color}33`, background: `${def.color}11`, color: def.color, fontSize: 11, fontFamily: 'monospace', cursor: 'pointer', direction: 'ltr' }}>
-                    {v}
-                  </button>
-                ))}
-              </div>
-
-              <textarea
-                value={templates[def.key] || DEFAULT_TEMPLATES[def.key]}
-                onChange={e => setTemplates(prev => ({ ...prev, [def.key]: e.target.value }))}
-                rows={5}
-                dir="auto"
-                style={{ width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '12px 14px', color: '#E2E8F0', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', resize: 'vertical', boxSizing: 'border-box', lineHeight: 1.8 }}
-              />
-            </div>
-          ))}
-
-          <button onClick={saveTemplates} disabled={savingTemplates}
-            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '11px 22px', borderRadius: 12, border: 'none', cursor: 'pointer', background: templatesSaved ? 'rgba(16,185,129,0.15)' : 'rgba(34,211,238,0.12)', color: templatesSaved ? '#10B981' : '#22D3EE', fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: 700 }}>
-            {savingTemplates ? <Loader2 size={14} className="animate-spin" /> : templatesSaved ? <Check size={14} /> : <Save size={14} />}
-            {templatesSaved ? 'تم الحفظ ✓' : 'حفظ القوالب'}
-          </button>
-        </div>
-      )}
     </div>
   )
 }

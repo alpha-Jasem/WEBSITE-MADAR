@@ -1,5 +1,5 @@
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
-import { BarChart3, Calendar, Car, ClipboardCheck, Droplets, LayoutDashboard, MessageSquare, Settings, Users2, Wrench, Zap, ClipboardList, Wallet, Sparkles } from 'lucide-react'
+import { BarChart3, Calendar, Car, ClipboardCheck, Droplets, LayoutDashboard, MessageSquare, Settings, Users2, Wrench, Zap, ClipboardList, Wallet } from 'lucide-react'
 import { DashShell } from '../components/dash/DashShell'
 import type { NavItem } from '../components/dash/DashSidebar'
 import { ClientOverview } from '../components/dashboard/client/ClientOverview'
@@ -22,6 +22,7 @@ import { ClientAppointments } from '../components/dashboard/client/ClientAppoint
 import { ClientConversations } from '../components/dashboard/client/ClientConversations'
 import { PricingPage } from '../components/dashboard/client/PricingPage'
 import { useClientCompany } from '../hooks/useClientCompany'
+import { ClientCompanyProvider } from '../context/ClientCompanyContext'
 import { getClientIndustryTemplate } from '../lib/clientIndustryTemplates'
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
@@ -31,18 +32,14 @@ function buildNavItems(template: ReturnType<typeof getClientIndustryTemplate>): 
 
   if (template.type === 'car_wash') {
     return [
-      { to: '/client',               icon: Droplets,      label: 'لوحة المغسلة',    end: true },
-      { to: '/client/queue',         icon: Car,           label: 'لوحة التشغيل'   },
-      { to: '/client/leads',         icon: Users2,        label: 'عملاء المغسلة'  },
-      { to: '/client/workers',       icon: Users2,        label: 'الموظفون'        },
-      { to: '/client/finance',       icon: Wallet,        label: 'المالية'          },
-      { to: '/client/conversations', icon: MessageSquare, label: 'طلبات واتساب'   },
-      { to: '/client/automations',   icon: Zap,           label: 'تذكيرات وولاء'  },
-      { to: '/client/reports',       icon: BarChart3,      label: 'التقارير'        },
-      { to: '/client/closing',       icon: ClipboardCheck, label: 'إغلاق اليوم'    },
-      { to: '/client/setup',         icon: ClipboardList, label: 'الإعداد'         },
-      { to: '/client/upgrade',       icon: Sparkles,      label: 'ترقية الباقة'   },
-      { to: '/client/settings',      icon: Settings,      label: 'الإعدادات'       },
+      { to: '/client',               icon: Droplets,      label: 'لوحة المغسلة',   end: true },
+      { to: '/client/queue',         icon: Car,           label: 'لوحة التشغيل'  },
+      { to: '/client/leads',         icon: Users2,        label: 'عملاء المغسلة' },
+      { to: '/client/workers',       icon: Users2,        label: 'الموظفون'       },
+      { to: '/client/finance',       icon: Wallet,        label: 'المالية'         },
+      { to: '/client/automations',   icon: Zap,           label: 'الأتمتة'        },
+      { to: '/client/reports',       icon: BarChart3,     label: 'التقارير'       },
+      { to: '/client/settings',      icon: Settings,      label: 'الإعدادات'      },
     ]
   }
 
@@ -54,7 +51,6 @@ function buildNavItems(template: ReturnType<typeof getClientIndustryTemplate>): 
     { to: '/client/automations', icon: Zap, label: labels.automations },
     { to: '/client/leads', icon: Users2, label: labels.leads },
     { to: '/client/reports', icon: BarChart3, label: labels.reports },
-    { to: '/client/upgrade', icon: Sparkles, label: 'ترقية الباقة' },
     { to: '/client/settings', icon: Settings, label: labels.settings },
   ]
 }

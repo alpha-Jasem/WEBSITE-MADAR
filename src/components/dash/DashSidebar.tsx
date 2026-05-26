@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { ChevronDown, Crown, Headphones, LogOut, Sparkles, TrendingUp } from 'lucide-react'
+import { ChevronDown, Crown, LogOut, Sparkles, TrendingUp } from 'lucide-react'
 import { signOut } from '../../lib/supabase'
 import type { Company } from '../../types'
 import { PLAN_LABELS } from '../../lib/constants'
@@ -66,60 +66,33 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
           ))}
         </nav>
 
-        {/* Upgrade card — plan-aware for clients */}
-        {role === 'client' && company ? (
+        {/* Upgrade card — only for non-premium clients */}
+        {role === 'client' && company && !isPremium && (
           <div className="dash-upgrade-card" style={{ borderColor: planColor + '44' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <div className="dash-upgrade-icon" style={{ background: planColor + '22', border: `1px solid ${planColor}44` }}>
-                {isPremium ? <Crown size={16} style={{ color: planColor }} /> : <TrendingUp size={16} style={{ color: planColor }} />}
+                <TrendingUp size={16} style={{ color: planColor }} />
               </div>
               <span style={{ fontSize: 11, fontWeight: 700, color: planColor, fontFamily: 'Sora, sans-serif', background: planColor + '18', padding: '2px 8px', borderRadius: 99 }}>
                 {planLabel}
               </span>
             </div>
-            {isPremium ? (
-              <>
-                <strong style={{ color: '#F1F5F9' }}>Premium Active ✅</strong>
-                <p style={{ color: '#475569' }}>جميع الميزات مفعّلة. استمتع بـ Madar OS الكامل.</p>
-              </>
-            ) : (
-              <>
-                <strong style={{ color: '#F1F5F9' }}>
-                  {plan === 'starter' ? 'ارتقِ إلى Pro' : 'ارتقِ إلى Premium'}
-                </strong>
-                <p style={{ color: '#475569' }}>
-                  {plan === 'starter'
-                    ? 'افتح التقارير الكاملة، المالية، وأداء الموظفين.'
-                    : 'افتح رؤى AI، تعدد الفروع، والتقارير المتقدمة.'}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => { navigate('/client/upgrade'); onClose() }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', border: 'none', color: '#fff', borderRadius: 8, padding: '8px 12px', fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer', width: '100%', justifyContent: 'center', marginTop: 4 }}
-                >
-                  <Sparkles size={12} />
-                  {plan === 'starter' ? 'ترقية إلى Pro' : 'ترقية إلى Premium'}
-                </button>
-              </>
-            )}
-          </div>
-        ) : role === 'admin' ? (
-          <div className="dash-upgrade-card">
-            <div className="dash-upgrade-icon">
-              <Crown size={18} />
-            </div>
-            <strong>Upgrade to Pro</strong>
-            <p>Unlock advanced AI operations, voice agents, and revenue automation.</p>
-            <button type="button">Upgrade Now</button>
-          </div>
-        ) : (
-          <div className="dash-upgrade-card">
-            <div className="dash-upgrade-icon">
-              <Headphones size={18} />
-            </div>
-            <strong>Need Help?</strong>
-            <p>Our support team is here for you whenever you need setup help.</p>
-            <button type="button">Contact Support</button>
+            <strong style={{ color: '#F1F5F9' }}>
+              {plan === 'starter' ? 'ارتقِ إلى Pro' : 'ارتقِ إلى Premium'}
+            </strong>
+            <p style={{ color: '#475569' }}>
+              {plan === 'starter'
+                ? 'افتح التقارير الكاملة، المالية، وأداء الموظفين.'
+                : 'افتح رؤى AI، تعدد الفروع، والتقارير المتقدمة.'}
+            </p>
+            <button
+              type="button"
+              onClick={() => { navigate('/client/upgrade'); onClose() }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', border: 'none', color: '#fff', borderRadius: 8, padding: '8px 12px', fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer', width: '100%', justifyContent: 'center', marginTop: 4 }}
+            >
+              <Sparkles size={12} />
+              {plan === 'starter' ? 'ترقية إلى Pro' : 'ترقية إلى Premium'}
+            </button>
           </div>
         )}
 

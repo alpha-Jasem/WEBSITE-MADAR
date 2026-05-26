@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { User, Bell, Shield, Link2, Copy, Check, Mail, Loader2, MapPin } from 'lucide-react'
+import { User, Bell, Shield, Link2, Copy, Check, Mail, Loader2, MapPin, ClipboardList, Save } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { getClientIndustryTemplate } from '../../../lib/clientIndustryTemplates'
+import { CarWashSetup } from './CarWashSetup'
 
 const PLAN_LIMITS: Record<string, string> = {
   starter: '2,000 رسالة/شهر',
@@ -13,13 +14,14 @@ const PLAN_LIMITS: Record<string, string> = {
 
 export const ClientSettings = () => {
   const { company, companyId } = useClientCompany()
+  const [tab, setTab] = useState<'account' | 'setup'>('account')
   const [copied, setCopied] = useState(false)
   const [emailTo, setEmailTo] = useState('')
   const [emailSubject, setEmailSubject] = useState('')
   const [emailBody, setEmailBody] = useState('')
   const [sendingEmail, setSendingEmail] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
-  const [notifGranted, setNotifGranted] = useState(Notification.permission === 'granted')
+  const [notifGranted, setNotifGranted] = useState(typeof Notification !== 'undefined' && Notification.permission === 'granted')
   const [mapsUrl, setMapsUrl] = useState('')
   const [savingMaps, setSavingMaps] = useState(false)
   const [mapsSaved, setMapsSaved] = useState(false)
@@ -86,6 +88,25 @@ export const ClientSettings = () => {
         <h1 className="text-2xl font-bold text-white font-cairo">الإعدادات</h1>
         <p className="text-sm text-slate-500 font-tajawal">إعدادات الحساب والتكاملات</p>
       </div>
+
+      {/* Tabs — car wash only */}
+      {isCarWash && (
+        <div style={{ display: 'flex', gap: 8, borderBottom: '1px solid rgba(255,255,255,0.07)', paddingBottom: 0 }}>
+          {[
+            { key: 'account', label: 'إعدادات الحساب', icon: User },
+            { key: 'setup',   label: 'إعداد المغسلة',  icon: ClipboardList },
+          ].map(({ key, label, icon: Icon }) => (
+            <button key={key} onClick={() => setTab(key as typeof tab)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', fontSize: 13, fontFamily: 'Cairo, sans-serif', fontWeight: 700, cursor: 'pointer', border: 'none', background: 'transparent', borderBottom: tab === key ? '2px solid #22D3EE' : '2px solid transparent', color: tab === key ? '#22D3EE' : '#475569', transition: 'all 0.15s', marginBottom: -1 }}>
+              <Icon size={14} />
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {isCarWash && tab === 'setup' ? <CarWashSetup /> : null}
+      {(!isCarWash || tab === 'account') && <>
 
       {/* Company info */}
       {company && (
@@ -183,7 +204,7 @@ export const ClientSettings = () => {
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold font-cairo cursor-pointer disabled:opacity-40"
               style={{ background: mapsSaved ? 'rgba(16,185,129,0.15)' : 'rgba(34,211,238,0.12)', border: `1px solid ${mapsSaved ? 'rgba(16,185,129,0.3)' : 'rgba(34,211,238,0.25)'}`, color: mapsSaved ? '#10B981' : '#22D3EE' }}
             >
-              {savingMaps ? <Loader2 size={14} className="animate-spin" /> : mapsSaved ? <Check size={14} /> : <Check size={14} />}
+              {savingMaps ? <Loader2 size={14} className="animate-spin" /> : mapsSaved ? <Check size={14} /> : <Save size={14} />}
               {mapsSaved ? 'تم الحفظ ✓' : 'حفظ'}
             </motion.button>
           </div>
@@ -219,14 +240,27 @@ export const ClientSettings = () => {
           <h3 className="text-sm font-bold text-white font-cairo">الأمان</h3>
         </div>
         <div className="space-y-3">
-          {['تغيير كلمة المرور', 'المصادقة الثنائية'].map(item => (
-            <div key={item} className="flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0">
-              <span className="text-sm text-slate-400 font-tajawal">{item}</span>
-              <button className="text-xs text-primary-400 hover:text-primary-300 font-tajawal cursor-pointer">تعديل</button>
+          <div className="flex items-center justify-between py-2 border-b border-white/[0.04]">
+              <span className="text-sm text-slate-400 font-tajawal">تغيير كلمة المرور</span>
+              <button
+                onClick={async () => {
+                  const { data: { session } } = await supabase.auth.getSession()
+                  if (session?.user?.email) {
+                    await supabase.auth.resetPasswordForEmail(session.user.email)
+                    alert('تم إرسال رابط تغيير كلمة المرور لبريدك الإلكتروني')
+                  }
+                }}
+                className="text-xs text-primary-400 hover:text-primary-300 font-tajawal cursor-pointer">
+                إرسال رابط التغيير
+              </button>
             </div>
-          ))}
+            <div className="flex items-center justify-between py-2">
+              <span className="text-sm text-slate-400 font-tajawal">المصادقة الثنائية</span>
+              <span className="text-xs text-slate-600 font-tajawal">قريباً</span>
+            </div>
         </div>
       </div>
+      </>}
     </div>
   )
 }

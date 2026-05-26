@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Plus, X, Loader2, TrendingUp, TrendingDown, Wallet, Users, DollarSign } from 'lucide-react'
+import { Plus, X, Loader2, TrendingUp, TrendingDown, Wallet, Users, DollarSign, ClipboardCheck } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
+import { CarWashDailyClosing } from './CarWashDailyClosing'
 import { FeatureLock } from '../../dash/FeatureLock'
 import { logAudit } from '../../../lib/auditLog'
 import type { CWExpense, ExpenseCategory, PaymentMethod } from '../../../types'
@@ -32,6 +33,7 @@ function StatCard({ icon: Icon, label, value, color, sub }: { icon: typeof Walle
 }
 
 export const CarWashFinance = () => {
+  const [tab, setTab] = useState<'finance' | 'closing'>('finance')
   const { companyId, company, loading: authLoading } = useClientCompany()
   const { can, planLabel } = usePlanGate()
   const [loading, setLoading] = useState(true)
@@ -139,6 +141,21 @@ export const CarWashFinance = () => {
 
   return (
     <div className="space-y-6">
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 8, borderBottom: '1px solid rgba(255,255,255,0.07)', paddingBottom: 0 }}>
+        {[
+          { key: 'finance', label: 'المالية',     icon: Wallet },
+          { key: 'closing', label: 'إغلاق اليوم', icon: ClipboardCheck },
+        ].map(({ key, label, icon: Icon }) => (
+          <button key={key} onClick={() => setTab(key as typeof tab)}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', fontSize: 13, fontFamily: 'Cairo, sans-serif', fontWeight: 700, cursor: 'pointer', border: 'none', background: 'transparent', borderBottom: tab === key ? '2px solid #22D3EE' : '2px solid transparent', color: tab === key ? '#22D3EE' : '#475569', transition: 'all 0.15s', marginBottom: -1 }}>
+            <Icon size={14} />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'closing' ? <CarWashDailyClosing /> : <>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white font-cairo">المالية</h1>
@@ -300,6 +317,7 @@ export const CarWashFinance = () => {
           </div>
         </div>
       )}
+      </>}
     </div>
   )
 }

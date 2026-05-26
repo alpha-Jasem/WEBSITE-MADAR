@@ -7,9 +7,17 @@ import { logAudit } from '../../../lib/auditLog'
 import type { CWQueueItem, CWWorker, CWService, QueueStatus, PaymentMethod } from '../../../types'
 import { CarWashReceipt } from './CarWashReceipt'
 
-const N8N_READY_WEBHOOK     = 'https://keepcalm.app.n8n.cloud/webhook/cw-car-ready'
-const N8N_DELIVERY_WEBHOOK  = 'https://keepcalm.app.n8n.cloud/webhook/cw-delivery-receipt'
-const N8N_LOYALTY_WEBHOOK   = 'https://keepcalm.app.n8n.cloud/webhook/cw-loyalty-milestone'
+const N8N_BASE              = 'https://keepcalm.app.n8n.cloud/webhook'
+const N8N_READY_WEBHOOK     = `${N8N_BASE}/cw-car-ready`
+const N8N_DELIVERY_WEBHOOK  = `${N8N_BASE}/cw-delivery-receipt`
+const N8N_LOYALTY_WEBHOOK   = `${N8N_BASE}/cw-loyalty-milestone`
+const N8N_REGISTER_WEBHOOK  = `${N8N_BASE}/cw-registration`
+
+function fireWebhook(url: string, body: Record<string, unknown>) {
+  fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    .then(r => { if (!r.ok) console.warn('[n8n]', url, r.status) })
+    .catch(e => console.warn('[n8n]', url, e))
+}
 
 const COLUMNS: { status: QueueStatus; label: string; color: string; bg: string }[] = [
   { status: 'received',  label: 'استلام',  color: '#94A3B8', bg: 'rgba(148,163,184,0.1)' },
@@ -212,6 +220,41 @@ export const CarWashQueue = () => {
         payment_status: 'unpaid',
       }).select().single()
       if (inserted) logAudit(companyId, 'car_created', { entityType: 'cw_queue', entityId: inserted.id })
+
+      // Upsert cw_customers + fire registration webhook for new customers
+      if (form.phone) {
+        const rawPhone = form.phone.replace(/\D/g, '')
+        const normalizedPhone = rawPhone.startsWith('966') ? rawPhone : rawPhone.startsWith('0') ? `966${rawPhone.slice(1)}` : `966${rawPhone}`
+        const localPhone = rawPhone.startsWith('966') ? `0${rawPhone.slice(3)}` : rawPhone.startsWith('0') ? rawPhone : `0${rawPhone}`
+
+        const { data: existingCustomer } = await supabase
+          .from('cw_customers')
+          .select('id, total_visits')
+          .eq('company_id', companyId)
+          .eq('phone', normalizedPhone)
+          .maybeSingle()
+
+        if (!existingCustomer) {
+          // New customer — create record + send welcome WhatsApp
+          await supabase.from('cw_customers').insert({
+            company_id: companyId,
+            phone: normalizedPhone,
+            name: form.customer_name || null,
+            total_visits: 0,
+            welcome_sent: true,
+          })
+          fireWebhook(N8N_REGISTER_WEBHOOK, {
+            phone: normalizedPhone,
+            customer_name: form.customer_name || '',
+            company_name: company?.name || 'المغسلة',
+            company_id: companyId,
+          })
+        } else if (form.customer_name && existingCustomer) {
+          // Update name if provided
+          await supabase.from('cw_customers').update({ name: form.customer_name }).eq('id', existingCustomer.id)
+        }
+        void localPhone
+      }
     }
 
     setForm(EMPTY_FORM)
@@ -238,12 +281,8 @@ export const CarWashQueue = () => {
 
     const cwAuto = (company as any)?.cw_automations || {}
     if (next === 'ready' && item.phone && cwAuto.car_ready?.enabled !== false) {
-      const phone = item.phone.replace(/^0/, '966').replace(/\D/g, '')
-      fetch(N8N_READY_WEBHOOK, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, customer_name: item.customer_name, company_name: company?.name || 'المغسلة', company_id: companyId }),
-      }).catch(() => {})
+      const phone = item.phone.replace(/\D/g, '').replace(/^0/, '966')
+      fireWebhook(N8N_READY_WEBHOOK, { phone, customer_name: item.customer_name, company_name: company?.name || 'المغسلة', company_id: companyId })
     }
     setMovingId(null)
   }
@@ -259,7 +298,7 @@ export const CarWashQueue = () => {
     await supabase.from('cw_queue').update({
       status: 'delivered',
       payment_method: selectedPayment,
-      payment_status: item.is_free_wash ? 'paid' : 'paid',
+      payment_status: 'paid',
       subtotal: vat.subtotal,
       vat_amount: vat.vat_amount,
       total_amount: vat.total_amount,
@@ -282,11 +321,14 @@ export const CarWashQueue = () => {
       worker_id: item.worker_id || null,
       plate: item.plate || null,
       notes: item.notes || null,
+      phone: item.phone || null,
+      customer_name: item.customer_name || null,
       review_request_sent: false,
     })
 
-    // Loyalty update
-    const phone = item.phone?.replace(/\D/g, '').replace(/^966/, '0')
+    // Loyalty update — phone must match cw_customers international format (966XXXXXXXXX)
+    const rawPhone = item.phone?.replace(/\D/g, '') || ''
+    const phone = rawPhone.startsWith('966') ? rawPhone : rawPhone.startsWith('0') ? `966${rawPhone.slice(1)}` : rawPhone ? `966${rawPhone}` : ''
     if (phone && companyId) {
       const { data: customer } = await supabase
         .from('cw_customers')
@@ -320,18 +362,8 @@ export const CarWashQueue = () => {
         }).eq('id', customer.id)
 
         if (loyaltyMilestone && item.phone && (company as any)?.cw_automations?.loyalty_milestone?.enabled !== false) {
-          const ph = item.phone.replace(/^0/, '966').replace(/\D/g, '')
-          fetch(N8N_LOYALTY_WEBHOOK, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              phone: ph,
-              customer_name: item.customer_name,
-              company_name: company?.name || 'المغسلة',
-              company_id: companyId,
-              free_washes: 1,
-            }),
-          }).catch(() => {})
+          const ph = item.phone.replace(/\D/g, '').replace(/^0/, '966')
+          fireWebhook(N8N_LOYALTY_WEBHOOK, { phone: ph, customer_name: item.customer_name, company_name: company?.name || 'المغسلة', company_id: companyId, free_washes: 1 })
         }
       }
     }
@@ -339,23 +371,19 @@ export const CarWashQueue = () => {
     // Delivery receipt webhook
     if (item.phone && (company as any)?.cw_automations?.delivery_receipt?.enabled !== false) {
       const ph = item.phone.replace(/^0/, '966').replace(/\D/g, '')
-      fetch(N8N_DELIVERY_WEBHOOK, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phone: ph,
-          customer_name: item.customer_name,
-          company_name: company?.name || 'المغسلة',
-          company_id: companyId,
-          service: item.service_name,
-          payment_method: selectedPayment,
-          subtotal: vat.subtotal,
-          vat_amount: vat.vat_amount,
-          total_amount: vat.total_amount,
-          is_free_wash: item.is_free_wash || false,
-          discount_amount: item.discount_amount || 0,
-        }),
-      }).catch(() => {})
+      fireWebhook(N8N_DELIVERY_WEBHOOK, {
+        phone: ph,
+        customer_name: item.customer_name,
+        company_name: company?.name || 'المغسلة',
+        company_id: companyId,
+        service: item.service_name,
+        payment_method: selectedPayment,
+        subtotal: vat.subtotal,
+        vat_amount: vat.vat_amount,
+        total_amount: vat.total_amount,
+        is_free_wash: item.is_free_wash || false,
+        discount_amount: item.discount_amount || 0,
+      })
     }
 
     logAudit(companyId, 'car_delivered', {
@@ -485,7 +513,7 @@ export const CarWashQueue = () => {
                       <p className="text-xs text-slate-500 font-tajawal mb-2 truncate">👤 {(item.worker as { name: string }).name}</p>
                     )}
 
-                    {col.status === 'ready' && item.phone && (
+                    {col.status === 'ready' && item.phone && (company as any)?.cw_automations?.car_ready?.enabled !== false && (
                       <p className="text-xs text-emerald-500 font-tajawal mb-1.5">📱 تم إشعار العميل</p>
                     )}
 

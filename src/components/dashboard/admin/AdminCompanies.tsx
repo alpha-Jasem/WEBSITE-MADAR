@@ -1,11 +1,20 @@
 import { useEffect, useState } from 'react'
-import { Search, Plus, Building2, Car, Stethoscope, Briefcase, MessageSquare, Users2, Zap, ChevronLeft } from 'lucide-react'
+import { Search, Plus, Building2, Car, Stethoscope, Briefcase, MessageSquare, Users2, Zap, ChevronLeft, Droplets, DollarSign, TrendingUp, RotateCcw } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { StatusBadge } from '../shared/StatusBadge'
-import { fetchCompanies } from '../../../lib/supabase'
+import { fetchCompanies, supabase } from '../../../lib/supabase'
 import { AdminAddClientModal } from './AdminAddClientModal'
 import { AdminClientDrawer } from './AdminClientDrawer'
 import type { Company } from '../../../types'
+
+interface CWKPIs {
+  revenueThisMonth: number
+  activeWashes: number
+  topWashName: string
+  topWashVisits: number
+  retentionRate: number
+  totalVisitsMonth: number
+}
 
 const planColors: Record<string, string> = {
   starter: '#06B6D4',
@@ -32,10 +41,55 @@ export const AdminCompanies = () => {
   const [filter, setFilter] = useState<'all' | 'active' | 'trial' | 'suspended'>('all')
   const [showModal, setShowModal] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
+  const [cwKPIs, setCwKPIs] = useState<CWKPIs | null>(null)
 
   const load = () => fetchCompanies().then(setCompanies)
 
-  useEffect(() => { load() }, [])
+  const loadCWKPIs = async () => {
+    const monthStart = new Date()
+    monthStart.setDate(1)
+    monthStart.setHours(0, 0, 0, 0)
+    const monthStr = monthStart.toISOString()
+
+    const [{ data: visits }, { data: customers }] = await Promise.all([
+      supabase.from('cw_visits')
+        .select('company_id, price, subtotal')
+        .gte('created_at', monthStr),
+      supabase.from('cw_customers')
+        .select('company_id, total_visits'),
+    ])
+
+    if (!visits) return
+
+    const revenue = visits.reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0)
+    const activeWashSet = new Set(visits.map(v => v.company_id))
+    const visitsByCompany: Record<string, number> = {}
+    for (const v of visits) {
+      visitsByCompany[v.company_id] = (visitsByCompany[v.company_id] || 0) + 1
+    }
+    const topId = Object.entries(visitsByCompany).sort((a, b) => b[1] - a[1])[0]
+
+    const totalCustomers = customers?.length ?? 0
+    const returningCustomers = customers?.filter(c => c.total_visits > 1).length ?? 0
+    const retentionRate = totalCustomers > 0 ? Math.round((returningCustomers / totalCustomers) * 100) : 0
+
+    let topWashName = '—'
+    if (topId) {
+      const { data: co } = await supabase.from('companies').select('name').eq('id', topId[0]).single()
+      topWashName = co?.name ?? '—'
+    }
+
+    setCwKPIs({
+      revenueThisMonth: revenue,
+      activeWashes: activeWashSet.size,
+      topWashName,
+      topWashVisits: topId?.[1] ?? 0,
+      retentionRate,
+      totalVisitsMonth: visits.length,
+    })
+  }
+
+  useEffect(() => { load(); loadCWKPIs() }, [])
 
   const filtered = companies.filter(c => {
     const q = search.toLowerCase()
@@ -111,6 +165,59 @@ export const AdminCompanies = () => {
           </div>
         ))}
       </div>
+
+      {/* Car Wash OS KPIs */}
+      {cwKPIs && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <Droplets size={14} color="#22D3EE" />
+            <span className="text-xs font-bold text-slate-400 font-tajawal tracking-widest uppercase">Car Wash OS — هذا الشهر</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              {
+                icon: DollarSign,
+                label: 'إيرادات الشهر',
+                value: cwKPIs.revenueThisMonth > 0 ? `${cwKPIs.revenueThisMonth.toLocaleString()} ر.س` : '—',
+                sub: `${cwKPIs.totalVisitsMonth} زيارة`,
+                color: '#10B981',
+              },
+              {
+                icon: Droplets,
+                label: 'مغسلات نشطة',
+                value: cwKPIs.activeWashes,
+                sub: 'لديها زيارات هذا الشهر',
+                color: '#22D3EE',
+              },
+              {
+                icon: TrendingUp,
+                label: 'أكثر مغسلة نشاطاً',
+                value: cwKPIs.topWashName,
+                sub: cwKPIs.topWashVisits > 0 ? `${cwKPIs.topWashVisits} زيارة` : undefined,
+                color: '#4F6EF7',
+              },
+              {
+                icon: RotateCcw,
+                label: 'معدل الاستبقاء',
+                value: `${cwKPIs.retentionRate}%`,
+                sub: 'عملاء زاروا أكثر من مرة',
+                color: '#F59E0B',
+              },
+            ].map(s => (
+              <div key={s.label} className="p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${s.color}22` }}>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs text-slate-500 font-tajawal">{s.label}</p>
+                  <div style={{ width: 28, height: 28, borderRadius: 8, background: `${s.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <s.icon size={13} style={{ color: s.color }} />
+                  </div>
+                </div>
+                <p className="text-lg font-black font-work truncate" style={{ color: s.color }}>{s.value}</p>
+                {s.sub && <p className="text-xs text-slate-600 font-tajawal mt-0.5">{s.sub}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Table */}
       <div className="rounded-2xl overflow-hidden overflow-x-auto" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>

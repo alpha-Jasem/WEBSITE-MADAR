@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Suspense, lazy } from 'react'
 import { LanguageProvider } from './context/LanguageContext'
+import { ClientCompanyProvider } from './context/ClientCompanyContext'
 import { ProtectedRoute } from './components/shared/ProtectedRoute'
 import { HomePage } from './pages/HomePage'
 import { Login } from './pages/Login'
@@ -33,7 +34,9 @@ function App() {
               path="/client/*"
               element={
                 <ProtectedRoute requiredRole="client">
-                  <ClientPortal />
+                  <ClientCompanyProvider>
+                    <ClientPortal />
+                  </ClientCompanyProvider>
                 </ProtectedRoute>
               }
             />

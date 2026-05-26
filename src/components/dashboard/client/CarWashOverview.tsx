@@ -19,6 +19,16 @@ import {
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 
+const N8N_BASE             = 'https://keepcalm.app.n8n.cloud/webhook'
+const N8N_REGISTER_WEBHOOK = `${N8N_BASE}/cw-registration`
+const N8N_LOYALTY_WEBHOOK  = `${N8N_BASE}/cw-loyalty-milestone`
+
+function fireWebhook(url: string, body: Record<string, unknown>) {
+  fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    .then(r => { if (!r.ok) console.warn('[n8n]', url, r.status) })
+    .catch(e => console.warn('[n8n]', url, e))
+}
+
 type CWCustomer = {
   id: string
   name: string | null
@@ -51,12 +61,13 @@ const TIER_LABELS: Record<string, string> = {
   gold: 'ذهبي',
 }
 
-function LoyaltyBar({ visits }: { visits: number }) {
-  const progress = visits % 5
-  const stepsCompleted = progress === 0 && visits > 0 ? 4 : Math.min(progress, 4)
+function LoyaltyBar({ visits, threshold = 5 }: { visits: number; threshold?: number }) {
+  const steps = threshold - 1
+  const progress = visits % threshold
+  const stepsCompleted = progress === 0 && visits > 0 ? steps : Math.min(progress, steps)
   return (
-    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-      {[1, 2, 3, 4].map((step) => (
+    <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexWrap: 'wrap' }}>
+      {Array.from({ length: steps }, (_, i) => i + 1).map((step) => (
         <div
           key={step}
           title={`غسلة ${step}`}
@@ -79,20 +90,20 @@ function LoyaltyBar({ visits }: { visits: number }) {
         </div>
       ))}
       <div
-        title="الخامسة مجانية"
+        title={`الغسلة ${threshold} مجانية`}
         style={{
           width: 22,
           height: 22,
           borderRadius: '50%',
-          background: visits > 0 && visits % 5 === 0 ? '#F59E0B' : 'rgba(255,255,255,0.05)',
-          border: `2px solid ${visits > 0 && visits % 5 === 0 ? '#F59E0B' : 'rgba(255,255,255,0.1)'}`,
+          background: visits > 0 && visits % threshold === 0 ? '#F59E0B' : 'rgba(255,255,255,0.05)',
+          border: `2px solid ${visits > 0 && visits % threshold === 0 ? '#F59E0B' : 'rgba(255,255,255,0.1)'}`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
         }}
       >
-        <Gift size={11} color={visits > 0 && visits % 5 === 0 ? '#080C14' : '#475569'} />
+        <Gift size={11} color={visits > 0 && visits % threshold === 0 ? '#080C14' : '#475569'} />
       </div>
     </div>
   )
@@ -167,25 +178,25 @@ function formatPhone(phone: string) {
 
 type WalkInForm = { name: string; phone: string; service: string; price: string }
 type Toast = { id: number; message: string; type: 'milestone' | 'success' }
-
-const SERVICES = ['غسيل عادي', 'غسيل بريميوم', 'غسيل داخلي وخارجي', 'تلميع', 'غسيل سريع']
+type CWService = { id: string; name: string; price: number | null }
 
 type QueueSummary = { received: number; washing: number; drying: number; ready: number }
 
 export function CarWashOverview() {
-  const { companyId, loading: authLoading } = useClientCompany()
+  const { companyId, company, loading: authLoading } = useClientCompany()
   const [customers, setCustomers] = useState<CWCustomer[]>([])
   const [recentVisits, setRecentVisits] = useState<CWVisit[]>([])
   const [pendingReviews, setPendingReviews] = useState(0)
   const [todayVisits, setTodayVisits] = useState(0)
   const [loading, setLoading] = useState(true)
   const [queueSummary, setQueueSummary] = useState<QueueSummary>({ received: 0, washing: 0, drying: 0, ready: 0 })
+  const [services, setServices] = useState<CWService[]>([])
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [toasts, setToasts] = useState<Toast[]>([])
   const toastId = useRef(0)
-  const [form, setForm] = useState<WalkInForm>({ name: '', phone: '', service: SERVICES[0], price: '' })
+  const [form, setForm] = useState<WalkInForm>({ name: '', phone: '', service: '', price: '' })
 
   const addToast = (message: string, type: Toast['type'] = 'success') => {
     const id = ++toastId.current
@@ -205,6 +216,7 @@ export function CarWashOverview() {
       { count: todayCount },
       { count: pendingCount },
       { data: visitsData },
+      { data: servicesData },
     ] = await Promise.all([
       supabase
         .from('cw_customers')
@@ -229,12 +241,20 @@ export function CarWashOverview() {
         .eq('company_id', companyId)
         .order('created_at', { ascending: false })
         .limit(10),
+      supabase
+        .from('cw_services')
+        .select('id, name, price')
+        .eq('company_id', companyId)
+        .eq('active', true)
+        .order('sort_order', { ascending: true }),
     ])
 
     setCustomers((customersData as CWCustomer[]) || [])
     setTodayVisits(todayCount || 0)
     setPendingReviews(pendingCount || 0)
     setRecentVisits((visitsData as unknown as CWVisit[]) || [])
+    const svcs = (servicesData as CWService[]) || []
+    setServices(svcs)
 
     // Load live queue summary
     const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
@@ -309,8 +329,16 @@ export function CarWashOverview() {
         name: form.name || null,
         total_visits: 1,
         last_visit_at: new Date().toISOString(),
+        welcome_sent: true,
       }).select('id').single()
       customerId = newCustomer?.id
+      // Fire immediate welcome WhatsApp
+      fireWebhook(N8N_REGISTER_WEBHOOK, {
+        phone: normalizedPhone,
+        customer_name: form.name || '',
+        company_name: company?.name ?? 'المغسلة',
+        company_id: companyId,
+      })
     }
 
     // Insert visit
@@ -323,9 +351,21 @@ export function CarWashOverview() {
       })
     }
 
+    // Fire loyalty milestone webhook if applicable
+    if (isMilestone) {
+      fireWebhook(N8N_LOYALTY_WEBHOOK, {
+        phone: normalizedPhone,
+        customer_name: form.name || '',
+        company_name: company?.name ?? 'المغسلة',
+        company_id: companyId,
+        free_washes: 1,
+      })
+    }
+
     setSubmitting(false)
     setShowModal(false)
-    setForm({ name: '', phone: '', service: SERVICES[0], price: '' })
+    const first = services[0]
+    setForm({ name: '', phone: '', service: first?.name || '', price: first?.price != null ? first.price.toString() : '' })
 
     if (isMilestone) {
       addToast(`🎉 ${form.name || 'العميل'} وصل الزيارة ${newVisitCount} — يستحق غسيل مجاني!`, 'milestone')
@@ -391,7 +431,11 @@ export function CarWashOverview() {
             كل 4 غسلات والخامسة مجانية
           </div>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => {
+              const first = services[0]
+              setForm({ name: '', phone: '', service: first?.name || '', price: first?.price != null ? first.price.toString() : '' })
+              setShowModal(true)
+            }}
             style={{
               display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px',
               background: 'linear-gradient(135deg, #22D3EE, #4F6EF7)',
@@ -440,33 +484,49 @@ export function CarWashOverview() {
 
             {/* Modal body */}
             <div dir="rtl" style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {[
-                { label: 'اسم العميل', key: 'name', placeholder: 'مثال: أحمد العتيبي', type: 'text' },
-                { label: 'رقم الجوال *', key: 'phone', placeholder: '05XXXXXXXX', type: 'tel' },
-                { label: 'السعر (ريال)', key: 'price', placeholder: '0', type: 'number' },
-              ].map(({ label, key, placeholder, type }) => (
-                <div key={key}>
-                  <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>{label}</label>
-                  <input
-                    type={type}
-                    value={form[key as keyof WalkInForm]}
-                    onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                    placeholder={placeholder}
-                    dir={key === 'phone' || key === 'price' ? 'ltr' : 'rtl'}
-                    style={{
-                      width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14,
-                      background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                      color: '#F1F5F9', outline: 'none', fontFamily: key === 'phone' ? 'Sora, sans-serif' : 'Tajawal, sans-serif',
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                </div>
-              ))}
+              {/* Name */}
+              <div>
+                <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>اسم العميل</label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  placeholder="مثال: أحمد العتيبي"
+                  dir="rtl"
+                  style={{
+                    width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14,
+                    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                    color: '#F1F5F9', outline: 'none', fontFamily: 'Tajawal, sans-serif',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+              {/* Phone */}
+              <div>
+                <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>رقم الجوال *</label>
+                <input
+                  type="tel"
+                  value={form.phone}
+                  onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                  placeholder="05XXXXXXXX"
+                  dir="ltr"
+                  style={{
+                    width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14,
+                    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                    color: '#F1F5F9', outline: 'none', fontFamily: 'Sora, sans-serif',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+              {/* Service — auto-fills price */}
               <div>
                 <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>نوع الخدمة</label>
                 <select
                   value={form.service}
-                  onChange={e => setForm(f => ({ ...f, service: e.target.value }))}
+                  onChange={e => {
+                    const svc = services.find(s => s.name === e.target.value)
+                    setForm(f => ({ ...f, service: e.target.value, price: svc?.price != null ? svc.price.toString() : f.price }))
+                  }}
                   dir="rtl"
                   style={{
                     width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14,
@@ -475,8 +535,35 @@ export function CarWashOverview() {
                     boxSizing: 'border-box', cursor: 'pointer',
                   }}
                 >
-                  {SERVICES.map(s => <option key={s} value={s} style={{ background: '#0D1422' }}>{s}</option>)}
+                  {services.length > 0
+                    ? services.map(s => (
+                        <option key={s.id} value={s.name} style={{ background: '#0D1422' }}>
+                          {s.name}{s.price != null ? ` — ${s.price} ر.س` : ''}
+                        </option>
+                      ))
+                    : <option value="" style={{ background: '#0D1422' }}>لا توجد خدمات — أضفها من الإعداد</option>
+                  }
                 </select>
+              </div>
+              {/* Price — auto-filled from service, editable */}
+              <div>
+                <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>
+                  السعر (ريال)
+                  {services.length > 0 && <span style={{ color: '#22D3EE', marginRight: 6, fontSize: 11 }}>يتملأ تلقائياً</span>}
+                </label>
+                <input
+                  type="number"
+                  value={form.price}
+                  onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
+                  placeholder="0"
+                  dir="ltr"
+                  style={{
+                    width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14,
+                    background: 'rgba(255,255,255,0.04)', border: `1px solid ${form.price ? 'rgba(34,211,238,0.3)' : 'rgba(255,255,255,0.08)'}`,
+                    color: '#F1F5F9', outline: 'none', fontFamily: 'Sora, sans-serif',
+                    boxSizing: 'border-box',
+                  }}
+                />
               </div>
             </div>
 
@@ -636,7 +723,7 @@ export function CarWashOverview() {
               </div>
 
               {/* Loyalty bar */}
-              <LoyaltyBar visits={c.total_visits} />
+              <LoyaltyBar visits={c.total_visits} threshold={company?.cw_loyalty_threshold || 5} />
 
               {/* Last visit */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>

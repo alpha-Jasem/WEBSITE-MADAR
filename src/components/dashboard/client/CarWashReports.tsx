@@ -63,19 +63,29 @@ function ChartTooltip({ active, payload, label }: any) {
 
 export function CarWashReports() {
   const { companyId, company, loading: authLoading } = useClientCompany()
+  const threshold = (company as any)?.cw_loyalty_threshold || 5
   const { can, planLabel } = usePlanGate()
   const [visits, setVisits] = useState<CWVisit[]>([])
   const [customers, setCustomers] = useState<CWCustomer[]>([])
   const [loading, setLoading] = useState(true)
   const [pdfLoading, setPdfLoading] = useState(false)
   const [showExportMenu, setShowExportMenu] = useState(false)
+  const [days, setDays] = useState(30)
+
+  const DATE_FILTERS = [
+    { label: 'اليوم', days: 1 },
+    { label: '7 أيام', days: 7 },
+    { label: '30 يوم', days: 30 },
+    { label: '3 أشهر', days: 90 },
+    { label: 'سنة', days: 365 },
+  ]
 
   useEffect(() => {
     if (authLoading || !companyId) return
     const load = async () => {
       setLoading(true)
       const since = new Date()
-      since.setDate(since.getDate() - 30)
+      since.setDate(since.getDate() - days)
       const [{ data: v }, { data: c }] = await Promise.all([
         supabase.from('cw_visits').select('id, created_at, price, subtotal, vat_amount, payment_method, is_free_wash, discount_amount, service_name, customer_id')
           .eq('company_id', companyId)
@@ -91,7 +101,7 @@ export function CarWashReports() {
       setLoading(false)
     }
     load()
-  }, [authLoading, companyId])
+  }, [authLoading, companyId, days])
 
   const stats = useMemo(() => {
     const now = new Date()
@@ -100,9 +110,8 @@ export function CarWashReports() {
 
     const todayVisits = visits.filter(v => v.created_at.startsWith(todayStr)).length
     const monthVisits = visits.filter(v => v.created_at.startsWith(thisMonthStr)).length
-    const revenue = visits.filter(v => v.created_at.startsWith(thisMonthStr))
-      .reduce((sum, v) => sum + (v.subtotal ?? v.price ?? 0), 0)
-    const milestones = customers.filter(c => c.total_visits > 0 && c.total_visits % 5 === 0).length
+    const revenue = visits.reduce((sum, v) => sum + (v.subtotal ?? v.price ?? 0), 0)
+    const milestones = customers.filter(c => c.total_visits > 0 && c.total_visits % threshold === 0).length
     const freeWashCount = visits.filter(v => v.is_free_wash).length
     const freeWashDiscount = visits.filter(v => v.is_free_wash).reduce((s, v) => s + (v.discount_amount || 0), 0)
 
@@ -113,10 +122,11 @@ export function CarWashReports() {
       paymentBreakdown[pm] = (paymentBreakdown[pm] || 0) + (v.subtotal ?? v.price ?? 0)
     }
 
-    // Daily chart (last 14 days)
-    const dailyChart = Array.from({ length: 14 }, (_, i) => {
+    // Daily chart — up to 30 points regardless of selected range
+    const chartDays = Math.min(days, 30)
+    const dailyChart = Array.from({ length: chartDays }, (_, i) => {
       const d = new Date(now)
-      d.setDate(d.getDate() - (13 - i))
+      d.setDate(d.getDate() - (chartDays - 1 - i))
       const key = d.toISOString().slice(0, 10)
       const dayVisits = visits.filter(v => v.created_at.startsWith(key))
       return {
@@ -137,7 +147,7 @@ export function CarWashReports() {
       .slice(0, 5)
 
     return { todayVisits, monthVisits, revenue, milestones, dailyChart, services, freeWashCount, freeWashDiscount, paymentBreakdown }
-  }, [visits, customers])
+  }, [visits, customers, days])
 
   const topCustomers = customers.slice(0, 8)
 
@@ -267,10 +277,17 @@ export function CarWashReports() {
     >
     <div dir="rtl" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>تقارير المغسلة</h1>
-          <p style={{ fontSize: 13, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginTop: 4 }}>آخر 30 يوم</p>
+          <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+            {DATE_FILTERS.map(f => (
+              <button key={f.days} onClick={() => setDays(f.days)}
+                style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer', border: `1px solid ${days === f.days ? '#22D3EE' : 'rgba(255,255,255,0.1)'}`, background: days === f.days ? 'rgba(34,211,238,0.12)' : 'transparent', color: days === f.days ? '#22D3EE' : '#64748B', fontWeight: days === f.days ? 700 : 400, transition: 'all 0.15s' }}>
+                {f.label}
+              </button>
+            ))}
+          </div>
         </div>
         <div style={{ position: 'relative' }}>
           <button
@@ -306,8 +323,8 @@ export function CarWashReports() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
         <StatCard icon={Car} label="زيارات اليوم" value={stats.todayVisits} color="#22D3EE" />
         <StatCard icon={TrendingUp} label="زيارات هذا الشهر" value={stats.monthVisits} color="#4F6EF7" />
-        <StatCard icon={DollarSign} label="إيرادات الشهر" value={stats.revenue > 0 ? `${stats.revenue.toLocaleString()} ر.س` : '—'} sub="قبل الضريبة" color="#10B981" />
-        <StatCard icon={Star} label="مكافآت ولاء" value={stats.milestones} sub="وصلوا الزيارة الخامسة" color="#F59E0B" />
+        <StatCard icon={DollarSign} label={`إيرادات آخر ${days === 1 ? 'يوم' : days + ' يوم'}`} value={stats.revenue > 0 ? `${stats.revenue.toLocaleString()} ر.س` : '—'} sub="قبل الضريبة" color="#10B981" />
+        <StatCard icon={Star} label="مكافآت ولاء" value={stats.milestones} sub={`وصلوا الغسلة ${threshold}`} color="#F59E0B" />
         <StatCard icon={Gift} label="غسلات مجانية" value={stats.freeWashCount} sub={stats.freeWashDiscount > 0 ? `خصم ${stats.freeWashDiscount.toFixed(0)} ر.س` : undefined} color="#F97316" />
         <StatCard icon={Users} label="إجمالي العملاء" value={customers.length} sub="مسجلون في النظام" color="#8B5CF6" />
       </div>
@@ -320,7 +337,7 @@ export function CarWashReports() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
           <BarChart3 size={16} color="#22D3EE" />
           <h2 style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>
-            الزيارات اليومية — آخر 14 يوم
+            الزيارات اليومية — آخر {Math.min(days, 30)} يوم
           </h2>
         </div>
         <ResponsiveContainer width="100%" height={180}>

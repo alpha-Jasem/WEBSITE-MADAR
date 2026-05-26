@@ -1,5 +1,7 @@
-import { Check, Lock, Sparkles, Crown, Zap } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Check, Lock, Sparkles, Crown, Zap, Loader2, CheckCircle2, AlertCircle, CreditCard, MessageSquare } from 'lucide-react'
 import { useClientCompany } from '../../../hooks/useClientCompany'
+import { supabase } from '../../../lib/supabase'
 import { MADAR_WHATSAPP_NUMBER } from '../../../lib/constants'
 
 const PLANS = [
@@ -86,7 +88,7 @@ function buildWhatsAppUrl(companyName: string, currentPlan: string, requestedPla
 }
 
 export const PricingPage = () => {
-  const { company } = useClientCompany()
+  const { company, companyId } = useClientCompany()
   const currentPlan = company?.plan ?? 'starter'
   const currentLabel = PLAN_LABEL_MAP[currentPlan] ?? 'Starter'
   const companyName = company?.name ?? 'منشأتي'
@@ -94,8 +96,80 @@ export const PricingPage = () => {
   const planOrder = ['starter', 'growth', 'enterprise']
   const currentIndex = planOrder.indexOf(currentPlan)
 
+  const [payingPlan, setPayingPlan] = useState<string | null>(null)
+  const [paymentStatus, setPaymentStatus] = useState<'success' | 'failed' | null>(null)
+  const [successPlan, setSuccessPlan] = useState<string | null>(null)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('payment_success') === '1') {
+      setPaymentStatus('success')
+      setSuccessPlan(params.get('plan'))
+      window.history.replaceState({}, '', window.location.pathname)
+    } else if (params.get('payment_failed') === '1') {
+      setPaymentStatus('failed')
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
+
+  const handlePay = async (planId: string) => {
+    if (!companyId) return
+    setPayingPlan(planId)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-moyasar-payment`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ plan: planId, company_id: companyId }),
+        }
+      )
+      const data = await resp.json()
+      if (data.payment_url) {
+        window.location.href = data.payment_url
+      } else {
+        // Fallback to WhatsApp if payment gateway not configured
+        const waUrl = buildWhatsAppUrl(companyName, currentLabel, PLAN_LABEL_MAP[planId] ?? planId)
+        window.open(waUrl, '_blank')
+        setPayingPlan(null)
+      }
+    } catch {
+      setPayingPlan(null)
+    }
+  }
+
   return (
     <div className="space-y-8" dir="rtl">
+      {/* Payment status banners */}
+      {paymentStatus === 'success' && (
+        <div style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <CheckCircle2 size={20} color="#10B981" />
+          <div>
+            <p style={{ fontSize: 15, fontWeight: 700, color: '#10B981', fontFamily: 'Cairo, sans-serif', margin: 0 }}>
+              تم الدفع بنجاح! 🎉
+            </p>
+            <p style={{ fontSize: 13, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>
+              تم ترقية باقتك إلى {successPlan ? PLAN_LABEL_MAP[successPlan] ?? successPlan : ''} — أعد تحميل الصفحة لرؤية المميزات الجديدة.
+            </p>
+          </div>
+        </div>
+      )}
+      {paymentStatus === 'failed' && (
+        <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <AlertCircle size={20} color="#EF4444" />
+          <div>
+            <p style={{ fontSize: 15, fontWeight: 700, color: '#EF4444', fontFamily: 'Cairo, sans-serif', margin: 0 }}>لم يتم إتمام الدفع</p>
+            <p style={{ fontSize: 13, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>
+              يمكنك المحاولة مجدداً أو التواصل معنا عبر واتساب.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="text-center">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-tajawal mb-4" style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', color: '#A5B4FC' }}>
@@ -195,23 +269,25 @@ export const PricingPage = () => {
                   باقتك الحالية ✓
                 </div>
               ) : isUpgrade ? (
-                <a
-                  href={buildWhatsAppUrl(companyName, currentLabel, plan.label)}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => handlePay(plan.id)}
+                  disabled={payingPlan !== null}
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    width: '100%', padding: '11px 0', borderRadius: 12, textDecoration: 'none',
+                    width: '100%', padding: '11px 0', borderRadius: 12, border: isPro ? 'none' : `1px solid ${plan.border}`,
                     background: isPro ? 'linear-gradient(135deg, #6366F1, #8B5CF6)' : `rgba(${plan.id === 'enterprise' ? '245,158,11' : '6,182,212'},0.15)`,
-                    border: isPro ? 'none' : `1px solid ${plan.border}`,
                     color: isPro ? '#fff' : plan.color,
                     fontSize: 13, fontWeight: 700, fontFamily: 'Tajawal, sans-serif',
                     boxShadow: isPro ? '0 4px 20px rgba(99,102,241,0.4)' : 'none',
+                    cursor: payingPlan !== null ? 'not-allowed' : 'pointer',
+                    opacity: payingPlan !== null && payingPlan !== plan.id ? 0.5 : 1,
                   }}
                 >
-                  <Sparkles size={14} />
-                  ترقية إلى {plan.label}
-                </a>
+                  {payingPlan === plan.id
+                    ? <><Loader2 size={14} className="animate-spin" /> جاري التوجيه...</>
+                    : <><CreditCard size={14} /> ادفع الآن — {plan.price} ر.س/شهر</>
+                  }
+                </button>
               ) : (
                 <div style={{ width: '100%', padding: '11px 0', borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#334155', fontSize: 13, fontFamily: 'Tajawal, sans-serif', textAlign: 'center' }}>
                   {isDowngrade ? 'باقة أقل' : ''}
