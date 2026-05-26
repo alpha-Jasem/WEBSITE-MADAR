@@ -239,10 +239,10 @@ export const CarWashWorkers = () => {
       {/* Form modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)' }}>
-          <div className="w-full max-w-md p-6 rounded-2xl" style={{ background: '#0D1422', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <div role="dialog" aria-modal="true" aria-label="Worker form" className="w-full max-w-md p-6 rounded-2xl" style={{ background: '#0D1422', border: '1px solid rgba(255,255,255,0.1)' }}>
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-bold text-white font-cairo">{editing ? 'تعديل موظف' : 'إضافة موظف'}</h2>
-              <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-white"><X size={18} /></button>
+              <button aria-label="Close dialog" onClick={() => setShowForm(false)} className="text-slate-400 hover:text-white"><X size={18} /></button>
             </div>
 
             <div className="space-y-4">

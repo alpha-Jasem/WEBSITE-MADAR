@@ -464,7 +464,7 @@ export function CarWashLeads() {
       {showCampaign && (
         <div onClick={e => e.target === e.currentTarget && setShowCampaign(false)}
           style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ background: '#0C0D14', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, width: '100%', maxWidth: 460, overflow: 'hidden' }}>
+          <div role="dialog" aria-modal="true" aria-label="WhatsApp campaign" style={{ background: '#0C0D14', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, width: '100%', maxWidth: 460, overflow: 'hidden' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(99,102,241,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -475,7 +475,7 @@ export function CarWashLeads() {
                   <p style={{ fontSize: 11, color: '#475569', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>{selected.size} عميل محدد</p>
                 </div>
               </div>
-              <button onClick={() => setShowCampaign(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569' }}><X size={18} /></button>
+              <button aria-label="Close dialog" onClick={() => setShowCampaign(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569' }}><X size={18} /></button>
             </div>
             <div dir="rtl" style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
@@ -504,7 +504,7 @@ export function CarWashLeads() {
       {showAddModal && (
         <div onClick={e => e.target === e.currentTarget && setShowAddModal(false)}
           style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ background: '#0C0D14', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, width: '100%', maxWidth: 400, overflow: 'hidden' }}>
+          <div role="dialog" aria-modal="true" aria-label="Add customer" style={{ background: '#0C0D14', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, width: '100%', maxWidth: 400, overflow: 'hidden' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(34,211,238,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -512,7 +512,7 @@ export function CarWashLeads() {
                 </div>
                 <h3 style={{ fontSize: 15, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>إضافة عميل جديد</h3>
               </div>
-              <button onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569' }}><X size={18} /></button>
+              <button aria-label="Close dialog" onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569' }}><X size={18} /></button>
             </div>
             <div dir="rtl" style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
@@ -547,7 +547,7 @@ export function CarWashLeads() {
       {editTarget && (
         <div onClick={e => e.target === e.currentTarget && setEditTarget(null)}
           style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ background: '#0C0D14', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, width: '100%', maxWidth: 400, overflow: 'hidden' }}>
+          <div role="dialog" aria-modal="true" aria-label="Edit customer" style={{ background: '#0C0D14', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, width: '100%', maxWidth: 400, overflow: 'hidden' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(99,102,241,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -555,7 +555,7 @@ export function CarWashLeads() {
                 </div>
                 <h3 style={{ fontSize: 15, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>تعديل بيانات العميل</h3>
               </div>
-              <button onClick={() => setEditTarget(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569' }}><X size={18} /></button>
+              <button aria-label="Close dialog" onClick={() => setEditTarget(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569' }}><X size={18} /></button>
             </div>
             <div dir="rtl" style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
@@ -585,7 +585,7 @@ export function CarWashLeads() {
       {deleteTarget && (
         <div onClick={e => e.target === e.currentTarget && setDeleteTarget(null)}
           style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ background: '#0C0D14', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 20, width: '100%', maxWidth: 380, overflow: 'hidden' }}>
+          <div role="dialog" aria-modal="true" aria-label="Delete customer confirmation" style={{ background: '#0C0D14', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 20, width: '100%', maxWidth: 380, overflow: 'hidden' }}>
             <div style={{ padding: '24px 22px', textAlign: 'center' }} dir="rtl">
               <div style={{ width: 52, height: 52, borderRadius: 14, background: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
                 <Trash2 size={22} color="#EF4444" />

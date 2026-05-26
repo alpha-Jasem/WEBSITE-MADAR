@@ -584,11 +584,11 @@ export const CarWashQueue = () => {
       {/* Add / Edit car form modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)' }}>
-          <div className="w-full max-w-md rounded-2xl overflow-y-auto max-h-[90vh]" style={{ background: '#0D1422', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <div role="dialog" aria-modal="true" aria-label="Car form" className="w-full max-w-md rounded-2xl overflow-y-auto max-h-[90vh]" style={{ background: '#0D1422', border: '1px solid rgba(255,255,255,0.1)' }}>
             <div className="p-6">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-lg font-bold text-white font-cairo">{editingItem ? 'تعديل السيارة' : 'إضافة سيارة'}</h2>
-                <button onClick={() => { setShowForm(false); setEditingItem(null); setLoyaltyInfo(null) }} className="text-slate-400 hover:text-white">
+                <button aria-label="Close dialog" onClick={() => { setShowForm(false); setEditingItem(null); setLoyaltyInfo(null) }} className="text-slate-400 hover:text-white">
                   <X size={18} />
                 </button>
               </div>
@@ -778,10 +778,10 @@ export const CarWashQueue = () => {
       {/* Delivery / payment modal */}
       {deliverModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
-          <div className="w-full max-w-sm rounded-2xl p-6" style={{ background: '#0D1422', border: '1px solid rgba(255,255,255,0.12)' }}>
+          <div role="dialog" aria-modal="true" aria-label="Confirm delivery" className="w-full max-w-sm rounded-2xl p-6" style={{ background: '#0D1422', border: '1px solid rgba(255,255,255,0.12)' }}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-bold text-white font-cairo">تأكيد التسليم</h2>
-              <button onClick={() => setDeliverModal(null)} className="text-slate-400 hover:text-white"><X size={18} /></button>
+              <button aria-label="Close dialog" onClick={() => setDeliverModal(null)} className="text-slate-400 hover:text-white"><X size={18} /></button>
             </div>
 
             <div className="mb-4 p-3 rounded-xl space-y-1" style={{ background: 'rgba(255,255,255,0.04)' }}>
@@ -880,7 +880,7 @@ export const CarWashQueue = () => {
       {/* Cancel confirmation modal */}
       {cancelConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)' }}>
-          <div className="w-full max-w-xs rounded-2xl p-6" style={{ background: '#0D1422', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <div role="dialog" aria-modal="true" aria-label="Cancel car confirmation" className="w-full max-w-xs rounded-2xl p-6" style={{ background: '#0D1422', border: '1px solid rgba(255,255,255,0.1)' }}>
             <h2 className="text-base font-bold text-white font-cairo mb-2">إلغاء السيارة</h2>
             <p className="text-sm text-slate-400 font-tajawal mb-5">هل أنت متأكد من إلغاء هذه السيارة من القائمة؟</p>
             <div className="flex gap-3">

@@ -210,6 +210,7 @@ export function CarWashOverview() {
 
     const today = new Date().toISOString().slice(0, 10)
     const twoHoursAgo = new Date(Date.now() - 2 * 3600 * 1000).toISOString()
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
 
     const [
       { data: customersData },
@@ -217,6 +218,7 @@ export function CarWashOverview() {
       { count: pendingCount },
       { data: visitsData },
       { data: servicesData },
+      { data: queueData },
     ] = await Promise.all([
       supabase
         .from('cw_customers')
@@ -246,7 +248,13 @@ export function CarWashOverview() {
         .select('id, name, price')
         .eq('company_id', companyId)
         .eq('active', true)
-        .order('sort_order', { ascending: true }),
+        .order('created_at', { ascending: true }),
+      supabase
+        .from('cw_queue')
+        .select('status')
+        .eq('company_id', companyId)
+        .neq('status', 'delivered')
+        .gte('created_at', todayStart.toISOString()),
     ])
 
     setCustomers((customersData as CWCustomer[]) || [])
@@ -256,14 +264,6 @@ export function CarWashOverview() {
     const svcs = (servicesData as CWService[]) || []
     setServices(svcs)
 
-    // Load live queue summary
-    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
-    const { data: queueData } = await supabase
-      .from('cw_queue')
-      .select('status')
-      .eq('company_id', companyId)
-      .neq('status', 'delivered')
-      .gte('created_at', todayStart.toISOString())
     const q: QueueSummary = { received: 0, washing: 0, drying: 0, ready: 0 }
     for (const r of queueData || []) {
       if (r.status in q) q[r.status as keyof QueueSummary]++
@@ -459,7 +459,11 @@ export function CarWashOverview() {
             display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
           }}
         >
-          <div style={{
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Register walk-in visit"
+            style={{
             background: '#0C0D14', border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: 20, width: '100%', maxWidth: 420, overflow: 'hidden',
           }}>
@@ -477,7 +481,7 @@ export function CarWashOverview() {
                   <p style={{ fontSize: 11, color: '#475569', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>walk-in مباشر بدون واتساب</p>
                 </div>
               </div>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569', padding: 4 }}>
+              <button aria-label="Close dialog" onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569', padding: 4 }}>
                 <X size={18} />
               </button>
             </div>

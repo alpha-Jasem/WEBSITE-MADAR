@@ -3639,6 +3639,10 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 
   .dash-overlay { display: block; }
 
+  .dash-topbar {
+    display: flex;
+  }
+
   .dash-hamburger { display: flex; }
 
   .dash-topbar {
@@ -3944,6 +3948,16 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 
 .dash-shell-client .dash-topbar {
   display: none;
+}
+
+@media (max-width: 768px) {
+  .dash-shell-client .dash-topbar {
+    display: flex;
+  }
+
+  .dash-shell-client .dash-content {
+    padding: 16px 16px 80px;
+  }
 }
 
 .dash-sidebar-client {
