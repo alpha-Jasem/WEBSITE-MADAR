@@ -454,17 +454,17 @@ export const CarWashQueue = () => {
       <div
         className="relative overflow-hidden rounded-2xl p-5 md:p-6"
         style={{
-          background: 'linear-gradient(135deg, rgba(15,23,42,0.98), rgba(3,7,18,0.96) 55%, rgba(20,83,45,0.34))',
-          border: '1px solid rgba(148,163,184,0.16)',
-          boxShadow: '0 22px 70px rgba(0,0,0,0.26)',
+          background: 'linear-gradient(135deg, #E8F4FF 0%, #EBF7FF 55%, rgba(16,185,129,0.06))',
+          border: '1px solid rgba(0,191,255,0.28)',
+          boxShadow: '0 4px 24px rgba(13,27,62,0.10)',
         }}
       >
-        <div className="absolute inset-x-0 top-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(16,185,129,0.8), transparent)' }} />
+        <div className="absolute inset-x-0 top-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(0,191,255,0.6), transparent)' }} />
         <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <p className="text-xs font-bold font-cairo text-emerald-300">مركز تشغيل اليوم</p>
-            <h1 className="mt-2 text-2xl md:text-3xl font-bold text-white font-cairo">مسار السيارات السريع</h1>
-            <p className="mt-2 text-sm md:text-base text-slate-400 font-tajawal leading-7">
+            <p className="text-xs font-bold font-cairo text-emerald-600">مركز تشغيل اليوم</p>
+            <h1 className="mt-2 text-2xl md:text-3xl font-bold font-cairo" style={{ color: '#0D1B3E' }}>مسار السيارات السريع</h1>
+            <p className="mt-2 text-sm md:text-base font-tajawal leading-7" style={{ color: '#415169' }}>
               أربع خطوات واضحة للموظف: استلام، قيد الخدمة، جاهزة، ثم تسليم. كل سيارة تتحرك بزر واحد بدون تفاصيل زائدة.
             </p>
           </div>
@@ -488,14 +488,14 @@ export const CarWashQueue = () => {
             <div
               key={stat.label}
               className="rounded-xl px-4 py-3"
-              style={{ background: 'rgba(255,255,255,0.045)', border: '1px solid rgba(255,255,255,0.08)' }}
+              style={{ background: '#FFFFFF', border: '1px solid rgba(0,191,255,0.22)', boxShadow: '0 2px 12px rgba(13,27,62,0.07)' }}
             >
               <div className="flex items-center justify-between gap-3">
-                <span className="text-xs text-slate-500 font-tajawal">{stat.label}</span>
-                <span className="h-2 w-2 rounded-full" style={{ background: stat.tone, boxShadow: '0 0 18px ' + stat.tone + 'AA' }} />
+                <span className="text-xs font-tajawal" style={{ color: '#5A6E85' }}>{stat.label}</span>
+                <span className="h-2 w-2 rounded-full" style={{ background: stat.tone, boxShadow: '0 0 10px ' + stat.tone + '88' }} />
               </div>
-              <p className="mt-2 text-2xl font-bold text-white font-sora">{stat.value}</p>
-              <p className="mt-1 text-xs text-slate-600 font-tajawal">{stat.hint}</p>
+              <p className="mt-2 text-2xl font-bold font-sora" style={{ color: '#0D1B3E' }}>{stat.value}</p>
+              <p className="mt-1 text-xs font-tajawal" style={{ color: '#415169' }}>{stat.hint}</p>
             </div>
           ))}
         </div>
@@ -518,7 +518,7 @@ export const CarWashQueue = () => {
                     <p className="text-xs text-slate-500 font-tajawal">{lane.eyebrow}</p>
                   </div>
                 </div>
-                <span className="rounded-full px-2.5 py-1 text-xs font-bold font-sora" style={{ color: lane.color, background: 'rgba(255,255,255,0.06)' }}>
+                <span className="rounded-full px-2.5 py-1 text-xs font-bold font-sora" style={{ color: lane.color, background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(4px)' }}>
                   {cars.length}
                 </span>
               </div>
@@ -528,11 +528,11 @@ export const CarWashQueue = () => {
                   <div
                     key={item.id}
                     className="rounded-xl p-3.5 transition-transform hover:-translate-y-0.5"
-                    style={{ background: 'rgba(3,7,18,0.72)', border: '1px solid rgba(255,255,255,0.09)', boxShadow: '0 16px 36px rgba(0,0,0,0.20)' }}
+                    style={{ background: '#FFFFFF', border: '1px solid rgba(0,191,255,0.18)', boxShadow: '0 4px 20px rgba(13,27,62,0.09)' }}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-base font-bold text-white font-cairo">{item.customer_name}</p>
+                        <p className="truncate text-base font-bold font-cairo" style={{ color: '#0D1B3E' }}>{item.customer_name}</p>
                         <p className="mt-1 truncate text-xs text-slate-500 font-tajawal">
                           {item.car_type || 'سيارة'}{item.plate ? ' · ' + item.plate : ''}
                         </p>
@@ -542,8 +542,8 @@ export const CarWashQueue = () => {
                           <button
                             aria-label="تعديل السيارة"
                             onClick={() => openEdit(item)}
-                            className="grid h-7 w-7 place-items-center rounded-lg text-slate-500 transition-colors hover:text-white"
-                            style={{ background: 'rgba(255,255,255,0.05)' }}
+                            className="grid h-7 w-7 place-items-center rounded-lg text-slate-500 transition-colors hover:text-slate-800"
+                            style={{ background: 'rgba(13,27,62,0.06)' }}
                           >
                             <Pencil size={12} />
                           </button>
@@ -551,7 +551,7 @@ export const CarWashQueue = () => {
                             aria-label="إلغاء السيارة"
                             onClick={() => setCancelConfirm(item.id)}
                             className="grid h-7 w-7 place-items-center rounded-lg text-slate-500 transition-colors hover:text-red-300"
-                            style={{ background: 'rgba(255,255,255,0.05)' }}
+                            style={{ background: 'rgba(13,27,62,0.06)' }}
                           >
                             <X size={13} />
                           </button>

@@ -75,8 +75,8 @@ function LoyaltyBar({ visits, threshold = 5 }: { visits: number; threshold?: num
             width: 18,
             height: 18,
             borderRadius: '50%',
-            background: step <= stepsCompleted ? '#22D3EE' : 'rgba(255,255,255,0.08)',
-            border: `2px solid ${step <= stepsCompleted ? '#22D3EE' : 'rgba(255,255,255,0.12)'}`,
+            background: step <= stepsCompleted ? '#22D3EE' : 'rgba(13,27,62,0.08)',
+            border: `2px solid ${step <= stepsCompleted ? '#22D3EE' : 'rgba(13,27,62,0.15)'}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -95,8 +95,8 @@ function LoyaltyBar({ visits, threshold = 5 }: { visits: number; threshold?: num
           width: 22,
           height: 22,
           borderRadius: '50%',
-          background: visits > 0 && visits % threshold === 0 ? '#F59E0B' : 'rgba(255,255,255,0.05)',
-          border: `2px solid ${visits > 0 && visits % threshold === 0 ? '#F59E0B' : 'rgba(255,255,255,0.1)'}`,
+          background: visits > 0 && visits % threshold === 0 ? '#F59E0B' : 'rgba(13,27,62,0.06)',
+          border: `2px solid ${visits > 0 && visits % threshold === 0 ? '#F59E0B' : 'rgba(13,27,62,0.14)'}`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -125,17 +125,20 @@ function StatCard({
   return (
     <div
       style={{
-        background: 'rgba(255,255,255,0.03)',
-        border: '1px solid rgba(255,255,255,0.07)',
+        background: '#FFFFFF',
+        border: '1px solid rgba(0,191,255,0.22)',
+        borderTop: '3px solid',
+        borderTopColor: color,
         borderRadius: 16,
         padding: '20px 22px',
         display: 'flex',
         flexDirection: 'column',
         gap: 10,
+        boxShadow: '0 2px 16px rgba(13,27,62,0.07)',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 13, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>{label}</span>
+        <span style={{ fontSize: 13, color: '#5A6E85', fontFamily: 'Tajawal, sans-serif' }}>{label}</span>
         <div
           style={{
             width: 36,
@@ -150,10 +153,10 @@ function StatCard({
           <Icon size={18} color={color} />
         </div>
       </div>
-      <strong style={{ fontSize: 28, fontWeight: 800, color: '#F1F5F9', fontFamily: 'Sora, sans-serif', lineHeight: 1 }}>
+      <strong style={{ fontSize: 28, fontWeight: 800, color: '#0D1B3E', fontFamily: 'Sora, sans-serif', lineHeight: 1 }}>
         {value}
       </strong>
-      {sub && <span style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif' }}>{sub}</span>}
+      {sub && <span style={{ fontSize: 12, color: '#415169', fontFamily: 'Tajawal, sans-serif' }}>{sub}</span>}
     </div>
   )
 }

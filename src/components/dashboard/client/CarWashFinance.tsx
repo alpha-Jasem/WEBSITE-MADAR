@@ -19,15 +19,15 @@ const EMPTY_FORM = { amount: '', category: 'other' as ExpenseCategory, descripti
 
 function StatCard({ icon: Icon, label, value, color, sub }: { icon: typeof Wallet; label: string; value: string; color: string; sub?: string }) {
   return (
-    <div className="p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${color}22` }}>
+    <div className="p-5 rounded-2xl" style={{ background: '#FFFFFF', border: `1px solid ${color}44`, borderTop: `3px solid ${color}`, boxShadow: '0 2px 16px rgba(13,27,62,0.07)' }}>
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: color + '22' }}>
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: color + '18' }}>
           <Icon size={16} style={{ color }} />
         </div>
-        <p className="text-xs text-slate-500 font-tajawal">{label}</p>
+        <p className="text-xs font-tajawal" style={{ color: '#5A6E85' }}>{label}</p>
       </div>
       <p className="text-2xl font-bold font-sora" style={{ color }}>{value}</p>
-      {sub && <p className="text-xs text-slate-600 font-tajawal mt-1">{sub}</p>}
+      {sub && <p className="text-xs font-tajawal mt-1" style={{ color: '#415169' }}>{sub}</p>}
     </div>
   )
 }
