@@ -82,7 +82,7 @@ export const Login = () => {
               <img src="/logo-main.png" alt="Madar" className="h-11 w-auto object-contain" />
               <div>
                 <p className="font-sora text-xl font-bold text-white">Madar.software</p>
-                <p className="mt-1 text-xs font-tajawal text-sky-100/65">منصة تشغيل الأعمال العربية</p>
+                <p className="mt-1 text-xs font-tajawal text-sky-100/60">منصة تشغيل الأعمال العربية</p>
               </div>
             </Link>
           </div>
@@ -102,9 +102,9 @@ export const Login = () => {
 
           <div className="relative grid gap-3">
             {['مسار تشغيل سريع للسيارات', 'تقارير مالية وضريبة VAT', 'واتساب وولاء العملاء تلقائياً'].map(item => (
-              <div key={item} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/8 px-4 py-3">
+              <div key={item} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/10 px-4 py-3">
                 <CheckCircle2 size={17} className="text-sky-300" />
-                <span className="font-tajawal text-sm text-white/82">{item}</span>
+                <span className="font-tajawal text-sm text-white/80">{item}</span>
               </div>
             ))}
           </div>
