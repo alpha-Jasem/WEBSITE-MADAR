@@ -127,7 +127,11 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
             </div>
           )}
 
-          <div className="dash-user-card">
+          <div
+            className="dash-user-card"
+            onClick={role === 'client' ? () => setShowSwitch(true) : undefined}
+            style={role === 'client' ? { cursor: 'pointer' } : undefined}
+          >
             <div className="dash-user-avatar">
               {profile.isOwner ? (company?.owner_name?.[0] ?? 'A') : profile.name[0]}
             </div>
