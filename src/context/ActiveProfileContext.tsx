@@ -1,25 +1,23 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 
-export type ActiveRole = 'owner' | 'manager' | 'staff'
-
 interface ActiveProfile {
-  role: ActiveRole
   name: string
   userId: string | null
   isOwner: boolean
+  permissions: string[] // allowed route paths, e.g. ["/client/queue", "/client/leads"]
 }
 
 interface ActiveProfileContextValue {
   profile: ActiveProfile
-  switchToProfile: (userId: string, name: string, role: ActiveRole, enteredPin: string, storedPin: string | null) => boolean
+  switchToProfile: (userId: string, name: string, permissions: string[], enteredPin: string, storedPin: string | null) => boolean
   returnToOwner: (ownerName: string) => void
 }
 
 const DEFAULT_PROFILE: ActiveProfile = {
-  role: 'owner',
   name: '',
   userId: null,
   isOwner: true,
+  permissions: [],
 }
 
 const SESSION_KEY = 'madar_active_profile'
@@ -47,17 +45,17 @@ export function ActiveProfileProvider({ children }: { children: ReactNode }) {
   const switchToProfile = (
     userId: string,
     name: string,
-    role: ActiveRole,
+    permissions: string[],
     enteredPin: string,
     storedPin: string | null,
   ): boolean => {
     if (!storedPin || enteredPin !== storedPin) return false
-    setProfile({ role, name, userId, isOwner: false })
+    setProfile({ name, userId, isOwner: false, permissions })
     return true
   }
 
   const returnToOwner = (ownerName: string) => {
-    setProfile({ role: 'owner', name: ownerName, userId: null, isOwner: true })
+    setProfile({ name: ownerName, userId: null, isOwner: true, permissions: [] })
   }
 
   return (

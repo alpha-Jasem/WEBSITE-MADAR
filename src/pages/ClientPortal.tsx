@@ -64,10 +64,6 @@ function usePageTitle(navItems: NavItem[]) {
   return match?.label ?? navItems[0]?.label ?? 'نظرة عامة'
 }
 
-const CW_NAV_ALL = ['/client', '/client/queue', '/client/leads', '/client/finance', '/client/reports', '/client/workers', '/client/automations', '/client/settings']
-const CW_NAV_MANAGER = ['/client', '/client/queue', '/client/leads', '/client/finance', '/client/reports', '/client/workers']
-const CW_NAV_STAFF = ['/client/queue']
-
 export const ClientPortal = () => {
   const { company, companyId, loading } = useClientCompany()
   const navigate = useNavigate()
@@ -76,11 +72,9 @@ export const ClientPortal = () => {
   const isCarWash = template.type === 'car_wash'
 
   const allNavItems = buildNavItems(template)
-  const navItems = isCarWash ? allNavItems.filter(item => {
-    if (profile.role === 'staff')   return CW_NAV_STAFF.includes(item.to)
-    if (profile.role === 'manager') return CW_NAV_MANAGER.includes(item.to)
-    return true
-  }) : allNavItems
+  const navItems = (isCarWash && !profile.isOwner)
+    ? allNavItems.filter(item => profile.permissions.includes(item.to))
+    : allNavItems
 
   const pageTitle = usePageTitle(navItems)
 
@@ -110,27 +104,30 @@ export const ClientPortal = () => {
     </div>
   )
 
-  const isStaff = isCarWash && profile.role === 'staff'
-  const isManager = isCarWash && profile.role === 'manager'
-  const staffGuard = <Navigate to="/client/queue" replace />
+  const canAccess = (path: string) =>
+    profile.isOwner || !isCarWash || profile.permissions.includes(path)
+
+  const fallback = profile.permissions[0]
+    ? <Navigate to={profile.permissions[0]} replace />
+    : <Navigate to="/client/queue" replace />
 
   return (
     <DashShell navItems={navItems} role="client" pageTitle={pageTitle}>
       <Routes>
-        <Route index element={isStaff ? staffGuard : isCarWash ? <CarWashOverview /> : <ClientOverview />} />
-        <Route path="queue" element={<CarWashQueue />} />
-        <Route path="workers" element={isStaff ? staffGuard : <CarWashWorkers />} />
-        <Route path="finance" element={isStaff ? staffGuard : <CarWashFinance />} />
-        <Route path="closing" element={isStaff ? staffGuard : <CarWashDailyClosing />} />
+        <Route index element={canAccess('/client') ? (isCarWash ? <CarWashOverview /> : <ClientOverview />) : fallback} />
+        <Route path="queue" element={canAccess('/client/queue') ? <CarWashQueue /> : fallback} />
+        <Route path="workers" element={canAccess('/client/workers') ? <CarWashWorkers /> : fallback} />
+        <Route path="finance" element={canAccess('/client/finance') ? <CarWashFinance /> : fallback} />
+        <Route path="closing" element={canAccess('/client/closing') ? <CarWashDailyClosing /> : fallback} />
         <Route path="setup" element={isCarWash ? <CarWashSetup /> : <ClientSetup />} />
         <Route path="appointments" element={<ClientAppointments />} />
         <Route path="conversations" element={<ClientConversations />} />
-        <Route path="automations" element={(isStaff || isManager) ? staffGuard : isCarWash ? <CarWashAutomations /> : <ClientAutomations />} />
-        <Route path="leads" element={isStaff ? staffGuard : isCarWash ? <CarWashLeads /> : <ClientLeads />} />
-        <Route path="reports" element={isStaff ? staffGuard : isCarWash ? <CarWashReports /> : <ClientReports />} />
+        <Route path="automations" element={canAccess('/client/automations') ? (isCarWash ? <CarWashAutomations /> : <ClientAutomations />) : fallback} />
+        <Route path="leads" element={canAccess('/client/leads') ? (isCarWash ? <CarWashLeads /> : <ClientLeads />) : fallback} />
+        <Route path="reports" element={canAccess('/client/reports') ? (isCarWash ? <CarWashReports /> : <ClientReports />) : fallback} />
         <Route path="upgrade" element={<PricingPage />} />
-        <Route path="settings" element={(isStaff || isManager) ? staffGuard : <ClientSettings />} />
-        <Route path="*" element={isStaff ? staffGuard : isCarWash ? <CarWashOverview /> : <ClientOverview />} />
+        <Route path="settings" element={canAccess('/client/settings') ? <ClientSettings /> : fallback} />
+        <Route path="*" element={canAccess('/client') ? (isCarWash ? <CarWashOverview /> : <ClientOverview />) : fallback} />
       </Routes>
 
       {showSeedDemo && companyId && (

@@ -114,7 +114,7 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#E2E8F0', fontFamily: 'Tajawal, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{profile.name}</div>
-                <div style={{ fontSize: 10, color: '#6366F1', fontFamily: 'Tajawal, sans-serif' }}>{profile.role === 'manager' ? 'مدير' : 'موظف'}</div>
+                <div style={{ fontSize: 10, color: '#6366F1', fontFamily: 'Tajawal, sans-serif' }}>{profile.permissions.length} صلاحية</div>
               </div>
               <button
                 type="button"
@@ -133,7 +133,7 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
             </div>
             <div>
               <strong>{profile.isOwner ? (company?.owner_name ?? 'Admin') : profile.name}</strong>
-              <span>{role === 'admin' ? 'Admin' : profile.isOwner ? planLabel : (profile.role === 'manager' ? 'مدير' : 'موظف')}</span>
+              <span>{role === 'admin' ? 'Admin' : profile.isOwner ? planLabel : `${profile.permissions.length} صلاحية`}</span>
             </div>
             <ChevronDown size={15} />
           </div>

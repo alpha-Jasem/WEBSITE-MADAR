@@ -61,22 +61,33 @@ export const ClientSettings = () => {
   }
 
   // Team management
-  interface StaffMember { id: string; full_name: string; role: 'manager' | 'staff'; pin: string | null }
+  const CW_PAGES = [
+    { path: '/client',            label: 'لوحة المغسلة'  },
+    { path: '/client/queue',      label: 'لوحة التشغيل'  },
+    { path: '/client/leads',      label: 'عملاء المغسلة' },
+    { path: '/client/finance',    label: 'المالية'        },
+    { path: '/client/reports',    label: 'التقارير'      },
+    { path: '/client/workers',    label: 'الموظفون'      },
+    { path: '/client/automations',label: 'الأتمتة'       },
+    { path: '/client/settings',   label: 'الإعدادات'     },
+  ]
+
+  interface StaffMember { id: string; full_name: string; pin: string | null; permissions: string[] }
   const [teamMembers, setTeamMembers] = useState<StaffMember[]>([])
   const [teamLoaded, setTeamLoaded] = useState(false)
   const [newName, setNewName] = useState('')
-  const [newRole, setNewRole] = useState<'manager' | 'staff'>('staff')
   const [newPin, setNewPin] = useState('')
+  const [newPerms, setNewPerms] = useState<string[]>(['/client/queue'])
   const [showPin, setShowPin] = useState(false)
   const [savingTeam, setSavingTeam] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
 
   const loadTeam = async () => {
     if (!companyId) return
     const { data } = await supabase
       .from('company_users')
-      .select('id, full_name, role, pin')
+      .select('id, full_name, pin, permissions')
       .eq('company_id', companyId)
-      .in('role', ['manager', 'staff'])
       .order('created_at')
     setTeamMembers((data as StaffMember[]) || [])
     setTeamLoaded(true)
@@ -86,16 +97,27 @@ export const ClientSettings = () => {
     if (tab === 'team' && !teamLoaded) loadTeam()
   }, [tab])
 
+  const togglePerm = (path: string) =>
+    setNewPerms(prev => prev.includes(path) ? prev.filter(p => p !== path) : [...prev, path])
+
+  const toggleMemberPerm = async (member: StaffMember, path: string) => {
+    const updated = member.permissions.includes(path)
+      ? member.permissions.filter(p => p !== path)
+      : [...member.permissions, path]
+    await supabase.from('company_users').update({ permissions: updated } as any).eq('id', member.id)
+    setTeamMembers(prev => prev.map(m => m.id === member.id ? { ...m, permissions: updated } : m))
+  }
+
   const addMember = async () => {
     if (!newName.trim() || newPin.length !== 4 || !companyId) return
     setSavingTeam(true)
     await supabase.from('company_users').insert({
       company_id: companyId,
       full_name: newName.trim(),
-      role: newRole,
       pin: newPin,
+      permissions: newPerms,
     } as any)
-    setNewName(''); setNewRole('staff'); setNewPin('')
+    setNewName(''); setNewPin(''); setNewPerms(['/client/queue'])
     await loadTeam()
     setSavingTeam(false)
   }
@@ -103,6 +125,7 @@ export const ClientSettings = () => {
   const deleteMember = async (id: string) => {
     await supabase.from('company_users').delete().eq('id', id)
     setTeamMembers(prev => prev.filter(m => m.id !== id))
+    if (editingId === id) setEditingId(null)
   }
 
   const sendEmail = async () => {
@@ -316,68 +339,58 @@ export const ClientSettings = () => {
           <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 18, padding: '20px 22px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
               <Plus size={15} color="#22D3EE" />
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif' }}>إضافة موظف جديد</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif' }}>إضافة مستخدم جديد</span>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {/* Name */}
               <div>
-                <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>اسم الموظف</label>
-                <input
-                  value={newName}
-                  onChange={e => setNewName(e.target.value)}
-                  placeholder="مثال: محمد العتيبي"
-                  dir="rtl"
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#F1F5F9', outline: 'none', fontFamily: 'Tajawal, sans-serif', boxSizing: 'border-box' }}
-                />
+                <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>الاسم</label>
+                <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="مثال: محمد العتيبي" dir="rtl"
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#F1F5F9', outline: 'none', fontFamily: 'Tajawal, sans-serif', boxSizing: 'border-box' }} />
               </div>
-              <div>
-                <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>الدور</label>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  {[{ val: 'staff' as const, label: 'موظف', desc: 'التشغيل فقط', color: '#22D3EE' }, { val: 'manager' as const, label: 'مدير', desc: 'كل شيء ماعدا الإعدادات', color: '#6366F1' }].map(r => (
-                    <button key={r.val} onClick={() => setNewRole(r.val)} style={{
-                      flex: 1, padding: '10px', borderRadius: 10, cursor: 'pointer',
-                      background: newRole === r.val ? `${r.color}18` : 'rgba(255,255,255,0.03)',
-                      border: `1px solid ${newRole === r.val ? r.color + '40' : 'rgba(255,255,255,0.07)'}`,
-                      color: newRole === r.val ? r.color : '#64748B',
-                    }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, fontFamily: 'Cairo, sans-serif' }}>{r.label}</div>
-                      <div style={{ fontSize: 10, fontFamily: 'Tajawal, sans-serif', marginTop: 2, color: newRole === r.val ? r.color + 'CC' : '#475569' }}>{r.desc}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* PIN */}
               <div>
                 <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>
-                  PIN (4 أرقام)
-                  <span style={{ color: '#475569', marginRight: 6, fontSize: 11 }}>يستخدمه الموظف للدخول</span>
+                  PIN (4 أرقام) <span style={{ color: '#475569', fontSize: 11 }}>— يستخدمه للدخول</span>
                 </label>
                 <div style={{ position: 'relative', maxWidth: 160 }}>
-                  <input
-                    type={showPin ? 'text' : 'password'}
-                    value={newPin}
+                  <input type={showPin ? 'text' : 'password'} value={newPin}
                     onChange={e => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    placeholder="• • • •"
-                    dir="ltr"
-                    maxLength={4}
-                    inputMode="numeric"
-                    style={{ width: '100%', padding: '10px 40px 10px 14px', borderRadius: 10, fontSize: 18, letterSpacing: 6, background: 'rgba(255,255,255,0.04)', border: `1px solid ${newPin.length === 4 ? 'rgba(34,211,238,0.4)' : 'rgba(255,255,255,0.08)'}`, color: '#F1F5F9', outline: 'none', fontFamily: 'Sora, sans-serif', boxSizing: 'border-box' }}
-                  />
+                    placeholder="• • • •" dir="ltr" maxLength={4} inputMode="numeric"
+                    style={{ width: '100%', padding: '10px 40px 10px 14px', borderRadius: 10, fontSize: 20, letterSpacing: 8, background: 'rgba(255,255,255,0.04)', border: `1px solid ${newPin.length === 4 ? 'rgba(34,211,238,0.4)' : 'rgba(255,255,255,0.08)'}`, color: '#F1F5F9', outline: 'none', fontFamily: 'Sora, sans-serif', boxSizing: 'border-box' }} />
                   <button onClick={() => setShowPin(v => !v)} style={{ position: 'absolute', top: '50%', left: 10, transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#475569', padding: 0 }}>
                     {showPin ? <EyeOff size={14} /> : <Eye size={14} />}
                   </button>
                 </div>
               </div>
-              <button
-                onClick={addMember}
-                disabled={!newName.trim() || newPin.length !== 4 || savingTeam}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', borderRadius: 12, border: 'none', cursor: !newName.trim() || newPin.length !== 4 ? 'not-allowed' : 'pointer',
-                  background: !newName.trim() || newPin.length !== 4 ? 'rgba(255,255,255,0.04)' : 'rgba(34,211,238,0.12)',
-                  color: !newName.trim() || newPin.length !== 4 ? '#334155' : '#22D3EE',
-                  fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: 700, alignSelf: 'flex-start',
-                }}
-              >
+              {/* Permissions */}
+              <div>
+                <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 10 }}>الصلاحيات — اختر الصفحات المسموحة</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {CW_PAGES.map(p => {
+                    const on = newPerms.includes(p.path)
+                    return (
+                      <button key={p.path} onClick={() => togglePerm(p.path)} style={{
+                        padding: '7px 14px', borderRadius: 20, fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer',
+                        background: on ? 'rgba(34,211,238,0.15)' : 'rgba(255,255,255,0.04)',
+                        border: `1px solid ${on ? 'rgba(34,211,238,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                        color: on ? '#22D3EE' : '#64748B', fontWeight: on ? 600 : 400,
+                      }}>
+                        {on ? '✓ ' : ''}{p.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              <button onClick={addMember} disabled={!newName.trim() || newPin.length !== 4 || savingTeam} style={{
+                display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', borderRadius: 12, border: 'none',
+                cursor: !newName.trim() || newPin.length !== 4 ? 'not-allowed' : 'pointer',
+                background: !newName.trim() || newPin.length !== 4 ? 'rgba(255,255,255,0.04)' : 'rgba(34,211,238,0.12)',
+                color: !newName.trim() || newPin.length !== 4 ? '#334155' : '#22D3EE',
+                fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: 700, alignSelf: 'flex-start',
+              }}>
                 {savingTeam ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
-                إضافة موظف
+                إضافة
               </button>
             </div>
           </div>
@@ -386,50 +399,58 @@ export const ClientSettings = () => {
           <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 18, overflow: 'hidden' }}>
             <div style={{ padding: '16px 22px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
               <Users size={15} color="#8B5CF6" />
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>أعضاء الفريق</h3>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>المستخدمون</h3>
               <span style={{ fontSize: 12, color: '#475569', fontFamily: 'Sora, sans-serif' }}>({teamMembers.length})</span>
             </div>
             {teamMembers.length === 0 ? (
               <div style={{ padding: '28px', textAlign: 'center', color: '#475569', fontFamily: 'Tajawal, sans-serif', fontSize: 13 }}>
-                لا يوجد موظفون — أضف أول موظف من الأعلى
+                لا يوجد مستخدمون — أضف أول مستخدم من الأعلى
               </div>
             ) : (
               teamMembers.map((m, i) => (
-                <div key={m.id} style={{
-                  display: 'flex', alignItems: 'center', gap: 12, padding: '14px 22px',
-                  borderBottom: i < teamMembers.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-                }}>
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: m.role === 'manager' ? 'rgba(99,102,241,0.15)' : 'rgba(34,211,238,0.12)', border: `1px solid ${m.role === 'manager' ? 'rgba(99,102,241,0.3)' : 'rgba(34,211,238,0.25)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: m.role === 'manager' ? '#818CF8' : '#22D3EE', flexShrink: 0 }}>
-                    {m.full_name[0]}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: '#E2E8F0', fontFamily: 'Tajawal, sans-serif' }}>{m.full_name}</div>
-                    <div style={{ fontSize: 11, color: m.role === 'manager' ? '#818CF8' : '#22D3EE', fontFamily: 'Tajawal, sans-serif' }}>
-                      {m.role === 'manager' ? 'مدير' : 'موظف'} · PIN: {'•'.repeat(m.pin?.length || 4)}
+                <div key={m.id} style={{ borderBottom: i < teamMembers.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                  {/* Member row */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 22px' }}>
+                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#818CF8', flexShrink: 0 }}>
+                      {m.full_name[0]}
                     </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: '#E2E8F0', fontFamily: 'Tajawal, sans-serif' }}>{m.full_name}</div>
+                      <div style={{ fontSize: 11, color: '#475569', fontFamily: 'Tajawal, sans-serif' }}>{(m.permissions || []).length} صلاحية · PIN: {'•'.repeat(4)}</div>
+                    </div>
+                    <button onClick={() => setEditingId(editingId === m.id ? null : m.id)} style={{
+                      padding: '5px 12px', borderRadius: 8, fontSize: 11, fontFamily: 'Cairo, sans-serif', cursor: 'pointer',
+                      background: editingId === m.id ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.05)',
+                      border: `1px solid ${editingId === m.id ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.08)'}`,
+                      color: editingId === m.id ? '#818CF8' : '#64748B', marginLeft: 6,
+                    }}>
+                      {editingId === m.id ? 'إخفاء' : 'تعديل'}
+                    </button>
+                    <button onClick={() => deleteMember(m.id)} style={{ width: 30, height: 30, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(239,68,68,0.08)', color: '#EF4444', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Trash2 size={13} />
+                    </button>
                   </div>
-                  <button onClick={() => deleteMember(m.id)} style={{ width: 30, height: 30, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(239,68,68,0.08)', color: '#EF4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Trash2 size={13} />
-                  </button>
+                  {/* Permission toggles */}
+                  {editingId === m.id && (
+                    <div style={{ padding: '0 22px 16px', display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {CW_PAGES.map(p => {
+                        const on = (m.permissions || []).includes(p.path)
+                        return (
+                          <button key={p.path} onClick={() => toggleMemberPerm(m, p.path)} style={{
+                            padding: '6px 13px', borderRadius: 20, fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer',
+                            background: on ? 'rgba(34,211,238,0.15)' : 'rgba(255,255,255,0.03)',
+                            border: `1px solid ${on ? 'rgba(34,211,238,0.4)' : 'rgba(255,255,255,0.07)'}`,
+                            color: on ? '#22D3EE' : '#475569', fontWeight: on ? 600 : 400,
+                          }}>
+                            {on ? '✓ ' : ''}{p.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               ))
             )}
-          </div>
-
-          {/* Permissions table */}
-          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '16px 20px' }}>
-            <p style={{ fontSize: 12, color: '#475569', fontFamily: 'Cairo, sans-serif', fontWeight: 600, marginBottom: 12 }}>جدول الصلاحيات</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 60px 60px 60px', gap: 8, fontSize: 12, fontFamily: 'Tajawal, sans-serif' }}>
-              {[['', 'مالك', 'مدير', 'موظف'], ['لوحة التشغيل', '✅', '✅', '✅'], ['لوحة المغسلة', '✅', '✅', '❌'], ['عملاء المغسلة', '✅', '✅', '❌'], ['المالية', '✅', '✅', '❌'], ['التقارير', '✅', '✅', '❌'], ['الموظفون', '✅', '👁', '❌'], ['الأتمتة', '✅', '❌', '❌'], ['الإعدادات', '✅', '❌', '❌']].map((row, ri) => (
-                <div key={ri} style={{ display: 'contents' }}>
-                  {row.map((cell, ci) => (
-                    <div key={ci} style={{ padding: '6px 8px', borderRadius: 6, background: ri === 0 ? 'rgba(255,255,255,0.04)' : 'transparent', color: ri === 0 ? '#94A3B8' : ci === 0 ? '#CBD5E1' : '#64748B', fontWeight: ri === 0 || ci === 0 ? 600 : 400, textAlign: ci > 0 ? 'center' : 'right' }}>
-                      {cell}
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       )}
