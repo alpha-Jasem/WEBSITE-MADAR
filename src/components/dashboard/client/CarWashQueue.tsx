@@ -808,34 +808,17 @@ export const CarWashQueue = () => {
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs text-slate-400 font-tajawal mb-1.5 flex items-center gap-1">
-                      السعر (ر.س)
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-slate-500"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                    </label>
-                    <div
-                      className="w-full px-4 py-2.5 rounded-xl text-sm font-sora flex items-center justify-between"
-                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', color: form.price ? '#F1F5F9' : '#64748B' }}
-                    >
-                      <span>{form.is_free_wash ? '0 — مجاني 🎁' : form.price ? `${form.price} ر.س` : 'يُحدد من الخدمة'}</span>
-                    </div>
-                    {form.is_free_wash && (
-                      <p className="text-xs text-amber-400 font-tajawal mt-1">مجانية — السعر 0</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">الموظف</label>
-                    <select
-                      value={form.worker_id}
-                      onChange={e => setForm(f => ({ ...f, worker_id: e.target.value }))}
-                      className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-white outline-none"
-                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
-                    >
-                      <option value="">بدون تعيين</option>
-                      {workers.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-                    </select>
-                  </div>
+                <div>
+                  <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">الموظف</label>
+                  <select
+                    value={form.worker_id}
+                    onChange={e => setForm(f => ({ ...f, worker_id: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-white outline-none"
+                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                  >
+                    <option value="">بدون تعيين</option>
+                    {workers.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                  </select>
                 </div>
 
                 {/* Notes */}
