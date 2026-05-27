@@ -175,8 +175,15 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
               borderRadius: 14, marginBottom: 8, overflow: 'hidden',
             }}>
               {/* Header */}
-              <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.07)', fontSize: 11, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>
-                {selected ? `أدخل PIN — ${selected.full_name}` : 'تبديل المستخدم'}
+              <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.07)', fontFamily: 'Tajawal, sans-serif' }}>
+                {selected ? (
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#E2E8F0' }}>أدخل الرقم السري</div>
+                    <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{selected.full_name}</div>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 11, color: '#64748B' }}>تبديل المستخدم</div>
+                )}
               </div>
 
               {!selected ? (
