@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { BarChart3, Calendar, Car, ClipboardCheck, Droplets, LayoutDashboard, MessageSquare, Settings, Users2, Wrench, Zap, ClipboardList, Wallet } from 'lucide-react'
 import { DashShell } from '../components/dash/DashShell'
 import type { NavItem } from '../components/dash/DashSidebar'
@@ -26,6 +26,7 @@ import { ClientCompanyProvider } from '../context/ClientCompanyContext'
 import { getClientIndustryTemplate } from '../lib/clientIndustryTemplates'
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { useActiveProfile } from '../context/ActiveProfileContext'
 
 function buildNavItems(template: ReturnType<typeof getClientIndustryTemplate>): NavItem[] {
   const labels = template.navLabels
@@ -63,13 +64,25 @@ function usePageTitle(navItems: NavItem[]) {
   return match?.label ?? navItems[0]?.label ?? 'نظرة عامة'
 }
 
+const CW_NAV_ALL = ['/client', '/client/queue', '/client/leads', '/client/finance', '/client/reports', '/client/workers', '/client/automations', '/client/settings']
+const CW_NAV_MANAGER = ['/client', '/client/queue', '/client/leads', '/client/finance', '/client/reports', '/client/workers']
+const CW_NAV_STAFF = ['/client/queue']
+
 export const ClientPortal = () => {
   const { company, companyId, loading } = useClientCompany()
   const navigate = useNavigate()
+  const { profile } = useActiveProfile()
   const template = getClientIndustryTemplate(company?.business_type, company?.industry)
-  const navItems = buildNavItems(template)
-  const pageTitle = usePageTitle(navItems)
   const isCarWash = template.type === 'car_wash'
+
+  const allNavItems = buildNavItems(template)
+  const navItems = isCarWash ? allNavItems.filter(item => {
+    if (profile.role === 'staff')   return CW_NAV_STAFF.includes(item.to)
+    if (profile.role === 'manager') return CW_NAV_MANAGER.includes(item.to)
+    return true
+  }) : allNavItems
+
+  const pageTitle = usePageTitle(navItems)
 
   const [showSeedDemo, setShowSeedDemo] = useState(false)
   const [seedChecked, setSeedChecked] = useState(false)
@@ -97,23 +110,27 @@ export const ClientPortal = () => {
     </div>
   )
 
+  const isStaff = isCarWash && profile.role === 'staff'
+  const isManager = isCarWash && profile.role === 'manager'
+  const staffGuard = <Navigate to="/client/queue" replace />
+
   return (
     <DashShell navItems={navItems} role="client" pageTitle={pageTitle}>
       <Routes>
-        <Route index element={isCarWash ? <CarWashOverview /> : <ClientOverview />} />
+        <Route index element={isStaff ? staffGuard : isCarWash ? <CarWashOverview /> : <ClientOverview />} />
         <Route path="queue" element={<CarWashQueue />} />
-        <Route path="workers" element={<CarWashWorkers />} />
-        <Route path="finance" element={<CarWashFinance />} />
-        <Route path="closing" element={<CarWashDailyClosing />} />
+        <Route path="workers" element={isStaff ? staffGuard : <CarWashWorkers />} />
+        <Route path="finance" element={isStaff ? staffGuard : <CarWashFinance />} />
+        <Route path="closing" element={isStaff ? staffGuard : <CarWashDailyClosing />} />
         <Route path="setup" element={isCarWash ? <CarWashSetup /> : <ClientSetup />} />
         <Route path="appointments" element={<ClientAppointments />} />
         <Route path="conversations" element={<ClientConversations />} />
-        <Route path="automations" element={isCarWash ? <CarWashAutomations /> : <ClientAutomations />} />
-        <Route path="leads" element={isCarWash ? <CarWashLeads /> : <ClientLeads />} />
-        <Route path="reports" element={isCarWash ? <CarWashReports /> : <ClientReports />} />
+        <Route path="automations" element={(isStaff || isManager) ? staffGuard : isCarWash ? <CarWashAutomations /> : <ClientAutomations />} />
+        <Route path="leads" element={isStaff ? staffGuard : isCarWash ? <CarWashLeads /> : <ClientLeads />} />
+        <Route path="reports" element={isStaff ? staffGuard : isCarWash ? <CarWashReports /> : <ClientReports />} />
         <Route path="upgrade" element={<PricingPage />} />
-        <Route path="settings" element={<ClientSettings />} />
-        <Route path="*" element={isCarWash ? <CarWashOverview /> : <ClientOverview />} />
+        <Route path="settings" element={(isStaff || isManager) ? staffGuard : <ClientSettings />} />
+        <Route path="*" element={isStaff ? staffGuard : isCarWash ? <CarWashOverview /> : <ClientOverview />} />
       </Routes>
 
       {showSeedDemo && companyId && (

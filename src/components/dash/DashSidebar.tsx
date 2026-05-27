@@ -1,8 +1,11 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { ChevronDown, Crown, LogOut, Sparkles, TrendingUp } from 'lucide-react'
+import { ChevronDown, Crown, LogOut, Sparkles, TrendingUp, Users, ShieldCheck } from 'lucide-react'
 import { signOut } from '../../lib/supabase'
 import type { Company } from '../../types'
 import { PLAN_LABELS } from '../../lib/constants'
+import { useActiveProfile } from '../../context/ActiveProfileContext'
+import { StaffSwitchModal as StaffSwitchModalLazy } from '../dashboard/client/StaffSwitchModal'
+import { useState } from 'react'
 
 export interface NavItem {
   to: string
@@ -27,6 +30,8 @@ const PLAN_COLORS: Record<string, string> = {
 
 export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }: Props) => {
   const navigate = useNavigate()
+  const { profile, returnToOwner } = useActiveProfile()
+  const [showSwitch, setShowSwitch] = useState(false)
   const plan = company?.plan ?? 'starter'
   const planLabel = PLAN_LABELS[plan] ?? 'Starter'
   const isPremium = plan === 'enterprise'
@@ -97,14 +102,61 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
         )}
 
         <div className="dash-sidebar-footer">
+          {/* Active profile indicator */}
+          {role === 'client' && !profile.isOwner && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px',
+              background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.25)',
+              borderRadius: 10, marginBottom: 8,
+            }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#818CF8', flexShrink: 0 }}>
+                {profile.name[0]}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#E2E8F0', fontFamily: 'Tajawal, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{profile.name}</div>
+                <div style={{ fontSize: 10, color: '#6366F1', fontFamily: 'Tajawal, sans-serif' }}>{profile.role === 'manager' ? 'مدير' : 'موظف'}</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => { returnToOwner(company?.owner_name || 'المالك'); onClose() }}
+                title="رجوع للمالك"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#F59E0B', padding: 2 }}
+              >
+                <ShieldCheck size={15} />
+              </button>
+            </div>
+          )}
+
           <div className="dash-user-card">
-            <div className="dash-user-avatar">{company?.owner_name?.[0] ?? 'A'}</div>
+            <div className="dash-user-avatar">
+              {profile.isOwner ? (company?.owner_name?.[0] ?? 'A') : profile.name[0]}
+            </div>
             <div>
-              <strong>{company?.owner_name ?? 'Admin'}</strong>
-              <span>{role === 'admin' ? 'Admin' : planLabel}</span>
+              <strong>{profile.isOwner ? (company?.owner_name ?? 'Admin') : profile.name}</strong>
+              <span>{role === 'admin' ? 'Admin' : profile.isOwner ? planLabel : (profile.role === 'manager' ? 'مدير' : 'موظف')}</span>
             </div>
             <ChevronDown size={15} />
           </div>
+
+          {/* Switch user button — only for client car wash */}
+          {role === 'client' && (
+            <button
+              type="button"
+              onClick={() => { setShowSwitch(true) }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 7, width: '100%',
+                padding: '9px 12px', borderRadius: 10, marginTop: 6,
+                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', fontSize: 12, cursor: 'pointer',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.08)')}
+              onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)')}
+            >
+              <Users size={14} />
+              تبديل المستخدم
+            </button>
+          )}
 
           <button
             type="button"
@@ -118,6 +170,11 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
             تسجيل الخروج
           </button>
         </div>
+
+        {/* Staff switch modal */}
+        {showSwitch && role === 'client' && (
+          <StaffSwitchModalLazy onClose={() => { setShowSwitch(false); onClose() }} />
+        )}
       </aside>
     </>
   )

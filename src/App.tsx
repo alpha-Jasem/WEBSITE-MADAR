@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Suspense, lazy } from 'react'
 import { LanguageProvider } from './context/LanguageContext'
 import { ClientCompanyProvider } from './context/ClientCompanyContext'
+import { ActiveProfileProvider } from './context/ActiveProfileContext'
 import { ProtectedRoute } from './components/shared/ProtectedRoute'
 import { LoadingScreen } from './components/shared/LoadingScreen'
 import { HomePage } from './pages/HomePage'
@@ -36,7 +37,9 @@ function App() {
               element={
                 <ProtectedRoute requiredRole="client">
                   <ClientCompanyProvider>
-                    <ClientPortal />
+                    <ActiveProfileProvider>
+                      <ClientPortal />
+                    </ActiveProfileProvider>
                   </ClientCompanyProvider>
                 </ProtectedRoute>
               }
