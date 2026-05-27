@@ -834,6 +834,37 @@ export const CarWashQueue = () => {
                 </div>
               </div>
 
+              {/* Mini invoice */}
+              {form.price && Number(form.price) > 0 && (() => {
+                const price = Number(form.price)
+                const vat = calcVAT(price, company?.tax_enabled || false, company?.vat_rate || 15, company?.price_includes_vat || false)
+                return (
+                  <div className="mt-4 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(0,191,255,0.22)' }}>
+                    <div className="px-4 py-2" style={{ background: 'rgba(0,191,255,0.08)', borderBottom: '1px solid rgba(0,191,255,0.15)' }}>
+                      <p className="text-xs font-bold font-cairo" style={{ color: '#1565C0' }}>ملخص الفاتورة</p>
+                    </div>
+                    <div className="px-4 py-3 space-y-2" style={{ background: 'rgba(255,255,255,0.96)' }}>
+                      {form.service_name && (
+                        <div className="flex justify-between text-xs font-tajawal">
+                          <span style={{ color: '#5A6E85' }}>{form.service_name}</span>
+                          <span style={{ color: '#0D1B3E' }}>{vat.subtotal.toFixed(2)} ر.س</span>
+                        </div>
+                      )}
+                      {company?.tax_enabled && (
+                        <div className="flex justify-between text-xs font-tajawal">
+                          <span style={{ color: '#5A6E85' }}>ضريبة القيمة المضافة ({company.vat_rate || 15}%)</span>
+                          <span style={{ color: '#0D1B3E' }}>{vat.vat_amount.toFixed(2)} ر.س</span>
+                        </div>
+                      )}
+                      <div className="pt-2 flex justify-between font-tajawal font-bold" style={{ borderTop: '1px dashed rgba(0,191,255,0.3)' }}>
+                        <span style={{ color: '#0D1B3E', fontSize: 13 }}>الإجمالي</span>
+                        <span style={{ color: '#1565C0', fontSize: 15 }}>{vat.total.toFixed(2)} ر.س</span>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
+
               <div className="flex gap-3 mt-5">
                 <button
                   onClick={() => { setShowForm(false); setEditingItem(null); setLoyaltyInfo(null) }}
