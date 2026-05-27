@@ -5,6 +5,7 @@ import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { getClientIndustryTemplate } from '../../../lib/clientIndustryTemplates'
 import { CarWashSetup } from './CarWashSetup'
+import { PLAN_LABELS } from '../../../lib/constants'
 
 const PLAN_LIMITS: Record<string, string> = {
   starter: '2,000 رسالة/شهر',
@@ -191,9 +192,9 @@ export const ClientSettings = () => {
           </div>
           {[
             { label: 'الشركة', value: company.name },
-            { label: 'القطاع', value: company.industry },
-            { label: 'الباقة', value: `${company.plan} — ${PLAN_LIMITS[company.plan] ?? ''}` },
-            { label: 'الحالة', value: company.status },
+            { label: 'القطاع', value: company.industry === 'car_wash' || company.business_type === 'car_wash' ? 'مغسلة سيارات' : company.industry },
+            { label: 'الباقة', value: `${PLAN_LABELS[company.plan] ?? company.plan} — ${(company.message_limit || 2000).toLocaleString()} رسالة/شهر` },
+            { label: 'الحالة', value: company.status === 'active' ? 'نشط' : company.status },
             { label: 'الرسائل المستخدمة', value: `${(company.messages_used || 0).toLocaleString()} / ${(company.message_limit || 2000).toLocaleString()}` },
           ].map(({ label, value }) => (
             <div key={label} className="flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0">
@@ -231,8 +232,8 @@ export const ClientSettings = () => {
         </div>
       </div>
 
-      {/* Send Email via Resend */}
-      <div className="p-5 rounded-2xl space-y-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+      {/* Send Email via Resend — hidden for car wash */}
+      {!isCarWash && <div className="p-5 rounded-2xl space-y-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
         <div className="flex items-center gap-2.5 mb-1">
           <Mail size={16} className="text-yellow-400" />
           <h3 className="text-sm font-bold text-white font-cairo">إرسال إيميل</h3>
@@ -253,7 +254,7 @@ export const ClientSettings = () => {
           style={{ background: emailSent ? '#10B981' : 'linear-gradient(135deg, #F59E0B, #EF4444)' }}>
           {sendingEmail ? <Loader2 size={14} className="animate-spin mx-auto" /> : emailSent ? 'تم الإرسال ✅' : 'إرسال الإيميل'}
         </button>
-      </div>
+      </div>}
 
       {/* Car Wash: Google Maps URL */}
       {isCarWash && (
