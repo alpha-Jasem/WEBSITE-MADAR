@@ -15,6 +15,9 @@ import {
   CheckCircle2,
   AlertCircle,
   X,
+  TrendingUp,
+  TrendingDown,
+  Target,
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
@@ -115,13 +118,17 @@ function StatCard({
   value,
   sub,
   color,
+  trend,
 }: {
   icon: typeof Users
   label: string
   value: string | number
   sub?: string
   color: string
+  trend?: number
 }) {
+  const trendUp = trend !== undefined && trend > 0
+  const trendDown = trend !== undefined && trend < 0
   return (
     <div
       style={{
@@ -139,18 +146,32 @@ function StatCard({
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{ fontSize: 13, color: '#5A6E85', fontFamily: 'Tajawal, sans-serif' }}>{label}</span>
-        <div
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 10,
-            background: `${color}18`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Icon size={18} color={color} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {trend !== undefined && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 3, padding: '2px 8px', borderRadius: 20,
+              background: trendUp ? 'rgba(16,185,129,0.1)' : trendDown ? 'rgba(239,68,68,0.1)' : 'rgba(100,116,139,0.1)',
+              border: `1px solid ${trendUp ? 'rgba(16,185,129,0.25)' : trendDown ? 'rgba(239,68,68,0.25)' : 'rgba(100,116,139,0.2)'}`,
+            }}>
+              {trendUp ? <TrendingUp size={11} color="#10B981" /> : trendDown ? <TrendingDown size={11} color="#EF4444" /> : null}
+              <span style={{ fontSize: 11, fontWeight: 700, fontFamily: 'Sora, sans-serif', color: trendUp ? '#10B981' : trendDown ? '#EF4444' : '#64748B' }}>
+                {trend > 0 ? '+' : ''}{trend.toFixed(0)}%
+              </span>
+            </div>
+          )}
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              background: `${color}18`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Icon size={18} color={color} />
+          </div>
         </div>
       </div>
       <strong style={{ fontSize: 28, fontWeight: 800, color: '#0D1B3E', fontFamily: 'Sora, sans-serif', lineHeight: 1 }}>
@@ -193,6 +214,11 @@ export function CarWashOverview() {
   const [todayVisits, setTodayVisits] = useState(0)
   const [loading, setLoading] = useState(true)
   const [queueSummary, setQueueSummary] = useState<QueueSummary>({ received: 0, washing: 0, drying: 0, ready: 0 })
+  const [monthRevenue, setMonthRevenue] = useState(0)
+  const [lastMonthRevenue, setLastMonthRevenue] = useState(0)
+  const [thisMonthVisits, setThisMonthVisits] = useState(0)
+  const [lastMonthVisits, setLastMonthVisits] = useState(0)
+  const [monthlyTarget, setMonthlyTarget] = useState(0)
   const [services, setServices] = useState<CWService[]>([])
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
@@ -215,6 +241,11 @@ export function CarWashOverview() {
     const twoHoursAgo = new Date(Date.now() - 2 * 3600 * 1000).toISOString()
     const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
 
+    const now = new Date()
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+
     const [
       { data: customersData },
       { count: todayCount },
@@ -222,6 +253,9 @@ export function CarWashOverview() {
       { data: visitsData },
       { data: servicesData },
       { data: queueData },
+      { data: thisMonthQueue },
+      { data: lastMonthQueue },
+      { data: companyData },
     ] = await Promise.all([
       supabase
         .from('cw_customers')
@@ -258,6 +292,24 @@ export function CarWashOverview() {
         .eq('company_id', companyId)
         .neq('status', 'delivered')
         .gte('created_at', todayStart.toISOString()),
+      supabase
+        .from('cw_queue')
+        .select('total_amount, price')
+        .eq('company_id', companyId)
+        .eq('status', 'delivered')
+        .gte('created_at', monthStart),
+      supabase
+        .from('cw_queue')
+        .select('total_amount, price')
+        .eq('company_id', companyId)
+        .eq('status', 'delivered')
+        .gte('created_at', lastMonthStart)
+        .lt('created_at', lastMonthEnd),
+      supabase
+        .from('companies')
+        .select('cw_monthly_target')
+        .eq('id', companyId)
+        .single(),
     ])
 
     setCustomers((customersData as CWCustomer[]) || [])
@@ -266,6 +318,15 @@ export function CarWashOverview() {
     setRecentVisits((visitsData as unknown as CWVisit[]) || [])
     const svcs = (servicesData as CWService[]) || []
     setServices(svcs)
+
+    // Month revenue sums
+    const thisRevenue = (thisMonthQueue || []).reduce((sum: number, r: any) => sum + (r.total_amount ?? r.price ?? 0), 0)
+    const lastRevenue = (lastMonthQueue || []).reduce((sum: number, r: any) => sum + (r.total_amount ?? r.price ?? 0), 0)
+    setMonthRevenue(thisRevenue)
+    setLastMonthRevenue(lastRevenue)
+    setThisMonthVisits((thisMonthQueue || []).length)
+    setLastMonthVisits((lastMonthQueue || []).length)
+    if ((companyData as any)?.cw_monthly_target) setMonthlyTarget((companyData as any).cw_monthly_target)
 
     const q: QueueSummary = { received: 0, washing: 0, drying: 0, ready: 0 }
     for (const r of queueData || []) {
@@ -378,6 +439,10 @@ export function CarWashOverview() {
 
     load()
   }
+
+  const visitsTrend = lastMonthVisits > 0 ? ((thisMonthVisits - lastMonthVisits) / lastMonthVisits) * 100 : undefined
+  const revenueTrend = lastMonthRevenue > 0 ? ((monthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 : undefined
+  const targetPct = monthlyTarget > 0 ? Math.min((monthRevenue / monthlyTarget) * 100, 100) : 0
 
   const milestones = customers.filter(c => c.total_visits > 0 && c.total_visits % 5 === 0).length
   const filteredCustomers = customers.filter(c => {
@@ -626,7 +691,7 @@ export function CarWashOverview() {
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
         <StatCard icon={Users} label="إجمالي العملاء" value={customers.length} sub="مسجلون في النظام" color="#22D3EE" />
-        <StatCard icon={Car} label="زيارات اليوم" value={todayVisits} sub="walk-in مسجّل" color="#4F6EF7" />
+        <StatCard icon={Car} label="زيارات الشهر" value={thisMonthVisits} sub={`اليوم: ${todayVisits}`} color="#4F6EF7" trend={visitsTrend} />
         <StatCard icon={Trophy} label="مكافآت ولاء" value={milestones} sub="وصلوا الغسلة الخامسة" color="#F59E0B" />
         <StatCard
           icon={pendingReviews > 0 ? AlertCircle : CheckCircle2}
@@ -635,6 +700,77 @@ export function CarWashOverview() {
           sub={pendingReviews > 0 ? 'تنتظر الإرسال (بعد ساعتين)' : 'كل الطلبات أُرسلت ✓'}
           color={pendingReviews > 0 ? '#EF4444' : '#10B981'}
         />
+      </div>
+
+      {/* Monthly Revenue Target */}
+      <div style={{
+        background: '#FFFFFF',
+        border: '1px solid rgba(0,191,255,0.22)',
+        borderRadius: 16,
+        padding: '20px 24px',
+        boxShadow: '0 2px 16px rgba(13,27,62,0.07)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Target size={16} color="#6366F1" />
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#0D1B3E', fontFamily: 'Cairo, sans-serif' }}>إيراد الشهر</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 20, fontWeight: 800, color: '#6366F1', fontFamily: 'Sora, sans-serif' }}>{monthRevenue.toFixed(0)}</div>
+              <div style={{ fontSize: 11, color: '#5A6E85', fontFamily: 'Tajawal, sans-serif' }}>ريال محقق</div>
+            </div>
+            {monthlyTarget > 0 && (
+              <>
+                <div style={{ width: 1, height: 32, background: 'rgba(0,191,255,0.2)' }} />
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: '#94A3B8', fontFamily: 'Sora, sans-serif' }}>{monthlyTarget.toFixed(0)}</div>
+                  <div style={{ fontSize: 11, color: '#5A6E85', fontFamily: 'Tajawal, sans-serif' }}>الهدف</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 20, fontWeight: 800, fontFamily: 'Sora, sans-serif', color: targetPct >= 100 ? '#10B981' : targetPct >= 70 ? '#F59E0B' : '#EF4444' }}>{targetPct.toFixed(0)}%</div>
+                  <div style={{ fontSize: 11, color: '#5A6E85', fontFamily: 'Tajawal, sans-serif' }}>الإنجاز</div>
+                </div>
+              </>
+            )}
+            {revenueTrend !== undefined && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20,
+                background: revenueTrend >= 0 ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                border: `1px solid ${revenueTrend >= 0 ? 'rgba(16,185,129,0.25)' : 'rgba(239,68,68,0.25)'}`,
+              }}>
+                {revenueTrend >= 0 ? <TrendingUp size={13} color="#10B981" /> : <TrendingDown size={13} color="#EF4444" />}
+                <span style={{ fontSize: 12, fontWeight: 700, fontFamily: 'Sora, sans-serif', color: revenueTrend >= 0 ? '#10B981' : '#EF4444' }}>
+                  {revenueTrend > 0 ? '+' : ''}{revenueTrend.toFixed(0)}% عن الشهر الماضي
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+        {monthlyTarget > 0 ? (
+          <div>
+            <div style={{ height: 10, background: 'rgba(0,191,255,0.1)', borderRadius: 99, overflow: 'hidden', border: '1px solid rgba(0,191,255,0.15)' }}>
+              <div style={{
+                height: '100%',
+                width: `${targetPct}%`,
+                borderRadius: 99,
+                background: targetPct >= 100 ? '#10B981' : targetPct >= 70 ? '#F59E0B' : '#6366F1',
+                transition: 'width 0.6s ease',
+              }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+              <span style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>0 ر.س</span>
+              <span style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>
+                {monthlyTarget > monthRevenue ? `متبقي ${(monthlyTarget - monthRevenue).toFixed(0)} ر.س` : '🎉 تم تحقيق الهدف!'}
+              </span>
+              <span style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>{monthlyTarget.toFixed(0)} ر.س</span>
+            </div>
+          </div>
+        ) : (
+          <div style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', textAlign: 'center', paddingTop: 4 }}>
+            حدّد هدفاً شهرياً من الإعداد → الولاء لعرض شريط التقدم
+          </div>
+        )}
       </div>
 
       {/* Customers Table */}

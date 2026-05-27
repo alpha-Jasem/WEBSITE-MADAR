@@ -47,6 +47,7 @@ export interface Company {
   cw_loyalty_threshold?: number
   google_maps_url?: string
   cw_message_templates?: Record<string, string>
+  cw_monthly_target?: number
 }
 
 export interface Automation {

@@ -59,6 +59,9 @@ export function CarWashSetup() {
   const [savingVat, setSavingVat] = useState(false)
   const [vatSaved, setVatSaved] = useState(false)
 
+  // Monthly target
+  const [monthlyTarget, setMonthlyTarget] = useState(0)
+
 
   const [loading, setLoading] = useState(true)
 
@@ -70,7 +73,7 @@ export function CarWashSetup() {
       const [{ data: svcData }, { data: co }] = await Promise.all([
         supabase.from('cw_services').select('*').eq('company_id', companyId).order('created_at'),
         supabase.from('companies')
-          .select('cw_hours, cw_loyalty_threshold, google_maps_url, tax_enabled, vat_rate, price_includes_vat, cw_message_templates')
+          .select('cw_hours, cw_loyalty_threshold, google_maps_url, tax_enabled, vat_rate, price_includes_vat, cw_message_templates, cw_monthly_target')
           .eq('id', companyId).single(),
       ])
 
@@ -84,6 +87,7 @@ export function CarWashSetup() {
         setTaxEnabled(!!c.tax_enabled)
         if (c.vat_rate) setVatRate(c.vat_rate)
         setPriceIncludesVat(!!c.price_includes_vat)
+        if (c.cw_monthly_target) setMonthlyTarget(c.cw_monthly_target)
       }
       setLoading(false)
     }
@@ -138,7 +142,7 @@ export function CarWashSetup() {
   const saveLoyalty = async () => {
     if (!companyId) return
     setSavingLoyalty(true)
-    await supabase.from('companies').update({ cw_loyalty_threshold: loyaltyThreshold, google_maps_url: reviewUrl } as any).eq('id', companyId)
+    await supabase.from('companies').update({ cw_loyalty_threshold: loyaltyThreshold, google_maps_url: reviewUrl, cw_monthly_target: monthlyTarget } as any).eq('id', companyId)
     setSavingLoyalty(false)
     setLoyaltySaved(true)
     setTimeout(() => setLoyaltySaved(false), 3000)
@@ -334,6 +338,27 @@ export function CarWashSetup() {
             <input value={reviewUrl} onChange={e => setReviewUrl(e.target.value)}
               placeholder="https://maps.app.goo.gl/..." dir="ltr"
               style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '10px 14px', color: '#E2E8F0', fontSize: 13, fontFamily: 'monospace', outline: 'none', boxSizing: 'border-box' }} />
+          </div>
+          <div style={SECTION_STYLE}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+              <span style={{ fontSize: 15 }}>🎯</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif' }}>هدف الإيراد الشهري</span>
+            </div>
+            <p style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginBottom: 14 }}>
+              حدّد الهدف الشهري لإيرادات المغسلة — سيظهر شريط التقدم في لوحة التشغيل.
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <input
+                type="number"
+                min={0}
+                value={monthlyTarget}
+                onChange={e => setMonthlyTarget(Number(e.target.value))}
+                placeholder="5000"
+                dir="ltr"
+                style={{ width: 140, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 14px', color: '#F1F5F9', fontSize: 18, fontFamily: 'Sora, sans-serif', fontWeight: 700, outline: 'none', textAlign: 'center' }}
+              />
+              <span style={{ fontSize: 13, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>ريال سعودي / الشهر</span>
+            </div>
           </div>
           <button onClick={saveLoyalty} disabled={savingLoyalty}
             style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '11px 22px', borderRadius: 12, border: 'none', cursor: 'pointer', background: loyaltySaved ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.12)', color: loyaltySaved ? '#10B981' : '#F59E0B', fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: 700 }}>
