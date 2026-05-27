@@ -858,7 +858,7 @@ export const CarWashQueue = () => {
                       )}
                       <div className="pt-2 flex justify-between font-tajawal font-bold" style={{ borderTop: '1px dashed rgba(0,191,255,0.3)' }}>
                         <span style={{ color: '#0D1B3E', fontSize: 13 }}>الإجمالي</span>
-                        <span style={{ color: '#1565C0', fontSize: 15 }}>{vat.total.toFixed(2)} ر.س</span>
+                        <span style={{ color: '#1565C0', fontSize: 15 }}>{vat.total_amount.toFixed(2)} ر.س</span>
                       </div>
                     </div>
                   </div>
