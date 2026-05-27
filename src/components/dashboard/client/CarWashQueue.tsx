@@ -141,12 +141,13 @@ export const CarWashQueue = () => {
   const lookupPhone = async (phone: string) => {
     if (!companyId || phone.length < 9) return
     setLoyaltyLoading(true)
-    const normalized = phone.replace(/\D/g, '').replace(/^966/, '0')
+    const digits = phone.replace(/\D/g, '')
+    const normalized966 = digits.startsWith('966') ? digits : digits.startsWith('0') ? `966${digits.slice(1)}` : `966${digits}`
     const { data } = await supabase
       .from('cw_customers')
       .select('id, free_washes_available, loyalty_count, total_visits')
       .eq('company_id', companyId)
-      .eq('phone', normalized)
+      .eq('phone', normalized966)
       .maybeSingle()
     setLoyaltyLoading(false)
     if (data) {
@@ -695,15 +696,29 @@ export const CarWashQueue = () => {
                 {/* Phone */}
                 <div>
                   <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">رقم الجوال</label>
-                  <input
-                    value={form.phone}
-                    onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                    onBlur={e => lookupPhone(e.target.value)}
-                    placeholder="05xxxxxxxx"
-                    className="w-full px-4 py-2.5 rounded-xl text-sm font-sora text-white placeholder-slate-600 outline-none"
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
-                    dir="ltr"
-                  />
+                  <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid rgba(0,191,255,0.28)' }}>
+                    <span
+                      className="flex items-center px-3 text-sm font-bold font-sora select-none"
+                      style={{ background: 'rgba(0,191,255,0.12)', color: '#1565C0', borderLeft: '1px solid rgba(0,191,255,0.22)', flexShrink: 0 }}
+                      dir="ltr"
+                    >
+                      966
+                    </span>
+                    <input
+                      value={form.phone.replace(/^966/, '')}
+                      onChange={e => {
+                        const digits = e.target.value.replace(/\D/g, '').slice(0, 9)
+                        setForm(f => ({ ...f, phone: '966' + digits }))
+                      }}
+                      onBlur={() => lookupPhone(form.phone)}
+                      placeholder="5xxxxxxxx"
+                      className="flex-1 px-3 py-2.5 text-sm font-sora outline-none"
+                      style={{ background: 'transparent', color: '#0D1B3E' }}
+                      dir="ltr"
+                      maxLength={9}
+                      inputMode="numeric"
+                    />
+                  </div>
                   {loyaltyLoading && (
                     <p className="text-xs text-slate-500 font-tajawal mt-1">جاري البحث...</p>
                   )}
