@@ -205,8 +205,8 @@ export const ClientSettings = () => {
         </div>
       )}
 
-      {/* Webhook URL */}
-      <div className="p-5 rounded-2xl space-y-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+      {/* Webhook URL — hidden for car wash */}
+      {!isCarWash && <div className="p-5 rounded-2xl space-y-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
         <div className="flex items-center gap-2.5 mb-1">
           <Link2 size={16} className="text-cyan-400" />
           <h3 className="text-sm font-bold text-white font-cairo">رابط Webhook الخاص بك</h3>
@@ -230,7 +230,7 @@ export const ClientSettings = () => {
           <p className="font-semibold text-slate-400">مثال على الاستخدام (POST):</p>
           <pre className="text-[10px] text-slate-600 font-mono" dir="ltr">{`{ "company_name": "شركة X", "phone": "05XXXXXXXX", "sector": "صحة", "source": "موقع" }`}</pre>
         </div>
-      </div>
+      </div>}
 
       {/* Send Email via Resend — hidden for car wash */}
       {!isCarWash && <div className="p-5 rounded-2xl space-y-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
