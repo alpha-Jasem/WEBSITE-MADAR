@@ -107,9 +107,19 @@ export const ClientPortal = () => {
   const canAccess = (path: string) =>
     profile.isOwner || !isCarWash || profile.permissions.includes(path)
 
+  const noAccessPage = (
+    <div dir="rtl" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: 12 }}>
+      <div style={{ fontSize: 40 }}>🔒</div>
+      <p style={{ color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', fontSize: 15, textAlign: 'center' }}>
+        ليس لديك صلاحية الوصول لهذه الصفحة<br />
+        <span style={{ fontSize: 12, color: '#475569' }}>افتح القائمة لتبديل المستخدم أو الرجوع للمالك</span>
+      </p>
+    </div>
+  )
+
   const fallback = profile.permissions[0]
     ? <Navigate to={profile.permissions[0]} replace />
-    : <Navigate to="/client/queue" replace />
+    : noAccessPage
 
   return (
     <DashShell navItems={navItems} role="client" pageTitle={pageTitle}>
