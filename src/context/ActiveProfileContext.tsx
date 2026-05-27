@@ -32,7 +32,13 @@ export function ActiveProfileProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<ActiveProfile>(() => {
     try {
       const saved = sessionStorage.getItem(SESSION_KEY)
-      return saved ? JSON.parse(saved) : DEFAULT_PROFILE
+      if (!saved) return DEFAULT_PROFILE
+      const parsed = JSON.parse(saved)
+      return {
+        ...DEFAULT_PROFILE,
+        ...parsed,
+        permissions: Array.isArray(parsed.permissions) ? parsed.permissions : [],
+      }
     } catch {
       return DEFAULT_PROFILE
     }
