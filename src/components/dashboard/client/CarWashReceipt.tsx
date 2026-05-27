@@ -18,7 +18,8 @@ interface Props {
 }
 
 export const CarWashReceipt = ({ item, company, paymentMethod, onClose }: Props) => {
-  const receiptNo = `REC-${item.id.slice(0, 8).toUpperCase()}`
+  const d = new Date()
+  const receiptNo = `INV-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${item.id.slice(-5).toUpperCase()}`
   const now = new Date()
   const dateStr = now.toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' })
   const timeStr = now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })

@@ -19,7 +19,10 @@ type CWVisit = {
   discount_amount: number | null
   service_name: string | null
   customer_id: string
+  worker_id: string | null
 }
+
+type CWWorker = { id: string; name: string }
 
 type CWCustomer = {
   id: string
@@ -71,6 +74,10 @@ export function CarWashReports() {
   const [pdfLoading, setPdfLoading] = useState(false)
   const [showExportMenu, setShowExportMenu] = useState(false)
   const [days, setDays] = useState(30)
+  const [customFrom, setCustomFrom] = useState('')
+  const [customTo, setCustomTo] = useState('')
+  const [showCustom, setShowCustom] = useState(false)
+  const [workers, setWorkers] = useState<CWWorker[]>([])
 
   const DATE_FILTERS = [
     { label: 'اليوم', days: 1 },
@@ -80,28 +87,40 @@ export function CarWashReports() {
     { label: 'سنة', days: 365 },
   ]
 
+  const isCustomActive = showCustom && customFrom && customTo
+
   useEffect(() => {
     if (authLoading || !companyId) return
     const load = async () => {
       setLoading(true)
-      const since = new Date()
-      since.setDate(since.getDate() - days)
-      const [{ data: v }, { data: c }] = await Promise.all([
-        supabase.from('cw_visits').select('id, created_at, price, subtotal, vat_amount, payment_method, is_free_wash, discount_amount, service_name, customer_id')
+      let since: Date, until: Date
+      if (isCustomActive) {
+        since = new Date(customFrom + 'T00:00:00')
+        until = new Date(customTo + 'T23:59:59')
+      } else {
+        since = new Date()
+        since.setDate(since.getDate() - days)
+        until = new Date()
+      }
+      const [{ data: v }, { data: c }, { data: w }] = await Promise.all([
+        supabase.from('cw_visits').select('id, created_at, price, subtotal, vat_amount, payment_method, is_free_wash, discount_amount, service_name, customer_id, worker_id')
           .eq('company_id', companyId)
           .gte('created_at', since.toISOString())
+          .lte('created_at', until.toISOString())
           .order('created_at', { ascending: true }),
         supabase.from('cw_customers').select('id, name, phone, total_visits, loyalty_tier')
           .eq('company_id', companyId)
           .order('total_visits', { ascending: false })
           .limit(50),
+        supabase.from('cw_workers').select('id, name').eq('company_id', companyId),
       ])
       setVisits((v as CWVisit[]) || [])
       setCustomers((c as CWCustomer[]) || [])
+      setWorkers((w as CWWorker[]) || [])
       setLoading(false)
     }
     load()
-  }, [authLoading, companyId, days])
+  }, [authLoading, companyId, days, isCustomActive, customFrom, customTo])
 
   const stats = useMemo(() => {
     const now = new Date()
@@ -146,8 +165,15 @@ export function CarWashReports() {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
 
-    return { todayVisits, monthVisits, revenue, milestones, dailyChart, services, freeWashCount, freeWashDiscount, paymentBreakdown }
-  }, [visits, customers, days])
+    // Worker performance
+    const workerStats = workers.map(w => {
+      const wVisits = visits.filter(v => v.worker_id === w.id)
+      const revenue = wVisits.reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0)
+      return { id: w.id, name: w.name, count: wVisits.length, revenue }
+    }).filter(w => w.count > 0).sort((a, b) => b.count - a.count)
+
+    return { todayVisits, monthVisits, revenue, milestones, dailyChart, services, freeWashCount, freeWashDiscount, paymentBreakdown, workerStats }
+  }, [visits, customers, workers, days])
 
   const topCustomers = customers.slice(0, 8)
 
@@ -280,13 +306,26 @@ export function CarWashReports() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>تقارير المغسلة</h1>
-          <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
             {DATE_FILTERS.map(f => (
-              <button key={f.days} onClick={() => setDays(f.days)}
-                style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer', border: `1px solid ${days === f.days ? '#22D3EE' : 'rgba(255,255,255,0.1)'}`, background: days === f.days ? 'rgba(34,211,238,0.12)' : 'transparent', color: days === f.days ? '#22D3EE' : '#64748B', fontWeight: days === f.days ? 700 : 400, transition: 'all 0.15s' }}>
+              <button key={f.days} onClick={() => { setDays(f.days); setShowCustom(false) }}
+                style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer', border: `1px solid ${!showCustom && days === f.days ? '#1565C0' : 'rgba(0,191,255,0.2)'}`, background: !showCustom && days === f.days ? 'rgba(21,101,192,0.12)' : 'transparent', color: !showCustom && days === f.days ? '#1565C0' : '#5A6E85', fontWeight: !showCustom && days === f.days ? 700 : 400, transition: 'all 0.15s' }}>
                 {f.label}
               </button>
             ))}
+            <button onClick={() => setShowCustom(v => !v)}
+              style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer', border: `1px solid ${showCustom ? '#1565C0' : 'rgba(0,191,255,0.2)'}`, background: showCustom ? 'rgba(21,101,192,0.12)' : 'transparent', color: showCustom ? '#1565C0' : '#5A6E85', fontWeight: showCustom ? 700 : 400 }}>
+              مخصص 📅
+            </button>
+            {showCustom && (
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
+                  style={{ padding: '4px 10px', borderRadius: 10, border: '1px solid rgba(0,191,255,0.3)', background: '#F4F9FF', color: '#0D1B3E', fontSize: 12, fontFamily: 'Sora, sans-serif' }} />
+                <span style={{ color: '#5A6E85', fontSize: 12 }}>←</span>
+                <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
+                  style={{ padding: '4px 10px', borderRadius: 10, border: '1px solid rgba(0,191,255,0.3)', background: '#F4F9FF', color: '#0D1B3E', fontSize: 12, fontFamily: 'Sora, sans-serif' }} />
+              </div>
+            )}
           </div>
         </div>
         <div style={{ position: 'relative' }}>
@@ -458,6 +497,38 @@ export function CarWashReports() {
                   </div>
                   <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2 }}>
                     <div style={{ height: '100%', width: `${(count / max) * 100}%`, background: '#4F6EF7', borderRadius: 2 }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Worker performance */}
+        {stats.workerStats.length > 0 && (
+          <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,191,255,0.22)', borderRadius: 18, overflow: 'hidden', boxShadow: '0 2px 16px rgba(13,27,62,0.07)' }}>
+            <div style={{ padding: '18px 20px', borderBottom: '1px solid rgba(0,191,255,0.15)', display: 'flex', alignItems: 'center', gap: 8, background: 'linear-gradient(90deg,#EAF4FF,#F0F7FF)' }}>
+              <Users size={15} color="#1565C0" />
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: '#0D1B3E', fontFamily: 'Cairo, sans-serif', margin: 0 }}>أداء الموظفين</h2>
+            </div>
+            {stats.workerStats.map((w, i) => {
+              const max = stats.workerStats[0].count
+              return (
+                <div key={w.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 20px', borderBottom: i < stats.workerStats.length - 1 ? '1px solid rgba(0,191,255,0.08)' : 'none' }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#8EA4C0', fontFamily: 'Sora, sans-serif', width: 22, textAlign: 'center' }}>{i + 1}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#0D1B3E', fontFamily: 'Tajawal, sans-serif', marginBottom: 5 }}>{w.name}</div>
+                    <div style={{ height: 6, borderRadius: 4, background: 'rgba(0,191,255,0.12)', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', borderRadius: 4, background: 'linear-gradient(90deg,#1565C0,#00BFFF)', width: `${(w.count / max) * 100}%`, transition: 'width 0.4s' }} />
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'center', minWidth: 48 }}>
+                    <strong style={{ fontSize: 18, fontWeight: 800, color: '#1565C0', fontFamily: 'Sora, sans-serif' }}>{w.count}</strong>
+                    <div style={{ fontSize: 10, color: '#5A6E85', fontFamily: 'Tajawal, sans-serif' }}>سيارة</div>
+                  </div>
+                  <div style={{ textAlign: 'center', minWidth: 72 }}>
+                    <strong style={{ fontSize: 14, fontWeight: 700, color: '#059669', fontFamily: 'Sora, sans-serif' }}>{w.revenue.toFixed(0)}</strong>
+                    <div style={{ fontSize: 10, color: '#5A6E85', fontFamily: 'Tajawal, sans-serif' }}>ر.س</div>
                   </div>
                 </div>
               )
