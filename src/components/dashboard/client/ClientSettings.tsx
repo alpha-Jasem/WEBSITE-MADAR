@@ -111,14 +111,19 @@ export const ClientSettings = () => {
   const addMember = async () => {
     if (!newName.trim() || newPin.length !== 4 || !companyId) return
     setSavingTeam(true)
-    await supabase.from('company_users').insert({
+    const { data, error } = await supabase.from('company_users').insert({
       company_id: companyId,
       full_name: newName.trim(),
       pin: newPin,
       permissions: newPerms,
-    } as any)
-    setNewName(''); setNewPin(''); setNewPerms(['/client/queue'])
-    await loadTeam()
+      role: 'staff',
+    } as any).select()
+    if (!error) {
+      setNewName(''); setNewPin(''); setNewPerms(['/client/queue'])
+      await loadTeam()
+    } else {
+      console.error('addMember error:', error)
+    }
     setSavingTeam(false)
   }
 
