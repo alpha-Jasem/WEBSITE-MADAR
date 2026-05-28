@@ -384,6 +384,16 @@ export function CarWashOverview() {
         loyalty_tier: tier,
         name: form.name || existing.name,
       }).eq('id', existing.id)
+      customerId = existing.id
+      // Send visit confirmation to returning customer
+      fireWebhook(N8N_REGISTER_WEBHOOK, {
+        phone: normalizedPhone,
+        customer_name: form.name || existing.name || '',
+        company_name: company?.name ?? 'المغسلة',
+        company_id: companyId,
+        is_new_customer: false,
+        visit_count: newVisitCount,
+      })
     } else {
       // Insert new customer
       const { data: newCustomer } = await supabase.from('cw_customers').insert({
@@ -395,12 +405,14 @@ export function CarWashOverview() {
         welcome_sent: true,
       }).select('id').single()
       customerId = newCustomer?.id
-      // Fire immediate welcome WhatsApp
+      // Send welcome WhatsApp to new customer
       fireWebhook(N8N_REGISTER_WEBHOOK, {
         phone: normalizedPhone,
         customer_name: form.name || '',
         company_name: company?.name ?? 'المغسلة',
         company_id: companyId,
+        is_new_customer: true,
+        visit_count: 1,
       })
     }
 
