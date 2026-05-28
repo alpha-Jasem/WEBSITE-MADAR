@@ -314,8 +314,23 @@ export const CarWashQueue = () => {
       delivered_at: now,
     }).eq('id', item.id)
 
+    // Look up customer first so we can link the visit record
+    const rawPhone = item.phone?.replace(/\D/g, '') || ''
+    const phone = rawPhone.startsWith('966') ? rawPhone : rawPhone.startsWith('0') ? `966${rawPhone.slice(1)}` : rawPhone ? `966${rawPhone}` : ''
+    let customer: { id: string; free_washes_available: number; loyalty_count: number; total_visits: number } | null = null
+    if (phone && companyId) {
+      const { data } = await supabase
+        .from('cw_customers')
+        .select('id, free_washes_available, loyalty_count, total_visits')
+        .eq('company_id', companyId)
+        .eq('phone', phone)
+        .maybeSingle()
+      customer = data
+    }
+
     await supabase.from('cw_visits').insert({
       company_id: item.company_id,
+      customer_id: customer?.id || null,
       service_name: item.service_name,
       service_id: item.service_id || null,
       price: item.price,
@@ -335,16 +350,8 @@ export const CarWashQueue = () => {
       review_request_sent: false,
     })
 
-    // Loyalty update — phone must match cw_customers international format (966XXXXXXXXX)
-    const rawPhone = item.phone?.replace(/\D/g, '') || ''
-    const phone = rawPhone.startsWith('966') ? rawPhone : rawPhone.startsWith('0') ? `966${rawPhone.slice(1)}` : rawPhone ? `966${rawPhone}` : ''
+    // Loyalty update
     if (phone && companyId) {
-      const { data: customer } = await supabase
-        .from('cw_customers')
-        .select('id, free_washes_available, loyalty_count, total_visits')
-        .eq('company_id', companyId)
-        .eq('phone', phone)
-        .maybeSingle()
 
       if (customer) {
         const threshold = company?.cw_loyalty_threshold || 5
@@ -379,7 +386,7 @@ export const CarWashQueue = () => {
 
     // Delivery receipt webhook
     if (item.phone && (company as any)?.cw_automations?.delivery_receipt?.enabled !== false) {
-      const ph = item.phone.replace(/^0/, '966').replace(/\D/g, '')
+      const ph = item.phone.replace(/\D/g, '').replace(/^0/, '966')
       fireWebhook(N8N_DELIVERY_WEBHOOK, {
         phone: ph,
         customer_name: item.customer_name,

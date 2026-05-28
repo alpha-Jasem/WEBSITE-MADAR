@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
+import { calcVAT } from '../../../lib/vatUtils'
 
 const N8N_BASE             = 'https://keepcalm.app.n8n.cloud/webhook'
 const N8N_REGISTER_WEBHOOK = `${N8N_BASE}/cw-registration`
@@ -293,16 +294,14 @@ export function CarWashOverview() {
         .neq('status', 'delivered')
         .gte('created_at', todayStart.toISOString()),
       supabase
-        .from('cw_queue')
-        .select('total_amount, price')
+        .from('cw_visits')
+        .select('total_amount, subtotal, price')
         .eq('company_id', companyId)
-        .eq('status', 'delivered')
         .gte('created_at', monthStart),
       supabase
-        .from('cw_queue')
-        .select('total_amount, price')
+        .from('cw_visits')
+        .select('total_amount, subtotal, price')
         .eq('company_id', companyId)
-        .eq('status', 'delivered')
         .gte('created_at', lastMonthStart)
         .lt('created_at', lastMonthEnd),
       supabase
@@ -319,9 +318,9 @@ export function CarWashOverview() {
     const svcs = (servicesData as CWService[]) || []
     setServices(svcs)
 
-    // Month revenue sums
-    const thisRevenue = (thisMonthQueue || []).reduce((sum: number, r: any) => sum + (r.total_amount ?? r.price ?? 0), 0)
-    const lastRevenue = (lastMonthQueue || []).reduce((sum: number, r: any) => sum + (r.total_amount ?? r.price ?? 0), 0)
+    // Month revenue sums — read from cw_visits (includes walk-ins + queue deliveries)
+    const thisRevenue = (thisMonthQueue || []).reduce((sum: number, r: any) => sum + (r.total_amount ?? r.subtotal ?? r.price ?? 0), 0)
+    const lastRevenue = (lastMonthQueue || []).reduce((sum: number, r: any) => sum + (r.total_amount ?? r.subtotal ?? r.price ?? 0), 0)
     setMonthRevenue(thisRevenue)
     setLastMonthRevenue(lastRevenue)
     setThisMonthVisits((thisMonthQueue || []).length)
@@ -343,8 +342,8 @@ export function CarWashOverview() {
 
     const channel = supabase
       .channel(`cw_overview_${companyId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'cw_visits' }, load)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'cw_customers' }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cw_visits', filter: `company_id=eq.${companyId}` }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cw_customers', filter: `company_id=eq.${companyId}` }, load)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cw_queue', filter: `company_id=eq.${companyId}` }, load)
       .subscribe()
 
@@ -405,13 +404,20 @@ export function CarWashOverview() {
       })
     }
 
-    // Insert visit
+    // Insert visit with VAT fields so revenue calculations are accurate
     if (customerId) {
+      const rawPrice = form.price ? parseFloat(form.price) : 0
+      const vat = calcVAT(rawPrice, company?.tax_enabled || false, company?.vat_rate || 15, company?.price_includes_vat || false)
       await supabase.from('cw_visits').insert({
         company_id: companyId,
         customer_id: customerId,
         service_name: form.service || null,
-        price: form.price ? parseFloat(form.price) : 0,
+        price: rawPrice,
+        subtotal: vat.subtotal,
+        vat_amount: vat.vat_amount,
+        total_amount: vat.total_amount,
+        payment_status: 'paid',
+        review_request_sent: false,
       })
     }
 
