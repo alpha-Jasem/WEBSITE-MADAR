@@ -1,32 +1,40 @@
+import { lazy, Suspense, useState, useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { BarChart3, Calendar, Car, ClipboardCheck, Droplets, LayoutDashboard, MessageSquare, Settings, Users2, Wrench, Zap, ClipboardList, Wallet } from 'lucide-react'
+import { BarChart3, Calendar, Car, ClipboardCheck, Droplets, LayoutDashboard, MessageSquare, Settings, Users2, Wrench, Zap, ClipboardList, Wallet, Loader2 } from 'lucide-react'
 import { DashShell } from '../components/dash/DashShell'
 import type { NavItem } from '../components/dash/DashSidebar'
-import { ClientOverview } from '../components/dashboard/client/ClientOverview'
-import { CarWashOverview } from '../components/dashboard/client/CarWashOverview'
-import { CarWashLeads } from '../components/dashboard/client/CarWashLeads'
-import { CarWashReports } from '../components/dashboard/client/CarWashReports'
-import { CarWashQueue } from '../components/dashboard/client/CarWashQueue'
-import { CarWashWorkers } from '../components/dashboard/client/CarWashWorkers'
-import { CarWashFinance } from '../components/dashboard/client/CarWashFinance'
-import { CarWashDailyClosing } from '../components/dashboard/client/CarWashDailyClosing'
-import { CarWashSeedDemo } from '../components/dashboard/client/CarWashSeedDemo'
-import { ClientAutomations } from '../components/dashboard/client/ClientAutomations'
-import { CarWashAutomations } from '../components/dashboard/client/CarWashAutomations'
-import { ClientLeads } from '../components/dashboard/client/ClientLeads'
-import { ClientReports } from '../components/dashboard/client/ClientReports'
-import { ClientSettings } from '../components/dashboard/client/ClientSettings'
-import { ClientSetup } from '../components/dashboard/client/ClientSetup'
-import { CarWashSetup } from '../components/dashboard/client/CarWashSetup'
-import { ClientAppointments } from '../components/dashboard/client/ClientAppointments'
-import { ClientConversations } from '../components/dashboard/client/ClientConversations'
-import { PricingPage } from '../components/dashboard/client/PricingPage'
 import { useClientCompany } from '../hooks/useClientCompany'
 import { ClientCompanyProvider } from '../context/ClientCompanyContext'
 import { getClientIndustryTemplate } from '../lib/clientIndustryTemplates'
-import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useActiveProfile } from '../context/ActiveProfileContext'
+
+const ClientOverview     = lazy(() => import('../components/dashboard/client/ClientOverview').then(m => ({ default: m.ClientOverview })))
+const CarWashOverview    = lazy(() => import('../components/dashboard/client/CarWashOverview').then(m => ({ default: m.CarWashOverview })))
+const CarWashLeads       = lazy(() => import('../components/dashboard/client/CarWashLeads').then(m => ({ default: m.CarWashLeads })))
+const CarWashReports     = lazy(() => import('../components/dashboard/client/CarWashReports').then(m => ({ default: m.CarWashReports })))
+const CarWashQueue       = lazy(() => import('../components/dashboard/client/CarWashQueue').then(m => ({ default: m.CarWashQueue })))
+const CarWashWorkers     = lazy(() => import('../components/dashboard/client/CarWashWorkers').then(m => ({ default: m.CarWashWorkers })))
+const CarWashFinance     = lazy(() => import('../components/dashboard/client/CarWashFinance').then(m => ({ default: m.CarWashFinance })))
+const CarWashDailyClosing = lazy(() => import('../components/dashboard/client/CarWashDailyClosing').then(m => ({ default: m.CarWashDailyClosing })))
+const CarWashSeedDemo    = lazy(() => import('../components/dashboard/client/CarWashSeedDemo').then(m => ({ default: m.CarWashSeedDemo })))
+const ClientAutomations  = lazy(() => import('../components/dashboard/client/ClientAutomations').then(m => ({ default: m.ClientAutomations })))
+const CarWashAutomations = lazy(() => import('../components/dashboard/client/CarWashAutomations').then(m => ({ default: m.CarWashAutomations })))
+const ClientLeads        = lazy(() => import('../components/dashboard/client/ClientLeads').then(m => ({ default: m.ClientLeads })))
+const ClientReports      = lazy(() => import('../components/dashboard/client/ClientReports').then(m => ({ default: m.ClientReports })))
+const ClientSettings     = lazy(() => import('../components/dashboard/client/ClientSettings').then(m => ({ default: m.ClientSettings })))
+const ClientSetup        = lazy(() => import('../components/dashboard/client/ClientSetup').then(m => ({ default: m.ClientSetup })))
+const CarWashSetup       = lazy(() => import('../components/dashboard/client/CarWashSetup').then(m => ({ default: m.CarWashSetup })))
+const ClientAppointments = lazy(() => import('../components/dashboard/client/ClientAppointments').then(m => ({ default: m.ClientAppointments })))
+const ClientConversations = lazy(() => import('../components/dashboard/client/ClientConversations').then(m => ({ default: m.ClientConversations })))
+const PricingPage        = lazy(() => import('../components/dashboard/client/PricingPage').then(m => ({ default: m.PricingPage })))
+
+const PageLoader = () => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300, gap: 10 }}>
+    <Loader2 size={18} style={{ animation: 'spin 0.8s linear infinite', color: '#22D3EE' }} />
+    <span style={{ color: '#475569', fontFamily: 'Tajawal, sans-serif', fontSize: 13 }}>جاري التحميل...</span>
+  </div>
+)
 
 function buildNavItems(template: ReturnType<typeof getClientIndustryTemplate>): NavItem[] {
   const labels = template.navLabels
@@ -97,13 +105,6 @@ export const ClientPortal = () => {
     check()
   }, [isCarWash, companyId, loading, seedChecked])
 
-  if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#080C14', gap: 12 }}>
-      <div style={{ width: 20, height: 20, border: '2px solid rgba(255,255,255,0.1)', borderTopColor: '#22D3EE', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-      <span style={{ color: '#475569', fontFamily: 'Tajawal, sans-serif', fontSize: 14 }}>جاري التحميل...</span>
-    </div>
-  )
-
   const canAccess = (path: string) =>
     profile.isOwner || !isCarWash || profile.permissions.includes(path)
 
@@ -121,32 +122,40 @@ export const ClientPortal = () => {
     ? <Navigate to={profile.permissions[0]} replace />
     : noAccessPage
 
+  if (loading) return (
+    <DashShell navItems={[]} role="client" pageTitle="">
+      <PageLoader />
+    </DashShell>
+  )
+
   return (
     <DashShell navItems={navItems} role="client" pageTitle={pageTitle}>
-      <Routes>
-        <Route index element={canAccess('/client') ? (isCarWash ? <CarWashOverview /> : <ClientOverview />) : fallback} />
-        <Route path="queue" element={canAccess('/client/queue') ? <CarWashQueue /> : fallback} />
-        <Route path="workers" element={canAccess('/client/workers') ? <CarWashWorkers /> : fallback} />
-        <Route path="finance" element={canAccess('/client/finance') ? <CarWashFinance /> : fallback} />
-        <Route path="closing" element={canAccess('/client/closing') ? <CarWashDailyClosing /> : fallback} />
-        <Route path="setup" element={isCarWash ? <CarWashSetup /> : <ClientSetup />} />
-        <Route path="appointments" element={<ClientAppointments />} />
-        <Route path="conversations" element={<ClientConversations />} />
-        <Route path="automations" element={canAccess('/client/automations') ? (isCarWash ? <CarWashAutomations /> : <ClientAutomations />) : fallback} />
-        <Route path="leads" element={canAccess('/client/leads') ? (isCarWash ? <CarWashLeads /> : <ClientLeads />) : fallback} />
-        <Route path="reports" element={canAccess('/client/reports') ? (isCarWash ? <CarWashReports /> : <ClientReports />) : fallback} />
-        <Route path="upgrade" element={<PricingPage />} />
-        <Route path="settings" element={canAccess('/client/settings') ? <ClientSettings /> : fallback} />
-        <Route path="*" element={canAccess('/client') ? (isCarWash ? <CarWashOverview /> : <ClientOverview />) : fallback} />
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route index element={canAccess('/client') ? (isCarWash ? <CarWashOverview /> : <ClientOverview />) : fallback} />
+          <Route path="queue" element={canAccess('/client/queue') ? <CarWashQueue /> : fallback} />
+          <Route path="workers" element={canAccess('/client/workers') ? <CarWashWorkers /> : fallback} />
+          <Route path="finance" element={canAccess('/client/finance') ? <CarWashFinance /> : fallback} />
+          <Route path="closing" element={canAccess('/client/closing') ? <CarWashDailyClosing /> : fallback} />
+          <Route path="setup" element={isCarWash ? <CarWashSetup /> : <ClientSetup />} />
+          <Route path="appointments" element={<ClientAppointments />} />
+          <Route path="conversations" element={<ClientConversations />} />
+          <Route path="automations" element={canAccess('/client/automations') ? (isCarWash ? <CarWashAutomations /> : <ClientAutomations />) : fallback} />
+          <Route path="leads" element={canAccess('/client/leads') ? (isCarWash ? <CarWashLeads /> : <ClientLeads />) : fallback} />
+          <Route path="reports" element={canAccess('/client/reports') ? (isCarWash ? <CarWashReports /> : <ClientReports />) : fallback} />
+          <Route path="upgrade" element={<PricingPage />} />
+          <Route path="settings" element={canAccess('/client/settings') ? <ClientSettings /> : fallback} />
+          <Route path="*" element={canAccess('/client') ? (isCarWash ? <CarWashOverview /> : <ClientOverview />) : fallback} />
+        </Routes>
 
-      {showSeedDemo && companyId && (
-        <CarWashSeedDemo
-          companyId={companyId}
-          onDone={() => { setShowSeedDemo(false); navigate('/client/queue') }}
-          onClose={() => setShowSeedDemo(false)}
-        />
-      )}
+        {showSeedDemo && companyId && (
+          <CarWashSeedDemo
+            companyId={companyId}
+            onDone={() => { setShowSeedDemo(false); navigate('/client/queue') }}
+            onClose={() => setShowSeedDemo(false)}
+          />
+        )}
+      </Suspense>
     </DashShell>
   )
 }

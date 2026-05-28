@@ -1,12 +1,19 @@
 import { useEffect, useState } from 'react'
-import { Plus, X, Loader2, TrendingUp, TrendingDown, Wallet, Users, DollarSign, ClipboardCheck } from 'lucide-react'
+import { Plus, X, Loader2, TrendingUp, TrendingDown, Wallet, Users, DollarSign, ClipboardCheck, FileDown } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
 import { CarWashDailyClosing } from './CarWashDailyClosing'
 import { FeatureLock } from '../../dash/FeatureLock'
 import { logAudit } from '../../../lib/auditLog'
+import { downloadCSV, formatDateForCSV } from '../../../lib/exportUtils'
 import type { CWExpense, ExpenseCategory, PaymentMethod } from '../../../types'
+
+const DATE_PRESETS = [
+  { label: 'اليوم',       days: 1  },
+  { label: 'هذا الأسبوع', days: 7  },
+  { label: 'هذا الشهر',  days: 30 },
+]
 
 const CATEGORIES: { value: ExpenseCategory; label: string }[] = [
   { value: 'tools',       label: 'أدوات ومواد'  },
@@ -39,6 +46,7 @@ export const CarWashFinance = () => {
   const [loading, setLoading] = useState(true)
   const [expenses, setExpenses] = useState<CWExpense[]>([])
   const [revenue, setRevenue] = useState(0)
+  const [visitCount, setVisitCount] = useState(0)
   const [workerCost, setWorkerCost] = useState(0)
   const [paymentBreakdown, setPaymentBreakdown] = useState<Record<string, number>>({})
   const [freeWashCount, setFreeWashCount] = useState(0)
@@ -47,29 +55,42 @@ export const CarWashFinance = () => {
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [days, setDays] = useState(1)
+  const [visitsData, setVisitsData] = useState<any[]>([])
 
   const today = new Date().toISOString().slice(0, 10)
 
-  const loadData = async () => {
+  const getDateRange = (d: number) => {
+    const start = new Date()
+    start.setDate(start.getDate() - (d - 1))
+    start.setHours(0, 0, 0, 0)
+    return start
+  }
+
+  const loadData = async (selectedDays = days) => {
     if (!companyId) return
     setLoading(true)
 
-    const todayStart = new Date()
-    todayStart.setHours(0, 0, 0, 0)
+    const rangeStart = getDateRange(selectedDays)
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
+
+    const expFrom = selectedDays === 1 ? today : rangeStart.toISOString().slice(0, 10)
 
     const [{ data: visits }, { data: queue }, { data: workers }, { data: exps }] = await Promise.all([
       supabase.from('cw_visits')
-        .select('price, subtotal, vat_amount, payment_method, is_free_wash, discount_amount, payment_status')
+        .select('price, subtotal, vat_amount, payment_method, is_free_wash, discount_amount, payment_status, created_at, service_name')
         .eq('company_id', companyId)
-        .gte('created_at', todayStart.toISOString())
+        .gte('created_at', rangeStart.toISOString())
         .not('payment_status', 'in', '("refunded","cancelled")'),
-      supabase.from('cw_queue').select('price, subtotal, worker_id, status').eq('company_id', companyId).eq('status', 'delivered').gte('delivered_at', todayStart.toISOString()),
+      supabase.from('cw_queue').select('price, subtotal, worker_id, status').eq('company_id', companyId).eq('status', 'delivered').gte('delivered_at', rangeStart.toISOString()),
       supabase.from('cw_workers').select('id, commission_type, commission_value, salary_type, fixed_salary').eq('company_id', companyId),
-      supabase.from('cw_expenses').select('*').eq('company_id', companyId).eq('expense_date', today).order('created_at', { ascending: false }),
+      supabase.from('cw_expenses').select('*').eq('company_id', companyId).gte('expense_date', expFrom).order('created_at', { ascending: false }),
     ])
 
     const totalRevenue = (visits || []).reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0)
     setRevenue(totalRevenue)
+    setVisitCount((visits || []).length)
+    setVisitsData(visits || [])
 
     const breakdown: Record<string, number> = {}
     let freeCount = 0
@@ -100,8 +121,21 @@ export const CarWashFinance = () => {
   }
 
   useEffect(() => {
-    if (!authLoading && companyId) loadData()
-  }, [authLoading, companyId])
+    if (!authLoading && companyId) loadData(days)
+  }, [authLoading, companyId, days])
+
+  const exportCSV = () => {
+    const rows = visitsData.map((v: any) => ({
+      'التاريخ': formatDateForCSV(v.created_at),
+      'الخدمة': v.service_name || '',
+      'قبل الضريبة': (v.subtotal ?? v.price ?? 0).toFixed(2),
+      'الضريبة': (v.vat_amount ?? 0).toFixed(2),
+      'الإجمالي': (v.subtotal ?? v.price ?? 0).toFixed(2),
+      'طريقة الدفع': v.payment_method || 'cash',
+      'غسلة مجانية': v.is_free_wash ? 'نعم' : 'لا',
+    }))
+    downloadCSV(rows, `madar-finance-${today}.csv`)
+  }
 
   const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0)
   const netProfit = revenue - totalExpenses - workerCost
@@ -156,21 +190,41 @@ export const CarWashFinance = () => {
       </div>
 
       {tab === 'closing' ? <CarWashDailyClosing /> : <>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white font-cairo">المالية</h1>
-          <p className="text-sm text-slate-500 font-tajawal">إغلاق يوم {new Date().toLocaleDateString('ar-SA', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+          <div className="flex gap-2 mt-2 flex-wrap">
+            {DATE_PRESETS.map(p => (
+              <button key={p.days} onClick={() => setDays(p.days)}
+                style={{
+                  padding: '4px 14px', borderRadius: 20, fontSize: 12, fontFamily: 'Tajawal, sans-serif',
+                  cursor: 'pointer', border: `1px solid ${days === p.days ? '#22D3EE' : 'rgba(255,255,255,0.12)'}`,
+                  background: days === p.days ? 'rgba(34,211,238,0.1)' : 'transparent',
+                  color: days === p.days ? '#22D3EE' : '#64748B', fontWeight: days === p.days ? 700 : 400,
+                }}>
+                {p.label}
+              </button>
+            ))}
+          </div>
         </div>
-        {can.financeExpenses && (
-          <button onClick={() => setShowForm(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-tajawal font-medium text-white" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
-            <Plus size={16} /> إضافة مصروف
+        <div className="flex gap-2">
+          <button onClick={exportCSV}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-tajawal font-medium"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#94A3B8' }}>
+            <FileDown size={15} /> تصدير
           </button>
-        )}
+          {can.financeExpenses && (
+            <button onClick={() => setShowForm(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-tajawal font-medium text-white" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
+              <Plus size={16} /> إضافة مصروف
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Revenue card — always visible */}
-      <div className="grid grid-cols-1 gap-4">
-        <StatCard icon={TrendingUp} label="الإيرادات" value={`${revenue.toFixed(0)} ر.س`} color="#10B981" sub="من الغسيل اليوم" />
+      {/* Revenue cards — always visible */}
+      <div className="grid grid-cols-2 gap-4">
+        <StatCard icon={TrendingUp} label="الإيرادات" value={`${revenue.toFixed(0)} ر.س`} color="#10B981" sub={`${visitCount} زيارة — ${DATE_PRESETS.find(p => p.days === days)?.label || ''}`} />
+        <StatCard icon={DollarSign} label="متوسط الزيارة" value={`${visitCount > 0 ? (revenue / visitCount).toFixed(0) : 0} ر.س`} color="#22D3EE" sub="لكل سيارة" />
       </div>
 
       {/* Expenses, profit bar, workers cost — Pro feature */}

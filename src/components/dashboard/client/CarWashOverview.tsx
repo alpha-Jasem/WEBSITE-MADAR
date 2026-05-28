@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Car,
   Check,
@@ -222,11 +222,15 @@ export function CarWashOverview() {
   const [monthlyTarget, setMonthlyTarget] = useState(0)
   const [services, setServices] = useState<CWService[]>([])
   const [search, setSearch] = useState('')
+  const [tierFilter, setTierFilter] = useState<string>('all')
+  const [sortBy, setSortBy] = useState<'last_visit' | 'visits'>('last_visit')
   const [showModal, setShowModal] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [toasts, setToasts] = useState<Toast[]>([])
   const toastId = useRef(0)
   const [form, setForm] = useState<WalkInForm>({ name: '', phone: '', service: '', price: '' })
+
+  const initialLoadDone = useRef(false)
 
   const addToast = (message: string, type: Toast['type'] = 'success') => {
     const id = ++toastId.current
@@ -234,9 +238,9 @@ export function CarWashOverview() {
     setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 5000)
   }
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!companyId) return
-    setLoading(true)
+    if (!initialLoadDone.current) setLoading(true)
 
     const today = new Date().toISOString().slice(0, 10)
     const twoHoursAgo = new Date(Date.now() - 2 * 3600 * 1000).toISOString()
@@ -333,8 +337,9 @@ export function CarWashOverview() {
     }
     setQueueSummary(q)
 
+    initialLoadDone.current = true
     setLoading(false)
-  }
+  }, [companyId])
 
   useEffect(() => {
     if (authLoading || !companyId) return
@@ -442,20 +447,30 @@ export function CarWashOverview() {
     } else {
       addToast(`✅ تم تسجيل الزيارة رقم ${newVisitCount} لـ ${form.name || normalizedPhone}`)
     }
-
-    load()
   }
 
   const visitsTrend = lastMonthVisits > 0 ? ((thisMonthVisits - lastMonthVisits) / lastMonthVisits) * 100 : undefined
   const revenueTrend = lastMonthRevenue > 0 ? ((monthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 : undefined
   const targetPct = monthlyTarget > 0 ? Math.min((monthRevenue / monthlyTarget) * 100, 100) : 0
 
-  const milestones = customers.filter(c => c.total_visits > 0 && c.total_visits % 5 === 0).length
-  const filteredCustomers = customers.filter(c => {
-    if (!search) return true
-    const q = search.toLowerCase()
-    return (c.name || '').toLowerCase().includes(q) || c.phone.includes(q)
-  })
+  const milestones = useMemo(
+    () => customers.filter(c => c.total_visits > 0 && c.total_visits % 5 === 0).length,
+    [customers]
+  )
+  const filteredCustomers = useMemo(() => {
+    let list = customers
+    if (search) {
+      const q = search.toLowerCase()
+      list = list.filter(c => (c.name || '').toLowerCase().includes(q) || c.phone.includes(q))
+    }
+    if (tierFilter !== 'all') {
+      list = list.filter(c => c.loyalty_tier === tierFilter)
+    }
+    if (sortBy === 'visits') {
+      list = [...list].sort((a, b) => b.total_visits - a.total_visits)
+    }
+    return list
+  }, [customers, search, tierFilter, sortBy])
 
   if (authLoading || loading) {
     return (
@@ -789,25 +804,56 @@ export function CarWashOverview() {
         {/* Table Header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '18px 22px', borderBottom: '1px solid rgba(255,255,255,0.06)',
-          flexWrap: 'wrap', gap: 12,
+          padding: '14px 22px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+          flexWrap: 'wrap', gap: 10,
         }}>
           <h2 style={{ fontSize: 15, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>
             قائمة العملاء
+            <span style={{ fontSize: 12, color: '#475569', fontWeight: 400, marginRight: 8 }}>({filteredCustomers.length})</span>
           </h2>
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="ابحث باسم أو رقم جوال..."
-            dir="rtl"
-            style={{
-              padding: '8px 14px', borderRadius: 10, fontSize: 13,
-              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-              color: '#F1F5F9', outline: 'none', fontFamily: 'Tajawal, sans-serif',
-              width: 220,
-            }}
-          />
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            {/* Tier filter */}
+            {[
+              { value: 'all', label: 'الكل' },
+              { value: 'bronze', label: 'برونزي' },
+              { value: 'silver', label: 'فضي' },
+              { value: 'gold', label: 'ذهبي' },
+            ].map(t => (
+              <button key={t.value} onClick={() => setTierFilter(t.value)}
+                style={{
+                  padding: '4px 12px', borderRadius: 20, fontSize: 11, fontFamily: 'Tajawal, sans-serif',
+                  cursor: 'pointer', border: `1px solid ${tierFilter === t.value ? '#22D3EE' : 'rgba(255,255,255,0.08)'}`,
+                  background: tierFilter === t.value ? 'rgba(34,211,238,0.1)' : 'transparent',
+                  color: tierFilter === t.value ? '#22D3EE' : '#64748B',
+                }}>
+                {t.label}
+              </button>
+            ))}
+            {/* Sort */}
+            <select value={sortBy} onChange={e => setSortBy(e.target.value as typeof sortBy)}
+              style={{
+                padding: '4px 10px', borderRadius: 10, fontSize: 11, fontFamily: 'Tajawal, sans-serif',
+                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                color: '#94A3B8', outline: 'none', cursor: 'pointer',
+              }}>
+              <option value="last_visit">آخر زيارة</option>
+              <option value="visits">الأكثر زيارة</option>
+            </select>
+            {/* Search */}
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="ابحث..."
+              dir="rtl"
+              style={{
+                padding: '6px 12px', borderRadius: 10, fontSize: 12,
+                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                color: '#F1F5F9', outline: 'none', fontFamily: 'Tajawal, sans-serif',
+                width: 150,
+              }}
+            />
+          </div>
         </div>
 
         {/* Column headers */}
