@@ -259,18 +259,9 @@ export const CarWashQueue = () => {
             company_id: companyId,
             is_new_customer: true,
           })
-        } else {
-          // Existing customer — update name if provided + send car received confirmation
-          if (form.customer_name) {
-            await supabase.from('cw_customers').update({ name: form.customer_name }).eq('id', existingCustomer.id)
-          }
-          fireWebhook(N8N_REGISTER_WEBHOOK, {
-            phone: normalizedPhone,
-            customer_name: form.customer_name || '',
-            company_name: company?.name || 'المغسلة',
-            company_id: companyId,
-            is_new_customer: false,
-          })
+        } else if (form.customer_name && existingCustomer) {
+          // Update name if provided
+          await supabase.from('cw_customers').update({ name: form.customer_name }).eq('id', existingCustomer.id)
         }
         void localPhone
       }
