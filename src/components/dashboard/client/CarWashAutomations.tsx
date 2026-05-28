@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Car, Star, ClipboardCheck, Receipt, Zap, MessageSquare, Users2, Clock, ChevronDown, ChevronUp, Save, Check, Loader2, Play, Pause } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
@@ -79,8 +79,8 @@ const DEFS: AutomationDef[] = [
 
 
 const SECTION_STYLE = {
-  background: 'rgba(255,255,255,0.03)',
-  border: '1px solid rgba(255,255,255,0.07)',
+  background: '#F8FAFC',
+  border: '1px solid #E2E8F0',
   borderRadius: 18,
   padding: '20px 22px',
 }
@@ -172,7 +172,7 @@ export function CarWashAutomations() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>الأتمتة</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>الأتمتة</h1>
           <p style={{ fontSize: 13, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginTop: 4 }}>
             تحكم في تشغيل وإيقاف رسائل الواتساب التلقائية
           </p>
@@ -271,7 +271,7 @@ function AutomationCard({ def, enabled, onToggle, expanded, onExpand, stat }: Ca
         {/* Info */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif' }}>{def.label}</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>{def.label}</span>
             {stat && (
               <span style={{ fontSize: 11, color: def.color, fontFamily: 'Sora, sans-serif', padding: '2px 8px', borderRadius: 6, background: `${def.color}15` }}>
                 {stat.value} {stat.label}
@@ -288,14 +288,14 @@ function AutomationCard({ def, enabled, onToggle, expanded, onExpand, stat }: Ca
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           {hasSettings && (
             <button onClick={onExpand}
-              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#64748B', cursor: 'pointer', fontSize: 11, fontFamily: 'Tajawal, sans-serif' }}>
+              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 12px', borderRadius: 8, border: '1px solid #E2E8F0', background: 'transparent', color: '#64748B', cursor: 'pointer', fontSize: 11, fontFamily: 'Tajawal, sans-serif' }}>
               تفاصيل
               {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
             </button>
           )}
           {/* Toggle */}
           <button onClick={onToggle}
-            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, border: `1px solid ${enabled ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.1)'}`, background: enabled ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.03)', color: enabled ? '#10B981' : '#475569', cursor: 'pointer', fontSize: 12, fontFamily: 'Cairo, sans-serif', fontWeight: 600 }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, border: `1px solid ${enabled ? 'rgba(16,185,129,0.3)' : '#E2E8F0'}`, background: enabled ? 'rgba(16,185,129,0.1)' : '#F8FAFC', color: enabled ? '#10B981' : '#475569', cursor: 'pointer', fontSize: 12, fontFamily: 'Cairo, sans-serif', fontWeight: 600 }}>
             {enabled ? <><Play size={11} fill="#10B981" /> شغّال</> : <><Pause size={11} /> موقوف</>}
           </button>
         </div>
@@ -310,7 +310,7 @@ function AutomationCard({ def, enabled, onToggle, expanded, onExpand, stat }: Ca
 
       {/* Expanded — AI-generated note only */}
       {expanded && def.aiGenerated && (
-        <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #E2E8F0' }}>
           <div style={{ padding: '12px 14px', background: 'rgba(236,72,153,0.06)', borderRadius: 12, border: '1px solid rgba(236,72,153,0.2)' }}>
             <p style={{ fontSize: 12, color: '#F472B6', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>
               ✨ هذه الرسالة يُولّدها الذكاء الاصطناعي تلقائياً كل أسبوع — لا تحتاج تعديلاً يدوياً

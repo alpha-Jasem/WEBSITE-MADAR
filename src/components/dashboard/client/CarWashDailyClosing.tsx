@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Loader2, ClipboardCheck, CheckCircle, Download, FileDown, ChevronDown } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
@@ -10,7 +10,7 @@ const N8N_CLOSING_WEBHOOK = 'https://keepcalm.app.n8n.cloud/webhook/cw-daily-clo
 
 function SummaryRow({ label, value, highlight, color }: { label: string; value: string; highlight?: boolean; color?: string }) {
   return (
-    <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+    <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid #E2E8F0' }}>
       <span className="text-sm text-slate-400 font-tajawal">{label}</span>
       <span className={`text-sm font-bold font-sora`} style={{ color: color || (highlight ? '#6366F1' : '#E2E8F0') }}>{value}</span>
     </div>
@@ -282,14 +282,14 @@ export const CarWashDailyClosing = () => {
             <button
               onClick={() => setShowExport(v => !v)}
               className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-tajawal text-slate-400 transition-all hover:text-white"
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+              style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
             >
               <FileDown size={14} />
               تصدير
               <ChevronDown size={12} />
             </button>
             {showExport && (
-              <div className="absolute left-0 top-full mt-1 rounded-xl overflow-hidden z-50" style={{ background: '#0D1422', border: '1px solid rgba(255,255,255,0.1)', minWidth: 180 }}>
+              <div className="absolute left-0 top-full mt-1 rounded-xl overflow-hidden z-50" style={{ background: '#0D1422', border: '1px solid #CBD5E1', minWidth: 180 }}>
                 {[
                   { label: 'تصدير CSV', action: () => { exportClosingsCSV(); setShowExport(false) } },
                   { label: 'طباعة آخر إغلاق', action: () => { if (todayClosing) printClosing(todayClosing); setShowExport(false) } },
@@ -321,8 +321,8 @@ export const CarWashDailyClosing = () => {
 
       {/* Summary card */}
       {displayData && (
-        <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-          <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.02)' }}>
+        <div className="rounded-2xl overflow-hidden" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+          <div className="px-5 py-4" style={{ borderBottom: '1px solid #E2E8F0', background: '#FAFAFA' }}>
             <div className="flex items-center gap-2">
               <ClipboardCheck size={16} className="text-primary-400" />
               <p className="text-sm font-bold text-white font-cairo">ملخص اليوم</p>
@@ -373,7 +373,7 @@ export const CarWashDailyClosing = () => {
               placeholder="أي ملاحظات عن هذا اليوم..."
               rows={3}
               className="w-full px-4 py-3 rounded-xl text-sm font-tajawal text-white placeholder-slate-600 outline-none resize-none"
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+              style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
             />
           </div>
           <button
@@ -390,8 +390,8 @@ export const CarWashDailyClosing = () => {
 
       {/* Past closings */}
       {pastClosings.length > 0 && (
-        <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-          <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <div className="rounded-2xl overflow-hidden" style={{ background: '#FAFAFA', border: '1px solid #E2E8F0' }}>
+          <div className="px-5 py-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
             <p className="text-sm font-bold text-white font-cairo">الإغلاقات السابقة</p>
           </div>
           <div className="divide-y divide-white/5">
@@ -410,7 +410,7 @@ export const CarWashDailyClosing = () => {
                 <button
                   onClick={() => printClosing(c)}
                   className="p-2 rounded-lg text-slate-600 hover:text-white transition-colors"
-                  style={{ background: 'rgba(255,255,255,0.04)' }}
+                  style={{ background: '#FFFFFF' }}
                 >
                   <Download size={13} />
                 </button>

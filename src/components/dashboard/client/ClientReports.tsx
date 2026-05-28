@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { BarChart3, MessageSquare, Users2, TrendingUp, Clock, Loader2 } from 'lucide-react'
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts'
 import { supabase } from '../../../lib/supabase'
@@ -7,7 +7,7 @@ import { useClientCompany } from '../../../hooks/useClientCompany'
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
   return (
-    <div style={{ background: '#0D1422', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '8px 12px' }}>
+    <div style={{ background: '#0D1422', border: '1px solid #CBD5E1', borderRadius: 8, padding: '8px 12px' }}>
       <p style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>{label}</p>
       {payload.map((p: any) => (
         <p key={p.dataKey} style={{ fontSize: 13, fontWeight: 700, color: p.color, fontFamily: 'Sora, sans-serif', margin: '2px 0 0' }}>
@@ -20,7 +20,7 @@ function ChartTooltip({ active, payload, label }: any) {
 
 function StatBox({ icon: Icon, label, value, color }: { icon: typeof MessageSquare; label: string; value: string; color: string }) {
   return (
-    <div className="p-4 rounded-xl text-center" style={{ background: 'rgba(255,255,255,0.02)', border: `1px solid ${color}22` }}>
+    <div className="p-4 rounded-xl text-center" style={{ background: '#FAFAFA', border: `1px solid ${color}22` }}>
       <Icon size={18} style={{ color, margin: '0 auto 8px' }} />
       <p className="text-2xl font-bold font-sora mb-1" style={{ color }}>{value}</p>
       <p className="text-xs text-slate-500 font-tajawal">{label}</p>
@@ -105,7 +105,7 @@ export const ClientReports = () => {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div className="p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+        <div className="p-5 rounded-2xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
           <div className="flex items-center gap-2 mb-4">
             <BarChart3 size={15} style={{ color: '#4F6EF7' }} />
             <h3 className="text-sm font-bold text-white font-cairo">الرسائل اليومية — آخر 7 أيام</h3>
@@ -132,7 +132,7 @@ export const ClientReports = () => {
           )}
         </div>
 
-        <div className="p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+        <div className="p-5 rounded-2xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
           <div className="flex items-center gap-2 mb-4">
             <Users2 size={15} style={{ color: '#10B981' }} />
             <h3 className="text-sm font-bold text-white font-cairo">العملاء الجدد — آخر 7 أيام</h3>

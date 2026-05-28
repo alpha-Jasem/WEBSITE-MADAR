@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Car, Clock, Star, Plus, Trash2, Check, Loader2, MapPin, Save, Receipt } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
@@ -24,8 +24,8 @@ const DEFAULT_HOURS: DayHours = Object.fromEntries(
 
 
 const SECTION_STYLE = {
-  background: 'rgba(255,255,255,0.03)',
-  border: '1px solid rgba(255,255,255,0.07)',
+  background: '#F8FAFC',
+  border: '1px solid #E2E8F0',
   borderRadius: 18,
   padding: '22px 24px',
 }
@@ -175,12 +175,12 @@ export function CarWashSetup() {
   return (
     <div dir="rtl" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
       <div>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>إعداد المغسلة</h1>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>إعداد المغسلة</h1>
         <p style={{ fontSize: 13, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginTop: 4 }}>الخدمات، أوقات العمل، الولاء، والضريبة</p>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 6, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: 6, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 6, background: '#FAFAFA', border: '1px solid #E2E8F0', borderRadius: 14, padding: 6, flexWrap: 'wrap' }}>
         {TABS.map(t => {
           const active = tab === t.key
           return (
@@ -206,7 +206,7 @@ export function CarWashSetup() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Car size={15} color="#22D3EE" />
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif' }}>الخدمات والأسعار</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>الخدمات والأسعار</span>
             </div>
             <button onClick={addService}
               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, border: '1px solid rgba(34,211,238,0.25)', background: 'rgba(34,211,238,0.08)', color: '#22D3EE', cursor: 'pointer', fontSize: 12, fontFamily: 'Cairo, sans-serif', fontWeight: 600 }}>
@@ -227,14 +227,14 @@ export function CarWashSetup() {
                 <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 60px 32px', gap: 10, alignItems: 'center' }}>
                   <input value={s.name} onChange={e => updateService(i, 'name', e.target.value)}
                     placeholder="اسم الخدمة"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '8px 12px', color: '#E2E8F0', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '8px 12px', color: '#1E293B', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
                   <input type="number" value={s.price} onChange={e => updateService(i, 'price', Number(e.target.value))}
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '8px 12px', color: '#E2E8F0', fontSize: 13, fontFamily: 'Sora, sans-serif', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '8px 12px', color: '#1E293B', fontSize: 13, fontFamily: 'Sora, sans-serif', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
                   <input type="number" value={s.duration_minutes} onChange={e => updateService(i, 'duration_minutes', Number(e.target.value))}
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '8px 12px', color: '#E2E8F0', fontSize: 13, fontFamily: 'Sora, sans-serif', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '8px 12px', color: '#1E293B', fontSize: 13, fontFamily: 'Sora, sans-serif', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <button onClick={() => updateService(i, 'active', !s.active)}
-                      style={{ width: 28, height: 28, borderRadius: 8, border: 'none', cursor: 'pointer', background: s.active ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.04)', color: s.active ? '#10B981' : '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      style={{ width: 28, height: 28, borderRadius: 8, border: 'none', cursor: 'pointer', background: s.active ? 'rgba(16,185,129,0.15)' : '#FFFFFF', color: s.active ? '#10B981' : '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <Check size={13} />
                     </button>
                   </div>
@@ -260,25 +260,25 @@ export function CarWashSetup() {
         <div style={SECTION_STYLE}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
             <Clock size={15} color="#8B5CF6" />
-            <span style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif' }}>أوقات العمل</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>أوقات العمل</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {DAYS.map(d => {
               const h = hours[d.key] || { open: '08:00', close: '22:00', closed: false }
               return (
-                <div key={d.key} style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 80px', gap: 12, alignItems: 'center', padding: '10px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.05)', opacity: h.closed ? 0.5 : 1 }}>
-                  <span style={{ fontSize: 13, color: '#E2E8F0', fontFamily: 'Tajawal, sans-serif', fontWeight: 600 }}>{d.label}</span>
+                <div key={d.key} style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 80px', gap: 12, alignItems: 'center', padding: '10px 14px', background: '#FAFAFA', borderRadius: 12, border: '1px solid #E2E8F0', opacity: h.closed ? 0.5 : 1 }}>
+                  <span style={{ fontSize: 13, color: '#1E293B', fontFamily: 'Tajawal, sans-serif', fontWeight: 600 }}>{d.label}</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span style={{ fontSize: 11, color: '#475569', fontFamily: 'Tajawal, sans-serif' }}>فتح</span>
                     <input type="time" value={h.open} disabled={h.closed}
                       onChange={e => setHours(prev => ({ ...prev, [d.key]: { ...prev[d.key], open: e.target.value } }))}
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '6px 10px', color: '#E2E8F0', fontSize: 12, fontFamily: 'Sora, sans-serif', outline: 'none' }} />
+                      style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 8, padding: '6px 10px', color: '#1E293B', fontSize: 12, fontFamily: 'Sora, sans-serif', outline: 'none' }} />
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span style={{ fontSize: 11, color: '#475569', fontFamily: 'Tajawal, sans-serif' }}>غلق</span>
                     <input type="time" value={h.close} disabled={h.closed}
                       onChange={e => setHours(prev => ({ ...prev, [d.key]: { ...prev[d.key], close: e.target.value } }))}
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '6px 10px', color: '#E2E8F0', fontSize: 12, fontFamily: 'Sora, sans-serif', outline: 'none' }} />
+                      style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 8, padding: '6px 10px', color: '#1E293B', fontSize: 12, fontFamily: 'Sora, sans-serif', outline: 'none' }} />
                   </div>
                   <button onClick={() => setHours(prev => ({ ...prev, [d.key]: { ...prev[d.key], closed: !h.closed } }))}
                     style={{ padding: '6px 10px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 600, fontFamily: 'Cairo, sans-serif', background: h.closed ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.1)', color: h.closed ? '#EF4444' : '#10B981' }}>
@@ -302,7 +302,7 @@ export function CarWashSetup() {
           <div style={SECTION_STYLE}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
               <Star size={15} color="#F59E0B" />
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif' }}>برنامج الولاء (5+1 مجاناً)</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>برنامج الولاء (5+1 مجاناً)</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
@@ -312,7 +312,7 @@ export function CarWashSetup() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <input type="number" min={2} max={20} value={loyaltyThreshold}
                     onChange={e => setLoyaltyThreshold(Number(e.target.value))}
-                    style={{ width: 80, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '8px 12px', color: '#F1F5F9', fontSize: 18, fontFamily: 'Sora, sans-serif', fontWeight: 700, outline: 'none', textAlign: 'center' }} />
+                    style={{ width: 80, background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: 10, padding: '8px 12px', color: '#0F172A', fontSize: 18, fontFamily: 'Sora, sans-serif', fontWeight: 700, outline: 'none', textAlign: 'center' }} />
                   <div style={{ fontSize: 13, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>
                     كل <strong style={{ color: '#F59E0B' }}>{loyaltyThreshold}</strong> غسلات مدفوعة = الغسلة <strong style={{ color: '#10B981' }}>التالية مجانية</strong>
                   </div>
@@ -330,19 +330,19 @@ export function CarWashSetup() {
           <div style={SECTION_STYLE}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
               <MapPin size={15} color="#22D3EE" />
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif' }}>رابط Google Maps للتقييم</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>رابط Google Maps للتقييم</span>
             </div>
             <p style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginBottom: 12 }}>
               سيُرسل هذا الرابط للعملاء بعد الزيارة لطلب التقييم على Google.
             </p>
             <input value={reviewUrl} onChange={e => setReviewUrl(e.target.value)}
               placeholder="https://maps.app.goo.gl/..." dir="ltr"
-              style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '10px 14px', color: '#E2E8F0', fontSize: 13, fontFamily: 'monospace', outline: 'none', boxSizing: 'border-box' }} />
+              style={{ width: '100%', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 12, padding: '10px 14px', color: '#1E293B', fontSize: 13, fontFamily: 'monospace', outline: 'none', boxSizing: 'border-box' }} />
           </div>
           <div style={SECTION_STYLE}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
               <span style={{ fontSize: 15 }}>🎯</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif' }}>هدف الإيراد الشهري</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>هدف الإيراد الشهري</span>
             </div>
             <p style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginBottom: 14 }}>
               حدّد الهدف الشهري لإيرادات المغسلة — سيظهر شريط التقدم في لوحة التشغيل.
@@ -355,7 +355,7 @@ export function CarWashSetup() {
                 onChange={e => setMonthlyTarget(Number(e.target.value))}
                 placeholder="5000"
                 dir="ltr"
-                style={{ width: 140, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 14px', color: '#F1F5F9', fontSize: 18, fontFamily: 'Sora, sans-serif', fontWeight: 700, outline: 'none', textAlign: 'center' }}
+                style={{ width: 140, background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: 10, padding: '10px 14px', color: '#0F172A', fontSize: 18, fontFamily: 'Sora, sans-serif', fontWeight: 700, outline: 'none', textAlign: 'center' }}
               />
               <span style={{ fontSize: 13, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>ريال سعودي / الشهر</span>
             </div>
@@ -374,18 +374,18 @@ export function CarWashSetup() {
           <div style={SECTION_STYLE}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
               <Receipt size={15} color="#6366F1" />
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif' }}>إعدادات ضريبة القيمة المضافة (VAT)</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>إعدادات ضريبة القيمة المضافة (VAT)</span>
             </div>
 
             {/* Enable/Disable toggle */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: 'rgba(255,255,255,0.02)', borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: '#FAFAFA', borderRadius: 14, border: '1px solid #E2E8F0', marginBottom: 14 }}>
               <div>
-                <p style={{ fontSize: 14, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', fontWeight: 600, margin: 0 }}>تفعيل الضريبة</p>
+                <p style={{ fontSize: 14, color: '#0F172A', fontFamily: 'Cairo, sans-serif', fontWeight: 600, margin: 0 }}>تفعيل الضريبة</p>
                 <p style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', margin: '4px 0 0' }}>هل مغسلتك مسجّلة في هيئة الزكاة والضريبة؟</p>
               </div>
               <button
                 onClick={() => setTaxEnabled(v => !v)}
-                style={{ width: 48, height: 26, borderRadius: 99, border: 'none', cursor: 'pointer', background: taxEnabled ? '#6366F1' : 'rgba(255,255,255,0.1)', position: 'relative', transition: 'background 0.2s' }}>
+                style={{ width: 48, height: 26, borderRadius: 99, border: 'none', cursor: 'pointer', background: taxEnabled ? '#6366F1' : '#E2E8F0', position: 'relative', transition: 'background 0.2s' }}>
                 <span style={{ position: 'absolute', top: 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'right 0.2s, left 0.2s', right: taxEnabled ? 3 : 'auto', left: taxEnabled ? 'auto' : 3 }} />
               </button>
             </div>
@@ -398,16 +398,16 @@ export function CarWashSetup() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <input type="number" value={vatRate} min={0} max={100}
                       onChange={e => setVatRate(Number(e.target.value))}
-                      style={{ width: 80, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '8px 12px', color: '#F1F5F9', fontSize: 20, fontFamily: 'Sora, sans-serif', fontWeight: 700, outline: 'none', textAlign: 'center' }} />
+                      style={{ width: 80, background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: 10, padding: '8px 12px', color: '#0F172A', fontSize: 20, fontFamily: 'Sora, sans-serif', fontWeight: 700, outline: 'none', textAlign: 'center' }} />
                     <span style={{ fontSize: 18, color: '#6366F1', fontFamily: 'Sora, sans-serif', fontWeight: 700 }}>%</span>
                     <p style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>الضريبة المعتمدة في المملكة 15%</p>
                   </div>
                 </div>
 
                 {/* Price includes VAT */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: 'rgba(255,255,255,0.02)', borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: '#FAFAFA', borderRadius: 14, border: '1px solid #E2E8F0' }}>
                   <div>
-                    <p style={{ fontSize: 13, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', fontWeight: 600, margin: 0 }}>الأسعار تشمل الضريبة</p>
+                    <p style={{ fontSize: 13, color: '#0F172A', fontFamily: 'Cairo, sans-serif', fontWeight: 600, margin: 0 }}>الأسعار تشمل الضريبة</p>
                     <p style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', margin: '4px 0 0' }}>
                       {priceIncludesVat
                         ? `مثال: سعر 115 ر.س = ${(115 / 1.15).toFixed(2)} ر.س + ${(115 - 115/1.15).toFixed(2)} ر.س ضريبة`
@@ -416,7 +416,7 @@ export function CarWashSetup() {
                   </div>
                   <button
                     onClick={() => setPriceIncludesVat(v => !v)}
-                    style={{ width: 48, height: 26, borderRadius: 99, border: 'none', cursor: 'pointer', background: priceIncludesVat ? '#6366F1' : 'rgba(255,255,255,0.1)', position: 'relative', transition: 'background 0.2s' }}>
+                    style={{ width: 48, height: 26, borderRadius: 99, border: 'none', cursor: 'pointer', background: priceIncludesVat ? '#6366F1' : '#E2E8F0', position: 'relative', transition: 'background 0.2s' }}>
                     <span style={{ position: 'absolute', top: 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'right 0.2s, left 0.2s', right: priceIncludesVat ? 3 : 'auto', left: priceIncludesVat ? 'auto' : 3 }} />
                   </button>
                 </div>

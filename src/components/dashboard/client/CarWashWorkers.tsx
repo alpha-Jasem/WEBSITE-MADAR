@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2, Trophy, Car, Loader2, X, Check } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
@@ -144,7 +144,7 @@ export const CarWashWorkers = () => {
 
       {/* Workers grid */}
       {workers.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-48 gap-3" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16 }}>
+        <div className="flex flex-col items-center justify-center h-48 gap-3" style={{ background: '#FAFAFA', border: '1px solid #E2E8F0', borderRadius: 16 }}>
           <p className="text-slate-500 font-tajawal text-sm">لا يوجد موظفون بعد</p>
           <button onClick={openAdd} className="text-primary-400 text-sm font-tajawal underline">أضف أول موظف</button>
         </div>
@@ -154,7 +154,7 @@ export const CarWashWorkers = () => {
             const s = getWorkerStats(w.id)
             const r = rank(w.id)
             return (
-              <div key={w.id} className="p-5 rounded-2xl relative" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div key={w.id} className="p-5 rounded-2xl relative" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                 {can.workerRanking && r === 1 && (
                   <div className="absolute top-3 left-3">
                     <Trophy size={16} style={{ color: '#F59E0B' }} />
@@ -218,7 +218,7 @@ export const CarWashWorkers = () => {
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {workers.slice(0, 3).map(w => (
-              <div key={w.id} className="p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div key={w.id} className="p-5 rounded-2xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                 <p className="text-white font-bold font-cairo text-base mb-4">{w.name}</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 rounded-xl text-center" style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)' }}>
@@ -239,7 +239,7 @@ export const CarWashWorkers = () => {
       {/* Form modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)' }}>
-          <div role="dialog" aria-modal="true" aria-label="Worker form" className="w-full max-w-md p-6 rounded-2xl" style={{ background: '#0D1422', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <div role="dialog" aria-modal="true" aria-label="Worker form" className="w-full max-w-md p-6 rounded-2xl" style={{ background: '#0D1422', border: '1px solid #CBD5E1' }}>
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-bold text-white font-cairo">{editing ? 'تعديل موظف' : 'إضافة موظف'}</h2>
               <button aria-label="Close dialog" onClick={() => setShowForm(false)} className="text-slate-400 hover:text-white"><X size={18} /></button>
@@ -248,11 +248,11 @@ export const CarWashWorkers = () => {
             <div className="space-y-4">
               <div>
                 <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">الاسم *</label>
-                <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="اسم الموظف" className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-white placeholder-slate-600 outline-none" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }} />
+                <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="اسم الموظف" className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-white placeholder-slate-600 outline-none" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }} />
               </div>
               <div>
                 <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">رقم الجوال</label>
-                <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="05xxxxxxxx" className="w-full px-4 py-2.5 rounded-xl text-sm font-sora text-white placeholder-slate-600 outline-none" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }} dir="ltr" />
+                <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="05xxxxxxxx" className="w-full px-4 py-2.5 rounded-xl text-sm font-sora text-white placeholder-slate-600 outline-none" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }} dir="ltr" />
               </div>
 
               {/* Salary type */}
@@ -265,8 +265,8 @@ export const CarWashWorkers = () => {
                       onClick={() => setForm(f => ({ ...f, salary_type: t }))}
                       className="py-2.5 rounded-xl text-xs font-tajawal transition-all"
                       style={{
-                        background: form.salary_type === t ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.05)',
-                        border: `1px solid ${form.salary_type === t ? '#6366F1' : 'rgba(255,255,255,0.1)'}`,
+                        background: form.salary_type === t ? 'rgba(99,102,241,0.3)' : '#FFFFFF',
+                        border: `1px solid ${form.salary_type === t ? '#6366F1' : '#E2E8F0'}`,
                         color: form.salary_type === t ? '#A5B4FC' : '#94A3B8',
                       }}
                     >
@@ -286,7 +286,7 @@ export const CarWashWorkers = () => {
                     onChange={e => setForm(f => ({ ...f, fixed_salary: Number(e.target.value) }))}
                     min={0}
                     className="w-full px-4 py-2.5 rounded-xl text-sm font-sora text-white outline-none"
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                    style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
                     dir="ltr"
                   />
                 </div>
@@ -304,8 +304,8 @@ export const CarWashWorkers = () => {
                           onClick={() => setForm(f => ({ ...f, commission_type: t }))}
                           className="py-2.5 rounded-xl text-sm font-tajawal transition-all"
                           style={{
-                            background: form.commission_type === t ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.05)',
-                            border: `1px solid ${form.commission_type === t ? '#6366F1' : 'rgba(255,255,255,0.1)'}`,
+                            background: form.commission_type === t ? 'rgba(99,102,241,0.3)' : '#FFFFFF',
+                            border: `1px solid ${form.commission_type === t ? '#6366F1' : '#E2E8F0'}`,
                             color: form.commission_type === t ? '#A5B4FC' : '#94A3B8',
                           }}
                         >
@@ -324,7 +324,7 @@ export const CarWashWorkers = () => {
                       onChange={e => setForm(f => ({ ...f, commission_value: Number(e.target.value) }))}
                       min={0}
                       className="w-full px-4 py-2.5 rounded-xl text-sm font-sora text-white outline-none"
-                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                      style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
                       dir="ltr"
                     />
                   </div>
@@ -333,7 +333,7 @@ export const CarWashWorkers = () => {
             </div>
 
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setShowForm(false)} className="flex-1 py-2.5 rounded-xl text-sm font-tajawal text-slate-400" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>إلغاء</button>
+              <button onClick={() => setShowForm(false)} className="flex-1 py-2.5 rounded-xl text-sm font-tajawal text-slate-400" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}>إلغاء</button>
               <button onClick={save} disabled={saving || !form.name.trim()} className="flex-1 py-2.5 rounded-xl text-sm font-tajawal text-white flex items-center justify-center gap-2 disabled:opacity-50" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
                 {saving ? 'جاري الحفظ...' : 'حفظ'}

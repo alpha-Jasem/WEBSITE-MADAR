@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { X, User, ShieldCheck, Wrench, AlertCircle } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
@@ -76,17 +76,17 @@ export function StaffSwitchModal({ onClose }: Props) {
       }}
     >
       <div dir="rtl" style={{
-        background: '#0C0F1A', border: '1px solid rgba(255,255,255,0.1)',
+        background: '#0C0F1A', border: '1px solid #CBD5E1',
         borderRadius: 20, width: '100%', maxWidth: 400, overflow: 'hidden',
       }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid #E2E8F0' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <User size={18} color="#6366F1" />
             </div>
             <div>
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>
                 {selected ? 'أدخل PIN' : 'تبديل المستخدم'}
               </h3>
               <p style={{ fontSize: 11, color: '#475569', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>
@@ -127,8 +127,8 @@ export function StaffSwitchModal({ onClose }: Props) {
                 {staff.map(u => (
                   <button key={u.id} onClick={() => handleSelect(u)} style={{
                     display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px',
-                    borderRadius: 12, border: '1px solid rgba(255,255,255,0.07)',
-                    background: profile.userId === u.id ? 'rgba(99,102,241,0.1)' : 'rgba(255,255,255,0.03)',
+                    borderRadius: 12, border: '1px solid #E2E8F0',
+                    background: profile.userId === u.id ? 'rgba(99,102,241,0.1)' : '#F8FAFC',
                     cursor: 'pointer', textAlign: 'right', width: '100%',
                   }}>
                     <div style={{
@@ -140,7 +140,7 @@ export function StaffSwitchModal({ onClose }: Props) {
                       {u.full_name[0]}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: '#E2E8F0', fontFamily: 'Tajawal, sans-serif' }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: '#1E293B', fontFamily: 'Tajawal, sans-serif' }}>
                         {u.full_name}
                         {profile.userId === u.id && <span style={{ fontSize: 10, color: '#22D3EE', marginRight: 6 }}>● نشط</span>}
                       </div>
@@ -161,8 +161,8 @@ export function StaffSwitchModal({ onClose }: Props) {
                 {[0,1,2,3].map(i => (
                   <div key={i} style={{
                     width: 16, height: 16, borderRadius: '50%',
-                    background: i < pin.length ? '#6366F1' : 'rgba(255,255,255,0.1)',
-                    border: `2px solid ${i < pin.length ? '#6366F1' : 'rgba(255,255,255,0.15)'}`,
+                    background: i < pin.length ? '#6366F1' : '#E2E8F0',
+                    border: `2px solid ${i < pin.length ? '#6366F1' : '#CBD5E1'}`,
                     transition: 'all 0.15s',
                   }} />
                 ))}
@@ -181,8 +181,8 @@ export function StaffSwitchModal({ onClose }: Props) {
                     handlePinInput(d)
                   }} disabled={d === ''} style={{
                     padding: '16px', borderRadius: 12, fontSize: d === '⌫' ? 18 : 20, fontWeight: 700, fontFamily: 'Sora, sans-serif',
-                    background: d === '' ? 'transparent' : 'rgba(255,255,255,0.05)',
-                    border: d === '' ? 'none' : '1px solid rgba(255,255,255,0.08)',
+                    background: d === '' ? 'transparent' : '#FFFFFF',
+                    border: d === '' ? 'none' : '1px solid #E2E8F0',
                     color: d === '⌫' ? '#94A3B8' : '#F1F5F9', cursor: d === '' ? 'default' : 'pointer',
                   }}>
                     {d}
@@ -191,7 +191,7 @@ export function StaffSwitchModal({ onClose }: Props) {
               </div>
               <button onClick={() => { setSelected(null); setPin(''); setError('') }} style={{
                 width: '100%', marginTop: 14, padding: '10px', borderRadius: 10,
-                background: 'transparent', border: '1px solid rgba(255,255,255,0.07)',
+                background: 'transparent', border: '1px solid #E2E8F0',
                 color: '#64748B', fontFamily: 'Tajawal, sans-serif', fontSize: 13, cursor: 'pointer',
               }}>
                 رجوع

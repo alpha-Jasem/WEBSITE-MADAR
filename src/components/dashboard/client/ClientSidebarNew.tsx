@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+﻿import { NavLink, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, Zap, Users2, BarChart3, Settings, LogOut, ChevronRight, Calendar, MessageSquare, Wrench } from 'lucide-react'
 import { signOut } from '../../../lib/supabase'
 
@@ -18,9 +18,9 @@ export const ClientSidebarNew = () => {
 
   return (
     <aside className="w-64 flex-shrink-0 hidden md:flex flex-col h-screen sticky top-0"
-      style={{ background: 'rgba(5,6,10,0.98)', borderLeft: '1px solid rgba(255,255,255,0.06)' }}>
+      style={{ background: 'rgba(5,6,10,0.98)', borderLeft: '1px solid #E2E8F0' }}>
 
-      <div className="p-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+      <div className="p-5 border-b" style={{ borderColor: '#F8FAFC' }}>
         <div className="flex items-center gap-3">
           <div style={{ background: 'white', borderRadius: 8, padding: '3px 8px' }}>
             <img src="/logo.jpeg" alt="MADAR" style={{ height: 28, width: 'auto' }} />
@@ -57,7 +57,7 @@ export const ClientSidebarNew = () => {
         ))}
       </nav>
 
-      <div className="p-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+      <div className="p-3 border-t" style={{ borderColor: '#F8FAFC' }}>
         <button onClick={async () => { await signOut(); navigate('/login') }}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all font-tajawal cursor-pointer">
           <LogOut size={16} />

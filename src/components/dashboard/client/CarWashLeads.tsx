@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Car, Download, Gift, Phone, Search, Send, Star, Trophy, Users, X, Check, Loader2, Lock, Plus, Pencil, Trash2 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../../lib/supabase'
@@ -70,17 +70,17 @@ function LoyaltyDots({ visits, threshold = 5 }: { visits: number; threshold?: nu
       {Array.from({ length: steps }, (_, i) => i + 1).map(s => (
         <div key={s} style={{
           width: 14, height: 14, borderRadius: '50%',
-          background: s <= filled ? '#22D3EE' : 'rgba(255,255,255,0.08)',
-          border: `1.5px solid ${s <= filled ? '#22D3EE' : 'rgba(255,255,255,0.12)'}`,
+          background: s <= filled ? '#22D3EE' : '#E2E8F0',
+          border: `1.5px solid ${s <= filled ? '#22D3EE' : '#CBD5E1'}`,
         }} />
       ))}
       <div style={{
         width: 16, height: 16, borderRadius: '50%',
-        background: visits > 0 && visits % threshold === 0 ? '#F59E0B' : 'rgba(255,255,255,0.05)',
-        border: `1.5px solid ${visits > 0 && visits % threshold === 0 ? '#F59E0B' : 'rgba(255,255,255,0.1)'}`,
+        background: visits > 0 && visits % threshold === 0 ? '#F59E0B' : '#FFFFFF',
+        border: `1.5px solid ${visits > 0 && visits % threshold === 0 ? '#F59E0B' : '#E2E8F0'}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        <Gift size={8} color={visits > 0 && visits % threshold === 0 ? '#080C14' : '#475569'} />
+        <Gift size={8} color={visits > 0 && visits % threshold === 0 ? '#F4F6FB' : '#475569'} />
       </div>
     </div>
   )
@@ -241,7 +241,7 @@ export function CarWashLeads() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>عملاء المغسلة</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>عملاء المغسلة</h1>
           <p style={{ fontSize: 13, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginTop: 4 }}>
             {customers.length} عميل مسجل — {inactive} غير نشط (أكثر من 30 يوم)
           </p>
@@ -321,8 +321,8 @@ export function CarWashLeads() {
             dir="rtl"
             style={{
               width: '100%', padding: '9px 36px 9px 14px', borderRadius: 10,
-              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-              color: '#F1F5F9', outline: 'none', fontFamily: 'Tajawal, sans-serif', fontSize: 13,
+              background: '#FFFFFF', border: '1px solid #E2E8F0',
+              color: '#0F172A', outline: 'none', fontFamily: 'Tajawal, sans-serif', fontSize: 13,
               boxSizing: 'border-box',
             }}
           />
@@ -331,8 +331,8 @@ export function CarWashLeads() {
           {TIER_FILTERS.map(f => (
             <button key={f.key} onClick={() => setFilter(f.key)} style={{
               padding: '6px 12px', borderRadius: 8, fontSize: 12, fontFamily: 'Tajawal, sans-serif',
-              background: filter === f.key ? 'rgba(34,211,238,0.12)' : 'rgba(255,255,255,0.03)',
-              border: `1px solid ${filter === f.key ? 'rgba(34,211,238,0.3)' : 'rgba(255,255,255,0.07)'}`,
+              background: filter === f.key ? 'rgba(34,211,238,0.12)' : '#F8FAFC',
+              border: `1px solid ${filter === f.key ? 'rgba(34,211,238,0.3)' : '#F8FAFC'}`,
               color: filter === f.key ? '#22D3EE' : '#64748B',
               cursor: 'pointer',
             }}>
@@ -351,13 +351,13 @@ export function CarWashLeads() {
 
       {/* Table */}
       <div style={{
-        background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)',
+        background: '#FAFAFA', border: '1px solid #E2E8F0',
         borderRadius: 18, overflow: 'hidden',
       }}>
         {/* Column headers */}
         <div style={{
           display: 'grid', gridTemplateColumns: '36px 1fr 140px 130px 110px 100px 90px 72px',
-          padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+          padding: '10px 20px', borderBottom: '1px solid #E2E8F0',
           fontSize: 11, color: '#475569', fontFamily: 'Tajawal, sans-serif',
           fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em',
           alignItems: 'center',
@@ -386,7 +386,7 @@ export function CarWashLeads() {
             <div key={c.id} style={{
               display: 'grid', gridTemplateColumns: '36px 1fr 140px 130px 110px 100px 90px 72px',
               padding: '13px 20px', alignItems: 'center',
-              borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+              borderBottom: i < filtered.length - 1 ? '1px solid #E2E8F0' : 'none',
               background: selected.has(c.id) ? 'rgba(99,102,241,0.06)' : isMilestone ? 'rgba(245,158,11,0.04)' : isNear ? 'rgba(34,211,238,0.03)' : 'transparent',
             }}>
               <input type="checkbox" checked={selected.has(c.id)} onChange={() => toggleSelect(c.id)}
@@ -402,7 +402,7 @@ export function CarWashLeads() {
                   {isMilestone ? '🎉' : (c.name || c.phone).slice(0, 1)}
                 </div>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#E2E8F0', fontFamily: 'Tajawal, sans-serif' }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1E293B', fontFamily: 'Tajawal, sans-serif' }}>
                     {c.name || '—'}
                     {isMilestone && <span style={{ marginRight: 6, fontSize: 10, color: '#F59E0B', background: 'rgba(245,158,11,0.1)', padding: '1px 6px', borderRadius: 4 }}>مكافأة ✓</span>}
                     {isNear && !isMilestone && <span style={{ marginRight: 6, fontSize: 10, color: '#22D3EE', background: 'rgba(34,211,238,0.08)', padding: '1px 6px', borderRadius: 4 }}>زيارة أخيرة</span>}
@@ -422,7 +422,7 @@ export function CarWashLeads() {
                 {timeAgo(c.last_visit_at)}
               </span>
 
-              <span style={{ fontSize: 16, fontWeight: 800, color: '#F1F5F9', fontFamily: 'Sora, sans-serif', textAlign: 'center' }}>
+              <span style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', fontFamily: 'Sora, sans-serif', textAlign: 'center' }}>
                 {c.total_visits}
               </span>
 
@@ -441,8 +441,8 @@ export function CarWashLeads() {
               {/* Row actions */}
               <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
                 <button onClick={() => openEdit(c)} title="تعديل" style={{
-                  width: 28, height: 28, borderRadius: 7, border: '1px solid rgba(255,255,255,0.07)',
-                  background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: 28, height: 28, borderRadius: 7, border: '1px solid #E2E8F0',
+                  background: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   cursor: 'pointer', color: '#64748B',
                 }}>
                   <Pencil size={12} />
@@ -464,14 +464,14 @@ export function CarWashLeads() {
       {showCampaign && (
         <div onClick={e => e.target === e.currentTarget && setShowCampaign(false)}
           style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div role="dialog" aria-modal="true" aria-label="WhatsApp campaign" style={{ background: '#0C0D14', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, width: '100%', maxWidth: 460, overflow: 'hidden' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+          <div role="dialog" aria-modal="true" aria-label="WhatsApp campaign" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: 20, width: '100%', maxWidth: 460, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid #E2E8F0' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(99,102,241,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Send size={17} color="#818CF8" />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: 15, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>إرسال حملة واتساب</h3>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>إرسال حملة واتساب</h3>
                   <p style={{ fontSize: 11, color: '#475569', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>{selected.size} عميل محدد</p>
                 </div>
               </div>
@@ -482,7 +482,7 @@ export function CarWashLeads() {
                 <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>نص الرسالة</label>
                 <textarea value={campaignMsg} onChange={e => setCampaignMsg(e.target.value)} rows={5}
                   placeholder="اكتب رسالتك هنا... مثال: عروض نهاية الأسبوع 🚗✨"
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#F1F5F9', outline: 'none', fontFamily: 'Tajawal, sans-serif', resize: 'vertical', boxSizing: 'border-box' }} />
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', outline: 'none', fontFamily: 'Tajawal, sans-serif', resize: 'vertical', boxSizing: 'border-box' }} />
                 <p style={{ fontSize: 11, color: '#334155', fontFamily: 'Tajawal, sans-serif', marginTop: 4 }}>
                   ستُرسل فوراً عبر WhatsApp
                 </p>
@@ -493,7 +493,7 @@ export function CarWashLeads() {
                   {sending ? <Loader2 size={15} className="animate-spin" /> : sent ? <Check size={15} /> : <Send size={15} />}
                   {sent ? 'تمت جدولة الإرسال ✓' : sending ? 'جاري الإرسال...' : `إرسال لـ ${selected.size} عميل`}
                 </button>
-                <button onClick={() => setShowCampaign(false)} style={{ padding: '11px 18px', borderRadius: 12, fontSize: 13, background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#64748B', cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>إلغاء</button>
+                <button onClick={() => setShowCampaign(false)} style={{ padding: '11px 18px', borderRadius: 12, fontSize: 13, background: 'transparent', border: '1px solid #E2E8F0', color: '#64748B', cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>إلغاء</button>
               </div>
             </div>
           </div>
@@ -504,13 +504,13 @@ export function CarWashLeads() {
       {showAddModal && (
         <div onClick={e => e.target === e.currentTarget && setShowAddModal(false)}
           style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div role="dialog" aria-modal="true" aria-label="Add customer" style={{ background: '#0C0D14', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, width: '100%', maxWidth: 400, overflow: 'hidden' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+          <div role="dialog" aria-modal="true" aria-label="Add customer" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: 20, width: '100%', maxWidth: 400, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid #E2E8F0' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(34,211,238,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Plus size={17} color="#22D3EE" />
                 </div>
-                <h3 style={{ fontSize: 15, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>إضافة عميل جديد</h3>
+                <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>إضافة عميل جديد</h3>
               </div>
               <button aria-label="Close dialog" onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569' }}><X size={18} /></button>
             </div>
@@ -519,24 +519,24 @@ export function CarWashLeads() {
                 <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>رقم الجوال *</label>
                 <input value={crudForm.phone} onChange={e => setCrudForm(f => ({ ...f, phone: e.target.value }))}
                   placeholder="05XXXXXXXX أو 966XXXXXXXXX"
-                  style={{ width: '100%', padding: '9px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#F1F5F9', outline: 'none', fontFamily: 'Sora, sans-serif', fontSize: 13, boxSizing: 'border-box', direction: 'ltr' }} />
+                  style={{ width: '100%', padding: '9px 14px', borderRadius: 10, background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', outline: 'none', fontFamily: 'Sora, sans-serif', fontSize: 13, boxSizing: 'border-box', direction: 'ltr' }} />
               </div>
               <div>
                 <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>اسم العميل (اختياري)</label>
                 <input value={crudForm.name} onChange={e => setCrudForm(f => ({ ...f, name: e.target.value }))}
                   placeholder="محمد العلي"
-                  style={{ width: '100%', padding: '9px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#F1F5F9', outline: 'none', fontFamily: 'Tajawal, sans-serif', fontSize: 13, boxSizing: 'border-box' }} />
+                  style={{ width: '100%', padding: '9px 14px', borderRadius: 10, background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', outline: 'none', fontFamily: 'Tajawal, sans-serif', fontSize: 13, boxSizing: 'border-box' }} />
               </div>
               <p style={{ fontSize: 11, color: '#334155', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>
                 ✅ سيُرسل له واتساب ترحيب فوري عند الإضافة
               </p>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button onClick={addCustomer} disabled={crudSaving || !crudForm.phone.trim()}
-                  style={{ flex: 1, padding: 11, borderRadius: 12, fontSize: 14, fontWeight: 700, border: 'none', cursor: crudSaving || !crudForm.phone.trim() ? 'not-allowed' : 'pointer', background: crudSaving || !crudForm.phone.trim() ? '#1E293B' : 'linear-gradient(135deg, #22D3EE, #06B6D4)', color: crudSaving || !crudForm.phone.trim() ? '#475569' : '#080C14', fontFamily: 'Cairo, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  style={{ flex: 1, padding: 11, borderRadius: 12, fontSize: 14, fontWeight: 700, border: 'none', cursor: crudSaving || !crudForm.phone.trim() ? 'not-allowed' : 'pointer', background: crudSaving || !crudForm.phone.trim() ? '#1E293B' : 'linear-gradient(135deg, #22D3EE, #06B6D4)', color: crudSaving || !crudForm.phone.trim() ? '#475569' : '#F4F6FB', fontFamily: 'Cairo, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                   {crudSaving ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
                   {crudSaving ? 'جاري الإضافة...' : 'إضافة وإرسال ترحيب'}
                 </button>
-                <button onClick={() => setShowAddModal(false)} style={{ padding: '11px 18px', borderRadius: 12, fontSize: 13, background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#64748B', cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>إلغاء</button>
+                <button onClick={() => setShowAddModal(false)} style={{ padding: '11px 18px', borderRadius: 12, fontSize: 13, background: 'transparent', border: '1px solid #E2E8F0', color: '#64748B', cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>إلغاء</button>
               </div>
             </div>
           </div>
@@ -547,13 +547,13 @@ export function CarWashLeads() {
       {editTarget && (
         <div onClick={e => e.target === e.currentTarget && setEditTarget(null)}
           style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div role="dialog" aria-modal="true" aria-label="Edit customer" style={{ background: '#0C0D14', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, width: '100%', maxWidth: 400, overflow: 'hidden' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+          <div role="dialog" aria-modal="true" aria-label="Edit customer" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: 20, width: '100%', maxWidth: 400, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid #E2E8F0' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(99,102,241,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Pencil size={15} color="#818CF8" />
                 </div>
-                <h3 style={{ fontSize: 15, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>تعديل بيانات العميل</h3>
+                <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>تعديل بيانات العميل</h3>
               </div>
               <button aria-label="Close dialog" onClick={() => setEditTarget(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569' }}><X size={18} /></button>
             </div>
@@ -561,12 +561,12 @@ export function CarWashLeads() {
               <div>
                 <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>رقم الجوال</label>
                 <input value={crudForm.phone} onChange={e => setCrudForm(f => ({ ...f, phone: e.target.value }))}
-                  style={{ width: '100%', padding: '9px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#F1F5F9', outline: 'none', fontFamily: 'Sora, sans-serif', fontSize: 13, boxSizing: 'border-box', direction: 'ltr' }} />
+                  style={{ width: '100%', padding: '9px 14px', borderRadius: 10, background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', outline: 'none', fontFamily: 'Sora, sans-serif', fontSize: 13, boxSizing: 'border-box', direction: 'ltr' }} />
               </div>
               <div>
                 <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>الاسم</label>
                 <input value={crudForm.name} onChange={e => setCrudForm(f => ({ ...f, name: e.target.value }))}
-                  style={{ width: '100%', padding: '9px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#F1F5F9', outline: 'none', fontFamily: 'Tajawal, sans-serif', fontSize: 13, boxSizing: 'border-box' }} />
+                  style={{ width: '100%', padding: '9px 14px', borderRadius: 10, background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', outline: 'none', fontFamily: 'Tajawal, sans-serif', fontSize: 13, boxSizing: 'border-box' }} />
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button onClick={updateCustomer} disabled={crudSaving}
@@ -574,7 +574,7 @@ export function CarWashLeads() {
                   {crudSaving ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
                   {crudSaving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
                 </button>
-                <button onClick={() => setEditTarget(null)} style={{ padding: '11px 18px', borderRadius: 12, fontSize: 13, background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#64748B', cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>إلغاء</button>
+                <button onClick={() => setEditTarget(null)} style={{ padding: '11px 18px', borderRadius: 12, fontSize: 13, background: 'transparent', border: '1px solid #E2E8F0', color: '#64748B', cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>إلغاء</button>
               </div>
             </div>
           </div>
@@ -585,14 +585,14 @@ export function CarWashLeads() {
       {deleteTarget && (
         <div onClick={e => e.target === e.currentTarget && setDeleteTarget(null)}
           style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div role="dialog" aria-modal="true" aria-label="Delete customer confirmation" style={{ background: '#0C0D14', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 20, width: '100%', maxWidth: 380, overflow: 'hidden' }}>
+          <div role="dialog" aria-modal="true" aria-label="Delete customer confirmation" style={{ background: '#FFFFFF', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 20, width: '100%', maxWidth: 380, overflow: 'hidden' }}>
             <div style={{ padding: '24px 22px', textAlign: 'center' }} dir="rtl">
               <div style={{ width: 52, height: 52, borderRadius: 14, background: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
                 <Trash2 size={22} color="#EF4444" />
               </div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: '0 0 8px' }}>حذف العميل؟</h3>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: '0 0 8px' }}>حذف العميل؟</h3>
               <p style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: '0 0 20px' }}>
-                سيتم حذف <strong style={{ color: '#F1F5F9' }}>{deleteTarget.name || deleteTarget.phone}</strong> وجميع بياناته. هذا الإجراء لا يمكن التراجع عنه.
+                سيتم حذف <strong style={{ color: '#0F172A' }}>{deleteTarget.name || deleteTarget.phone}</strong> وجميع بياناته. هذا الإجراء لا يمكن التراجع عنه.
               </p>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button onClick={deleteCustomer} disabled={crudDeleting}
@@ -600,7 +600,7 @@ export function CarWashLeads() {
                   {crudDeleting ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
                   {crudDeleting ? 'جاري الحذف...' : 'نعم، احذف'}
                 </button>
-                <button onClick={() => setDeleteTarget(null)} style={{ flex: 1, padding: 11, borderRadius: 12, fontSize: 13, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#94A3B8', cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>إلغاء</button>
+                <button onClick={() => setDeleteTarget(null)} style={{ flex: 1, padding: 11, borderRadius: 12, fontSize: 13, background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#94A3B8', cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>إلغاء</button>
               </div>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Plus, X, Loader2, TrendingUp, TrendingDown, Wallet, Users, DollarSign, ClipboardCheck, FileDown } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
@@ -176,7 +176,7 @@ export const CarWashFinance = () => {
   return (
     <div className="space-y-6">
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 8, borderBottom: '1px solid rgba(255,255,255,0.07)', paddingBottom: 0 }}>
+      <div style={{ display: 'flex', gap: 8, borderBottom: '1px solid #E2E8F0', paddingBottom: 0 }}>
         {[
           { key: 'finance', label: 'المالية',     icon: Wallet },
           { key: 'closing', label: 'إغلاق اليوم', icon: ClipboardCheck },
@@ -198,7 +198,7 @@ export const CarWashFinance = () => {
               <button key={p.days} onClick={() => setDays(p.days)}
                 style={{
                   padding: '4px 14px', borderRadius: 20, fontSize: 12, fontFamily: 'Tajawal, sans-serif',
-                  cursor: 'pointer', border: `1px solid ${days === p.days ? '#22D3EE' : 'rgba(255,255,255,0.12)'}`,
+                  cursor: 'pointer', border: `1px solid ${days === p.days ? '#22D3EE' : '#CBD5E1'}`,
                   background: days === p.days ? 'rgba(34,211,238,0.1)' : 'transparent',
                   color: days === p.days ? '#22D3EE' : '#64748B', fontWeight: days === p.days ? 700 : 400,
                 }}>
@@ -210,7 +210,7 @@ export const CarWashFinance = () => {
         <div className="flex gap-2">
           <button onClick={exportCSV}
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-tajawal font-medium"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#94A3B8' }}>
+            style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#94A3B8' }}>
             <FileDown size={15} /> تصدير
           </button>
           {can.financeExpenses && (
@@ -251,7 +251,7 @@ export const CarWashFinance = () => {
           </div>
 
           {/* Profit bar */}
-          <div className="p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+          <div className="p-5 rounded-2xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
             <p className="text-sm font-bold text-white font-cairo mb-4">توزيع الإيرادات</p>
             {revenue > 0 ? (
               <div className="space-y-3">
@@ -265,7 +265,7 @@ export const CarWashFinance = () => {
                       <span className="text-xs text-slate-400 font-tajawal">{item.label}</span>
                       <span className="text-xs font-sora" style={{ color: item.color }}>{item.val.toFixed(0)} ر.س</span>
                     </div>
-                    <div className="h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                    <div className="h-2 rounded-full" style={{ background: '#FFFFFF' }}>
                       <div className="h-2 rounded-full transition-all" style={{ width: `${Math.min(100, (item.val / revenue) * 100)}%`, background: item.color }} />
                     </div>
                   </div>
@@ -278,7 +278,7 @@ export const CarWashFinance = () => {
 
           {/* Payment method breakdown */}
           {Object.keys(paymentBreakdown).length > 0 && (
-            <div className="p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className="p-5 rounded-2xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
               <p className="text-sm font-bold text-white font-cairo mb-4">توزيع طرق الدفع</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {Object.entries(paymentBreakdown).map(([pm, amount]) => {
@@ -307,14 +307,14 @@ export const CarWashFinance = () => {
           )}
 
           {/* Expenses list */}
-          <div className="p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+          <div className="p-5 rounded-2xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
             <p className="text-sm font-bold text-white font-cairo mb-4">مصاريف اليوم</p>
             {expenses.length === 0 ? (
               <p className="text-slate-600 font-tajawal text-sm text-center py-4">لا توجد مصاريف مسجّلة</p>
             ) : (
               <div className="space-y-2">
                 {expenses.map(e => (
-                  <div key={e.id} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div key={e.id} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                     <div className="flex-1">
                       <p className="text-sm text-white font-tajawal">{e.description || CATEGORIES.find(c => c.value === e.category)?.label}</p>
                       <p className="text-xs text-slate-500 font-tajawal">{CATEGORIES.find(c => c.value === e.category)?.label}</p>
@@ -334,7 +334,7 @@ export const CarWashFinance = () => {
       {/* Add expense modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)' }}>
-          <div role="dialog" aria-modal="true" aria-label="Add expense" className="w-full max-w-sm p-6 rounded-2xl" style={{ background: '#0D1422', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <div role="dialog" aria-modal="true" aria-label="Add expense" className="w-full max-w-sm p-6 rounded-2xl" style={{ background: '#0D1422', border: '1px solid #CBD5E1' }}>
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-bold text-white font-cairo">إضافة مصروف</h2>
               <button aria-label="Close dialog" onClick={() => setShowForm(false)} className="text-slate-400 hover:text-white"><X size={18} /></button>
@@ -343,13 +343,13 @@ export const CarWashFinance = () => {
             <div className="space-y-4">
               <div>
                 <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">المبلغ (ر.س) *</label>
-                <input type="number" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} placeholder="0" min={0} className="w-full px-4 py-2.5 rounded-xl text-sm font-sora text-white placeholder-slate-600 outline-none" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }} dir="ltr" />
+                <input type="number" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} placeholder="0" min={0} className="w-full px-4 py-2.5 rounded-xl text-sm font-sora text-white placeholder-slate-600 outline-none" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }} dir="ltr" />
               </div>
               <div>
                 <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">الفئة</label>
                 <div className="grid grid-cols-2 gap-2">
                   {CATEGORIES.map(c => (
-                    <button key={c.value} onClick={() => setForm(f => ({ ...f, category: c.value }))} className="py-2 rounded-xl text-xs font-tajawal transition-all" style={{ background: form.category === c.value ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.05)', border: `1px solid ${form.category === c.value ? '#6366F1' : 'rgba(255,255,255,0.1)'}`, color: form.category === c.value ? '#A5B4FC' : '#94A3B8' }}>
+                    <button key={c.value} onClick={() => setForm(f => ({ ...f, category: c.value }))} className="py-2 rounded-xl text-xs font-tajawal transition-all" style={{ background: form.category === c.value ? 'rgba(99,102,241,0.3)' : '#FFFFFF', border: `1px solid ${form.category === c.value ? '#6366F1' : '#E2E8F0'}`, color: form.category === c.value ? '#A5B4FC' : '#94A3B8' }}>
                       {c.label}
                     </button>
                   ))}
@@ -357,12 +357,12 @@ export const CarWashFinance = () => {
               </div>
               <div>
                 <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">وصف (اختياري)</label>
-                <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="تفاصيل المصروف..." className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-white placeholder-slate-600 outline-none" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }} />
+                <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="تفاصيل المصروف..." className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-white placeholder-slate-600 outline-none" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }} />
               </div>
             </div>
 
             <div className="flex gap-3 mt-5">
-              <button onClick={() => setShowForm(false)} className="flex-1 py-2.5 rounded-xl text-sm font-tajawal text-slate-400" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>إلغاء</button>
+              <button onClick={() => setShowForm(false)} className="flex-1 py-2.5 rounded-xl text-sm font-tajawal text-slate-400" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}>إلغاء</button>
               <button onClick={addExpense} disabled={saving || !form.amount || Number(form.amount) <= 0} className="flex-1 py-2.5 rounded-xl text-sm font-tajawal text-white flex items-center justify-center gap-2 disabled:opacity-50" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                 {saving ? 'جاري الحفظ...' : 'إضافة'}

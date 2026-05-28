@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Car,
   Check,
@@ -85,7 +85,7 @@ function LoyaltyBar({ visits, threshold = 5 }: { visits: number; threshold?: num
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: 9,
-            color: step <= stepsCompleted ? '#080C14' : '#475569',
+            color: step <= stepsCompleted ? '#F4F6FB' : '#475569',
             fontWeight: 700,
             flexShrink: 0,
           }}
@@ -107,7 +107,7 @@ function LoyaltyBar({ visits, threshold = 5 }: { visits: number; threshold?: num
           flexShrink: 0,
         }}
       >
-        <Gift size={11} color={visits > 0 && visits % threshold === 0 ? '#080C14' : '#475569'} />
+        <Gift size={11} color={visits > 0 && visits % threshold === 0 ? '#F4F6FB' : '#475569'} />
       </div>
     </div>
   )
@@ -503,7 +503,7 @@ export function CarWashOverview() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>
             لوحة المغسلة
           </h1>
           <p style={{ fontSize: 13, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginTop: 4 }}>
@@ -529,7 +529,7 @@ export function CarWashOverview() {
               display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px',
               background: 'linear-gradient(135deg, #22D3EE, #4F6EF7)',
               border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700,
-              color: '#080C14', fontFamily: 'Cairo, sans-serif', cursor: 'pointer',
+              color: '#F4F6FB', fontFamily: 'Cairo, sans-serif', cursor: 'pointer',
             }}
           >
             <Plus size={16} />
@@ -553,20 +553,20 @@ export function CarWashOverview() {
             aria-modal="true"
             aria-label="Register walk-in visit"
             style={{
-            background: '#0C0D14', border: '1px solid rgba(255,255,255,0.1)',
+            background: '#FFFFFF', border: '1px solid #CBD5E1',
             borderRadius: 20, width: '100%', maxWidth: 420, overflow: 'hidden',
           }}>
             {/* Modal header */}
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '18px 22px', borderBottom: '1px solid rgba(255,255,255,0.07)',
+              padding: '18px 22px', borderBottom: '1px solid #E2E8F0',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(34,211,238,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Car size={18} color="#22D3EE" />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: 15, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>تسجيل زيارة جديدة</h3>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>تسجيل زيارة جديدة</h3>
                   <p style={{ fontSize: 11, color: '#475569', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>walk-in مباشر بدون واتساب</p>
                 </div>
               </div>
@@ -588,8 +588,8 @@ export function CarWashOverview() {
                   dir="rtl"
                   style={{
                     width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14,
-                    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                    color: '#F1F5F9', outline: 'none', fontFamily: 'Tajawal, sans-serif',
+                    background: '#FFFFFF', border: '1px solid #E2E8F0',
+                    color: '#0F172A', outline: 'none', fontFamily: 'Tajawal, sans-serif',
                     boxSizing: 'border-box',
                   }}
                 />
@@ -605,8 +605,8 @@ export function CarWashOverview() {
                   dir="ltr"
                   style={{
                     width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14,
-                    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                    color: '#F1F5F9', outline: 'none', fontFamily: 'Sora, sans-serif',
+                    background: '#FFFFFF', border: '1px solid #E2E8F0',
+                    color: '#0F172A', outline: 'none', fontFamily: 'Sora, sans-serif',
                     boxSizing: 'border-box',
                   }}
                 />
@@ -623,8 +623,8 @@ export function CarWashOverview() {
                   dir="rtl"
                   style={{
                     width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14,
-                    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                    color: '#F1F5F9', outline: 'none', fontFamily: 'Tajawal, sans-serif',
+                    background: '#FFFFFF', border: '1px solid #E2E8F0',
+                    color: '#0F172A', outline: 'none', fontFamily: 'Tajawal, sans-serif',
                     boxSizing: 'border-box', cursor: 'pointer',
                   }}
                 >
@@ -652,8 +652,8 @@ export function CarWashOverview() {
                   dir="ltr"
                   style={{
                     width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14,
-                    background: 'rgba(255,255,255,0.04)', border: `1px solid ${form.price ? 'rgba(34,211,238,0.3)' : 'rgba(255,255,255,0.08)'}`,
-                    color: '#F1F5F9', outline: 'none', fontFamily: 'Sora, sans-serif',
+                    background: '#FFFFFF', border: `1px solid ${form.price ? 'rgba(34,211,238,0.3)' : '#E2E8F0'}`,
+                    color: '#0F172A', outline: 'none', fontFamily: 'Sora, sans-serif',
                     boxSizing: 'border-box',
                   }}
                 />
@@ -668,7 +668,7 @@ export function CarWashOverview() {
                 style={{
                   flex: 1, padding: '11px', borderRadius: 12, fontSize: 14, fontWeight: 700,
                   background: submitting || !form.phone ? '#1E293B' : 'linear-gradient(135deg, #22D3EE, #4F6EF7)',
-                  color: submitting || !form.phone ? '#475569' : '#080C14',
+                  color: submitting || !form.phone ? '#475569' : '#F4F6FB',
                   border: 'none', cursor: submitting || !form.phone ? 'not-allowed' : 'pointer',
                   fontFamily: 'Cairo, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 }}
@@ -680,7 +680,7 @@ export function CarWashOverview() {
                 onClick={() => setShowModal(false)}
                 style={{
                   padding: '11px 20px', borderRadius: 12, fontSize: 13,
-                  background: 'transparent', border: '1px solid rgba(255,255,255,0.08)',
+                  background: 'transparent', border: '1px solid #E2E8F0',
                   color: '#64748B', cursor: 'pointer', fontFamily: 'Tajawal, sans-serif',
                 }}
               >
@@ -693,7 +693,7 @@ export function CarWashOverview() {
 
       {/* Live Queue Summary Bar */}
       {(queueSummary.received + queueSummary.washing + queueSummary.drying + queueSummary.ready) > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 18px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 18px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 14, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginLeft: 4 }}>🔴 مباشر:</span>
           {[
             { label: 'استلام',  value: queueSummary.received, color: '#94A3B8' },
@@ -796,18 +796,18 @@ export function CarWashOverview() {
 
       {/* Customers Table */}
       <div style={{
-        background: 'rgba(255,255,255,0.02)',
-        border: '1px solid rgba(255,255,255,0.07)',
+        background: '#FAFAFA',
+        border: '1px solid #E2E8F0',
         borderRadius: 18,
         overflow: 'hidden',
       }}>
         {/* Table Header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '14px 22px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+          padding: '14px 22px', borderBottom: '1px solid #E2E8F0',
           flexWrap: 'wrap', gap: 10,
         }}>
-          <h2 style={{ fontSize: 15, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>
             قائمة العملاء
             <span style={{ fontSize: 12, color: '#475569', fontWeight: 400, marginRight: 8 }}>({filteredCustomers.length})</span>
           </h2>
@@ -822,7 +822,7 @@ export function CarWashOverview() {
               <button key={t.value} onClick={() => setTierFilter(t.value)}
                 style={{
                   padding: '4px 12px', borderRadius: 20, fontSize: 11, fontFamily: 'Tajawal, sans-serif',
-                  cursor: 'pointer', border: `1px solid ${tierFilter === t.value ? '#22D3EE' : 'rgba(255,255,255,0.08)'}`,
+                  cursor: 'pointer', border: `1px solid ${tierFilter === t.value ? '#22D3EE' : '#E2E8F0'}`,
                   background: tierFilter === t.value ? 'rgba(34,211,238,0.1)' : 'transparent',
                   color: tierFilter === t.value ? '#22D3EE' : '#64748B',
                 }}>
@@ -833,7 +833,7 @@ export function CarWashOverview() {
             <select value={sortBy} onChange={e => setSortBy(e.target.value as typeof sortBy)}
               style={{
                 padding: '4px 10px', borderRadius: 10, fontSize: 11, fontFamily: 'Tajawal, sans-serif',
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                background: '#FFFFFF', border: '1px solid #E2E8F0',
                 color: '#94A3B8', outline: 'none', cursor: 'pointer',
               }}>
               <option value="last_visit">آخر زيارة</option>
@@ -848,8 +848,8 @@ export function CarWashOverview() {
               dir="rtl"
               style={{
                 padding: '6px 12px', borderRadius: 10, fontSize: 12,
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                color: '#F1F5F9', outline: 'none', fontFamily: 'Tajawal, sans-serif',
+                background: '#FFFFFF', border: '1px solid #E2E8F0',
+                color: '#0F172A', outline: 'none', fontFamily: 'Tajawal, sans-serif',
                 width: 150,
               }}
             />
@@ -861,7 +861,7 @@ export function CarWashOverview() {
           display: 'grid',
           gridTemplateColumns: '1fr 140px 120px 140px 90px 90px',
           padding: '10px 22px',
-          borderBottom: '1px solid rgba(255,255,255,0.05)',
+          borderBottom: '1px solid #E2E8F0',
           fontSize: 11, fontWeight: 600, color: '#475569',
           fontFamily: 'Tajawal, sans-serif', textTransform: 'uppercase', letterSpacing: '0.04em',
         }}>
@@ -888,7 +888,7 @@ export function CarWashOverview() {
                 display: 'grid',
                 gridTemplateColumns: '1fr 140px 120px 140px 90px 90px',
                 padding: '14px 22px',
-                borderBottom: i < filteredCustomers.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                borderBottom: i < filteredCustomers.length - 1 ? '1px solid #E2E8F0' : 'none',
                 alignItems: 'center',
                 transition: 'background 0.15s',
               }}
@@ -906,7 +906,7 @@ export function CarWashOverview() {
                 }}>
                   {(c.name || c.phone).slice(0, 1)}
                 </div>
-                <span style={{ fontSize: 14, fontWeight: 600, color: '#E2E8F0', fontFamily: 'Tajawal, sans-serif' }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: '#1E293B', fontFamily: 'Tajawal, sans-serif' }}>
                   {c.name || '—'}
                 </span>
               </div>
@@ -927,7 +927,7 @@ export function CarWashOverview() {
               </div>
 
               {/* Total visits */}
-              <span style={{ fontSize: 15, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Sora, sans-serif', textAlign: 'center' }}>
+              <span style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', fontFamily: 'Sora, sans-serif', textAlign: 'center' }}>
                 {c.total_visits}
               </span>
 
@@ -957,13 +957,13 @@ export function CarWashOverview() {
 
         {/* Recent visits */}
         <div style={{
-          background: 'rgba(255,255,255,0.02)',
-          border: '1px solid rgba(255,255,255,0.07)',
+          background: '#FAFAFA',
+          border: '1px solid #E2E8F0',
           borderRadius: 18, overflow: 'hidden',
         }}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 8 }}>
             <RotateCcw size={15} color="#22D3EE" />
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>
               آخر الزيارات
             </h3>
           </div>
@@ -978,7 +978,7 @@ export function CarWashOverview() {
                 <div key={v.id} style={{
                   display: 'flex', alignItems: 'center', gap: 12,
                   padding: '12px 20px',
-                  borderBottom: i < recentVisits.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                  borderBottom: i < recentVisits.length - 1 ? '1px solid #E2E8F0' : 'none',
                 }}>
                   <div style={{
                     width: 30, height: 30, borderRadius: '50%',
@@ -989,7 +989,7 @@ export function CarWashOverview() {
                     <Car size={13} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#E2E8F0', fontFamily: 'Tajawal, sans-serif' }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1E293B', fontFamily: 'Tajawal, sans-serif' }}>
                       {customer?.name || 'عميل'}
                     </div>
                     <div style={{ fontSize: 11, color: '#64748B', fontFamily: 'Sora, sans-serif', direction: 'ltr', display: 'inline-block' }}>
@@ -1012,13 +1012,13 @@ export function CarWashOverview() {
 
         {/* Loyalty milestones */}
         <div style={{
-          background: 'rgba(255,255,255,0.02)',
-          border: '1px solid rgba(255,255,255,0.07)',
+          background: '#FAFAFA',
+          border: '1px solid #E2E8F0',
           borderRadius: 18, overflow: 'hidden',
         }}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 8 }}>
             <Trophy size={15} color="#F59E0B" />
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>
               عملاء يستحقون مكافأة ولاء
             </h3>
           </div>
@@ -1031,7 +1031,7 @@ export function CarWashOverview() {
               <div key={c.id} style={{
                 display: 'flex', alignItems: 'center', gap: 12,
                 padding: '12px 20px',
-                borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                borderBottom: i < arr.length - 1 ? '1px solid #E2E8F0' : 'none',
               }}>
                 <div style={{
                   width: 30, height: 30, borderRadius: '50%',
@@ -1042,7 +1042,7 @@ export function CarWashOverview() {
                   <Gift size={14} color="#F59E0B" />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#E2E8F0', fontFamily: 'Tajawal, sans-serif' }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1E293B', fontFamily: 'Tajawal, sans-serif' }}>
                     {c.name || '—'}
                   </div>
                   <div style={{ fontSize: 11, color: '#64748B', fontFamily: 'Sora, sans-serif', direction: 'ltr', display: 'inline-block' }}>

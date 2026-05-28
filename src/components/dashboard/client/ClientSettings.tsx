@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { User, Bell, Shield, Link2, Copy, Check, Mail, Loader2, MapPin, ClipboardList, Save, Users, Plus, Trash2, Eye, EyeOff } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { supabase } from '../../../lib/supabase'
@@ -165,7 +165,7 @@ export const ClientSettings = () => {
 
       {/* Tabs — car wash only */}
       {isCarWash && (
-        <div style={{ display: 'flex', gap: 8, borderBottom: '1px solid rgba(255,255,255,0.07)', paddingBottom: 0 }}>
+        <div style={{ display: 'flex', gap: 8, borderBottom: '1px solid #E2E8F0', paddingBottom: 0 }}>
           {[
             { key: 'account', label: 'إعدادات الحساب', icon: User },
             { key: 'setup',   label: 'إعداد المغسلة',  icon: ClipboardList },
@@ -185,7 +185,7 @@ export const ClientSettings = () => {
 
       {/* Company info */}
       {company && (
-        <div className="p-5 rounded-2xl space-y-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+        <div className="p-5 rounded-2xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
           <div className="flex items-center gap-2.5 mb-4">
             <User size={16} className="text-primary-400" />
             <h3 className="text-sm font-bold text-white font-cairo">معلومات الشركة</h3>
@@ -206,7 +206,7 @@ export const ClientSettings = () => {
       )}
 
       {/* Webhook URL — hidden for car wash */}
-      {!isCarWash && <div className="p-5 rounded-2xl space-y-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+      {!isCarWash && <div className="p-5 rounded-2xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
         <div className="flex items-center gap-2.5 mb-1">
           <Link2 size={16} className="text-cyan-400" />
           <h3 className="text-sm font-bold text-white font-cairo">رابط Webhook الخاص بك</h3>
@@ -226,14 +226,14 @@ export const ClientSettings = () => {
         ) : (
           <p className="text-xs text-slate-600 font-tajawal">— لا يوجد رابط webhook بعد</p>
         )}
-        <div className="p-3 rounded-xl text-xs text-slate-500 font-tajawal space-y-1" style={{ background: 'rgba(255,255,255,0.02)' }}>
+        <div className="p-3 rounded-xl text-xs text-slate-500 font-tajawal space-y-1" style={{ background: '#FAFAFA' }}>
           <p className="font-semibold text-slate-400">مثال على الاستخدام (POST):</p>
           <pre className="text-[10px] text-slate-600 font-mono" dir="ltr">{`{ "company_name": "شركة X", "phone": "05XXXXXXXX", "sector": "صحة", "source": "موقع" }`}</pre>
         </div>
       </div>}
 
       {/* Send Email via Resend — hidden for car wash */}
-      {!isCarWash && <div className="p-5 rounded-2xl space-y-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+      {!isCarWash && <div className="p-5 rounded-2xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
         <div className="flex items-center gap-2.5 mb-1">
           <Mail size={16} className="text-yellow-400" />
           <h3 className="text-sm font-bold text-white font-cairo">إرسال إيميل</h3>
@@ -258,7 +258,7 @@ export const ClientSettings = () => {
 
       {/* Car Wash: Google Maps URL */}
       {isCarWash && (
-        <div className="p-5 rounded-2xl space-y-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+        <div className="p-5 rounded-2xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
           <div className="flex items-center gap-2.5 mb-1">
             <MapPin size={16} className="text-cyan-400" />
             <h3 className="text-sm font-bold text-white font-cairo">رابط Google Maps للمغسلة</h3>
@@ -290,7 +290,7 @@ export const ClientSettings = () => {
       )}
 
       {/* Notifications */}
-      <div className="p-5 rounded-2xl space-y-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+      <div className="p-5 rounded-2xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
         <div className="flex items-center gap-2.5 mb-1">
           <Bell size={16} className="text-purple-400" />
           <h3 className="text-sm font-bold text-white font-cairo">الإشعارات</h3>
@@ -309,7 +309,7 @@ export const ClientSettings = () => {
       </div>
 
       {/* Security */}
-      <div className="p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+      <div className="p-5 rounded-2xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
         <div className="flex items-center gap-2.5 mb-4">
           <Shield size={16} className="text-slate-400" />
           <h3 className="text-sm font-bold text-white font-cairo">الأمان</h3>
@@ -342,17 +342,17 @@ export const ClientSettings = () => {
         <div dir="rtl" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
 
           {/* Add member form */}
-          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 18, padding: '20px 22px' }}>
+          <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 18, padding: '20px 22px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
               <Plus size={15} color="#22D3EE" />
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif' }}>إضافة مستخدم جديد</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>إضافة مستخدم جديد</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {/* Name */}
               <div>
                 <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>الاسم</label>
                 <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="مثال: محمد العتيبي" dir="rtl"
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#F1F5F9', outline: 'none', fontFamily: 'Tajawal, sans-serif', boxSizing: 'border-box' }} />
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', outline: 'none', fontFamily: 'Tajawal, sans-serif', boxSizing: 'border-box' }} />
               </div>
               {/* PIN */}
               <div>
@@ -363,7 +363,7 @@ export const ClientSettings = () => {
                   <input type={showPin ? 'text' : 'password'} value={newPin}
                     onChange={e => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
                     placeholder="• • • •" dir="ltr" maxLength={4} inputMode="numeric"
-                    style={{ width: '100%', padding: '10px 40px 10px 14px', borderRadius: 10, fontSize: 20, letterSpacing: 8, background: 'rgba(255,255,255,0.04)', border: `1px solid ${newPin.length === 4 ? 'rgba(34,211,238,0.4)' : 'rgba(255,255,255,0.08)'}`, color: '#F1F5F9', outline: 'none', fontFamily: 'Sora, sans-serif', boxSizing: 'border-box' }} />
+                    style={{ width: '100%', padding: '10px 40px 10px 14px', borderRadius: 10, fontSize: 20, letterSpacing: 8, background: '#FFFFFF', border: `1px solid ${newPin.length === 4 ? 'rgba(34,211,238,0.4)' : '#E2E8F0'}`, color: '#0F172A', outline: 'none', fontFamily: 'Sora, sans-serif', boxSizing: 'border-box' }} />
                   <button onClick={() => setShowPin(v => !v)} style={{ position: 'absolute', top: '50%', left: 10, transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#475569', padding: 0 }}>
                     {showPin ? <EyeOff size={14} /> : <Eye size={14} />}
                   </button>
@@ -378,8 +378,8 @@ export const ClientSettings = () => {
                     return (
                       <button key={p.path} onClick={() => togglePerm(p.path)} style={{
                         padding: '7px 14px', borderRadius: 20, fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer',
-                        background: on ? 'rgba(34,211,238,0.15)' : 'rgba(255,255,255,0.04)',
-                        border: `1px solid ${on ? 'rgba(34,211,238,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                        background: on ? 'rgba(34,211,238,0.15)' : '#FFFFFF',
+                        border: `1px solid ${on ? 'rgba(34,211,238,0.4)' : '#E2E8F0'}`,
                         color: on ? '#22D3EE' : '#64748B', fontWeight: on ? 600 : 400,
                       }}>
                         {on ? '✓ ' : ''}{p.label}
@@ -391,7 +391,7 @@ export const ClientSettings = () => {
               <button onClick={addMember} disabled={!newName.trim() || newPin.length !== 4 || savingTeam} style={{
                 display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', borderRadius: 12, border: 'none',
                 cursor: !newName.trim() || newPin.length !== 4 ? 'not-allowed' : 'pointer',
-                background: !newName.trim() || newPin.length !== 4 ? 'rgba(255,255,255,0.04)' : 'rgba(34,211,238,0.12)',
+                background: !newName.trim() || newPin.length !== 4 ? '#FFFFFF' : 'rgba(34,211,238,0.12)',
                 color: !newName.trim() || newPin.length !== 4 ? '#334155' : '#22D3EE',
                 fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: 700, alignSelf: 'flex-start',
               }}>
@@ -402,10 +402,10 @@ export const ClientSettings = () => {
           </div>
 
           {/* Members list */}
-          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 18, overflow: 'hidden' }}>
-            <div style={{ padding: '16px 22px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 18, overflow: 'hidden' }}>
+            <div style={{ padding: '16px 22px', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 8 }}>
               <Users size={15} color="#8B5CF6" />
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>المستخدمون</h3>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>المستخدمون</h3>
               <span style={{ fontSize: 12, color: '#475569', fontFamily: 'Sora, sans-serif' }}>({teamMembers.length})</span>
             </div>
             {teamMembers.length === 0 ? (
@@ -414,20 +414,20 @@ export const ClientSettings = () => {
               </div>
             ) : (
               teamMembers.map((m, i) => (
-                <div key={m.id} style={{ borderBottom: i < teamMembers.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                <div key={m.id} style={{ borderBottom: i < teamMembers.length - 1 ? '1px solid #E2E8F0' : 'none' }}>
                   {/* Member row */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 22px' }}>
                     <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#818CF8', flexShrink: 0 }}>
                       {m.full_name[0]}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: '#E2E8F0', fontFamily: 'Tajawal, sans-serif' }}>{m.full_name}</div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: '#1E293B', fontFamily: 'Tajawal, sans-serif' }}>{m.full_name}</div>
                       <div style={{ fontSize: 11, color: '#475569', fontFamily: 'Tajawal, sans-serif' }}>{(m.permissions || []).length} صلاحية · PIN: {'•'.repeat(4)}</div>
                     </div>
                     <button onClick={() => setEditingId(editingId === m.id ? null : m.id)} style={{
                       padding: '5px 12px', borderRadius: 8, fontSize: 11, fontFamily: 'Cairo, sans-serif', cursor: 'pointer',
-                      background: editingId === m.id ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.05)',
-                      border: `1px solid ${editingId === m.id ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.08)'}`,
+                      background: editingId === m.id ? 'rgba(99,102,241,0.15)' : '#FFFFFF',
+                      border: `1px solid ${editingId === m.id ? 'rgba(99,102,241,0.3)' : '#E2E8F0'}`,
                       color: editingId === m.id ? '#818CF8' : '#64748B', marginLeft: 6,
                     }}>
                       {editingId === m.id ? 'إخفاء' : 'تعديل'}
@@ -444,8 +444,8 @@ export const ClientSettings = () => {
                         return (
                           <button key={p.path} onClick={() => toggleMemberPerm(m, p.path)} style={{
                             padding: '6px 13px', borderRadius: 20, fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer',
-                            background: on ? 'rgba(34,211,238,0.15)' : 'rgba(255,255,255,0.03)',
-                            border: `1px solid ${on ? 'rgba(34,211,238,0.4)' : 'rgba(255,255,255,0.07)'}`,
+                            background: on ? 'rgba(34,211,238,0.15)' : '#F8FAFC',
+                            border: `1px solid ${on ? 'rgba(34,211,238,0.4)' : '#F8FAFC'}`,
                             color: on ? '#22D3EE' : '#475569', fontWeight: on ? 600 : 400,
                           }}>
                             {on ? '✓ ' : ''}{p.label}

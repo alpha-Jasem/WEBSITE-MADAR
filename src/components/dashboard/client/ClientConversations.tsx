@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { MessageSquare, Clock, Phone, Loader2, RefreshCw, User } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
@@ -122,7 +122,7 @@ export const ClientConversations = () => {
         </div>
         <button onClick={load}
           className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs text-slate-400 hover:text-white cursor-pointer transition-all"
-          style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
+          style={{ border: '1px solid #E2E8F0' }}>
           <RefreshCw size={13} />
           تحديث
         </button>
@@ -137,7 +137,7 @@ export const ClientConversations = () => {
           { label: 'لم يكمل',  value: abandonedCount,         color: '#EF4444' },
         ].map(s => (
           <div key={s.label} className="p-3 rounded-xl text-center"
-            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
             <p className="text-xl font-black font-work" style={{ color: s.color }}>{s.value}</p>
             <p className="text-xs text-slate-600 font-tajawal mt-0.5">{s.label}</p>
           </div>
@@ -184,7 +184,7 @@ export const ClientConversations = () => {
               <motion.div key={conv.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.03 }}
                 className="flex items-center gap-4 p-4 rounded-xl transition-colors hover:bg-white/[0.02]"
-                style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${isActive ? cfg.color + '25' : 'rgba(255,255,255,0.06)'}` }}>
+                style={{ background: '#F8FAFC', border: `1px solid ${isActive ? cfg.color + '25' : '#F8FAFC'}` }}>
 
                 {/* Status dot */}
                 <div className="flex-shrink-0 relative">
@@ -194,7 +194,7 @@ export const ClientConversations = () => {
                   </div>
                   {isActive && (
                     <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 animate-pulse"
-                      style={{ background: cfg.dot, borderColor: '#0C0D14' }} />
+                      style={{ background: cfg.dot, borderColor: '#FFFFFF' }} />
                   )}
                 </div>
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { MessageSquare, Users2, Clock, Play, Pause, Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { StatusBadge } from '../shared/StatusBadge'
@@ -59,8 +59,8 @@ export const ClientAutomations = () => {
               initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
               className="p-6 rounded-2xl space-y-5"
               style={{
-                background: a.status === 'error' ? 'rgba(239,68,68,0.06)' : 'rgba(255,255,255,0.03)',
-                border: `1px solid ${a.status === 'error' ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.07)'}`,
+                background: a.status === 'error' ? 'rgba(239,68,68,0.06)' : '#F8FAFC',
+                border: `1px solid ${a.status === 'error' ? 'rgba(239,68,68,0.2)' : '#F8FAFC'}`,
               }}>
               <div className="flex items-center justify-between">
                 <div>
@@ -76,7 +76,7 @@ export const ClientAutomations = () => {
                   { icon: Users2,        value: a.leads_generated,                 label: 'عملاء محتملون' },
                   { icon: Clock,         value: `${a.avg_response_time}ث`,          label: 'متوسط الرد' },
                 ].map(({ icon: Icon, value, label }) => (
-                  <div key={label} className="p-3 rounded-xl text-center" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                  <div key={label} className="p-3 rounded-xl text-center" style={{ background: '#F8FAFC' }}>
                     <Icon size={13} className="text-slate-500 mx-auto mb-1" />
                     <p className="text-lg font-bold text-white font-sora">{value}</p>
                     <p className="text-[10px] text-slate-600 font-tajawal">{label}</p>

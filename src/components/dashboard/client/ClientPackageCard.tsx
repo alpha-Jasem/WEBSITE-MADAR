@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, MessageSquare, RefreshCw, ArrowUpRight, Stethoscope, Car, Building2, Briefcase, X, CheckCircle2 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
@@ -77,7 +77,7 @@ function UpgradeModal({ company, onClose }: { company: Company; onClose: () => v
 
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
         className="w-full max-w-2xl rounded-2xl p-6 relative"
-        style={{ background: '#0C0D14', border: '1px solid rgba(255,255,255,0.1)' }}
+        style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
         dir="rtl">
 
         <button onClick={onClose}
@@ -107,8 +107,8 @@ function UpgradeModal({ company, onClose }: { company: Company; onClose: () => v
                 return (
                   <div key={key} className="rounded-xl p-4 flex flex-col gap-3"
                     style={{
-                      background: isCurrent ? `${plan.color}12` : 'rgba(255,255,255,0.03)',
-                      border: `1px solid ${isCurrent ? plan.border : 'rgba(255,255,255,0.07)'}`,
+                      background: isCurrent ? `${plan.color}12` : '#F8FAFC',
+                      border: `1px solid ${isCurrent ? plan.border : '#F8FAFC'}`,
                     }}>
 
                     <div>
@@ -176,7 +176,7 @@ export const ClientPackageCard = ({ company }: Props) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="rounded-2xl overflow-hidden"
-        style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${plan.border}`, boxShadow: `0 0 40px ${plan.glow}` }}
+        style={{ background: '#F8FAFC', border: `1px solid ${plan.border}`, boxShadow: `0 0 40px ${plan.glow}` }}
       >
         <div className="h-1 w-full" style={{ background: `linear-gradient(90deg, ${plan.color}, ${plan.color}88)` }} />
 
@@ -220,7 +220,7 @@ export const ClientPackageCard = ({ company }: Props) => {
               </span>
             </div>
 
-            <div className="h-3 rounded-full overflow-hidden mb-1.5" style={{ background: 'rgba(255,255,255,0.06)' }}>
+            <div className="h-3 rounded-full overflow-hidden mb-1.5" style={{ background: '#F8FAFC' }}>
               <motion.div
                 className="h-full rounded-full"
                 initial={{ width: 0 }}
@@ -274,7 +274,7 @@ export const ClientPackageCard = ({ company }: Props) => {
             <div className="flex flex-col justify-between">
               {resetDate && (
                 <div className="flex items-start gap-2 p-3 rounded-xl mb-3"
-                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                   <RefreshCw size={13} className="text-slate-500 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-xs text-slate-500 font-tajawal">تجديد الباقة</p>

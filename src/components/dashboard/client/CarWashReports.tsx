@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell } from 'recharts'
 import { BarChart3, Car, DollarSign, FileDown, Gift, Loader2, Star, TrendingUp, Users, ChevronDown } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
@@ -35,7 +35,7 @@ type CWCustomer = {
 function StatCard({ icon: Icon, label, value, sub, color }: { icon: typeof Car; label: string; value: string | number; sub?: string; color: string }) {
   return (
     <div style={{
-      background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+      background: '#F8FAFC', border: '1px solid #E2E8F0',
       borderRadius: 16, padding: '18px 20px',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -44,7 +44,7 @@ function StatCard({ icon: Icon, label, value, sub, color }: { icon: typeof Car; 
           <Icon size={17} color={color} />
         </div>
       </div>
-      <strong style={{ fontSize: 26, fontWeight: 800, color: '#F1F5F9', fontFamily: 'Sora, sans-serif', display: 'block', lineHeight: 1 }}>{value}</strong>
+      <strong style={{ fontSize: 26, fontWeight: 800, color: '#0F172A', fontFamily: 'Sora, sans-serif', display: 'block', lineHeight: 1 }}>{value}</strong>
       {sub && <span style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginTop: 4, display: 'block' }}>{sub}</span>}
     </div>
   )
@@ -53,7 +53,7 @@ function StatCard({ icon: Icon, label, value, sub, color }: { icon: typeof Car; 
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
   return (
-    <div style={{ background: '#0D1422', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '8px 12px' }}>
+    <div style={{ background: '#0D1422', border: '1px solid #CBD5E1', borderRadius: 8, padding: '8px 12px' }}>
       <p style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>{label}</p>
       {payload.map((p: any) => (
         <p key={p.name} style={{ fontSize: 13, fontWeight: 700, color: p.color, fontFamily: 'Sora, sans-serif', margin: '2px 0 0' }}>
@@ -305,7 +305,7 @@ export function CarWashReports() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>تقارير المغسلة</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>تقارير المغسلة</h1>
           <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
             {DATE_FILTERS.map(f => (
               <button key={f.days} onClick={() => { setDays(f.days); setShowCustom(false) }}
@@ -338,7 +338,7 @@ export function CarWashReports() {
             <ChevronDown size={13} />
           </button>
           {showExportMenu && (
-            <div style={{ position: 'absolute', top: '110%', left: 0, background: '#0D1422', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, overflow: 'hidden', zIndex: 50, minWidth: 180 }}>
+            <div style={{ position: 'absolute', top: '110%', left: 0, background: '#0D1422', border: '1px solid #CBD5E1', borderRadius: 12, overflow: 'hidden', zIndex: 50, minWidth: 180 }}>
               {[
                 { label: 'تصدير المبيعات CSV', action: () => { exportSalesCSV(); setShowExportMenu(false) } },
                 { label: 'تصدير PDF', action: () => { exportPDF(); setShowExportMenu(false) } },
@@ -347,7 +347,7 @@ export function CarWashReports() {
                   key={item.label}
                   onClick={item.action}
                   style={{ display: 'block', width: '100%', textAlign: 'right', padding: '10px 16px', background: 'none', border: 'none', color: '#94A3B8', fontSize: 13, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFC')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'none')}
                 >
                   {item.label}
@@ -370,12 +370,12 @@ export function CarWashReports() {
 
       {/* Daily visits chart */}
       <div style={{
-        background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)',
+        background: '#FAFAFA', border: '1px solid #E2E8F0',
         borderRadius: 18, padding: '20px 22px',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
           <BarChart3 size={16} color="#22D3EE" />
-          <h2 style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>
+          <h2 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>
             الزيارات اليومية — آخر {Math.min(days, 30)} يوم
           </h2>
         </div>
@@ -397,10 +397,10 @@ export function CarWashReports() {
 
       {/* Payment breakdown */}
       {Object.keys(stats.paymentBreakdown).length > 0 && (
-        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 18, padding: '20px 22px' }}>
+        <div style={{ background: '#FAFAFA', border: '1px solid #E2E8F0', borderRadius: 18, padding: '20px 22px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
             <DollarSign size={15} color="#6366F1" />
-            <h2 style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>توزيع طرق الدفع — هذا الشهر</h2>
+            <h2 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>توزيع طرق الدفع — هذا الشهر</h2>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 12 }}>
             {Object.entries(stats.paymentBreakdown).map(([pm, amount]) => {
@@ -408,7 +408,7 @@ export function CarWashReports() {
               return (
                 <div key={pm} style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
                   <p style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', marginBottom: 4 }}>{labels[pm] || pm}</p>
-                  <p style={{ fontSize: 18, fontWeight: 800, color: '#F1F5F9', fontFamily: 'Sora, sans-serif' }}>{amount.toFixed(0)}</p>
+                  <p style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', fontFamily: 'Sora, sans-serif' }}>{amount.toFixed(0)}</p>
                   <p style={{ fontSize: 10, color: '#475569', fontFamily: 'Tajawal, sans-serif' }}>ر.س</p>
                 </div>
               )
@@ -421,12 +421,12 @@ export function CarWashReports() {
 
         {/* Revenue chart */}
         <div style={{
-          background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)',
+          background: '#FAFAFA', border: '1px solid #E2E8F0',
           borderRadius: 18, padding: '20px 22px',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
             <DollarSign size={15} color="#10B981" />
-            <h2 style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>الإيرادات اليومية</h2>
+            <h2 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>الإيرادات اليومية</h2>
           </div>
           <ResponsiveContainer width="100%" height={150}>
             <BarChart data={stats.dailyChart.slice(-7)}>
@@ -440,12 +440,12 @@ export function CarWashReports() {
 
         {/* Top customers */}
         <div style={{
-          background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)',
+          background: '#FAFAFA', border: '1px solid #E2E8F0',
           borderRadius: 18, overflow: 'hidden',
         }}>
-          <div style={{ padding: '18px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ padding: '18px 20px', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 8 }}>
             <Users size={15} color="#8B5CF6" />
-            <h2 style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>أكثر العملاء زيارة</h2>
+            <h2 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>أكثر العملاء زيارة</h2>
           </div>
           {topCustomers.length === 0 ? (
             <div style={{ padding: '28px 20px', textAlign: 'center', color: '#475569', fontFamily: 'Tajawal, sans-serif', fontSize: 13 }}>
@@ -454,13 +454,13 @@ export function CarWashReports() {
           ) : topCustomers.map((c, i) => (
             <div key={c.id} style={{
               display: 'flex', alignItems: 'center', gap: 12, padding: '11px 20px',
-              borderBottom: i < topCustomers.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+              borderBottom: i < topCustomers.length - 1 ? '1px solid #E2E8F0' : 'none',
             }}>
               <span style={{ fontSize: 13, fontWeight: 700, color: '#475569', fontFamily: 'Sora, sans-serif', width: 20, textAlign: 'center' }}>
                 {i + 1}
               </span>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#E2E8F0', fontFamily: 'Tajawal, sans-serif' }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#1E293B', fontFamily: 'Tajawal, sans-serif' }}>
                   {c.name || '—'}
                 </div>
                 <div style={{ fontSize: 11, color: '#475569', fontFamily: 'Sora, sans-serif', direction: 'ltr', display: 'inline-block' }}>
@@ -480,22 +480,22 @@ export function CarWashReports() {
         {/* Services breakdown */}
         {stats.services.length > 0 && (
           <div style={{
-            background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)',
+            background: '#FAFAFA', border: '1px solid #E2E8F0',
             borderRadius: 18, overflow: 'hidden',
           }}>
-            <div style={{ padding: '18px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ padding: '18px 20px', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 8 }}>
               <Car size={15} color="#4F6EF7" />
-              <h2 style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', fontFamily: 'Cairo, sans-serif', margin: 0 }}>أكثر الخدمات طلباً</h2>
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>أكثر الخدمات طلباً</h2>
             </div>
             {stats.services.map(([name, count], i) => {
               const max = stats.services[0][1]
               return (
-                <div key={name} style={{ padding: '12px 20px', borderBottom: i < stats.services.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                <div key={name} style={{ padding: '12px 20px', borderBottom: i < stats.services.length - 1 ? '1px solid #E2E8F0' : 'none' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <span style={{ fontSize: 13, color: '#E2E8F0', fontFamily: 'Tajawal, sans-serif' }}>{name}</span>
+                    <span style={{ fontSize: 13, color: '#1E293B', fontFamily: 'Tajawal, sans-serif' }}>{name}</span>
                     <span style={{ fontSize: 13, fontWeight: 700, color: '#4F6EF7', fontFamily: 'Sora, sans-serif' }}>{count}</span>
                   </div>
-                  <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2 }}>
+                  <div style={{ height: 4, background: '#F8FAFC', borderRadius: 2 }}>
                     <div style={{ height: '100%', width: `${(count / max) * 100}%`, background: '#4F6EF7', borderRadius: 2 }} />
                   </div>
                 </div>

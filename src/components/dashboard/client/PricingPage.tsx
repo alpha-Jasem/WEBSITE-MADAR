@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { Check, Lock, Sparkles, Crown, Zap, Loader2, CheckCircle2, AlertCircle, CreditCard, MessageSquare } from 'lucide-react'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { supabase } from '../../../lib/supabase'
@@ -193,8 +193,8 @@ export const PricingPage = () => {
             <div
               key={plan.id}
               style={{
-                background: isPro ? `linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.05))` : 'rgba(255,255,255,0.03)',
-                border: `1px solid ${isCurrent ? plan.color : isPro ? plan.border : 'rgba(255,255,255,0.08)'}`,
+                background: isPro ? `linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.05))` : '#F8FAFC',
+                border: `1px solid ${isCurrent ? plan.color : isPro ? plan.border : '#E2E8F0'}`,
                 borderRadius: 20,
                 padding: '28px 24px',
                 position: 'relative',
@@ -220,7 +220,7 @@ export const PricingPage = () => {
               {isCurrent && (
                 <div style={{
                   position: 'absolute', top: -13, left: '50%', transform: 'translateX(-50%)',
-                  background: plan.color, color: '#080C14',
+                  background: plan.color, color: '#F4F6FB',
                   padding: '4px 14px', borderRadius: 99,
                   fontSize: 11, fontWeight: 700, fontFamily: 'Tajawal, sans-serif',
                   whiteSpace: 'nowrap',
@@ -243,7 +243,7 @@ export const PricingPage = () => {
               {/* Price */}
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
-                  <span style={{ fontSize: 36, fontWeight: 800, color: '#F1F5F9', fontFamily: 'Sora, sans-serif' }}>{plan.price}</span>
+                  <span style={{ fontSize: 36, fontWeight: 800, color: '#0F172A', fontFamily: 'Sora, sans-serif' }}>{plan.price}</span>
                   <span style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>ر.س / شهر</span>
                 </div>
               </div>
@@ -265,7 +265,7 @@ export const PricingPage = () => {
 
               {/* CTA */}
               {isCurrent ? (
-                <div style={{ width: '100%', padding: '11px 0', borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#475569', fontSize: 13, fontFamily: 'Tajawal, sans-serif', textAlign: 'center', fontWeight: 600 }}>
+                <div style={{ width: '100%', padding: '11px 0', borderRadius: 12, background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569', fontSize: 13, fontFamily: 'Tajawal, sans-serif', textAlign: 'center', fontWeight: 600 }}>
                   باقتك الحالية ✓
                 </div>
               ) : isUpgrade ? (
@@ -289,7 +289,7 @@ export const PricingPage = () => {
                   }
                 </button>
               ) : (
-                <div style={{ width: '100%', padding: '11px 0', borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#334155', fontSize: 13, fontFamily: 'Tajawal, sans-serif', textAlign: 'center' }}>
+                <div style={{ width: '100%', padding: '11px 0', borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#334155', fontSize: 13, fontFamily: 'Tajawal, sans-serif', textAlign: 'center' }}>
                   {isDowngrade ? 'باقة أقل' : ''}
                 </div>
               )}
@@ -305,7 +305,7 @@ export const PricingPage = () => {
           { icon: '🔒', title: 'بدون عقود', desc: 'يمكنك الإلغاء في أي وقت' },
           { icon: '💬', title: 'دعم مباشر', desc: 'على واتساب — طوال أوقات العمل' },
         ].map(item => (
-          <div key={item.title} className="p-4 rounded-2xl text-center" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
+          <div key={item.title} className="p-4 rounded-2xl text-center" style={{ background: '#FAFAFA', border: '1px solid #E2E8F0' }}>
             <div className="text-2xl mb-2">{item.icon}</div>
             <p className="text-sm font-bold text-white font-cairo mb-1">{item.title}</p>
             <p className="text-xs text-slate-500 font-tajawal">{item.desc}</p>

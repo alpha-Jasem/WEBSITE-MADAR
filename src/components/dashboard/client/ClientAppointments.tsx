@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Calendar, Clock, Phone, Search, CheckCircle2, XCircle, AlertCircle, Loader2, Plus, User, X } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
@@ -116,7 +116,7 @@ function NewAppointmentModal({
 
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
         className="w-full max-w-md rounded-2xl p-6 relative"
-        style={{ background: '#0C0D14', border: '1px solid rgba(255,255,255,0.1)' }}
+        style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
         dir="rtl">
 
         <button onClick={onClose}
@@ -179,7 +179,7 @@ function NewAppointmentModal({
         <div className="flex gap-3 mt-6">
           <button onClick={onClose}
             className="flex-1 py-2.5 rounded-xl text-sm font-tajawal text-slate-400 hover:text-white cursor-pointer transition-all"
-            style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+            style={{ border: '1px solid #E2E8F0' }}>
             إلغاء
           </button>
           <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
@@ -279,7 +279,7 @@ export const ClientAppointments = () => {
             { label: 'مكتملة', value: doneCount,      color: '#10B981' },
           ].map(s => (
             <div key={s.label} className="p-4 rounded-xl text-center"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+              style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
               <p className="text-2xl font-black font-work" style={{ color: s.color }}>{s.value}</p>
               <p className="text-xs text-slate-500 font-tajawal mt-1">{s.label}</p>
             </div>
@@ -316,7 +316,7 @@ export const ClientAppointments = () => {
         </div>
 
         {/* Table */}
-        <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
+        <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
           {filtered.length === 0 ? (
             <div className="py-16 text-center">
               <Calendar size={36} className="text-slate-700 mx-auto mb-3" />

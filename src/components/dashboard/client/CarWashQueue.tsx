@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+﻿import { useEffect, useState, useRef } from 'react'
 import { Plus, X, Loader2, Clock, ChevronRight, Car, Pencil, Check, Gift, ChevronDown, ChevronUp, Receipt } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
@@ -621,7 +621,7 @@ export const CarWashQueue = () => {
                 {cars.length === 0 && (
                   <div
                     className="flex h-40 flex-col items-center justify-center rounded-xl text-center"
-                    style={{ background: 'rgba(3,7,18,0.34)', border: '1px dashed rgba(255,255,255,0.12)' }}
+                    style={{ background: 'rgba(3,7,18,0.34)', border: '1px dashed #CBD5E1' }}
                   >
                     <Car size={24} className="text-slate-700" />
                     <p className="mt-2 text-sm text-slate-600 font-tajawal">لا توجد سيارات هنا</p>
@@ -636,7 +636,7 @@ export const CarWashQueue = () => {
       {activeItems.length === 0 && (
         <div
           className="flex flex-col items-center justify-center h-40 gap-3"
-          style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16 }}
+          style={{ background: '#FAFAFA', border: '1px solid #E2E8F0', borderRadius: 16 }}
         >
           <Car size={32} className="text-slate-700" />
           <p className="text-slate-500 font-tajawal text-sm">لا توجد سيارات في قائمة اليوم</p>
@@ -646,11 +646,11 @@ export const CarWashQueue = () => {
 
       {/* Cancelled today section */}
       {cancelledItems.length > 0 && (
-        <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
+        <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
           <button
             onClick={() => setShowCancelled(v => !v)}
             className="w-full flex items-center justify-between px-4 py-3 text-sm font-tajawal text-slate-500"
-            style={{ background: 'rgba(255,255,255,0.02)' }}
+            style={{ background: '#FAFAFA' }}
           >
             <span>ملغاة اليوم ({cancelledItems.length})</span>
             {showCancelled ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -661,7 +661,7 @@ export const CarWashQueue = () => {
                 <div
                   key={item.id}
                   className="flex items-center gap-3 px-3 py-2 rounded-lg"
-                  style={{ background: 'rgba(255,255,255,0.03)' }}
+                  style={{ background: '#F8FAFC' }}
                 >
                   <X size={12} className="text-slate-600 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
@@ -679,7 +679,7 @@ export const CarWashQueue = () => {
       {/* Add / Edit car form modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)' }}>
-          <div role="dialog" aria-modal="true" aria-label="Car form" className="w-full max-w-md rounded-2xl overflow-y-auto max-h-[90vh]" style={{ background: '#0D1422', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <div role="dialog" aria-modal="true" aria-label="Car form" className="w-full max-w-md rounded-2xl overflow-y-auto max-h-[90vh]" style={{ background: '#0D1422', border: '1px solid #CBD5E1' }}>
             <div className="p-6">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-lg font-bold text-white font-cairo">{editingItem ? 'تعديل السيارة' : 'إضافة سيارة'}</h2>
@@ -697,7 +697,7 @@ export const CarWashQueue = () => {
                     onChange={e => setForm(f => ({ ...f, customer_name: e.target.value }))}
                     placeholder="اسم العميل"
                     className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-white placeholder-slate-600 outline-none"
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                    style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
                   />
                 </div>
 
@@ -767,7 +767,7 @@ export const CarWashQueue = () => {
                       onChange={e => setForm(f => ({ ...f, car_type: e.target.value }))}
                       placeholder="تويوتا، هيونداي..."
                       className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-white placeholder-slate-600 outline-none"
-                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                      style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
                     />
                   </div>
                   <div>
@@ -777,7 +777,7 @@ export const CarWashQueue = () => {
                       onChange={e => setForm(f => ({ ...f, plate: e.target.value }))}
                       placeholder="أ ب ج 1234"
                       className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-white placeholder-slate-600 outline-none"
-                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                      style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
                     />
                   </div>
                 </div>
@@ -798,7 +798,7 @@ export const CarWashQueue = () => {
                         }))
                       }}
                       className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-white outline-none"
-                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                      style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
                     >
                       <option value="">اختر الخدمة</option>
                       {services.map(s => (
@@ -811,7 +811,7 @@ export const CarWashQueue = () => {
                       onChange={e => setForm(f => ({ ...f, service_name: e.target.value }))}
                       placeholder="غسيل عادي، بريميوم..."
                       className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-white placeholder-slate-600 outline-none"
-                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                      style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
                     />
                   )}
                 </div>
@@ -822,7 +822,7 @@ export const CarWashQueue = () => {
                     value={form.worker_id}
                     onChange={e => setForm(f => ({ ...f, worker_id: e.target.value }))}
                     className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-white outline-none"
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                    style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
                   >
                     <option value="">بدون تعيين</option>
                     {workers.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
@@ -837,7 +837,7 @@ export const CarWashQueue = () => {
                     onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                     placeholder="أي ملاحظات إضافية..."
                     className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-white placeholder-slate-600 outline-none"
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                    style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
                   />
                 </div>
               </div>
@@ -877,7 +877,7 @@ export const CarWashQueue = () => {
                 <button
                   onClick={() => { setShowForm(false); setEditingItem(null); setLoyaltyInfo(null) }}
                   className="flex-1 py-2.5 rounded-xl text-sm font-tajawal text-slate-400"
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                  style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
                 >
                   إلغاء
                 </button>
@@ -899,13 +899,13 @@ export const CarWashQueue = () => {
       {/* Delivery / payment modal */}
       {deliverModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
-          <div role="dialog" aria-modal="true" aria-label="Confirm delivery" className="w-full max-w-sm rounded-2xl p-6" style={{ background: '#0D1422', border: '1px solid rgba(255,255,255,0.12)' }}>
+          <div role="dialog" aria-modal="true" aria-label="Confirm delivery" className="w-full max-w-sm rounded-2xl p-6" style={{ background: '#0D1422', border: '1px solid #CBD5E1' }}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-bold text-white font-cairo">تأكيد التسليم</h2>
               <button aria-label="Close dialog" onClick={() => setDeliverModal(null)} className="text-slate-400 hover:text-white"><X size={18} /></button>
             </div>
 
-            <div className="mb-4 p-3 rounded-xl space-y-1" style={{ background: 'rgba(255,255,255,0.04)' }}>
+            <div className="mb-4 p-3 rounded-xl space-y-1" style={{ background: '#FFFFFF' }}>
               <p className="text-sm font-bold text-white font-cairo">{deliverModal.customer_name}</p>
               {deliverModal.service_name && <p className="text-xs text-slate-400 font-tajawal">{deliverModal.service_name}</p>}
               {deliverModal.is_free_wash && (
@@ -921,7 +921,7 @@ export const CarWashQueue = () => {
               const price = deliverModal.is_free_wash ? 0 : deliverModal.price
               const vat = calcVAT(price, company?.tax_enabled || false, company?.vat_rate || 15, company?.price_includes_vat || false)
               return (
-                <div className="mb-4 space-y-1.5 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className="mb-4 space-y-1.5 p-3 rounded-xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                   {deliverModal.is_free_wash ? (
                     <>
                       <div className="flex justify-between text-xs font-tajawal">
@@ -973,8 +973,8 @@ export const CarWashQueue = () => {
                       onClick={() => setSelectedPayment(pm.value)}
                       className="py-2 rounded-xl text-xs font-tajawal font-medium transition-all"
                       style={{
-                        background: selectedPayment === pm.value ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.05)',
-                        border: `1px solid ${selectedPayment === pm.value ? '#6366F1' : 'rgba(255,255,255,0.1)'}`,
+                        background: selectedPayment === pm.value ? 'rgba(99,102,241,0.3)' : '#FFFFFF',
+                        border: `1px solid ${selectedPayment === pm.value ? '#6366F1' : '#E2E8F0'}`,
                         color: selectedPayment === pm.value ? '#A5B4FC' : '#94A3B8',
                       }}
                     >
@@ -1001,14 +1001,14 @@ export const CarWashQueue = () => {
       {/* Cancel confirmation modal */}
       {cancelConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)' }}>
-          <div role="dialog" aria-modal="true" aria-label="Cancel car confirmation" className="w-full max-w-xs rounded-2xl p-6" style={{ background: '#0D1422', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <div role="dialog" aria-modal="true" aria-label="Cancel car confirmation" className="w-full max-w-xs rounded-2xl p-6" style={{ background: '#0D1422', border: '1px solid #CBD5E1' }}>
             <h2 className="text-base font-bold text-white font-cairo mb-2">إلغاء السيارة</h2>
             <p className="text-sm text-slate-400 font-tajawal mb-5">هل أنت متأكد من إلغاء هذه السيارة من القائمة؟</p>
             <div className="flex gap-3">
               <button
                 onClick={() => setCancelConfirm(null)}
                 className="flex-1 py-2.5 rounded-xl text-sm font-tajawal text-slate-400"
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
               >
                 تراجع
               </button>

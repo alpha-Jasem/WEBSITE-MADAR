@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   GitBranch, Wrench, Users2, Calendar, Settings2,
@@ -260,7 +260,7 @@ function BranchTab({ companyId, branch, setBranch, saving, setSaving, flash }: {
   ]
 
   return (
-    <div className="rounded-2xl p-6 space-y-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+    <div className="rounded-2xl p-6 space-y-5" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
       <h3 className="text-sm font-bold text-white font-cairo">بيانات الفرع</h3>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -278,7 +278,7 @@ function BranchTab({ companyId, branch, setBranch, saving, setSaving, flash }: {
             <button key={ind.id} onClick={() => setForm(f => ({ ...f, industry_type: ind.id }))}
               className="py-2 px-1 rounded-xl text-xs font-tajawal text-center cursor-pointer transition-all"
               style={{
-                border: `1px solid ${form.industry_type === ind.id ? 'rgba(79,110,247,0.5)' : 'rgba(255,255,255,0.07)'}`,
+                border: `1px solid ${form.industry_type === ind.id ? 'rgba(79,110,247,0.5)' : '#F8FAFC'}`,
                 background: form.industry_type === ind.id ? 'rgba(79,110,247,0.12)' : 'transparent',
                 color: form.industry_type === ind.id ? '#fff' : '#64748b',
               }}>
@@ -345,7 +345,7 @@ function ServicesTab({ branchId, services, setServices, saving, setSaving, flash
   return (
     <div className="space-y-4">
       {/* Add form */}
-      <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+      <div className="rounded-2xl p-5" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
         <h3 className="text-sm font-bold text-white font-cairo mb-4">إضافة خدمة جديدة</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <Field label="اسم الخدمة (عربي)" required><Input value={form.name_ar} onChange={set('name_ar')} placeholder="تنظيف سيارة" /></Field>
@@ -376,7 +376,7 @@ function ServicesTab({ branchId, services, setServices, saving, setSaving, flash
         ) : services.map((s, i) => (
           <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
             className="flex items-center gap-4 p-4 rounded-xl"
-            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
             <div className="w-3 h-10 rounded-full flex-shrink-0" style={{ background: s.color }} />
             <div className="flex-1 min-w-0">
               <p className="text-sm text-white font-tajawal">{s.name_ar}</p>
@@ -435,7 +435,7 @@ function ResourcesTab({ branchId, resources, setResources, saving, setSaving, fl
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+      <div className="rounded-2xl p-5" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
         <h3 className="text-sm font-bold text-white font-cairo mb-4">إضافة عضو طاقم</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <Field label="الاسم (عربي)" required><Input value={form.name_ar} onChange={set('name_ar')} placeholder="د. أحمد محمد" /></Field>
@@ -448,7 +448,7 @@ function ResourcesTab({ branchId, resources, setResources, saving, setSaving, fl
             <button key={r.id} onClick={() => setForm(f => ({ ...f, role: r.id }))}
               className="px-3 py-1.5 rounded-lg text-xs font-tajawal cursor-pointer transition-all"
               style={{
-                border: `1px solid ${form.role === r.id ? 'rgba(79,110,247,0.5)' : 'rgba(255,255,255,0.07)'}`,
+                border: `1px solid ${form.role === r.id ? 'rgba(79,110,247,0.5)' : '#F8FAFC'}`,
                 background: form.role === r.id ? 'rgba(79,110,247,0.12)' : 'transparent',
                 color: form.role === r.id ? '#fff' : '#64748b',
               }}>
@@ -479,7 +479,7 @@ function ResourcesTab({ branchId, resources, setResources, saving, setSaving, fl
         ) : resources.map((r, i) => (
           <motion.div key={r.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
             className="flex items-center gap-3 p-4 rounded-xl"
-            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
             <div className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
               style={{ background: r.avatar_color }}>
               {r.name_ar[0]}
@@ -546,7 +546,7 @@ function SchedulesTab({ branchId, schedules, setSchedules, resources, saving, se
           <button onClick={() => setSelectedResource(null)}
             className="px-3 py-2 rounded-lg text-xs font-tajawal cursor-pointer transition-all"
             style={{
-              border: `1px solid ${selectedResource === null ? 'rgba(79,110,247,0.5)' : 'rgba(255,255,255,0.07)'}`,
+              border: `1px solid ${selectedResource === null ? 'rgba(79,110,247,0.5)' : '#F8FAFC'}`,
               background: selectedResource === null ? 'rgba(79,110,247,0.12)' : 'transparent',
               color: selectedResource === null ? '#fff' : '#64748b',
             }}>
@@ -556,7 +556,7 @@ function SchedulesTab({ branchId, schedules, setSchedules, resources, saving, se
             <button key={r.id} onClick={() => setSelectedResource(r.id)}
               className="px-3 py-2 rounded-lg text-xs font-tajawal cursor-pointer transition-all"
               style={{
-                border: `1px solid ${selectedResource === r.id ? r.avatar_color + '80' : 'rgba(255,255,255,0.07)'}`,
+                border: `1px solid ${selectedResource === r.id ? r.avatar_color + '80' : '#F8FAFC'}`,
                 background: selectedResource === r.id ? r.avatar_color + '15' : 'transparent',
                 color: selectedResource === r.id ? '#fff' : '#64748b',
               }}>
@@ -567,9 +567,9 @@ function SchedulesTab({ branchId, schedules, setSchedules, resources, saving, se
       )}
 
       {/* Days grid */}
-      <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
+      <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
         <div className="px-4 py-3 text-xs font-bold text-slate-500 font-tajawal"
-          style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          style={{ background: '#FAFAFA', borderBottom: '1px solid #E2E8F0' }}>
           أيام وساعات العمل
         </div>
         <div className="divide-y divide-white/[0.05]">
@@ -582,7 +582,7 @@ function SchedulesTab({ branchId, schedules, setSchedules, resources, saving, se
                   className="cursor-pointer flex-shrink-0 transition-all">
                   {isActive
                     ? <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#4F6EF7' }}><Check size={10} color="#fff" /></div>
-                    : <div className="w-5 h-5 rounded-full" style={{ border: '2px solid rgba(255,255,255,0.15)' }} />}
+                    : <div className="w-5 h-5 rounded-full" style={{ border: '2px solid #CBD5E1' }} />}
                 </button>
                 <span className="text-sm font-tajawal w-20" style={{ color: isActive ? '#fff' : '#64748b' }}>{day}</span>
                 {isActive && sch ? (
@@ -638,7 +638,7 @@ function SettingsTab({ branchId, settings, setSettings, saving, setSaving, flash
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl p-6 space-y-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+      <div className="rounded-2xl p-6 space-y-4" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
         <h3 className="text-sm font-bold text-white font-cairo">إعدادات الفرع</h3>
         <p className="text-xs text-slate-500 font-tajawal">هذه البيانات يستخدمها الذكاء الاصطناعي للرد على أسئلة العملاء عبر واتساب</p>
         <div className="space-y-3">

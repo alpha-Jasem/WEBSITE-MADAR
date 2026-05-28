@@ -1,4 +1,4 @@
-import { X, Printer, MessageCircle, Gift } from 'lucide-react'
+﻿import { X, Printer, MessageCircle, Gift } from 'lucide-react'
 import type { CWQueueItem, Company, PaymentMethod } from '../../../types'
 
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
@@ -70,9 +70,9 @@ export const CarWashReceipt = ({ item, company, paymentMethod, onClose }: Props)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.8)' }}>
-      <div className="w-full max-w-sm rounded-2xl overflow-hidden" style={{ background: '#0D1422', border: '1px solid rgba(255,255,255,0.1)' }}>
+      <div className="w-full max-w-sm rounded-2xl overflow-hidden" style={{ background: '#0D1422', border: '1px solid #CBD5E1' }}>
         {/* Header */}
-        <div className="px-6 py-4 flex items-center justify-between" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2))', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <div className="px-6 py-4 flex items-center justify-between" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2))', borderBottom: '1px solid #E2E8F0' }}>
           <div>
             <h2 className="text-base font-bold text-white font-cairo">فاتورة</h2>
             <p className="text-xs text-slate-400 font-sora">{receiptNo}</p>
@@ -90,7 +90,7 @@ export const CarWashReceipt = ({ item, company, paymentMethod, onClose }: Props)
             <p className="text-xs text-slate-500 font-tajawal">{dateStr} — {timeStr}</p>
           </div>
 
-          <div style={{ borderTop: '1px dashed rgba(255,255,255,0.1)' }} />
+          <div style={{ borderTop: '1px dashed #CBD5E1' }} />
 
           {/* Customer info */}
           <div className="space-y-1.5">
@@ -101,7 +101,7 @@ export const CarWashReceipt = ({ item, company, paymentMethod, onClose }: Props)
             {item.service_name && <Row label="الخدمة" value={item.service_name} />}
           </div>
 
-          <div style={{ borderTop: '1px dashed rgba(255,255,255,0.1)' }} />
+          <div style={{ borderTop: '1px dashed #CBD5E1' }} />
 
           {/* Price breakdown */}
           <div className="space-y-1.5">
@@ -114,7 +114,7 @@ export const CarWashReceipt = ({ item, company, paymentMethod, onClose }: Props)
                   </span>
                   <span className="text-xs text-amber-400 font-tajawal">-{item.original_price} ر.س</span>
                 </div>
-                <div className="flex items-center justify-between pt-1" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                <div className="flex items-center justify-between pt-1" style={{ borderTop: '1px solid #E2E8F0' }}>
                   <span className="text-sm font-bold text-white font-cairo">الإجمالي</span>
                   <span className="text-sm font-bold text-emerald-400 font-sora">0 ر.س 🎁</span>
                 </div>
@@ -123,7 +123,7 @@ export const CarWashReceipt = ({ item, company, paymentMethod, onClose }: Props)
               <>
                 <Row label="قبل الضريبة" value={`${subtotal.toFixed(2)} ر.س`} />
                 <Row label={`ضريبة ${company.vat_rate || 15}%`} value={`${vatAmount.toFixed(2)} ر.س`} />
-                <div className="flex items-center justify-between pt-1" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                <div className="flex items-center justify-between pt-1" style={{ borderTop: '1px solid #E2E8F0' }}>
                   <span className="text-sm font-bold text-white font-cairo">الإجمالي</span>
                   <span className="text-sm font-bold text-emerald-400 font-sora">{totalAmount.toFixed(2)} ر.س</span>
                 </div>
@@ -140,7 +140,7 @@ export const CarWashReceipt = ({ item, company, paymentMethod, onClose }: Props)
             )}
           </div>
 
-          <div style={{ borderTop: '1px dashed rgba(255,255,255,0.1)' }} />
+          <div style={{ borderTop: '1px dashed #CBD5E1' }} />
 
           <p className="text-center text-xs text-slate-600 font-tajawal">شكراً لزيارتكم — نتطلع لخدمتكم مجدداً 🙏</p>
         </div>
@@ -150,7 +150,7 @@ export const CarWashReceipt = ({ item, company, paymentMethod, onClose }: Props)
           <button
             onClick={handlePrint}
             className="flex-1 py-2.5 rounded-xl text-sm font-tajawal flex items-center justify-center gap-2 transition-all hover:opacity-80"
-            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#94A3B8' }}
+            style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', color: '#94A3B8' }}
           >
             <Printer size={14} />
             طباعة

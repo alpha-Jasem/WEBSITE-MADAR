@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Loader2, Sparkles, X, Check } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { logAudit } from '../../../lib/auditLog'
@@ -90,7 +90,7 @@ export const CarWashSeedDemo = ({ companyId, onDone, onClose }: Props) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.8)' }}>
-      <div className="w-full max-w-sm rounded-2xl p-6" style={{ background: '#0D1422', border: '1px solid rgba(255,255,255,0.12)' }}>
+      <div className="w-full max-w-sm rounded-2xl p-6" style={{ background: '#0D1422', border: '1px solid #CBD5E1' }}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Sparkles size={18} className="text-primary-400" />
@@ -131,7 +131,7 @@ export const CarWashSeedDemo = ({ companyId, onDone, onClose }: Props) => {
                 onClick={onClose}
                 disabled={seeding}
                 className="flex-1 py-2.5 rounded-xl text-sm font-tajawal text-slate-400 disabled:opacity-40"
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
               >
                 إلغاء
               </button>

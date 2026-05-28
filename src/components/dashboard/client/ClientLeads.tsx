@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Search, Users2, Phone, MessageCircle, Download, FileText, Loader2, Sparkles } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { StatusBadge } from '../shared/StatusBadge'
@@ -179,7 +179,7 @@ export const ClientLeads = () => {
         {[{ key: 'all', label: 'الكل' }, ...STAGES].map(s => (
           <button key={s.key} onClick={() => setStageFilter(s.key)}
             className={`px-3 py-1.5 rounded-lg text-xs font-tajawal cursor-pointer transition-all ${stageFilter === s.key ? 'bg-primary-500/20 text-primary-400' : 'text-slate-500 hover:text-white'}`}
-            style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+            style={{ border: '1px solid #E2E8F0' }}>
             {s.label}
             {s.key !== 'all' && <span className="mr-1 text-slate-600">({leads.filter(l => l.stage === s.key).length})</span>}
           </button>
@@ -196,10 +196,10 @@ export const ClientLeads = () => {
       </div>
 
       {/* Table */}
-      <div className="rounded-2xl overflow-hidden overflow-x-auto" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
+      <div className="rounded-2xl overflow-hidden overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
         <table className="w-full min-w-[600px]">
           <thead>
-            <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
               {['العميل', 'المرحلة', 'القيمة', 'الدرجة', 'آخر تحديث', 'إجراءات'].map(h => (
                 <th key={h} className="px-4 py-3 text-right text-xs text-slate-500 font-tajawal font-medium">{h}</th>
               ))}
@@ -281,7 +281,7 @@ export const ClientLeads = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}>
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
             className="w-full max-w-md p-6 rounded-2xl space-y-4"
-            style={{ background: '#0D1017', border: '1px solid rgba(255,255,255,0.1)' }}>
+            style={{ background: '#0D1017', border: '1px solid #CBD5E1' }}>
             <h3 className="text-base font-bold text-white font-cairo">إرسال واتساب — {waModal.lead.company_name}</h3>
             <textarea
               value={waModal.msg}
@@ -296,7 +296,7 @@ export const ClientLeads = () => {
               </button>
               <button onClick={() => setWaModal(null)}
                 className="px-4 py-2.5 rounded-xl text-sm font-tajawal text-slate-400 cursor-pointer hover:text-white"
-                style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+                style={{ border: '1px solid #E2E8F0' }}>
                 إلغاء
               </button>
             </div>
