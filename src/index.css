@@ -3957,15 +3957,13 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 }
 
 .dash-sidebar-client {
-  border-radius: 24px 0 0 24px;
-  background:
-    radial-gradient(circle at 60% 2%, rgba(78, 72, 255, 0.13), transparent 28%),
-    linear-gradient(180deg, rgba(4, 9, 23, 0.98), rgba(5, 10, 24, 0.95));
+  border-radius: 0;
+  background: #FFFFFF;
 }
 
 .dash-sidebar-client .dash-sidebar-sub {
-  margin-top: 22px;
-  color: #6f7891;
+  margin-top: 16px;
+  color: var(--d-text3);
   font-size: 12px;
   font-family: 'Tajawal', sans-serif;
   letter-spacing: 0;
@@ -3973,13 +3971,13 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 }
 
 .dash-sidebar-client .dash-nav-link {
-  min-height: 48px;
-  border-radius: 12px;
+  min-height: 44px;
+  border-radius: 10px;
 }
 
 .dash-sidebar-client .dash-upgrade-card {
-  margin-top: 22px;
-  background: rgba(8, 15, 34, 0.74);
+  margin-top: 16px;
+  background: rgba(99,102,241,0.07);
 }
 
 .client-orbit-dashboard {
@@ -4845,60 +4843,57 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 }
 
 .dash-shell-client .dash-sidebar-client {
-  background:
-    radial-gradient(circle at 38% 4%, rgba(0,191,255,0.24), transparent 34%),
-    radial-gradient(circle at 100% 88%, rgba(21,101,192,0.28), transparent 34%),
-    linear-gradient(180deg, #0D1B3E, #091631) !important;
-  border-left: 1px solid rgba(0,191,255,0.22);
-  box-shadow: -18px 0 70px rgba(13,27,62,0.14);
+  background: #FFFFFF !important;
+  border-left: 1px solid var(--d-border);
+  box-shadow: 4px 0 20px rgba(15,23,42,0.06);
 }
 
 .dash-shell-client .dash-sidebar-name,
 .dash-shell-client .dash-sidebar-client .dash-user-card strong {
-  color: #FFFFFF;
+  color: var(--d-text1);
 }
 
 .dash-shell-client .dash-sidebar-name span,
 .dash-shell-client .dash-sidebar-sub {
-  color: #7DDFFF;
+  color: var(--d-accent);
 }
 
 .dash-shell-client .dash-sidebar-client .dash-nav-link {
-  color: rgba(255,255,255,0.68);
+  color: var(--d-text2);
 }
 
 .dash-shell-client .dash-sidebar-client .dash-nav-link:hover {
-  background: rgba(255,255,255,0.10);
-  color: #FFFFFF;
+  background: rgba(99,102,241,0.07);
+  color: var(--d-accent);
 }
 
 .dash-shell-client .dash-sidebar-client .dash-nav-link.active {
-  background: linear-gradient(135deg, #00BFFF, #1565C0) !important;
-  border-color: rgba(125,223,255,0.64);
-  color: #FFFFFF;
-  box-shadow: 0 16px 34px rgba(0,191,255,0.28);
+  background: rgba(99,102,241,0.1) !important;
+  border-color: rgba(99,102,241,0.22);
+  color: #4338CA;
+  box-shadow: 0 1px 6px rgba(99,102,241,0.14);
 }
 
 .dash-shell-client .dash-sidebar-client .dash-nav-link.active .dash-nav-icon {
-  color: #FFFFFF;
+  color: #4338CA;
   filter: none;
 }
 
 .dash-shell-client .dash-user-card {
-  color: rgba(255,255,255,0.72);
+  color: var(--d-text2);
 }
 
 .dash-shell-client .dash-user-card span {
-  color: rgba(125,223,255,0.78);
+  color: var(--d-text3);
 }
 
 .dash-shell-client .dash-user-avatar {
-  background: linear-gradient(135deg, #00BFFF, #1565C0);
-  border-color: rgba(125,223,255,0.45);
+  background: linear-gradient(135deg, var(--d-accent), var(--d-accent2));
+  border-color: transparent;
 }
 
 .dash-shell-client .dash-logout-btn {
-  color: rgba(255,255,255,0.58);
+  color: var(--d-text3);
 }
 
 .dash-shell-client .dash-topbar {
