@@ -147,10 +147,10 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
                 {planLabel}
               </span>
             </div>
-            <strong style={{ color: '#F1F5F9' }}>
+            <strong style={{ color: '#0F172A' }}>
               {plan === 'starter' ? 'ارتقِ إلى Pro' : 'ارتقِ إلى Premium'}
             </strong>
-            <p style={{ color: '#475569' }}>
+            <p style={{ color: '#64748B' }}>
               {plan === 'starter'
                 ? 'افتح التقارير الكاملة، المالية، وأداء الموظفين.'
                 : 'افتح رؤى AI، تعدد الفروع، والتقارير المتقدمة.'}
@@ -171,18 +171,19 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
           {/* Inline user switcher dropdown */}
           {role === 'client' && dropOpen && (
             <div dir="rtl" style={{
-              background: '#0E1420', border: '1px solid rgba(255,255,255,0.1)',
+              background: '#FFFFFF', border: '1px solid #E2E8F0',
               borderRadius: 14, marginBottom: 8, overflow: 'hidden',
+              boxShadow: '0 4px 20px rgba(15,23,42,0.08)',
             }}>
               {/* Header */}
-              <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.07)', fontFamily: 'Tajawal, sans-serif' }}>
+              <div style={{ padding: '10px 14px', borderBottom: '1px solid #F1F5F9', fontFamily: 'Tajawal, sans-serif' }}>
                 {selected ? (
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#E2E8F0' }}>أدخل الرقم السري</div>
-                    <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{selected.full_name}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>أدخل الرقم السري</div>
+                    <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{selected.full_name}</div>
                   </div>
                 ) : (
-                  <div style={{ fontSize: 11, color: '#64748B' }}>تبديل المستخدم</div>
+                  <div style={{ fontSize: 11, color: '#94A3B8' }}>تبديل المستخدم</div>
                 )}
               </div>
 
@@ -192,8 +193,8 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
                   {!profile.isOwner && (
                     <button onClick={handleReturnToOwner} style={{
                       display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px',
-                      borderRadius: 10, border: '1px solid rgba(245,158,11,0.25)',
-                      background: 'rgba(245,158,11,0.08)', color: '#F59E0B',
+                      borderRadius: 10, border: '1px solid rgba(245,158,11,0.3)',
+                      background: 'rgba(245,158,11,0.06)', color: '#D97706',
                       fontFamily: 'Tajawal, sans-serif', fontSize: 12, fontWeight: 700,
                       cursor: 'pointer', width: '100%',
                     }}>
@@ -204,32 +205,32 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
 
                   {/* Staff list */}
                   {!staffLoaded ? (
-                    <div style={{ textAlign: 'center', padding: '12px 0', color: '#475569', fontSize: 12, fontFamily: 'Tajawal, sans-serif' }}>جاري التحميل...</div>
+                    <div style={{ textAlign: 'center', padding: '12px 0', color: '#94A3B8', fontSize: 12, fontFamily: 'Tajawal, sans-serif' }}>جاري التحميل...</div>
                   ) : staff.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '12px 0', color: '#475569', fontSize: 12, fontFamily: 'Tajawal, sans-serif' }}>لا يوجد مستخدمون — أضفهم من الإعدادات</div>
+                    <div style={{ textAlign: 'center', padding: '12px 0', color: '#94A3B8', fontSize: 12, fontFamily: 'Tajawal, sans-serif' }}>لا يوجد مستخدمون — أضفهم من الإعدادات</div>
                   ) : staff.map(u => (
                     <button key={u.id} onClick={() => { setSelected(u); setPin(''); setPinError(false) }}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px',
-                        borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)',
-                        background: profile.userId === u.id ? 'rgba(99,102,241,0.1)' : 'rgba(255,255,255,0.03)',
+                        borderRadius: 10, border: '1px solid #E2E8F0',
+                        background: profile.userId === u.id ? 'rgba(99,102,241,0.07)' : '#F8FAFC',
                         cursor: 'pointer', width: '100%', textAlign: 'right',
                       }}>
                       <div style={{
                         width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
-                        background: 'rgba(99,102,241,0.18)', display: 'flex', alignItems: 'center',
-                        justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#818CF8',
+                        background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', display: 'flex', alignItems: 'center',
+                        justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff',
                       }}>
                         {u.full_name[0]}
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: '#E2E8F0', fontFamily: 'Tajawal, sans-serif' }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', fontFamily: 'Tajawal, sans-serif' }}>
                           {u.full_name}
-                          {profile.userId === u.id && <span style={{ fontSize: 10, color: '#22D3EE', marginRight: 6 }}>● نشط</span>}
+                          {profile.userId === u.id && <span style={{ fontSize: 10, color: '#6366F1', marginRight: 6 }}>● نشط</span>}
                         </div>
-                        <div style={{ fontSize: 10, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>{(u.permissions || []).length} صلاحية</div>
+                        <div style={{ fontSize: 10, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>{(u.permissions || []).length} صلاحية</div>
                       </div>
-                      <ChevronDown size={12} color="#475569" style={{ transform: 'rotate(-90deg)' }} />
+                      <ChevronDown size={12} color="#CBD5E1" style={{ transform: 'rotate(-90deg)' }} />
                     </button>
                   ))}
                 </div>
@@ -241,15 +242,15 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
                     {[0,1,2,3].map(i => (
                       <div key={i} style={{
                         width: 12, height: 12, borderRadius: '50%',
-                        background: i < pin.length ? (pinError ? '#EF4444' : '#6366F1') : 'rgba(255,255,255,0.12)',
-                        border: `2px solid ${i < pin.length ? (pinError ? '#EF4444' : '#6366F1') : 'rgba(255,255,255,0.15)'}`,
+                        background: i < pin.length ? (pinError ? '#EF4444' : '#6366F1') : '#E2E8F0',
+                        border: `2px solid ${i < pin.length ? (pinError ? '#EF4444' : '#6366F1') : '#CBD5E1'}`,
                         transition: 'all 0.15s',
                       }} />
                     ))}
                   </div>
 
                   {pinError && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 8, background: 'rgba(239,68,68,0.1)', marginBottom: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 8, background: 'rgba(239,68,68,0.06)', marginBottom: 10 }}>
                       <AlertCircle size={12} color="#EF4444" />
                       <span style={{ fontSize: 11, color: '#EF4444', fontFamily: 'Tajawal, sans-serif' }}>PIN غير صحيح</span>
                     </div>
@@ -265,9 +266,9 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
                       }} disabled={d === ''} style={{
                         padding: '12px 0', borderRadius: 10,
                         fontSize: d === '⌫' ? 16 : 18, fontWeight: 700, fontFamily: 'Sora, sans-serif',
-                        background: d === '' ? 'transparent' : 'rgba(255,255,255,0.05)',
-                        border: d === '' ? 'none' : '1px solid rgba(255,255,255,0.07)',
-                        color: d === '⌫' ? '#94A3B8' : '#F1F5F9',
+                        background: d === '' ? 'transparent' : '#F8FAFC',
+                        border: d === '' ? 'none' : '1px solid #E2E8F0',
+                        color: d === '⌫' ? '#94A3B8' : '#0F172A',
                         cursor: d === '' ? 'default' : 'pointer',
                       }}>
                         {d}
@@ -277,8 +278,8 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
 
                   <button onClick={() => { setSelected(null); setPin(''); setPinError(false) }} style={{
                     width: '100%', marginTop: 8, padding: '8px', borderRadius: 8,
-                    background: 'transparent', border: '1px solid rgba(255,255,255,0.07)',
-                    color: '#64748B', fontFamily: 'Tajawal, sans-serif', fontSize: 12, cursor: 'pointer',
+                    background: 'transparent', border: '1px solid #E2E8F0',
+                    color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', fontSize: 12, cursor: 'pointer',
                   }}>
                     رجوع
                   </button>
