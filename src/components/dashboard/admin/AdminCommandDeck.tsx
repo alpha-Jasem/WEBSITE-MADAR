@@ -1,407 +1,306 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
-  Area,
-  AreaChart,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
-import {
-  Bell,
-  BriefcaseBusiness,
-  ChevronDown,
-  Crown,
-  DollarSign,
-  FolderKanban,
-  Mail,
-  MoreVertical,
-  Search,
-  Sparkles,
+  AlertTriangle,
+  ArrowLeft,
+  Building2,
+  Car,
+  CheckCircle2,
+  MessageSquare,
+  QrCode,
+  ShieldCheck,
   TrendingUp,
-  UserRound,
   Users2,
+  WalletCards,
   Zap,
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
+import type { Company } from '../../../types'
 
-type Lead = {
+type HealthRow = {
   id: string
-  company_name?: string | null
-  stage?: string | null
-  price_sold?: number | null
-  created_at?: string | null
-  updated_at?: string | null
+  name: string
+  score: number
+  issues: string[]
 }
 
-type Company = {
+type Activity = {
   id: string
-  name?: string | null
-  is_active?: boolean | null
+  company_name: string | null
+  customer_name: string | null
+  service_name: string | null
+  status: string | null
+  created_at: string
 }
-
-type Automation = {
-  id: string
-  status?: string | null
-}
-
-const revenueData = [
-  { day: 'May 10', revenue: 30000, expenses: 10000 },
-  { day: 'May 11', revenue: 68000, expenses: 23000 },
-  { day: 'May 12', revenue: 72000, expenses: 31000 },
-  { day: 'May 13', revenue: 100000, expenses: 48000 },
-  { day: 'May 14', revenue: 78000, expenses: 56000 },
-  { day: 'May 15', revenue: 128000, expenses: 57000 },
-  { day: 'May 16', revenue: 146000, expenses: 70000 },
-]
-
-const sparkLines = [
-  'M0 42 L18 39 L36 43 L54 37 L72 28 L90 35 L108 31 L126 18 L144 12 L162 20 L180 9 L198 15 L216 4',
-  'M0 44 L18 40 L36 42 L54 34 L72 24 L90 29 L108 21 L126 30 L144 20 L162 12 L180 18 L198 7 L216 4',
-  'M0 43 L18 38 L36 39 L54 28 L72 34 L90 26 L108 38 L126 24 L144 30 L162 14 L180 20 L198 8 L216 3',
-  'M0 46 L18 42 L36 44 L54 37 L72 24 L90 31 L108 27 L126 36 L144 29 L162 22 L180 13 L198 18 L216 5',
-]
-
-const projectStatus = [
-  { name: 'In Progress', value: 10, color: '#1277ff' },
-  { name: 'Completed', value: 8, color: '#8b35ff' },
-  { name: 'On Hold', value: 4, color: '#19d5d1' },
-  { name: 'Cancelled', value: 2, color: '#44506e' },
-]
-
-const visitorPins = [
-  ['12%', '36%', '#7c3cff'],
-  ['18%', '45%', '#0ea5ff'],
-  ['27%', '32%', '#7c3cff'],
-  ['46%', '42%', '#0ea5ff'],
-  ['52%', '38%', '#7c3cff'],
-  ['58%', '47%', '#0ea5ff'],
-  ['67%', '39%', '#7c3cff'],
-  ['74%', '56%', '#0ea5ff'],
-  ['82%', '72%', '#7c3cff'],
-]
 
 function formatMoney(value: number) {
-  return `$${Math.round(value).toLocaleString('en-US')}`
+  return `${Math.round(value).toLocaleString('ar-SA')} ر.س`
 }
 
-function timeAgo(iso?: string | null) {
-  if (!iso) return 'Just now'
-  const minutes = Math.floor((Date.now() - new Date(iso).getTime()) / 60000)
-  if (minutes < 60) return `${Math.max(minutes, 1)} min ago`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours} hr ago`
-  return `${Math.floor(hours / 24)} day ago`
+function startOfMonthIso() {
+  const date = new Date()
+  date.setDate(1)
+  date.setHours(0, 0, 0, 0)
+  return date.toISOString()
 }
 
-function MetricCard({
+function startOfTodayIso() {
+  const date = new Date()
+  date.setHours(0, 0, 0, 0)
+  return date.toISOString()
+}
+
+function StatCard({
   title,
   value,
-  change,
+  note,
   icon: Icon,
   color,
-  path,
 }: {
   title: string
-  value: string
-  change: string
-  icon: typeof DollarSign
+  value: string | number
+  note: string
+  icon: typeof Building2
   color: string
-  path: string
 }) {
   return (
-    <article className="mosaic-stat-card">
-      <div className="mosaic-stat-head">
-        <span>{title}</span>
-        <div className="mosaic-stat-icon" style={{ '--accent': color } as CSSProperties}>
-          <Icon size={20} />
+    <article className="rounded-2xl p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 14px 36px rgba(15,23,42,0.06)' }}>
+      <div className="mb-5 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-bold text-slate-500 font-tajawal">{title}</p>
+          <strong className="mt-2 block text-3xl font-black text-slate-900 font-sora">{value}</strong>
+        </div>
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: `${color}16`, border: `1px solid ${color}2E` }}>
+          <Icon size={20} style={{ color }} />
         </div>
       </div>
-      <strong>{value}</strong>
-      <p>
-        <TrendingUp size={13} />
-        <span>{change}</span>
-        from last month
-      </p>
-      <svg className="mosaic-sparkline" viewBox="0 0 216 52" preserveAspectRatio="none">
-        <defs>
-          <linearGradient id={`spark-${title.replace(/\s/g, '-')}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.7" />
-            <stop offset="100%" stopColor={color} stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <path d={`${path} L216 52 L0 52 Z`} fill={`url(#spark-${title.replace(/\s/g, '-')})`} />
-        <path d={path} fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      <p className="text-xs leading-5 text-slate-500 font-tajawal">{note}</p>
     </article>
   )
 }
 
 export const AdminCommandDeck = () => {
-  const [leads, setLeads] = useState<Lead[]>([])
   const [companies, setCompanies] = useState<Company[]>([])
-  const [automations, setAutomations] = useState<Automation[]>([])
-  const [messages, setMessages] = useState(0)
+  const [health, setHealth] = useState<HealthRow[]>([])
+  const [revenueMonth, setRevenueMonth] = useState(0)
+  const [carsToday, setCarsToday] = useState(0)
+  const [activities, setActivities] = useState<Activity[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const load = async () => {
+    setLoading(true)
+    const monthStart = startOfMonthIso()
+    const todayStart = startOfTodayIso()
+
+    const [
+      { data: companyRows },
+      { data: visits },
+      { data: queueToday },
+      { data: services },
+      { data: workers },
+      { data: latest },
+    ] = await Promise.all([
+      supabase.from('companies').select('*').order('created_at', { ascending: false }),
+      supabase.from('cw_visits').select('company_id, price, subtotal').gte('created_at', monthStart),
+      supabase.from('cw_queue').select('company_id, status').gte('created_at', todayStart),
+      supabase.from('cw_services').select('company_id, active'),
+      supabase.from('cw_workers').select('company_id, active'),
+      supabase.from('cw_queue')
+        .select('id, customer_name, service_name, status, created_at, company:companies(name)')
+        .order('created_at', { ascending: false })
+        .limit(6),
+    ])
+
+    const companyList = (companyRows || []) as Company[]
+    const carWashes = companyList.filter(c => c.business_type === 'car_wash' || c.industry === 'car_wash')
+    const servicesByCompany = new Map<string, number>()
+    const workersByCompany = new Map<string, number>()
+    const queueByCompany = new Map<string, number>()
+
+    for (const row of services || []) {
+      if (row.active !== false) servicesByCompany.set(row.company_id, (servicesByCompany.get(row.company_id) || 0) + 1)
+    }
+    for (const row of workers || []) {
+      if (row.active !== false) workersByCompany.set(row.company_id, (workersByCompany.get(row.company_id) || 0) + 1)
+    }
+    for (const row of queueToday || []) {
+      queueByCompany.set(row.company_id, (queueByCompany.get(row.company_id) || 0) + 1)
+    }
+
+    const nextHealth = carWashes.map(company => {
+      const issues: string[] = []
+      let score = 0
+
+      if (company.status === 'active') score += 20
+      else issues.push('الحساب غير نشط')
+      if (company.public_checkin_token || company.webhook_token) score += 20
+      else issues.push('QR غير جاهز')
+      if ((servicesByCompany.get(company.id) || 0) > 0) score += 20
+      else issues.push('لا توجد خدمات')
+      if ((workersByCompany.get(company.id) || 0) > 0) score += 20
+      else issues.push('لا يوجد موظفون')
+      if ((queueByCompany.get(company.id) || 0) > 0) score += 20
+      else issues.push('لا يوجد تشغيل اليوم')
+
+      return { id: company.id, name: company.name, score, issues }
+    }).sort((a, b) => a.score - b.score)
+
+    setCompanies(companyList)
+    setHealth(nextHealth)
+    setRevenueMonth((visits || []).reduce((sum, row) => sum + Number(row.subtotal ?? row.price ?? 0), 0))
+    setCarsToday((queueToday || []).filter(row => row.status !== 'cancelled').length)
+    setActivities((latest || []).map((row: any) => ({
+      id: row.id,
+      company_name: row.company?.name || null,
+      customer_name: row.customer_name || null,
+      service_name: row.service_name || null,
+      status: row.status || null,
+      created_at: row.created_at,
+    })))
+    setLoading(false)
+  }
 
   useEffect(() => {
-    const load = async () => {
-      const [{ data: l }, { data: c }, { data: a }, { count: m }] = await Promise.all([
-        supabase.from('crm_leads').select('id,company_name,stage,price_sold,created_at,updated_at'),
-        supabase.from('companies').select('id,name,is_active'),
-        supabase.from('automations').select('id,status'),
-        supabase.from('message_logs').select('id', { count: 'exact', head: true }),
-      ])
-      setLeads((l ?? []) as Lead[])
-      setCompanies((c ?? []) as Company[])
-      setAutomations((a ?? []) as Automation[])
-      setMessages(m ?? 0)
-    }
-
     load()
     const channel = supabase
-      .channel('mosaic_admin_deck')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'crm_leads' }, load)
+      .channel('admin_command_center')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cw_queue' }, load)
       .subscribe()
 
-    return () => {
-      supabase.removeChannel(channel)
-    }
+    return () => { supabase.removeChannel(channel) }
   }, [])
 
-  const wonLeads = leads.filter((lead) => lead.stage === 'won')
-  const revenue = wonLeads.reduce((sum, lead) => sum + (lead.price_sold || 0), 0) || 124560
-  const activeCompanies = companies.filter((company) => company.is_active !== false).length || companies.length || 1256
-  const activeAutomations = automations.filter((automation) => ['active', 'running'].includes(automation.status || '')).length || 28
-  const activeUsers = Math.max(messages || leads.length * 9 || 1842, 1842)
-  const profit = Math.round(revenue * 0.367) || 45680
+  const activeCompanies = companies.filter(company => company.status === 'active').length
+  const carWashCompanies = companies.filter(company => company.business_type === 'car_wash' || company.industry === 'car_wash')
+  const qrReady = carWashCompanies.filter(company => company.public_checkin_token || company.webhook_token).length
+  const nearLimit = companies.filter(company => {
+    const limit = company.message_limit || 0
+    return limit > 0 && ((company.messages_used || 0) / limit) >= 0.8
+  }).length
+  const healthyTenants = health.filter(row => row.score >= 80).length
 
-  const products = [
-    { name: 'Madar ERP', amount: 62540, percent: 52, color: '#1478ff' },
-    { name: 'Madar CRM', amount: 38420, percent: 31, color: '#9347ff' },
-    { name: 'Madar POS', amount: 15600, percent: 13, color: '#16d4d1' },
-    { name: 'Madar HR', amount: 8000, percent: 4, color: '#6d55ff' },
-  ]
+  const worstHealth = useMemo(() => health.slice(0, 5), [health])
 
-  const activities = useMemo(() => {
-    const live = leads.slice(0, 2).map((lead) => ({
-      title: `${lead.company_name || 'New account'} moved to ${lead.stage || 'pipeline'}`,
-      time: timeAgo(lead.updated_at || lead.created_at),
-      value: '',
-      color: '#16d4d1',
-    }))
-
-    return [
-      ...live,
-      { title: 'AI booking flow updated', time: '15 min ago', value: '', color: '#8b35ff' },
-      { title: 'Payment received from Acme Inc.', time: '1 hr ago', value: '+$2,850', color: '#00e0b8' },
-      { title: 'Voice agent deployment completed', time: '2 hr ago', value: '', color: '#1277ff' },
-      { title: 'New team member joined', time: '3 hr ago', value: '', color: '#6f35ff' },
-    ].slice(0, 5)
-  }, [leads])
-
-  const metrics = [
-    { title: 'Total Revenue', value: formatMoney(revenue), change: '+18.6%', icon: DollarSign, color: '#1277ff' },
-    { title: 'New Projects', value: String(activeAutomations), change: '+12.4%', icon: BriefcaseBusiness, color: '#9336ff' },
-    { title: 'Active Users', value: activeUsers.toLocaleString('en-US'), change: '+8.7%', icon: Users2, color: '#0097ff' },
-    { title: 'Profit', value: formatMoney(profit), change: '+14.2%', icon: FolderKanban, color: '#a43cff' },
-  ]
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center gap-3">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-blue-500" />
+        <p className="text-sm text-slate-500 font-tajawal">جاري تحميل مركز الإدارة...</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="mosaic-dashboard" dir="ltr">
-      <header className="mosaic-header">
-        <div>
-          <h1>Welcome back, Aiden</h1>
-          <p>Here&apos;s what&apos;s happening with your business today.</p>
-        </div>
-
-        <label className="mosaic-search">
-          <Search size={19} />
-          <input type="search" placeholder="Search anything..." />
-          <kbd>⌘ K</kbd>
-        </label>
-
-        <div className="mosaic-actions">
-          <button type="button" aria-label="Notifications">
-            <Bell size={20} />
-            <span>3</span>
-          </button>
-          <button type="button" aria-label="Messages">
-            <Mail size={20} />
-            <span>7</span>
-          </button>
-          <button type="button" className="mosaic-orb" aria-label="AI command">
-            <Sparkles size={23} />
-          </button>
-        </div>
-      </header>
-
-      <section className="mosaic-kpi-grid">
-        {metrics.map((metric, index) => (
-          <MetricCard key={metric.title} {...metric} path={sparkLines[index]} />
-        ))}
-      </section>
-
-      <section className="mosaic-main-grid">
-        <article className="mosaic-panel mosaic-revenue">
-          <div className="mosaic-panel-head">
-            <div>
-              <h2>Revenue Overview</h2>
-              <div className="mosaic-legend">
-                <span><i className="blue" /> Revenue</span>
-                <span><i className="purple" /> Expenses</span>
-              </div>
-            </div>
-            <div className="mosaic-panel-tools">
-              <button type="button">This Week <ChevronDown size={14} /></button>
-              <MoreVertical size={18} />
-            </div>
+    <div className="space-y-6">
+      <section className="rounded-3xl p-6" style={{ background: 'linear-gradient(135deg, #FFFFFF, #F0F7FF)', border: '1px solid #DCEBFF', boxShadow: '0 20px 50px rgba(15,23,42,0.06)' }}>
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="mb-2 text-xs font-bold text-blue-600 font-tajawal">مركز إدارة مدار OS</p>
+            <h1 className="text-3xl font-black text-slate-950 font-cairo">تابع صحة عملاء المغاسل من مكان واحد</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 font-tajawal">
+              هذه اللوحة مخصصة لك كمشغل SaaS: تعرف من يعمل، من يحتاج تجهيز، من اقترب من حد الرسائل، وأين توجد فرصة ترقية.
+            </p>
           </div>
-
-          <ResponsiveContainer width="100%" height={285}>
-            <AreaChart data={revenueData} margin={{ top: 18, right: 12, left: 4, bottom: 0 }}>
-              <defs>
-                <linearGradient id="mosaicRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#1287ff" stopOpacity={0.55} />
-                  <stop offset="100%" stopColor="#1287ff" stopOpacity={0.02} />
-                </linearGradient>
-                <linearGradient id="mosaicExpenses" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#a63cff" stopOpacity={0.45} />
-                  <stop offset="100%" stopColor="#a63cff" stopOpacity={0.02} />
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="day" stroke="#7d86a8" tickLine={false} axisLine={false} fontSize={12} />
-              <YAxis stroke="#7d86a8" tickLine={false} axisLine={false} fontSize={12} tickFormatter={(value) => `$${value / 1000}K`} />
-              <Tooltip
-                contentStyle={{
-                  background: 'rgba(6, 10, 24, 0.92)',
-                  border: '1px solid rgba(120, 136, 255, 0.24)',
-                  borderRadius: 12,
-                  color: '#fff',
-                  boxShadow: '0 18px 60px rgba(0, 0, 0, 0.38)',
-                }}
-                formatter={(value: number, name: string) => [formatMoney(value), name]}
-              />
-              <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#1287ff" strokeWidth={3} fill="url(#mosaicRevenue)" dot={false} activeDot={{ r: 5 }} />
-              <Area type="monotone" dataKey="expenses" name="Expenses" stroke="#a63cff" strokeWidth={3} fill="url(#mosaicExpenses)" dot={false} activeDot={{ r: 5 }} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </article>
-
-        <aside className="mosaic-side-stack">
-          <article className="mosaic-panel mosaic-status">
-            <div className="mosaic-panel-head compact">
-              <h2>Project Status</h2>
-              <a href="/admin/pipeline">View All</a>
-            </div>
-            <div className="mosaic-status-body">
-              <div className="mosaic-donut">
-                <ResponsiveContainer width="100%" height={190}>
-                  <PieChart>
-                    <Pie data={projectStatus} dataKey="value" innerRadius={58} outerRadius={78} paddingAngle={1}>
-                      {projectStatus.map((item) => <Cell key={item.name} fill={item.color} />)}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-                <div>
-                  <strong>24</strong>
-                  <span>Total Projects</span>
-                </div>
-              </div>
-              <div className="mosaic-status-list">
-                {projectStatus.map((item) => (
-                  <p key={item.name}>
-                    <i style={{ background: item.color }} />
-                    <strong>{item.value}</strong>
-                    {item.name}
-                  </p>
-                ))}
-              </div>
-            </div>
-          </article>
-
-          <article className="mosaic-panel mosaic-client-card">
-            <div>
-              <span>Total Clients</span>
-              <strong>{activeCompanies.toLocaleString('en-US')}</strong>
-              <p><TrendingUp size={13} /> +9.4% from last month</p>
-            </div>
-            <div className="mosaic-client-icon"><UserRound size={23} /></div>
-          </article>
-
-          <article className="mosaic-panel mosaic-activity">
-            <div className="mosaic-panel-head compact">
-              <h2>Recent Activity</h2>
-              <a href="/admin/logs">View All</a>
-            </div>
-            <div className="mosaic-activity-list">
-              {activities.map((activity) => (
-                <div className="mosaic-activity-row" key={`${activity.title}-${activity.time}`}>
-                    <span style={{ '--accent': activity.color } as CSSProperties}><Zap size={15} /></span>
-                  <div>
-                    <strong>{activity.title}</strong>
-                    <small>{activity.time}</small>
-                  </div>
-                  {activity.value && <em>{activity.value}</em>}
-                </div>
-              ))}
-            </div>
-          </article>
-        </aside>
-      </section>
-
-      <section className="mosaic-bottom-grid">
-        <article className="mosaic-panel mosaic-products">
-          <div className="mosaic-panel-head compact">
-            <h2>Top Products</h2>
-            <a href="/admin/analytics">View All</a>
-          </div>
-          <div className="mosaic-products-list">
-            {products.map((product) => (
-              <div className="mosaic-product-row" key={product.name}>
-                <div className="mosaic-product-icon" style={{ '--accent': product.color } as CSSProperties}>
-                  <Sparkles size={15} />
-                </div>
-                <div>
-                  <p>
-                    <span>{product.name}</span>
-                    <em>{formatMoney(product.amount)}</em>
-                    <strong>{product.percent}%</strong>
-                  </p>
-                  <div><span style={{ width: `${product.percent}%`, background: product.color }} /></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </article>
-
-        <article className="mosaic-panel mosaic-map-panel">
-          <div className="mosaic-panel-head compact">
-            <h2>Global Visitors</h2>
-            <a href="/admin/analytics">View Full Report</a>
-          </div>
-          <div className="mosaic-map">
-            {visitorPins.map(([left, top, color]) => (
-              <span key={`${left}-${top}`} style={{ left, top, '--pin': color } as CSSProperties} />
-            ))}
-          </div>
-          <div className="mosaic-visitor-stats">
+          <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4 lg:min-w-[430px]">
             {[
-              ['12,540', 'Total Visitors', '+15.3%'],
-              ['8,920', 'Unique Visitors', '+11.7%'],
-              ['5m 24s', 'Avg. Session', '+6.4%'],
-              ['68%', 'Bounce Rate', '-4.1%'],
-            ].map(([value, label, shift]) => (
-              <div key={label}>
-                <strong>{value}</strong>
-                <span>{label}</span>
-                <em>{shift}</em>
+              ['الشركات', companies.length],
+              ['النشطة', activeCompanies],
+              ['QR جاهز', `${qrReady}/${carWashCompanies.length || 0}`],
+              ['صحة عالية', `${healthyTenants}/${health.length || 0}`],
+            ].map(([label, value]) => (
+              <div key={String(label)} className="rounded-2xl bg-white p-4" style={{ border: '1px solid #E2E8F0' }}>
+                <strong className="block text-2xl font-black text-slate-900 font-sora">{value}</strong>
+                <span className="mt-1 block text-xs text-slate-500 font-tajawal">{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-4">
+        <StatCard title="إيراد المغاسل هذا الشهر" value={formatMoney(revenueMonth)} note="محسوب من زيارات cw_visits المسجلة هذا الشهر." icon={TrendingUp} color="#10B981" />
+        <StatCard title="سيارات اليوم" value={carsToday} note="إجمالي السيارات غير الملغاة التي دخلت المسار اليوم." icon={Car} color="#0EA5E9" />
+        <StatCard title="مغاسل تحتاج تدخل" value={health.filter(row => row.score < 80).length} note="حسابات ناقصة خدمات، موظفين، QR، أو نشاط تشغيل." icon={AlertTriangle} color="#F59E0B" />
+        <StatCard title="قريبة من حد الرسائل" value={nearLimit} note="عملاء تجاوزوا 80% من حد الرسائل الشهري." icon={MessageSquare} color="#EF4444" />
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+        <article className="rounded-3xl bg-white p-5" style={{ border: '1px solid #E2E8F0', boxShadow: '0 16px 42px rgba(15,23,42,0.05)' }}>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 font-cairo">صحة عملاء المغاسل</h2>
+              <p className="text-xs text-slate-500 font-tajawal">الأقل جاهزية تظهر أولاً.</p>
+            </div>
+            <Link to="/admin/companies" className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-blue-700 font-tajawal" style={{ background: '#EFF6FF' }}>
+              إدارة الشركات <ArrowLeft size={13} />
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {worstHealth.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center">
+                <ShieldCheck className="mx-auto mb-2 text-emerald-500" size={26} />
+                <p className="text-sm font-bold text-slate-700 font-cairo">لا توجد مغاسل مضافة بعد</p>
+              </div>
+            ) : worstHealth.map(row => {
+              const color = row.score >= 80 ? '#10B981' : row.score >= 55 ? '#F59E0B' : '#EF4444'
+              return (
+                <div key={row.id} className="rounded-2xl p-4" style={{ background: '#F8FAFC', border: `1px solid ${color}30` }}>
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <strong className="block truncate text-sm text-slate-900 font-cairo">{row.name}</strong>
+                      <span className="mt-1 block text-xs text-slate-500 font-tajawal">
+                        {row.issues.length ? row.issues.slice(0, 3).join('، ') : 'جاهزة للتشغيل'}
+                      </span>
+                    </div>
+                    <span className="text-xl font-black font-sora" style={{ color }}>{row.score}</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+                    <div className="h-full rounded-full" style={{ width: `${row.score}%`, background: color }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </article>
+
+        <article className="rounded-3xl bg-white p-5" style={{ border: '1px solid #E2E8F0', boxShadow: '0 16px 42px rgba(15,23,42,0.05)' }}>
+          <div className="mb-4">
+            <h2 className="text-lg font-bold text-slate-900 font-cairo">آخر حركة تشغيل</h2>
+            <p className="text-xs text-slate-500 font-tajawal">آخر سيارات دخلت مسارات العملاء.</p>
+          </div>
+          <div className="space-y-3">
+            {activities.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center">
+                <Car className="mx-auto mb-2 text-slate-400" size={26} />
+                <p className="text-sm text-slate-500 font-tajawal">لا توجد حركة حديثة.</p>
+              </div>
+            ) : activities.map(item => (
+              <div key={item.id} className="flex items-center gap-3 rounded-2xl bg-slate-50 p-3" style={{ border: '1px solid #E2E8F0' }}>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                  <Car size={18} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-bold text-slate-900 font-cairo">{item.customer_name || 'عميل مغسلة'}</p>
+                  <p className="truncate text-xs text-slate-500 font-tajawal">{item.company_name || 'شركة'} - {item.service_name || 'خدمة'} - {item.status || 'received'}</p>
+                </div>
               </div>
             ))}
           </div>
         </article>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-3">
+        {[
+          { icon: QrCode, title: 'QR التسجيل الذاتي', text: 'راقب جاهزية روابط التسجيل لكل مغسلة، وعدد العملاء الذين دخلوا من QR.' },
+          { icon: WalletCards, title: 'الإضافات المدفوعة', text: 'المحفظة، الاشتراكات الشهرية، والدفع الإلكتروني تبقى قابلة للتفعيل لكل عميل.' },
+          { icon: Zap, title: 'فرص الترقية', text: 'اقترب من العملاء الذين وصلوا حد الرسائل أو يحتاجون QR أو تقارير متقدمة.' },
+        ].map(item => (
+          <article key={item.title} className="rounded-3xl bg-white p-5" style={{ border: '1px solid #E2E8F0' }}>
+            <item.icon size={22} className="mb-4 text-blue-600" />
+            <h3 className="text-base font-bold text-slate-900 font-cairo">{item.title}</h3>
+            <p className="mt-2 text-sm leading-7 text-slate-500 font-tajawal">{item.text}</p>
+          </article>
+        ))}
       </section>
     </div>
   )
