@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState, useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { BarChart3, Calendar, Car, ClipboardCheck, Droplets, LayoutDashboard, MessageSquare, Settings, Users2, Wrench, Zap, ClipboardList, Wallet, Loader2 } from 'lucide-react'
+import { BarChart3, Calendar, Car, Droplets, LayoutDashboard, MessageSquare, Monitor, Settings, Users2, Wrench, Zap, Wallet, Loader2 } from 'lucide-react'
 import { DashShell } from '../components/dash/DashShell'
 import type { NavItem } from '../components/dash/DashSidebar'
 import { useClientCompany } from '../hooks/useClientCompany'
@@ -14,6 +14,7 @@ const CarWashOverview    = lazy(() => import('../components/dashboard/client/Car
 const CarWashLeads       = lazy(() => import('../components/dashboard/client/CarWashLeads').then(m => ({ default: m.CarWashLeads })))
 const CarWashReports     = lazy(() => import('../components/dashboard/client/CarWashReports').then(m => ({ default: m.CarWashReports })))
 const CarWashQueue       = lazy(() => import('../components/dashboard/client/CarWashQueue').then(m => ({ default: m.CarWashQueue })))
+const CarWashQueueDisplay = lazy(() => import('../components/dashboard/client/CarWashQueueDisplay').then(m => ({ default: m.CarWashQueueDisplay })))
 const CarWashWorkers     = lazy(() => import('../components/dashboard/client/CarWashWorkers').then(m => ({ default: m.CarWashWorkers })))
 const CarWashFinance     = lazy(() => import('../components/dashboard/client/CarWashFinance').then(m => ({ default: m.CarWashFinance })))
 const CarWashDailyClosing = lazy(() => import('../components/dashboard/client/CarWashDailyClosing').then(m => ({ default: m.CarWashDailyClosing })))
@@ -43,6 +44,7 @@ function buildNavItems(template: ReturnType<typeof getClientIndustryTemplate>): 
     return [
       { to: '/client',               icon: Droplets,      label: 'لوحة المغسلة',   end: true },
       { to: '/client/queue',         icon: Car,           label: 'لوحة التشغيل'  },
+      { to: '/client/queue-display', icon: Monitor,       label: 'شاشة العرض' },
       { to: '/client/leads',         icon: Users2,        label: 'عملاء المغسلة' },
       { to: '/client/finance',       icon: Wallet,        label: 'المالية'         },
       { to: '/client/reports',       icon: BarChart3,     label: 'التقارير'       },
@@ -75,13 +77,16 @@ function usePageTitle(navItems: NavItem[]) {
 export const ClientPortal = () => {
   const { company, companyId, loading } = useClientCompany()
   const navigate = useNavigate()
+  const location = useLocation()
   const { profile } = useActiveProfile()
   const template = getClientIndustryTemplate(company?.business_type, company?.industry)
   const isCarWash = template.type === 'car_wash'
 
   const allNavItems = buildNavItems(template)
   const navItems = (isCarWash && !profile.isOwner)
-    ? allNavItems.filter(item => profile.permissions.includes(item.to))
+    ? allNavItems.filter(item => item.to === '/client/queue-display'
+      ? profile.permissions.includes('/client/queue')
+      : profile.permissions.includes(item.to))
     : allNavItems
 
   const pageTitle = usePageTitle(navItems)
@@ -108,6 +113,8 @@ export const ClientPortal = () => {
   const canAccess = (path: string) =>
     profile.isOwner || !isCarWash || profile.permissions.includes(path)
 
+  const displayMode = isCarWash && location.pathname.startsWith('/client/queue-display')
+
   const noAccessPage = (
     <div dir="rtl" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: 12 }}>
       <div style={{ fontSize: 40 }}>🔒</div>
@@ -128,12 +135,24 @@ export const ClientPortal = () => {
     </DashShell>
   )
 
+  if (displayMode) {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="queue-display" element={canAccess('/client/queue') ? <CarWashQueueDisplay /> : fallback} />
+          <Route path="*" element={<Navigate to="/client/queue-display" replace />} />
+        </Routes>
+      </Suspense>
+    )
+  }
+
   return (
     <DashShell navItems={navItems} role="client" pageTitle={pageTitle}>
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route index element={canAccess('/client') ? (isCarWash ? <CarWashOverview /> : <ClientOverview />) : fallback} />
           <Route path="queue" element={canAccess('/client/queue') ? <CarWashQueue /> : fallback} />
+          <Route path="queue-display" element={canAccess('/client/queue') ? <CarWashQueueDisplay /> : fallback} />
           <Route path="workers" element={canAccess('/client/workers') ? <CarWashWorkers /> : fallback} />
           <Route path="finance" element={canAccess('/client/finance') ? <CarWashFinance /> : fallback} />
           <Route path="closing" element={canAccess('/client/closing') ? <CarWashDailyClosing /> : fallback} />

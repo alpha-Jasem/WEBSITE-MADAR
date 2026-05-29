@@ -10,6 +10,7 @@ import {
   Gift,
   Loader2,
   MessageCircle,
+  Monitor,
   Plus,
   Receipt,
   Sparkles,
@@ -212,6 +213,10 @@ export function CarWashOverview() {
           <Link to="/client/queue" className="cw-primary-action">
             <Car size={18} />
             فتح لوحة التشغيل
+          </Link>
+          <Link to="/client/queue-display" className="cw-secondary-action">
+            <Monitor size={17} />
+            شاشة العرض
           </Link>
           <Link to="/client/finance" className="cw-secondary-action">
             <Receipt size={17} />

@@ -65,6 +65,7 @@ export const ClientSettings = () => {
   const CW_PAGES = [
     { path: '/client',            label: 'لوحة المغسلة'  },
     { path: '/client/queue',      label: 'لوحة التشغيل'  },
+    { path: '/client/queue-display', label: 'شاشة العرض' },
     { path: '/client/leads',      label: 'عملاء المغسلة' },
     { path: '/client/finance',    label: 'المالية'        },
     { path: '/client/reports',    label: 'التقارير'      },
