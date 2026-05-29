@@ -44,6 +44,10 @@ function startOfMonthIso() {
   return date.toISOString()
 }
 
+function formatSar(value: number) {
+  return `${Math.round(value).toLocaleString('ar-SA')} ر.س`
+}
+
 function startOfTodayIso() {
   const date = new Date()
   date.setHours(0, 0, 0, 0)
@@ -218,7 +222,7 @@ export const AdminCommandDeck = () => {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-4">
-        <StatCard title="إيراد المغاسل هذا الشهر" value={formatMoney(revenueMonth)} note="محسوب من زيارات cw_visits المسجلة هذا الشهر." icon={TrendingUp} color="#10B981" />
+        <StatCard title="إيراد المغاسل هذا الشهر" value={formatSar(revenueMonth)} note="محسوب من زيارات cw_visits المسجلة هذا الشهر." icon={TrendingUp} color="#10B981" />
         <StatCard title="سيارات اليوم" value={carsToday} note="إجمالي السيارات غير الملغاة التي دخلت المسار اليوم." icon={Car} color="#0EA5E9" />
         <StatCard title="مغاسل تحتاج تدخل" value={health.filter(row => row.score < 80).length} note="حسابات ناقصة خدمات، موظفين، QR، أو نشاط تشغيل." icon={AlertTriangle} color="#F59E0B" />
         <StatCard title="قريبة من حد الرسائل" value={nearLimit} note="عملاء تجاوزوا 80% من حد الرسائل الشهري." icon={MessageSquare} color="#EF4444" />
