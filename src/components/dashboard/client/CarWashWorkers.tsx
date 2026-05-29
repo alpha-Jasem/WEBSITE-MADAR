@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, Trophy, Car, Loader2, X, Check } from 'lucide-react'
+import { Plus, Pencil, Trash2, Trophy, Car, Loader2, X, Check, AlertTriangle } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
@@ -33,6 +33,7 @@ export const CarWashWorkers = () => {
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [unassignedDelivered, setUnassignedDelivered] = useState(0)
 
   const loadData = async () => {
     if (!companyId) return
@@ -52,6 +53,7 @@ export const CarWashWorkers = () => {
 
     const workersData = w || []
     setWorkers(workersData)
+    setUnassignedDelivered((queue || []).filter(item => !item.worker_id).length)
 
     const statsMap: Record<string, WorkerStats> = {}
     for (const item of queue || []) {
@@ -134,13 +136,23 @@ export const CarWashWorkers = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white font-cairo">الموظفون</h1>
+          <h1 className="text-2xl font-bold text-slate-900 font-cairo">الموظفون</h1>
           <p className="text-sm text-slate-500 font-tajawal">أداء اليوم والعمولات</p>
         </div>
         <button onClick={openAdd} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-tajawal font-medium text-white" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
           <Plus size={16} /> إضافة موظف
         </button>
       </div>
+
+      {unassignedDelivered > 0 && (
+        <div className="flex items-start gap-3 rounded-2xl p-4" style={{ background: '#FFFBEB', border: '1px solid #FCD34D' }}>
+          <AlertTriangle size={18} className="mt-0.5 flex-shrink-0" style={{ color: '#B45309' }} />
+          <div>
+            <p className="text-sm font-bold font-cairo" style={{ color: '#92400E' }}>يوجد {unassignedDelivered} سيارة مُسلّمة بدون موظف</p>
+            <p className="mt-1 text-xs font-tajawal" style={{ color: '#B45309' }}>اربطها بموظف من لوحة التشغيل حتى تكون العمولات وتقييم الأداء دقيقة.</p>
+          </div>
+        </div>
+      )}
 
       {/* Workers grid */}
       {workers.length === 0 ? (
@@ -162,7 +174,7 @@ export const CarWashWorkers = () => {
                 )}
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <p className="text-white font-bold font-cairo text-base">{w.name}</p>
+                    <p className="text-slate-900 font-bold font-cairo text-base">{w.name}</p>
                     {w.phone && <p className="text-slate-500 text-xs font-tajawal mt-0.5">{w.phone}</p>}
                   </div>
                   <div className="flex gap-2">
@@ -180,7 +192,7 @@ export const CarWashWorkers = () => {
                     <div className="grid grid-cols-2 gap-3 mb-3">
                       <div className="p-3 rounded-xl text-center" style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)' }}>
                         <Car size={14} style={{ color: '#6366F1', margin: '0 auto 4px' }} />
-                        <p className="text-xl font-bold font-sora text-white">{s.carsToday}</p>
+                        <p className="text-xl font-bold font-sora text-slate-900">{s.carsToday}</p>
                         <p className="text-xs text-slate-500 font-tajawal">سيارة اليوم</p>
                       </div>
                       <div className="p-3 rounded-xl text-center" style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)' }}>
@@ -190,7 +202,7 @@ export const CarWashWorkers = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-slate-500 font-tajawal">الراتب:</span>
-                      <span className="text-xs font-tajawal text-slate-300">
+                      <span className="text-xs font-tajawal text-slate-700">
                         {w.salary_type === 'fixed'
                           ? `${w.fixed_salary} ر.س / شهر`
                           : w.salary_type === 'mixed'

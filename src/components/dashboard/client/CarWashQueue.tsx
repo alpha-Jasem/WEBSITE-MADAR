@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState, useRef } from 'react'
-import { Plus, X, Loader2, Clock, ChevronRight, Car, Pencil, Check, Gift, ChevronDown, ChevronUp, Receipt } from 'lucide-react'
+import { Plus, X, Loader2, Clock, ChevronRight, Car, Pencil, Check, Gift, ChevronDown, ChevronUp, Receipt, AlertTriangle } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { calcVAT } from '../../../lib/vatUtils'
@@ -101,6 +101,7 @@ export const CarWashQueue = () => {
   const [cancelConfirm, setCancelConfirm] = useState<string | null>(null)
   const [cancelling, setCancelling] = useState(false)
   const [showCancelled, setShowCancelled] = useState(false)
+  const [workerRequiredId, setWorkerRequiredId] = useState<string | null>(null)
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
   const loadItems = async (cid: string) => {
@@ -288,12 +289,18 @@ export const CarWashQueue = () => {
     const next = NEXT_STATUS[item.status]
     if (!next) return
 
+    if (!item.worker_id && workers.length > 0 && item.status !== 'ready') {
+      setWorkerRequiredId(item.id)
+      return
+    }
+
     if (next === 'delivered') {
       setDeliverModal(item)
       setSelectedPayment('cash')
       return
     }
 
+    setWorkerRequiredId(null)
     setMovingId(item.id)
     const updates: Record<string, unknown> = { status: next }
     if (item.status === 'received' && next === 'washing' && !item.started_at) updates.started_at = new Date().toISOString()
@@ -619,6 +626,13 @@ export const CarWashQueue = () => {
                       <p className="mt-3 rounded-lg px-3 py-2 text-xs text-emerald-300 font-tajawal" style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.18)' }}>
                         تم إشعار العميل عبر واتساب
                       </p>
+                    )}
+
+                    {workerRequiredId === item.id && (
+                      <div className="mt-3 flex items-start gap-2 rounded-lg px-3 py-2 text-xs font-tajawal" style={{ color: '#B45309', background: '#FFFBEB', border: '1px solid #FCD34D70' }}>
+                        <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
+                        <span>حدد الموظف المسؤول قبل تحريك السيارة حتى تظهر في الأداء والإغلاق.</span>
+                      </div>
                     )}
 
                     {lane.actionLabel && NEXT_STATUS[item.status] && (

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Search, Plus, Building2, Car, Stethoscope, Briefcase, MessageSquare, Users2, Zap, ChevronLeft, Droplets, DollarSign, TrendingUp, RotateCcw } from 'lucide-react'
+import { Search, Plus, Building2, Car, Stethoscope, Briefcase, MessageSquare, Users2, Zap, ChevronLeft, Droplets, DollarSign, TrendingUp, RotateCcw, ShieldCheck, AlertTriangle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { StatusBadge } from '../shared/StatusBadge'
 import { fetchCompanies, supabase } from '../../../lib/supabase'
@@ -14,6 +14,17 @@ interface CWKPIs {
   topWashVisits: number
   retentionRate: number
   totalVisitsMonth: number
+}
+
+interface TenantHealth {
+  companyId: string
+  name: string
+  score: number
+  services: number
+  workers: number
+  carsToday: number
+  messageUsage: number
+  issues: string[]
 }
 
 const planColors: Record<string, string> = {
@@ -42,8 +53,80 @@ export const AdminCompanies = () => {
   const [showModal, setShowModal] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
   const [cwKPIs, setCwKPIs] = useState<CWKPIs | null>(null)
+  const [tenantHealth, setTenantHealth] = useState<TenantHealth[]>([])
 
-  const load = () => fetchCompanies().then(setCompanies)
+  const load = async () => {
+    const list = await fetchCompanies()
+    setCompanies(list)
+    loadTenantHealth(list)
+  }
+
+  const loadTenantHealth = async (list: Company[]) => {
+    const carWashes = list.filter(c => c.business_type === 'car_wash' || c.industry === 'car_wash')
+    if (carWashes.length === 0) {
+      setTenantHealth([])
+      return
+    }
+
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+
+    const [{ data: services }, { data: workers }, { data: queue }] = await Promise.all([
+      supabase.from('cw_services').select('company_id, active'),
+      supabase.from('cw_workers').select('company_id, active'),
+      supabase.from('cw_queue').select('company_id, created_at').gte('created_at', todayStart.toISOString()),
+    ])
+
+    const serviceRows = (services || []) as Array<{ company_id: string; active?: boolean | null }>
+    const workerRows = (workers || []) as Array<{ company_id: string; active?: boolean | null }>
+    const queueRows = (queue || []) as Array<{ company_id: string }>
+
+    const countByCompany = <T extends { company_id: string }>(rows: T[], predicate: (row: T) => boolean = () => true) =>
+      rows.reduce<Record<string, number>>((acc, row) => {
+        if (predicate(row)) acc[row.company_id] = (acc[row.company_id] || 0) + 1
+        return acc
+      }, {})
+
+    const servicesByCompany = countByCompany(serviceRows, row => row.active !== false)
+    const workersByCompany = countByCompany(workerRows, row => row.active !== false)
+    const carsByCompany = countByCompany(queueRows)
+
+    const health = carWashes.map(company => {
+      const servicesCount = servicesByCompany[company.id] || 0
+      const workersCount = workersByCompany[company.id] || 0
+      const carsToday = carsByCompany[company.id] || 0
+      const limit = company.message_limit || 0
+      const messageUsage = limit > 0 ? Math.round(((company.messages_used || 0) / limit) * 100) : 0
+      const issues: string[] = []
+      let score = 0
+
+      if (company.status === 'active') score += 15
+      else issues.push('الحساب غير نشط')
+      if (company.webhook_token) score += 15
+      else issues.push('QR التسجيل غير مفعّل')
+      if (servicesCount > 0) score += 20
+      else issues.push('لا توجد خدمات مغسلة')
+      if (workersCount > 0) score += 20
+      else issues.push('لا يوجد موظفون')
+      if (carsToday > 0) score += 15
+      else issues.push('لا توجد سيارات اليوم')
+      if (!limit || messageUsage < 80) score += 15
+      else issues.push('قريب من حد الرسائل')
+
+      return {
+        companyId: company.id,
+        name: company.name,
+        score,
+        services: servicesCount,
+        workers: workersCount,
+        carsToday,
+        messageUsage,
+        issues,
+      }
+    }).sort((a, b) => a.score - b.score)
+
+    setTenantHealth(health)
+  }
 
   const loadCWKPIs = async () => {
     const monthStart = new Date()
@@ -225,6 +308,57 @@ export const AdminCompanies = () => {
                 {s.sub && <p className="text-xs text-slate-600 font-tajawal mt-0.5">{s.sub}</p>}
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {tenantHealth.length > 0 && (
+        <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <ShieldCheck size={16} color="#22D3EE" />
+              <div>
+                <p className="text-sm font-bold text-white font-cairo">صحة مغاسل السيارات</p>
+                <p className="text-xs text-slate-500 font-tajawal">أقل الحسابات جاهزية تظهر أولاً حتى تعرف أين تتدخل.</p>
+              </div>
+            </div>
+            <span className="rounded-full px-3 py-1 text-xs font-bold font-sora" style={{ color: '#22D3EE', background: 'rgba(34,211,238,0.12)' }}>
+              {tenantHealth.filter(item => item.score >= 85).length}/{tenantHealth.length} جاهزة
+            </span>
+          </div>
+          <div className="grid gap-3 lg:grid-cols-3">
+            {tenantHealth.slice(0, 6).map(item => {
+              const tone = item.score >= 85 ? '#10B981' : item.score >= 60 ? '#F59E0B' : '#EF4444'
+              return (
+                <button
+                  key={item.companyId}
+                  onClick={() => setSelectedCompany(companies.find(c => c.id === item.companyId) || null)}
+                  className="rounded-xl p-4 text-right transition-all hover:bg-white/[0.04]"
+                  style={{ border: `1px solid ${tone}33`, background: `${tone}0D` }}
+                >
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold text-white font-cairo">{item.name}</p>
+                      <p className="mt-1 text-xs text-slate-500 font-tajawal">
+                        خدمات {item.services} • موظفون {item.workers} • سيارات اليوم {item.carsToday}
+                      </p>
+                    </div>
+                    <span className="text-xl font-black font-sora" style={{ color: tone }}>{item.score}</span>
+                  </div>
+                  <div className="mb-3 h-2 overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                    <div className="h-full rounded-full" style={{ width: `${item.score}%`, background: tone }} />
+                  </div>
+                  {item.issues.length > 0 ? (
+                    <div className="flex items-start gap-2 text-xs text-slate-400 font-tajawal">
+                      <AlertTriangle size={13} className="mt-0.5 flex-shrink-0" style={{ color: tone }} />
+                      <span>{item.issues.slice(0, 2).join('، ')}</span>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-emerald-400 font-tajawal">جاهزة للتشغيل والبيع.</p>
+                  )}
+                </button>
+              )
+            })}
           </div>
         </div>
       )}

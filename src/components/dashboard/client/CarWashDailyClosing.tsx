@@ -12,7 +12,7 @@ function SummaryRow({ label, value, highlight, color }: { label: string; value: 
   return (
     <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid #E2E8F0' }}>
       <span className="text-sm text-slate-400 font-tajawal">{label}</span>
-      <span className={`text-sm font-bold font-sora`} style={{ color: color || (highlight ? '#6366F1' : '#E2E8F0') }}>{value}</span>
+      <span className={`text-sm font-bold font-sora`} style={{ color: color || (highlight ? '#6366F1' : '#0F172A') }}>{value}</span>
     </div>
   )
 }
@@ -24,6 +24,7 @@ export const CarWashDailyClosing = () => {
   const [todayClosing, setTodayClosing] = useState<CWDailyClosing | null>(null)
   const [pastClosings, setPastClosings] = useState<CWDailyClosing[]>([])
   const [notes, setNotes] = useState('')
+  const [actualCash, setActualCash] = useState('')
   const [showExport, setShowExport] = useState(false)
   const [preview, setPreview] = useState<{
     totalCars: number
@@ -151,9 +152,17 @@ export const CarWashDailyClosing = () => {
     if (!authLoading && companyId) loadData()
   }, [authLoading, companyId])
 
+  useEffect(() => {
+    if (preview && !actualCash) setActualCash(String(preview.cashSales.toFixed(2)))
+  }, [preview, actualCash])
+
   const closeDay = async () => {
     if (!companyId || !preview || closing) return
     setClosing(true)
+    const actualCashValue = Number(actualCash || 0)
+    const cashDiff = actualCashValue - preview.cashSales
+    const cashNote = `مطابقة الكاش: المتوقع ${preview.cashSales.toFixed(2)} ر.س، الفعلي ${actualCashValue.toFixed(2)} ر.س، الفرق ${cashDiff.toFixed(2)} ر.س`
+    const finalNotes = [cashNote, notes.trim()].filter(Boolean).join('\n')
 
     const { data: inserted } = await supabase.from('cw_daily_closings').insert({
       company_id: companyId,
@@ -175,7 +184,7 @@ export const CarWashDailyClosing = () => {
       net_profit: preview.netProfit,
       free_washes_count: preview.freeWashesCount,
       loyalty_discount_amount: preview.loyaltyDiscountAmount,
-      notes: notes || null,
+      notes: finalNotes || null,
     }).select().single()
 
     if (inserted) {
@@ -325,7 +334,7 @@ export const CarWashDailyClosing = () => {
           <div className="px-5 py-4" style={{ borderBottom: '1px solid #E2E8F0', background: '#FAFAFA' }}>
             <div className="flex items-center gap-2">
               <ClipboardCheck size={16} className="text-primary-400" />
-              <p className="text-sm font-bold text-white font-cairo">ملخص اليوم</p>
+              <p className="text-sm font-bold text-slate-900 font-cairo">ملخص اليوم</p>
             </div>
           </div>
           <div className="p-5 space-y-0">
@@ -353,7 +362,7 @@ export const CarWashDailyClosing = () => {
             <div className="py-2" />
 
             <div className="flex items-center justify-between py-3 px-4 rounded-xl mt-2" style={{ background: displayData.net_profit >= 0 ? 'rgba(99,102,241,0.12)' : 'rgba(239,68,68,0.12)', border: `1px solid ${displayData.net_profit >= 0 ? 'rgba(99,102,241,0.3)' : 'rgba(239,68,68,0.3)'}` }}>
-              <span className="text-sm font-bold text-white font-cairo">صافي الربح</span>
+              <span className="text-sm font-bold text-slate-900 font-cairo">صافي الربح</span>
               <span className="text-lg font-bold font-sora" style={{ color: displayData.net_profit >= 0 ? '#818CF8' : '#F87171' }}>
                 {displayData.net_profit.toFixed(2)} ر.س
               </span>
@@ -365,6 +374,35 @@ export const CarWashDailyClosing = () => {
       {/* Notes + close button */}
       {!todayClosing && preview && (
         <div className="space-y-3">
+          <div className="rounded-2xl p-4" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm font-bold text-slate-900 font-cairo">مطابقة درج الكاش</p>
+                <p className="mt-1 text-xs text-slate-500 font-tajawal">اكتب المبلغ الموجود فعليًا في الدرج قبل إغلاق اليوم.</p>
+              </div>
+              <div className="min-w-[220px]">
+                <label className="mb-1.5 block text-xs text-slate-500 font-tajawal">الكاش الفعلي</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={actualCash}
+                  onChange={e => setActualCash(e.target.value)}
+                  className="w-full rounded-xl px-4 py-3 text-sm text-slate-900 outline-none font-sora"
+                  style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
+                />
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <SummaryRow label="المتوقع كاش" value={`${preview.cashSales.toFixed(2)} ر.س`} />
+              <SummaryRow label="الموجود فعلياً" value={`${Number(actualCash || 0).toFixed(2)} ر.س`} />
+              <SummaryRow
+                label="الفرق"
+                value={`${(Number(actualCash || 0) - preview.cashSales).toFixed(2)} ر.س`}
+                color={Math.abs(Number(actualCash || 0) - preview.cashSales) < 0.01 ? '#059669' : '#DC2626'}
+              />
+            </div>
+          </div>
           <div>
             <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">ملاحظات (اختياري)</label>
             <textarea
@@ -372,7 +410,7 @@ export const CarWashDailyClosing = () => {
               onChange={e => setNotes(e.target.value)}
               placeholder="أي ملاحظات عن هذا اليوم..."
               rows={3}
-              className="w-full px-4 py-3 rounded-xl text-sm font-tajawal text-white placeholder-slate-600 outline-none resize-none"
+              className="w-full px-4 py-3 rounded-xl text-sm font-tajawal text-slate-900 placeholder-slate-500 outline-none resize-none"
               style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
             />
           </div>
