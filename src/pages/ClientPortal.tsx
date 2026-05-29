@@ -45,7 +45,7 @@ function buildNavItems(template: ReturnType<typeof getClientIndustryTemplate>): 
       { to: '/client',               icon: Droplets,      label: 'لوحة المغسلة',   end: true },
       { to: '/client/queue',         icon: Car,           label: 'لوحة التشغيل'  },
       { to: '/client/queue-display', icon: Monitor,       label: 'شاشة العرض' },
-      { to: '/client/leads',         icon: Users2,        label: 'عملاء المغسلة' },
+      { to: '/client/leads',         icon: Users2,        label: 'عملاء' },
       { to: '/client/finance',       icon: Wallet,        label: 'المالية'         },
       { to: '/client/reports',       icon: BarChart3,     label: 'التقارير'       },
       { to: '/client/workers',       icon: Users2,        label: 'الموظفون'       },
