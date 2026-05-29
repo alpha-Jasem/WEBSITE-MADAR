@@ -276,6 +276,63 @@ export const AdminCommandDeck = () => {
     .filter(row => !search || row.name.toLowerCase().includes(search.toLowerCase()) || row.issues.join(' ').includes(search))
     .slice(0, 7)
 
+  const commandAlerts = useMemo(() => {
+    const alerts: Array<{ id: string; tone: string; title: string; desc: string; to: string; action: string }> = []
+    if (nearLimit > 0) {
+      alerts.push({
+        id: 'message-limit',
+        tone: '#EF4444',
+        title: 'شركات قريبة من حد رسائل واتساب',
+        desc: `${nearLimit} شركة وصلت 80% أو أكثر. هذه أفضل لحظة لبيع ترقية أو زيادة حد الرسائل.`,
+        to: '/admin/settings',
+        action: 'فتح التحكم',
+      })
+    }
+    const missingQr = carWashCompanies.filter(company => !(company.public_checkin_token || company.webhook_token))
+    if (missingQr.length > 0) {
+      alerts.push({
+        id: 'missing-qr',
+        tone: '#F59E0B',
+        title: 'QR التسجيل الذاتي غير جاهز',
+        desc: `${missingQr.length} مغسلة تحتاج رابط QR قبل تسليم النظام للعميل.`,
+        to: '/admin/settings',
+        action: 'تجهيز QR',
+      })
+    }
+    const unhealthy = health.filter(row => row.score < 70)
+    if (unhealthy.length > 0) {
+      alerts.push({
+        id: 'unhealthy-tenants',
+        tone: '#7C3AED',
+        title: 'حسابات تحتاج إنقاذ قبل العرض',
+        desc: `${unhealthy.length} حساب ناقص خدمات أو موظفين أو نشاط. ابدأ بالأقل جاهزية.`,
+        to: '/admin/companies',
+        action: 'مراجعة الشركات',
+      })
+    }
+    if (!automations.some(item => item.type === 'whatsapp' && item.status === 'active')) {
+      alerts.push({
+        id: 'whatsapp-review',
+        tone: '#0EA5E9',
+        title: 'تحقق من واتساب قبل البيع',
+        desc: 'لا توجد أتمتة WhatsApp نشطة في بيانات النظام. راجع n8n أو أسرار Meta قبل تجربة العملاء.',
+        to: '/admin/n8n',
+        action: 'فتح n8n',
+      })
+    }
+    if (alerts.length === 0) {
+      alerts.push({
+        id: 'all-clear',
+        tone: '#10B981',
+        title: 'النظام جاهز للعرض',
+        desc: 'لا توجد مشاكل حرجة حسب بيانات الشركات والتشغيل الحالية.',
+        to: '/admin/companies',
+        action: 'عرض الشركات',
+      })
+    }
+    return alerts
+  }, [automations, carWashCompanies, health, nearLimit])
+
   const recentEvents = [
     ...activities.map(item => ({
       id: `activity-${item.id}`,
@@ -366,6 +423,19 @@ export const AdminCommandDeck = () => {
             </article>
           )
         })}
+      </section>
+
+      <section className="admin-command-alerts">
+        {commandAlerts.slice(0, 4).map(alert => (
+          <Link key={alert.id} to={alert.to} style={{ borderColor: `${alert.tone}33` }}>
+            <span style={{ background: alert.tone }} />
+            <div>
+              <strong>{alert.title}</strong>
+              <small>{alert.desc}</small>
+            </div>
+            <em style={{ color: alert.tone }}>{alert.action}</em>
+          </Link>
+        ))}
       </section>
 
       <section className="admin-command-grid">

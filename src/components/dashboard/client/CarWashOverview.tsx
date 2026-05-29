@@ -207,6 +207,29 @@ export function CarWashOverview() {
 
   const freeWashCustomers = customers.filter(c => (c.free_washes_available || 0) > 0)
   const nextCars = queue.filter(item => item.status !== 'delivered').slice(0, 5)
+  const stuckCars = queue.filter(item => {
+    if (item.status === 'delivered' || item.status === 'cancelled') return false
+    return Date.now() - new Date(item.created_at).getTime() > 60 * 60 * 1000
+  })
+  const setupIssues = [
+    { label: 'QR التسجيل الذاتي', done: Boolean((company as any)?.public_checkin_token || company?.webhook_token) },
+    { label: 'حد رسائل واتساب', done: Boolean(company?.message_limit) },
+    { label: 'رابط خرائط Google', done: Boolean(company?.google_maps_url) },
+    { label: 'إعداد VAT', done: Boolean(company?.tax_enabled === false || company?.vat_rate) },
+  ]
+  const operationsScore = Math.max(0, Math.min(100,
+    100
+      - stuckCars.length * 15
+      - (stats.ready.length > 3 ? 10 : 0)
+      - (pendingReviews > 0 ? 8 : 0)
+      - setupIssues.filter(item => !item.done).length * 7,
+  ))
+  const nextActions = [
+    stuckCars.length > 0 ? `راجع ${stuckCars.length} سيارة متأخرة في المسار` : '',
+    stats.ready.length > 0 ? `سلّم ${stats.ready.length} سيارة جاهزة` : '',
+    pendingReviews > 0 ? `أرسل ${pendingReviews} طلب تقييم` : '',
+    setupIssues.find(item => !item.done) ? `أكمل إعداد ${setupIssues.find(item => !item.done)?.label}` : '',
+  ].filter(Boolean)
 
   if (authLoading || loading) {
     return (
@@ -250,6 +273,33 @@ export function CarWashOverview() {
         <Kpi icon={CheckCircle2} label="جاهزة للتسليم" value={stats.ready.length} hint="تحتاج تسليم ودفع" color="#10B981" />
         <Kpi icon={Wallet} label="إيراد اليوم" value={`${money(stats.revenue)} ر.س`} hint={`${stats.delivered.length} سيارة مسلمة`} color="#1565C0" />
         <Kpi icon={MessageCircle} label="تقييمات معلقة" value={pendingReviews} hint="جاهزة لطلب واتساب" color={pendingReviews > 0 ? '#F59E0B' : '#10B981'} />
+      </section>
+
+      <section className="cw-ops-brief">
+        <article className="cw-ops-score">
+          <span>مؤشر تشغيل اليوم</span>
+          <strong>{operationsScore}%</strong>
+          <small>{operationsScore >= 85 ? 'التشغيل ممتاز' : operationsScore >= 65 ? 'يحتاج متابعة خفيفة' : 'يحتاج تدخل الآن'}</small>
+        </article>
+        <article className="cw-next-actions">
+          <div>
+            <h2>ماذا أفعل الآن؟</h2>
+            <p>أولوية سريعة مبنية على السيارات، الإعدادات، والتقييمات.</p>
+          </div>
+          <div>
+            {(nextActions.length ? nextActions : ['كل شيء مستقر الآن']).slice(0, 4).map(action => (
+              <span key={action}><Sparkles size={13} /> {action}</span>
+            ))}
+          </div>
+        </article>
+        <article className="cw-readiness-mini">
+          {setupIssues.map(item => (
+            <span key={item.label} className={item.done ? 'done' : ''}>
+              <CheckCircle2 size={13} />
+              {item.label}
+            </span>
+          ))}
+        </article>
       </section>
 
       <section className="cw-main-grid">

@@ -14,6 +14,7 @@ import {
   TrendingUp,
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
+import type { Company } from '../../../types'
 
 type StageKey = 'new_lead' | 'contacted' | 'qualified' | 'meeting_booked' | 'proposal_sent' | 'won'
 
@@ -103,6 +104,7 @@ function timeAgo(iso?: string | null) {
 
 export const AdminPipeline = () => {
   const [deals, setDeals] = useState<Deal[]>([])
+  const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [draggingId, setDraggingId] = useState<string | null>(null)
@@ -124,11 +126,14 @@ export const AdminPipeline = () => {
   const load = async () => {
     setLoading(true)
     setLoadError('')
-    const { data, error } = await supabase
-      .from('crm_leads')
-      .select('*')
-      .order('updated_at', { ascending: false })
-      .limit(160)
+    const [{ data, error }, { data: companyRows }] = await Promise.all([
+      supabase
+        .from('crm_leads')
+        .select('*')
+        .order('updated_at', { ascending: false })
+        .limit(160),
+      supabase.from('companies').select('*').order('created_at', { ascending: false }),
+    ])
 
     if (error) {
       setLoadError(error.message)
@@ -136,6 +141,7 @@ export const AdminPipeline = () => {
     } else {
       setDeals(((data ?? []) as any[]).filter(row => row.stage !== 'lost').map(mapDeal))
     }
+    setCompanies((companyRows ?? []) as Company[])
     setLoading(false)
   }
 
@@ -173,6 +179,27 @@ export const AdminPipeline = () => {
     }).length
     return { openDeals, weighted, wonDeals, wonRevenue, staleDeals }
   }, [filteredDeals])
+
+  const upgradeSignals = useMemo(() => {
+    return companies
+      .filter(company => company.business_type === 'car_wash' || company.industry === 'car_wash')
+      .map(company => {
+        const flags = ((company.cw_automations as any)?.feature_flags || {}) as Record<string, boolean>
+        const messageUsage = company.message_limit ? Math.round(((company.messages_used || 0) / company.message_limit) * 100) : 0
+        const reasons = [
+          messageUsage >= 70 ? `استهلاك الرسائل ${messageUsage}%` : '',
+          !(company.public_checkin_token || company.webhook_token) ? 'QR غير جاهز' : '',
+          !flags.wallet ? 'المحفظة غير مفعلة' : '',
+          !flags.memberships ? 'الاشتراكات الشهرية غير مفعلة' : '',
+          !flags.online_payments ? 'الدفع الإلكتروني غير مفعل' : '',
+        ].filter(Boolean)
+        const score = Math.min(100, messageUsage + reasons.length * 12 + (company.plan === 'starter' ? 18 : 0))
+        return { company, reasons, score, messageUsage }
+      })
+      .filter(row => row.reasons.length > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 4)
+  }, [companies])
 
   const moveDeal = async (id: string, stage: StageKey) => {
     setDeals(prev => prev.map(deal => deal.id === id ? { ...deal, stage, updated_at: new Date().toISOString() } : deal))
@@ -273,6 +300,46 @@ export const AdminPipeline = () => {
           <span>تعذر تحميل خط المبيعات: {loadError}</span>
         </section>
       )}
+
+      <section className="admin-upgrade-signals">
+        <header>
+          <div>
+            <span>فرص ترقية تلقائية</span>
+            <h2>الشركات التي تستحق متابعة مبيعات الآن</h2>
+          </div>
+          <small>{upgradeSignals.length} فرصة من بيانات التشغيل</small>
+        </header>
+        <div>
+          {upgradeSignals.length === 0 ? (
+            <article className="quiet">
+              <CheckCircle2 size={18} />
+              لا توجد فرص ترقية واضحة حالياً.
+            </article>
+          ) : upgradeSignals.map(signal => (
+            <article key={signal.company.id}>
+              <strong>{signal.company.name}</strong>
+              <p>{signal.reasons.slice(0, 3).join(' · ')}</p>
+              <footer>
+                <span>{signal.company.plan}</span>
+                <button type="button" onClick={() => {
+                  setForm({
+                    company_name: signal.company.name,
+                    contact_name: signal.company.owner_name || '',
+                    phone: '',
+                    email: signal.company.owner_email || '',
+                    sector: 'مغسلة سيارات',
+                    source: `فرصة ترقية: ${signal.reasons[0]}`,
+                    price_expected: signal.company.plan === 'starter' ? '799' : '1999',
+                  })
+                  setShowCreate(true)
+                }}>
+                  تحويل لفرصة
+                </button>
+              </footer>
+            </article>
+          ))}
+        </div>
+      </section>
 
       {filteredDeals.length === 0 && (
         <section className="admin-pipeline-zero">
