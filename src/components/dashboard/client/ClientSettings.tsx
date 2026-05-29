@@ -6,6 +6,9 @@ import { useClientCompany } from '../../../hooks/useClientCompany'
 import { getClientIndustryTemplate } from '../../../lib/clientIndustryTemplates'
 import { CarWashSetup } from './CarWashSetup'
 import { PLAN_LABELS } from '../../../lib/constants'
+import { getSelfCheckinSettings, getSelfCheckinUrl } from '../../../lib/selfCheckin'
+import { usePlanGate } from '../../../hooks/usePlanGate'
+import { FeatureLock } from '../../dash/FeatureLock'
 
 const PLAN_LIMITS: Record<string, string> = {
   starter: '2,000 رسالة/شهر',
@@ -27,15 +30,38 @@ export const ClientSettings = () => {
   const [mapsUrl, setMapsUrl] = useState('')
   const [savingMaps, setSavingMaps] = useState(false)
   const [mapsSaved, setMapsSaved] = useState(false)
+  const [selfEnabled, setSelfEnabled] = useState(true)
+  const [selfApproval, setSelfApproval] = useState(true)
+  const [selfSpamMinutes, setSelfSpamMinutes] = useState(10)
+  const [savingSelfCheckin, setSavingSelfCheckin] = useState(false)
+  const [selfSaved, setSelfSaved] = useState(false)
+  const [serviceCount, setServiceCount] = useState(0)
+  const [workerCount, setWorkerCount] = useState(0)
 
   const template = getClientIndustryTemplate(company?.business_type, company?.industry)
   const isCarWash = template.type === 'car_wash'
+  const { can, planLabel } = usePlanGate()
 
   useEffect(() => {
     if (company && (company as any).google_maps_url) {
       setMapsUrl((company as any).google_maps_url)
     }
+    const settings = getSelfCheckinSettings(company as any)
+    setSelfEnabled(settings.enabled)
+    setSelfApproval(settings.approvalRequired)
+    setSelfSpamMinutes(settings.antiSpamMinutes)
   }, [company])
+
+  useEffect(() => {
+    if (!companyId || !isCarWash) return
+    Promise.all([
+      supabase.from('cw_services').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('active', true),
+      supabase.from('cw_workers').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('active', true),
+    ]).then(([services, workers]) => {
+      setServiceCount(services.count || 0)
+      setWorkerCount(workers.count || 0)
+    })
+  }, [companyId, isCarWash])
 
   const saveMapsUrl = async () => {
     if (!companyId || !mapsUrl) return
@@ -50,9 +76,7 @@ export const ClientSettings = () => {
     ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/inbound-lead?token=${company.webhook_token}`
     : ''
 
-  const checkinUrl = company?.webhook_token
-    ? `${window.location.origin}/checkin/${company.webhook_token}`
-    : ''
+  const checkinUrl = getSelfCheckinUrl(company as any)
   const checkinQrUrl = checkinUrl
     ? `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=12&data=${encodeURIComponent(checkinUrl)}`
     : ''
@@ -69,6 +93,24 @@ export const ClientSettings = () => {
     navigator.clipboard.writeText(checkinUrl)
     setCopiedCheckin(true)
     setTimeout(() => setCopiedCheckin(false), 2000)
+  }
+
+  const saveSelfCheckin = async () => {
+    if (!companyId || !company) return
+    setSavingSelfCheckin(true)
+    const current = ((company as any).cw_automations || {}) as Record<string, any>
+    const next = {
+      ...current,
+      self_checkin: {
+        enabled: selfEnabled,
+        approval_required: selfApproval,
+        anti_spam_minutes: selfSpamMinutes,
+      },
+    }
+    await supabase.from('companies').update({ cw_automations: next } as any).eq('id', companyId)
+    setSavingSelfCheckin(false)
+    setSelfSaved(true)
+    setTimeout(() => setSelfSaved(false), 2500)
   }
 
   const printCheckinKit = () => {
@@ -269,6 +311,33 @@ export const ClientSettings = () => {
         </div>
       )}
 
+      {isCarWash && (
+        <div className="p-5 rounded-2xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+          <div className="flex items-center gap-2.5 mb-2">
+            <ClipboardList size={16} className="text-cyan-400" />
+            <h3 className="text-sm font-bold text-white font-cairo">قائمة جاهزية المغسلة</h3>
+          </div>
+          <div className="grid gap-2 md:grid-cols-2">
+            {[
+              { label: 'إضافة الخدمات والأسعار', done: serviceCount > 0, hint: `${serviceCount} خدمة نشطة` },
+              { label: 'إضافة الموظفين', done: workerCount > 0, hint: `${workerCount} موظف نشط` },
+              { label: 'تجهيز QR التسجيل الذاتي', done: !!checkinUrl && can.selfCheckin, hint: can.selfCheckin ? 'جاهز للطباعة' : 'يتطلب Growth' },
+              { label: 'رابط Google Maps للتقييم', done: !!mapsUrl, hint: mapsUrl ? 'مضاف' : 'اختياري لكنه مهم' },
+            ].map(item => (
+              <div key={item.label} className="flex items-center justify-between gap-3 rounded-xl p-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold font-tajawal" style={{ color: '#0D1B3E' }}>{item.label}</p>
+                  <p className="text-xs font-tajawal" style={{ color: '#64748B' }}>{item.hint}</p>
+                </div>
+                <span className="grid h-7 w-7 place-items-center rounded-lg" style={{ background: item.done ? 'rgba(16,185,129,0.12)' : '#F1F5F9', color: item.done ? '#059669' : '#94A3B8' }}>
+                  <Check size={14} />
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Webhook URL — hidden for car wash */}
       {!isCarWash && <div className="p-5 rounded-2xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
         <div className="flex items-center gap-2.5 mb-1">
@@ -297,50 +366,82 @@ export const ClientSettings = () => {
       </div>}
 
       {isCarWash && (
-        <div className="p-5 rounded-2xl space-y-4" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-          <div className="flex items-center gap-2.5">
-            <QrCode size={16} className="text-cyan-400" />
-            <div>
-              <h3 className="text-sm font-bold text-white font-cairo">رابط التسجيل الذاتي QR</h3>
-              <p className="text-xs text-slate-500 font-tajawal">اطبع هذا الرمز عند مدخل المغسلة ليُسجل العميل سيارته بنفسه.</p>
-            </div>
-          </div>
-
-          {checkinUrl ? (
-            <div className="grid gap-4 md:grid-cols-[180px_1fr]">
-              <div className="rounded-2xl p-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                <img src={checkinQrUrl} alt="QR التسجيل الذاتي" className="w-full rounded-xl" />
+        <FeatureLock
+          locked={!can.selfCheckin}
+          requiredPlan="pro"
+          featureName="التسجيل الذاتي QR"
+          benefit="متاح في باقة Growth: العملاء يسجلون سياراتهم بأنفسهم وتدخل مباشرة في لوحة التشغيل."
+          companyName={company?.name}
+          currentPlan={planLabel}
+        >
+          <div className="p-5 rounded-2xl space-y-4" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+            <div className="flex items-center gap-2.5">
+              <QrCode size={16} className="text-cyan-400" />
+              <div>
+                <h3 className="text-sm font-bold text-white font-cairo">رابط التسجيل الذاتي QR</h3>
+                <p className="text-xs text-slate-500 font-tajawal">اطبع هذا الرمز عند مدخل المغسلة ليُسجل العميل سيارته بنفسه.</p>
               </div>
-              <div className="space-y-3">
-                <code className="block rounded-xl px-3 py-2 text-xs font-mono break-all" dir="ltr" style={{ background: '#FFFFFF', color: '#0D1B3E', border: '1px solid #E2E8F0' }}>
-                  {checkinUrl}
-                </code>
-                <div className="flex flex-wrap gap-2">
-                  <button onClick={copyCheckin}
-                    className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold font-cairo"
-                    style={{ background: copiedCheckin ? 'rgba(16,185,129,0.12)' : 'rgba(0,191,255,0.12)', color: copiedCheckin ? '#059669' : '#0099CC', border: `1px solid ${copiedCheckin ? 'rgba(16,185,129,0.25)' : 'rgba(0,191,255,0.25)'}` }}>
-                    {copiedCheckin ? <Check size={14} /> : <Copy size={14} />}
-                    {copiedCheckin ? 'تم النسخ' : 'نسخ الرابط'}
-                  </button>
-                  <a href={checkinUrl} target="_blank" rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold font-cairo"
-                    style={{ background: '#FFFFFF', color: '#0D1B3E', border: '1px solid #E2E8F0' }}>
-                    <ExternalLink size={14} />
-                    فتح صفحة التسجيل
-                  </a>
-                  <button onClick={printCheckinKit}
-                    className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold font-cairo"
-                    style={{ background: '#0D1B3E', color: '#FFFFFF', border: '1px solid #0D1B3E' }}>
-                    <QrCode size={14} />
-                    طباعة لوحة QR
-                  </button>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-3">
+              <label className="rounded-xl p-3 text-sm font-bold font-tajawal" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0D1B3E' }}>
+                <input type="checkbox" checked={selfEnabled} onChange={e => setSelfEnabled(e.target.checked)} style={{ marginLeft: 8 }} />
+                تفعيل التسجيل الذاتي
+              </label>
+              <label className="rounded-xl p-3 text-sm font-bold font-tajawal" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0D1B3E' }}>
+                <input type="checkbox" checked={selfApproval} onChange={e => setSelfApproval(e.target.checked)} style={{ marginLeft: 8 }} />
+                اعتماد الموظف أولاً
+              </label>
+              <label className="rounded-xl p-3 text-sm font-bold font-tajawal" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0D1B3E' }}>
+                منع التكرار
+                <input type="number" min={3} max={60} value={selfSpamMinutes} onChange={e => setSelfSpamMinutes(Number(e.target.value) || 10)} style={{ width: 64, marginRight: 8 }} />
+                د
+              </label>
+            </div>
+
+            <button onClick={saveSelfCheckin} disabled={savingSelfCheckin}
+              className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold font-cairo"
+              style={{ background: selfSaved ? 'rgba(16,185,129,0.12)' : 'rgba(0,191,255,0.12)', color: selfSaved ? '#059669' : '#0099CC', border: `1px solid ${selfSaved ? 'rgba(16,185,129,0.25)' : 'rgba(0,191,255,0.25)'}` }}>
+              {savingSelfCheckin ? <Loader2 size={14} className="animate-spin" /> : selfSaved ? <Check size={14} /> : <Save size={14} />}
+              {selfSaved ? 'تم حفظ إعدادات QR' : 'حفظ إعدادات QR'}
+            </button>
+
+            {checkinUrl ? (
+              <div className="grid gap-4 md:grid-cols-[180px_1fr]">
+                <div className="rounded-2xl p-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                  <img src={checkinQrUrl} alt="QR التسجيل الذاتي" className="w-full rounded-xl" />
+                </div>
+                <div className="space-y-3">
+                  <code className="block rounded-xl px-3 py-2 text-xs font-mono break-all" dir="ltr" style={{ background: '#FFFFFF', color: '#0D1B3E', border: '1px solid #E2E8F0' }}>
+                    {checkinUrl}
+                  </code>
+                  <div className="flex flex-wrap gap-2">
+                    <button onClick={copyCheckin}
+                      className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold font-cairo"
+                      style={{ background: copiedCheckin ? 'rgba(16,185,129,0.12)' : 'rgba(0,191,255,0.12)', color: copiedCheckin ? '#059669' : '#0099CC', border: `1px solid ${copiedCheckin ? 'rgba(16,185,129,0.25)' : 'rgba(0,191,255,0.25)'}` }}>
+                      {copiedCheckin ? <Check size={14} /> : <Copy size={14} />}
+                      {copiedCheckin ? 'تم النسخ' : 'نسخ الرابط'}
+                    </button>
+                    <a href={checkinUrl} target="_blank" rel="noreferrer"
+                      className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold font-cairo"
+                      style={{ background: '#FFFFFF', color: '#0D1B3E', border: '1px solid #E2E8F0' }}>
+                      <ExternalLink size={14} />
+                      فتح صفحة التسجيل
+                    </a>
+                    <button onClick={printCheckinKit}
+                      className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold font-cairo"
+                      style={{ background: '#0D1B3E', color: '#FFFFFF', border: '1px solid #0D1B3E' }}>
+                      <QrCode size={14} />
+                      طباعة لوحة QR
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <p className="text-xs text-slate-600 font-tajawal">لم يتم إنشاء token عام لهذه المغسلة بعد. أنشئه من لوحة الإدارة.</p>
-          )}
-        </div>
+            ) : (
+              <p className="text-xs text-slate-600 font-tajawal">لم يتم إنشاء token عام لهذه المغسلة بعد. أنشئه من لوحة الإدارة.</p>
+            )}
+          </div>
+        </FeatureLock>
       )}
 
       {/* Send Email via Resend — hidden for car wash */}

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import type { Company, Plan, CompanyStatus } from '../../../types'
+import { getSelfCheckinSettings, getSelfCheckinUrl } from '../../../lib/selfCheckin'
 
 // ─── Car wash message templates ───────────────────────────────────────────────
 
@@ -86,8 +87,9 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
   const pct = Math.min(100, Math.round((used / limit) * 100))
   const isRed = pct >= 85
   const BusinessIcon = BUSINESS_ICONS[company.business_type ?? 'other'] ?? Briefcase
-  const checkinUrl = company.webhook_token ? `${window.location.origin}/checkin/${company.webhook_token}` : ''
+  const checkinUrl = getSelfCheckinUrl(company as any)
   const checkinQrUrl = checkinUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=10&data=${encodeURIComponent(checkinUrl)}` : ''
+  const selfSettings = getSelfCheckinSettings(company as any)
 
   const [saving, setSaving] = useState(false)
   const [activePlan, setActivePlan] = useState<Plan>(company.plan)
@@ -275,6 +277,9 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
                         <img src={checkinQrUrl} alt="QR" className="h-24 w-24 rounded-lg bg-white p-1" />
                         <div className="min-w-0 flex-1">
                           <code className="block break-all rounded-lg px-3 py-2 text-[10px] text-cyan-200 font-mono" dir="ltr" style={{ background: 'rgba(255,255,255,0.05)' }}>{checkinUrl}</code>
+                          <p className="mt-2 text-[11px] text-slate-500 font-tajawal">
+                            {selfSettings.enabled ? 'مفعل' : 'موقوف'} · {selfSettings.approvalRequired ? 'يتطلب اعتماد الموظف' : 'يدخل مباشرة'} · منع التكرار {selfSettings.antiSpamMinutes}د
+                          </p>
                           <div className="mt-2 flex gap-2">
                             <CopyBtn value={checkinUrl} />
                             <a href={checkinUrl} target="_blank" rel="noreferrer" className="inline-flex h-7 items-center gap-1 rounded-lg px-2 text-xs text-slate-300 hover:bg-white/10">

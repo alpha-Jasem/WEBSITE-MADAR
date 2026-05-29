@@ -20,6 +20,7 @@ export function usePlanGate() {
       workerRanking: allOpen || isPro,
       workerPercentCommission: allOpen || isPro,
       campaigns: allOpen || isPro,
+      selfCheckin: allOpen || isPro,
       scheduledAutomations: allOpen || isPro,
       aiInsights: allOpen || isPremium,
       weeklyPromoAI: allOpen || isPremium,

@@ -30,6 +30,7 @@ export interface Company {
   owner_email: string
   owner_phone: string
   webhook_token?: string
+  public_checkin_token?: string
   monthly_messages: number
   monthly_leads: number
   automations_count: number
@@ -48,6 +49,7 @@ export interface Company {
   cw_loyalty_threshold?: number
   google_maps_url?: string
   cw_message_templates?: Record<string, string>
+  cw_automations?: Record<string, any>
   cw_monthly_target?: number
 }
 

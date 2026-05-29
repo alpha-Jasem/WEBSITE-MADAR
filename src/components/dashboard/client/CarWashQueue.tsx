@@ -5,6 +5,7 @@ import { useClientCompany } from '../../../hooks/useClientCompany'
 import { calcVAT } from '../../../lib/vatUtils'
 import { logAudit } from '../../../lib/auditLog'
 import { getDailyTicketCode } from '../../../lib/carWashTickets'
+import { clearSelfCheckinPending, isSelfCheckinPending } from '../../../lib/selfCheckin'
 import type { CWQueueItem, CWWorker, CWService, QueueStatus, PaymentMethod } from '../../../types'
 import { CarWashReceipt } from './CarWashReceipt'
 
@@ -276,6 +277,14 @@ export const CarWashQueue = () => {
   }
 
   const moveNext = async (item: CWQueueItem) => {
+    if (isSelfCheckinPending(item.notes)) {
+      setMovingId(item.id)
+      await supabase.from('cw_queue').update({ notes: clearSelfCheckinPending(item.notes) }).eq('id', item.id)
+      logAudit(companyId || '', 'self_checkin_approved', { entityType: 'cw_queue', entityId: item.id })
+      setMovingId(null)
+      return
+    }
+
     const next = NEXT_STATUS[item.status]
     if (!next) return
 
@@ -584,6 +593,11 @@ export const CarWashQueue = () => {
                           <Gift size={11} /> مجانية
                         </span>
                       )}
+                      {isSelfCheckinPending(item.notes) && (
+                        <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-tajawal" style={{ color: '#B45309', background: '#FFFBEB', border: '1px solid #FCD34D70' }}>
+                          بانتظار اعتماد الموظف
+                        </span>
+                      )}
                     </div>
 
                     <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
@@ -617,7 +631,7 @@ export const CarWashQueue = () => {
                         {movingId === item.id ? <Loader2 size={14} className="animate-spin" /> : (
                           lane.key === 'ready' ? <Receipt size={14} /> : <ChevronRight size={14} />
                         )}
-                        {lane.actionLabel}
+                        {isSelfCheckinPending(item.notes) ? 'اعتماد السيارة' : lane.actionLabel}
                       </button>
                     )}
                   </div>

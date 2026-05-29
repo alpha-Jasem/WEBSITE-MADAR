@@ -6355,6 +6355,20 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   cursor: not-allowed;
 }
 
+.self-checkin-status-link {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 18px;
+  border-radius: 14px;
+  color: #FFFFFF;
+  text-decoration: none;
+  background: linear-gradient(135deg, #00BFFF, #1565C0);
+  font-weight: 900;
+}
+
 .self-checkin-state,
 .self-checkin-success {
   min-height: calc(100vh - 48px);
@@ -6418,6 +6432,115 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   border: 1px solid #E2E8F0;
 }
 
+.status-page-card {
+  width: min(760px, 100%);
+  min-height: calc(100vh - 48px);
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 18px;
+  margin: 0 auto;
+  padding: 34px;
+  text-align: center;
+  border: 1px solid rgba(0,191,255,0.2);
+  border-radius: 28px;
+  background: rgba(255,255,255,0.92);
+  box-shadow: 0 28px 80px rgba(13,27,62,0.12);
+}
+
+.status-page-card > img {
+  width: 145px;
+  height: auto;
+  padding: 9px 14px;
+  border-radius: 16px;
+  background: #FFFFFF;
+  box-shadow: 0 16px 40px rgba(13,27,62,0.12);
+}
+
+.status-page-card > span {
+  color: #0099CC;
+  font-weight: 900;
+}
+
+.status-page-card h1 {
+  margin: 0;
+  color: #0D1B3E;
+  font-size: clamp(28px, 5vw, 46px);
+  font-weight: 900;
+}
+
+.status-car-summary {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.status-car-summary div {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  background: #FFFFFF;
+}
+
+.status-car-summary small {
+  display: block;
+  color: #64748B;
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 700;
+}
+
+.status-car-summary strong {
+  display: block;
+  margin-top: 4px;
+  color: #0D1B3E;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-timeline {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.status-step {
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  padding: 12px 8px;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  background: #FFFFFF;
+  color: #94A3B8;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.status-step div {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #F1F5F9;
+}
+
+.status-step.done {
+  color: #0D1B3E;
+  border-color: rgba(0,191,255,0.26);
+  background: rgba(0,191,255,0.06);
+}
+
+.status-step.done div {
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #00BFFF, #1565C0);
+}
+
 @media (max-width: 820px) {
   .self-checkin-page {
     padding: 16px;
@@ -6437,6 +6560,11 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   }
 
   .self-checkin-two {
+    grid-template-columns: 1fr;
+  }
+
+  .status-car-summary,
+  .status-timeline {
     grid-template-columns: 1fr;
   }
 }

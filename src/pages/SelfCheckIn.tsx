@@ -1,17 +1,21 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import { CheckCircle2, Loader2, ShieldCheck, Sparkles } from 'lucide-react'
+import { Link, useParams } from 'react-router-dom'
+import { CheckCircle2, Loader2, ShieldCheck, Sparkles, ExternalLink } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { calcVAT } from '../lib/vatUtils'
 import { getDailyTicketCode } from '../lib/carWashTickets'
-import type { Company, CWService } from '../types'
+import { canUseSelfCheckin, getSelfCheckinSettings, markSelfCheckinNotes } from '../lib/selfCheckin'
+import type { Company, CWService, Plan } from '../types'
 
 const N8N_REGISTER_WEBHOOK = 'https://keepcalm.app.n8n.cloud/webhook/cw-registration'
 
 type CheckinCompany = Pick<Company,
   'id' | 'name' | 'business_type' | 'industry' | 'status' | 'webhook_token' |
-  'tax_enabled' | 'vat_rate' | 'price_includes_vat' | 'cw_loyalty_threshold'
->
+  'tax_enabled' | 'vat_rate' | 'price_includes_vat' | 'cw_loyalty_threshold' | 'plan'
+> & {
+  public_checkin_token?: string | null
+  cw_automations?: Record<string, any> | null
+}
 
 type QueueLite = {
   id: string
@@ -46,6 +50,25 @@ function fireRegistration(body: Record<string, unknown>) {
   }).catch(() => undefined)
 }
 
+async function submitViaEdgeFunction(body: Record<string, unknown>) {
+  const baseUrl = import.meta.env.VITE_SUPABASE_URL
+  if (!baseUrl || baseUrl.includes('placeholder')) return null
+  try {
+    const response = await fetch(`${baseUrl}/functions/v1/cw-public-checkin`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify(body),
+    })
+    if (!response.ok) return null
+    return await response.json() as { queue_id?: string; ticket_code?: string; approval_pending?: boolean }
+  } catch {
+    return null
+  }
+}
+
 export function SelfCheckIn() {
   const { token = '' } = useParams()
   const [company, setCompany] = useState<CheckinCompany | null>(null)
@@ -55,6 +78,8 @@ export function SelfCheckIn() {
   const [form, setForm] = useState(EMPTY_FORM)
   const [submitting, setSubmitting] = useState(false)
   const [ticketCode, setTicketCode] = useState('')
+  const [queueId, setQueueId] = useState('')
+  const [approvalPending, setApprovalPending] = useState(false)
   const [submitError, setSubmitError] = useState('')
 
   useEffect(() => {
@@ -62,11 +87,21 @@ export function SelfCheckIn() {
       setLoading(true)
       setLoadError('')
 
-      const { data: companyData, error: companyError } = await supabase
+      let { data: companyData, error: companyError } = await supabase
         .from('companies')
-        .select('id, name, business_type, industry, status, webhook_token, tax_enabled, vat_rate, price_includes_vat, cw_loyalty_threshold')
+        .select('id, name, business_type, industry, status, webhook_token, tax_enabled, vat_rate, price_includes_vat, cw_loyalty_threshold, plan, cw_automations')
         .eq('webhook_token', token)
         .maybeSingle()
+
+      if (!companyData) {
+        const fallback = await supabase
+          .from('companies')
+          .select('id, name, business_type, industry, status, webhook_token, tax_enabled, vat_rate, price_includes_vat, cw_loyalty_threshold, plan, cw_automations')
+          .eq('public_checkin_token', token)
+          .maybeSingle()
+        companyData = fallback.data
+        companyError = fallback.error || companyError
+      }
 
       if (companyError || !companyData) {
         setLoadError('رابط التسجيل غير صحيح أو غير مفعل.')
@@ -77,6 +112,13 @@ export function SelfCheckIn() {
       const co = companyData as CheckinCompany
       if (co.status === 'suspended' || (co.business_type !== 'car_wash' && co.industry !== 'car_wash')) {
         setLoadError('التسجيل الذاتي غير متاح لهذه المنشأة حالياً.')
+        setLoading(false)
+        return
+      }
+
+      const settings = getSelfCheckinSettings(co)
+      if (!settings.enabled || !canUseSelfCheckin(co.plan as Plan)) {
+        setLoadError('التسجيل الذاتي غير مفعل لهذه المغسلة حالياً.')
         setLoading(false)
         return
       }
@@ -114,6 +156,40 @@ export function SelfCheckIn() {
 
     setSubmitting(true)
     setSubmitError('')
+    const settings = getSelfCheckinSettings(company)
+
+    const edgeResult = await submitViaEdgeFunction({
+      token,
+      customer_name: form.customer_name.trim(),
+      phone,
+      car_type: form.car_type.trim() || null,
+      plate: form.plate.trim() || null,
+      service_id: selectedService.id,
+    })
+
+    if (edgeResult?.queue_id && edgeResult.ticket_code) {
+      setTicketCode(edgeResult.ticket_code)
+      setQueueId(edgeResult.queue_id)
+      setApprovalPending(!!edgeResult.approval_pending)
+      setSubmitting(false)
+      return
+    }
+
+    const spamWindow = new Date(Date.now() - settings.antiSpamMinutes * 60 * 1000).toISOString()
+    const { data: recentQueue } = await supabase
+      .from('cw_queue')
+      .select('id')
+      .eq('company_id', company.id)
+      .eq('phone', phone)
+      .gte('created_at', spamWindow)
+      .neq('status', 'cancelled')
+      .limit(1)
+
+    if (recentQueue && recentQueue.length > 0) {
+      setSubmitError(`تم تسجيل سيارة بهذا الرقم قبل قليل. انتظر ${settings.antiSpamMinutes} دقائق أو راجع موظف المغسلة.`)
+      setSubmitting(false)
+      return
+    }
 
     const { data: existingCustomer } = await supabase
       .from('cw_customers')
@@ -157,7 +233,7 @@ export function SelfCheckIn() {
         total_amount: vat.total_amount,
         status: 'received',
         payment_status: 'unpaid',
-        notes: 'Self check-in QR',
+        notes: markSelfCheckinNotes(null, settings.approvalRequired),
       })
       .select('id, created_at')
       .single()
@@ -178,7 +254,20 @@ export function SelfCheckIn() {
       .neq('status', 'cancelled')
       .order('created_at', { ascending: true })
 
-    setTicketCode(getDailyTicketCode((queueData || []) as QueueLite[], inserted.id))
+    const ticket = getDailyTicketCode((queueData || []) as QueueLite[], inserted.id)
+    setTicketCode(ticket)
+    setQueueId(inserted.id)
+    setApprovalPending(settings.approvalRequired)
+    fireRegistration({
+      phone,
+      customer_name: form.customer_name.trim(),
+      company_name: company.name,
+      company_id: company.id,
+      ticket_code: ticket,
+      service: selectedService.name,
+      status_url: `${window.location.origin}/status/${token}/${inserted.id}`,
+      self_checkin: true,
+    })
     setSubmitting(false)
   }
 
@@ -206,7 +295,7 @@ export function SelfCheckIn() {
   }
 
   if (ticketCode) {
-    const displayUrl = `${window.location.origin}/client/queue-display`
+    const statusUrl = `${window.location.origin}/status/${token}/${queueId}`
     return (
       <main className="self-checkin-page" dir="rtl">
         <section className="self-checkin-success">
@@ -215,8 +304,12 @@ export function SelfCheckIn() {
           <span>{company.name}</span>
           <h1>تم تسجيل سيارتك</h1>
           <div className="self-checkin-ticket">{ticketCode}</div>
-          <p>احتفظ بالرقم وتابع حالة سيارتك على شاشة المغسلة.</p>
-          <img className="self-checkin-mini-qr" src={qrUrl(displayUrl, 150)} alt="QR" />
+          <p>{approvalPending ? 'طلبك بانتظار اعتماد الموظف، وبعدها سيظهر في مسار التشغيل.' : 'احتفظ بالرقم وتابع حالة سيارتك على شاشة المغسلة.'}</p>
+          <Link className="self-checkin-status-link" to={`/status/${token}/${queueId}`}>
+            <ExternalLink size={16} />
+            متابعة حالة السيارة
+          </Link>
+          <img className="self-checkin-mini-qr" src={qrUrl(statusUrl, 150)} alt="QR" />
         </section>
       </main>
     )

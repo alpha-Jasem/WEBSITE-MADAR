@@ -15,6 +15,7 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ 
 const ClientPortal = lazy(() => import('./pages/ClientPortal').then(m => ({ default: m.ClientPortal })))
 const SolarEngine = lazy(() => import('./pages/SolarEngine').then(m => ({ default: m.SolarEngine })))
 const SelfCheckIn = lazy(() => import('./pages/SelfCheckIn').then(m => ({ default: m.SelfCheckIn })))
+const CarWashStatus = lazy(() => import('./pages/CarWashStatus').then(m => ({ default: m.CarWashStatus })))
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/checkin/:token" element={<SelfCheckIn />} />
+            <Route path="/status/:token/:queueId" element={<CarWashStatus />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route
               path="/admin/*"
