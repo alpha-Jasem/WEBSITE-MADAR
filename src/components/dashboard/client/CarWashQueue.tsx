@@ -463,6 +463,7 @@ export const CarWashQueue = () => {
   const cancelledItems = items.filter(i => i.status === 'cancelled')
   const laneItems = (lane: FastLane) => activeItems.filter(i => lane.statuses.includes(i.status))
   const pendingItems = activeItems.filter(i => i.status !== 'delivered')
+  const pendingApprovalItems = activeItems.filter(i => isSelfCheckinPending(i.notes))
   const deliveredItems = activeItems.filter(i => i.status === 'delivered')
   const readyItems = activeItems.filter(i => i.status === 'ready')
   const inServiceItems = activeItems.filter(i => i.status === 'washing' || i.status === 'drying')
@@ -486,6 +487,16 @@ export const CarWashQueue = () => {
         }}
       >
         <div className="absolute inset-x-0 top-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(0,191,255,0.6), transparent)' }} />
+        {pendingApprovalItems.length > 0 && (
+          <div className="flex items-center gap-3 rounded-xl px-4 py-3 mb-1" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.35)' }}>
+            <span className="flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold font-sora flex-shrink-0" style={{ background: '#F59E0B', color: '#fff' }}>
+              {pendingApprovalItems.length}
+            </span>
+            <p className="text-sm font-bold font-tajawal" style={{ color: '#92400E' }}>
+              {pendingApprovalItems.length === 1 ? 'سيارة تنتظر اعتمادك' : `${pendingApprovalItems.length} سيارات تنتظر اعتمادك`} — اضغط "اعتماد السيارة" في البطاقة لإدخالها للمسار
+            </p>
+          </div>
+        )}
         <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
             <p className="text-xs font-bold font-cairo text-emerald-600">مركز تشغيل اليوم</p>

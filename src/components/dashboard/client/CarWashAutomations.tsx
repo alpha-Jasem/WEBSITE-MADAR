@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from 'react'
-import { Car, Star, ClipboardCheck, Receipt, Zap, MessageSquare, Users2, Clock, ChevronDown, ChevronUp, Save, Check, Loader2, Play, Pause } from 'lucide-react'
+import { Car, Star, ClipboardCheck, Receipt, Zap, MessageSquare, Users2, Clock, ChevronDown, ChevronUp, Save, Check, Loader2, Play, Pause, QrCode, ShieldCheck } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
@@ -100,6 +100,7 @@ export function CarWashAutomations() {
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<{ deliveries: number; reviews: number }>({ deliveries: 0, reviews: 0 })
+  const [selfCheckin, setSelfCheckin] = useState({ enabled: true, approval_required: true, anti_spam_minutes: 10 })
 
   useEffect(() => {
     if (authLoading || !companyId) return
@@ -123,6 +124,9 @@ export function CarWashAutomations() {
           }
           return merged
         })
+        if (saved.self_checkin) {
+          setSelfCheckin(prev => ({ ...prev, ...saved.self_checkin }))
+        }
       }
 
       if (visits) {
@@ -143,8 +147,9 @@ export function CarWashAutomations() {
   const saveAll = async () => {
     if (!companyId) return
     setSaving(true)
-    await supabase.from('companies').update({ cw_automations: automations } as any).eq('id', companyId)
-    logAudit(companyId, 'automations_updated', { newValue: automations })
+    const full = { ...automations, self_checkin: selfCheckin }
+    await supabase.from('companies').update({ cw_automations: full } as any).eq('id', companyId)
+    logAudit(companyId, 'automations_updated', { newValue: full })
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
@@ -241,6 +246,81 @@ export function CarWashAutomations() {
           </div>
         </FeatureLock>
       </div>
+
+      {/* Self Check-in Settings */}
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0EA5E9' }} />
+          <span style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Cairo, sans-serif', fontWeight: 700, letterSpacing: 1 }}>
+            التسجيل الذاتي عبر QR
+          </span>
+        </div>
+        <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 16, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+          {/* Enable toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 34, height: 34, borderRadius: 10, background: selfCheckin.enabled ? 'rgba(14,165,233,0.12)' : '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <QrCode size={16} color={selfCheckin.enabled ? '#0EA5E9' : '#94A3B8'} />
+              </div>
+              <div>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>تفعيل التسجيل الذاتي</p>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>العميل يسجل سيارته بنفسه عبر QR Code</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setSelfCheckin(s => ({ ...s, enabled: !s.enabled }))}
+              style={{ width: 48, height: 26, borderRadius: 99, border: 'none', cursor: 'pointer', background: selfCheckin.enabled ? '#0EA5E9' : '#E2E8F0', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}
+            >
+              <span style={{ position: 'absolute', top: 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'right 0.2s, left 0.2s', right: selfCheckin.enabled ? 3 : 'auto', left: selfCheckin.enabled ? 'auto' : 3 }} />
+            </button>
+          </div>
+
+          {selfCheckin.enabled && (
+            <>
+              {/* Approval required */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingTop: 12, borderTop: '1px solid #E2E8F0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 10, background: selfCheckin.approval_required ? 'rgba(245,158,11,0.1)' : '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <ShieldCheck size={16} color={selfCheckin.approval_required ? '#F59E0B' : '#94A3B8'} />
+                  </div>
+                  <div>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>اعتماد الموظف مطلوب</p>
+                    <p style={{ margin: '2px 0 0', fontSize: 11, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>
+                      {selfCheckin.approval_required ? 'السيارة تنتظر موافقة الموظف قبل دخول المسار' : 'السيارة تدخل المسار مباشرة بعد التسجيل'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelfCheckin(s => ({ ...s, approval_required: !s.approval_required }))}
+                  style={{ width: 48, height: 26, borderRadius: 99, border: 'none', cursor: 'pointer', background: selfCheckin.approval_required ? '#F59E0B' : '#E2E8F0', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}
+                >
+                  <span style={{ position: 'absolute', top: 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'right 0.2s, left 0.2s', right: selfCheckin.approval_required ? 3 : 'auto', left: selfCheckin.approval_required ? 'auto' : 3 }} />
+                </button>
+              </div>
+
+              {/* Anti-spam minutes */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingTop: 12, borderTop: '1px solid #E2E8F0' }}>
+                <div>
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>فترة الحماية من التكرار</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>لا يُسمح لنفس الرقم بالتسجيل مرتين خلال هذه الفترة</p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                  <input
+                    type="number"
+                    min={1} max={60}
+                    value={selfCheckin.anti_spam_minutes}
+                    onChange={e => setSelfCheckin(s => ({ ...s, anti_spam_minutes: Math.max(1, Math.min(60, Number(e.target.value))) }))}
+                    style={{ width: 56, textAlign: 'center', padding: '6px 8px', borderRadius: 8, border: '1px solid #E2E8F0', background: '#fff', color: '#0F172A', fontFamily: 'Sora, sans-serif', fontSize: 14, fontWeight: 700, outline: 'none' }}
+                  />
+                  <span style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>دقيقة</span>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
     </div>
   )
 }
