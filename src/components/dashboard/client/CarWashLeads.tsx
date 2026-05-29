@@ -80,7 +80,7 @@ function LoyaltyDots({ visits, threshold = 5 }: { visits: number; threshold?: nu
         border: `1.5px solid ${visits > 0 && visits % threshold === 0 ? '#F59E0B' : '#E2E8F0'}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        <Gift size={8} color={visits > 0 && visits % threshold === 0 ? '#F4F6FB' : '#475569'} />
+        <Gift size={8} color={visits > 0 && visits % threshold === 0 ? '#FFFFFF' : '#475569'} />
       </div>
     </div>
   )
