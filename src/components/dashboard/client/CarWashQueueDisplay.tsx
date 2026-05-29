@@ -202,7 +202,21 @@ type DisplayColumnProps = {
 }
 
 function DisplayColumn({ tone, icon: Icon, title, subtitle, items, allItems, limit, featured }: DisplayColumnProps) {
-  const visible = items.slice(0, limit)
+  const [page, setPage] = useState(0)
+  const totalPages = Math.max(1, Math.ceil(items.length / limit))
+
+  useEffect(() => {
+    setPage(0)
+  }, [items.length])
+
+  useEffect(() => {
+    if (totalPages <= 1) return
+    const id = setInterval(() => setPage(p => (p + 1) % totalPages), 5000)
+    return () => clearInterval(id)
+  }, [totalPages])
+
+  const safePage = Math.min(page, totalPages - 1)
+  const visible = items.slice(safePage * limit, (safePage + 1) * limit)
 
   return (
     <section className={`cw-display-column ${tone}${featured ? ' featured' : ''}`}>
@@ -235,6 +249,14 @@ function DisplayColumn({ tone, icon: Icon, title, subtitle, items, allItems, lim
           ))
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div className="cw-display-page-dots">
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <span key={i} className={i === safePage ? 'active' : ''} />
+          ))}
+        </div>
+      )}
     </section>
   )
 }

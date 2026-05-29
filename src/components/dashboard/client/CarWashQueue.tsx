@@ -529,7 +529,8 @@ export const CarWashQueue = () => {
 
       <div className="grid gap-4 xl:grid-cols-4 lg:grid-cols-2">
         {FAST_LANES.map(lane => {
-          const cars = laneItems(lane)
+          const allCars = laneItems(lane)
+          const cars = lane.key === 'delivered' ? allCars.slice(-5) : allCars
           return (
             <section
               key={lane.key}
@@ -544,11 +545,14 @@ export const CarWashQueue = () => {
                   </div>
                 </div>
                 <span className="rounded-full px-2.5 py-1 text-xs font-bold font-sora" style={{ color: lane.color, background: '#FFFFFF', border: '1px solid ' + lane.color + '30' }}>
-                  {cars.length}
+                  {allCars.length}
                 </span>
               </div>
 
-              <div className="space-y-3">
+              <div
+                className="space-y-3"
+                style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 280px)', paddingBottom: 8, paddingRight: 2 }}
+              >
                 {cars.map(item => (
                   <div
                     key={item.id}
@@ -659,6 +663,11 @@ export const CarWashQueue = () => {
                     <Car size={22} style={{ color: '#CBD5E1' }} />
                     <p className="mt-2 text-sm font-tajawal" style={{ color: '#94A3B8' }}>لا توجد سيارات</p>
                   </div>
+                )}
+                {lane.key === 'delivered' && allCars.length > 5 && (
+                  <p className="text-center font-tajawal" style={{ fontSize: 11, color: '#94A3B8', padding: '4px 0 2px' }}>
+                    + {allCars.length - 5} سيارة مسلّمة سابقاً
+                  </p>
                 )}
               </div>
             </section>

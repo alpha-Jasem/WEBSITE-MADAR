@@ -1,8 +1,9 @@
 ﻿import { useEffect, useState } from 'react'
-import { Car, Clock, Star, Plus, Trash2, Check, Loader2, MapPin, Save, Receipt } from 'lucide-react'
+import { Car, Clock, Star, Plus, Trash2, Check, Loader2, MapPin, Save, Receipt, QrCode, Copy, ExternalLink } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { logAudit } from '../../../lib/auditLog'
+import { getSelfCheckinUrl } from '../../../lib/selfCheckin'
 import type { CWService } from '../../../types'
 
 type WorkingHours = { open: string; close: string; closed: boolean }
@@ -33,7 +34,8 @@ const SECTION_STYLE = {
 export function CarWashSetup() {
   const { companyId, company, loading: authLoading } = useClientCompany()
 
-  const [tab, setTab] = useState<'services' | 'hours' | 'loyalty' | 'vat'>('services')
+  const [tab, setTab] = useState<'services' | 'hours' | 'loyalty' | 'vat' | 'qr'>('services')
+  const [copiedUrl, setCopiedUrl] = useState(false)
 
   // Services (table-based)
   const [services, setServices] = useState<CWService[]>([])
@@ -163,6 +165,7 @@ export function CarWashSetup() {
     { key: 'hours',    label: 'أوقات العمل', icon: Clock   },
     { key: 'loyalty',  label: 'الولاء',       icon: Star    },
     { key: 'vat',      label: 'الضريبة',      icon: Receipt },
+    { key: 'qr',       label: 'رمز QR',       icon: QrCode  },
   ] as const
 
   if (authLoading || loading) return (
@@ -440,6 +443,67 @@ export function CarWashSetup() {
           </button>
         </div>
       )}
+
+      {/* QR Tab */}
+      {tab === 'qr' && (() => {
+        const checkinUrl = getSelfCheckinUrl(company as any)
+        const qrSrc = checkinUrl
+          ? `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=14&data=${encodeURIComponent(checkinUrl)}`
+          : ''
+        return (
+          <div style={{ ...SECTION_STYLE, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, textAlign: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <QrCode size={16} color="#22D3EE" />
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>رمز QR للتسجيل الذاتي</span>
+            </div>
+
+            <p style={{ margin: 0, color: '#475569', fontFamily: 'Tajawal, sans-serif', fontSize: 13, maxWidth: 380, lineHeight: 1.7 }}>
+              ضع هذا الرمز عند مدخل المغسلة أو أرسله للعملاء — يسجلون سيارتهم ويحصلون على رقم تذكرتهم بأنفسهم.
+            </p>
+
+            {checkinUrl ? (
+              <>
+                <img
+                  src={qrSrc}
+                  alt="QR Code"
+                  style={{ width: 200, height: 200, borderRadius: 18, background: '#FFFFFF', padding: 10, boxShadow: '0 8px 32px rgba(13,27,62,0.12)', border: '1px solid #E2E8F0' }}
+                />
+
+                <div style={{ width: '100%', maxWidth: 420, background: '#F1F5F9', borderRadius: 12, padding: '10px 14px', border: '1px solid #E2E8F0', fontFamily: 'Sora, sans-serif', fontSize: 11, color: '#475569', wordBreak: 'break-all', textAlign: 'left', direction: 'ltr' }}>
+                  {checkinUrl}
+                </div>
+
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(checkinUrl)
+                      setCopiedUrl(true)
+                      setTimeout(() => setCopiedUrl(false), 2500)
+                    }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', borderRadius: 12, border: '1px solid #E2E8F0', background: copiedUrl ? 'rgba(16,185,129,0.1)' : '#FFFFFF', color: copiedUrl ? '#10B981' : '#475569', fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    {copiedUrl ? <Check size={14} /> : <Copy size={14} />}
+                    {copiedUrl ? 'تم النسخ ✓' : 'نسخ الرابط'}
+                  </button>
+                  <a
+                    href={checkinUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', borderRadius: 12, border: '1px solid rgba(34,211,238,0.3)', background: 'rgba(34,211,238,0.08)', color: '#0099CC', fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
+                  >
+                    <ExternalLink size={14} />
+                    فتح الصفحة
+                  </a>
+                </div>
+              </>
+            ) : (
+              <div style={{ padding: '20px', color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', fontSize: 13 }}>
+                الرابط غير متاح — تأكد من تفعيل التسجيل الذاتي في الإعدادات.
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
     </div>
   )

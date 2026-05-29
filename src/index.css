@@ -6666,6 +6666,28 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   background: linear-gradient(135deg, #00BFFF, #1565C0);
 }
 
+.cw-display-page-dots {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 0 3px;
+  flex-shrink: 0;
+}
+
+.cw-display-page-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.18);
+  transition: background 0.3s;
+}
+
+.cw-display-page-dots span.active {
+  background: rgba(0,191,255,0.85);
+  width: 18px;
+  border-radius: 3px;
+}
+
 .status-rating-button {
   min-height: 44px;
   padding: 0 18px;
