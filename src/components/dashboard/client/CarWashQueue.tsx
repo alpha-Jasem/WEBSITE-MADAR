@@ -10,11 +10,9 @@ import { clearSelfCheckinPending, isSelfCheckinPending } from '../../../lib/self
 import type { CWQueueItem, CWWorker, CWService, QueueStatus, PaymentMethod } from '../../../types'
 import { CarWashReceipt } from './CarWashReceipt'
 
-const N8N_BASE              = 'https://keepcalm.app.n8n.cloud/webhook'
-const N8N_READY_WEBHOOK     = `${N8N_BASE}/cw-car-ready`
-const N8N_DELIVERY_WEBHOOK  = `${N8N_BASE}/cw-delivery-receipt`
-const N8N_LOYALTY_WEBHOOK   = `${N8N_BASE}/cw-loyalty-milestone`
-const N8N_REGISTER_WEBHOOK  = `${N8N_BASE}/cw-registration`
+// Notifications (car_ready, delivery_receipt, loyalty_milestone, daily_closing)
+// are now handled by Supabase DB triggers — no webhook calls needed here.
+const N8N_REGISTER_WEBHOOK = 'https://keepcalm.app.n8n.cloud/webhook/cw-registration'
 
 function fireWebhook(url: string, body: Record<string, unknown>) {
   fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
@@ -329,10 +327,6 @@ export const CarWashQueue = () => {
     await supabase.from('cw_queue').update(updates).eq('id', item.id)
 
     const cwAuto = (company as any)?.cw_automations || {}
-    if (next === 'ready' && item.phone && cwAuto.car_ready?.enabled !== false) {
-      const phone = item.phone.replace(/\D/g, '').replace(/^0/, '966')
-      fireWebhook(N8N_READY_WEBHOOK, { phone, customer_name: item.customer_name, company_name: company?.name || 'المغسلة', company_id: companyId })
-    }
     setMovingId(null)
   }
 
@@ -417,30 +411,10 @@ export const CarWashQueue = () => {
           last_visit_at: now,
         }).eq('id', customer.id)
 
-        if (loyaltyMilestone && item.phone && (company as any)?.cw_automations?.loyalty_milestone?.enabled !== false) {
-          const ph = item.phone.replace(/\D/g, '').replace(/^0/, '966')
-          fireWebhook(N8N_LOYALTY_WEBHOOK, { phone: ph, customer_name: item.customer_name, company_name: company?.name || 'المغسلة', company_id: companyId, free_washes: 1 })
-        }
       }
     }
 
-    // Delivery receipt webhook
-    if (item.phone && (company as any)?.cw_automations?.delivery_receipt?.enabled !== false) {
-      const ph = item.phone.replace(/\D/g, '').replace(/^0/, '966')
-      fireWebhook(N8N_DELIVERY_WEBHOOK, {
-        phone: ph,
-        customer_name: item.customer_name,
-        company_name: company?.name || 'المغسلة',
-        company_id: companyId,
-        service: item.service_name,
-        payment_method: selectedPayment,
-        subtotal: vat.subtotal,
-        vat_amount: vat.vat_amount,
-        total_amount: vat.total_amount,
-        is_free_wash: item.is_free_wash || false,
-        discount_amount: item.discount_amount || 0,
-      })
-    }
+    // Delivery receipt + loyalty notifications handled by Supabase DB trigger
 
     logAudit(companyId, 'car_delivered', {
       entityType: 'cw_queue',

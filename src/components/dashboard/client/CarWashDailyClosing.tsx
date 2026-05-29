@@ -6,7 +6,7 @@ import { logAudit } from '../../../lib/auditLog'
 import { downloadCSV, formatDateForCSV } from '../../../lib/exportUtils'
 import type { CWDailyClosing } from '../../../types'
 
-const N8N_CLOSING_WEBHOOK = 'https://keepcalm.app.n8n.cloud/webhook/cw-daily-closing'
+// Daily closing notification handled by Supabase DB trigger (cw_trigger_daily_closing)
 
 function SummaryRow({ label, value, highlight, color }: { label: string; value: string; highlight?: boolean; color?: string }) {
   return (
@@ -191,12 +191,7 @@ export const CarWashDailyClosing = () => {
       logAudit(companyId, 'daily_closed', { entityType: 'cw_daily_closings', entityId: inserted.id, newValue: { net_profit: preview.netProfit } })
       setTodayClosing(inserted as CWDailyClosing)
 
-      // Fire n8n webhook
-      fetch(N8N_CLOSING_WEBHOOK, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ company_id: companyId, company_name: company?.name, ...inserted }),
-      }).catch(() => {})
+      // Closing notification sent automatically via DB trigger
     }
     setClosing(false)
   }
