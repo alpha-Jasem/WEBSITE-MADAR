@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Car, CheckCircle2, Clock, Droplets, Loader2, Radio, Sparkles } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
+import { getDailyTicketCode } from '../../../lib/carWashTickets'
 import type { QueueStatus } from '../../../types'
 
 type DisplayCar = {
@@ -25,10 +26,11 @@ const DISPLAY_STATUS: Record<QueueStatus, { label: string; short: string }> = {
   cancelled: { label: 'ملغية', short: 'ملغية' },
 }
 
-function plateCode(item: DisplayCar) {
+function plateCode(items: DisplayCar[], item: DisplayCar) {
+  const ticket = getDailyTicketCode(items, item.id)
   const plate = item.plate?.replace(/\s+/g, ' ').trim()
-  if (plate) return plate
-  return `#${item.id.slice(0, 4).toUpperCase()}`
+  if (plate) return `${ticket}`
+  return ticket
 }
 
 function minutesSince(value: string) {
@@ -145,6 +147,7 @@ export function CarWashQueueDisplay() {
           title="في الانتظار"
           subtitle="تم الاستلام"
           items={groups.waiting}
+          allItems={items}
           limit={8}
         />
         <DisplayColumn
@@ -153,6 +156,7 @@ export function CarWashQueueDisplay() {
           title="قيد الخدمة"
           subtitle="غسيل وتجفيف"
           items={groups.working}
+          allItems={items}
           limit={8}
         />
         <DisplayColumn
@@ -161,6 +165,7 @@ export function CarWashQueueDisplay() {
           title="جاهزة للاستلام"
           subtitle="توجه للاستلام"
           items={groups.ready}
+          allItems={items}
           limit={10}
           featured
         />
@@ -176,7 +181,7 @@ export function CarWashQueueDisplay() {
             <span className="cw-display-muted">لا توجد سيارات مسلمة حتى الآن</span>
           ) : (
             groups.delivered.map(item => (
-              <span key={item.id}>{plateCode(item)}</span>
+              <span key={item.id}>{plateCode(items, item)}</span>
             ))
           )}
         </div>
@@ -191,11 +196,12 @@ type DisplayColumnProps = {
   title: string
   subtitle: string
   items: DisplayCar[]
+  allItems: DisplayCar[]
   limit: number
   featured?: boolean
 }
 
-function DisplayColumn({ tone, icon: Icon, title, subtitle, items, limit, featured }: DisplayColumnProps) {
+function DisplayColumn({ tone, icon: Icon, title, subtitle, items, allItems, limit, featured }: DisplayColumnProps) {
   const visible = items.slice(0, limit)
 
   return (
@@ -219,10 +225,10 @@ function DisplayColumn({ tone, icon: Icon, title, subtitle, items, limit, featur
         ) : (
           visible.map(item => (
             <article className="cw-display-car" key={item.id}>
-              <div className="cw-display-plate">{plateCode(item)}</div>
+              <div className="cw-display-plate">{getDailyTicketCode(allItems, item.id)}</div>
               <div className="cw-display-car-meta">
                 <strong>{DISPLAY_STATUS[item.status].label}</strong>
-                <span>{item.service_name || item.car_type || 'خدمة مغسلة'}{item.worker?.name ? ` • ${item.worker.name}` : ''}</span>
+                <span>{item.plate ? `${item.plate} • ` : ''}{item.service_name || item.car_type || 'خدمة مغسلة'}{item.worker?.name ? ` • ${item.worker.name}` : ''}</span>
               </div>
               <small>{minutesSince(item.status === 'delivered' ? (item.delivered_at || item.created_at) : item.created_at)}</small>
             </article>

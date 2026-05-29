@@ -29,6 +29,7 @@ export interface Company {
   owner_name: string
   owner_email: string
   owner_phone: string
+  webhook_token?: string
   monthly_messages: number
   monthly_leads: number
   automations_count: number

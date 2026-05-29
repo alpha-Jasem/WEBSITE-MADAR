@@ -14,6 +14,7 @@ import { Terms } from './pages/Terms'
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
 const ClientPortal = lazy(() => import('./pages/ClientPortal').then(m => ({ default: m.ClientPortal })))
 const SolarEngine = lazy(() => import('./pages/SolarEngine').then(m => ({ default: m.SolarEngine })))
+const SelfCheckIn = lazy(() => import('./pages/SelfCheckIn').then(m => ({ default: m.SelfCheckIn })))
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/checkin/:token" element={<SelfCheckIn />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route
               path="/admin/*"

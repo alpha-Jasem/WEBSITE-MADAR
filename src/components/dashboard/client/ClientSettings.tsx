@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from 'react'
-import { User, Bell, Shield, Link2, Copy, Check, Mail, Loader2, MapPin, ClipboardList, Save, Users, Plus, Trash2, Eye, EyeOff } from 'lucide-react'
+import { User, Bell, Shield, Link2, Copy, Check, Mail, Loader2, MapPin, ClipboardList, Save, Users, Plus, Trash2, Eye, EyeOff, QrCode, ExternalLink } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
@@ -17,6 +17,7 @@ export const ClientSettings = () => {
   const { company, companyId } = useClientCompany()
   const [tab, setTab] = useState<'account' | 'setup' | 'team'>('account')
   const [copied, setCopied] = useState(false)
+  const [copiedCheckin, setCopiedCheckin] = useState(false)
   const [emailTo, setEmailTo] = useState('')
   const [emailSubject, setEmailSubject] = useState('')
   const [emailBody, setEmailBody] = useState('')
@@ -49,11 +50,73 @@ export const ClientSettings = () => {
     ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/inbound-lead?token=${company.webhook_token}`
     : ''
 
+  const checkinUrl = company?.webhook_token
+    ? `${window.location.origin}/checkin/${company.webhook_token}`
+    : ''
+  const checkinQrUrl = checkinUrl
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=12&data=${encodeURIComponent(checkinUrl)}`
+    : ''
+
   const copyWebhook = () => {
     if (!webhookUrl) return
     navigator.clipboard.writeText(webhookUrl)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const copyCheckin = () => {
+    if (!checkinUrl) return
+    navigator.clipboard.writeText(checkinUrl)
+    setCopiedCheckin(true)
+    setTimeout(() => setCopiedCheckin(false), 2000)
+  }
+
+  const printCheckinKit = () => {
+    if (!checkinUrl || !company) return
+    const printWindow = window.open('', '_blank', 'width=720,height=900')
+    if (!printWindow) return
+    printWindow.document.write(`
+      <html dir="rtl">
+        <head>
+          <title>QR التسجيل الذاتي - ${company.name}</title>
+          <style>
+            body{margin:0;background:#eef6ff;font-family:Cairo,Tajawal,Arial,sans-serif;color:#0D1B3E}
+            .sheet{width:794px;min-height:1123px;margin:0 auto;padding:54px;box-sizing:border-box;background:linear-gradient(160deg,#fff,#eef8ff)}
+            .logo{width:170px;padding:10px 16px;border-radius:18px;background:#fff;box-shadow:0 12px 30px rgba(13,27,62,.12)}
+            .hero{margin-top:44px}
+            .eyebrow{display:inline-block;padding:8px 14px;border-radius:999px;background:rgba(0,191,255,.12);color:#0077AA;font-weight:900}
+            h1{margin:18px 0 10px;font-size:54px;line-height:1.05;font-weight:900}
+            p{margin:0;color:#415169;font-size:22px;line-height:1.8}
+            .qr{margin:48px auto 26px;width:360px;height:360px;padding:18px;border-radius:34px;background:#fff;border:1px solid #d8e8f7;display:block}
+            .url{direction:ltr;text-align:center;word-break:break-all;font:700 15px monospace;color:#1565C0;background:#fff;border:1px solid #d8e8f7;border-radius:16px;padding:14px}
+            .steps{display:grid;gap:14px;margin-top:34px}
+            .step{display:flex;gap:12px;align-items:center;padding:16px;border-radius:18px;background:#fff;border:1px solid #e1edf8;font-size:20px;font-weight:800}
+            .num{width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,#00BFFF,#1565C0);color:#fff;display:grid;place-items:center;font-weight:900}
+            .foot{margin-top:44px;text-align:center;color:#6b7d95;font-size:15px}
+          </style>
+        </head>
+        <body>
+          <div class="sheet">
+            <img class="logo" src="${window.location.origin}/logo-main.png" />
+            <div class="hero">
+              <span class="eyebrow">مدار OS للتسجيل الذاتي</span>
+              <h1>${company.name}</h1>
+              <p>امسح الرمز وسجل سيارتك خلال أقل من دقيقة. سيظهر رقمك مباشرة على شاشة التشغيل.</p>
+            </div>
+            <img class="qr" src="${checkinQrUrl}" />
+            <div class="url">${checkinUrl}</div>
+            <div class="steps">
+              <div class="step"><span class="num">1</span> امسح رمز QR من جوالك</div>
+              <div class="step"><span class="num">2</span> اختر الخدمة واكتب بيانات السيارة</div>
+              <div class="step"><span class="num">3</span> احتفظ برقم التذكرة وتابع الشاشة</div>
+            </div>
+            <div class="foot">Powered by Madar OS</div>
+          </div>
+          <script>window.onload=()=>{setTimeout(()=>window.print(),300)}</script>
+        </body>
+      </html>
+    `)
+    printWindow.document.close()
   }
 
   const requestNotifPermission = async () => {
@@ -232,6 +295,53 @@ export const ClientSettings = () => {
           <pre className="text-[10px] text-slate-600 font-mono" dir="ltr">{`{ "company_name": "شركة X", "phone": "05XXXXXXXX", "sector": "صحة", "source": "موقع" }`}</pre>
         </div>
       </div>}
+
+      {isCarWash && (
+        <div className="p-5 rounded-2xl space-y-4" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+          <div className="flex items-center gap-2.5">
+            <QrCode size={16} className="text-cyan-400" />
+            <div>
+              <h3 className="text-sm font-bold text-white font-cairo">رابط التسجيل الذاتي QR</h3>
+              <p className="text-xs text-slate-500 font-tajawal">اطبع هذا الرمز عند مدخل المغسلة ليُسجل العميل سيارته بنفسه.</p>
+            </div>
+          </div>
+
+          {checkinUrl ? (
+            <div className="grid gap-4 md:grid-cols-[180px_1fr]">
+              <div className="rounded-2xl p-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                <img src={checkinQrUrl} alt="QR التسجيل الذاتي" className="w-full rounded-xl" />
+              </div>
+              <div className="space-y-3">
+                <code className="block rounded-xl px-3 py-2 text-xs font-mono break-all" dir="ltr" style={{ background: '#FFFFFF', color: '#0D1B3E', border: '1px solid #E2E8F0' }}>
+                  {checkinUrl}
+                </code>
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={copyCheckin}
+                    className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold font-cairo"
+                    style={{ background: copiedCheckin ? 'rgba(16,185,129,0.12)' : 'rgba(0,191,255,0.12)', color: copiedCheckin ? '#059669' : '#0099CC', border: `1px solid ${copiedCheckin ? 'rgba(16,185,129,0.25)' : 'rgba(0,191,255,0.25)'}` }}>
+                    {copiedCheckin ? <Check size={14} /> : <Copy size={14} />}
+                    {copiedCheckin ? 'تم النسخ' : 'نسخ الرابط'}
+                  </button>
+                  <a href={checkinUrl} target="_blank" rel="noreferrer"
+                    className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold font-cairo"
+                    style={{ background: '#FFFFFF', color: '#0D1B3E', border: '1px solid #E2E8F0' }}>
+                    <ExternalLink size={14} />
+                    فتح صفحة التسجيل
+                  </a>
+                  <button onClick={printCheckinKit}
+                    className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold font-cairo"
+                    style={{ background: '#0D1B3E', color: '#FFFFFF', border: '1px solid #0D1B3E' }}>
+                    <QrCode size={14} />
+                    طباعة لوحة QR
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-slate-600 font-tajawal">لم يتم إنشاء token عام لهذه المغسلة بعد. أنشئه من لوحة الإدارة.</p>
+          )}
+        </div>
+      )}
 
       {/* Send Email via Resend — hidden for car wash */}
       {!isCarWash && <div className="p-5 rounded-2xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>

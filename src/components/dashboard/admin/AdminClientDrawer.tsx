@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, Building2, Car, Stethoscope, Briefcase, Check, Copy,
   Mail, Phone, Calendar, Zap, Users2, MessageSquare,
-  ShieldOff, ShieldCheck, TrendingUp, AlertTriangle, Loader2, RotateCcw,
+  ShieldOff, ShieldCheck, TrendingUp, AlertTriangle, Loader2, RotateCcw, QrCode, ExternalLink,
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import type { Company, Plan, CompanyStatus } from '../../../types'
@@ -86,6 +86,8 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
   const pct = Math.min(100, Math.round((used / limit) * 100))
   const isRed = pct >= 85
   const BusinessIcon = BUSINESS_ICONS[company.business_type ?? 'other'] ?? Briefcase
+  const checkinUrl = company.webhook_token ? `${window.location.origin}/checkin/${company.webhook_token}` : ''
+  const checkinQrUrl = checkinUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=10&data=${encodeURIComponent(checkinUrl)}` : ''
 
   const [saving, setSaving] = useState(false)
   const [activePlan, setActivePlan] = useState<Plan>(company.plan)
@@ -258,6 +260,37 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
                 </div>
               ))}
             </div>
+
+            {company.business_type === 'car_wash' && (
+              <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(0,191,255,0.24)' }}>
+                <div className="flex items-center gap-2 px-4 py-2.5"
+                  style={{ background: 'rgba(0,191,255,0.08)', borderBottom: '1px solid rgba(0,191,255,0.14)' }}>
+                  <QrCode size={12} className="text-cyan-400" />
+                  <p className="text-xs text-cyan-300 font-tajawal">رابط التسجيل الذاتي للعميل النهائي</p>
+                </div>
+                <div className="p-4 space-y-3">
+                  {checkinUrl ? (
+                    <>
+                      <div className="flex items-start gap-3">
+                        <img src={checkinQrUrl} alt="QR" className="h-24 w-24 rounded-lg bg-white p-1" />
+                        <div className="min-w-0 flex-1">
+                          <code className="block break-all rounded-lg px-3 py-2 text-[10px] text-cyan-200 font-mono" dir="ltr" style={{ background: 'rgba(255,255,255,0.05)' }}>{checkinUrl}</code>
+                          <div className="mt-2 flex gap-2">
+                            <CopyBtn value={checkinUrl} />
+                            <a href={checkinUrl} target="_blank" rel="noreferrer" className="inline-flex h-7 items-center gap-1 rounded-lg px-2 text-xs text-slate-300 hover:bg-white/10">
+                              <ExternalLink size={12} />
+                              فتح
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-xs text-slate-500 font-tajawal">لا يوجد webhook_token لهذه الشركة. أضف token قبل طباعة QR.</p>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Car wash message templates (admin only) */}
             {company.business_type === 'car_wash' && (

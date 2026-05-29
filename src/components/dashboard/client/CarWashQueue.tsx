@@ -4,6 +4,7 @@ import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { calcVAT } from '../../../lib/vatUtils'
 import { logAudit } from '../../../lib/auditLog'
+import { getDailyTicketCode } from '../../../lib/carWashTickets'
 import type { CWQueueItem, CWWorker, CWService, QueueStatus, PaymentMethod } from '../../../types'
 import { CarWashReceipt } from './CarWashReceipt'
 
@@ -540,7 +541,12 @@ export const CarWashQueue = () => {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-base font-bold font-cairo" style={{ color: '#0D1B3E' }}>{item.customer_name}</p>
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-lg px-2 py-1 text-xs font-black font-sora" style={{ color: '#FFFFFF', background: lane.color }}>
+                            {getDailyTicketCode(items, item.id)}
+                          </span>
+                          <p className="truncate text-base font-bold font-cairo" style={{ color: '#0D1B3E' }}>{item.customer_name}</p>
+                        </div>
                         <p className="mt-1 truncate text-xs text-slate-500 font-tajawal">
                           {item.car_type || 'سيارة'}{item.plate ? ' · ' + item.plate : ''}
                         </p>

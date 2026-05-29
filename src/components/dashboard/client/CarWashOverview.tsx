@@ -22,6 +22,7 @@ import {
 import { Link } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
+import { getDailyTicketCode } from '../../../lib/carWashTickets'
 
 type QueueStatus = 'received' | 'washing' | 'drying' | 'ready' | 'delivered' | 'cancelled'
 
@@ -251,7 +252,7 @@ export function CarWashOverview() {
                   <div className="cw-car-row" key={car.id}>
                     <div className="cw-car-icon" style={{ color: meta.color, background: `${meta.color}14` }}><Car size={17} /></div>
                     <div>
-                      <strong>{car.customer_name}</strong>
+                      <strong>{getDailyTicketCode(queue, car.id)} · {car.customer_name}</strong>
                       <span>{car.car_type || 'سيارة'}{car.plate ? ` · ${car.plate}` : ''}</span>
                     </div>
                     <em style={{ color: meta.color, background: `${meta.color}14` }}>{meta.label}</em>

@@ -98,6 +98,14 @@ export const AdminCompanies = () => {
     return matchSearch && matchFilter
   })
 
+  const carWashCompanies = companies.filter(c => c.business_type === 'car_wash' || c.industry === 'car_wash')
+  const qrReadyCompanies = carWashCompanies.filter(c => !!c.webhook_token)
+  const nearLimitCompanies = companies.filter(c => {
+    const limit = c.message_limit || 0
+    if (!limit) return false
+    return ((c.messages_used || 0) / limit) >= 0.8
+  })
+
   return (
     <div className="space-y-6">
       {showModal && (
@@ -151,12 +159,14 @@ export const AdminCompanies = () => {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
         {[
           { label: 'إجمالي العملاء', value: companies.length, color: '#4F6EF7' },
           { label: 'نشط', value: companies.filter(c => c.status === 'active').length, color: '#10B981' },
           { label: 'تجريبي', value: companies.filter(c => c.status === 'trial').length, color: '#F59E0B' },
           { label: 'موقوف', value: companies.filter(c => c.status === 'suspended').length, color: '#EF4444' },
+          { label: 'QR جاهز', value: `${qrReadyCompanies.length}/${carWashCompanies.length || 0}`, color: '#22D3EE' },
+          { label: 'قريب من حد الرسائل', value: nearLimitCompanies.length, color: '#F97316' },
         ].map(s => (
           <div key={s.label} className="p-4 rounded-xl"
             style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
