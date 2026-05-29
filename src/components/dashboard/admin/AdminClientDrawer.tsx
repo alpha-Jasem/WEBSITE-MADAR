@@ -243,7 +243,7 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
                   <Zap size={16} className="text-blue-600" />
                   <h3 className="text-sm font-bold text-slate-900 font-cairo">مركز الميزات المدفوعة</h3>
                 </div>
-                <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700 font-tajawal">Admin control</span>
+                <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700 font-tajawal">تحكم الإدارة</span>
               </div>
               <div className="space-y-3">
                 {FEATURE_FLAGS.map(feature => {

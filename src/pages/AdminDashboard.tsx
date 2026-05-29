@@ -45,7 +45,7 @@ function usePageTitle() {
   const match = navItems.find((item) =>
     item.end ? location.pathname === item.to : location.pathname.startsWith(item.to)
   )
-  return match?.label ?? 'Overview'
+  return match?.label ?? 'مركز الإدارة'
 }
 
 export const AdminDashboard = () => {

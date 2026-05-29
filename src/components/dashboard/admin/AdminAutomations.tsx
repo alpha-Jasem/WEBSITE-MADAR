@@ -1,135 +1,149 @@
-import { useEffect, useState } from 'react'
-import { Zap, Search, Play, Pause, AlertTriangle, MessageSquare, Users2, Clock, ExternalLink } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { useEffect, useMemo, useState } from 'react'
+import type { ElementType } from 'react'
+import { AlertTriangle, Bot, Calendar, ExternalLink, MessageSquare, Pause, Play, RefreshCw, Search, Users2, Zap } from 'lucide-react'
 import { StatusBadge } from '../shared/StatusBadge'
 import { fetchAllAutomations, updateAutomationStatus } from '../../../lib/supabase'
-import type { Automation } from '../../../types'
+import type { Automation, AutomationType } from '../../../types'
 
-const typeIcons: Record<string, string> = {
-  whatsapp: '💬', crm: '🔄', ai_agent: '🤖', booking: '📅', sales: '📈',
-}
-const typeLabels: Record<string, string> = {
-  whatsapp: 'واتساب', crm: 'CRM', ai_agent: 'وكيل AI', booking: 'حجز', sales: 'مبيعات',
+const typeMeta: Record<AutomationType, { label: string; icon: ElementType; color: string }> = {
+  whatsapp: { label: 'واتساب', icon: MessageSquare, color: '#10B981' },
+  crm: { label: 'CRM', icon: Users2, color: '#1565C0' },
+  ai_agent: { label: 'وكيل AI', icon: Bot, color: '#8B5CF6' },
+  booking: { label: 'حجوزات', icon: Calendar, color: '#F59E0B' },
+  sales: { label: 'مبيعات', icon: Zap, color: '#EF4444' },
 }
 
 export const AdminAutomations = () => {
   const [automations, setAutomations] = useState<Automation[]>([])
   const [search, setSearch] = useState('')
+  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchAllAutomations().then(d => { if (d.length) setAutomations(d) })
-  }, [])
-
-  const toggle = async (a: Automation) => {
-    const newStatus = a.status === 'active' ? 'paused' : 'active'
-    await updateAutomationStatus(a.id, newStatus)
-    setAutomations(prev => prev.map(x => x.id === a.id ? { ...x, status: newStatus } : x))
+  const load = async () => {
+    setLoading(true)
+    const rows = await fetchAllAutomations()
+    setAutomations(rows)
+    setLoading(false)
   }
 
-  const filtered = automations.filter(a => a.name.includes(search))
-  const active = automations.filter(a => a.status === 'active').length
-  const errors = automations.filter(a => a.status === 'error').length
+  useEffect(() => { load() }, [])
+
+  const toggle = async (automation: Automation) => {
+    const nextStatus = automation.status === 'active' ? 'paused' : 'active'
+    await updateAutomationStatus(automation.id, nextStatus)
+    setAutomations(prev => prev.map(item => item.id === automation.id ? { ...item, status: nextStatus } : item))
+  }
+
+  const filtered = useMemo(() => {
+    const needle = search.trim().toLowerCase()
+    if (!needle) return automations
+    return automations.filter(item =>
+      [item.name, item.type, item.company?.name, item.company?.industry]
+        .filter(Boolean)
+        .some(value => String(value).toLowerCase().includes(needle))
+    )
+  }, [automations, search])
+
+  const active = automations.filter(item => item.status === 'active').length
+  const paused = automations.filter(item => item.status === 'paused').length
+  const errors = automations.filter(item => item.status === 'error').length
+  const messagesToday = automations.reduce((sum, item) => sum + (item.messages_today || 0), 0)
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="admin-page">
+      <section className="admin-page-hero">
         <div>
-          <h1 className="text-2xl font-bold text-white font-cairo">التحكم في الأتمتة</h1>
-          <p className="text-sm text-slate-500 font-tajawal">{active} نشط · {errors} أخطاء</p>
+          <span>مركز الأتمتة</span>
+          <h1>تشغيل واتساب و n8n من مكان واحد</h1>
+          <p>راقب الأتمتات النشطة، الأخطاء، الرسائل اليومية، وروابط n8n لكل شركة بدون الدخول على كل حساب يدويًا.</p>
         </div>
-        {errors > 0 && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-tajawal text-red-400"
-            style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
-            <AlertTriangle size={13} />
-            {errors} أتمتة تحتاج انتباه
-          </div>
-        )}
-      </div>
+        <button type="button" onClick={load}>
+          <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
+          تحديث
+        </button>
+      </section>
 
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" />
-        <input value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="ابحث عن أتمتة..."
-          className="w-full bg-white/[0.03] border border-white/[0.07] rounded-xl px-4 py-2.5 pr-9 text-sm text-white placeholder-slate-600 outline-none focus:border-primary-400/40 font-tajawal"
-          dir="rtl"
-        />
-      </div>
-
-      {/* Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filtered.map((a, i) => (
-          <motion.div key={a.id}
-            initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-            className="p-5 rounded-2xl space-y-4"
-            style={{
-              background: a.status === 'error' ? 'rgba(239,68,68,0.06)' : 'rgba(255,255,255,0.03)',
-              border: `1px solid ${a.status === 'error' ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.07)'}`,
-            }}>
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="text-xl">{typeIcons[a.type]}</span>
-                <div>
-                  <p className="text-sm font-semibold text-white font-tajawal">{a.name}</p>
-                  <p className="text-xs text-slate-600 font-tajawal">{typeLabels[a.type]}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <StatusBadge status={a.status} />
-                {a.n8n_workflow_id && (
-                  <a
-                    href={`${a.n8n_instance_url || 'https://keepcalm.app.n8n.cloud'}/workflow/${a.n8n_workflow_id}`}
-                    target="_blank" rel="noopener noreferrer"
-                    className="p-1 rounded-lg transition-colors hover:bg-white/10" title="فتح في n8n"
-                    style={{ color: 'rgba(245,158,11,0.7)' }}>
-                    <ExternalLink size={11} />
-                  </a>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { icon: MessageSquare, value: a.messages_today, label: 'رسائل اليوم' },
-                { icon: Users2,        value: a.leads_generated, label: 'عملاء' },
-                { icon: Clock,         value: `${a.avg_response_time}ث`, label: 'وقت الرد' },
-              ].map(({ icon: Icon, value, label }) => (
-                <div key={label} className="text-center">
-                  <Icon size={11} className="text-slate-600 mx-auto mb-0.5" />
-                  <p className="text-sm font-bold text-white font-sora">{value}</p>
-                  <p className="text-[10px] text-slate-600 font-tajawal">{label}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Response rate bar */}
-            <div>
-              <div className="flex justify-between text-[10px] text-slate-600 font-tajawal mb-1">
-                <span>معدل الاستجابة</span>
-                <span>{a.response_rate}%</span>
-              </div>
-              <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-                <div className="h-full rounded-full transition-all"
-                  style={{
-                    width: `${a.response_rate}%`,
-                    background: a.response_rate > 85 ? '#10B981' : a.response_rate > 60 ? '#F59E0B' : '#EF4444',
-                  }} />
-              </div>
-            </div>
-
-            {a.status !== 'error' && (
-              <button onClick={() => toggle(a)}
-                className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-tajawal cursor-pointer transition-all ${
-                  a.status === 'active'
-                    ? 'text-yellow-400 hover:bg-yellow-500/10 border border-yellow-500/20'
-                    : 'text-emerald-400 hover:bg-emerald-500/10 border border-emerald-500/20'
-                }`}>
-                {a.status === 'active' ? <><Pause size={12} />إيقاف مؤقت</> : <><Play size={12} />تشغيل</>}
-              </button>
-            )}
-          </motion.div>
+      <div className="admin-metric-strip">
+        {[
+          { label: 'نشطة', value: active, color: '#10B981' },
+          { label: 'متوقفة', value: paused, color: '#F59E0B' },
+          { label: 'تحتاج انتباه', value: errors, color: '#EF4444' },
+          { label: 'رسائل اليوم', value: messagesToday.toLocaleString('en-US'), color: '#1565C0' },
+        ].map(item => (
+          <article key={item.label}>
+            <span style={{ background: item.color }} />
+            <strong>{item.value}</strong>
+            <small>{item.label}</small>
+          </article>
         ))}
       </div>
+
+      {errors > 0 && (
+        <div className="admin-alert-line">
+          <AlertTriangle size={16} />
+          يوجد {errors} أتمتة تحتاج مراجعة قبل أن تؤثر على رسائل العملاء.
+        </div>
+      )}
+
+      <div className="admin-toolbar">
+        <div className="admin-search">
+          <Search size={15} />
+          <input value={search} onChange={event => setSearch(event.target.value)} placeholder="ابحث عن أتمتة أو شركة..." />
+        </div>
+      </div>
+
+      <div className="admin-automation-grid">
+        {filtered.map(automation => {
+          const meta = typeMeta[automation.type] ?? typeMeta.crm
+          const Icon = meta.icon
+          return (
+            <article key={automation.id} className={automation.status === 'error' ? 'danger' : ''}>
+              <header>
+                <div className="admin-automation-icon" style={{ color: meta.color, background: `${meta.color}14`, borderColor: `${meta.color}2E` }}>
+                  <Icon size={18} />
+                </div>
+                <div>
+                  <h3>{automation.name}</h3>
+                  <p>{automation.company?.name || 'بدون شركة'} · {meta.label}</p>
+                </div>
+                <StatusBadge status={automation.status} />
+              </header>
+
+              <div className="admin-automation-stats">
+                <span><strong>{automation.messages_today || 0}</strong><small>اليوم</small></span>
+                <span><strong>{automation.messages_month || 0}</strong><small>الشهر</small></span>
+                <span><strong>{automation.response_rate || 0}%</strong><small>استجابة</small></span>
+              </div>
+
+              <div className="admin-response-bar">
+                <span style={{ width: `${Math.min(100, automation.response_rate || 0)}%` }} />
+              </div>
+
+              <footer>
+                {automation.n8n_workflow_id && (
+                  <a
+                    href={`${(automation as any).n8n_instance_url || 'https://keepcalm.app.n8n.cloud'}/workflow/${automation.n8n_workflow_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink size={13} />
+                    فتح n8n
+                  </a>
+                )}
+                {automation.status !== 'error' && (
+                  <button type="button" onClick={() => toggle(automation)}>
+                    {automation.status === 'active' ? <Pause size={13} /> : <Play size={13} />}
+                    {automation.status === 'active' ? 'إيقاف مؤقت' : 'تشغيل'}
+                  </button>
+                )}
+              </footer>
+            </article>
+          )
+        })}
+      </div>
+
+      {!loading && filtered.length === 0 && (
+        <div className="admin-empty-state">لا توجد أتمتات مطابقة للبحث.</div>
+      )}
     </div>
   )
 }

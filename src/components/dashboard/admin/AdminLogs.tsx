@@ -1,9 +1,23 @@
-import { useEffect, useState } from 'react'
-import { Activity, Search, RefreshCw } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { useEffect, useMemo, useState } from 'react'
+import { Activity, AlertTriangle, CheckCircle2, Info, RefreshCw, Search } from 'lucide-react'
 import { StatusBadge } from '../shared/StatusBadge'
 import { fetchLogs } from '../../../lib/supabase'
 import type { Log, LogLevel } from '../../../types'
+
+const levelIcons: Record<LogLevel, typeof Info> = {
+  info: Info,
+  warning: AlertTriangle,
+  error: AlertTriangle,
+  success: CheckCircle2,
+}
+
+const levelLabels: Record<LogLevel | 'all', string> = {
+  all: 'الكل',
+  info: 'معلومات',
+  warning: 'تحذير',
+  error: 'خطأ',
+  success: 'نجاح',
+}
 
 export const AdminLogs = () => {
   const [logs, setLogs] = useState<Log[]>([])
@@ -13,90 +27,91 @@ export const AdminLogs = () => {
 
   const load = async () => {
     setLoading(true)
-    const d = await fetchLogs(100)
-    if (d.length) setLogs(d)
+    const rows = await fetchLogs(120)
+    setLogs(rows)
     setLoading(false)
   }
 
   useEffect(() => { load() }, [])
 
-  const filtered = logs.filter(l => {
-    const matchSearch = l.message.includes(search) || l.event.includes(search)
-    const matchLevel = levelFilter === 'all' || l.level === levelFilter
-    return matchSearch && matchLevel
-  })
+  const filtered = useMemo(() => {
+    const needle = search.trim().toLowerCase()
+    return logs.filter(log => {
+      const matchSearch = !needle || [log.message, log.event, log.company_id, log.automation_id]
+        .filter(Boolean)
+        .some(value => String(value).toLowerCase().includes(needle))
+      const matchLevel = levelFilter === 'all' || log.level === levelFilter
+      return matchSearch && matchLevel
+    })
+  }, [logs, search, levelFilter])
 
-  const levelCounts = (['error', 'warning', 'success', 'info'] as LogLevel[]).map(lv => ({
-    level: lv, count: logs.filter(l => l.level === lv).length,
+  const levelCounts = (['error', 'warning', 'success', 'info'] as LogLevel[]).map(level => ({
+    level,
+    count: logs.filter(log => log.level === level).length,
   }))
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="admin-page">
+      <section className="admin-page-hero">
         <div>
-          <h1 className="text-2xl font-bold text-white font-cairo">سجل الأحداث</h1>
-          <p className="text-sm text-slate-500 font-tajawal">{logs.length} حدث مسجل</p>
+          <span>سجل النظام</span>
+          <h1>أحداث التشغيل والأخطاء</h1>
+          <p>واجهة مرتبة لمراجعة أخطاء n8n، رسائل النظام، والتنبيهات المهمة بدون قراءة JSON طويل إلا عند الحاجة.</p>
         </div>
-        <button onClick={load}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-slate-400 hover:text-white transition-colors cursor-pointer font-tajawal"
-          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-          <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+        <button type="button" onClick={load}>
+          <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
           تحديث
         </button>
+      </section>
+
+      <div className="admin-log-filters">
+        <button type="button" className={levelFilter === 'all' ? 'active' : ''} onClick={() => setLevelFilter('all')}>
+          <Activity size={15} />
+          الكل
+          <strong>{logs.length}</strong>
+        </button>
+        {levelCounts.map(({ level, count }) => {
+          const Icon = levelIcons[level]
+          return (
+            <button key={level} type="button" className={levelFilter === level ? 'active' : ''} onClick={() => setLevelFilter(levelFilter === level ? 'all' : level)}>
+              <Icon size={15} />
+              {levelLabels[level]}
+              <strong>{count}</strong>
+            </button>
+          )
+        })}
       </div>
 
-      {/* Level summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {levelCounts.map(({ level, count }) => (
-          <button key={level} onClick={() => setLevelFilter(levelFilter === level ? 'all' : level)}
-            className={`p-3 rounded-xl text-center cursor-pointer transition-all ${levelFilter === level ? 'ring-1 ring-white/20' : ''}`}
-            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-            <p className="text-xl font-bold font-sora text-white mb-1">{count}</p>
-            <StatusBadge status={level} />
-          </button>
-        ))}
+      <div className="admin-toolbar">
+        <div className="admin-search">
+          <Search size={15} />
+          <input value={search} onChange={event => setSearch(event.target.value)} placeholder="ابحث في السجلات..." />
+        </div>
       </div>
 
-      <div className="relative">
-        <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" />
-        <input value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="ابحث في السجلات..."
-          className="w-full bg-white/[0.03] border border-white/[0.07] rounded-xl px-4 py-2.5 pr-9 text-sm text-white placeholder-slate-600 outline-none focus:border-primary-400/40 font-tajawal"
-          dir="rtl" />
-      </div>
-
-      <div className="space-y-2">
-        {filtered.map((log, i) => (
-          <motion.div key={log.id}
-            initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
-            className="flex items-start gap-3 p-4 rounded-xl"
-            style={{
-              background: log.level === 'error' ? 'rgba(239,68,68,0.05)' : 'rgba(255,255,255,0.02)',
-              border: `1px solid ${log.level === 'error' ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.05)'}`,
-            }}>
+      <div className="admin-log-list">
+        {filtered.map(log => (
+          <article key={log.id} className={log.level}>
             <StatusBadge status={log.level} />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-0.5">
-                <span className="text-[10px] text-slate-600 font-work">{log.event}</span>
-                {log.company_id && <span className="text-[10px] text-slate-700 font-tajawal">· company:{log.company_id}</span>}
-              </div>
-              <p className="text-sm text-slate-300 font-tajawal leading-relaxed">{log.message}</p>
-              {log.meta && (
-                <p className="text-[10px] text-slate-700 font-work mt-1 font-mono">
-                  {JSON.stringify(log.meta)}
-                </p>
-              )}
+            <div>
+              <header>
+                <strong>{log.event}</strong>
+                <span>{new Date(log.created_at).toLocaleString('ar-SA')}</span>
+              </header>
+              <p>{log.message}</p>
+              <footer>
+                {log.company_id && <code>company:{log.company_id}</code>}
+                {log.automation_id && <code>automation:{log.automation_id}</code>}
+              </footer>
+              {log.meta && <pre>{JSON.stringify(log.meta, null, 2)}</pre>}
             </div>
-            <span className="text-[10px] text-slate-600 flex-shrink-0 font-work">
-              {new Date(log.created_at).toLocaleTimeString('ar-SA')}
-            </span>
-          </motion.div>
+          </article>
         ))}
 
-        {filtered.length === 0 && (
-          <div className="py-12 text-center">
-            <Activity size={32} className="text-slate-700 mx-auto mb-2" />
-            <p className="text-slate-600 font-tajawal text-sm">لا توجد سجلات</p>
+        {!loading && filtered.length === 0 && (
+          <div className="admin-empty-state">
+            <Activity size={30} />
+            لا توجد سجلات مطابقة.
           </div>
         )}
       </div>
