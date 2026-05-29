@@ -32,6 +32,16 @@ type Deal = {
   updated_at: string | null
 }
 
+type NewDealForm = {
+  company_name: string
+  contact_name: string
+  phone: string
+  email: string
+  sector: string
+  source: string
+  price_expected: string
+}
+
 const stages: Array<{ key: StageKey; label: string; hint: string; color: string; probability: number }> = [
   { key: 'new_lead', label: 'جديد', hint: 'دخل للنظام', color: '#64748B', probability: 10 },
   { key: 'contacted', label: 'تم التواصل', hint: 'مكالمة أو واتساب', color: '#00BFFF', probability: 25 },
@@ -62,6 +72,23 @@ function dealValue(deal: Deal) {
   return Number(deal.price_sold ?? deal.price_expected ?? 0)
 }
 
+function mapDeal(row: any): Deal {
+  return {
+    id: row.id,
+    company_name: row.company_name ?? row.company ?? row.name ?? null,
+    contact_name: row.contact_name ?? row.owner_name ?? row.customer_name ?? null,
+    phone: row.phone ?? row.owner_phone ?? null,
+    email: row.email ?? row.owner_email ?? null,
+    sector: row.sector ?? row.industry ?? row.business_type ?? null,
+    source: row.source ?? null,
+    stage: normalizeStage(row.stage ?? row.status),
+    price_expected: row.price_expected ?? row.value ?? row.expected_value ?? null,
+    price_sold: row.price_sold ?? row.closed_value ?? null,
+    created_at: row.created_at ?? null,
+    updated_at: row.updated_at ?? row.created_at ?? null,
+  }
+}
+
 function formatSar(value: number) {
   return `${Math.round(value).toLocaleString('ar-SA')} ر.س`
 }
@@ -81,17 +108,34 @@ export const AdminPipeline = () => {
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [dragOverStage, setDragOverStage] = useState<StageKey | null>(null)
   const [view, setView] = useState<'board' | 'table'>('board')
+  const [showCreate, setShowCreate] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [loadError, setLoadError] = useState('')
+  const [form, setForm] = useState<NewDealForm>({
+    company_name: '',
+    contact_name: '',
+    phone: '',
+    email: '',
+    sector: 'مغسلة سيارات',
+    source: 'إدخال يدوي',
+    price_expected: '799',
+  })
 
   const load = async () => {
     setLoading(true)
-    const { data } = await supabase
+    setLoadError('')
+    const { data, error } = await supabase
       .from('crm_leads')
-      .select('id, company_name, contact_name, phone, email, sector, source, stage, price_expected, price_sold, created_at, updated_at')
-      .not('stage', 'in', '(lost)')
+      .select('*')
       .order('updated_at', { ascending: false })
       .limit(160)
 
-    setDeals(((data ?? []) as any[]).map(row => ({ ...row, stage: normalizeStage(row.stage) })))
+    if (error) {
+      setLoadError(error.message)
+      setDeals([])
+    } else {
+      setDeals(((data ?? []) as any[]).filter(row => row.stage !== 'lost').map(mapDeal))
+    }
     setLoading(false)
   }
 
@@ -135,6 +179,41 @@ export const AdminPipeline = () => {
     await supabase.from('crm_leads').update({ stage, updated_at: new Date().toISOString() }).eq('id', id)
   }
 
+  const createDeal = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!form.company_name.trim() && !form.contact_name.trim()) return
+
+    setSaving(true)
+    const payload = {
+      company_name: form.company_name.trim() || form.contact_name.trim(),
+      contact_name: form.contact_name.trim() || null,
+      phone: form.phone.trim() || null,
+      email: form.email.trim() || null,
+      sector: form.sector.trim() || null,
+      source: form.source.trim() || 'إدخال يدوي',
+      price_expected: Number(form.price_expected || 0),
+      stage: 'new_lead',
+      updated_at: new Date().toISOString(),
+    }
+    const { data, error } = await supabase.from('crm_leads').insert(payload).select('*').single()
+    if (!error && data) {
+      setDeals(prev => [mapDeal(data), ...prev])
+      setShowCreate(false)
+      setForm({
+        company_name: '',
+        contact_name: '',
+        phone: '',
+        email: '',
+        sector: 'مغسلة سيارات',
+        source: 'إدخال يدوي',
+        price_expected: '799',
+      })
+    } else if (error) {
+      setLoadError(error.message)
+    }
+    setSaving(false)
+  }
+
   if (loading) {
     return (
       <div className="admin-command-loading">
@@ -152,7 +231,7 @@ export const AdminPipeline = () => {
           <h1>خط مبيعات واضح لبيع مدار للمغاسل والعيادات</h1>
           <p>تابع الفرص من أول تواصل إلى الإغلاق، حرّك الصفقة بين المراحل، واعرف أين تضيع القيمة قبل نهاية الشهر.</p>
         </div>
-        <button type="button">
+        <button type="button" onClick={() => setShowCreate(true)}>
           <Plus size={16} />
           فرصة جديدة
         </button>
@@ -187,6 +266,30 @@ export const AdminPipeline = () => {
           <button type="button" className={view === 'table' ? 'active' : ''} onClick={() => setView('table')}>جدول</button>
         </div>
       </section>
+
+      {loadError && (
+        <section className="admin-pipeline-warning">
+          <AlertTriangle size={17} />
+          <span>تعذر تحميل خط المبيعات: {loadError}</span>
+        </section>
+      )}
+
+      {filteredDeals.length === 0 && (
+        <section className="admin-pipeline-zero">
+          <div>
+            <span>ابدأ البيع من هنا</span>
+            <h2>{search ? 'لا توجد نتائج مطابقة للبحث' : 'لا توجد فرص في خط المبيعات حتى الآن'}</h2>
+            <p>
+              أضف أول فرصة للمغسلة أو العيادة، ثم حركها بين المراحل. الصفحة ستعطيك قيمة مرجحة،
+              فرص تحتاج متابعة، وإيراد مغلق تلقائيا من بيانات CRM.
+            </p>
+          </div>
+          <button type="button" onClick={() => setShowCreate(true)}>
+            <Plus size={16} />
+            إضافة أول فرصة
+          </button>
+        </section>
+      )}
 
       {view === 'board' ? (
         <section className="admin-pipeline-board">
@@ -247,7 +350,10 @@ export const AdminPipeline = () => {
                   ))}
 
                   {columnDeals.length === 0 && (
-                    <div className="admin-pipeline-empty">لا توجد فرص هنا</div>
+                    <button type="button" className="admin-pipeline-empty" onClick={() => setShowCreate(true)}>
+                      <Plus size={14} />
+                      لا توجد فرص هنا
+                    </button>
                   )}
                 </div>
               </article>
@@ -293,6 +399,54 @@ export const AdminPipeline = () => {
           <p>أي عميل يطلب Wallet أو Memberships أو Online Payments يجب أن يتحول مباشرة إلى مرحلة عرض مرسل أو اجتماع.</p>
         </article>
       </section>
+
+      {showCreate && (
+        <div className="admin-pipeline-modal-backdrop" onClick={() => setShowCreate(false)}>
+          <form className="admin-pipeline-modal" onSubmit={createDeal} onClick={event => event.stopPropagation()}>
+            <header>
+              <div>
+                <span>فرصة جديدة</span>
+                <h2>إضافة عميل محتمل إلى خط المبيعات</h2>
+              </div>
+              <button type="button" onClick={() => setShowCreate(false)}>إغلاق</button>
+            </header>
+
+            <div className="admin-pipeline-form-grid">
+              <label>
+                اسم الشركة
+                <input value={form.company_name} onChange={event => setForm(prev => ({ ...prev, company_name: event.target.value }))} placeholder="مثال: مغسلة النخبة" autoFocus />
+              </label>
+              <label>
+                اسم المسؤول
+                <input value={form.contact_name} onChange={event => setForm(prev => ({ ...prev, contact_name: event.target.value }))} placeholder="اسم صاحب القرار" />
+              </label>
+              <label>
+                الجوال
+                <input value={form.phone} onChange={event => setForm(prev => ({ ...prev, phone: event.target.value }))} placeholder="9665XXXXXXXX" dir="ltr" />
+              </label>
+              <label>
+                البريد
+                <input value={form.email} onChange={event => setForm(prev => ({ ...prev, email: event.target.value }))} placeholder="name@example.com" dir="ltr" />
+              </label>
+              <label>
+                القطاع
+                <input value={form.sector} onChange={event => setForm(prev => ({ ...prev, sector: event.target.value }))} />
+              </label>
+              <label>
+                قيمة الاشتراك المتوقعة
+                <input value={form.price_expected} onChange={event => setForm(prev => ({ ...prev, price_expected: event.target.value }))} inputMode="numeric" dir="ltr" />
+              </label>
+            </div>
+
+            <footer>
+              <button type="button" onClick={() => setShowCreate(false)}>إلغاء</button>
+              <button type="submit" disabled={saving}>
+                {saving ? 'جاري الحفظ...' : 'إضافة الفرصة'}
+              </button>
+            </footer>
+          </form>
+        </div>
+      )}
     </div>
   )
 }

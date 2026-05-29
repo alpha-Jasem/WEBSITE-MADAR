@@ -5972,12 +5972,76 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 
 .admin-pipeline-empty {
   display: grid;
+  gap: 6px;
   min-height: 100px;
   place-items: center;
   border: 1px dashed rgba(13,27,62,0.14);
   border-radius: 14px;
+  background: transparent;
   color: #91A0B4;
   font: 800 12px 'Tajawal', sans-serif;
+  cursor: pointer;
+}
+
+.admin-pipeline-warning,
+.admin-pipeline-zero {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  font-family: 'Tajawal', sans-serif;
+}
+
+.admin-pipeline-warning {
+  border: 1px solid rgba(239,68,68,0.22);
+  background: rgba(239,68,68,0.08);
+  color: #B91C1C;
+  font-weight: 900;
+}
+
+.admin-pipeline-zero {
+  justify-content: space-between;
+  border: 1px solid rgba(0,191,255,0.22);
+  background:
+    radial-gradient(circle at 8% 0%, rgba(0,191,255,0.14), transparent 28%),
+    linear-gradient(135deg, #FFFFFF, #F7FAFD);
+  box-shadow: 0 18px 50px rgba(13,27,62,0.06);
+}
+
+.admin-pipeline-zero span {
+  color: #1565C0;
+  font: 900 12px 'Tajawal', sans-serif;
+}
+
+.admin-pipeline-zero h2 {
+  margin: 4px 0 0;
+  color: #0D1B3E;
+  font: 900 20px 'Cairo', sans-serif;
+}
+
+.admin-pipeline-zero p {
+  max-width: 760px;
+  margin-top: 6px;
+  color: #52627A;
+  font: 700 13px/1.8 'Tajawal', sans-serif;
+}
+
+.admin-pipeline-zero button,
+.admin-pipeline-modal footer button[type="submit"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #00BFFF, #1565C0);
+  color: #FFFFFF;
+  font: 900 13px 'Tajawal', sans-serif;
+  cursor: pointer;
+  box-shadow: 0 14px 28px rgba(0,191,255,0.18);
 }
 
 .admin-pipeline-table {
@@ -6058,6 +6122,95 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   font: 700 13px/1.8 'Tajawal', sans-serif;
 }
 
+.admin-pipeline-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(13,27,62,0.38);
+  backdrop-filter: blur(10px);
+}
+
+.admin-pipeline-modal {
+  width: min(680px, 100%);
+  padding: 20px;
+  border: 1px solid rgba(13,27,62,0.12);
+  border-radius: 22px;
+  background: #FFFFFF;
+  box-shadow: 0 34px 110px rgba(13,27,62,0.22);
+}
+
+.admin-pipeline-modal header,
+.admin-pipeline-modal footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-pipeline-modal header {
+  margin-bottom: 16px;
+}
+
+.admin-pipeline-modal header span {
+  color: #1565C0;
+  font: 900 12px 'Tajawal', sans-serif;
+}
+
+.admin-pipeline-modal header h2 {
+  margin: 4px 0 0;
+  color: #0D1B3E;
+  font: 900 21px 'Cairo', sans-serif;
+}
+
+.admin-pipeline-modal header button,
+.admin-pipeline-modal footer button[type="button"] {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid rgba(13,27,62,0.10);
+  border-radius: 11px;
+  background: #F7FAFD;
+  color: #52627A;
+  font: 900 12px 'Tajawal', sans-serif;
+  cursor: pointer;
+}
+
+.admin-pipeline-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-pipeline-form-grid label {
+  display: grid;
+  gap: 6px;
+  color: #52627A;
+  font: 900 12px 'Tajawal', sans-serif;
+}
+
+.admin-pipeline-form-grid input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid rgba(13,27,62,0.12);
+  border-radius: 12px;
+  background: #F7FAFD;
+  color: #0D1B3E;
+  outline: none;
+  font: 800 13px 'Tajawal', sans-serif;
+}
+
+.admin-pipeline-form-grid input:focus {
+  border-color: rgba(0,191,255,0.46);
+  box-shadow: 0 0 0 3px rgba(0,191,255,0.10);
+}
+
+.admin-pipeline-modal footer {
+  margin-top: 18px;
+}
+
 @media (max-width: 1180px) {
   .admin-command-hero,
   .admin-command-grid,
@@ -6105,6 +6258,17 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   }
 
   .admin-pipeline-side-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-pipeline-zero,
+  .admin-pipeline-modal header,
+  .admin-pipeline-modal footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-pipeline-form-grid {
     grid-template-columns: 1fr;
   }
 }
