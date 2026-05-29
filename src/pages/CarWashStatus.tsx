@@ -17,7 +17,6 @@ type StatusQueueItem = {
   company_id: string
   customer_name: string
   phone: string | null
-  car_type: string | null
   plate: string | null
   service_name: string | null
   status: QueueStatus
@@ -26,30 +25,34 @@ type StatusQueueItem = {
   delivered_at: string | null
 }
 
-const STATUS_STEPS: { status: QueueStatus | 'approved'; label: string; icon: React.ElementType }[] = [
-  { status: 'received', label: 'تم التسجيل', icon: Clock },
-  { status: 'approved', label: 'اعتمدها الموظف', icon: ShieldCheck },
-  { status: 'washing', label: 'قيد الغسيل', icon: Droplets },
-  { status: 'ready', label: 'جاهزة للاستلام', icon: Sparkles },
-  { status: 'delivered', label: 'تم التسليم', icon: CheckCircle2 },
+const STATUS_STEPS: { key: string; label: string; sub: string; icon: React.ElementType }[] = [
+  { key: 'waiting', label: 'بانتظار الدور', sub: 'سيارتك مسجلة في المسار', icon: Clock },
+  { key: 'washing', label: 'جاري الغسيل', sub: 'الفريق يعمل على السيارة', icon: Droplets },
+  { key: 'ready', label: 'جاهزة للاستلام', sub: 'تقدر تتوجه للكاشير', icon: Sparkles },
+  { key: 'delivered', label: 'تم التسليم', sub: 'شكراً لزيارتك', icon: CheckCircle2 },
 ]
 
-const ORDER: Record<string, number> = {
-  received: 1,
-  approved: 2,
-  washing: 3,
-  drying: 3,
-  ready: 4,
-  delivered: 5,
+function statusLevel(item: StatusQueueItem) {
+  if (item.status === 'delivered') return 4
+  if (item.status === 'ready') return 3
+  if (item.status === 'washing' || item.status === 'drying') return 2
+  return 1
 }
 
 function statusTitle(item: StatusQueueItem) {
   if (isSelfCheckinPending(item.notes)) return 'طلبك بانتظار اعتماد الموظف'
-  if (item.status === 'received') return 'تم تسجيل سيارتك'
-  if (item.status === 'washing' || item.status === 'drying') return 'سيارتك قيد الخدمة'
+  if (item.status === 'received') return 'رقمك في المسار'
+  if (item.status === 'washing' || item.status === 'drying') return 'سيارتك جاري غسلها'
   if (item.status === 'ready') return 'سيارتك جاهزة للاستلام'
   if (item.status === 'delivered') return 'تم تسليم السيارة'
   return 'تم تحديث حالة السيارة'
+}
+
+function statusHint(item: StatusQueueItem) {
+  if (isSelfCheckinPending(item.notes)) return 'سيتم اعتماد التسجيل من الموظف، وبعدها تبدأ متابعة الحالة مباشرة.'
+  if (item.status === 'ready') return 'احتفظ برقمك وتوجه للاستلام عند الكاشير.'
+  if (item.status === 'delivered') return 'نتمنى كانت تجربتك ممتازة.'
+  return 'هذه الصفحة تتحدث تلقائياً عند تحريك السيارة في لوحة التشغيل.'
 }
 
 export function CarWashStatus() {
@@ -92,7 +95,7 @@ export function CarWashStatus() {
 
     const { data: queueItem } = await supabase
       .from('cw_queue')
-      .select('id, company_id, customer_name, phone, car_type, plate, service_name, status, notes, created_at, delivered_at')
+      .select('id, company_id, customer_name, phone, plate, service_name, status, notes, created_at, delivered_at')
       .eq('company_id', co.id)
       .eq('id', queueId)
       .maybeSingle()
@@ -134,7 +137,7 @@ export function CarWashStatus() {
   }, [company?.id, queueId])
 
   const ticket = useMemo(() => item ? getDailyTicketCode(dayItems, item.id) : '', [dayItems, item])
-  const progress = item ? (isSelfCheckinPending(item.notes) ? 1 : item.status === 'received' ? 2 : ORDER[item.status] || 1) : 1
+  const progress = item ? statusLevel(item) : 1
 
   if (loading) {
     return (
@@ -165,6 +168,7 @@ export function CarWashStatus() {
         <img src="/logo-main.png" alt="Madar" />
         <span>{company.name}</span>
         <h1>{statusTitle(item)}</h1>
+        <p className="status-live-copy">{statusHint(item)}</p>
         <div className="self-checkin-ticket">{ticket}</div>
 
         <div className="status-car-summary">
@@ -173,27 +177,35 @@ export function CarWashStatus() {
             <strong>{item.customer_name}</strong>
           </div>
           <div>
-            <small>السيارة</small>
-            <strong>{item.car_type || 'سيارة'}{item.plate ? ` • ${item.plate}` : ''}</strong>
-          </div>
-          <div>
             <small>الخدمة</small>
             <strong>{item.service_name || 'خدمة مغسلة'}</strong>
           </div>
+          <div>
+            <small>المتابعة</small>
+            <strong>Live</strong>
+          </div>
         </div>
 
-        <div className="status-timeline">
+        <div className="status-timeline simple">
           {STATUS_STEPS.map((step, index) => {
             const done = progress >= index + 1
+            const active = progress === index + 1
             const Icon = step.icon
             return (
-              <div className={`status-step${done ? ' done' : ''}`} key={step.label}>
+              <div className={`status-step${done ? ' done' : ''}${active ? ' active' : ''}`} key={step.key}>
                 <div><Icon size={18} /></div>
                 <span>{step.label}</span>
+                <small>{step.sub}</small>
               </div>
             )
           })}
         </div>
+
+        {item.status === 'delivered' && (
+          <button className="status-rating-button" type="button">
+            قيّم التجربة لاحقاً
+          </button>
+        )}
 
         <Link to={`/checkin/${token}`} className="self-checkin-status-link">
           <Car size={16} />

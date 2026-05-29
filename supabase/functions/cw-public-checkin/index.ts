@@ -76,13 +76,14 @@ Deno.serve(async (req) => {
   }
 
   const token = String(payload.token || '').trim()
-  const customerName = String(payload.customer_name || '').trim()
+  const action = String(payload.action || 'checkin').trim()
+  const requestedCustomerName = String(payload.customer_name || '').trim()
   const phone = normalizePhone(String(payload.phone || ''))
   const carType = String(payload.car_type || '').trim()
   const plate = String(payload.plate || '').trim()
   const serviceId = String(payload.service_id || '').trim()
 
-  if (!token || !customerName || !phone || !serviceId) {
+  if (!token || !phone || (action !== 'lookup_customer' && !serviceId)) {
     return json({ error: 'missing_required_fields' }, 400)
   }
 
@@ -101,6 +102,19 @@ Deno.serve(async (req) => {
 
   const settings = company.cw_automations?.self_checkin || {}
   if (settings.enabled === false) return json({ error: 'self_checkin_disabled' }, 403)
+
+  if (action === 'lookup_customer') {
+    const { data: customer } = await supabase
+      .from('cw_customers')
+      .select('id, name, total_visits, free_washes_available')
+      .eq('company_id', company.id)
+      .eq('phone', phone)
+      .maybeSingle()
+
+    return json({
+      customer: customer || null,
+    })
+  }
 
   const approvalRequired = settings.approval_required !== false
   const antiSpamMinutes = Number(settings.anti_spam_minutes || 10)
@@ -142,6 +156,8 @@ Deno.serve(async (req) => {
     .eq('company_id', company.id)
     .eq('phone', phone)
     .maybeSingle()
+
+  const customerName = requestedCustomerName || `عميل ${phone.slice(-4)}`
 
   if (existingCustomer?.id) {
     await supabase.from('cw_customers').update({ name: customerName }).eq('id', existingCustomer.id)

@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { CheckCircle2, Loader2, ShieldCheck, Sparkles, ExternalLink } from 'lucide-react'
+import { CheckCircle2, ExternalLink, Loader2, Phone, ShieldCheck, Sparkles, UserRound } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { calcVAT } from '../lib/vatUtils'
 import { getDailyTicketCode } from '../lib/carWashTickets'
@@ -22,10 +22,17 @@ type QueueLite = {
   created_at: string
 }
 
+type KnownCustomer = {
+  id: string
+  name: string | null
+  total_visits?: number | null
+  free_washes_available?: number | null
+}
+
 const EMPTY_FORM = {
-  customer_name: '',
+  first_name: '',
+  last_name: '',
   phone: '',
-  car_type: '',
   plate: '',
   service_id: '',
 }
@@ -36,6 +43,19 @@ function normalizePhone(value: string) {
   if (digits.startsWith('966')) return digits
   if (digits.startsWith('0')) return `966${digits.slice(1)}`
   return `966${digits}`
+}
+
+function isValidSaudiMobile(value: string) {
+  const digits = value.replace(/\D/g, '')
+  return /^05\d{8}$/.test(digits) || /^9665\d{8}$/.test(digits)
+}
+
+function splitName(name?: string | null) {
+  const parts = (name || '').trim().split(/\s+/).filter(Boolean)
+  return {
+    first: parts[0] || '',
+    last: parts.slice(1).join(' '),
+  }
 }
 
 function qrUrl(value: string, size = 220) {
@@ -50,7 +70,7 @@ function fireRegistration(body: Record<string, unknown>) {
   }).catch(() => undefined)
 }
 
-async function submitViaEdgeFunction(body: Record<string, unknown>) {
+async function callCheckinFunction(body: Record<string, unknown>) {
   const baseUrl = import.meta.env.VITE_SUPABASE_URL
   if (!baseUrl || baseUrl.includes('placeholder')) return null
   try {
@@ -62,17 +82,23 @@ async function submitViaEdgeFunction(body: Record<string, unknown>) {
       },
       body: JSON.stringify(body),
     })
-    if (!response.ok) {
-      if ([400, 403, 404, 409].includes(response.status)) {
-        const errorBody = await response.json().catch(() => ({}))
-        return { error: errorBody.error || 'edge_rejected', anti_spam_minutes: errorBody.anti_spam_minutes }
-      }
-      return null
-    }
-    return await response.json() as { queue_id?: string; ticket_code?: string; approval_pending?: boolean }
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok) return { error: payload.error || 'edge_rejected', anti_spam_minutes: payload.anti_spam_minutes }
+    return payload
   } catch {
     return null
   }
+}
+
+function edgeErrorMessage(error: string, minutes?: number) {
+  const errors: Record<string, string> = {
+    duplicate_recent_checkin: `تم تسجيل سيارة بهذا الرقم قبل قليل. انتظر ${minutes || 10} دقائق أو راجع موظف المغسلة.`,
+    self_checkin_disabled: 'التسجيل الذاتي غير مفعّل لهذه المغسلة حالياً.',
+    plan_locked: 'التسجيل الذاتي غير متاح في باقة هذه المغسلة حالياً.',
+    invalid_service: 'الخدمة المختارة غير متاحة حالياً.',
+    missing_required_fields: 'أكمل البيانات المطلوبة قبل تسجيل السيارة.',
+  }
+  return errors[error] || 'تعذر تسجيل السيارة. فضلاً راجع موظف المغسلة.'
 }
 
 export function SelfCheckIn() {
@@ -82,6 +108,9 @@ export function SelfCheckIn() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [form, setForm] = useState(EMPTY_FORM)
+  const [step, setStep] = useState<'phone' | 'details'>('phone')
+  const [knownCustomer, setKnownCustomer] = useState<KnownCustomer | null>(null)
+  const [checkingPhone, setCheckingPhone] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [ticketCode, setTicketCode] = useState('')
   const [queueId, setQueueId] = useState('')
@@ -101,10 +130,10 @@ export function SelfCheckIn() {
         companyData = rpcResult.data[0]
       } else {
         const direct = await supabase
-        .from('companies')
-        .select('id, name, business_type, industry, status, webhook_token, tax_enabled, vat_rate, price_includes_vat, cw_loyalty_threshold, plan, cw_automations')
-        .eq('webhook_token', token)
-        .maybeSingle()
+          .from('companies')
+          .select('id, name, business_type, industry, status, webhook_token, tax_enabled, vat_rate, price_includes_vat, cw_loyalty_threshold, plan, cw_automations')
+          .eq('webhook_token', token)
+          .maybeSingle()
         companyData = direct.data
         companyError = direct.error
 
@@ -120,7 +149,7 @@ export function SelfCheckIn() {
       }
 
       if (companyError || !companyData) {
-        setLoadError('رابط التسجيل غير صحيح أو غير مفعل.')
+        setLoadError('رابط التسجيل غير صحيح أو غير مفعّل.')
         setLoading(false)
         return
       }
@@ -134,7 +163,7 @@ export function SelfCheckIn() {
 
       const settings = getSelfCheckinSettings(co)
       if (!settings.enabled || !canUseSelfCheckin(co.plan as Plan)) {
-        setLoadError('التسجيل الذاتي غير مفعل لهذه المغسلة حالياً.')
+        setLoadError('التسجيل الذاتي غير مفعّل لهذه المغسلة حالياً.')
         setLoading(false)
         return
       }
@@ -160,13 +189,62 @@ export function SelfCheckIn() {
     return calcVAT(price, !!company?.tax_enabled, company?.vat_rate || 15, !!company?.price_includes_vat)
   }, [company, selectedService])
 
+  const lookupCustomer = async () => {
+    if (!company || checkingPhone) return
+    setSubmitError('')
+    if (!isValidSaudiMobile(form.phone)) {
+      setSubmitError('اكتب رقم جوال سعودي صحيح مثل 05XXXXXXXX.')
+      return
+    }
+
+    setCheckingPhone(true)
+    const phone = normalizePhone(form.phone)
+    let customer: KnownCustomer | null = null
+
+    const edgeResult = await callCheckinFunction({ action: 'lookup_customer', token, phone })
+    if (edgeResult?.customer) customer = edgeResult.customer as KnownCustomer
+
+    if (!customer) {
+      const { data } = await supabase
+        .from('cw_customers')
+        .select('id, name, total_visits, free_washes_available')
+        .eq('company_id', company.id)
+        .eq('phone', phone)
+        .maybeSingle()
+      customer = data as KnownCustomer | null
+    }
+
+    if (customer?.id) {
+      const name = splitName(customer.name)
+      setKnownCustomer(customer)
+      setForm(current => ({
+        ...current,
+        first_name: name.first,
+        last_name: name.last,
+      }))
+    } else {
+      setKnownCustomer(null)
+      setForm(current => ({ ...current, first_name: '', last_name: '' }))
+    }
+    setStep('details')
+    setCheckingPhone(false)
+  }
+
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     if (!company || !selectedService || submitting) return
 
     const phone = normalizePhone(form.phone)
-    if (!phone || phone.length < 12) {
-      setSubmitError('اكتب رقم جوال صحيح يبدأ بـ 05 أو 966.')
+    const firstName = form.first_name.trim()
+    const lastName = form.last_name.trim()
+    const customerName = [firstName, lastName].filter(Boolean).join(' ').trim()
+
+    if (!isValidSaudiMobile(form.phone)) {
+      setSubmitError('اكتب رقم جوال سعودي صحيح مثل 05XXXXXXXX.')
+      return
+    }
+    if (!knownCustomer && (!firstName || !lastName)) {
+      setSubmitError('للعميل الجديد اكتب الاسم الأول والاسم الأخير.')
       return
     }
 
@@ -174,23 +252,16 @@ export function SelfCheckIn() {
     setSubmitError('')
     const settings = getSelfCheckinSettings(company)
 
-    const edgeResult = await submitViaEdgeFunction({
+    const edgeResult = await callCheckinFunction({
       token,
-      customer_name: form.customer_name.trim(),
+      customer_name: customerName || knownCustomer?.name || `عميل ${phone.slice(-4)}`,
       phone,
-      car_type: form.car_type.trim() || null,
       plate: form.plate.trim() || null,
       service_id: selectedService.id,
     })
 
     if (edgeResult?.error) {
-      const errors: Record<string, string> = {
-        duplicate_recent_checkin: `تم تسجيل سيارة بهذا الرقم قبل قليل. انتظر ${edgeResult.anti_spam_minutes || settings.antiSpamMinutes} دقائق أو راجع موظف المغسلة.`,
-        self_checkin_disabled: 'التسجيل الذاتي غير مفعل لهذه المغسلة حالياً.',
-        plan_locked: 'التسجيل الذاتي غير متاح في باقة هذه المغسلة حالياً.',
-        invalid_service: 'الخدمة المختارة غير متاحة حالياً.',
-      }
-      setSubmitError(errors[String(edgeResult.error)] || 'تعذر تسجيل السيارة. فضلاً راجع موظف المغسلة.')
+      setSubmitError(edgeErrorMessage(String(edgeResult.error), edgeResult.anti_spam_minutes))
       setSubmitting(false)
       return
     }
@@ -227,18 +298,18 @@ export function SelfCheckIn() {
       .maybeSingle()
 
     if (existingCustomer?.id) {
-      await supabase.from('cw_customers').update({ name: form.customer_name.trim() || null }).eq('id', existingCustomer.id)
+      await supabase.from('cw_customers').update({ name: customerName || knownCustomer?.name || null }).eq('id', existingCustomer.id)
     } else {
       await supabase.from('cw_customers').insert({
         company_id: company.id,
         phone,
-        name: form.customer_name.trim() || null,
+        name: customerName,
         total_visits: 0,
         welcome_sent: true,
       })
       fireRegistration({
         phone,
-        customer_name: form.customer_name.trim(),
+        customer_name: customerName,
         company_name: company.name,
         company_id: company.id,
         is_new_customer: true,
@@ -249,9 +320,8 @@ export function SelfCheckIn() {
       .from('cw_queue')
       .insert({
         company_id: company.id,
-        customer_name: form.customer_name.trim(),
+        customer_name: customerName || knownCustomer?.name || `عميل ${phone.slice(-4)}`,
         phone,
-        car_type: form.car_type.trim() || null,
         plate: form.plate.trim() || null,
         service_id: selectedService.id,
         service_name: selectedService.name,
@@ -288,7 +358,7 @@ export function SelfCheckIn() {
     setApprovalPending(settings.approvalRequired)
     fireRegistration({
       phone,
-      customer_name: form.customer_name.trim(),
+      customer_name: customerName || knownCustomer?.name,
       company_name: company.name,
       company_id: company.id,
       ticket_code: ticket,
@@ -332,10 +402,10 @@ export function SelfCheckIn() {
           <span>{company.name}</span>
           <h1>تم تسجيل سيارتك</h1>
           <div className="self-checkin-ticket">{ticketCode}</div>
-          <p>{approvalPending ? 'طلبك بانتظار اعتماد الموظف، وبعدها سيظهر في مسار التشغيل.' : 'احتفظ بالرقم وتابع حالة سيارتك على شاشة المغسلة.'}</p>
+          <p>{approvalPending ? 'طلبك بانتظار اعتماد الموظف، ثم سيظهر مباشرة في مسار التشغيل.' : 'احتفظ بهذا الرقم. ستتحدث صفحة الحالة مباشرة عند تحريك السيارة.'}</p>
           <Link className="self-checkin-status-link" to={`/status/${token}/${queueId}`}>
             <ExternalLink size={16} />
-            متابعة حالة السيارة
+            متابعة الحالة Live
           </Link>
           <img className="self-checkin-mini-qr" src={qrUrl(statusUrl, 150)} alt="QR" />
         </section>
@@ -350,65 +420,107 @@ export function SelfCheckIn() {
           <img src="/logo-main.png" alt="Madar" />
           <span>تسجيل ذاتي سريع</span>
           <h1>{company.name}</h1>
-          <p>سجل سيارتك من الجوال، وخذ رقم تذكرة يظهر مباشرة في لوحة التشغيل وشاشة الانتظار.</p>
+          <p>اكتب رقم جوالك، اختر الخدمة، وخذ رقم تذكرة Live يظهر للفريق فوراً بدون انتظار عند الكاونتر.</p>
           <div className="self-checkin-points">
-            <div><Sparkles size={16} /> بدون انتظار عند الكاونتر</div>
-            <div><Sparkles size={16} /> رقم واضح لمتابعة السيارة</div>
-            <div><Sparkles size={16} /> بياناتك محفوظة للولاء والواتساب</div>
+            <div><Sparkles size={16} /> رقم التذكرة هو هوية سيارتك داخل المسار</div>
+            <div><Sparkles size={16} /> صفحة الحالة تتحدث مباشرة بدون تحديث</div>
+            <div><Sparkles size={16} /> لا نحتاج لوحة السيارة أو نوعها للتسجيل السريع</div>
           </div>
         </div>
 
         <form className="self-checkin-card" onSubmit={submit}>
           <div className="self-checkin-form-head">
-            <span>بيانات السيارة</span>
-            <strong>ابدأ التسجيل</strong>
+            <span>{step === 'phone' ? 'الخطوة 1 من 2' : 'الخطوة 2 من 2'}</span>
+            <strong>{step === 'phone' ? 'ابدأ برقم الجوال' : knownCustomer ? 'أهلًا بعودتك' : 'بيانات سريعة'}</strong>
           </div>
 
-          <label>
-            الاسم
-            <input value={form.customer_name} onChange={e => setForm({ ...form, customer_name: e.target.value })} required placeholder="اسم العميل" />
-          </label>
+          {step === 'phone' ? (
+            <>
+              <label>
+                رقم الجوال السعودي
+                <input
+                  value={form.phone}
+                  onChange={e => setForm({ ...form, phone: e.target.value })}
+                  required
+                  inputMode="tel"
+                  placeholder="05XXXXXXXX"
+                  dir="ltr"
+                />
+              </label>
+              {submitError && <p className="self-checkin-error">{submitError}</p>}
+              <button type="button" onClick={lookupCustomer} disabled={checkingPhone}>
+                {checkingPhone ? <Loader2 className="animate-spin" size={18} /> : <Phone size={18} />}
+                متابعة
+              </button>
+            </>
+          ) : (
+            <>
+              <div className={`self-checkin-customer ${knownCustomer ? 'known' : ''}`}>
+                <UserRound size={18} />
+                <div>
+                  <strong>{knownCustomer ? (knownCustomer.name || 'عميل سابق') : 'عميل جديد'}</strong>
+                  <span>{knownCustomer ? `${knownCustomer.total_visits || 0} زيارة سابقة` : 'نحتاج الاسم فقط لأول مرة'}</span>
+                </div>
+                <button type="button" onClick={() => { setStep('phone'); setSubmitError('') }}>تغيير الرقم</button>
+              </div>
 
-          <label>
-            رقم الجوال
-            <input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} required inputMode="tel" placeholder="05XXXXXXXX" dir="ltr" />
-          </label>
+              {!knownCustomer && (
+                <div className="self-checkin-two">
+                  <label>
+                    الاسم الأول
+                    <input value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} required placeholder="مثال: أحمد" />
+                  </label>
+                  <label>
+                    الاسم الأخير
+                    <input value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} required placeholder="مثال: الحربي" />
+                  </label>
+                </div>
+              )}
 
-          <div className="self-checkin-two">
-            <label>
-              نوع السيارة
-              <input value={form.car_type} onChange={e => setForm({ ...form, car_type: e.target.value })} placeholder="مثال: كامري" />
-            </label>
-            <label>
-              اللوحة
-              <input value={form.plate} onChange={e => setForm({ ...form, plate: e.target.value })} placeholder="اختياري" />
-            </label>
-          </div>
+              <label>
+                لوحة السيارة <span className="self-checkin-optional">اختياري</span>
+                <input value={form.plate} onChange={e => setForm({ ...form, plate: e.target.value })} placeholder="إذا كانت سهلة عليك" />
+              </label>
 
-          <label>
-            الخدمة
-            <select value={form.service_id} onChange={e => setForm({ ...form, service_id: e.target.value })} required>
-              <option value="">اختر الخدمة</option>
-              {services.map(service => (
-                <option key={service.id} value={service.id}>{service.name} - {service.price} ر.س</option>
-              ))}
-            </select>
-          </label>
+              <div>
+                <div className="self-checkin-service-head">
+                  <strong>اختر الخدمة</strong>
+                  <span>{services.length} خدمات متاحة</span>
+                </div>
+                <div className="self-checkin-services">
+                  {services.map(service => {
+                    const active = form.service_id === service.id
+                    return (
+                      <button
+                        key={service.id}
+                        type="button"
+                        className={active ? 'active' : ''}
+                        onClick={() => setForm({ ...form, service_id: service.id })}
+                      >
+                        <span>{service.name}</span>
+                        <strong>{Number(service.price || 0).toFixed(0)} ر.س</strong>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
 
-          {selectedService && (
-            <div className="self-checkin-price">
-              <span>الإجمالي</span>
-              <strong>{vat.total_amount.toFixed(2)} ر.س</strong>
-              {company.tax_enabled && <small>شامل ضريبة VAT حسب إعدادات المغسلة</small>}
-            </div>
+              {selectedService && (
+                <div className="self-checkin-price">
+                  <span>الإجمالي</span>
+                  <strong>{vat.total_amount.toFixed(2)} ر.س</strong>
+                  {company.tax_enabled && <small>حسب إعدادات ضريبة VAT في المغسلة</small>}
+                </div>
+              )}
+
+              {submitError && <p className="self-checkin-error">{submitError}</p>}
+
+              <button type="submit" disabled={submitting || services.length === 0 || !selectedService}>
+                {submitting ? <Loader2 className="animate-spin" size={18} /> : null}
+                تسجيل السيارة وإصدار الرقم
+              </button>
+            </>
           )}
-
-          {submitError && <p className="self-checkin-error">{submitError}</p>}
-
-          <button type="submit" disabled={submitting || services.length === 0}>
-            {submitting ? <Loader2 className="animate-spin" size={18} /> : null}
-            تسجيل السيارة
-          </button>
         </form>
       </section>
     </main>
