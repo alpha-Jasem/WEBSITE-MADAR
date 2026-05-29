@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect } from 'react'
-import { Check, Lock, Sparkles, Crown, Zap, Loader2, CheckCircle2, AlertCircle, CreditCard, MessageSquare } from 'lucide-react'
+import { Check, Lock, Sparkles, Crown, Zap, Loader2, CheckCircle2, AlertCircle, CreditCard, Wallet, Repeat, Smartphone } from 'lucide-react'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { supabase } from '../../../lib/supabase'
 import { MADAR_WHATSAPP_NUMBER } from '../../../lib/constants'
@@ -8,7 +8,7 @@ const PLANS = [
   {
     id: 'starter' as const,
     label: 'Starter',
-    labelAr: 'ابتدائي',
+    labelAr: 'تشغيل أساسي',
     price: '299',
     badge: null,
     icon: Zap,
@@ -16,22 +16,22 @@ const PLANS = [
     border: 'rgba(6,182,212,0.3)',
     glow: 'rgba(6,182,212,0.1)',
     features: [
-      { text: 'لوحة التشغيل — قائمة انتظار غير محدودة', included: true },
-      { text: 'تسجيل العملاء Walk-in', included: true },
+      { text: 'لوحة تشغيل سيارات أساسية', included: true },
+      { text: 'إضافة السيارات من الموظف', included: true },
+      { text: 'كاش ونقطة بيع عند التسليم', included: true },
+      { text: 'رقم تذكرة داخلي لكل سيارة', included: true },
       { text: 'برنامج الولاء الأساسي', included: true },
       { text: 'إشعارات واتساب "سيارتك جاهزة"', included: true },
       { text: 'إدارة الموظفين الأساسية', included: true },
       { text: 'إيرادات اليوم', included: true },
-      { text: 'تتبع المصاريف والربح الصافي', included: false },
-      { text: 'تقارير وأداء الموظفين', included: false },
-      { text: 'تصدير PDF', included: false },
-      { text: 'رؤى AI', included: false },
+      { text: 'QR تسجيل ذاتي للعميل', included: false },
+      { text: 'تقارير مالية متقدمة', included: false },
     ],
   },
   {
     id: 'growth' as const,
     label: 'Pro',
-    labelAr: 'نمو',
+    labelAr: 'تشغيل ذكي',
     price: '799',
     badge: 'الأكثر شعبية 🔥',
     icon: Sparkles,
@@ -40,21 +40,22 @@ const PLANS = [
     glow: 'rgba(99,102,241,0.2)',
     features: [
       { text: 'كل مميزات Starter', included: true },
+      { text: 'QR تسجيل ذاتي سريع للعميل', included: true },
+      { text: 'صفحة حالة Live للعميل', included: true },
+      { text: 'رقم تذكرة واضح مثل A-014', included: true },
       { text: 'تتبع المصاريف والربح الصافي', included: true },
       { text: 'أداء الموظفين والعمولات', included: true },
-      { text: 'عمولة نسبة مئوية', included: true },
-      { text: 'تقارير 30 يوم كاملة', included: true },
-      { text: 'تصدير PDF للتقارير', included: true },
+      { text: 'إغلاق يومي مع مطابقة الكاش', included: true },
       { text: 'رسوم بيانية للإيرادات', included: true },
-      { text: 'قائمة أفضل العملاء', included: true },
-      { text: 'رؤى AI', included: false },
+      { text: 'تقارير PDF / CSV', included: true },
+      { text: 'الاشتراكات والمحفظة الرقمية', included: false },
       { text: 'تعدد الفروع', included: false },
     ],
   },
   {
     id: 'enterprise' as const,
     label: 'Premium',
-    labelAr: 'مؤسسي',
+    labelAr: 'مغاسل متقدمة',
     price: '1,999',
     badge: '👑 Enterprise',
     icon: Crown,
@@ -63,16 +64,41 @@ const PLANS = [
     glow: 'rgba(245,158,11,0.15)',
     features: [
       { text: 'كل مميزات Pro', included: true },
-      { text: 'رؤى AI متقدمة', included: true },
       { text: 'تعدد الفروع', included: true },
+      { text: 'Admin Health لكل الفروع', included: true },
+      { text: 'صلاحيات موظفين متقدمة', included: true },
+      { text: 'حد رسائل أعلى', included: true },
+      { text: 'رؤى AI متقدمة', included: true },
       { text: 'تقارير مخصصة', included: true },
       { text: 'API مخصص', included: true },
-      { text: 'أتمتات غير محدودة', included: true },
       { text: 'دعم أولوية 24/7', included: true },
-      { text: 'White Label', included: true },
-      { text: 'تكامل المحاسبة', included: true },
-      { text: 'تقارير ضريبية', included: true },
+      { text: 'White Label اختياري', included: true },
+      { text: 'إضافات المحفظة والاشتراكات حسب التفعيل', included: true },
     ],
+  },
+]
+
+const ADD_ONS = [
+  {
+    icon: Wallet,
+    title: 'المحفظة الرقمية',
+    desc: 'رصيد للعميل النهائي يخصم منه تلقائياً عند الزيارة.',
+    price: 'إضافة مدفوعة',
+    color: '#10B981',
+  },
+  {
+    icon: Repeat,
+    title: 'اشتراكات العملاء الشهرية',
+    desc: 'باقات 4 أو 8 غسلات أو Unlimited مع تذكير واتساب.',
+    price: 'مرحلة ثانية',
+    color: '#F59E0B',
+  },
+  {
+    icon: Smartphone,
+    title: 'Apple Pay / Google Pay',
+    desc: 'دفع مسبق عبر مزود الدفع وربطه بمحفظة العميل.',
+    price: 'يتطلب تفعيل',
+    color: '#6366F1',
   },
 ]
 
@@ -175,9 +201,9 @@ export const PricingPage = () => {
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-tajawal mb-4" style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', color: '#A5B4FC' }}>
           <Sparkles size={12} /> باقتك الحالية: {currentLabel}
         </div>
-        <h1 className="text-3xl font-bold text-white font-cairo mb-3">ترقية باقتك</h1>
+        <h1 className="text-3xl font-bold text-slate-900 font-cairo mb-3">باقات مدار للمغاسل</h1>
         <p className="text-slate-400 font-tajawal text-base max-w-lg mx-auto leading-relaxed">
-          اختر الباقة المناسبة لنمو منشأتك. جميع الباقات تشمل الدعم الكامل وإعداد مجاني.
+          اختر مستوى التشغيل المناسب لمغسلتك. ابدأ بالكاش ونقطة البيع، ثم فعّل QR والتقارير والإضافات المتقدمة عند الحاجة.
         </p>
       </div>
 
@@ -256,7 +282,7 @@ export const PricingPage = () => {
                       ? <Check size={14} style={{ color: plan.color, flexShrink: 0, marginTop: 2 }} />
                       : <Lock size={12} style={{ color: '#334155', flexShrink: 0, marginTop: 3 }} />
                     }
-                    <span style={{ fontSize: 12, color: feat.included ? '#CBD5E1' : '#475569', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.5 }}>
+                    <span style={{ fontSize: 12, color: feat.included ? '#334155' : '#94A3B8', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.5 }}>
                       {feat.text}
                     </span>
                   </div>
@@ -298,6 +324,29 @@ export const PricingPage = () => {
         })}
       </div>
 
+      <div className="rounded-3xl p-5" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+        <div className="mb-4 flex flex-col gap-1 text-right">
+          <p className="text-sm font-bold text-slate-900 font-cairo">إضافات مدفوعة للمرحلة الثانية</p>
+          <p className="text-xs text-slate-500 font-tajawal">تظهر للعميل فقط إذا فعّلها صاحب النظام من لوحة الإدارة لكل مغسلة.</p>
+        </div>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          {ADD_ONS.map(addon => (
+            <div key={addon.title} className="rounded-2xl p-4" style={{ background: '#FFFFFF', border: `1px solid ${addon.color}33` }}>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: `${addon.color}18`, border: `1px solid ${addon.color}33` }}>
+                  <addon.icon size={18} style={{ color: addon.color }} />
+                </div>
+                <span className="rounded-full px-2.5 py-1 text-[11px] font-bold font-tajawal" style={{ color: addon.color, background: `${addon.color}12` }}>
+                  {addon.price}
+                </span>
+              </div>
+              <p className="text-sm font-bold text-slate-900 font-cairo">{addon.title}</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500 font-tajawal">{addon.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Bottom trust section */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
         {[
@@ -307,7 +356,7 @@ export const PricingPage = () => {
         ].map(item => (
           <div key={item.title} className="p-4 rounded-2xl text-center" style={{ background: '#FAFAFA', border: '1px solid #E2E8F0' }}>
             <div className="text-2xl mb-2">{item.icon}</div>
-            <p className="text-sm font-bold text-white font-cairo mb-1">{item.title}</p>
+            <p className="text-sm font-bold text-slate-900 font-cairo mb-1">{item.title}</p>
             <p className="text-xs text-slate-500 font-tajawal">{item.desc}</p>
           </div>
         ))}
