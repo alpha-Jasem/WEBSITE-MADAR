@@ -169,11 +169,7 @@ export function SelfCheckIn() {
       }
 
       const { data: serviceData } = await supabase
-        .from('cw_services')
-        .select('*')
-        .eq('company_id', co.id)
-        .eq('active', true)
-        .order('created_at')
+        .rpc('get_public_checkin_services', { checkin_token: token })
 
       setCompany(co)
       setServices((serviceData || []) as CWService[])
