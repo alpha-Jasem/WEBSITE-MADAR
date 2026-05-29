@@ -30,10 +30,10 @@ type FastLane = {
 }
 
 const FAST_LANES: FastLane[] = [
-  { key: 'received', statuses: ['received'], label: 'استلام', eyebrow: 'سيارات وصلت للتو', actionLabel: 'بدء الخدمة', color: '#38BDF8', bg: 'rgba(56,189,248,0.10)' },
-  { key: 'in_service', statuses: ['washing', 'drying'], label: 'قيد الخدمة', eyebrow: 'يتم العمل عليها الآن', actionLabel: 'السيارة جاهزة', color: '#8B5CF6', bg: 'rgba(139,92,246,0.12)' },
-  { key: 'ready', statuses: ['ready'], label: 'جاهزة', eyebrow: 'بانتظار التسليم', actionLabel: 'تسليم واستلام الدفع', color: '#10B981', bg: 'rgba(16,185,129,0.12)' },
-  { key: 'delivered', statuses: ['delivered'], label: 'تم التسليم', eyebrow: 'منجزة اليوم', color: '#F59E0B', bg: 'rgba(245,158,11,0.11)' },
+  { key: 'received',   statuses: ['received'],           label: 'استلام',       eyebrow: 'سيارات وصلت للتو',      actionLabel: 'بدء الخدمة',          color: '#0EA5E9', bg: '#F0F9FF' },
+  { key: 'in_service', statuses: ['washing', 'drying'],  label: 'قيد الخدمة',  eyebrow: 'يتم العمل عليها الآن',  actionLabel: 'السيارة جاهزة',        color: '#7C3AED', bg: '#F5F3FF' },
+  { key: 'ready',      statuses: ['ready'],               label: 'جاهزة',        eyebrow: 'بانتظار التسليم',        actionLabel: 'تسليم واستلام الدفع',  color: '#059669', bg: '#F0FDF4' },
+  { key: 'delivered',  statuses: ['delivered'],           label: 'تم التسليم',   eyebrow: 'منجزة اليوم',            color: '#D97706',                     bg: '#FFFBEB' },
 ]
 
 const NEXT_STATUS: Partial<Record<QueueStatus, QueueStatus>> = {
@@ -517,17 +517,16 @@ export const CarWashQueue = () => {
             <section
               key={lane.key}
               className="min-h-[420px] rounded-2xl p-3"
-              style={{ background: lane.bg, border: '1px solid ' + lane.color + '33' }}
+              style={{ background: lane.bg, border: '1px solid ' + lane.color + '28', borderTop: '3px solid ' + lane.color }}
             >
               <div className="mb-3 flex items-center justify-between gap-3 px-1">
                 <div className="flex items-center gap-2">
-                  <span className="h-9 w-1 rounded-full" style={{ background: lane.color, boxShadow: '0 0 24px ' + lane.color + '88' }} />
                   <div>
-                    <h2 className="text-base font-bold font-cairo" style={{ color: lane.color }}>{lane.label}</h2>
-                    <p className="text-xs text-slate-500 font-tajawal">{lane.eyebrow}</p>
+                    <h2 className="text-sm font-bold font-cairo" style={{ color: lane.color }}>{lane.label}</h2>
+                    <p className="text-xs text-slate-400 font-tajawal">{lane.eyebrow}</p>
                   </div>
                 </div>
-                <span className="rounded-full px-2.5 py-1 text-xs font-bold font-sora" style={{ color: lane.color, background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(4px)' }}>
+                <span className="rounded-full px-2.5 py-1 text-xs font-bold font-sora" style={{ color: lane.color, background: '#FFFFFF', border: '1px solid ' + lane.color + '30' }}>
                   {cars.length}
                 </span>
               </div>
@@ -570,12 +569,12 @@ export const CarWashQueue = () => {
 
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       {item.service_name && (
-                        <span className="rounded-full px-2.5 py-1 text-xs font-medium font-tajawal" style={{ color: lane.color, background: lane.bg }}>
+                        <span className="rounded-full px-2.5 py-1 text-xs font-medium font-tajawal" style={{ color: lane.color, background: '#FFFFFF', border: '1px solid ' + lane.color + '30' }}>
                           {item.service_name}
                         </span>
                       )}
                       {item.is_free_wash && (
-                        <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs text-amber-300 font-tajawal" style={{ background: 'rgba(245,158,11,0.12)' }}>
+                        <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-tajawal" style={{ color: '#D97706', background: '#FFFBEB', border: '1px solid #FCD34D50' }}>
                           <Gift size={11} /> مجانية
                         </span>
                       )}
@@ -583,16 +582,16 @@ export const CarWashQueue = () => {
 
                     <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
                       <div>
-                        <p className="text-slate-600 font-tajawal">القيمة</p>
-                        <p className="mt-1 text-slate-300 font-sora">{item.is_free_wash ? '0' : (item.total_amount ?? item.price ?? 0)} ر.س</p>
+                        <p className="text-slate-400 font-tajawal">القيمة</p>
+                        <p className="mt-1 font-semibold font-sora" style={{ color: '#0F172A' }}>{item.is_free_wash ? '0' : (item.total_amount ?? item.price ?? 0)} ر.س</p>
                       </div>
                       <div>
-                        <p className="text-slate-600 font-tajawal">الوقت</p>
-                        <p className="mt-1 inline-flex items-center gap-1 text-slate-300 font-sora"><Clock size={11} />{elapsed(item.created_at)}</p>
+                        <p className="text-slate-400 font-tajawal">الوقت</p>
+                        <p className="mt-1 inline-flex items-center gap-1 font-sora" style={{ color: '#0F172A' }}><Clock size={11} />{elapsed(item.created_at)}</p>
                       </div>
                       <div className="min-w-0">
-                        <p className="text-slate-600 font-tajawal">الموظف</p>
-                        <p className="mt-1 truncate text-slate-300 font-tajawal">{item.worker ? (item.worker as { name: string }).name : 'غير محدد'}</p>
+                        <p className="text-slate-400 font-tajawal">الموظف</p>
+                        <p className="mt-1 truncate font-tajawal" style={{ color: '#0F172A' }}>{item.worker ? (item.worker as { name: string }).name : 'غير محدد'}</p>
                       </div>
                     </div>
 
@@ -621,10 +620,10 @@ export const CarWashQueue = () => {
                 {cars.length === 0 && (
                   <div
                     className="flex h-40 flex-col items-center justify-center rounded-xl text-center"
-                    style={{ background: 'rgba(3,7,18,0.34)', border: '1px dashed #CBD5E1' }}
+                    style={{ background: '#FFFFFF', border: '1px dashed #CBD5E1' }}
                   >
-                    <Car size={24} className="text-slate-700" />
-                    <p className="mt-2 text-sm text-slate-600 font-tajawal">لا توجد سيارات هنا</p>
+                    <Car size={22} style={{ color: '#CBD5E1' }} />
+                    <p className="mt-2 text-sm font-tajawal" style={{ color: '#94A3B8' }}>لا توجد سيارات</p>
                   </div>
                 )}
               </div>
