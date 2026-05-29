@@ -140,12 +140,27 @@ export const CarWashQueue = () => {
       }
     })
 
-    channelRef.current = supabase
-      .channel(`queue-${cid}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'cw_queue', filter: `company_id=eq.${cid}` }, () => loadItems(cid))
-      .subscribe()
+    const subscribe = () => {
+      channelRef.current?.unsubscribe()
+      channelRef.current = supabase
+        .channel(`queue-${cid}-${Date.now()}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'cw_queue', filter: `company_id=eq.${cid}` }, () => loadItems(cid))
+        .subscribe(status => {
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            setTimeout(() => subscribe(), 3000)
+          }
+        })
+    }
+    subscribe()
 
-    return () => { channelRef.current?.unsubscribe() }
+    // Reload data when tab becomes visible again (handles long background sessions)
+    const onVisible = () => { if (document.visibilityState === 'visible') { loadItems(cid); subscribe() } }
+    document.addEventListener('visibilitychange', onVisible)
+
+    return () => {
+      channelRef.current?.unsubscribe()
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [authLoading, companyId])
 
   const lookupPhone = async (phone: string) => {

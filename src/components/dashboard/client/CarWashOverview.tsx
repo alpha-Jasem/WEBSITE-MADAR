@@ -159,14 +159,29 @@ export function CarWashOverview() {
     if (authLoading || !companyId) return
     load()
 
-    const channel = supabase
-      .channel(`cw_command_center_${companyId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'cw_queue', filter: `company_id=eq.${companyId}` }, load)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'cw_visits', filter: `company_id=eq.${companyId}` }, load)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'cw_customers', filter: `company_id=eq.${companyId}` }, load)
-      .subscribe()
+    let ch: ReturnType<typeof supabase.channel> | null = null
+    const subscribe = () => {
+      if (ch) supabase.removeChannel(ch)
+      ch = supabase
+        .channel(`cw_command_center_${companyId}_${Date.now()}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'cw_queue', filter: `company_id=eq.${companyId}` }, load)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'cw_visits', filter: `company_id=eq.${companyId}` }, load)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'cw_customers', filter: `company_id=eq.${companyId}` }, load)
+        .subscribe(status => {
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            setTimeout(() => subscribe(), 3000)
+          }
+        })
+    }
+    subscribe()
 
-    return () => { supabase.removeChannel(channel) }
+    const onVisible = () => { if (document.visibilityState === 'visible') { load(); subscribe() } }
+    document.addEventListener('visibilitychange', onVisible)
+
+    return () => {
+      if (ch) supabase.removeChannel(ch)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [authLoading, companyId])
 
   const stats = useMemo(() => {

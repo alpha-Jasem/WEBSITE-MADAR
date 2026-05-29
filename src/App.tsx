@@ -5,6 +5,7 @@ import { ClientCompanyProvider } from './context/ClientCompanyContext'
 import { ActiveProfileProvider } from './context/ActiveProfileContext'
 import { ProtectedRoute } from './components/shared/ProtectedRoute'
 import { LoadingScreen } from './components/shared/LoadingScreen'
+import { ErrorBoundary } from './components/shared/ErrorBoundary'
 import { HomePage } from './pages/HomePage'
 import { Login } from './pages/Login'
 import { AuthCallback } from './pages/AuthCallback'
@@ -21,6 +22,7 @@ function App() {
   return (
     <LanguageProvider>
       <BrowserRouter>
+        <ErrorBoundary>
         <Suspense fallback={<LoadingScreen />}>
           <Routes>
             <Route path="/" element={<HomePage />} />
@@ -61,6 +63,7 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
+        </ErrorBoundary>
       </BrowserRouter>
     </LanguageProvider>
   )
