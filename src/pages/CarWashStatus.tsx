@@ -62,11 +62,18 @@ export function CarWashStatus() {
 
   const load = async () => {
     setError('')
-    let { data: co } = await supabase
-      .from('companies')
-      .select('id, name, webhook_token')
-      .eq('webhook_token', token)
-      .maybeSingle()
+    let co: any = null
+    const rpcResult = await supabase.rpc('get_public_checkin_company', { checkin_token: token })
+    if (rpcResult.data?.[0]) {
+      co = rpcResult.data[0]
+    } else {
+      const direct = await supabase
+        .from('companies')
+        .select('id, name, webhook_token')
+        .eq('webhook_token', token)
+        .maybeSingle()
+      co = direct.data
+    }
 
     if (!co) {
       const fallback = await supabase

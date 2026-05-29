@@ -171,7 +171,7 @@ export const ClientSettings = () => {
     { path: '/client',            label: 'لوحة المغسلة'  },
     { path: '/client/queue',      label: 'لوحة التشغيل'  },
     { path: '/client/queue-display', label: 'شاشة العرض' },
-    { path: '/client/leads',      label: 'عملاء' },
+    { path: '/client/leads',      label: 'العملاء' },
     { path: '/client/finance',    label: 'المالية'        },
     { path: '/client/reports',    label: 'التقارير'      },
     { path: '/client/workers',    label: 'الموظفون'      },

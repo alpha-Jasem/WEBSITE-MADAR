@@ -154,7 +154,7 @@ export function CarWashLeads() {
     }))
     const ws = XLSX.utils.json_to_sheet(rows)
     const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'عملاء')
+    XLSX.utils.book_append_sheet(wb, ws, 'العملاء')
     XLSX.writeFile(wb, `cw-customers-${new Date().toISOString().slice(0, 10)}.xlsx`)
   }
 
@@ -241,7 +241,7 @@ export function CarWashLeads() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>عملاء</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>العملاء</h1>
           <p style={{ fontSize: 13, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginTop: 4 }}>
             {customers.length} عميل مسجل — {inactive} غير نشط (أكثر من 30 يوم)
           </p>

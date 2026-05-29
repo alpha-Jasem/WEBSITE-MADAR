@@ -62,7 +62,13 @@ async function submitViaEdgeFunction(body: Record<string, unknown>) {
       },
       body: JSON.stringify(body),
     })
-    if (!response.ok) return null
+    if (!response.ok) {
+      if ([400, 403, 404, 409].includes(response.status)) {
+        const errorBody = await response.json().catch(() => ({}))
+        return { error: errorBody.error || 'edge_rejected', anti_spam_minutes: errorBody.anti_spam_minutes }
+      }
+      return null
+    }
     return await response.json() as { queue_id?: string; ticket_code?: string; approval_pending?: boolean }
   } catch {
     return null
@@ -87,20 +93,30 @@ export function SelfCheckIn() {
       setLoading(true)
       setLoadError('')
 
-      let { data: companyData, error: companyError } = await supabase
+      let companyData: any = null
+      let companyError: any = null
+
+      const rpcResult = await supabase.rpc('get_public_checkin_company', { checkin_token: token })
+      if (rpcResult.data?.[0]) {
+        companyData = rpcResult.data[0]
+      } else {
+        const direct = await supabase
         .from('companies')
         .select('id, name, business_type, industry, status, webhook_token, tax_enabled, vat_rate, price_includes_vat, cw_loyalty_threshold, plan, cw_automations')
         .eq('webhook_token', token)
         .maybeSingle()
+        companyData = direct.data
+        companyError = direct.error
 
-      if (!companyData) {
-        const fallback = await supabase
-          .from('companies')
-          .select('id, name, business_type, industry, status, webhook_token, tax_enabled, vat_rate, price_includes_vat, cw_loyalty_threshold, plan, cw_automations')
-          .eq('public_checkin_token', token)
-          .maybeSingle()
-        companyData = fallback.data
-        companyError = fallback.error || companyError
+        if (!companyData) {
+          const fallback = await supabase
+            .from('companies')
+            .select('id, name, business_type, industry, status, webhook_token, tax_enabled, vat_rate, price_includes_vat, cw_loyalty_threshold, plan, cw_automations')
+            .eq('public_checkin_token', token)
+            .maybeSingle()
+          companyData = fallback.data
+          companyError = fallback.error || companyError
+        }
       }
 
       if (companyError || !companyData) {
@@ -166,6 +182,18 @@ export function SelfCheckIn() {
       plate: form.plate.trim() || null,
       service_id: selectedService.id,
     })
+
+    if (edgeResult?.error) {
+      const errors: Record<string, string> = {
+        duplicate_recent_checkin: `تم تسجيل سيارة بهذا الرقم قبل قليل. انتظر ${edgeResult.anti_spam_minutes || settings.antiSpamMinutes} دقائق أو راجع موظف المغسلة.`,
+        self_checkin_disabled: 'التسجيل الذاتي غير مفعل لهذه المغسلة حالياً.',
+        plan_locked: 'التسجيل الذاتي غير متاح في باقة هذه المغسلة حالياً.',
+        invalid_service: 'الخدمة المختارة غير متاحة حالياً.',
+      }
+      setSubmitError(errors[String(edgeResult.error)] || 'تعذر تسجيل السيارة. فضلاً راجع موظف المغسلة.')
+      setSubmitting(false)
+      return
+    }
 
     if (edgeResult?.queue_id && edgeResult.ticket_code) {
       setTicketCode(edgeResult.ticket_code)
