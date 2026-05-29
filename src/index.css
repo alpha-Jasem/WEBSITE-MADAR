@@ -5975,18 +5975,18 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px;
+  gap: 10px;
+  padding: 14px 16px 10px;
   overflow: hidden;
 }
 
 .cw-display-car {
   display: grid;
-  grid-template-columns: minmax(150px, 0.68fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(130px, 0.68fr) minmax(0, 1fr) auto;
   align-items: center;
-  gap: 14px;
-  min-height: 86px;
-  padding: 14px;
+  gap: 12px;
+  min-height: 76px;
+  padding: 11px 14px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.1);

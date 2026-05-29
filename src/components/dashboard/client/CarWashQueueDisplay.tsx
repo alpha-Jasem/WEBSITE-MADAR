@@ -148,7 +148,7 @@ export function CarWashQueueDisplay() {
           subtitle="تم الاستلام"
           items={groups.waiting}
           allItems={items}
-          limit={8}
+          limit={6}
         />
         <DisplayColumn
           tone="working"
@@ -157,7 +157,7 @@ export function CarWashQueueDisplay() {
           subtitle="غسيل وتجفيف"
           items={groups.working}
           allItems={items}
-          limit={8}
+          limit={6}
         />
         <DisplayColumn
           tone="ready"
@@ -166,7 +166,7 @@ export function CarWashQueueDisplay() {
           subtitle="توجه للاستلام"
           items={groups.ready}
           allItems={items}
-          limit={10}
+          limit={8}
           featured
         />
       </section>
