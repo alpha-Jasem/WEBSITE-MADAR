@@ -25,6 +25,12 @@ type Service = {
   price: number
 }
 
+const OTP_TTL_MINUTES = 5
+const OTP_VERIFICATION_TTL_MINUTES = 20
+const OTP_MAX_PER_HOUR = 5
+const OTP_MAX_ATTEMPTS = 5
+const DEFAULT_OTP_WEBHOOK = 'https://keepcalm.app.n8n.cloud/webhook/cw-send-otp'
+
 function json(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -56,6 +62,85 @@ function ticketCode(items: { id: string; created_at: string }[], itemId: string)
   return `A-${String((index >= 0 ? index : 0) + 1).padStart(3, '0')}`
 }
 
+function addMinutes(minutes: number) {
+  return new Date(Date.now() + minutes * 60 * 1000).toISOString()
+}
+
+function generateOtp() {
+  return String(crypto.getRandomValues(new Uint32Array(1))[0] % 10000).padStart(4, '0')
+}
+
+function generateToken() {
+  const bytes = crypto.getRandomValues(new Uint8Array(24))
+  return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('')
+}
+
+async function sha256(value: string) {
+  const data = new TextEncoder().encode(value)
+  const digest = await crypto.subtle.digest('SHA-256', data)
+  return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('')
+}
+
+async function otpHash(companyId: string, phone: string, code: string) {
+  const secret = Deno.env.get('OTP_SECRET') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || 'madar-otp'
+  return sha256(`${companyId}:${phone}:${code}:${secret}`)
+}
+
+async function sendOtpViaWhatsApp(phone: string, code: string, company: Company) {
+  const n8nUrl = Deno.env.get('N8N_OTP_WEBHOOK_URL') || DEFAULT_OTP_WEBHOOK
+  const metaToken = Deno.env.get('WHATSAPP_ACCESS_TOKEN') || Deno.env.get('META_WHATSAPP_ACCESS_TOKEN')
+  const phoneNumberId = Deno.env.get('WHATSAPP_PHONE_NUMBER_ID') || Deno.env.get('META_WHATSAPP_PHONE_NUMBER_ID')
+  const message = `\u0631\u0645\u0632 \u0627\u0644\u062a\u062d\u0642\u0642 \u0644\u0645\u0646\u0635\u0629 \u0645\u062f\u0627\u0631: ${code}\n\u0635\u0627\u0644\u062d \u0644\u0645\u062f\u0629 ${OTP_TTL_MINUTES} \u062f\u0642\u0627\u0626\u0642.\n${company.name}`
+
+  if (metaToken && phoneNumberId) {
+    const response = await fetch(`https://graph.facebook.com/v18.0/${phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${metaToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: phone,
+        type: 'text',
+        text: { preview_url: false, body: message },
+      }),
+    })
+    if (response.ok) return { ok: true, provider: 'meta' }
+    return { ok: false, provider: 'meta', status: response.status, body: await response.text().catch(() => '') }
+  }
+
+  const response = await fetch(n8nUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      phone,
+      otp: code,
+      message,
+      company_id: company.id,
+      company_name: company.name,
+      expires_in_minutes: OTP_TTL_MINUTES,
+    }),
+  })
+  if (response.ok) return { ok: true, provider: 'n8n' }
+  return { ok: false, provider: 'n8n', status: response.status, body: await response.text().catch(() => '') }
+}
+
+async function hasVerifiedOtp(supabase: ReturnType<typeof createClient>, companyId: string, phone: string, token: string) {
+  if (!token) return false
+  const { data } = await supabase
+    .from('cw_phone_otps')
+    .select('id')
+    .eq('company_id', companyId)
+    .eq('phone', phone)
+    .eq('verification_token', token)
+    .not('verified_at', 'is', null)
+    .gt('verification_expires_at', new Date().toISOString())
+    .order('verified_at', { ascending: false })
+    .limit(1)
+  return Boolean(data?.length)
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405)
@@ -82,8 +167,10 @@ Deno.serve(async (req) => {
   const carType = String(payload.car_type || '').trim()
   const plate = String(payload.plate || '').trim()
   const serviceId = String(payload.service_id || '').trim()
+  const otp = String(payload.otp || '').replace(/\D/g, '').slice(0, 4)
+  const verificationToken = String(payload.verification_token || '').trim()
 
-  if (!token || !phone || (action !== 'lookup_customer' && !serviceId)) {
+  if (!token || !phone) {
     return json({ error: 'missing_required_fields' }, 400)
   }
 
@@ -103,6 +190,76 @@ Deno.serve(async (req) => {
   const settings = company.cw_automations?.self_checkin || {}
   if (settings.enabled === false) return json({ error: 'self_checkin_disabled' }, 403)
 
+  if (action === 'send_otp') {
+    const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+    const { data: recent } = await supabase
+      .from('cw_phone_otps')
+      .select('id')
+      .eq('company_id', company.id)
+      .eq('phone', phone)
+      .gte('created_at', hourAgo)
+
+    if ((recent?.length || 0) >= OTP_MAX_PER_HOUR) {
+      return json({ error: 'phone_otp_limit' }, 429)
+    }
+
+    const code = generateOtp()
+    const codeHash = await otpHash(company.id, phone, code)
+    const sendResult = await sendOtpViaWhatsApp(phone, code, company)
+
+    if (!sendResult.ok) {
+      console.error('otp_send_failed', sendResult)
+      return json({ error: 'otp_send_failed', provider: sendResult.provider }, 502)
+    }
+
+    const { error: otpError } = await supabase.from('cw_phone_otps').insert({
+      company_id: company.id,
+      phone,
+      code_hash: codeHash,
+      expires_at: addMinutes(OTP_TTL_MINUTES),
+    })
+
+    if (otpError) return json({ error: 'otp_store_failed' }, 500)
+    return json({ sent: true, expires_in_seconds: OTP_TTL_MINUTES * 60 })
+  }
+
+  if (action === 'verify_otp') {
+    if (otp.length !== 4) return json({ error: 'otp_invalid' }, 400)
+
+    const { data: rows } = await supabase
+      .from('cw_phone_otps')
+      .select('id, code_hash, attempts, expires_at')
+      .eq('company_id', company.id)
+      .eq('phone', phone)
+      .is('verified_at', null)
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    const row = rows?.[0]
+    if (!row) return json({ error: 'otp_not_found' }, 404)
+    if ((row.attempts || 0) >= OTP_MAX_ATTEMPTS) return json({ error: 'otp_expired' }, 410)
+
+    const candidateHash = await otpHash(company.id, phone, otp)
+    if (candidateHash !== row.code_hash) {
+      await supabase.from('cw_phone_otps').update({ attempts: (row.attempts || 0) + 1 }).eq('id', row.id)
+      return json({ error: 'otp_invalid' }, 400)
+    }
+
+    const tokenValue = generateToken()
+    await supabase.from('cw_phone_otps').update({
+      verified_at: new Date().toISOString(),
+      verification_token: tokenValue,
+      verification_expires_at: addMinutes(OTP_VERIFICATION_TTL_MINUTES),
+    }).eq('id', row.id)
+
+    return json({ verified: true, verification_token: tokenValue })
+  }
+
+  if (!(await hasVerifiedOtp(supabase, company.id, phone, verificationToken))) {
+    return json({ error: 'otp_required' }, 401)
+  }
+
   if (action === 'lookup_customer') {
     const { data: customer } = await supabase
       .from('cw_customers')
@@ -114,6 +271,10 @@ Deno.serve(async (req) => {
     return json({
       customer: customer || null,
     })
+  }
+
+  if (!serviceId) {
+    return json({ error: 'missing_required_fields' }, 400)
   }
 
   const approvalRequired = settings.approval_required !== false
@@ -157,7 +318,7 @@ Deno.serve(async (req) => {
     .eq('phone', phone)
     .maybeSingle()
 
-  const customerName = requestedCustomerName || `عميل ${phone.slice(-4)}`
+  const customerName = requestedCustomerName || `\u0639\u0645\u064a\u0644 ${phone.slice(-4)}`
 
   if (existingCustomer?.id) {
     await supabase.from('cw_customers').update({ name: customerName }).eq('id', existingCustomer.id)

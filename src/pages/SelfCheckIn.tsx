@@ -208,6 +208,11 @@ export function SelfCheckIn() {
     }
     setSendingOtp(true)
     const result = await callCheckinFunction({ action: 'send_otp', token, phone: normalizePhone(form.phone) })
+    if (!result) {
+      setSubmitError('تعذر الاتصال بخدمة التحقق. حاول مرة أخرى.')
+      setSendingOtp(false)
+      return
+    }
     if (result?.error) {
       const msgs: Record<string, string> = {
         rate_limit_exceeded: 'تجاوزت الحد المسموح. انتظر ساعة وحاول مجدداً.',
@@ -231,6 +236,11 @@ export function SelfCheckIn() {
     if (otpInput.length !== 4) { setOtpError('أدخل الرمز المكوّن من 4 أرقام.'); return }
     setVerifyingOtp(true)
     const result = await callCheckinFunction({ action: 'verify_otp', token, phone: normalizePhone(form.phone), otp: otpInput })
+    if (!result) {
+      setOtpError('تعذر الاتصال بخدمة التحقق. حاول مرة أخرى.')
+      setVerifyingOtp(false)
+      return
+    }
     if (result?.error || !result?.verified) {
       const msgs: Record<string, string> = {
         otp_invalid: 'الرمز غير صحيح. تحقق من واتساب.',
@@ -246,6 +256,11 @@ export function SelfCheckIn() {
     // Lookup customer after verified
     const phone = normalizePhone(form.phone)
     const edgeResult = await callCheckinFunction({ action: 'lookup_customer', token, phone, verification_token: vtk })
+    if (!edgeResult) {
+      setOtpError('تم التحقق من الرمز، لكن تعذر تحميل بيانات العميل. حاول مرة أخرى.')
+      setVerifyingOtp(false)
+      return
+    }
     const customer = edgeResult?.customer as KnownCustomer | null
     if (customer?.id) {
       const nm = splitName(customer.name)
