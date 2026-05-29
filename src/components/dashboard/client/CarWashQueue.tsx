@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Plus, X, Loader2, Clock, ChevronRight, Car, Pencil, Check, Gift, ChevronDown, ChevronUp, Receipt, AlertTriangle } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
@@ -83,6 +84,7 @@ interface LoyaltyInfo {
 
 export const CarWashQueue = () => {
   const { companyId, company, loading: authLoading } = useClientCompany()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [items, setItems] = useState<CWQueueItem[]>([])
   const [workers, setWorkers] = useState<CWWorker[]>([])
   const [services, setServices] = useState<CWService[]>([])
@@ -131,7 +133,12 @@ export const CarWashQueue = () => {
       setServices((svcs || []) as CWService[])
       setLoading(false)
     }
-    init()
+    init().then(() => {
+      if (searchParams.get('add') === '1') {
+        openAdd()
+        setSearchParams({}, { replace: true })
+      }
+    })
 
     channelRef.current = supabase
       .channel(`queue-${cid}`)
@@ -464,6 +471,11 @@ export const CarWashQueue = () => {
   const laneItems = (lane: FastLane) => activeItems.filter(i => lane.statuses.includes(i.status))
   const pendingItems = activeItems.filter(i => i.status !== 'delivered')
   const pendingApprovalItems = activeItems.filter(i => isSelfCheckinPending(i.notes))
+  const stuckItems = activeItems.filter(i => {
+    if (i.status === 'delivered' || i.status === 'cancelled') return false
+    const mins = Math.floor((Date.now() - new Date(i.created_at).getTime()) / 60000)
+    return mins >= 60
+  })
   const deliveredItems = activeItems.filter(i => i.status === 'delivered')
   const readyItems = activeItems.filter(i => i.status === 'ready')
   const inServiceItems = activeItems.filter(i => i.status === 'washing' || i.status === 'drying')
@@ -494,6 +506,18 @@ export const CarWashQueue = () => {
             </span>
             <p className="text-sm font-bold font-tajawal" style={{ color: '#92400E' }}>
               {pendingApprovalItems.length === 1 ? 'سيارة تنتظر اعتمادك' : `${pendingApprovalItems.length} سيارات تنتظر اعتمادك`} — اضغط "اعتماد السيارة" في البطاقة لإدخالها للمسار
+            </p>
+          </div>
+        )}
+        {stuckItems.length > 0 && (
+          <div className="flex items-center gap-3 rounded-xl px-4 py-3 mb-1" style={{ background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.3)' }}>
+            <span className="flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold font-sora flex-shrink-0" style={{ background: '#EF4444', color: '#fff' }}>
+              {stuckItems.length}
+            </span>
+            <p className="text-sm font-bold font-tajawal" style={{ color: '#B91C1C' }}>
+              {stuckItems.length === 1
+                ? `سيارة "${stuckItems[0].customer_name}" في المسار أكثر من ساعة — تحقق منها`
+                : `${stuckItems.length} سيارات في المسار أكثر من ساعة — تحقق منها`}
             </p>
           </div>
         )}

@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from 'react'
-import { Plus, X, Loader2, TrendingUp, TrendingDown, Wallet, Users, DollarSign, ClipboardCheck, FileDown } from 'lucide-react'
+import { Plus, X, Loader2, TrendingUp, TrendingDown, Wallet, Users, DollarSign, ClipboardCheck, FileDown, Pencil } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
@@ -52,6 +52,7 @@ export const CarWashFinance = () => {
   const [freeWashCount, setFreeWashCount] = useState(0)
   const [freeWashDiscount, setFreeWashDiscount] = useState(0)
   const [showForm, setShowForm] = useState(false)
+  const [editingExpense, setEditingExpense] = useState<CWExpense | null>(null)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -140,19 +141,29 @@ export const CarWashFinance = () => {
   const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0)
   const netProfit = revenue - totalExpenses - workerCost
 
+  const closeForm = () => { setShowForm(false); setEditingExpense(null); setForm(EMPTY_FORM) }
+
   const addExpense = async () => {
     if (!companyId || !form.amount || Number(form.amount) <= 0) return
     setSaving(true)
-    const { data: inserted } = await supabase.from('cw_expenses').insert({
-      company_id: companyId,
-      amount: Number(form.amount),
-      category: form.category,
-      description: form.description || null,
-      expense_date: today,
-    }).select().single()
-    if (inserted) logAudit(companyId, 'expense_added', { entityType: 'cw_expenses', entityId: inserted.id, newValue: { amount: inserted.amount, category: inserted.category } })
-    setForm(EMPTY_FORM)
-    setShowForm(false)
+    if (editingExpense) {
+      await supabase.from('cw_expenses').update({
+        amount: Number(form.amount),
+        category: form.category,
+        description: form.description || null,
+      }).eq('id', editingExpense.id)
+      logAudit(companyId, 'expense_updated', { entityType: 'cw_expenses', entityId: editingExpense.id, newValue: { amount: Number(form.amount), category: form.category } })
+    } else {
+      const { data: inserted } = await supabase.from('cw_expenses').insert({
+        company_id: companyId,
+        amount: Number(form.amount),
+        category: form.category,
+        description: form.description || null,
+        expense_date: today,
+      }).select().single()
+      if (inserted) logAudit(companyId, 'expense_added', { entityType: 'cw_expenses', entityId: inserted.id, newValue: { amount: inserted.amount, category: inserted.category } })
+    }
+    closeForm()
     setSaving(false)
     loadData()
   }
@@ -308,19 +319,25 @@ export const CarWashFinance = () => {
 
           {/* Expenses list */}
           <div className="p-5 rounded-2xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-            <p className="text-sm font-bold text-white font-cairo mb-4">مصاريف اليوم</p>
+            <p className="text-sm font-bold font-cairo mb-4" style={{ color: '#0F172A' }}>مصاريف اليوم</p>
             {expenses.length === 0 ? (
-              <p className="text-slate-600 font-tajawal text-sm text-center py-4">لا توجد مصاريف مسجّلة</p>
+              <p className="text-slate-500 font-tajawal text-sm text-center py-4">لا توجد مصاريف مسجّلة</p>
             ) : (
               <div className="space-y-2">
                 {expenses.map(e => (
-                  <div key={e.id} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                  <div key={e.id} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <div className="flex-1">
-                      <p className="text-sm text-white font-tajawal">{e.description || CATEGORIES.find(c => c.value === e.category)?.label}</p>
+                      <p className="text-sm font-tajawal" style={{ color: '#1E293B' }}>{e.description || CATEGORIES.find(c => c.value === e.category)?.label}</p>
                       <p className="text-xs text-slate-500 font-tajawal">{CATEGORIES.find(c => c.value === e.category)?.label}</p>
                     </div>
                     <p className="text-sm font-sora font-bold" style={{ color: '#EF4444' }}>{e.amount.toFixed(0)} ر.س</p>
-                    <button onClick={() => deleteExpense(e.id)} disabled={deleting === e.id} className="text-slate-600 hover:text-red-400 transition-colors">
+                    <button
+                      onClick={() => { setEditingExpense(e); setForm({ amount: String(e.amount), category: e.category, description: e.description || '' }); setShowForm(true) }}
+                      className="text-slate-400 hover:text-indigo-500 transition-colors"
+                    >
+                      <Pencil size={13} />
+                    </button>
+                    <button onClick={() => deleteExpense(e.id)} disabled={deleting === e.id} className="text-slate-400 hover:text-red-400 transition-colors">
                       {deleting === e.id ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />}
                     </button>
                   </div>
@@ -333,11 +350,11 @@ export const CarWashFinance = () => {
 
       {/* Add expense modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)' }}>
-          <div role="dialog" aria-modal="true" aria-label="Add expense" className="w-full max-w-sm p-6 rounded-2xl" style={{ background: '#0D1422', border: '1px solid #CBD5E1' }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15,23,42,0.5)' }}>
+          <div role="dialog" aria-modal="true" className="w-full max-w-sm p-6 rounded-2xl" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 20px 60px rgba(15,23,42,0.15)' }}>
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold text-white font-cairo">إضافة مصروف</h2>
-              <button aria-label="Close dialog" onClick={() => setShowForm(false)} className="text-slate-400 hover:text-white"><X size={18} /></button>
+              <h2 className="text-lg font-bold font-cairo" style={{ color: '#0F172A' }}>{editingExpense ? 'تعديل مصروف' : 'إضافة مصروف'}</h2>
+              <button aria-label="Close dialog" onClick={closeForm} className="text-slate-400 hover:text-slate-700"><X size={18} /></button>
             </div>
 
             <div className="space-y-4">
@@ -362,10 +379,10 @@ export const CarWashFinance = () => {
             </div>
 
             <div className="flex gap-3 mt-5">
-              <button onClick={() => setShowForm(false)} className="flex-1 py-2.5 rounded-xl text-sm font-tajawal text-slate-400" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}>إلغاء</button>
+              <button onClick={closeForm} className="flex-1 py-2.5 rounded-xl text-sm font-tajawal" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#64748B' }}>إلغاء</button>
               <button onClick={addExpense} disabled={saving || !form.amount || Number(form.amount) <= 0} className="flex-1 py-2.5 rounded-xl text-sm font-tajawal text-white flex items-center justify-center gap-2 disabled:opacity-50" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
-                {saving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
-                {saving ? 'جاري الحفظ...' : 'إضافة'}
+                {saving ? <Loader2 size={14} className="animate-spin" /> : editingExpense ? <Pencil size={14} /> : <Plus size={14} />}
+                {saving ? 'جاري الحفظ...' : editingExpense ? 'حفظ التعديل' : 'إضافة'}
               </button>
             </div>
           </div>

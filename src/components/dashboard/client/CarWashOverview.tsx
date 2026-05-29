@@ -211,9 +211,13 @@ export function CarWashOverview() {
           <p>تابع السيارات النشطة، التسليمات، الإيراد، العملاء والولاء من شاشة واحدة مصممة لسرعة القرار داخل المغسلة.</p>
         </div>
         <div className="cw-hero-actions">
-          <Link to="/client/queue" className="cw-primary-action">
-            <Car size={18} />
-            فتح لوحة التشغيل
+          <Link to="/client/queue?add=1" className="cw-primary-action">
+            <Plus size={18} />
+            إضافة سيارة
+          </Link>
+          <Link to="/client/queue" className="cw-secondary-action">
+            <Car size={17} />
+            لوحة التشغيل
           </Link>
           <Link to="/client/queue-display" className="cw-secondary-action">
             <Monitor size={17} />

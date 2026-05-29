@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from 'react'
-import { Car, Download, Gift, Phone, Search, Send, Star, Trophy, Users, X, Check, Loader2, Lock, Plus, Pencil, Trash2 } from 'lucide-react'
+import { Car, Clock, Download, Gift, Phone, Search, Send, Star, Trophy, Users, X, Check, Loader2, Lock, Plus, Pencil, Trash2 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
@@ -107,6 +107,10 @@ export function CarWashLeads() {
   const [editTarget, setEditTarget] = useState<CWCustomer | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<CWCustomer | null>(null)
   const [crudForm, setCrudForm] = useState<CRUDForm>({ name: '', phone: '' })
+  // History state
+  const [historyCustomer, setHistoryCustomer] = useState<CWCustomer | null>(null)
+  const [historyVisits, setHistoryVisits] = useState<any[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
   const [crudSaving, setCrudSaving] = useState(false)
   const [crudDeleting, setCrudDeleting] = useState(false)
 
@@ -182,6 +186,20 @@ export function CarWashLeads() {
 
   const openAdd = () => { setCrudForm({ name: '', phone: '' }); setShowAddModal(true) }
   const openEdit = (c: CWCustomer) => { setEditTarget(c); setCrudForm({ name: c.name || '', phone: c.phone }); }
+
+  const openHistory = async (c: CWCustomer) => {
+    setHistoryCustomer(c)
+    setHistoryLoading(true)
+    const { data } = await supabase
+      .from('cw_visits')
+      .select('id, service_name, total_amount, payment_method, created_at')
+      .eq('company_id', companyId)
+      .eq('phone', c.phone)
+      .order('created_at', { ascending: false })
+      .limit(30)
+    setHistoryVisits(data || [])
+    setHistoryLoading(false)
+  }
 
   const addCustomer = async () => {
     if (!companyId || !crudForm.phone.trim()) return
@@ -440,6 +458,13 @@ export function CarWashLeads() {
 
               {/* Row actions */}
               <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                <button onClick={() => openHistory(c)} title="سجل الزيارات" style={{
+                  width: 28, height: 28, borderRadius: 7, border: '1px solid rgba(99,102,241,0.2)',
+                  background: 'rgba(99,102,241,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', color: '#6366F1',
+                }}>
+                  <Clock size={12} />
+                </button>
                 <button onClick={() => openEdit(c)} title="تعديل" style={{
                   width: 28, height: 28, borderRadius: 7, border: '1px solid #E2E8F0',
                   background: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -602,6 +627,50 @@ export function CarWashLeads() {
                 </button>
                 <button onClick={() => setDeleteTarget(null)} style={{ flex: 1, padding: 11, borderRadius: 12, fontSize: 13, background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#94A3B8', cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>إلغاء</button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Visit History Modal */}
+      {historyCustomer && (
+        <div onClick={e => e.target === e.currentTarget && setHistoryCustomer(null)}
+          style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div role="dialog" aria-modal="true" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 20, width: '100%', maxWidth: 480, maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 60px rgba(15,23,42,0.15)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid #E2E8F0' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>سجل الزيارات</h3>
+                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>{historyCustomer.name || historyCustomer.phone} — {historyCustomer.total_visits} زيارة</p>
+              </div>
+              <button onClick={() => setHistoryCustomer(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
+            </div>
+            <div style={{ overflowY: 'auto', flex: 1, padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }} dir="rtl">
+              {historyLoading ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 120, gap: 8 }}>
+                  <Loader2 size={18} style={{ animation: 'spin 0.8s linear infinite', color: '#6366F1' }} />
+                  <span style={{ color: '#64748B', fontFamily: 'Tajawal, sans-serif', fontSize: 13 }}>جاري التحميل...</span>
+                </div>
+              ) : historyVisits.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '32px 0', color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', fontSize: 13 }}>لا توجد زيارات مسجّلة</div>
+              ) : historyVisits.map((v, i) => (
+                <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: i === 0 ? 'rgba(99,102,241,0.04)' : '#F8FAFC', borderRadius: 12, border: '1px solid #E2E8F0' }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Car size={15} color="#6366F1" />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#0F172A', fontFamily: 'Cairo, sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {v.service_name || 'خدمة مغسلة'}
+                    </p>
+                    <p style={{ margin: '2px 0 0', fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>
+                      {new Date(v.created_at).toLocaleDateString('ar-SA', { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </p>
+                  </div>
+                  <div style={{ textAlign: 'left', flexShrink: 0 }}>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#10B981', fontFamily: 'Sora, sans-serif' }}>{v.total_amount ? `${Number(v.total_amount).toFixed(0)} ر.س` : '—'}</p>
+                    <p style={{ margin: '2px 0 0', fontSize: 10, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>{v.payment_method || ''}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

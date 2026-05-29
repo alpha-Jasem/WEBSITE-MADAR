@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState, useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { BarChart3, Calendar, Car, Droplets, LayoutDashboard, MessageSquare, Monitor, Settings, Users2, Wrench, Zap, Wallet, Loader2 } from 'lucide-react'
+import { BarChart3, Calendar, Car, ClipboardCheck, Droplets, LayoutDashboard, MessageSquare, Monitor, Settings, Users2, Wrench, Zap, Wallet, Loader2 } from 'lucide-react'
 import { DashShell } from '../components/dash/DashShell'
 import type { NavItem } from '../components/dash/DashSidebar'
 import { useClientCompany } from '../hooks/useClientCompany'
@@ -42,15 +42,16 @@ function buildNavItems(template: ReturnType<typeof getClientIndustryTemplate>): 
 
   if (template.type === 'car_wash') {
     return [
-      { to: '/client',               icon: Droplets,      label: 'لوحة المغسلة',   end: true },
-      { to: '/client/queue',         icon: Car,           label: 'لوحة التشغيل'  },
-      { to: '/client/queue-display', icon: Monitor,       label: 'شاشة العرض' },
-      { to: '/client/leads',         icon: Users2,        label: 'العملاء' },
-      { to: '/client/finance',       icon: Wallet,        label: 'المالية'         },
-      { to: '/client/reports',       icon: BarChart3,     label: 'التقارير'       },
-      { to: '/client/workers',       icon: Users2,        label: 'الموظفون'       },
-      { to: '/client/automations',   icon: Zap,           label: 'الأتمتة'        },
-      { to: '/client/settings',      icon: Settings,      label: 'الإعدادات'      },
+      { to: '/client',               icon: Droplets,       label: 'لوحة المغسلة',  end: true },
+      { to: '/client/queue',         icon: Car,            label: 'لوحة التشغيل' },
+      { to: '/client/queue-display', icon: Monitor,        label: 'شاشة العرض'  },
+      { to: '/client/leads',         icon: Users2,         label: 'العملاء'      },
+      { to: '/client/finance',       icon: Wallet,         label: 'المالية'      },
+      { to: '/client/closing',       icon: ClipboardCheck, label: 'إغلاق اليوم' },
+      { to: '/client/reports',       icon: BarChart3,      label: 'التقارير'     },
+      { to: '/client/workers',       icon: Users2,         label: 'الموظفون'     },
+      { to: '/client/automations',   icon: Zap,            label: 'الأتمتة'      },
+      { to: '/client/settings',      icon: Settings,       label: 'الإعدادات'    },
     ]
   }
 
