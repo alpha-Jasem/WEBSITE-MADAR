@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import { DashSidebar, type NavItem } from './DashSidebar'
@@ -21,7 +21,7 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
   useEffect(() => { setMenuOpen(false) }, [location.pathname])
 
   return (
-    <div className={`dash-shell dash-shell-${role}`} dir={role === 'client' ? 'rtl' : 'ltr'}>
+    <div className={`dash-shell dash-shell-${role}`} dir="rtl">
       <DashSidebar
         navItems={navItems}
         open={menuOpen}
@@ -47,7 +47,7 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
           <div className="dash-topbar-right">
             {topbarRight}
             <span className="dash-topbar-badge">
-              {role === 'admin' ? 'Admin' : 'عميل'}
+              {role === 'admin' ? 'إدارة' : 'عميل'}
             </span>
           </div>
         </header>

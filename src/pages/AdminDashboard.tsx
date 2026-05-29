@@ -27,17 +27,17 @@ import { AdminConversations } from '../components/dashboard/admin/AdminConversat
 import { AdminOverview } from '../components/dashboard/admin/AdminOverview'
 
 const navItems: NavItem[] = [
-  { to: '/admin', icon: LayoutDashboard, label: 'Overview', end: true },
-  { to: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
-  { to: '/admin/companies', icon: Building2, label: 'Clients' },
-  { to: '/admin/leads', icon: Users2, label: 'Leads' },
-  { to: '/admin/pipeline', icon: GitBranch, label: 'Pipeline' },
-  { to: '/admin/appointments', icon: Calendar, label: 'Bookings' },
-  { to: '/admin/conversations', icon: MessageSquare, label: 'Messages' },
-  { to: '/admin/automations', icon: Zap, label: 'Automations' },
-  { to: '/admin/n8n', icon: Workflow, label: 'n8n Reactor' },
-  { to: '/admin/logs', icon: Activity, label: 'Reports' },
-  { to: '/admin/settings', icon: Settings, label: 'Settings' },
+  { to: '/admin', icon: LayoutDashboard, label: 'مركز الإدارة', end: true },
+  { to: '/admin/analytics', icon: BarChart3, label: 'التحليلات' },
+  { to: '/admin/companies', icon: Building2, label: 'الشركات' },
+  { to: '/admin/leads', icon: Users2, label: 'العملاء المحتملون' },
+  { to: '/admin/pipeline', icon: GitBranch, label: 'خط المبيعات' },
+  { to: '/admin/appointments', icon: Calendar, label: 'الحجوزات' },
+  { to: '/admin/conversations', icon: MessageSquare, label: 'المحادثات' },
+  { to: '/admin/automations', icon: Zap, label: 'الأتمتة' },
+  { to: '/admin/n8n', icon: Workflow, label: 'n8n' },
+  { to: '/admin/logs', icon: Activity, label: 'السجلات' },
+  { to: '/admin/settings', icon: Settings, label: 'الإعدادات' },
 ]
 
 function usePageTitle() {

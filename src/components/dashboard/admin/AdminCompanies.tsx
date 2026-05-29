@@ -1,29 +1,31 @@
-import { useEffect, useState } from 'react'
-import { Search, Plus, Building2, Car, Stethoscope, Briefcase, MessageSquare, Users2, Zap, ChevronLeft, Droplets, DollarSign, TrendingUp, RotateCcw, ShieldCheck, AlertTriangle } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
+import {
+  AlertTriangle,
+  Building2,
+  Car,
+  ChevronLeft,
+  MessageSquare,
+  Plus,
+  QrCode,
+  Search,
+  ShieldCheck,
+  Stethoscope,
+  Users2,
+  Zap,
+} from 'lucide-react'
 import { StatusBadge } from '../shared/StatusBadge'
 import { fetchCompanies, supabase } from '../../../lib/supabase'
 import { AdminAddClientModal } from './AdminAddClientModal'
 import { AdminClientDrawer } from './AdminClientDrawer'
 import type { Company } from '../../../types'
 
-interface CWKPIs {
-  revenueThisMonth: number
-  activeWashes: number
-  topWashName: string
-  topWashVisits: number
-  retentionRate: number
-  totalVisitsMonth: number
-}
-
-interface TenantHealth {
+type TenantHealth = {
   companyId: string
-  name: string
   score: number
   services: number
   workers: number
   carsToday: number
-  messageUsage: number
   issues: string[]
 }
 
@@ -34,37 +36,48 @@ const planColors: Record<string, string> = {
 }
 
 const planLabels: Record<string, string> = {
-  starter: 'ابتدائي',
-  growth: 'نمو',
-  enterprise: 'مؤسسي',
+  starter: 'Starter',
+  growth: 'Pro',
+  enterprise: 'Premium',
+}
+
+const businessLabels: Record<string, string> = {
+  clinic: 'عيادة',
+  car_wash: 'مغسلة',
+  real_estate: 'عقار',
+  other: 'أخرى',
 }
 
 const businessIcons: Record<string, React.ElementType> = {
   clinic: Stethoscope,
   car_wash: Car,
   real_estate: Building2,
-  other: Briefcase,
+  other: Building2,
+}
+
+function getMessageUsage(company: Company) {
+  const limit = company.message_limit || 0
+  if (!limit) return 0
+  return Math.min(100, Math.round(((company.messages_used || 0) / limit) * 100))
+}
+
+function featureEnabled(company: Company, key: string) {
+  return Boolean((company.cw_automations as any)?.feature_flags?.[key])
 }
 
 export const AdminCompanies = () => {
   const [companies, setCompanies] = useState<Company[]>([])
+  const [health, setHealth] = useState<Record<string, TenantHealth>>({})
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'all' | 'active' | 'trial' | 'suspended'>('all')
   const [showModal, setShowModal] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
-  const [cwKPIs, setCwKPIs] = useState<CWKPIs | null>(null)
-  const [tenantHealth, setTenantHealth] = useState<TenantHealth[]>([])
-
-  const load = async () => {
-    const list = await fetchCompanies()
-    setCompanies(list)
-    loadTenantHealth(list)
-  }
+  const [loading, setLoading] = useState(true)
 
   const loadTenantHealth = async (list: Company[]) => {
     const carWashes = list.filter(c => c.business_type === 'car_wash' || c.industry === 'car_wash')
     if (carWashes.length === 0) {
-      setTenantHealth([])
+      setHealth({})
       return
     }
 
@@ -74,12 +87,8 @@ export const AdminCompanies = () => {
     const [{ data: services }, { data: workers }, { data: queue }] = await Promise.all([
       supabase.from('cw_services').select('company_id, active'),
       supabase.from('cw_workers').select('company_id, active'),
-      supabase.from('cw_queue').select('company_id, created_at').gte('created_at', todayStart.toISOString()),
+      supabase.from('cw_queue').select('company_id, created_at, status').gte('created_at', todayStart.toISOString()),
     ])
-
-    const serviceRows = (services || []) as Array<{ company_id: string; active?: boolean | null }>
-    const workerRows = (workers || []) as Array<{ company_id: string; active?: boolean | null }>
-    const queueRows = (queue || []) as Array<{ company_id: string }>
 
     const countByCompany = <T extends { company_id: string }>(rows: T[], predicate: (row: T) => boolean = () => true) =>
       rows.reduce<Record<string, number>>((acc, row) => {
@@ -87,107 +96,72 @@ export const AdminCompanies = () => {
         return acc
       }, {})
 
-    const servicesByCompany = countByCompany(serviceRows, row => row.active !== false)
-    const workersByCompany = countByCompany(workerRows, row => row.active !== false)
-    const carsByCompany = countByCompany(queueRows)
+    const servicesByCompany = countByCompany((services || []) as Array<{ company_id: string; active?: boolean | null }>, row => row.active !== false)
+    const workersByCompany = countByCompany((workers || []) as Array<{ company_id: string; active?: boolean | null }>, row => row.active !== false)
+    const carsByCompany = countByCompany((queue || []) as Array<{ company_id: string; status?: string | null }>, row => row.status !== 'cancelled')
 
-    const health = carWashes.map(company => {
+    const next: Record<string, TenantHealth> = {}
+    for (const company of carWashes) {
+      const issues: string[] = []
+      let score = 0
       const servicesCount = servicesByCompany[company.id] || 0
       const workersCount = workersByCompany[company.id] || 0
       const carsToday = carsByCompany[company.id] || 0
-      const limit = company.message_limit || 0
-      const messageUsage = limit > 0 ? Math.round(((company.messages_used || 0) / limit) * 100) : 0
-      const issues: string[] = []
-      let score = 0
+      const messageUsage = getMessageUsage(company)
 
       if (company.status === 'active') score += 15
       else issues.push('الحساب غير نشط')
-      if (company.webhook_token) score += 15
-      else issues.push('QR التسجيل غير مفعّل')
+      if (company.public_checkin_token || company.webhook_token) score += 20
+      else issues.push('QR غير جاهز')
       if (servicesCount > 0) score += 20
-      else issues.push('لا توجد خدمات مغسلة')
+      else issues.push('لا توجد خدمات')
       if (workersCount > 0) score += 20
       else issues.push('لا يوجد موظفون')
       if (carsToday > 0) score += 15
-      else issues.push('لا توجد سيارات اليوم')
-      if (!limit || messageUsage < 80) score += 15
+      else issues.push('لا يوجد تشغيل اليوم')
+      if (messageUsage < 80) score += 10
       else issues.push('قريب من حد الرسائل')
 
-      return {
+      next[company.id] = {
         companyId: company.id,
-        name: company.name,
         score,
         services: servicesCount,
         workers: workersCount,
         carsToday,
-        messageUsage,
         issues,
       }
-    }).sort((a, b) => a.score - b.score)
-
-    setTenantHealth(health)
+    }
+    setHealth(next)
   }
 
-  const loadCWKPIs = async () => {
-    const monthStart = new Date()
-    monthStart.setDate(1)
-    monthStart.setHours(0, 0, 0, 0)
-    const monthStr = monthStart.toISOString()
+  const load = async () => {
+    setLoading(true)
+    const list = await fetchCompanies()
+    setCompanies(list)
+    await loadTenantHealth(list)
+    setLoading(false)
+  }
 
-    const [{ data: visits }, { data: customers }] = await Promise.all([
-      supabase.from('cw_visits')
-        .select('company_id, price, subtotal')
-        .gte('created_at', monthStr),
-      supabase.from('cw_customers')
-        .select('company_id, total_visits'),
-    ])
+  useEffect(() => { load() }, [])
 
-    if (!visits) return
-
-    const revenue = visits.reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0)
-    const activeWashSet = new Set(visits.map(v => v.company_id))
-    const visitsByCompany: Record<string, number> = {}
-    for (const v of visits) {
-      visitsByCompany[v.company_id] = (visitsByCompany[v.company_id] || 0) + 1
-    }
-    const topId = Object.entries(visitsByCompany).sort((a, b) => b[1] - a[1])[0]
-
-    const totalCustomers = customers?.length ?? 0
-    const returningCustomers = customers?.filter(c => c.total_visits > 1).length ?? 0
-    const retentionRate = totalCustomers > 0 ? Math.round((returningCustomers / totalCustomers) * 100) : 0
-
-    let topWashName = '—'
-    if (topId) {
-      const { data: co } = await supabase.from('companies').select('name').eq('id', topId[0]).single()
-      topWashName = co?.name ?? '—'
-    }
-
-    setCwKPIs({
-      revenueThisMonth: revenue,
-      activeWashes: activeWashSet.size,
-      topWashName,
-      topWashVisits: topId?.[1] ?? 0,
-      retentionRate,
-      totalVisitsMonth: visits.length,
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return companies.filter(company => {
+      const matchSearch =
+        !q ||
+        company.name.toLowerCase().includes(q) ||
+        company.owner_name.toLowerCase().includes(q) ||
+        company.owner_email.toLowerCase().includes(q)
+      const matchFilter = filter === 'all' || company.status === filter
+      return matchSearch && matchFilter
     })
-  }
-
-  useEffect(() => { load(); loadCWKPIs() }, [])
-
-  const filtered = companies.filter(c => {
-    const q = search.toLowerCase()
-    const matchSearch = c.name.toLowerCase().includes(q) || c.owner_name.toLowerCase().includes(q) || c.owner_email.toLowerCase().includes(q)
-    const matchFilter = filter === 'all' || c.status === filter
-    return matchSearch && matchFilter
-  })
+  }, [companies, filter, search])
 
   const carWashCompanies = companies.filter(c => c.business_type === 'car_wash' || c.industry === 'car_wash')
-  const qrReadyCompanies = carWashCompanies.filter(c => !!c.webhook_token)
-  const nearLimitCompanies = companies.filter(c => {
-    const limit = c.message_limit || 0
-    if (!limit) return false
-    return ((c.messages_used || 0) / limit) >= 0.8
-  })
+  const qrReadyCompanies = carWashCompanies.filter(c => c.public_checkin_token || c.webhook_token)
+  const nearLimitCompanies = companies.filter(c => getMessageUsage(c) >= 80)
+  const walletEnabled = companies.filter(c => featureEnabled(c, 'wallet')).length
+  const subscriptionsEnabled = companies.filter(c => featureEnabled(c, 'memberships')).length
 
   return (
     <div className="space-y-6">
@@ -206,275 +180,171 @@ export const AdminCompanies = () => {
         />
       )}
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white font-cairo">الحسابات</h1>
-          <p className="text-sm text-slate-500 font-tajawal">{companies.length} عميل مسجّل</p>
+          <p className="text-xs font-bold text-blue-600 font-tajawal">إدارة العملاء</p>
+          <h1 className="mt-1 text-2xl font-black text-slate-900 font-cairo">الشركات والمغاسل</h1>
+          <p className="mt-1 text-sm text-slate-500 font-tajawal">راقب الباقات، الصحة التشغيلية، الإضافات، وحدود الرسائل لكل عميل.</p>
         </div>
-        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.97 }}
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer font-cairo"
-          style={{ background: 'linear-gradient(135deg, #4F6EF7, #7C3AED)' }}>
-          <Plus size={15} />
-          إضافة عميل
+          className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white font-cairo"
+          style={{ background: 'linear-gradient(135deg, #0EA5E9, #4F6EF7)' }}
+        >
+          <Plus size={16} />
+          إضافة شركة
         </motion.button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" />
-          <input value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="ابحث بالاسم أو الإيميل..."
-            className="w-full bg-white/[0.03] border border-white/[0.07] rounded-xl px-4 py-2.5 pr-9 text-sm text-white placeholder-slate-600 outline-none focus:border-indigo-500/40 font-tajawal transition-colors"
-            dir="rtl"
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
+        {[
+          { label: 'إجمالي الشركات', value: companies.length, color: '#4F6EF7', icon: Building2 },
+          { label: 'نشطة', value: companies.filter(c => c.status === 'active').length, color: '#10B981', icon: ShieldCheck },
+          { label: 'تجريبية', value: companies.filter(c => c.status === 'trial').length, color: '#F59E0B', icon: Zap },
+          { label: 'QR جاهز', value: `${qrReadyCompanies.length}/${carWashCompanies.length || 0}`, color: '#0EA5E9', icon: QrCode },
+          { label: 'محافظ مفعلة', value: walletEnabled + subscriptionsEnabled, color: '#8B5CF6', icon: Users2 },
+          { label: 'قرب حد الرسائل', value: nearLimitCompanies.length, color: '#EF4444', icon: AlertTriangle },
+        ].map(item => (
+          <div key={item.label} className="rounded-2xl bg-white p-4" style={{ border: '1px solid #E2E8F0', boxShadow: '0 12px 30px rgba(15,23,42,0.04)' }}>
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <p className="text-xs text-slate-500 font-tajawal">{item.label}</p>
+              <item.icon size={15} style={{ color: item.color }} />
+            </div>
+            <p className="text-2xl font-black font-sora" style={{ color: item.color }}>{item.value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex flex-col gap-3 lg:flex-row">
+        <label className="relative flex-1">
+          <Search size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="ابحث باسم الشركة أو المالك أو الإيميل..."
+            className="w-full rounded-xl bg-white px-4 py-3 pr-10 text-sm text-slate-900 outline-none font-tajawal"
+            style={{ border: '1px solid #E2E8F0' }}
           />
-        </div>
-        <div className="flex gap-2">
-          {(['all', 'active', 'trial', 'suspended'] as const).map(f => (
-            <button key={f} onClick={() => setFilter(f)}
-              className={`px-3 py-2 rounded-lg text-xs font-tajawal cursor-pointer transition-all ${filter === f ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-500 hover:text-white bg-white/[0.03]'}`}>
-              {f === 'all' ? 'الكل' : f === 'active' ? 'نشط' : f === 'trial' ? 'تجريبي' : 'موقوف'}
+        </label>
+        <div className="flex gap-2 overflow-x-auto">
+          {(['all', 'active', 'trial', 'suspended'] as const).map(status => (
+            <button
+              key={status}
+              onClick={() => setFilter(status)}
+              className="whitespace-nowrap rounded-xl px-4 py-2 text-xs font-bold font-tajawal"
+              style={{
+                background: filter === status ? '#0F172A' : '#FFFFFF',
+                color: filter === status ? '#FFFFFF' : '#475569',
+                border: '1px solid #E2E8F0',
+              }}
+            >
+              {status === 'all' ? 'الكل' : status === 'active' ? 'نشطة' : status === 'trial' ? 'تجريبية' : 'موقوفة'}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
-        {[
-          { label: 'إجمالي العملاء', value: companies.length, color: '#4F6EF7' },
-          { label: 'نشط', value: companies.filter(c => c.status === 'active').length, color: '#10B981' },
-          { label: 'تجريبي', value: companies.filter(c => c.status === 'trial').length, color: '#F59E0B' },
-          { label: 'موقوف', value: companies.filter(c => c.status === 'suspended').length, color: '#EF4444' },
-          { label: 'QR جاهز', value: `${qrReadyCompanies.length}/${carWashCompanies.length || 0}`, color: '#22D3EE' },
-          { label: 'قريب من حد الرسائل', value: nearLimitCompanies.length, color: '#F97316' },
-        ].map(s => (
-          <div key={s.label} className="p-4 rounded-xl"
-            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-            <p className="text-xs text-slate-500 font-tajawal mb-1">{s.label}</p>
-            <p className="text-2xl font-black font-work" style={{ color: s.color }}>{s.value}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Car Wash OS KPIs */}
-      {cwKPIs && (
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <Droplets size={14} color="#22D3EE" />
-            <span className="text-xs font-bold text-slate-400 font-tajawal tracking-widest uppercase">Car Wash OS — هذا الشهر</span>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              {
-                icon: DollarSign,
-                label: 'إيرادات الشهر',
-                value: cwKPIs.revenueThisMonth > 0 ? `${cwKPIs.revenueThisMonth.toLocaleString()} ر.س` : '—',
-                sub: `${cwKPIs.totalVisitsMonth} زيارة`,
-                color: '#10B981',
-              },
-              {
-                icon: Droplets,
-                label: 'مغسلات نشطة',
-                value: cwKPIs.activeWashes,
-                sub: 'لديها زيارات هذا الشهر',
-                color: '#22D3EE',
-              },
-              {
-                icon: TrendingUp,
-                label: 'أكثر مغسلة نشاطاً',
-                value: cwKPIs.topWashName,
-                sub: cwKPIs.topWashVisits > 0 ? `${cwKPIs.topWashVisits} زيارة` : undefined,
-                color: '#4F6EF7',
-              },
-              {
-                icon: RotateCcw,
-                label: 'معدل الاستبقاء',
-                value: `${cwKPIs.retentionRate}%`,
-                sub: 'عملاء زاروا أكثر من مرة',
-                color: '#F59E0B',
-              },
-            ].map(s => (
-              <div key={s.label} className="p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${s.color}22` }}>
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs text-slate-500 font-tajawal">{s.label}</p>
-                  <div style={{ width: 28, height: 28, borderRadius: 8, background: `${s.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <s.icon size={13} style={{ color: s.color }} />
-                  </div>
-                </div>
-                <p className="text-lg font-black font-work truncate" style={{ color: s.color }}>{s.value}</p>
-                {s.sub && <p className="text-xs text-slate-600 font-tajawal mt-0.5">{s.sub}</p>}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {tenantHealth.length > 0 && (
-        <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <ShieldCheck size={16} color="#22D3EE" />
-              <div>
-                <p className="text-sm font-bold text-white font-cairo">صحة مغاسل السيارات</p>
-                <p className="text-xs text-slate-500 font-tajawal">أقل الحسابات جاهزية تظهر أولاً حتى تعرف أين تتدخل.</p>
-              </div>
-            </div>
-            <span className="rounded-full px-3 py-1 text-xs font-bold font-sora" style={{ color: '#22D3EE', background: 'rgba(34,211,238,0.12)' }}>
-              {tenantHealth.filter(item => item.score >= 85).length}/{tenantHealth.length} جاهزة
-            </span>
-          </div>
-          <div className="grid gap-3 lg:grid-cols-3">
-            {tenantHealth.slice(0, 6).map(item => {
-              const tone = item.score >= 85 ? '#10B981' : item.score >= 60 ? '#F59E0B' : '#EF4444'
-              return (
-                <button
-                  key={item.companyId}
-                  onClick={() => setSelectedCompany(companies.find(c => c.id === item.companyId) || null)}
-                  className="rounded-xl p-4 text-right transition-all hover:bg-white/[0.04]"
-                  style={{ border: `1px solid ${tone}33`, background: `${tone}0D` }}
-                >
-                  <div className="mb-3 flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-bold text-white font-cairo">{item.name}</p>
-                      <p className="mt-1 text-xs text-slate-500 font-tajawal">
-                        خدمات {item.services} • موظفون {item.workers} • سيارات اليوم {item.carsToday}
-                      </p>
-                    </div>
-                    <span className="text-xl font-black font-sora" style={{ color: tone }}>{item.score}</span>
-                  </div>
-                  <div className="mb-3 h-2 overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
-                    <div className="h-full rounded-full" style={{ width: `${item.score}%`, background: tone }} />
-                  </div>
-                  {item.issues.length > 0 ? (
-                    <div className="flex items-start gap-2 text-xs text-slate-400 font-tajawal">
-                      <AlertTriangle size={13} className="mt-0.5 flex-shrink-0" style={{ color: tone }} />
-                      <span>{item.issues.slice(0, 2).join('، ')}</span>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-emerald-400 font-tajawal">جاهزة للتشغيل والبيع.</p>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Table */}
-      <div className="rounded-2xl overflow-hidden overflow-x-auto" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
-        <table className="w-full min-w-[700px]">
-          <thead>
-            <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-              {['العميل', 'نوع النشاط', 'الباقة', 'الحالة', 'الرسائل', 'العملاء', 'الأتمتة', ''].map(h => (
-                <th key={h} className="px-4 py-3 text-right text-xs text-slate-500 font-tajawal font-medium">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((c, i) => {
-              const BizIcon = businessIcons[c.business_type ?? 'other'] ?? Briefcase
-              const used = c.messages_used ?? 0
-              const limit = c.message_limit ?? 1000
-              const pct = Math.min(100, Math.round((used / limit) * 100))
-              const color = planColors[c.plan]
-              return (
-                <motion.tr key={c.id}
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
-                  onClick={() => setSelectedCompany(c)}
-                  className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors cursor-pointer group">
-
-                  {/* Company + email */}
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                        style={{ background: `linear-gradient(135deg, ${color}, ${color}88)` }}>
-                        {c.name[0]}
-                      </div>
-                      <div>
-                        <p className="text-sm text-white font-tajawal">{c.name}</p>
-                        <p className="text-xs text-slate-600 font-work">{c.owner_email}</p>
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Business type */}
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1.5">
-                      <BizIcon size={12} style={{ color }} />
-                      <span className="text-xs text-slate-400 font-tajawal">
-                        {c.business_type === 'clinic' ? 'عيادة' : c.business_type === 'car_wash' ? 'مغسلة' : c.business_type === 'real_estate' ? 'عقارية' : 'أخرى'}
-                      </span>
-                    </div>
-                  </td>
-
-                  {/* Plan */}
-                  <td className="px-4 py-3">
-                    <span className="text-xs font-medium px-2 py-1 rounded-full font-work"
-                      style={{ color, background: `${color}18` }}>
-                      {planLabels[c.plan] || c.plan}
-                    </span>
-                  </td>
-
-                  {/* Status */}
-                  <td className="px-4 py-3"><StatusBadge status={c.status} /></td>
-
-                  {/* Messages usage bar */}
-                  <td className="px-4 py-3">
-                    <div className="flex flex-col gap-1 min-w-[96px]">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1 text-xs text-slate-400">
-                          <MessageSquare size={10} className="text-slate-600" />
-                          <span>{used.toLocaleString()}</span>
+      <div className="overflow-hidden rounded-3xl bg-white" style={{ border: '1px solid #E2E8F0', boxShadow: '0 18px 45px rgba(15,23,42,0.05)' }}>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[980px]">
+            <thead>
+              <tr className="bg-slate-50">
+                {['الشركة', 'النشاط', 'الباقة', 'الحالة', 'الصحة', 'الرسائل', 'الإضافات', ''].map(header => (
+                  <th key={header} className="px-4 py-3 text-right text-xs font-bold text-slate-500 font-tajawal">{header}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-500 font-tajawal">جاري تحميل الشركات...</td>
+                </tr>
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-500 font-tajawal">لا توجد نتائج مطابقة.</td>
+                </tr>
+              ) : filtered.map((company, index) => {
+                const color = planColors[company.plan] || '#4F6EF7'
+                const usage = getMessageUsage(company)
+                const rowHealth = health[company.id]
+                const BizIcon = businessIcons[company.business_type ?? 'other'] || Building2
+                return (
+                  <motion.tr
+                    key={company.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: index * 0.02 }}
+                    onClick={() => setSelectedCompany(company)}
+                    className="cursor-pointer border-t border-slate-100 transition-colors hover:bg-slate-50"
+                  >
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl text-sm font-black text-white" style={{ background: `linear-gradient(135deg, ${color}, ${color}99)` }}>
+                          {company.name[0]}
                         </div>
-                        <span className="text-xs text-slate-600">/{limit.toLocaleString()}</span>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-bold text-slate-900 font-cairo">{company.name}</p>
+                          <p className="truncate text-xs text-slate-500 font-sora">{company.owner_email}</p>
+                        </div>
                       </div>
-                      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
-                        <motion.div className="h-full rounded-full"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${pct}%` }}
-                          transition={{ duration: 0.8 }}
-                          style={{ background: pct > 85 ? '#EF4444' : color }}
-                        />
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600 font-tajawal">
+                        <BizIcon size={12} style={{ color }} />
+                        {businessLabels[company.business_type ?? 'other'] || 'أخرى'}
                       </div>
-                    </div>
-                  </td>
-
-                  {/* Leads */}
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                      <Users2 size={11} className="text-slate-600" />
-                      {c.monthly_leads ?? 0}
-                    </div>
-                  </td>
-
-                  {/* Automations */}
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                      <Zap size={11} className="text-slate-600" />
-                      {c.automations_count ?? 0}
-                    </div>
-                  </td>
-
-                  {/* Arrow */}
-                  <td className="px-3 py-3">
-                    <ChevronLeft size={14} className="text-slate-700 group-hover:text-slate-400 transition-colors" />
-                  </td>
-                </motion.tr>
-              )
-            })}
-          </tbody>
-        </table>
-
-        {filtered.length === 0 && (
-          <div className="py-16 text-center">
-            <Building2 size={36} className="text-slate-700 mx-auto mb-3" />
-            <p className="text-slate-600 font-tajawal text-sm mb-1">لا توجد حسابات</p>
-            <p className="text-slate-700 font-tajawal text-xs">اضغط "إضافة عميل" لإنشاء أول حساب</p>
-          </div>
-        )}
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className="rounded-full px-3 py-1 text-xs font-bold font-sora" style={{ color, background: `${color}16` }}>
+                        {planLabels[company.plan] || company.plan}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4"><StatusBadge status={company.status} /></td>
+                    <td className="px-4 py-4">
+                      {rowHealth ? (
+                        <div className="min-w-[130px]">
+                          <div className="mb-1 flex items-center justify-between text-xs">
+                            <span className="text-slate-500 font-tajawal">{rowHealth.issues[0] || 'جاهزة'}</span>
+                            <strong className="font-sora" style={{ color: rowHealth.score >= 80 ? '#059669' : rowHealth.score >= 55 ? '#D97706' : '#DC2626' }}>{rowHealth.score}</strong>
+                          </div>
+                          <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
+                            <div className="h-full rounded-full" style={{ width: `${rowHealth.score}%`, background: rowHealth.score >= 80 ? '#10B981' : rowHealth.score >= 55 ? '#F59E0B' : '#EF4444' }} />
+                          </div>
+                        </div>
+                      ) : <span className="text-xs text-slate-400 font-tajawal">غير محسوبة</span>}
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="min-w-[110px]">
+                        <div className="mb-1 flex items-center justify-between text-xs text-slate-500 font-sora">
+                          <span>{(company.messages_used || 0).toLocaleString('en-US')}</span>
+                          <span>{usage}%</span>
+                        </div>
+                        <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
+                          <div className="h-full rounded-full" style={{ width: `${usage}%`, background: usage >= 85 ? '#EF4444' : color }} />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex flex-wrap gap-1">
+                        {(company.public_checkin_token || company.webhook_token) && <span className="rounded-full bg-blue-50 px-2 py-1 text-[11px] text-blue-700 font-tajawal">QR</span>}
+                        {featureEnabled(company, 'wallet') && <span className="rounded-full bg-emerald-50 px-2 py-1 text-[11px] text-emerald-700 font-tajawal">محفظة</span>}
+                        {featureEnabled(company, 'memberships') && <span className="rounded-full bg-amber-50 px-2 py-1 text-[11px] text-amber-700 font-tajawal">اشتراكات</span>}
+                        {!featureEnabled(company, 'wallet') && !featureEnabled(company, 'memberships') && !(company.public_checkin_token || company.webhook_token) && (
+                          <span className="text-xs text-slate-400 font-tajawal">أساسي</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <ChevronLeft size={16} className="text-slate-400" />
+                    </td>
+                  </motion.tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )
