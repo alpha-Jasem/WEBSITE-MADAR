@@ -335,6 +335,7 @@
         document.documentElement.style.setProperty('--madar-preloader-logo-filter', 'drop-shadow(0 12px 24px rgba(15,84,122,0.12))')
         document.documentElement.style.setProperty('--madar-preloader-public-copy', 'none')
         document.documentElement.style.setProperty('--madar-preloader-portal-copy', 'inline')
+        document.documentElement.style.setProperty('--madar-preloader-chrome', 'none')
       })()
     </script>
     <div id="root">
@@ -353,7 +354,7 @@
           filter:blur(60px);pointer-events:none;
         "></div>
         <!-- Logo row -->
-        <div style="display:flex;align-items:center;gap:12px;position:relative;">
+        <div style="display:var(--madar-preloader-chrome,flex);align-items:center;gap:12px;position:relative;">
           <img src="/logo-main.png" alt="Madar"
             style="height:48px;width:auto;object-fit:contain;filter:var(--madar-preloader-logo-filter,drop-shadow(0 0 16px rgba(34,211,238,0.4)));"
             onerror="this.style.display='none'" />
@@ -362,7 +363,7 @@
           </span>
         </div>
         <!-- Spinner -->
-        <div style="position:relative;width:44px;height:44px;">
+        <div style="display:var(--madar-preloader-chrome,block);position:relative;width:44px;height:44px;">
           <div style="
             position:absolute;inset:0;border-radius:50%;
             border:2px solid rgba(34,211,238,0.1);
