@@ -30,6 +30,7 @@ const OTP_VERIFICATION_TTL_MINUTES = 20
 const OTP_MAX_PER_HOUR = 5
 const OTP_MAX_ATTEMPTS = 5
 const DEFAULT_OTP_WEBHOOK = 'https://keepcalm.app.n8n.cloud/webhook/cw-send-otp'
+const TWILIO_VERIFY_BASE_URL = 'https://verify.twilio.com/v2'
 
 function json(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -84,6 +85,69 @@ async function sha256(value: string) {
 async function otpHash(companyId: string, phone: string, code: string) {
   const secret = Deno.env.get('OTP_SECRET') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || 'madar-otp'
   return sha256(`${companyId}:${phone}:${code}:${secret}`)
+}
+
+function twilioConfig() {
+  const apiKeySid = Deno.env.get('TWILIO_API_KEY_SID') || Deno.env.get('TWILIO_ACCOUNT_SID') || ''
+  const apiKeySecret = Deno.env.get('TWILIO_API_KEY_SECRET') || Deno.env.get('TWILIO_AUTH_TOKEN') || ''
+  const serviceSid = Deno.env.get('TWILIO_VERIFY_SERVICE_SID') || ''
+  const channel = (Deno.env.get('TWILIO_VERIFY_CHANNEL') || 'sms').toLowerCase()
+
+  if (!apiKeySid || !apiKeySecret || !serviceSid) return null
+
+  return {
+    apiKeySid,
+    apiKeySecret,
+    serviceSid,
+    channel: channel === 'whatsapp' ? 'whatsapp' : 'sms',
+  }
+}
+
+function twilioAuthHeader(apiKeySid: string, apiKeySecret: string) {
+  return `Basic ${btoa(`${apiKeySid}:${apiKeySecret}`)}`
+}
+
+async function sendOtpViaTwilio(phone: string) {
+  const config = twilioConfig()
+  if (!config) return null
+
+  const response = await fetch(`${TWILIO_VERIFY_BASE_URL}/Services/${config.serviceSid}/Verifications`, {
+    method: 'POST',
+    headers: {
+      'Authorization': twilioAuthHeader(config.apiKeySid, config.apiKeySecret),
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      To: `+${phone}`,
+      Channel: config.channel,
+    }),
+  })
+
+  const body = await response.json().catch(() => ({}))
+  if (response.ok) return { ok: true, provider: `twilio_${config.channel}`, sid: body.sid as string | undefined }
+  return { ok: false, provider: `twilio_${config.channel}`, status: response.status, body }
+}
+
+async function verifyOtpViaTwilio(phone: string, code: string) {
+  const config = twilioConfig()
+  if (!config) return null
+
+  const response = await fetch(`${TWILIO_VERIFY_BASE_URL}/Services/${config.serviceSid}/VerificationCheck`, {
+    method: 'POST',
+    headers: {
+      'Authorization': twilioAuthHeader(config.apiKeySid, config.apiKeySecret),
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      To: `+${phone}`,
+      Code: code,
+    }),
+  })
+
+  const body = await response.json().catch(() => ({}))
+  if (response.ok && body.status === 'approved') return { ok: true, provider: 'twilio_verify' }
+  if (response.ok) return { ok: false, provider: 'twilio_verify', status: body.status || 'pending', body }
+  return { ok: false, provider: 'twilio_verify', status: response.status, body }
 }
 
 async function sendOtpViaWhatsApp(phone: string, code: string, company: Company) {
@@ -203,6 +267,25 @@ Deno.serve(async (req) => {
       return json({ error: 'phone_otp_limit' }, 429)
     }
 
+    const twilioResult = await sendOtpViaTwilio(phone)
+
+    if (twilioResult) {
+      if (!twilioResult.ok) {
+        console.error('otp_send_failed', twilioResult)
+        return json({ error: 'otp_send_failed', provider: twilioResult.provider }, 502)
+      }
+
+      const { error: otpError } = await supabase.from('cw_phone_otps').insert({
+        company_id: company.id,
+        phone,
+        code_hash: `twilio:${twilioResult.sid || 'verify'}`,
+        expires_at: addMinutes(OTP_TTL_MINUTES),
+      })
+
+      if (otpError) return json({ error: 'otp_store_failed' }, 500)
+      return json({ sent: true, provider: twilioResult.provider, expires_in_seconds: OTP_TTL_MINUTES * 60 })
+    }
+
     const code = generateOtp()
     const codeHash = await otpHash(company.id, phone, code)
     const sendResult = await sendOtpViaWhatsApp(phone, code, company)
@@ -239,6 +322,24 @@ Deno.serve(async (req) => {
     const row = rows?.[0]
     if (!row) return json({ error: 'otp_not_found' }, 404)
     if ((row.attempts || 0) >= OTP_MAX_ATTEMPTS) return json({ error: 'otp_expired' }, 410)
+
+    if (String(row.code_hash || '').startsWith('twilio:')) {
+      const twilioCheck = await verifyOtpViaTwilio(phone, otp)
+      if (!twilioCheck) return json({ error: 'otp_provider_not_configured' }, 500)
+      if (!twilioCheck.ok) {
+        await supabase.from('cw_phone_otps').update({ attempts: (row.attempts || 0) + 1 }).eq('id', row.id)
+        return json({ error: 'otp_invalid' }, 400)
+      }
+
+      const tokenValue = generateToken()
+      await supabase.from('cw_phone_otps').update({
+        verified_at: new Date().toISOString(),
+        verification_token: tokenValue,
+        verification_expires_at: addMinutes(OTP_VERIFICATION_TTL_MINUTES),
+      }).eq('id', row.id)
+
+      return json({ verified: true, verification_token: tokenValue })
+    }
 
     const candidateHash = await otpHash(company.id, phone, otp)
     if (candidateHash !== row.code_hash) {
