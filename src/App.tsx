@@ -23,7 +23,7 @@ function App() {
     <LanguageProvider>
       <BrowserRouter>
         <ErrorBoundary>
-        <Suspense fallback={<LoadingScreen />}>
+        <Suspense fallback={<LoadingScreen variant="portal" />}>
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<Login />} />

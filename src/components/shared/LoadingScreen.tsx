@@ -11,7 +11,135 @@ interface Node {
   speed: number
 }
 
-export const LoadingScreen = ({ onDone }: { onDone?: () => void }) => {
+type LoadingScreenVariant = 'public' | 'portal'
+
+const PortalLoadingScreen = () => (
+  <motion.div
+    className="fixed inset-0 z-[100] overflow-hidden"
+    dir="rtl"
+    style={{
+      background:
+        'linear-gradient(135deg, #f8fcff 0%, #eef9ff 48%, #f7fbff 100%)',
+      fontFamily: 'Tajawal, Cairo, sans-serif',
+    }}
+    exit={{ opacity: 0 }}
+    transition={{ duration: 0.22, ease: 'easeOut' }}
+  >
+    <div
+      className="absolute inset-0 opacity-60"
+      style={{
+        backgroundImage:
+          'linear-gradient(rgba(0,149,255,0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(0,149,255,0.055) 1px, transparent 1px)',
+        backgroundSize: '38px 38px',
+      }}
+    />
+    <div
+      className="absolute -left-24 top-10 h-72 w-72 rounded-full blur-3xl"
+      style={{ background: 'rgba(0, 191, 255, 0.16)' }}
+    />
+    <div
+      className="absolute right-24 bottom-10 h-80 w-80 rounded-full blur-3xl"
+      style={{ background: 'rgba(79, 70, 229, 0.09)' }}
+    />
+
+    <div className="relative flex min-h-screen">
+      <aside
+        className="hidden w-[236px] shrink-0 border-l border-sky-100/80 bg-white/74 px-6 py-7 shadow-[0_20px_70px_rgba(15,84,122,0.08)] backdrop-blur xl:block"
+      >
+        <div className="mb-9 flex items-center gap-3">
+          <img src="/logo-main.png" alt="Madar" className="h-11 w-auto object-contain" />
+          <div>
+            <p className="font-sora text-base font-bold leading-none text-slate-950">Madar.software</p>
+            <p className="mt-1 text-xs font-semibold text-sky-500">مركز الإدارة</p>
+          </div>
+        </div>
+        <div className="space-y-3">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <motion.div
+              key={i}
+              className="h-11 rounded-2xl bg-slate-100/80"
+              initial={{ opacity: 0.45 }}
+              animate={{ opacity: [0.45, 0.9, 0.45] }}
+              transition={{ duration: 1.3, repeat: Infinity, delay: i * 0.08 }}
+            />
+          ))}
+        </div>
+      </aside>
+
+      <main className="flex min-h-screen flex-1 items-center justify-center px-5 py-8 sm:px-8">
+        <div className="w-full max-w-5xl">
+          <div className="mb-7 flex items-center justify-between gap-4">
+            <div>
+              <div className="mb-3 h-3 w-24 rounded-full bg-sky-200/80" />
+              <div className="h-9 w-72 max-w-[70vw] rounded-2xl bg-white/80 shadow-sm" />
+            </div>
+            <div className="flex items-center gap-3 rounded-full border border-sky-100 bg-white/84 px-4 py-3 shadow-sm">
+              <span className="relative flex h-3 w-3">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75" />
+                <span className="relative inline-flex h-3 w-3 rounded-full bg-sky-500" />
+              </span>
+              <span className="text-sm font-bold text-slate-700">جاري تجهيز اللوحة...</span>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <motion.div
+                key={i}
+                className="h-32 rounded-[26px] border border-sky-100 bg-white/82 p-5 shadow-[0_18px_45px_rgba(15,84,122,0.08)]"
+                initial={{ opacity: 0.5, y: 8 }}
+                animate={{ opacity: [0.5, 1, 0.5], y: 0 }}
+                transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.1 }}
+              >
+                <div className="mb-7 h-4 w-16 rounded-full bg-slate-100" />
+                <div className="mb-3 h-8 w-20 rounded-2xl bg-slate-100" />
+                <div className="h-3 w-28 rounded-full bg-sky-100" />
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_320px]">
+            <motion.div
+              className="h-72 rounded-[28px] border border-sky-100 bg-white/82 p-6 shadow-[0_18px_45px_rgba(15,84,122,0.08)]"
+              initial={{ opacity: 0.58 }}
+              animate={{ opacity: [0.58, 1, 0.58] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              <div className="mb-6 h-5 w-48 rounded-full bg-slate-100" />
+              <div className="space-y-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-2xl bg-sky-100/80" />
+                    <div className="flex-1">
+                      <div className="mb-2 h-4 w-2/5 rounded-full bg-slate-100" />
+                      <div className="h-3 w-3/5 rounded-full bg-slate-100/80" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="h-72 rounded-[28px] border border-sky-100 bg-white/82 p-6 shadow-[0_18px_45px_rgba(15,84,122,0.08)]"
+              initial={{ opacity: 0.5 }}
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 1.45, repeat: Infinity, delay: 0.12 }}
+            >
+              <div className="mb-6 h-5 w-36 rounded-full bg-slate-100" />
+              <div className="space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="h-9 rounded-2xl bg-slate-100/80" />
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </motion.div>
+)
+
+const PublicLoadingScreen = ({ onDone }: { onDone?: () => void }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [showText, setShowText] = useState(false)
 
@@ -163,4 +291,8 @@ export const LoadingScreen = ({ onDone }: { onDone?: () => void }) => {
       </div>
     </motion.div>
   )
+}
+
+export const LoadingScreen = ({ onDone, variant = 'public' }: { onDone?: () => void; variant?: LoadingScreenVariant }) => {
+  return variant === 'portal' ? <PortalLoadingScreen /> : <PublicLoadingScreen onDone={onDone} />
 }
