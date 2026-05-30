@@ -13,6 +13,7 @@ type Company = {
   industry: string | null
   status: 'active' | 'suspended' | 'trial'
   plan: 'starter' | 'growth' | 'enterprise'
+  plan_reset_at: string | null
   tax_enabled: boolean | null
   vat_rate: number | null
   price_includes_vat: boolean | null
@@ -246,6 +247,9 @@ Deno.serve(async (req) => {
 
   if (!company) return json({ error: 'invalid_checkin_token' }, 404)
   if (company.status === 'suspended') return json({ error: 'company_suspended' }, 403)
+  if (company.status === 'trial' && company.plan_reset_at && new Date(company.plan_reset_at).getTime() < Date.now()) {
+    return json({ error: 'trial_expired' }, 403)
+  }
   if (company.business_type !== 'car_wash' && company.industry !== 'car_wash') {
     return json({ error: 'not_car_wash' }, 403)
   }

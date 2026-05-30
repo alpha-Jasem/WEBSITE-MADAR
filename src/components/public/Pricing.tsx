@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { Check, Sparkles, ArrowRight, Zap } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useLanguage } from '../../context/LanguageContext'
 import { openWhatsAppChat } from '../../lib/whatsapp'
 
@@ -120,6 +121,33 @@ export const Pricing = () => {
             )
           })}
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 0.45 }}
+          className="mt-10 rounded-3xl bg-white p-5 shadow-[0_18px_50px_rgba(13,27,62,0.08)]"
+          style={{ border: '1px solid rgba(0,191,255,0.18)' }}
+        >
+          <div className="flex flex-col items-center justify-between gap-4 text-center md:flex-row md:text-right">
+            <div>
+              <p className={`text-lg font-bold ${language === 'ar' ? 'font-cairo' : 'font-sora'}`} style={{ color: '#0D1B3E' }}>
+                {t('تبيع مغاسل سيارات؟ جرّب النظام كامل 14 يوم', 'Run a car wash? Try the full OS for 14 days')}
+              </p>
+              <p className={`mt-1 text-sm ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: '#3B5280' }}>
+                {t('حساب فوري، OTP للجوال، QR تسجيل ذاتي، وخطوات تشغيل جاهزة.', 'Instant account, phone OTP, self check-in QR, and guided setup.')}
+              </p>
+            </div>
+            <Link
+              to="/trial"
+              className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
+              style={{ background: 'linear-gradient(135deg, #00BFFF, #1565C0)', boxShadow: '0 16px 34px rgba(0,191,255,0.22)' }}
+            >
+              {t('ابدأ تجربة مجانية', 'Start Free Trial')}
+              <ArrowRight size={14} className={language === 'ar' ? 'rotate-180' : ''} />
+            </Link>
+          </div>
+        </motion.div>
 
         <motion.p initial={{ opacity: 0 }} animate={inView ? { opacity: 1 } : {}} transition={{ delay: 0.6 }}
           className={`text-center text-xs mt-8 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: '#7A96BE' }}>

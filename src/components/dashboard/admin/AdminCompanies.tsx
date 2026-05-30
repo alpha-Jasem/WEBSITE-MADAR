@@ -5,9 +5,7 @@ import {
   Building2,
   Car,
   ChevronLeft,
-  MessageSquare,
   Plus,
-  QrCode,
   Search,
   ShieldCheck,
   Stethoscope,
@@ -65,6 +63,11 @@ function featureEnabled(company: Company, key: string) {
   return Boolean((company.cw_automations as any)?.feature_flags?.[key])
 }
 
+function daysUntil(date?: string | null) {
+  if (!date) return null
+  return Math.ceil((new Date(date).getTime() - Date.now()) / (24 * 60 * 60 * 1000))
+}
+
 export const AdminCompanies = () => {
   const [companies, setCompanies] = useState<Company[]>([])
   const [health, setHealth] = useState<Record<string, TenantHealth>>({})
@@ -73,6 +76,7 @@ export const AdminCompanies = () => {
   const [showModal, setShowModal] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
   const [loading, setLoading] = useState(true)
+  const [busyCompanyId, setBusyCompanyId] = useState<string | null>(null)
 
   const loadTenantHealth = async (list: Company[]) => {
     const carWashes = list.filter(c => c.business_type === 'car_wash' || c.industry === 'car_wash')
@@ -144,6 +148,34 @@ export const AdminCompanies = () => {
 
   useEffect(() => { load() }, [])
 
+  const updateCompany = async (company: Company, patch: Partial<Company>, action: string) => {
+    setBusyCompanyId(company.id)
+    try {
+      const { error } = await supabase.from('companies').update(patch as any).eq('id', company.id)
+      if (error) throw error
+      await supabase.from('logs').insert({
+        company_id: company.id,
+        level: 'success',
+        event: action,
+        message: `Admin updated company ${company.name}`,
+        meta: patch,
+      })
+      await load()
+    } finally {
+      setBusyCompanyId(null)
+    }
+  }
+
+  const activateTrial = (company: Company) => updateCompany(company, {
+    status: 'active',
+    plan_reset_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+  } as Partial<Company>, 'admin_trial_activated')
+
+  const extendTrial = (company: Company) => updateCompany(company, {
+    status: 'trial',
+    plan_reset_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+  } as Partial<Company>, 'admin_trial_extended')
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return companies.filter(company => {
@@ -157,11 +189,10 @@ export const AdminCompanies = () => {
     })
   }, [companies, filter, search])
 
-  const carWashCompanies = companies.filter(c => c.business_type === 'car_wash' || c.industry === 'car_wash')
-  const qrReadyCompanies = carWashCompanies.filter(c => c.public_checkin_token || c.webhook_token)
   const nearLimitCompanies = companies.filter(c => getMessageUsage(c) >= 80)
   const walletEnabled = companies.filter(c => featureEnabled(c, 'wallet')).length
   const subscriptionsEnabled = companies.filter(c => featureEnabled(c, 'memberships')).length
+  const expiringTrials = companies.filter(c => c.status === 'trial' && (daysUntil(c.plan_reset_at) ?? 99) <= 3)
 
   return (
     <div className="space-y-6">
@@ -203,7 +234,7 @@ export const AdminCompanies = () => {
           { label: 'إجمالي الشركات', value: companies.length, color: '#4F6EF7', icon: Building2 },
           { label: 'نشطة', value: companies.filter(c => c.status === 'active').length, color: '#10B981', icon: ShieldCheck },
           { label: 'تجريبية', value: companies.filter(c => c.status === 'trial').length, color: '#F59E0B', icon: Zap },
-          { label: 'QR جاهز', value: `${qrReadyCompanies.length}/${carWashCompanies.length || 0}`, color: '#0EA5E9', icon: QrCode },
+          { label: 'تنتهي قريباً', value: expiringTrials.length, color: '#EA580C', icon: AlertTriangle },
           { label: 'محافظ مفعلة', value: walletEnabled + subscriptionsEnabled, color: '#8B5CF6', icon: Users2 },
           { label: 'قرب حد الرسائل', value: nearLimitCompanies.length, color: '#EF4444', icon: AlertTriangle },
         ].map(item => (
@@ -270,6 +301,7 @@ export const AdminCompanies = () => {
                 const usage = getMessageUsage(company)
                 const rowHealth = health[company.id]
                 const BizIcon = businessIcons[company.business_type ?? 'other'] || Building2
+                const trialDays = company.status === 'trial' ? daysUntil(company.plan_reset_at) : null
                 return (
                   <motion.tr
                     key={company.id}
@@ -301,7 +333,16 @@ export const AdminCompanies = () => {
                         {planLabels[company.plan] || company.plan}
                       </span>
                     </td>
-                    <td className="px-4 py-4"><StatusBadge status={company.status} /></td>
+                    <td className="px-4 py-4">
+                      <div className="flex flex-col items-start gap-1">
+                        <StatusBadge status={company.status} />
+                        {trialDays !== null && (
+                          <span className="text-[11px] text-slate-500 font-tajawal">
+                            {trialDays > 0 ? `باقي ${trialDays} يوم` : 'انتهت التجربة'}
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-4 py-4">
                       {rowHealth ? (
                         <div className="min-w-[130px]">
@@ -337,7 +378,29 @@ export const AdminCompanies = () => {
                       </div>
                     </td>
                     <td className="px-4 py-4">
-                      <ChevronLeft size={16} className="text-slate-400" />
+                      <div className="flex items-center justify-end gap-2">
+                        {company.status === 'trial' && (
+                          <>
+                            <button
+                              type="button"
+                              disabled={busyCompanyId === company.id}
+                              onClick={(event) => { event.stopPropagation(); activateTrial(company) }}
+                              className="rounded-lg bg-emerald-50 px-3 py-1.5 text-[11px] font-bold text-emerald-700 font-tajawal disabled:opacity-50"
+                            >
+                              تفعيل
+                            </button>
+                            <button
+                              type="button"
+                              disabled={busyCompanyId === company.id}
+                              onClick={(event) => { event.stopPropagation(); extendTrial(company) }}
+                              className="rounded-lg bg-amber-50 px-3 py-1.5 text-[11px] font-bold text-amber-700 font-tajawal disabled:opacity-50"
+                            >
+                              تمديد 7 أيام
+                            </button>
+                          </>
+                        )}
+                        <ChevronLeft size={16} className="text-slate-400" />
+                      </div>
                     </td>
                   </motion.tr>
                 )

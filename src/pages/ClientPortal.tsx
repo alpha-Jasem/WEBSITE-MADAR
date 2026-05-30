@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState, useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { BarChart3, Calendar, Car, ClipboardCheck, Droplets, LayoutDashboard, MessageSquare, Monitor, Settings, Users2, Wrench, Zap, Wallet, Loader2 } from 'lucide-react'
+import { AlertTriangle, BarChart3, Calendar, Car, ClipboardCheck, CreditCard, Droplets, LayoutDashboard, Loader2, MessageSquare, Monitor, Settings, Users2, Wrench, Zap, Wallet } from 'lucide-react'
 import { DashShell } from '../components/dash/DashShell'
 import type { NavItem } from '../components/dash/DashSidebar'
 import { useClientCompany } from '../hooks/useClientCompany'
@@ -75,6 +75,36 @@ function usePageTitle(navItems: NavItem[]) {
   return match?.label ?? navItems[0]?.label ?? 'نظرة عامة'
 }
 
+function isTrialExpired(company: ReturnType<typeof useClientCompany>['company']) {
+  return company?.status === 'trial' && company.plan_reset_at && new Date(company.plan_reset_at).getTime() < Date.now()
+}
+
+function TrialExpiredGate() {
+  return (
+    <div dir="rtl" className="mx-auto flex min-h-[62vh] max-w-3xl items-center justify-center">
+      <section className="w-full rounded-[28px] border border-amber-200 bg-white p-8 text-center shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+        <div className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-2xl bg-amber-50 text-amber-600">
+          <AlertTriangle size={28} />
+        </div>
+        <p className="text-sm font-bold text-amber-600 font-tajawal">انتهت التجربة المجانية</p>
+        <h1 className="mt-2 text-2xl font-black text-slate-950 font-cairo">ثبّت اشتراكك عشان تستمر لوحة التشغيل وQR</h1>
+        <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-slate-500 font-tajawal">
+          بيانات المغسلة محفوظة. بعد الدفع تتحول المنشأة إلى حساب نشط وتبقى الخدمات، العملاء، والتقارير كما هي.
+        </p>
+        <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+          <a href="/client/upgrade" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0D1B3E] px-5 py-3 text-sm font-bold text-white font-cairo">
+            <CreditCard size={16} />
+            اختيار الباقة والدفع
+          </a>
+          <a href="mailto:info@madar.software" className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-600 font-cairo">
+            تواصل مع الدعم
+          </a>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 export const ClientPortal = () => {
   const { company, companyId, loading } = useClientCompany()
   const navigate = useNavigate()
@@ -91,6 +121,7 @@ export const ClientPortal = () => {
     : allNavItems
 
   const pageTitle = usePageTitle(navItems)
+  const trialExpired = isTrialExpired(company)
 
   const [showSeedDemo, setShowSeedDemo] = useState(false)
   const [seedChecked, setSeedChecked] = useState(false)
@@ -150,25 +181,29 @@ export const ClientPortal = () => {
   return (
     <DashShell navItems={navItems} role="client" pageTitle={pageTitle}>
       <Suspense fallback={<PageLoader />}>
-        <Routes>
-          <Route index element={canAccess('/client') ? (isCarWash ? <CarWashOverview /> : <ClientOverview />) : fallback} />
-          <Route path="queue" element={canAccess('/client/queue') ? <CarWashQueue /> : fallback} />
-          <Route path="queue-display" element={canAccess('/client/queue') ? <CarWashQueueDisplay /> : fallback} />
-          <Route path="workers" element={canAccess('/client/workers') ? <CarWashWorkers /> : fallback} />
-          <Route path="finance" element={canAccess('/client/finance') ? <CarWashFinance /> : fallback} />
-          <Route path="closing" element={canAccess('/client/closing') ? <CarWashDailyClosing /> : fallback} />
-          <Route path="setup" element={isCarWash ? <CarWashSetup /> : <ClientSetup />} />
-          <Route path="appointments" element={<ClientAppointments />} />
-          <Route path="conversations" element={<ClientConversations />} />
-          <Route path="automations" element={canAccess('/client/automations') ? (isCarWash ? <CarWashAutomations /> : <ClientAutomations />) : fallback} />
-          <Route path="leads" element={canAccess('/client/leads') ? (isCarWash ? <CarWashLeads /> : <ClientLeads />) : fallback} />
-          <Route path="reports" element={canAccess('/client/reports') ? (isCarWash ? <CarWashReports /> : <ClientReports />) : fallback} />
-          <Route path="upgrade" element={<PricingPage />} />
-          <Route path="settings" element={canAccess('/client/settings') ? <ClientSettings /> : fallback} />
-          <Route path="*" element={canAccess('/client') ? (isCarWash ? <CarWashOverview /> : <ClientOverview />) : fallback} />
-        </Routes>
+        {trialExpired && !location.pathname.startsWith('/client/upgrade') ? (
+          <TrialExpiredGate />
+        ) : (
+          <Routes>
+            <Route index element={canAccess('/client') ? (isCarWash ? <CarWashOverview /> : <ClientOverview />) : fallback} />
+            <Route path="queue" element={canAccess('/client/queue') ? <CarWashQueue /> : fallback} />
+            <Route path="queue-display" element={canAccess('/client/queue') ? <CarWashQueueDisplay /> : fallback} />
+            <Route path="workers" element={canAccess('/client/workers') ? <CarWashWorkers /> : fallback} />
+            <Route path="finance" element={canAccess('/client/finance') ? <CarWashFinance /> : fallback} />
+            <Route path="closing" element={canAccess('/client/closing') ? <CarWashDailyClosing /> : fallback} />
+            <Route path="setup" element={isCarWash ? <CarWashSetup /> : <ClientSetup />} />
+            <Route path="appointments" element={<ClientAppointments />} />
+            <Route path="conversations" element={<ClientConversations />} />
+            <Route path="automations" element={canAccess('/client/automations') ? (isCarWash ? <CarWashAutomations /> : <ClientAutomations />) : fallback} />
+            <Route path="leads" element={canAccess('/client/leads') ? (isCarWash ? <CarWashLeads /> : <ClientLeads />) : fallback} />
+            <Route path="reports" element={canAccess('/client/reports') ? (isCarWash ? <CarWashReports /> : <ClientReports />) : fallback} />
+            <Route path="upgrade" element={<PricingPage />} />
+            <Route path="settings" element={canAccess('/client/settings') ? <ClientSettings /> : fallback} />
+            <Route path="*" element={canAccess('/client') ? (isCarWash ? <CarWashOverview /> : <ClientOverview />) : fallback} />
+          </Routes>
+        )}
 
-        {showSeedDemo && companyId && (
+        {!trialExpired && showSeedDemo && companyId && (
           <CarWashSeedDemo
             companyId={companyId}
             onDone={() => { setShowSeedDemo(false); navigate('/client/queue') }}

@@ -47,7 +47,9 @@ begin
 end;
 $$;
 
-create or replace function public.get_public_checkin_company(checkin_token text)
+drop function if exists public.get_public_checkin_company(text);
+
+create function public.get_public_checkin_company(checkin_token text)
 returns table (
   id uuid,
   name text,
@@ -55,6 +57,7 @@ returns table (
   industry text,
   status text,
   plan text,
+  plan_reset_at timestamptz,
   public_checkin_token text,
   webhook_token text,
   tax_enabled boolean,
@@ -75,6 +78,7 @@ as $$
     c.industry,
     c.status,
     c.plan,
+    c.plan_reset_at,
     c.public_checkin_token,
     c.webhook_token,
     c.tax_enabled,
@@ -83,8 +87,8 @@ as $$
     c.cw_loyalty_threshold,
     c.cw_automations
   from public.companies c
-  where c.public_checkin_token = checkin_token
-     or c.webhook_token = checkin_token
+  where (c.public_checkin_token = checkin_token or c.webhook_token = checkin_token)
+    and not (c.status = 'trial' and c.plan_reset_at is not null and c.plan_reset_at < now())
   limit 1;
 $$;
 
