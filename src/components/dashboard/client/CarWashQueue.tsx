@@ -53,6 +53,11 @@ const PAYMENT_BUTTONS: { value: PaymentMethod; label: string }[] = [
   { value: 'other', label: 'أخرى' },
 ]
 
+const OPTIONAL_PAYMENT_BUTTONS: { value: PaymentMethod; label: string; flag: 'wallet' | 'memberships' }[] = [
+  { value: 'wallet', label: 'محفظة', flag: 'wallet' },
+  { value: 'membership', label: 'اشتراك', flag: 'memberships' },
+]
+
 function elapsed(created_at: string) {
   const mins = Math.floor((Date.now() - new Date(created_at).getTime()) / 60000)
   if (mins < 60) return `${mins}د`
@@ -82,6 +87,7 @@ interface LoyaltyInfo {
 
 export const CarWashQueue = () => {
   const { companyId, company, loading: authLoading } = useClientCompany()
+  const featureFlags = ((company?.cw_automations as any)?.feature_flags || {}) as Record<string, boolean>
   const [searchParams, setSearchParams] = useSearchParams()
   const [items, setItems] = useState<CWQueueItem[]>([])
   const [workers, setWorkers] = useState<CWWorker[]>([])
@@ -334,9 +340,76 @@ export const CarWashQueue = () => {
     if (!deliverModal || !companyId || delivering) return
     setDelivering(true)
     const item = deliverModal
-    const price = item.is_free_wash ? 0 : item.price
+    const isMembershipPayment = selectedPayment === 'membership'
+    const price = item.is_free_wash || isMembershipPayment ? 0 : item.price
     const vat = calcVAT(price, company?.tax_enabled || false, company?.vat_rate || 15, company?.price_includes_vat || false)
     const now = new Date().toISOString()
+
+    // Look up customer first so we can link the visit record
+    const rawPhone = item.phone?.replace(/\D/g, '') || ''
+    const phone = rawPhone.startsWith('966') ? rawPhone : rawPhone.startsWith('0') ? `966${rawPhone.slice(1)}` : rawPhone ? `966${rawPhone}` : ''
+    let customer: { id: string; free_washes_available: number; loyalty_count: number; total_visits: number; wallet_balance?: number | null } | null = null
+    if (phone && companyId) {
+      const { data } = await supabase
+        .from('cw_customers')
+        .select('id, free_washes_available, loyalty_count, total_visits, wallet_balance')
+        .eq('company_id', companyId)
+        .eq('phone', phone)
+        .maybeSingle()
+      customer = data
+    }
+
+    let membershipId: string | null = null
+    if (selectedPayment === 'membership') {
+      if (!customer?.id) {
+        alert('لا يوجد عميل مسجل لهذا الرقم لاستخدام الاشتراك')
+        setDelivering(false)
+        return
+      }
+      const { data: membership } = await supabase
+        .from('cw_customer_memberships')
+        .select('id, remaining_washes')
+        .eq('company_id', companyId)
+        .eq('customer_id', customer.id)
+        .eq('status', 'active')
+        .gt('remaining_washes', 0)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (!membership) {
+        alert('لا يوجد اشتراك نشط أو غسلات متبقية لهذا العميل')
+        setDelivering(false)
+        return
+      }
+      membershipId = membership.id
+      await supabase
+        .from('cw_customer_memberships')
+        .update({ remaining_washes: Math.max(0, Number(membership.remaining_washes || 0) - 1) } as any)
+        .eq('id', membership.id)
+    }
+
+    if (selectedPayment === 'wallet') {
+      if (!customer?.id) {
+        alert('لا يوجد عميل مسجل لهذا الرقم لاستخدام المحفظة')
+        setDelivering(false)
+        return
+      }
+      if (Number(customer.wallet_balance || 0) < vat.total_amount) {
+        alert('رصيد المحفظة غير كاف')
+        setDelivering(false)
+        return
+      }
+      await supabase.from('cw_wallet_transactions').insert({
+        company_id: companyId,
+        customer_id: customer.id,
+        amount: -vat.total_amount,
+        type: 'debit',
+        note: `خصم غسيل ${item.service_name || ''}`.trim(),
+      })
+      await supabase.from('cw_customers').update({
+        wallet_balance: Number(customer.wallet_balance || 0) - vat.total_amount,
+      } as any).eq('id', customer.id)
+    }
 
     await supabase.from('cw_queue').update({
       status: 'delivered',
@@ -345,22 +418,9 @@ export const CarWashQueue = () => {
       subtotal: vat.subtotal,
       vat_amount: vat.vat_amount,
       total_amount: vat.total_amount,
+      discount_amount: isMembershipPayment ? item.price : item.discount_amount || 0,
       delivered_at: now,
     }).eq('id', item.id)
-
-    // Look up customer first so we can link the visit record
-    const rawPhone = item.phone?.replace(/\D/g, '') || ''
-    const phone = rawPhone.startsWith('966') ? rawPhone : rawPhone.startsWith('0') ? `966${rawPhone.slice(1)}` : rawPhone ? `966${rawPhone}` : ''
-    let customer: { id: string; free_washes_available: number; loyalty_count: number; total_visits: number } | null = null
-    if (phone && companyId) {
-      const { data } = await supabase
-        .from('cw_customers')
-        .select('id, free_washes_available, loyalty_count, total_visits')
-        .eq('company_id', companyId)
-        .eq('phone', phone)
-        .maybeSingle()
-      customer = data
-    }
 
     await supabase.from('cw_visits').insert({
       company_id: item.company_id,
@@ -373,12 +433,12 @@ export const CarWashQueue = () => {
       total_amount: vat.total_amount,
       payment_method: selectedPayment,
       payment_status: 'paid',
-      is_free_wash: item.is_free_wash || false,
+      is_free_wash: item.is_free_wash || isMembershipPayment || false,
       original_price: item.original_price || null,
-      discount_amount: item.discount_amount || 0,
+      discount_amount: isMembershipPayment ? item.price : item.discount_amount || 0,
       worker_id: item.worker_id || null,
       plate: item.plate || null,
-      notes: item.notes || null,
+      notes: membershipId ? `${item.notes || ''} [membership:${membershipId}]`.trim() : item.notes || null,
       phone: item.phone || null,
       customer_name: item.customer_name || null,
       review_request_sent: false,
@@ -972,7 +1032,7 @@ export const CarWashQueue = () => {
             </div>
 
             <div className="mb-4 p-3 rounded-xl space-y-1" style={{ background: '#FFFFFF' }}>
-              <p className="text-sm font-bold text-white font-cairo">{deliverModal.customer_name}</p>
+              <p className="text-sm font-bold text-slate-950 font-cairo">{deliverModal.customer_name}</p>
               {deliverModal.service_name && <p className="text-xs text-slate-400 font-tajawal">{deliverModal.service_name}</p>}
               {deliverModal.is_free_wash && (
                 <div className="flex items-center gap-1.5 mt-1">
@@ -1033,7 +1093,7 @@ export const CarWashQueue = () => {
               <div className="mb-5">
                 <p className="text-xs text-slate-400 font-tajawal mb-2">طريقة الدفع</p>
                 <div className="grid grid-cols-3 gap-2">
-                  {PAYMENT_BUTTONS.map(pm => (
+                  {[...PAYMENT_BUTTONS, ...OPTIONAL_PAYMENT_BUTTONS.filter(pm => Boolean(featureFlags[pm.flag]))].map(pm => (
                     <button
                       key={pm.value}
                       onClick={() => setSelectedPayment(pm.value)}

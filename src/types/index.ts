@@ -141,7 +141,7 @@ export interface LeadFormData {
 export type QueueStatus = 'received' | 'washing' | 'drying' | 'ready' | 'delivered' | 'cancelled'
 export type CommissionType = 'fixed' | 'percentage'
 export type ExpenseCategory = 'tools' | 'electricity' | 'rent' | 'other'
-export type PaymentMethod = 'cash' | 'mada' | 'visa' | 'bank_transfer' | 'stc_pay' | 'other'
+export type PaymentMethod = 'cash' | 'mada' | 'visa' | 'bank_transfer' | 'stc_pay' | 'wallet' | 'membership' | 'other'
 export type PaymentStatus = 'unpaid' | 'paid' | 'refunded' | 'cancelled'
 export type SalaryType = 'fixed' | 'commission' | 'mixed'
 

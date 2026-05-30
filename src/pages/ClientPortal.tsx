@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState, useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { AlertTriangle, BarChart3, Calendar, Car, ClipboardCheck, CreditCard, Droplets, LayoutDashboard, Loader2, MessageSquare, Monitor, Settings, Users2, Wrench, Zap, Wallet } from 'lucide-react'
+import { AlertTriangle, BarChart3, Calendar, Car, ClipboardCheck, CreditCard, Droplets, LayoutDashboard, Loader2, MessageSquare, Monitor, Settings, Users2, WalletCards, Wrench, Zap, Wallet } from 'lucide-react'
 import { DashShell } from '../components/dash/DashShell'
 import type { NavItem } from '../components/dash/DashSidebar'
 import { useClientCompany } from '../hooks/useClientCompany'
@@ -17,6 +17,7 @@ const CarWashQueue       = lazy(() => import('../components/dashboard/client/Car
 const CarWashQueueDisplay = lazy(() => import('../components/dashboard/client/CarWashQueueDisplay').then(m => ({ default: m.CarWashQueueDisplay })))
 const CarWashWorkers     = lazy(() => import('../components/dashboard/client/CarWashWorkers').then(m => ({ default: m.CarWashWorkers })))
 const CarWashFinance     = lazy(() => import('../components/dashboard/client/CarWashFinance').then(m => ({ default: m.CarWashFinance })))
+const CarWashMemberships = lazy(() => import('../components/dashboard/client/CarWashMemberships').then(m => ({ default: m.CarWashMemberships })))
 const CarWashDailyClosing = lazy(() => import('../components/dashboard/client/CarWashDailyClosing').then(m => ({ default: m.CarWashDailyClosing })))
 const CarWashSeedDemo    = lazy(() => import('../components/dashboard/client/CarWashSeedDemo').then(m => ({ default: m.CarWashSeedDemo })))
 const ClientAutomations  = lazy(() => import('../components/dashboard/client/ClientAutomations').then(m => ({ default: m.ClientAutomations })))
@@ -46,6 +47,7 @@ function buildNavItems(template: ReturnType<typeof getClientIndustryTemplate>): 
       { to: '/client/queue',         icon: Car,            label: 'لوحة التشغيل' },
       { to: '/client/queue-display', icon: Monitor,        label: 'شاشة العرض'  },
       { to: '/client/leads',         icon: Users2,         label: 'العملاء'      },
+      { to: '/client/memberships',   icon: WalletCards,    label: 'الاشتراكات'  },
       { to: '/client/finance',       icon: Wallet,         label: 'المالية'      },
       { to: '/client/closing',       icon: ClipboardCheck, label: 'إغلاق اليوم' },
       { to: '/client/reports',       icon: BarChart3,      label: 'التقارير'     },
@@ -114,11 +116,16 @@ export const ClientPortal = () => {
   const isCarWash = template.type === 'car_wash'
 
   const allNavItems = buildNavItems(template)
+  const flags = ((company?.cw_automations as any)?.feature_flags || {}) as Record<string, boolean>
+  const paidCustomerRevenueEnabled = Boolean(flags.wallet || flags.memberships || flags.online_payments)
+  const visibleNavItems = isCarWash && !paidCustomerRevenueEnabled
+    ? allNavItems.filter(item => item.to !== '/client/memberships')
+    : allNavItems
   const navItems = (isCarWash && !profile.isOwner)
-    ? allNavItems.filter(item => item.to === '/client/queue-display'
+    ? visibleNavItems.filter(item => item.to === '/client/queue-display'
       ? profile.permissions.includes('/client/queue')
       : profile.permissions.includes(item.to))
-    : allNavItems
+    : visibleNavItems
 
   const pageTitle = usePageTitle(navItems)
   const trialExpired = isTrialExpired(company)
@@ -196,6 +203,7 @@ export const ClientPortal = () => {
             <Route path="conversations" element={<ClientConversations />} />
             <Route path="automations" element={canAccess('/client/automations') ? (isCarWash ? <CarWashAutomations /> : <ClientAutomations />) : fallback} />
             <Route path="leads" element={canAccess('/client/leads') ? (isCarWash ? <CarWashLeads /> : <ClientLeads />) : fallback} />
+            <Route path="memberships" element={isCarWash ? <CarWashMemberships /> : fallback} />
             <Route path="reports" element={canAccess('/client/reports') ? (isCarWash ? <CarWashReports /> : <ClientReports />) : fallback} />
             <Route path="upgrade" element={<PricingPage />} />
             <Route path="settings" element={canAccess('/client/settings') ? <ClientSettings /> : fallback} />
