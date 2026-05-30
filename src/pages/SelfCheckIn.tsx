@@ -243,7 +243,7 @@ export function SelfCheckIn() {
     }
     if (result?.error || !result?.verified) {
       const msgs: Record<string, string> = {
-        otp_invalid: 'الرمز غير صحيح. تحقق من واتساب.',
+        otp_invalid: 'الرمز غير صحيح. تحقق من الرسالة النصية.',
         otp_expired: 'انتهت صلاحية الرمز. اطلب رمزاً جديداً.',
         otp_not_found: 'لم يُرسَل رمز. اطلب رمزاً جديداً.',
       }
@@ -495,14 +495,14 @@ export function SelfCheckIn() {
               {submitError && <p className="self-checkin-error">{submitError}</p>}
               <button type="button" onClick={sendOtp} disabled={sendingOtp}>
                 {sendingOtp ? <Loader2 className="animate-spin" size={18} /> : <MessageCircle size={18} />}
-                {sendingOtp ? 'جاري الإرسال...' : 'إرسال رمز واتساب'}
+                {sendingOtp ? 'جاري الإرسال...' : 'إرسال رمز إلى الجوال'}
               </button>
             </>
           ) : step === 'otp' ? (
             <>
               <div style={{ textAlign: 'center', padding: '4px 0 8px' }}>
                 <p style={{ margin: 0, fontSize: 14, color: '#475569', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.7 }}>
-                  أرسلنا رمز التحقق عبر واتساب إلى<br />
+                  أرسلنا رمز التحقق برسالة نصية إلى<br />
                   <strong style={{ color: '#0F172A', fontFamily: 'Sora, sans-serif', direction: 'ltr', display: 'inline-block' }}>
                     {form.phone}
                   </strong>
