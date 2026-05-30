@@ -4,6 +4,12 @@ import { RefreshCw } from 'lucide-react'
 interface Props { children: ReactNode }
 interface State { error: Error | null }
 
+const CHUNK_RELOAD_KEY = 'madar_chunk_reload_once'
+
+function isChunkLoadError(error: Error) {
+  return /Failed to fetch dynamically imported module|Importing a module script failed|Loading chunk|ChunkLoadError/i.test(error.message)
+}
+
 export class ErrorBoundary extends Component<Props, State> {
   state: State = { error: null }
 
@@ -13,10 +19,19 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: { componentStack: string }) {
     console.error('[ErrorBoundary]', error, info.componentStack)
+
+    if (isChunkLoadError(error) && sessionStorage.getItem(CHUNK_RELOAD_KEY) !== '1') {
+      sessionStorage.setItem(CHUNK_RELOAD_KEY, '1')
+      window.location.reload()
+      return
+    }
   }
 
   render() {
-    if (!this.state.error) return this.props.children
+    if (!this.state.error) {
+      sessionStorage.removeItem(CHUNK_RELOAD_KEY)
+      return this.props.children
+    }
 
     return (
       <div
