@@ -291,5 +291,6 @@ const PublicLoadingScreen = ({ onDone }: { onDone?: () => void }) => {
 }
 
 export const LoadingScreen = ({ onDone, variant = 'public' }: { onDone?: () => void; variant?: LoadingScreenVariant }) => {
-  return variant === 'portal' ? <PortalLoadingScreen /> : <PublicLoadingScreen onDone={onDone} />
+  const isPortalRoute = typeof window !== 'undefined' && /^\/(admin|client|solar)(\/|$)/.test(window.location.pathname)
+  return variant === 'portal' || isPortalRoute ? <PortalLoadingScreen /> : <PublicLoadingScreen onDone={onDone} />
 }

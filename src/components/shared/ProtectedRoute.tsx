@@ -69,7 +69,7 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
     }
   }, [requiredRole])
 
-  if (isLoading) return <LoadingScreen />
+  if (isLoading) return <LoadingScreen variant={requiredRole ? 'portal' : 'public'} />
 
   if (!isAuthed) {
     const redirect = encodeURIComponent(`${location.pathname}${location.search}`)
