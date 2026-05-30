@@ -353,8 +353,24 @@ export const AdminCommandDeck = () => {
   if (loading) {
     return (
       <div className="admin-command-loading">
-        <div />
-        <p>جاري تحميل مركز الإدارة...</p>
+        <div className="admin-command-loading-status">
+          <span />
+          <p>جاري تجهيز اللوحة...</p>
+        </div>
+        <section className="admin-command-loading-hero">
+          <div>
+            <i />
+            <b />
+            <em />
+          </div>
+          <div className="admin-command-loading-grid">
+            {Array.from({ length: 4 }).map((_, index) => <span key={index} />)}
+          </div>
+        </section>
+        <section className="admin-command-loading-panels">
+          <span />
+          <span />
+        </section>
       </div>
     )
   }

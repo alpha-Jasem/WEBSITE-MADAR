@@ -46,12 +46,9 @@ const PortalLoadingScreen = () => (
       <aside
         className="hidden w-[236px] shrink-0 border-l border-sky-100/80 bg-white/74 px-6 py-7 shadow-[0_20px_70px_rgba(15,84,122,0.08)] backdrop-blur xl:block"
       >
-        <div className="mb-9 flex items-center gap-3">
-          <img src="/logo-main.png" alt="Madar" className="h-11 w-auto object-contain" />
-          <div>
-            <p className="font-sora text-base font-bold leading-none text-slate-950">Madar.software</p>
-            <p className="mt-1 text-xs font-semibold text-sky-500">مركز الإدارة</p>
-          </div>
+        <div className="mb-9 space-y-3">
+          <div className="h-8 w-28 rounded-2xl bg-sky-100/80" />
+          <div className="h-3 w-20 rounded-full bg-slate-100" />
         </div>
         <div className="space-y-3">
           {Array.from({ length: 8 }).map((_, i) => (
