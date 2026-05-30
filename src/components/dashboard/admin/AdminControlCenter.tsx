@@ -7,12 +7,17 @@ import {
   Building2,
   CheckCircle2,
   CreditCard,
+  Gauge,
   History,
+  ListChecks,
   LockKeyhole,
   MessageSquare,
+  QrCode,
   RefreshCw,
+  Send,
   ShieldCheck,
   SlidersHorizontal,
+  Store,
   WalletCards,
   Workflow,
   Zap,
@@ -36,6 +41,41 @@ type AuditRow = {
   entity_type?: string | null
   created_at: string
   company_id?: string | null
+}
+
+type OpsLog = {
+  id: string
+  level?: string | null
+  event?: string | null
+  message?: string | null
+  company_id?: string | null
+  created_at: string
+}
+
+type OtpLog = {
+  id: string
+  company_name: string
+  phone_tail: string
+  provider: string
+  status: string
+  attempts: number
+  created_at: string
+}
+
+type OpsOverview = {
+  twilio_ready: boolean
+  otp: {
+    today: number
+    month: number
+    twilio_today: number
+    twilio_month: number
+    verified_today: number
+    verified_month: number
+    estimated_sms_cost_sar: number
+    latest: OtpLog[]
+  }
+  audit: AuditRow[]
+  logs: OpsLog[]
 }
 
 const planValue: Record<string, number> = {
@@ -63,6 +103,23 @@ function money(value: number) {
   return `${value.toLocaleString('en-US')} ر.س`
 }
 
+async function callAdminOps(body: Record<string, unknown>) {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.access_token) return null
+  const baseUrl = import.meta.env.VITE_SUPABASE_URL
+  const response = await fetch(`${baseUrl}/functions/v1/admin-ops`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify(body),
+  })
+  const payload = await response.json().catch(() => ({}))
+  if (!response.ok) return { error: payload.error || 'admin_ops_failed', details: payload }
+  return payload
+}
+
 function SmallCard({ icon: Icon, label, value, tone = '#0EA5E9' }: { icon: ElementType; label: string; value: string | number; tone?: string }) {
   return (
     <article className="admin-control-stat">
@@ -77,6 +134,12 @@ export const AdminControlCenter = () => {
   const [companies, setCompanies] = useState<Company[]>([])
   const [health, setHealth] = useState<HealthRow[]>([])
   const [audit, setAudit] = useState<AuditRow[]>([])
+  const [ops, setOps] = useState<OpsOverview | null>(null)
+  const [diagnoseId, setDiagnoseId] = useState('')
+  const [testPhone, setTestPhone] = useState('')
+  const [testCompanyId, setTestCompanyId] = useState('')
+  const [testStatus, setTestStatus] = useState('')
+  const [testingOtp, setTestingOtp] = useState(false)
   const [loading, setLoading] = useState(true)
 
   const load = async () => {
@@ -84,12 +147,13 @@ export const AdminControlCenter = () => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    const [companiesRes, servicesRes, workersRes, queueRes, logsRes] = await Promise.all([
+    const [companiesRes, servicesRes, workersRes, queueRes, logsRes, opsRes] = await Promise.all([
       supabase.from('companies').select('*').order('created_at', { ascending: false }),
       supabase.from('cw_services').select('company_id, active'),
       supabase.from('cw_workers').select('company_id, active'),
       supabase.from('cw_queue').select('company_id, status, created_at').gte('created_at', today.toISOString()),
       supabase.from('cw_audit_logs').select('id, action, entity_type, company_id, created_at').order('created_at', { ascending: false }).limit(12),
+      callAdminOps({ action: 'overview' }),
     ])
 
     const rows = (companiesRes.data || []) as Company[]
@@ -126,7 +190,10 @@ export const AdminControlCenter = () => {
 
     setCompanies(rows)
     setHealth(healthRows.sort((a, b) => a.score - b.score))
-    setAudit(((logsRes.data || []) as AuditRow[]))
+    setAudit(((opsRes && !('error' in opsRes) ? opsRes.audit : logsRes.data) || []) as AuditRow[])
+    setOps(opsRes && !('error' in opsRes) ? opsRes as OpsOverview : null)
+    setDiagnoseId(prev => prev || healthRows[0]?.company.id || '')
+    setTestCompanyId(prev => prev || rows[0]?.id || '')
     setLoading(false)
   }
 
@@ -152,9 +219,41 @@ export const AdminControlCenter = () => {
 
   const alerts = [
     ...companies.filter(company => messageUsage(company) >= 80).map(company => ({ label: `${company.name}: قريب من حد الرسائل`, level: 'danger' })),
+    ...(ops && ops.otp.estimated_sms_cost_sar >= 300 ? [{ label: `تكلفة OTP هذا الشهر ${money(ops.otp.estimated_sms_cost_sar)}`, level: 'danger' }] : []),
     ...companies.filter(company => !(company.public_checkin_token || company.webhook_token)).slice(0, 5).map(company => ({ label: `${company.name}: QR غير جاهز`, level: 'warn' })),
     ...health.filter(row => row.score < 65).slice(0, 5).map(row => ({ label: `${row.company.name}: جاهزية ${row.score}%`, level: 'warn' })),
   ].slice(0, 10)
+
+  const diagnosed = health.find(row => row.company.id === diagnoseId) || health[0]
+
+  const onboardingChecks = diagnosed ? [
+    { label: 'الحساب نشط', done: diagnosed.company.status === 'active' || diagnosed.company.status === 'trial' },
+    { label: 'QR جاهز', done: Boolean(diagnosed.company.public_checkin_token || diagnosed.company.webhook_token) },
+    { label: 'الخدمات مضافة', done: diagnosed.services > 0 },
+    { label: 'الموظفون مضافون', done: diagnosed.workers > 0 },
+    { label: 'VAT مضبوط', done: diagnosed.company.tax_enabled !== undefined },
+    { label: 'Twilio OTP جاهز', done: Boolean(ops?.twilio_ready) },
+    { label: 'تشغيل اليوم موجود', done: diagnosed.carsToday > 0 },
+  ] : []
+
+  const runOtpTest = async () => {
+    if (!testCompanyId || testingOtp) return
+    const digits = testPhone.replace(/\D/g, '')
+    if (!/^05\d{8}$/.test(digits) && !/^9665\d{8}$/.test(digits)) {
+      setTestStatus('اكتب رقم سعودي صحيح مثل 05XXXXXXXX')
+      return
+    }
+    setTestingOtp(true)
+    setTestStatus('جاري إرسال اختبار OTP...')
+    const result = await callAdminOps({ action: 'test_otp', company_id: testCompanyId, phone: testPhone })
+    if (result?.sent) {
+      setTestStatus(`تم الإرسال عبر ${result.provider}`)
+      await load()
+    } else {
+      setTestStatus('تعذر إرسال الاختبار. راجع Secrets أو رصيد Twilio.')
+    }
+    setTestingOtp(false)
+  }
 
   if (loading) {
     return (
@@ -182,6 +281,8 @@ export const AdminControlCenter = () => {
         <SmallCard icon={WalletCards} label="مزايا مدفوعة" value={stats.addonCount} tone="#8B5CF6" />
         <SmallCard icon={QrCode} label="QR جاهز" value={`${stats.qrReady}/${companies.length}`} tone="#0EA5E9" />
         <SmallCard icon={AlertTriangle} label="قرب حد الرسائل" value={stats.nearLimit} tone="#EF4444" />
+        <SmallCard icon={MessageSquare} label="OTP هذا الشهر" value={ops?.otp.month ?? 0} tone="#10B981" />
+        <SmallCard icon={Gauge} label="تكلفة OTP" value={money(ops?.otp.estimated_sms_cost_sar ?? 0)} tone="#F59E0B" />
       </div>
 
       <div className="admin-control-grid">
@@ -227,13 +328,65 @@ export const AdminControlCenter = () => {
         </section>
 
         <section className="admin-control-panel">
-          <header><SlidersHorizontal size={18} /><h2>إدارة المزايا</h2></header>
+          <header><Send size={18} /><h2>اختبار OTP</h2></header>
+          <div className="admin-ops-form">
+            <select value={testCompanyId} onChange={event => setTestCompanyId(event.target.value)}>
+              {companies.map(company => <option key={company.id} value={company.id}>{company.name}</option>)}
+            </select>
+            <input value={testPhone} onChange={event => setTestPhone(event.target.value)} placeholder="05XXXXXXXX" dir="ltr" />
+            <button type="button" onClick={runOtpTest} disabled={testingOtp}>
+              {testingOtp ? 'جاري الإرسال...' : 'إرسال اختبار'}
+            </button>
+            {testStatus && <p>{testStatus}</p>}
+          </div>
+        </section>
+
+        <section className="admin-control-panel">
+          <header><ListChecks size={18} /><h2>تشخيص شركة</h2></header>
+          <div className="admin-ops-form">
+            <select value={diagnoseId} onChange={event => setDiagnoseId(event.target.value)}>
+              {health.map(row => <option key={row.company.id} value={row.company.id}>{row.company.name}</option>)}
+            </select>
+          </div>
+          {diagnosed && (
+            <div className="admin-diagnosis">
+              <div className="admin-health-meter"><span style={{ width: `${diagnosed.score}%` }} /></div>
+              <strong>{diagnosed.score}% جاهزية</strong>
+              <p>{diagnosed.issues.join(' · ') || 'الشركة جاهزة للتشغيل'}</p>
+            </div>
+          )}
+        </section>
+
+        <section className="admin-control-panel wide">
+          <header><History size={18} /><h2>OTP Logs والتكلفة</h2></header>
+          <div className="admin-otp-summary">
+            <article><strong>{ops?.otp.today ?? 0}</strong><span>اليوم</span></article>
+            <article><strong>{ops?.otp.verified_month ?? 0}</strong><span>تحقق ناجح</span></article>
+            <article><strong>{money(ops?.otp.estimated_sms_cost_sar ?? 0)}</strong><span>تكلفة تقديرية</span></article>
+          </div>
+          <div className="admin-audit-list compact">
+            {ops?.otp.latest?.length ? ops.otp.latest.map(item => (
+              <article key={item.id}>
+                <MessageSquare size={15} />
+                <div>
+                  <strong>{item.company_name} · ****{item.phone_tail}</strong>
+                  <span>{item.provider} · {item.status === 'verified' ? 'تم التحقق' : 'تم الإرسال'} · {new Date(item.created_at).toLocaleString('ar-SA')}</span>
+                </div>
+              </article>
+            )) : <p className="admin-muted">لا توجد OTP logs بعد.</p>}
+          </div>
+        </section>
+
+        <section className="admin-control-panel">
+          <header><Store size={18} /><h2>متجر الإضافات</h2></header>
           <div className="admin-addon-grid">
             {[
-              ['المحافظ الرقمية', 'wallet'],
-              ['الاشتراكات الشهرية', 'memberships'],
-              ['Apple Pay / Google Pay', 'online_payments'],
-              ['الفروع المتعددة', 'branches'],
+              ['Wallet', 'wallet'],
+              ['Memberships', 'memberships'],
+              ['Payments', 'online_payments'],
+              ['Branches', 'branches'],
+              ['AI Promo', 'whatsapp_ai'],
+              ['Reports', 'advanced_reports'],
             ].map(([label, key]) => (
               <article key={key}>
                 <strong>{companies.filter(company => hasFeature(company, key)).length}</strong>
@@ -256,6 +409,18 @@ export const AdminControlCenter = () => {
           </div>
         </section>
 
+        <section className="admin-control-panel">
+          <header><ListChecks size={18} /><h2>Onboarding Checklist</h2></header>
+          <div className="admin-check-mini">
+            {onboardingChecks.map(check => (
+              <article key={check.label} className={check.done ? 'done' : ''}>
+                <CheckCircle2 size={15} />
+                <span>{check.label}</span>
+              </article>
+            ))}
+          </div>
+        </section>
+
         <section className="admin-control-panel wide">
           <header><History size={18} /><h2>آخر تغييرات الإدارة</h2></header>
           <div className="admin-audit-list">
@@ -268,6 +433,21 @@ export const AdminControlCenter = () => {
                 </div>
               </article>
             )) : <p className="admin-muted">سيظهر هنا سجل تعديل الباقات والمزايا بعد أول تغيير.</p>}
+          </div>
+        </section>
+
+        <section className="admin-control-panel wide">
+          <header><Zap size={18} /><h2>System Logs</h2></header>
+          <div className="admin-audit-list compact">
+            {ops?.logs?.length ? ops.logs.map(item => (
+              <article key={item.id}>
+                <Zap size={15} />
+                <div>
+                  <strong>{item.event || item.level || 'system'}</strong>
+                  <span>{item.message || 'بدون تفاصيل'} · {new Date(item.created_at).toLocaleString('ar-SA')}</span>
+                </div>
+              </article>
+            )) : <p className="admin-muted">لا توجد system logs ظاهرة.</p>}
           </div>
         </section>
       </div>
