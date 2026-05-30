@@ -8,6 +8,9 @@ import { canUseSelfCheckin, getSelfCheckinSettings, markSelfCheckinNotes } from 
 import type { Company, CWService, Plan } from '../types'
 
 const N8N_REGISTER_WEBHOOK = 'https://keepcalm.app.n8n.cloud/webhook/cw-registration'
+const CHECKIN_SESSION_MS = 60 * 60 * 1000
+const CHECKIN_SESSION_PREFIX = 'madar_checkin_session'
+const CHECKIN_LAST_PHONE_PREFIX = 'madar_checkin_last_phone'
 
 type CheckinCompany = Pick<Company,
   'id' | 'name' | 'business_type' | 'industry' | 'status' | 'webhook_token' |
@@ -62,6 +65,52 @@ function qrUrl(value: string, size = 220) {
   return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=12&data=${encodeURIComponent(value)}`
 }
 
+function sessionKey(token: string, phone: string) {
+  return `${CHECKIN_SESSION_PREFIX}:${token}:${phone}`
+}
+
+function lastPhoneKey(token: string) {
+  return `${CHECKIN_LAST_PHONE_PREFIX}:${token}`
+}
+
+function readCheckinSession(token: string, phone: string) {
+  try {
+    const stored = sessionStorage.getItem(sessionKey(token, phone))
+    if (!stored) return null
+    const parsed = JSON.parse(stored) as { verificationToken?: string; expiresAt?: number }
+    if (!parsed.verificationToken || !parsed.expiresAt || parsed.expiresAt <= Date.now()) {
+      sessionStorage.removeItem(sessionKey(token, phone))
+      return null
+    }
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+function readLastCheckinSession(token: string) {
+  try {
+    const phone = sessionStorage.getItem(lastPhoneKey(token)) || ''
+    if (!phone) return null
+    const session = readCheckinSession(token, phone)
+    return session ? { phone, ...session } : null
+  } catch {
+    return null
+  }
+}
+
+function storeCheckinSession(token: string, phone: string, verificationToken: string) {
+  try {
+    sessionStorage.setItem(lastPhoneKey(token), phone)
+    sessionStorage.setItem(sessionKey(token, phone), JSON.stringify({
+      verificationToken,
+      expiresAt: Date.now() + CHECKIN_SESSION_MS,
+    }))
+  } catch {
+    // Best effort only. OTP still works without browser storage.
+  }
+}
+
 function fireRegistration(body: Record<string, unknown>) {
   fetch(N8N_REGISTER_WEBHOOK, {
     method: 'POST',
@@ -111,6 +160,7 @@ export function SelfCheckIn() {
   const [step, setStep] = useState<'phone' | 'otp' | 'details'>('phone')
   const [knownCustomer, setKnownCustomer] = useState<KnownCustomer | null>(null)
   const [checkingPhone, setCheckingPhone] = useState(false)
+  const [restoredSession, setRestoredSession] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [ticketCode, setTicketCode] = useState('')
   const [queueId, setQueueId] = useState('')
@@ -199,15 +249,61 @@ export function SelfCheckIn() {
     return () => clearTimeout(t)
   }, [resendCooldown])
 
+  const continueWithVerifiedSession = async (phone: string, vtk: string, showOtpError = true) => {
+    setVerificationToken(vtk)
+    const edgeResult = await callCheckinFunction({ action: 'lookup_customer', token, phone, verification_token: vtk })
+    if (!edgeResult || edgeResult?.error) {
+      if (showOtpError) setOtpError('انتهت جلسة التحقق. اطلب رمزاً جديداً.')
+      return false
+    }
+
+    const customer = edgeResult?.customer as KnownCustomer | null
+    if (customer?.id) {
+      const nm = splitName(customer.name)
+      setKnownCustomer(customer)
+      setForm(f => ({ ...f, phone, first_name: nm.first, last_name: nm.last }))
+    } else {
+      setKnownCustomer(null)
+      setForm(f => ({ ...f, phone, first_name: '', last_name: '' }))
+    }
+    setStep('details')
+    return true
+  }
+
+  useEffect(() => {
+    if (loading || !company || restoredSession || ticketCode) return
+    const saved = readLastCheckinSession(token)
+    if (!saved) {
+      setRestoredSession(true)
+      return
+    }
+
+    setCheckingPhone(true)
+    continueWithVerifiedSession(saved.phone, saved.verificationToken, false)
+      .finally(() => {
+        setCheckingPhone(false)
+        setRestoredSession(true)
+      })
+  }, [loading, company, restoredSession, ticketCode, token])
+
   const sendOtp = async () => {
-    if (!company || sendingOtp) return
+    if (!company || sendingOtp || checkingPhone) return
     setSubmitError('')
     if (!isValidSaudiMobile(form.phone)) {
       setSubmitError('اكتب رقم جوال سعودي صحيح مثل 05XXXXXXXX.')
       return
     }
+    const phone = normalizePhone(form.phone)
+    const saved = readCheckinSession(token, phone)
+    if (saved) {
+      setCheckingPhone(true)
+      const ok = await continueWithVerifiedSession(phone, saved.verificationToken)
+      setCheckingPhone(false)
+      if (ok) return
+    }
+
     setSendingOtp(true)
-    const result = await callCheckinFunction({ action: 'send_otp', token, phone: normalizePhone(form.phone) })
+    const result = await callCheckinFunction({ action: 'send_otp', token, phone })
     if (!result) {
       setSubmitError('تعذر الاتصال بخدمة التحقق. حاول مرة أخرى.')
       setSendingOtp(false)
@@ -252,11 +348,12 @@ export function SelfCheckIn() {
       return
     }
     const vtk: string = result.verification_token
+    const phone = normalizePhone(form.phone)
+    storeCheckinSession(token, phone, vtk)
     setVerificationToken(vtk)
     // Lookup customer after verified
-    const phone = normalizePhone(form.phone)
     const edgeResult = await callCheckinFunction({ action: 'lookup_customer', token, phone, verification_token: vtk })
-    if (!edgeResult) {
+    if (!edgeResult || edgeResult?.error) {
       setOtpError('تم التحقق من الرمز، لكن تعذر تحميل بيانات العميل. حاول مرة أخرى.')
       setVerifyingOtp(false)
       return

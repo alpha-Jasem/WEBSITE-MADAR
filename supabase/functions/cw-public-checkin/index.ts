@@ -26,7 +26,7 @@ type Service = {
 }
 
 const OTP_TTL_MINUTES = 5
-const OTP_VERIFICATION_TTL_MINUTES = 20
+const OTP_VERIFICATION_TTL_MINUTES = 60
 const OTP_MAX_PER_HOUR = 5
 const OTP_MAX_ATTEMPTS = 5
 const DEFAULT_OTP_WEBHOOK = 'https://keepcalm.app.n8n.cloud/webhook/cw-send-otp'

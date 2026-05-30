@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { Car, CheckCircle2, Clock, Droplets, Loader2, ShieldCheck, Sparkles } from 'lucide-react'
+import { useParams } from 'react-router-dom'
+import { CheckCircle2, Clock, Droplets, Loader2, ShieldCheck, Sparkles } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { getDailyTicketCode } from '../lib/carWashTickets'
 import { isSelfCheckinPending } from '../lib/selfCheckin'
@@ -207,10 +207,6 @@ export function CarWashStatus() {
           </button>
         )}
 
-        <Link to={`/checkin/${token}`} className="self-checkin-status-link">
-          <Car size={16} />
-          تسجيل سيارة أخرى
-        </Link>
       </section>
     </main>
   )
