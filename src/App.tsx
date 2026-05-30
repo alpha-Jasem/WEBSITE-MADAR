@@ -11,12 +11,12 @@ import { Login } from './pages/Login'
 import { AuthCallback } from './pages/AuthCallback'
 import { Privacy } from './pages/Privacy'
 import { Terms } from './pages/Terms'
+import { SelfCheckIn } from './pages/SelfCheckIn'
+import { CarWashStatus } from './pages/CarWashStatus'
 
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
 const ClientPortal = lazy(() => import('./pages/ClientPortal').then(m => ({ default: m.ClientPortal })))
 const SolarEngine = lazy(() => import('./pages/SolarEngine').then(m => ({ default: m.SolarEngine })))
-const SelfCheckIn = lazy(() => import('./pages/SelfCheckIn').then(m => ({ default: m.SelfCheckIn })))
-const CarWashStatus = lazy(() => import('./pages/CarWashStatus').then(m => ({ default: m.CarWashStatus })))
 
 function App() {
   return (

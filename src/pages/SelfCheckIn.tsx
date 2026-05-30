@@ -512,14 +512,7 @@ export function SelfCheckIn() {
   }
 
   if (loading) {
-    return (
-      <main className="self-checkin-page" dir="rtl">
-        <div className="self-checkin-state">
-          <Loader2 className="animate-spin" size={28} />
-          <span>جاري فتح التسجيل الذاتي...</span>
-        </div>
-      </main>
-    )
+    return <main className="self-checkin-page" dir="rtl" aria-busy="true" />
   }
 
   if (loadError || !company) {

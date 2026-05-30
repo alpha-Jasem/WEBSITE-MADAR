@@ -201,12 +201,6 @@ export function CarWashStatus() {
           })}
         </div>
 
-        {item.status === 'delivered' && (
-          <button className="status-rating-button" type="button">
-            قيّم التجربة لاحقاً
-          </button>
-        )}
-
       </section>
     </main>
   )
