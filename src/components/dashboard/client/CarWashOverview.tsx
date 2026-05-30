@@ -17,9 +17,10 @@ import {
   Trophy,
   Users,
   Wallet,
+  X,
   Zap,
 } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { getDailyTicketCode } from '../../../lib/carWashTickets'
@@ -91,12 +92,14 @@ function formatPhone(phone?: string | null) {
 
 export function CarWashOverview() {
   const { companyId, company, loading: authLoading } = useClientCompany()
+  const location = useLocation()
   const [loading, setLoading] = useState(true)
   const [queue, setQueue] = useState<QueueCar[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
   const [visits, setVisits] = useState<Visit[]>([])
   const [workers, setWorkers] = useState<WorkerScore[]>([])
   const [pendingReviews, setPendingReviews] = useState(0)
+  const [showTrialGuide, setShowTrialGuide] = useState(false)
 
   const load = async () => {
     if (!companyId) return
@@ -184,6 +187,14 @@ export function CarWashOverview() {
     }
   }, [authLoading, companyId])
 
+  useEffect(() => {
+    if (!company?.id) return
+    const key = `madar_trial_guide_dismissed_${company.id}`
+    const shouldShow = company.status === 'trial' && localStorage.getItem(key) !== '1'
+    const welcome = new URLSearchParams(location.search).get('welcome') === 'trial'
+    setShowTrialGuide(shouldShow || welcome)
+  }, [company?.id, company?.status, location.search])
+
   const stats = useMemo(() => {
     const active = queue.filter(item => item.status !== 'delivered')
     const delivered = queue.filter(item => item.status === 'delivered')
@@ -230,6 +241,14 @@ export function CarWashOverview() {
     pendingReviews > 0 ? `أرسل ${pendingReviews} طلب تقييم` : '',
     setupIssues.find(item => !item.done) ? `أكمل إعداد ${setupIssues.find(item => !item.done)?.label}` : '',
   ].filter(Boolean)
+  const trialDaysLeft = company?.status === 'trial' && company?.plan_reset_at
+    ? Math.max(0, Math.ceil((new Date(company.plan_reset_at).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
+    : null
+
+  const dismissTrialGuide = () => {
+    if (company?.id) localStorage.setItem(`madar_trial_guide_dismissed_${company.id}`, '1')
+    setShowTrialGuide(false)
+  }
 
   if (authLoading || loading) {
     return (
@@ -267,6 +286,47 @@ export function CarWashOverview() {
           </Link>
         </div>
       </section>
+
+      {showTrialGuide && company?.status === 'trial' && (
+        <section className="rounded-[24px] border border-sky-100 bg-white p-5 shadow-[0_20px_70px_rgba(15,23,42,0.08)]">
+          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <span className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-1 text-xs font-bold text-sky-700 font-tajawal">
+                <Sparkles size={13} />
+                تجربة Pro مفعلة {trialDaysLeft !== null ? `- باقي ${trialDaysLeft} يوم` : ''}
+              </span>
+              <h2 className="mt-3 text-xl font-bold text-slate-950 font-cairo">مرحباً بك في مدار OS</h2>
+              <p className="mt-1 max-w-2xl text-sm leading-7 text-slate-500 font-tajawal">
+                جهزنا لك الخدمات الأساسية وفتحنا التسجيل الذاتي QR خلال التجربة. اتبع هذه الخطوات عشان تكون المغسلة جاهزة للبيع والتشغيل أمام فريقك.
+              </p>
+            </div>
+            <button type="button" onClick={dismissTrialGuide} className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 text-slate-400 transition-colors hover:text-slate-900">
+              <X size={16} />
+            </button>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-5">
+            {[
+              { title: 'راجع الخدمات', desc: 'عدّل الأسعار والمدة.', to: '/client/setup', icon: Droplets },
+              { title: 'اطبع QR', desc: 'ضعه عند مدخل المغسلة.', to: '/client/settings', icon: Monitor },
+              { title: 'جرّب المسار', desc: 'استقبال ثم خدمة ثم تسليم.', to: '/client/queue', icon: Car },
+              { title: 'أضف الموظفين', desc: 'تابع الأداء والصلاحيات.', to: '/client/workers', icon: Users },
+              { title: 'اختَر الباقة', desc: 'ثبّت الاشتراك بعد التجربة.', to: '/client/upgrade', icon: Wallet },
+            ].map((item, index) => (
+              <Link key={item.title} to={item.to} className="rounded-2xl border border-slate-100 bg-slate-50 p-4 transition-all hover:-translate-y-0.5 hover:border-sky-200 hover:bg-white hover:shadow-lg">
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="grid h-9 w-9 place-items-center rounded-xl bg-white text-sky-600 shadow-sm">
+                    <item.icon size={17} />
+                  </span>
+                  <em className="font-sora text-xs not-italic text-slate-300">0{index + 1}</em>
+                </div>
+                <strong className="block text-sm text-slate-950 font-cairo">{item.title}</strong>
+                <small className="mt-1 block text-xs leading-5 text-slate-500 font-tajawal">{item.desc}</small>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="cw-kpi-grid">
         <Kpi icon={Car} label="سيارات في المسار" value={stats.active.length} hint={`${stats.inService.length} قيد الخدمة`} color="#00BFFF" />

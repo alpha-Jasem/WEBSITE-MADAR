@@ -43,6 +43,9 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
   const isPremium = plan === 'enterprise'
   const planColor = PLAN_COLORS[plan] ?? '#00BFFF'
   const companyId = (company as any)?.id ?? null
+  const trialDaysLeft = role === 'client' && company?.status === 'trial' && company?.plan_reset_at
+    ? Math.max(0, Math.ceil((new Date(company.plan_reset_at).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
+    : null
 
   const [dropOpen, setDropOpen] = useState(false)
   const [staff, setStaff] = useState<StaffUser[]>([])
@@ -138,7 +141,9 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
             </div>
             <strong>{plan === 'starter' ? 'ارتق إلى Pro' : 'ارتق إلى Premium'}</strong>
             <p>
-              {plan === 'starter'
+              {trialDaysLeft !== null
+                ? `تجربتك المجانية فعالة، باقي ${trialDaysLeft} يوم لتثبيت الاشتراك.`
+                : plan === 'starter'
                 ? 'افتح التقارير الكاملة، المالية، وأداء الموظفين.'
                 : 'افتح رؤى AI، تعدد الفروع، والتقارير المتقدمة.'}
             </p>

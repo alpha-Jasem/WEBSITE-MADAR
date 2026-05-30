@@ -8,6 +8,7 @@ import { LoadingScreen } from './components/shared/LoadingScreen'
 import { ErrorBoundary } from './components/shared/ErrorBoundary'
 import { HomePage } from './pages/HomePage'
 import { Login } from './pages/Login'
+import { TrialSignup } from './pages/TrialSignup'
 import { AuthCallback } from './pages/AuthCallback'
 import { Privacy } from './pages/Privacy'
 import { Terms } from './pages/Terms'
@@ -27,6 +28,7 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/trial" element={<TrialSignup />} />
             <Route path="/checkin/:token" element={<SelfCheckIn />} />
             <Route path="/status/:token/:queueId" element={<CarWashStatus />} />
             <Route path="/auth/callback" element={<AuthCallback />} />

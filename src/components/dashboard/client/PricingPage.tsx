@@ -108,6 +108,11 @@ const PLAN_LABEL_MAP: Record<string, string> = {
   enterprise: 'Premium',
 }
 
+const UNLOCKED_BY_PLAN: Record<string, string[]> = {
+  growth: ['التسجيل الذاتي QR', 'صفحة حالة Live للعميل', 'تقارير مالية وVAT', 'إغلاق اليوم', 'أداء الموظفين'],
+  enterprise: ['تعدد الفروع', 'صلاحيات متقدمة', 'رؤى AI', 'تقارير مخصصة', 'دعم أولوية'],
+}
+
 function buildWhatsAppUrl(companyName: string, currentPlan: string, requestedPlan: string) {
   const msg = `أهلاً، أود ترقية باقتي في Madar OS.\n\nالمنشأة: ${companyName}\nالباقة الحالية: ${currentPlan}\nالباقة المطلوبة: ${requestedPlan}\n\nأرجو المساعدة في الترقية.`
   return `https://wa.me/${MADAR_WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`
@@ -118,6 +123,9 @@ export const PricingPage = () => {
   const currentPlan = company?.plan ?? 'starter'
   const currentLabel = PLAN_LABEL_MAP[currentPlan] ?? 'Starter'
   const companyName = company?.name ?? 'منشأتي'
+  const trialDaysLeft = company?.status === 'trial' && company?.plan_reset_at
+    ? Math.max(0, Math.ceil((new Date(company.plan_reset_at).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
+    : null
 
   const planOrder = ['starter', 'growth', 'enterprise']
   const currentIndex = planOrder.indexOf(currentPlan)
@@ -172,15 +180,22 @@ export const PricingPage = () => {
     <div className="space-y-8" dir="rtl">
       {/* Payment status banners */}
       {paymentStatus === 'success' && (
-        <div style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <CheckCircle2 size={20} color="#10B981" />
-          <div>
+        <div style={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(0,191,255,0.08))', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 20, padding: '18px 20px', display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+          <CheckCircle2 size={22} color="#10B981" style={{ marginTop: 2 }} />
+          <div className="flex-1">
             <p style={{ fontSize: 15, fontWeight: 700, color: '#10B981', fontFamily: 'Cairo, sans-serif', margin: 0 }}>
-              تم الدفع بنجاح! 🎉
+              تم الدفع بنجاح
             </p>
             <p style={{ fontSize: 13, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>
-              تم ترقية باقتك إلى {successPlan ? PLAN_LABEL_MAP[successPlan] ?? successPlan : ''} — أعد تحميل الصفحة لرؤية المميزات الجديدة.
+              تم ترقية باقتك إلى {successPlan ? PLAN_LABEL_MAP[successPlan] ?? successPlan : ''}. هذه أهم المميزات التي أصبحت متاحة الآن:
             </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {(UNLOCKED_BY_PLAN[successPlan || ''] || ['مميزات الباقة الجديدة']).map(item => (
+                <span key={item} className="rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-700 font-tajawal">
+                  {item}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -205,6 +220,14 @@ export const PricingPage = () => {
         <p className="text-slate-400 font-tajawal text-base max-w-lg mx-auto leading-relaxed">
           اختر مستوى التشغيل المناسب لمغسلتك. ابدأ بالكاش ونقطة البيع، ثم فعّل QR والتقارير والإضافات المتقدمة عند الحاجة.
         </p>
+        {trialDaysLeft !== null && (
+          <div className="mx-auto mt-5 max-w-xl rounded-2xl border border-sky-100 bg-white px-5 py-4 text-right shadow-sm">
+            <p className="text-sm font-bold text-slate-900 font-cairo">أنت الآن في تجربة Pro المجانية</p>
+            <p className="mt-1 text-xs leading-5 text-slate-500 font-tajawal">
+              باقي {trialDaysLeft} يوم على التجربة. عند الدفع تتحول الباقة إلى اشتراك نشط وتبقى إعدادات المغسلة كما هي.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Plan cards */}
