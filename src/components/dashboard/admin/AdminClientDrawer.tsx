@@ -20,6 +20,7 @@ import {
   X,
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
+import { logAudit } from '../../../lib/auditLog'
 import { getSelfCheckinSettings, getSelfCheckinUrl } from '../../../lib/selfCheckin'
 import type { Company, CompanyStatus, Plan } from '../../../types'
 
@@ -143,6 +144,18 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
       setFeedback('تعذر الحفظ. حاول مرة أخرى.')
       return
     }
+    logAudit(company.id, 'company_settings_updated', {
+      entityType: 'company',
+      entityId: company.id,
+      oldValue: {
+        plan: company.plan,
+        feature_flags: (company.cw_automations as any)?.feature_flags || {},
+      },
+      newValue: {
+        plan: activePlan,
+        feature_flags: flags,
+      },
+    })
     setFeedback('تم حفظ إعدادات الشركة')
     setTimeout(() => setFeedback(''), 1600)
     onUpdated()
@@ -153,7 +166,15 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
     setSaving(true)
     const { error } = await supabase.from('companies').update({ status: next }).eq('id', company.id)
     setSaving(false)
-    if (!error) onUpdated()
+    if (!error) {
+      logAudit(company.id, 'company_status_updated', {
+        entityType: 'company_status',
+        entityId: company.id,
+        oldValue: { status: company.status },
+        newValue: { status: next },
+      })
+      onUpdated()
+    }
   }
 
   return (

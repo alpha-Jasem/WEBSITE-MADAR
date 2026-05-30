@@ -17,6 +17,7 @@ import {
   Search,
   Settings,
   ShieldCheck,
+  SlidersHorizontal,
   TrendingUp,
   WalletCards,
   Workflow,
@@ -403,6 +404,7 @@ export const AdminCommandDeck = () => {
 
       <section className="admin-quick-actions">
         {[
+          { to: '/admin/control', icon: SlidersHorizontal, label: 'مركز التحكم', desc: 'الصحة، المزايا، الفوترة، والتنبيهات.' },
           { to: '/admin/companies', icon: Building2, label: 'إضافة / إدارة شركة', desc: 'افتح حساب عميل أو عدل بياناته.' },
           { to: '/admin/settings', icon: Settings, label: 'تفعيل ميزات مدفوعة', desc: 'محفظة، اشتراكات، دفع إلكتروني.' },
           { to: '/admin/automations', icon: Zap, label: 'مراجعة الأتمتة', desc: 'أوقف أو شغل تدفقات العميل.' },

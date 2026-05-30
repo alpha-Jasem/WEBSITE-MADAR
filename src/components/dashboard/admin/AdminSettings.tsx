@@ -18,6 +18,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
+import { logAudit } from '../../../lib/auditLog'
 import type { Company, Plan } from '../../../types'
 import { PLAN_LABELS, PLAN_PRICES } from '../../../lib/constants'
 
@@ -170,6 +171,12 @@ export const AdminSettings = () => {
 
     if (!error) {
       setCompanies(prev => prev.map(item => item.id === company.id ? { ...item, cw_automations: nextAutomations } : item))
+      logAudit(company.id, nextFlags[key] ? 'feature_enabled' : 'feature_disabled', {
+        entityType: 'company_feature',
+        entityId: key,
+        oldValue: { enabled: Boolean(current[key]) },
+        newValue: { enabled: Boolean(nextFlags[key]) },
+      })
       setFeedback('تم حفظ إعدادات الميزات')
     } else {
       setFeedback('تعذر الحفظ، حاول مرة أخرى')
@@ -187,6 +194,12 @@ export const AdminSettings = () => {
 
     if (!error) {
       setCompanies(prev => prev.map(item => item.id === company.id ? { ...item, plan, message_limit: planLimits[plan] } : item))
+      logAudit(company.id, 'plan_updated', {
+        entityType: 'company_plan',
+        entityId: plan,
+        oldValue: { plan: company.plan, message_limit: company.message_limit },
+        newValue: { plan, message_limit: planLimits[plan] },
+      })
       setFeedback('تم تحديث باقة الشركة')
     } else {
       setFeedback('تعذر تحديث الباقة')

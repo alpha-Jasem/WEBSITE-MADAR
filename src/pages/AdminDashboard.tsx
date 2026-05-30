@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   MessageSquare,
   Settings,
+  SlidersHorizontal,
   Users2,
   Workflow,
   Zap,
@@ -25,9 +26,11 @@ import { AdminPipeline } from '../components/dashboard/admin/AdminPipeline'
 import { AdminAppointments } from '../components/dashboard/admin/AdminAppointments'
 import { AdminConversations } from '../components/dashboard/admin/AdminConversations'
 import { AdminOverview } from '../components/dashboard/admin/AdminOverview'
+import { AdminControlCenter } from '../components/dashboard/admin/AdminControlCenter'
 
 const navItems: NavItem[] = [
   { to: '/admin', icon: LayoutDashboard, label: 'مركز الإدارة', end: true },
+  { to: '/admin/control', icon: SlidersHorizontal, label: 'مركز التحكم' },
   { to: '/admin/analytics', icon: BarChart3, label: 'التحليلات' },
   { to: '/admin/companies', icon: Building2, label: 'الشركات' },
   { to: '/admin/leads', icon: Users2, label: 'العملاء المحتملون' },
@@ -55,6 +58,7 @@ export const AdminDashboard = () => {
     <DashShell navItems={navItems} role="admin" pageTitle={pageTitle}>
       <Routes>
         <Route index element={<AdminCommandDeck />} />
+        <Route path="control" element={<AdminControlCenter />} />
         <Route path="companies" element={<AdminCompanies />} />
         <Route path="automations" element={<AdminAutomations />} />
         <Route path="leads" element={<AdminLeads />} />
