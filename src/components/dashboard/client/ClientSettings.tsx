@@ -266,7 +266,7 @@ export const ClientSettings = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white font-cairo">الإعدادات</h1>
+        <h1 className="text-2xl font-bold text-slate-900 font-cairo">الإعدادات</h1>
         <p className="text-sm text-slate-500 font-tajawal">إعدادات الحساب والتكاملات</p>
       </div>
 
@@ -297,7 +297,7 @@ export const ClientSettings = () => {
         <div className="p-5 rounded-2xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
           <div className="flex items-center gap-2.5 mb-4">
             <User size={16} className="text-primary-400" />
-            <h3 className="text-sm font-bold text-white font-cairo">معلومات الشركة</h3>
+            <h3 className="text-sm font-bold text-slate-900 font-cairo">معلومات الشركة</h3>
           </div>
           {[
             { label: 'الشركة', value: company.name },
@@ -306,9 +306,9 @@ export const ClientSettings = () => {
             { label: 'الحالة', value: company.status === 'active' ? 'نشط' : company.status },
             { label: 'الرسائل المستخدمة', value: `${(company.messages_used || 0).toLocaleString()} / ${(company.message_limit || 2000).toLocaleString()}` },
           ].map(({ label, value }) => (
-            <div key={label} className="flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0">
+            <div key={label} className="flex items-center justify-between py-2 border-b border-slate-200 last:border-0">
               <span className="text-sm text-slate-400 font-tajawal">{label}</span>
-              <span className="text-sm text-white font-tajawal">{value}</span>
+              <span className="text-sm text-slate-900 font-tajawal">{value}</span>
             </div>
           ))}
         </div>
@@ -318,7 +318,7 @@ export const ClientSettings = () => {
         <div className="p-5 rounded-2xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
           <div className="flex items-center gap-2.5 mb-2">
             <ClipboardList size={16} className="text-cyan-400" />
-            <h3 className="text-sm font-bold text-white font-cairo">قائمة جاهزية المغسلة</h3>
+            <h3 className="text-sm font-bold text-slate-900 font-cairo">قائمة جاهزية المغسلة</h3>
           </div>
           <div className="grid gap-2 md:grid-cols-2">
             {[
@@ -345,12 +345,12 @@ export const ClientSettings = () => {
       {!isCarWash && <div className="p-5 rounded-2xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
         <div className="flex items-center gap-2.5 mb-1">
           <Link2 size={16} className="text-cyan-400" />
-          <h3 className="text-sm font-bold text-white font-cairo">رابط Webhook الخاص بك</h3>
+          <h3 className="text-sm font-bold text-slate-900 font-cairo">رابط Webhook الخاص بك</h3>
         </div>
         <p className="text-xs text-slate-500 font-tajawal">أرسل بيانات العملاء من أي نموذج خارجي إلى هذا الرابط وسيدخل CRM تلقائياً.</p>
         {webhookUrl ? (
           <div className="flex items-center gap-2">
-            <code className="flex-1 text-[10px] text-cyan-400 bg-white/[0.03] px-3 py-2 rounded-lg font-mono break-all" dir="ltr">
+            <code className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[10px] text-[#1565C0] font-mono break-all" dir="ltr">
               {webhookUrl}
             </code>
             <button onClick={copyWebhook}
@@ -381,7 +381,7 @@ export const ClientSettings = () => {
             <div className="flex items-center gap-2.5">
               <QrCode size={16} className="text-cyan-400" />
               <div>
-                <h3 className="text-sm font-bold text-white font-cairo">رابط التسجيل الذاتي QR</h3>
+                <h3 className="text-sm font-bold text-slate-900 font-cairo">رابط التسجيل الذاتي QR</h3>
                 <p className="text-xs text-slate-500 font-tajawal">اطبع هذا الرمز عند مدخل المغسلة ليُسجل العميل سيارته بنفسه.</p>
               </div>
             </div>
@@ -451,19 +451,19 @@ export const ClientSettings = () => {
       {!isCarWash && <div className="p-5 rounded-2xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
         <div className="flex items-center gap-2.5 mb-1">
           <Mail size={16} className="text-yellow-400" />
-          <h3 className="text-sm font-bold text-white font-cairo">إرسال إيميل</h3>
+          <h3 className="text-sm font-bold text-slate-900 font-cairo">إرسال إيميل</h3>
         </div>
         <input value={emailTo} onChange={e => setEmailTo(e.target.value)}
           placeholder="البريد الإلكتروني للمستلم"
-          className="w-full bg-white/[0.03] border border-white/[0.07] rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 outline-none font-tajawal"
+          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none font-tajawal"
           dir="rtl" />
         <input value={emailSubject} onChange={e => setEmailSubject(e.target.value)}
           placeholder="الموضوع"
-          className="w-full bg-white/[0.03] border border-white/[0.07] rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 outline-none font-tajawal"
+          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none font-tajawal"
           dir="rtl" />
         <textarea value={emailBody} onChange={e => setEmailBody(e.target.value)}
           placeholder="نص الرسالة..." rows={4} dir="rtl"
-          className="w-full bg-white/[0.03] border border-white/[0.07] rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 outline-none font-tajawal resize-none" />
+          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none font-tajawal resize-none" />
         <button onClick={sendEmail} disabled={sendingEmail || !emailTo || !emailSubject}
           className="w-full py-2.5 rounded-xl text-sm font-bold font-tajawal text-white cursor-pointer disabled:opacity-40 transition-all"
           style={{ background: emailSent ? '#10B981' : 'linear-gradient(135deg, #F59E0B, #EF4444)' }}>
@@ -476,7 +476,7 @@ export const ClientSettings = () => {
         <div className="p-5 rounded-2xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
           <div className="flex items-center gap-2.5 mb-1">
             <MapPin size={16} className="text-cyan-400" />
-            <h3 className="text-sm font-bold text-white font-cairo">رابط Google Maps للمغسلة</h3>
+            <h3 className="text-sm font-bold text-slate-900 font-cairo">رابط Google Maps للمغسلة</h3>
           </div>
           <p className="text-xs text-slate-500 font-tajawal">سيُرسل هذا الرابط تلقائياً للعملاء بعد كل غسلة لطلب التقييم.</p>
           <div className="flex items-center gap-2">
@@ -485,7 +485,7 @@ export const ClientSettings = () => {
               onChange={e => setMapsUrl(e.target.value)}
               placeholder="https://maps.app.goo.gl/..."
               dir="ltr"
-              className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 outline-none focus:border-cyan-500/50 font-mono transition-colors"
+              className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-cyan-500/50 font-mono transition-colors"
             />
             <motion.button
               whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
@@ -508,7 +508,7 @@ export const ClientSettings = () => {
       <div className="p-5 rounded-2xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
         <div className="flex items-center gap-2.5 mb-1">
           <Bell size={16} className="text-purple-400" />
-          <h3 className="text-sm font-bold text-white font-cairo">الإشعارات</h3>
+          <h3 className="text-sm font-bold text-slate-900 font-cairo">الإشعارات</h3>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-sm text-slate-400 font-tajawal">إشعارات المتصفح عند وصول عميل جديد</span>
@@ -527,10 +527,10 @@ export const ClientSettings = () => {
       <div className="p-5 rounded-2xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
         <div className="flex items-center gap-2.5 mb-4">
           <Shield size={16} className="text-slate-400" />
-          <h3 className="text-sm font-bold text-white font-cairo">الأمان</h3>
+          <h3 className="text-sm font-bold text-slate-900 font-cairo">الأمان</h3>
         </div>
         <div className="space-y-3">
-          <div className="flex items-center justify-between py-2 border-b border-white/[0.04]">
+          <div className="flex items-center justify-between py-2 border-b border-slate-200">
               <span className="text-sm text-slate-400 font-tajawal">تغيير كلمة المرور</span>
               <button
                 onClick={async () => {

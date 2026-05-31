@@ -7325,6 +7325,35 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   color: #047857;
 }
 
+.admin-check-list span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.admin-check-list strong {
+  color: #0D1B3E;
+  font: 800 13px 'Cairo', sans-serif;
+}
+
+.admin-check-list small,
+.admin-check-list em {
+  color: #64748B;
+  font: 700 12px 'Tajawal', sans-serif;
+  line-height: 1.6;
+}
+
+.admin-check-list em {
+  color: #1565C0;
+  font-style: normal;
+}
+
+.admin-check-list div.done strong,
+.admin-check-list div.done small,
+.admin-check-list div.done em {
+  color: #047857;
+}
+
 .admin-env-list code {
   display: block;
   padding: 10px 12px;

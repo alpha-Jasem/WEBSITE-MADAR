@@ -65,6 +65,33 @@ const featureCatalog: Array<{
   { key: 'advanced_reports', title: 'تقارير متقدمة', desc: 'تصدير وتحليل مالي وتشغيلي مفصل.', icon: Zap, paid: true },
 ]
 
+const launchChecklist = [
+  {
+    title: 'Moyasar production',
+    desc: 'تفعيل مفاتيح الإنتاج، Apple Pay / Google Pay، وتجربة callback على خطة حقيقية.',
+    owner: 'تحتاج منك',
+    done: false,
+  },
+  {
+    title: 'WhatsApp Business verification',
+    desc: 'توثيق Meta Business وربط رقم إنتاجي لإرسال OTP ورسائل التشغيل بدون رقم testing.',
+    owner: 'تحتاج منك',
+    done: false,
+  },
+  {
+    title: 'Supabase Edge Functions',
+    desc: 'نشر آخر نسخة من cw-public-checkin و trial-signup بعد اعتماد أسرار Twilio/Moyasar.',
+    owner: 'نقدر ننشر بعد توفر الأسرار',
+    done: false,
+  },
+  {
+    title: 'Netlify deployment',
+    desc: 'يتم تلقائياً عند push إلى main، مع مراجعة آخر build قبل تسليم العميل.',
+    owner: 'جاهز آلياً',
+    done: true,
+  },
+]
+
 function getFlags(company: Company) {
   return (((company.cw_automations as any)?.feature_flags || {}) as Record<string, boolean>)
 }
@@ -384,6 +411,20 @@ export const AdminSettings = () => {
 
       {activeTab === 'security' && (
         <div className="admin-settings-grid">
+          <SettingCard icon={CheckCircle2} title="قائمة الإطلاق الخارجي" desc="الأشياء التي تحدد هل المنصة جاهزة للبيع المدفوع بكامل الثقة.">
+            <div className="admin-check-list">
+              {launchChecklist.map(item => (
+                <div key={item.title} className={item.done ? 'done' : ''}>
+                  <CheckCircle2 size={15} />
+                  <span>
+                    <strong>{item.title}</strong>
+                    <small>{item.desc}</small>
+                    <em>{item.owner}</em>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </SettingCard>
           <SettingCard icon={LockKeyhole} title="صلاحيات الإدارة" desc="ضبط الوصول الحساس قبل تفعيل ميزات مدفوعة أو تعديل الباقات.">
             {['تعديل الباقات', 'تفعيل الدفع الإلكتروني', 'تعطيل شركة', 'عرض سجلات النظام'].map(item => (
               <div key={item} className="admin-setting-row"><span>{item}</span><button type="button">يتطلب أدمن</button></div>
