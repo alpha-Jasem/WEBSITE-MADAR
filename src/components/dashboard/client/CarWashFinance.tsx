@@ -359,11 +359,11 @@ export const CarWashFinance = () => {
 
             <div className="space-y-4">
               <div>
-                <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">المبلغ (ر.س) *</label>
-                <input type="number" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} placeholder="0" min={0} className="w-full px-4 py-2.5 rounded-xl text-sm font-sora text-white placeholder-slate-600 outline-none" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }} dir="ltr" />
+                <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">المبلغ (ر.س) *</label>
+                <input type="number" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} placeholder="0" min={0} className="w-full px-4 py-2.5 rounded-xl text-sm font-sora text-slate-900 placeholder-slate-400 outline-none focus:border-sky-400" style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }} dir="ltr" />
               </div>
               <div>
-                <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">الفئة</label>
+                <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">الفئة</label>
                 <div className="grid grid-cols-2 gap-2">
                   {CATEGORIES.map(c => (
                     <button key={c.value} onClick={() => setForm(f => ({ ...f, category: c.value }))} className="py-2 rounded-xl text-xs font-tajawal transition-all" style={{ background: form.category === c.value ? 'rgba(99,102,241,0.3)' : '#FFFFFF', border: `1px solid ${form.category === c.value ? '#6366F1' : '#E2E8F0'}`, color: form.category === c.value ? '#A5B4FC' : '#94A3B8' }}>
@@ -373,8 +373,8 @@ export const CarWashFinance = () => {
                 </div>
               </div>
               <div>
-                <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">وصف (اختياري)</label>
-                <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="تفاصيل المصروف..." className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-white placeholder-slate-600 outline-none" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }} />
+                <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">وصف (اختياري)</label>
+                <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="تفاصيل المصروف..." className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-slate-900 placeholder-slate-400 outline-none focus:border-sky-400" style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }} />
               </div>
             </div>
 

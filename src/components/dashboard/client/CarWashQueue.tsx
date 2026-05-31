@@ -805,11 +805,11 @@ export const CarWashQueue = () => {
       {/* Add / Edit car form modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)' }}>
-          <div role="dialog" aria-modal="true" aria-label="Car form" className="w-full max-w-md rounded-2xl overflow-y-auto max-h-[90vh]" style={{ background: '#0D1422', border: '1px solid #CBD5E1' }}>
+          <div role="dialog" aria-modal="true" aria-label="Car form" className="w-full max-w-md rounded-2xl overflow-y-auto max-h-[90vh] shadow-2xl" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <div className="p-6">
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-bold text-white font-cairo">{editingItem ? 'تعديل السيارة' : 'إضافة سيارة'}</h2>
-                <button aria-label="Close dialog" onClick={() => { setShowForm(false); setEditingItem(null); setLoyaltyInfo(null) }} className="text-slate-400 hover:text-white">
+                <h2 className="text-lg font-bold text-slate-900 font-cairo">{editingItem ? 'تعديل السيارة' : 'إضافة سيارة'}</h2>
+                <button aria-label="Close dialog" onClick={() => { setShowForm(false); setEditingItem(null); setLoyaltyInfo(null) }} className="text-slate-400 hover:text-slate-900">
                   <X size={18} />
                 </button>
               </div>
@@ -817,19 +817,19 @@ export const CarWashQueue = () => {
               <div className="space-y-3">
                 {/* Customer name */}
                 <div>
-                  <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">اسم العميل *</label>
+                  <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">اسم العميل *</label>
                   <input
                     value={form.customer_name}
                     onChange={e => setForm(f => ({ ...f, customer_name: e.target.value }))}
                     placeholder="اسم العميل"
-                    className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-white placeholder-slate-600 outline-none"
-                    style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
+                    className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-slate-900 placeholder-slate-400 outline-none focus:border-sky-400"
+                    style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }}
                   />
                 </div>
 
                 {/* Phone */}
                 <div>
-                  <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">رقم الجوال</label>
+                  <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">رقم الجوال</label>
                   <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid rgba(0,191,255,0.28)' }}>
                     <span
                       className="flex items-center px-3 text-sm font-bold font-sora select-none"
@@ -887,30 +887,30 @@ export const CarWashQueue = () => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">نوع السيارة</label>
+                    <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">نوع السيارة</label>
                     <input
                       value={form.car_type}
                       onChange={e => setForm(f => ({ ...f, car_type: e.target.value }))}
                       placeholder="تويوتا، هيونداي..."
-                      className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-white placeholder-slate-600 outline-none"
-                      style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
+                      className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-slate-900 placeholder-slate-400 outline-none focus:border-sky-400"
+                      style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }}
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">رقم اللوحة</label>
+                    <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">رقم اللوحة</label>
                     <input
                       value={form.plate}
                       onChange={e => setForm(f => ({ ...f, plate: e.target.value }))}
                       placeholder="أ ب ج 1234"
-                      className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-white placeholder-slate-600 outline-none"
-                      style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
+                      className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-slate-900 placeholder-slate-400 outline-none focus:border-sky-400"
+                      style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }}
                     />
                   </div>
                 </div>
 
                 {/* Service */}
                 <div>
-                  <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">الخدمة</label>
+                  <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">الخدمة</label>
                   {services.length > 0 ? (
                     <select
                       value={form.service_id}
@@ -923,8 +923,8 @@ export const CarWashQueue = () => {
                           price: f.is_free_wash ? '0' : (svc ? String(svc.price) : f.price),
                         }))
                       }}
-                      className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-white outline-none"
-                      style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
+                      className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-slate-900 outline-none focus:border-sky-400"
+                      style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }}
                     >
                       <option value="">اختر الخدمة</option>
                       {services.map(s => (
@@ -936,19 +936,19 @@ export const CarWashQueue = () => {
                       value={form.service_name}
                       onChange={e => setForm(f => ({ ...f, service_name: e.target.value }))}
                       placeholder="غسيل عادي، بريميوم..."
-                      className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-white placeholder-slate-600 outline-none"
-                      style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
+                      className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-slate-900 placeholder-slate-400 outline-none focus:border-sky-400"
+                      style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }}
                     />
                   )}
                 </div>
 
                 <div>
-                  <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">الموظف</label>
+                  <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">الموظف</label>
                   <select
                     value={form.worker_id}
                     onChange={e => setForm(f => ({ ...f, worker_id: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-white outline-none"
-                    style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
+                    className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-slate-900 outline-none focus:border-sky-400"
+                    style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }}
                   >
                     <option value="">بدون تعيين</option>
                     {workers.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
@@ -957,13 +957,13 @@ export const CarWashQueue = () => {
 
                 {/* Notes */}
                 <div>
-                  <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">ملاحظات</label>
+                  <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">ملاحظات</label>
                   <input
                     value={form.notes}
                     onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                     placeholder="أي ملاحظات إضافية..."
-                    className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-white placeholder-slate-600 outline-none"
-                    style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
+                    className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-slate-900 placeholder-slate-400 outline-none focus:border-sky-400"
+                    style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }}
                   />
                 </div>
               </div>
@@ -1002,8 +1002,8 @@ export const CarWashQueue = () => {
               <div className="flex gap-3 mt-5">
                 <button
                   onClick={() => { setShowForm(false); setEditingItem(null); setLoyaltyInfo(null) }}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-tajawal text-slate-400"
-                  style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-tajawal text-slate-600"
+                  style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }}
                 >
                   إلغاء
                 </button>
@@ -1059,7 +1059,7 @@ export const CarWashQueue = () => {
                         <span className="text-amber-400">-{deliverModal.original_price} ر.س</span>
                       </div>
                       <div className="flex justify-between text-sm font-bold font-cairo pt-1 border-t border-white/5">
-                        <span className="text-white">الإجمالي</span>
+                        <span className="text-slate-900">الإجمالي</span>
                         <span className="text-emerald-400">0 ر.س</span>
                       </div>
                     </>
@@ -1074,13 +1074,13 @@ export const CarWashQueue = () => {
                         <span className="text-slate-300">{vat.vat_amount.toFixed(2)} ر.س</span>
                       </div>
                       <div className="flex justify-between text-sm font-bold font-cairo pt-1 border-t border-white/5">
-                        <span className="text-white">الإجمالي</span>
+                        <span className="text-slate-900">الإجمالي</span>
                         <span className="text-emerald-400">{vat.total_amount.toFixed(2)} ر.س</span>
                       </div>
                     </>
                   ) : (
                     <div className="flex justify-between text-sm font-bold font-cairo">
-                      <span className="text-white">الإجمالي</span>
+                      <span className="text-slate-900">الإجمالي</span>
                       <span className="text-emerald-400">{price} ر.س</span>
                     </div>
                   )}
