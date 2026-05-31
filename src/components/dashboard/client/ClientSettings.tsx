@@ -9,6 +9,7 @@ import { PLAN_LABELS } from '../../../lib/constants'
 import { getSelfCheckinSettings, getSelfCheckinUrl } from '../../../lib/selfCheckin'
 import { usePlanGate } from '../../../hooks/usePlanGate'
 import { FeatureLock } from '../../dash/FeatureLock'
+import { CarWashLaunchChecklist } from './CarWashLaunchChecklist'
 
 const PLAN_LIMITS: Record<string, string> = {
   starter: '2,000 رسالة/شهر',
@@ -288,6 +289,8 @@ export const ClientSettings = () => {
 
       {isCarWash && tab === 'setup' ? <CarWashSetup /> : null}
       {(!isCarWash || tab === 'account') && <>
+
+      {isCarWash && <CarWashLaunchChecklist compact />}
 
       {/* Company info */}
       {company && (
