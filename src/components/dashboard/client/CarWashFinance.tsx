@@ -8,6 +8,7 @@ import { FeatureLock } from '../../dash/FeatureLock'
 import { logAudit } from '../../../lib/auditLog'
 import { downloadCSV, formatDateForCSV } from '../../../lib/exportUtils'
 import type { CWExpense, ExpenseCategory, PaymentMethod } from '../../../types'
+import { ClientButton, ClientEmptyState, ClientPageHeader, ClientPanel, ClientStatCard } from './ClientUI'
 
 const DATE_PRESETS = [
   { label: 'اليوم',       days: 1  },
@@ -23,21 +24,6 @@ const CATEGORIES: { value: ExpenseCategory; label: string }[] = [
 ]
 
 const EMPTY_FORM = { amount: '', category: 'other' as ExpenseCategory, description: '' }
-
-function StatCard({ icon: Icon, label, value, color, sub }: { icon: typeof Wallet; label: string; value: string; color: string; sub?: string }) {
-  return (
-    <div className="p-5 rounded-2xl" style={{ background: '#FFFFFF', border: `1px solid ${color}44`, borderTop: `3px solid ${color}`, boxShadow: '0 2px 16px rgba(13,27,62,0.07)' }}>
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: color + '18' }}>
-          <Icon size={16} style={{ color }} />
-        </div>
-        <p className="text-xs font-tajawal" style={{ color: '#5A6E85' }}>{label}</p>
-      </div>
-      <p className="text-2xl font-bold font-sora" style={{ color }}>{value}</p>
-      {sub && <p className="text-xs font-tajawal mt-1" style={{ color: '#415169' }}>{sub}</p>}
-    </div>
-  )
-}
 
 export const CarWashFinance = () => {
   const [tab, setTab] = useState<'finance' | 'closing'>('finance')
@@ -201,41 +187,43 @@ export const CarWashFinance = () => {
       </div>
 
       {tab === 'closing' ? <CarWashDailyClosing /> : <>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-white font-cairo">المالية</h1>
-          <div className="flex gap-2 mt-2 flex-wrap">
-            {DATE_PRESETS.map(p => (
-              <button key={p.days} onClick={() => setDays(p.days)}
-                style={{
-                  padding: '4px 14px', borderRadius: 20, fontSize: 12, fontFamily: 'Tajawal, sans-serif',
-                  cursor: 'pointer', border: `1px solid ${days === p.days ? '#22D3EE' : '#CBD5E1'}`,
-                  background: days === p.days ? 'rgba(34,211,238,0.1)' : 'transparent',
-                  color: days === p.days ? '#22D3EE' : '#64748B', fontWeight: days === p.days ? 700 : 400,
-                }}>
-                {p.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={exportCSV}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-tajawal font-medium"
-            style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#94A3B8' }}>
-            <FileDown size={15} /> تصدير
-          </button>
+      <ClientPageHeader
+        eyebrow="مركز الماليات"
+        title="المالية"
+        description="إيرادات، مصاريف، تكاليف الموظفين، وصافي الربح في شاشة واحدة واضحة للمغسلة."
+        actions={(
+          <>
+            <ClientButton tone="secondary" onClick={exportCSV}>
+              <FileDown size={15} /> تصدير
+            </ClientButton>
+            <div className="flex gap-2 rounded-2xl bg-white p-1" style={{ border: '1px solid #E2E8F0' }}>
+              {DATE_PRESETS.map(p => (
+                <button key={p.days} onClick={() => setDays(p.days)}
+                  className="rounded-xl px-3 text-xs font-bold font-tajawal transition-all"
+                  style={{
+                    minHeight: 34,
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: days === p.days ? 'rgba(0,191,255,0.12)' : 'transparent',
+                    color: days === p.days ? '#1565C0' : '#64748B',
+                  }}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
           {can.financeExpenses && (
-            <button onClick={() => setShowForm(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-tajawal font-medium text-white" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
+            <ClientButton onClick={() => setShowForm(true)}>
               <Plus size={16} /> إضافة مصروف
-            </button>
+            </ClientButton>
           )}
-        </div>
-      </div>
+          </>
+        )}
+      />
 
       {/* Revenue cards — always visible */}
       <div className="grid grid-cols-2 gap-4">
-        <StatCard icon={TrendingUp} label="الإيرادات" value={`${revenue.toFixed(0)} ر.س`} color="#10B981" sub={`${visitCount} زيارة — ${DATE_PRESETS.find(p => p.days === days)?.label || ''}`} />
-        <StatCard icon={DollarSign} label="متوسط الزيارة" value={`${visitCount > 0 ? (revenue / visitCount).toFixed(0) : 0} ر.س`} color="#22D3EE" sub="لكل سيارة" />
+        <ClientStatCard icon={TrendingUp} label="الإيرادات" value={`${revenue.toFixed(0)} ر.س`} tone="green" sub={`${visitCount} زيارة — ${DATE_PRESETS.find(p => p.days === days)?.label || ''}`} />
+        <ClientStatCard icon={DollarSign} label="متوسط الزيارة" value={`${visitCount > 0 ? (revenue / visitCount).toFixed(0) : 0} ر.س`} tone="blue" sub="لكل سيارة" />
       </div>
 
       {/* Expenses, profit bar, workers cost — Pro feature */}
@@ -250,20 +238,19 @@ export const CarWashFinance = () => {
         <div className="space-y-6">
           {/* Summary cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <StatCard icon={TrendingDown} label="المصاريف"       value={`${totalExpenses.toFixed(0)} ر.س`} color="#EF4444" sub={`${expenses.length} بند`} />
-            <StatCard icon={Users}        label="تكاليف الموظفين" value={`${workerCost.toFixed(0)} ر.س`}   color="#F59E0B" sub="عمولات اليوم" />
-            <StatCard
+            <ClientStatCard icon={TrendingDown} label="المصاريف"       value={`${totalExpenses.toFixed(0)} ر.س`} tone="red" sub={`${expenses.length} بند`} />
+            <ClientStatCard icon={Users}        label="تكاليف الموظفين" value={`${workerCost.toFixed(0)} ر.س`}   tone="amber" sub="عمولات اليوم" />
+            <ClientStatCard
               icon={DollarSign}
               label="صافي الربح"
               value={`${netProfit.toFixed(0)} ر.س`}
-              color={netProfit >= 0 ? '#6366F1' : '#EF4444'}
+              tone={netProfit >= 0 ? 'blue' : 'red'}
               sub={netProfit >= 0 ? 'ممتاز اليوم' : 'خسارة — راجع المصاريف'}
             />
           </div>
 
           {/* Profit bar */}
-          <div className="p-5 rounded-2xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-            <p className="text-sm font-bold text-white font-cairo mb-4">توزيع الإيرادات</p>
+          <ClientPanel title="توزيع الإيرادات" description="كيف تنقسم مبيعات اليوم بين ربح وتكاليف تشغيل.">
             {revenue > 0 ? (
               <div className="space-y-3">
                 {[
@@ -283,27 +270,26 @@ export const CarWashFinance = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-slate-600 font-tajawal text-sm text-center py-4">لا توجد إيرادات بعد</p>
+              <ClientEmptyState icon={Wallet} title="لا توجد إيرادات بعد" description="بمجرد تسليم أول سيارة ستظهر الأرقام هنا." />
             )}
-          </div>
+          </ClientPanel>
 
           {/* Payment method breakdown */}
           {Object.keys(paymentBreakdown).length > 0 && (
-            <div className="p-5 rounded-2xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-              <p className="text-sm font-bold text-white font-cairo mb-4">توزيع طرق الدفع</p>
+            <ClientPanel title="توزيع طرق الدفع" description="تابع النقد، مدى، التحويل، وباقي القنوات بسرعة.">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {Object.entries(paymentBreakdown).map(([pm, amount]) => {
                   const labels: Record<string, string> = { cash: 'كاش', mada: 'مدى', visa: 'فيزا', bank_transfer: 'تحويل', stc_pay: 'STC Pay', other: 'أخرى' }
                   return (
                     <div key={pm} className="p-3 rounded-xl text-center" style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.15)' }}>
                       <p className="text-xs text-slate-400 font-tajawal mb-1">{labels[pm] || pm}</p>
-                      <p className="text-base font-bold text-white font-sora">{amount.toFixed(0)}</p>
+                      <p className="text-base font-bold text-slate-900 font-sora">{amount.toFixed(0)}</p>
                       <p className="text-xs text-slate-600 font-tajawal">ر.س</p>
                     </div>
                   )
                 })}
               </div>
-            </div>
+            </ClientPanel>
           )}
 
           {/* Free washes */}
@@ -318,10 +304,9 @@ export const CarWashFinance = () => {
           )}
 
           {/* Expenses list */}
-          <div className="p-5 rounded-2xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-            <p className="text-sm font-bold font-cairo mb-4" style={{ color: '#0F172A' }}>مصاريف اليوم</p>
+          <ClientPanel title="مصاريف اليوم" description="سجل المصاريف التشغيلية اليومية وراجع أثرها على الربح.">
             {expenses.length === 0 ? (
-              <p className="text-slate-500 font-tajawal text-sm text-center py-4">لا توجد مصاريف مسجّلة</p>
+              <ClientEmptyState icon={TrendingDown} title="لا توجد مصاريف مسجلة" description="أضف مصروفًا عند شراء مواد أو تسجيل تكلفة تشغيل." />
             ) : (
               <div className="space-y-2">
                 {expenses.map(e => (
@@ -344,7 +329,7 @@ export const CarWashFinance = () => {
                 ))}
               </div>
             )}
-          </div>
+          </ClientPanel>
         </div>
       </FeatureLock>
 
@@ -379,11 +364,11 @@ export const CarWashFinance = () => {
             </div>
 
             <div className="flex gap-3 mt-5">
-              <button onClick={closeForm} className="flex-1 py-2.5 rounded-xl text-sm font-tajawal" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#64748B' }}>إلغاء</button>
-              <button onClick={addExpense} disabled={saving || !form.amount || Number(form.amount) <= 0} className="flex-1 py-2.5 rounded-xl text-sm font-tajawal text-white flex items-center justify-center gap-2 disabled:opacity-50" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
+              <ClientButton tone="secondary" onClick={closeForm} className="flex-1">إلغاء</ClientButton>
+              <ClientButton onClick={addExpense} disabled={saving || !form.amount || Number(form.amount) <= 0} className="flex-1">
                 {saving ? <Loader2 size={14} className="animate-spin" /> : editingExpense ? <Pencil size={14} /> : <Plus size={14} />}
                 {saving ? 'جاري الحفظ...' : editingExpense ? 'حفظ التعديل' : 'إضافة'}
-              </button>
+              </ClientButton>
             </div>
           </div>
         </div>

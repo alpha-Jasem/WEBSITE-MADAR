@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
+import { ClientButton, ClientPageHeader } from './ClientUI'
 
 const N8N_BASE             = 'https://keepcalm.app.n8n.cloud/webhook'
 const N8N_REGISTER_WEBHOOK = `${N8N_BASE}/cw-registration`
@@ -256,58 +257,36 @@ export function CarWashLeads() {
 
   return (
     <div dir="rtl" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>العملاء</h1>
-          <p style={{ fontSize: 13, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginTop: 4 }}>
-            {customers.length} عميل مسجل — {inactive} غير نشط (أكثر من 30 يوم)
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+      <ClientPageHeader
+        eyebrow="ملف العملاء والولاء"
+        title="العملاء"
+        description={`${customers.length} عميل مسجل — ${inactive} غير نشط أكثر من 30 يوم.`}
+        actions={(
+          <>
           {selected.size > 0 && (
             can.campaigns ? (
-              <button onClick={() => setShowCampaign(true)} style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px',
-                background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)',
-                borderRadius: 10, fontSize: 13, color: '#818CF8', fontFamily: 'Cairo, sans-serif', fontWeight: 700,
-                cursor: 'pointer',
-              }}>
+              <ClientButton onClick={() => setShowCampaign(true)}>
                 <Send size={14} /> إرسال لـ {selected.size} عميل
-              </button>
+              </ClientButton>
             ) : (
-              <button
+              <ClientButton
+                tone="secondary"
                 onClick={() => window.location.href = '/client/upgrade'}
                 title="ميزة Pro — ارتقِ لتفعيل الحملات"
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px',
-                  background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.2)',
-                  borderRadius: 10, fontSize: 13, color: '#64748B', fontFamily: 'Cairo, sans-serif', fontWeight: 700,
-                  cursor: 'pointer',
-                }}>
+              >
                 <Lock size={13} /> حملة واتساب — Pro
-              </button>
+              </ClientButton>
             )
           )}
-          <button onClick={openAdd} style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px',
-            background: 'linear-gradient(135deg, #22D3EE22, #06B6D422)',
-            border: '1px solid rgba(34,211,238,0.3)',
-            borderRadius: 10, fontSize: 13, color: '#22D3EE', fontFamily: 'Cairo, sans-serif', fontWeight: 700,
-            cursor: 'pointer',
-          }}>
+          <ClientButton onClick={openAdd}>
             <Plus size={14} /> إضافة عميل
-          </button>
-          <button onClick={exportExcel} style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px',
-            background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)',
-            borderRadius: 10, fontSize: 13, color: '#10B981', fontFamily: 'Tajawal, sans-serif',
-            cursor: 'pointer',
-          }}>
+          </ClientButton>
+          <ClientButton tone="secondary" onClick={exportExcel}>
             <Download size={14} /> تصدير Excel
-          </button>
-        </div>
-      </div>
+          </ClientButton>
+          </>
+        )}
+      />
 
       {/* Summary pills */}
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>

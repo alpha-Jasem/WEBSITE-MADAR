@@ -7,6 +7,7 @@ import { usePlanGate } from '../../../hooks/usePlanGate'
 import { FeatureLock } from '../../dash/FeatureLock'
 import { downloadCSV, formatDateForCSV } from '../../../lib/exportUtils'
 import type { PaymentMethod } from '../../../types'
+import { ClientButton, ClientPageHeader } from './ClientUI'
 
 type CWVisit = {
   id: string
@@ -302,11 +303,13 @@ export function CarWashReports() {
       currentPlan={planLabel}
     >
     <div dir="rtl" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>تقارير المغسلة</h1>
-          <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+      <ClientPageHeader
+        eyebrow="تحليل الأداء"
+        title="تقارير المغسلة"
+        description="رسوم بيانية، إيرادات، ولاء العملاء، وأداء الخدمات بفلاتر جاهزة للتصدير."
+        actions={(
+          <>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
             {DATE_FILTERS.map(f => (
               <button key={f.days} onClick={() => { setDays(f.days); setShowCustom(false) }}
                 style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer', border: `1px solid ${!showCustom && days === f.days ? '#1565C0' : 'rgba(0,191,255,0.2)'}`, background: !showCustom && days === f.days ? 'rgba(21,101,192,0.12)' : 'transparent', color: !showCustom && days === f.days ? '#1565C0' : '#5A6E85', fontWeight: !showCustom && days === f.days ? 700 : 400, transition: 'all 0.15s' }}>
@@ -335,16 +338,14 @@ export function CarWashReports() {
               </div>
             )}
           </div>
-        </div>
         <div style={{ position: 'relative' }}>
-          <button
+          <ClientButton
             onClick={() => setShowExportMenu(v => !v)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 12, background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', border: 'none', color: '#fff', fontSize: 13, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer' }}
           >
             <FileDown size={15} />
             تصدير
             <ChevronDown size={13} />
-          </button>
+          </ClientButton>
           {showExportMenu && (
             <div style={{ position: 'absolute', top: '110%', left: 0, background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 12, overflow: 'hidden', zIndex: 50, minWidth: 180, boxShadow: '0 8px 24px rgba(15,23,42,0.10)' }}>
               {[
@@ -364,7 +365,9 @@ export function CarWashReports() {
             </div>
           )}
         </div>
-      </div>
+          </>
+        )}
+      />
 
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>

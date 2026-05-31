@@ -10,6 +10,7 @@ import { getSelfCheckinSettings, getSelfCheckinUrl } from '../../../lib/selfChec
 import { usePlanGate } from '../../../hooks/usePlanGate'
 import { FeatureLock } from '../../dash/FeatureLock'
 import { CarWashLaunchChecklist } from './CarWashLaunchChecklist'
+import { ClientPageHeader } from './ClientUI'
 
 const PLAN_LIMITS: Record<string, string> = {
   starter: '2,000 رسالة/شهر',
@@ -265,10 +266,11 @@ export const ClientSettings = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 font-cairo">الإعدادات</h1>
-        <p className="text-sm text-slate-500 font-tajawal">إعدادات الحساب والتكاملات</p>
-      </div>
+      <ClientPageHeader
+        eyebrow="مركز التحكم"
+        title="الإعدادات"
+        description="إعدادات الحساب، QR، الفريق، التقييمات، والصلاحيات التشغيلية."
+      />
 
       {/* Tabs — car wash only */}
       {isCarWash && (

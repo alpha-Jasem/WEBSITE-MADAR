@@ -5,6 +5,7 @@ import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
 import { FeatureLock } from '../../dash/FeatureLock'
 import { logAudit } from '../../../lib/auditLog'
+import { ClientButton, ClientPageHeader, ClientPanel } from './ClientUI'
 
 // ─── Static automation definitions ───────────────────────────────────────────
 
@@ -174,20 +175,17 @@ export function CarWashAutomations() {
   return (
     <div dir="rtl" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>الأتمتة</h1>
-          <p style={{ fontSize: 13, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginTop: 4 }}>
-            تحكم في تشغيل وإيقاف رسائل الواتساب التلقائية
-          </p>
-        </div>
-        <button onClick={saveAll} disabled={saving}
-          style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', borderRadius: 12, border: 'none', cursor: 'pointer', background: saved ? 'rgba(16,185,129,0.15)' : 'rgba(34,211,238,0.12)', color: saved ? '#10B981' : '#22D3EE', fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
-          {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <Check size={14} /> : <Save size={14} />}
-          {saved ? 'تم الحفظ ✓' : 'حفظ الكل'}
-        </button>
-      </div>
+      <ClientPageHeader
+        eyebrow="محرك الواتساب"
+        title="الأتمتة"
+        description="تحكم في تشغيل وإيقاف رسائل العملاء التلقائية بدون تعقيد."
+        actions={(
+          <ClientButton onClick={saveAll} disabled={saving} tone={saved ? 'success' : 'primary'}>
+            {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <Check size={14} /> : <Save size={14} />}
+            {saved ? 'تم الحفظ' : 'حفظ الكل'}
+          </ClientButton>
+        )}
+      />
 
       {/* Webhook section */}
       <div>
@@ -255,7 +253,7 @@ export function CarWashAutomations() {
             التسجيل الذاتي عبر QR
           </span>
         </div>
-        <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 16, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <ClientPanel>
 
           {/* Enable toggle */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
@@ -318,7 +316,7 @@ export function CarWashAutomations() {
               </div>
             </>
           )}
-        </div>
+        </ClientPanel>
       </div>
 
     </div>

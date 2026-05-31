@@ -5,6 +5,7 @@ import { useClientCompany } from '../../../hooks/useClientCompany'
 import { logAudit } from '../../../lib/auditLog'
 import { downloadCSV, formatDateForCSV } from '../../../lib/exportUtils'
 import type { CWDailyClosing } from '../../../types'
+import { ClientButton, ClientPageHeader, ClientPanel, ClientStatusPill } from './ClientUI'
 
 // Daily closing notification handled by Supabase DB trigger (cw_trigger_daily_closing)
 
@@ -274,26 +275,22 @@ export const CarWashDailyClosing = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white font-cairo">إغلاق اليوم</h1>
-          <p className="text-sm text-slate-500 font-tajawal">
-            {new Date().toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </p>
-        </div>
-        {pastClosings.length > 0 && (
+      <ClientPageHeader
+        eyebrow="نهاية الوردية"
+        title="إغلاق اليوم"
+        description={new Date().toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        actions={pastClosings.length > 0 ? (
           <div className="relative">
-            <button
+            <ClientButton
+              tone="secondary"
               onClick={() => setShowExport(v => !v)}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-tajawal text-slate-400 transition-all hover:text-white"
-              style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
             >
               <FileDown size={14} />
               تصدير
               <ChevronDown size={12} />
-            </button>
+            </ClientButton>
             {showExport && (
-              <div className="absolute left-0 top-full mt-1 rounded-xl overflow-hidden z-50" style={{ background: '#0D1422', border: '1px solid #CBD5E1', minWidth: 180 }}>
+              <div className="absolute left-0 top-full mt-1 rounded-xl overflow-hidden z-50 shadow-xl" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', minWidth: 180 }}>
                 {[
                   { label: 'تصدير CSV', action: () => { exportClosingsCSV(); setShowExport(false) } },
                   { label: 'طباعة آخر إغلاق', action: () => { if (todayClosing) printClosing(todayClosing); setShowExport(false) } },
@@ -301,7 +298,7 @@ export const CarWashDailyClosing = () => {
                   <button
                     key={item.label}
                     onClick={item.action}
-                    className="block w-full text-right px-4 py-2.5 text-sm font-tajawal text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+                    className="block w-full text-right px-4 py-2.5 text-sm font-tajawal text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition-all"
                   >
                     {item.label}
                   </button>
@@ -309,8 +306,8 @@ export const CarWashDailyClosing = () => {
               </div>
             )}
           </div>
-        )}
-      </div>
+        ) : undefined}
+      />
 
       {/* Already closed banner */}
       {todayClosing && (
@@ -325,13 +322,7 @@ export const CarWashDailyClosing = () => {
 
       {/* Summary card */}
       {displayData && (
-        <div className="rounded-2xl overflow-hidden" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-          <div className="px-5 py-4" style={{ borderBottom: '1px solid #E2E8F0', background: '#FAFAFA' }}>
-            <div className="flex items-center gap-2">
-              <ClipboardCheck size={16} className="text-primary-400" />
-              <p className="text-sm font-bold text-slate-900 font-cairo">ملخص اليوم</p>
-            </div>
-          </div>
+        <ClientPanel icon={ClipboardCheck} title="ملخص اليوم" description="الأرقام النهائية قبل اعتماد إغلاق الوردية.">
           <div className="p-5 space-y-0">
             <SummaryRow label="عدد السيارات" value={`${displayData.total_cars} سيارة`} />
             <SummaryRow label="قبل الضريبة" value={`${displayData.subtotal_sales.toFixed(2)} ر.س`} />
@@ -363,18 +354,14 @@ export const CarWashDailyClosing = () => {
               </span>
             </div>
           </div>
-        </div>
+        </ClientPanel>
       )}
 
       {/* Notes + close button */}
       {!todayClosing && preview && (
         <div className="space-y-3">
-          <div className="rounded-2xl p-4" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+          <ClientPanel title="مطابقة درج الكاش" description="سجل الكاش الفعلي قبل الإغلاق لتقليل أخطاء نهاية اليوم.">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-sm font-bold text-slate-900 font-cairo">مطابقة درج الكاش</p>
-                <p className="mt-1 text-xs text-slate-500 font-tajawal">اكتب المبلغ الموجود فعليًا في الدرج قبل إغلاق اليوم.</p>
-              </div>
               <div className="min-w-[220px]">
                 <label className="mb-1.5 block text-xs text-slate-500 font-tajawal">الكاش الفعلي</label>
                 <input
@@ -397,7 +384,7 @@ export const CarWashDailyClosing = () => {
                 color={Math.abs(Number(actualCash || 0) - preview.cashSales) < 0.01 ? '#059669' : '#DC2626'}
               />
             </div>
-          </div>
+          </ClientPanel>
           <div>
             <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">ملاحظات (اختياري)</label>
             <textarea
@@ -409,40 +396,36 @@ export const CarWashDailyClosing = () => {
               style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
             />
           </div>
-          <button
+          <ClientButton
+            tone="success"
             onClick={closeDay}
             disabled={closing}
-            className="w-full py-3.5 rounded-xl text-base font-bold font-cairo text-white flex items-center justify-center gap-2 disabled:opacity-50 transition-all hover:opacity-90"
-            style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}
+            className="w-full"
           >
             {closing ? <Loader2 size={18} className="animate-spin" /> : <ClipboardCheck size={18} />}
             {closing ? 'جاري الإغلاق...' : 'إغلاق اليوم'}
-          </button>
+          </ClientButton>
         </div>
       )}
 
       {/* Past closings */}
       {pastClosings.length > 0 && (
-        <div className="rounded-2xl overflow-hidden" style={{ background: '#FAFAFA', border: '1px solid #E2E8F0' }}>
-          <div className="px-5 py-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
-            <p className="text-sm font-bold text-white font-cairo">الإغلاقات السابقة</p>
-          </div>
-          <div className="divide-y divide-white/5">
+        <ClientPanel title="الإغلاقات السابقة" description="آخر 30 يوم إغلاق مع طباعة سريعة لكل يوم.">
+          <div className="divide-y divide-slate-100">
             {pastClosings.map(c => (
               <div key={c.id} className="px-5 py-3 flex items-center gap-4">
                 <div className="flex-1">
-                  <p className="text-sm text-white font-tajawal">{c.closing_date}</p>
+                  <p className="text-sm text-slate-900 font-tajawal">{c.closing_date}</p>
                   <p className="text-xs text-slate-500 font-tajawal">{c.total_cars} سيارة</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-bold font-sora" style={{ color: c.net_profit >= 0 ? '#818CF8' : '#F87171' }}>
-                    {c.net_profit.toFixed(0)} ر.س
-                  </p>
-                  <p className="text-xs text-slate-600 font-tajawal">صافي الربح</p>
+                  <ClientStatusPill tone={c.net_profit >= 0 ? 'green' : 'red'}>
+                    {c.net_profit.toFixed(0)} ر.س صافي الربح
+                  </ClientStatusPill>
                 </div>
                 <button
                   onClick={() => printClosing(c)}
-                  className="p-2 rounded-lg text-slate-600 hover:text-white transition-colors"
+                  className="p-2 rounded-lg text-slate-600 hover:text-sky-600 transition-colors"
                   style={{ background: '#FFFFFF' }}
                 >
                   <Download size={13} />
@@ -450,7 +433,7 @@ export const CarWashDailyClosing = () => {
               </div>
             ))}
           </div>
-        </div>
+        </ClientPanel>
       )}
     </div>
   )

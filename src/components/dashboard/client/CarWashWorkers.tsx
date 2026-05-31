@@ -1,11 +1,12 @@
 ﻿import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, Trophy, Car, Loader2, X, Check, AlertTriangle } from 'lucide-react'
+import { Plus, Pencil, Trash2, Trophy, Car, Loader2, X, Check, AlertTriangle, Users } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
 import { FeatureLock } from '../../dash/FeatureLock'
 import { logAudit } from '../../../lib/auditLog'
 import type { CWWorker, CommissionType, SalaryType } from '../../../types'
+import { ClientButton, ClientEmptyState, ClientPageHeader } from './ClientUI'
 
 interface WorkerStats {
   workerId: string
@@ -134,15 +135,12 @@ export const CarWashWorkers = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 font-cairo">الموظفون</h1>
-          <p className="text-sm text-slate-500 font-tajawal">أداء اليوم والعمولات</p>
-        </div>
-        <button onClick={openAdd} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-tajawal font-medium text-white" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
-          <Plus size={16} /> إضافة موظف
-        </button>
-      </div>
+      <ClientPageHeader
+        eyebrow="فريق التشغيل"
+        title="الموظفون"
+        description="أداء اليوم، السيارات المنجزة، العمولات، والتنبيه عند وجود سيارات غير مربوطة بموظف."
+        actions={<ClientButton onClick={openAdd}><Plus size={16} /> إضافة موظف</ClientButton>}
+      />
 
       {unassignedDelivered > 0 && (
         <div className="flex items-start gap-3 rounded-2xl p-4" style={{ background: '#FFFBEB', border: '1px solid #FCD34D' }}>
@@ -156,10 +154,12 @@ export const CarWashWorkers = () => {
 
       {/* Workers grid */}
       {workers.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-48 gap-3" style={{ background: '#FAFAFA', border: '1px solid #E2E8F0', borderRadius: 16 }}>
-          <p className="text-slate-500 font-tajawal text-sm">لا يوجد موظفون بعد</p>
-          <button onClick={openAdd} className="text-primary-400 text-sm font-tajawal underline">أضف أول موظف</button>
-        </div>
+        <ClientEmptyState
+          icon={Users}
+          title="لا يوجد موظفون بعد"
+          description="أضف الفريق حتى تظهر العمولات والأداء اليومي بشكل صحيح."
+          action={<ClientButton onClick={openAdd}><Plus size={16} /> أضف أول موظف</ClientButton>}
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {workers.map((w) => {
@@ -178,7 +178,7 @@ export const CarWashWorkers = () => {
                     {w.phone && <p className="text-slate-500 text-xs font-tajawal mt-0.5">{w.phone}</p>}
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => openEdit(w)} className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
+                    <button onClick={() => openEdit(w)} className="p-1.5 rounded-lg hover:bg-sky-50 text-slate-400 hover:text-sky-600 transition-colors">
                       <Pencil size={14} />
                     </button>
                     <button onClick={() => deactivate(w.id)} disabled={deletingId === w.id} className="p-1.5 rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors">
