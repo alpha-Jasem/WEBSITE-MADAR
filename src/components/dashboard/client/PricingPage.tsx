@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect } from 'react'
-import { Check, Lock, Sparkles, Crown, Zap, Loader2, CheckCircle2, AlertCircle, CreditCard, Wallet, Repeat, Smartphone } from 'lucide-react'
+import { Check, Lock, Sparkles, Crown, Zap, Loader2, CheckCircle2, AlertCircle, CreditCard, Wallet, Repeat, Smartphone, MessageCircle } from 'lucide-react'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { supabase } from '../../../lib/supabase'
 import { MADAR_WHATSAPP_NUMBER } from '../../../lib/constants'
@@ -115,6 +115,11 @@ const UNLOCKED_BY_PLAN: Record<string, string[]> = {
 
 function buildWhatsAppUrl(companyName: string, currentPlan: string, requestedPlan: string) {
   const msg = `أهلاً، أود ترقية باقتي في Madar OS.\n\nالمنشأة: ${companyName}\nالباقة الحالية: ${currentPlan}\nالباقة المطلوبة: ${requestedPlan}\n\nأرجو المساعدة في الترقية.`
+  return `https://wa.me/${MADAR_WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`
+}
+
+function buildAddonWhatsAppUrl(companyName: string, addonName: string) {
+  const msg = `أهلاً، أود تفعيل إضافة ${addonName} في Madar OS.\n\nالمنشأة: ${companyName}\n\nأرسلوا لي المتطلبات والتكلفة.`
   return `https://wa.me/${MADAR_WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`
 }
 
@@ -365,6 +370,16 @@ export const PricingPage = () => {
               </div>
               <p className="text-sm font-bold text-slate-900 font-cairo">{addon.title}</p>
               <p className="mt-1 text-xs leading-5 text-slate-500 font-tajawal">{addon.desc}</p>
+              <a
+                href={buildAddonWhatsAppUrl(companyName, addon.title)}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-bold font-cairo transition-transform hover:-translate-y-0.5"
+                style={{ background: `${addon.color}12`, color: addon.color, border: `1px solid ${addon.color}25` }}
+              >
+                <MessageCircle size={14} />
+                طلب التفعيل
+              </a>
             </div>
           ))}
         </div>
