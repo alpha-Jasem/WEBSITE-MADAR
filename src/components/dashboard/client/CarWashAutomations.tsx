@@ -5,7 +5,7 @@ import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
 import { FeatureLock } from '../../dash/FeatureLock'
 import { logAudit } from '../../../lib/auditLog'
-import { ClientButton, ClientPageHeader, ClientPanel } from './ClientUI'
+import { ClientButton, ClientInsightPanel, ClientPageHeader, ClientPanel } from './ClientUI'
 
 // ─── Static automation definitions ───────────────────────────────────────────
 
@@ -171,6 +171,17 @@ export function CarWashAutomations() {
     if (key === 'review_request') return { label: 'تقييم طُلب', value: stats.reviews }
     return null
   }
+  const enabledCount = DEFS.filter(def => automations[def.key]?.enabled !== false).length
+  const disabledCount = DEFS.length - enabledCount
+  const automationInsights = [
+    { title: 'نسبة التشغيل', description: `${enabledCount} من ${DEFS.length} أتمتة مفعلة. كلما زادت الأتمتة قل ضغط الموظف.`, tone: disabledCount > 2 ? 'amber' as const : 'green' as const },
+    stats.deliveries > 0
+      ? { title: 'إيصالات التسليم تعمل مع التشغيل', description: `${stats.deliveries} عملية تسليم هذا الشهر، تأكد أن إيصال التسليم مفعل دائماً.`, tone: 'blue' as const }
+      : { title: 'اختبر أول تسليم', description: 'بعد أول تسليم ستظهر بيانات الإيصالات والتقييمات هنا.', tone: 'slate' as const },
+    stats.reviews > 0
+      ? { title: 'التقييمات بدأت تتحرك', description: `${stats.reviews} طلب تقييم مرسل. راقب Google Maps وارفع التقييم العام.`, tone: 'green' as const }
+      : { title: 'فعّل طلب التقييم', description: 'طلب التقييم بعد الخدمة من أقوى أدوات رفع مبيعات المغسلة محلياً.', tone: 'amber' as const },
+  ]
 
   return (
     <div dir="rtl" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -185,6 +196,12 @@ export function CarWashAutomations() {
             {saved ? 'تم الحفظ' : 'حفظ الكل'}
           </ClientButton>
         )}
+      />
+
+      <ClientInsightPanel
+        title="حالة محرك الرسائل"
+        description="خلاصة عملية تساعد المالك يعرف هل الأتمتة تبيع وتوفر وقت فعلاً."
+        items={automationInsights}
       />
 
       {/* Webhook section */}

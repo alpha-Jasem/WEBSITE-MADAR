@@ -277,6 +277,76 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   font: 900 11px 'Tajawal', sans-serif;
 }
 
+.client-insight-panel {
+  padding: 20px;
+  border: 1px solid rgba(0,191,255,0.18);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(0,191,255,0.12), transparent 34%),
+    linear-gradient(135deg, #FFFFFF, #F8FBFF);
+  box-shadow: 0 16px 48px rgba(13,27,62,0.06);
+}
+
+.client-insight-head {
+  margin-bottom: 15px;
+}
+
+.client-insight-head span {
+  display: inline-flex;
+  margin-bottom: 7px;
+  color: #0099CC;
+  font: 900 11px 'Tajawal', sans-serif;
+}
+
+.client-insight-head h2 {
+  margin: 0;
+  color: #0D1B3E;
+  font: 900 17px 'Cairo', sans-serif;
+  letter-spacing: 0;
+}
+
+.client-insight-head p {
+  margin: 4px 0 0;
+  color: #64748B;
+  font: 700 12px/1.8 'Tajawal', sans-serif;
+}
+
+.client-insight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.client-insight-grid article {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  gap: 10px;
+  min-height: 92px;
+  padding: 13px;
+  border: 1px solid;
+  border-radius: 16px;
+}
+
+.client-insight-grid i {
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 5px rgba(255,255,255,0.55);
+}
+
+.client-insight-grid strong {
+  display: block;
+  color: #0D1B3E;
+  font: 900 13px 'Cairo', sans-serif;
+}
+
+.client-insight-grid p {
+  margin: 4px 0 0;
+  color: #52627A;
+  font: 700 12px/1.75 'Tajawal', sans-serif;
+}
+
 @media (max-width: 720px) {
   .client-page-header {
     flex-direction: column;

@@ -9,6 +9,7 @@ import { getDailyTicketCode } from '../../../lib/carWashTickets'
 import { clearSelfCheckinPending, isSelfCheckinPending } from '../../../lib/selfCheckin'
 import type { CWQueueItem, CWWorker, CWService, QueueStatus, PaymentMethod } from '../../../types'
 import { CarWashReceipt } from './CarWashReceipt'
+import { ClientInsightPanel } from './ClientUI'
 
 // Notifications (car_ready, delivery_receipt, loyalty_milestone, daily_closing)
 // are now handled by Supabase DB triggers — no webhook calls needed here.
@@ -529,6 +530,23 @@ export const CarWashQueue = () => {
   const readyItems = activeItems.filter(i => i.status === 'ready')
   const inServiceItems = activeItems.filter(i => i.status === 'washing' || i.status === 'drying')
   const todayRevenue = deliveredItems.reduce((sum, item) => sum + (item.total_amount ?? item.price ?? 0), 0)
+  const avgMinutes = deliveredItems.length
+    ? Math.round(deliveredItems.reduce((sum, item) => sum + Math.max(0, Math.floor((new Date(item.delivered_at || item.updated_at || item.created_at).getTime() - new Date(item.created_at).getTime()) / 60000)), 0) / deliveredItems.length)
+    : 0
+  const queueInsights = [
+    pendingApprovalItems.length > 0
+      ? { title: 'اعتمد تسجيلات QR أولاً', description: `${pendingApprovalItems.length} سيارة دخلت من الباركود وتنتظر موظف يثبتها في المسار.`, tone: 'amber' as const }
+      : { title: 'QR جاهز بدون انتظار', description: 'لا توجد سيارات معلقة من التسجيل الذاتي الآن، وهذا ممتاز لتخفيف ضغط الاستقبال.', tone: 'green' as const },
+    readyItems.length > 0
+      ? { title: 'سلّم السيارات الجاهزة', description: `${readyItems.length} سيارة جاهزة. التسليم السريع يقلل الزحام ويرفع رضا العميل.`, tone: 'green' as const }
+      : { title: 'لا يوجد تسليم متوقف', description: 'عند ظهور سيارة جاهزة خليها أعلى أولوية حتى لا تتكدس منطقة الخروج.', tone: 'slate' as const },
+    stuckItems.length > 0
+      ? { title: 'تأخير يحتاج تدخل', description: `${stuckItems.length} سيارة تجاوزت ساعة في المسار. راجع العامل أو الخدمة الآن.`, tone: 'red' as const }
+      : { title: 'المسار بدون تأخير خطير', description: 'لا توجد سيارات متأخرة أكثر من ساعة. استمر بنفس الوتيرة.', tone: 'green' as const },
+    avgMinutes > 0
+      ? { title: 'متوسط مدة الخدمة', description: `متوسط السيارات المسلمة اليوم ${avgMinutes} دقيقة. الهدف المثالي للمغسلة السريعة 20-35 دقيقة.`, tone: avgMinutes > 45 ? 'amber' as const : 'blue' as const }
+      : { title: 'ابدأ بقياس الوقت', description: 'بعد أول تسليم سيظهر متوسط مدة الخدمة تلقائياً لمراقبة أداء اليوم.', tone: 'blue' as const },
+  ]
 
   if (authLoading || loading) return (
     <div className="flex items-center justify-center h-64 gap-3">
@@ -610,6 +628,12 @@ export const CarWashQueue = () => {
           ))}
         </div>
       </div>
+
+      <ClientInsightPanel
+        title="أولويات التشغيل الآن"
+        description="هذه التوصيات مصممة لتقليل ضغط الموظف وتسريع خروج السيارات بدون متابعة يدوية طويلة."
+        items={queueInsights}
+      />
 
       <div className="grid gap-4 xl:grid-cols-4 lg:grid-cols-2">
         {FAST_LANES.map(lane => {

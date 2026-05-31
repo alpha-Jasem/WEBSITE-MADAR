@@ -8,7 +8,7 @@ import { FeatureLock } from '../../dash/FeatureLock'
 import { logAudit } from '../../../lib/auditLog'
 import { downloadCSV, formatDateForCSV } from '../../../lib/exportUtils'
 import type { CWExpense, ExpenseCategory, PaymentMethod } from '../../../types'
-import { ClientButton, ClientEmptyState, ClientPageHeader, ClientPanel, ClientStatCard } from './ClientUI'
+import { ClientButton, ClientEmptyState, ClientInsightPanel, ClientPageHeader, ClientPanel, ClientStatCard } from './ClientUI'
 
 const DATE_PRESETS = [
   { label: 'اليوم',       days: 1  },
@@ -126,6 +126,17 @@ export const CarWashFinance = () => {
 
   const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0)
   const netProfit = revenue - totalExpenses - workerCost
+  const financeInsights = [
+    netProfit >= 0
+      ? { title: 'الربح اليومي صحي', description: `صافي الربح الحالي ${netProfit.toFixed(0)} ر.س بعد المصاريف وتكاليف الموظفين.`, tone: 'green' as const }
+      : { title: 'راجع المصاريف فوراً', description: `صافي الربح بالسالب ${netProfit.toFixed(0)} ر.س. تحقق من مصاريف اليوم والعمولات.`, tone: 'red' as const },
+    visitCount > 0
+      ? { title: 'متوسط فاتورة العميل', description: `متوسط الزيارة ${Math.round(revenue / visitCount)} ر.س. ارفعها بخدمة إضافية بسيطة عند التسجيل.`, tone: 'blue' as const }
+      : { title: 'لا توجد زيارات في الفترة', description: 'ابدأ بتسليم أول سيارة حتى تظهر مؤشرات الإيراد والمتوسطات.', tone: 'slate' as const },
+    totalExpenses > revenue * 0.35 && revenue > 0
+      ? { title: 'المصاريف مرتفعة', description: 'المصاريف تجاوزت 35% من الإيراد. افصل المواد والكهرباء والإيجار للمراجعة.', tone: 'amber' as const }
+      : { title: 'المصاريف تحت السيطرة', description: 'نسبة المصاريف الحالية لا تظهر كخطر مباشر على هامش اليوم.', tone: 'green' as const },
+  ]
 
   const closeForm = () => { setShowForm(false); setEditingExpense(null); setForm(EMPTY_FORM) }
 
@@ -225,6 +236,12 @@ export const CarWashFinance = () => {
         <ClientStatCard icon={TrendingUp} label="الإيرادات" value={`${revenue.toFixed(0)} ر.س`} tone="green" sub={`${visitCount} زيارة — ${DATE_PRESETS.find(p => p.days === days)?.label || ''}`} />
         <ClientStatCard icon={DollarSign} label="متوسط الزيارة" value={`${visitCount > 0 ? (revenue / visitCount).toFixed(0) : 0} ر.س`} tone="blue" sub="لكل سيارة" />
       </div>
+
+      <ClientInsightPanel
+        title="قراءة مالية سريعة"
+        description="مؤشرات عملية للمالك قبل نهاية اليوم: هل نربح، أين الهدر، وكيف نرفع متوسط الفاتورة."
+        items={financeInsights}
+      />
 
       {/* Expenses, profit bar, workers cost — Pro feature */}
       <FeatureLock

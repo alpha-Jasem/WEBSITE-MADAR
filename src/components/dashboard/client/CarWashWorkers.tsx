@@ -6,7 +6,7 @@ import { usePlanGate } from '../../../hooks/usePlanGate'
 import { FeatureLock } from '../../dash/FeatureLock'
 import { logAudit } from '../../../lib/auditLog'
 import type { CWWorker, CommissionType, SalaryType } from '../../../types'
-import { ClientButton, ClientEmptyState, ClientPageHeader } from './ClientUI'
+import { ClientButton, ClientEmptyState, ClientInsightPanel, ClientPageHeader } from './ClientUI'
 
 interface WorkerStats {
   workerId: string
@@ -125,6 +125,19 @@ export const CarWashWorkers = () => {
 
   const getWorkerStats = (id: string) => stats.find(s => s.workerId === id) || { carsToday: 0, commissionToday: 0 }
   const rank = (id: string) => { const i = stats.findIndex(s => s.workerId === id); return i === -1 ? null : i + 1 }
+  const bestStats = stats[0]
+  const bestWorker = bestStats ? workers.find(w => w.id === bestStats.workerId) : null
+  const workerInsights = [
+    bestWorker
+      ? { title: 'أفضل أداء اليوم', description: `${bestWorker.name} متصدر بعدد ${bestStats.carsToday} سيارة. استخدمه كمرجع للوردية.`, tone: 'green' as const }
+      : { title: 'لا يوجد أداء مسجل بعد', description: 'بعد أول تسليم مربوط بموظف ستظهر المقارنة تلقائياً.', tone: 'slate' as const },
+    unassignedDelivered > 0
+      ? { title: 'أصلح الربط الآن', description: `${unassignedDelivered} سيارة مسلمة بدون موظف. هذا يخرب العمولات والتقييمات.`, tone: 'red' as const }
+      : { title: 'الربط جيد', description: 'كل السيارات المسلمة مربوطة بموظفين، وهذا يجعل الأداء قابل للقياس.', tone: 'green' as const },
+    workers.length > 0
+      ? { title: 'جهّز تقييم العميل', description: 'المرحلة التالية الأفضل: ربط تقييم 5 نجوم بعد التسليم باسم الموظف المسؤول.', tone: 'blue' as const }
+      : { title: 'أضف الفريق أولاً', description: 'بدون موظفين لا يمكن قياس الأداء أو العمولات أو جودة الخدمة.', tone: 'amber' as const },
+  ]
 
   if (authLoading || loading) return (
     <div className="flex items-center justify-center h-64 gap-3">
@@ -151,6 +164,12 @@ export const CarWashWorkers = () => {
           </div>
         </div>
       )}
+
+      <ClientInsightPanel
+        title="تحسين أداء الفريق"
+        description="هذه التوصيات تساعد المالك يعرف من يعمل جيداً وأين تضيع دقة الحسابات."
+        items={workerInsights}
+      />
 
       {/* Workers grid */}
       {workers.length === 0 ? (

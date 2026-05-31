@@ -7,7 +7,7 @@ import { usePlanGate } from '../../../hooks/usePlanGate'
 import { FeatureLock } from '../../dash/FeatureLock'
 import { downloadCSV, formatDateForCSV } from '../../../lib/exportUtils'
 import type { PaymentMethod } from '../../../types'
-import { ClientButton, ClientPageHeader } from './ClientUI'
+import { ClientButton, ClientInsightPanel, ClientPageHeader } from './ClientUI'
 
 type CWVisit = {
   id: string
@@ -177,6 +177,21 @@ export function CarWashReports() {
   }, [visits, customers, workers, days])
 
   const topCustomers = customers.slice(0, 8)
+  const avgTicket = stats.todayVisits > 0 ? Math.round(stats.revenue / Math.max(1, visits.length)) : 0
+  const reportInsights = [
+    stats.services.length > 0
+      ? { title: 'ادفع الخدمة الأعلى طلباً', description: `الخدمة الأكثر طلباً هي "${stats.services[0][0]}" بعدد ${stats.services[0][1]} طلب. اجعلها واضحة في QR والعروض.`, tone: 'blue' as const }
+      : { title: 'لا توجد خدمات كافية للتحليل', description: 'بعد تسجيل عدة زيارات ستظهر أفضل الخدمات تلقائياً.', tone: 'slate' as const },
+    stats.workerStats.length > 0
+      ? { title: 'استفد من أفضل موظف', description: `${stats.workerStats[0].name} أنجز ${stats.workerStats[0].count} سيارة. استخدمه كنموذج للوردية.`, tone: 'green' as const }
+      : { title: 'اربط الزيارات بالموظفين', description: 'تحديد الموظف في لوحة التشغيل يجعل تقرير الأداء قابل للبيع والإدارة.', tone: 'amber' as const },
+    stats.milestones > 0
+      ? { title: 'مكافآت جاهزة للبيع العكسي', description: `${stats.milestones} عميل وصلوا مرحلة مكافأة. هذه فرصة ممتازة لعرض اشتراك شهري.`, tone: 'amber' as const }
+      : { title: 'ابنِ ولاء تدريجي', description: 'استمر بتسجيل الزيارات حتى يبدأ النظام باكتشاف فرص المكافآت والرجوع.', tone: 'blue' as const },
+    avgTicket > 0
+      ? { title: 'متوسط قيمة العميل', description: `متوسط الفاتورة في الفترة حوالي ${avgTicket} ر.س. ارفعها بإضافة خدمة تلميع أو عطر كخيار سريع.`, tone: avgTicket < 35 ? 'amber' as const : 'green' as const }
+      : { title: 'انتظر بيانات أكثر', description: 'كلما زادت الزيارات أصبحت توصيات الإيراد أدق.', tone: 'slate' as const },
+  ]
 
   const exportSalesCSV = () => {
     const rows = visits.map(v => ({
@@ -378,6 +393,12 @@ export function CarWashReports() {
         <StatCard icon={Gift} label="غسلات مجانية" value={stats.freeWashCount} sub={stats.freeWashDiscount > 0 ? `خصم ${stats.freeWashDiscount.toFixed(0)} ر.س` : undefined} color="#F97316" />
         <StatCard icon={Users} label="إجمالي العملاء" value={customers.length} sub="مسجلون في النظام" color="#8B5CF6" />
       </div>
+
+      <ClientInsightPanel
+        title="قرارات جاهزة من التقرير"
+        description="بدل قراءة الرسوم فقط، هذه توصيات مباشرة للمالك لرفع المبيعات وتقليل الهدر."
+        items={reportInsights}
+      />
 
       {/* Daily visits chart */}
       <div style={{

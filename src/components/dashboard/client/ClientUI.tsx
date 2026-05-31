@@ -138,3 +138,38 @@ export function ClientStatusPill({ children, tone = 'slate' }: { children: React
     </span>
   )
 }
+
+export function ClientInsightPanel({
+  title,
+  description,
+  items,
+}: {
+  title: string
+  description?: string
+  items: Array<{ title: string; description: string; tone?: Tone; action?: ReactNode }>
+}) {
+  return (
+    <section className="client-insight-panel">
+      <div className="client-insight-head">
+        <span>توصيات مدار</span>
+        <h2>{title}</h2>
+        {description && <p>{description}</p>}
+      </div>
+      <div className="client-insight-grid">
+        {items.map((item) => {
+          const t = toneMap[item.tone || 'blue']
+          return (
+            <article key={item.title} style={{ borderColor: t.border, background: t.bg }}>
+              <i style={{ background: t.color }} />
+              <div>
+                <strong>{item.title}</strong>
+                <p>{item.description}</p>
+              </div>
+              {item.action}
+            </article>
+          )
+        })}
+      </div>
+    </section>
+  )
+}

@@ -4,6 +4,7 @@ import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
 import { getSelfCheckinUrl } from '../../../lib/selfCheckin'
+import { ClientInsightPanel } from './ClientUI'
 
 type Customer = {
   id: string
@@ -116,6 +117,20 @@ export function CarWashMemberships() {
     { label: 'الدفع الإلكتروني النهائي', done: can.onlinePayments, icon: Smartphone },
   ]
   const journeyScore = Math.round((journey.filter(item => item.done).length / journey.length) * 100)
+  const membershipInsights = [
+    activePlans.length > 0
+      ? { title: 'الباقات جاهزة للبيع', description: `${activePlans.length} باقة فعالة. الأفضل عرضها في QR بعد تسجيل الخدمة مباشرة.`, tone: 'green' as const }
+      : { title: 'أنشئ أول باقة شهرية', description: 'ابدأ بباقة 4 غسلات وباقة 8 غسلات لتجربة تسعير بسيطة وسهلة البيع.', tone: 'amber' as const },
+    activeMemberships.length > 0
+      ? { title: 'إيراد متكرر بدأ', description: `${activeMemberships.length} مشترك نشط بإيراد شهري متوقع ${money(recurringRevenue)} ر.س.`, tone: 'blue' as const }
+      : { title: 'حوّل العملاء المتكررين', description: 'أفضل عميل للبيع هو من زار أكثر من مرتين. اعرض عليه اشتراك شهري عند التسليم.', tone: 'blue' as const },
+    can.wallet
+      ? { title: 'المحفظة مفعلة', description: `إجمالي أرصدة المحافظ ${money(walletBalance)} ر.س. راقبها كالتزام مالي على المغسلة.`, tone: 'green' as const }
+      : { title: 'المحفظة اختيارية من الأدمن', description: 'إذا لا تريدها لبعض المغاسل، اتركها مقفلة واجعل الدفع كاش/POS فقط.', tone: 'slate' as const },
+    can.onlinePayments
+      ? { title: 'الدفع الإلكتروني جاهز للتسويق', description: 'بعد ربط مزود الدفع، اجعل الاشتراك من جوال العميل بدون موظف.', tone: 'green' as const }
+      : { title: 'الدفع الإلكتروني ينتظر الربط', description: 'إلى أن يكتمل Moyasar/Apple Pay، خليه خيار مدفوع يتم تفعيله من الأدمن.', tone: 'amber' as const },
+  ]
 
   const createPlan = async () => {
     if (!companyId || !planForm.name.trim()) return
@@ -244,6 +259,12 @@ export function CarWashMemberships() {
         <Stat icon={WalletCards} label="أرصدة المحافظ" value={`${money(walletBalance)} ر.س`} color="#F59E0B" />
         <Stat icon={CheckCircle2} label="باقات فعالة" value={activePlans.length.toLocaleString('en-US')} color="#0EA5E9" />
       </section>
+
+      <ClientInsightPanel
+        title="فرص الاشتراك والمحفظة"
+        description="الهدف هنا أن تكون الميزة قابلة للبيع كإضافة اختيارية للمغسلة، وليست عبئاً على كل عميل."
+        items={membershipInsights}
+      />
 
       <section className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-sm">
         <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
