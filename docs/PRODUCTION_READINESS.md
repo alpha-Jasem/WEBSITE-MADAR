@@ -38,6 +38,9 @@ Before giving a car wash access, verify:
 - Supabase project: `aacnqiuwrpzgxhzdavaq`.
 - Do not touch project `checwxcpfwbvjfvbujaw`.
 - Public self check-in function: `cw-public-checkin`.
+- Madar AI assistant function: `madar-ai-assistant`.
+- Madar AI requires Supabase Secret `OPENAI_API_KEY`; optional `OPENAI_MODEL` defaults to `gpt-4o-mini`.
+- Never place OpenAI keys in React, Netlify public env vars, migrations, docs, or committed files.
 - Public check-in must not expose service prices from another company.
 - RLS should keep tenant data isolated by `company_id`.
 

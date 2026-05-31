@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import { DashSidebar, type NavItem } from './DashSidebar'
 import { useClientCompany } from '../../hooks/useClientCompany'
+import { MadarAIAssistant } from './MadarAIAssistant'
 
 interface Props {
   navItems: NavItem[]
@@ -56,6 +57,11 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
           {children}
         </main>
       </div>
+      <MadarAIAssistant
+        role={role}
+        companyId={role === 'client' ? company?.id ?? null : null}
+        pageTitle={pageTitle}
+      />
     </div>
   )
 }
