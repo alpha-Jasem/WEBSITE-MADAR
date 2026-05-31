@@ -708,8 +708,8 @@ export function SelfCheckIn() {
 
               <div>
                 <div className="self-checkin-service-head">
-                  <strong>اختر الخدمة</strong>
-                  <span>{services.length} خدمات متاحة</span>
+                  <strong>{purchaseMode === 'membership' ? 'اختر باقة الاشتراك' : 'اختر الخدمة'}</strong>
+                  <span>{purchaseMode === 'membership' ? `${membershipPlans.length} باقات متاحة` : `${services.length} خدمات متاحة`}</span>
                 </div>
                 {purchaseMode === 'membership' ? (
                   <div className="self-checkin-memberships">
