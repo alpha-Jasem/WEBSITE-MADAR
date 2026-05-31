@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { CheckCircle2, CreditCard, Loader2, Lock, Plus, RefreshCw, Save, Users, WalletCards } from 'lucide-react'
+import { CheckCircle2, CreditCard, ExternalLink, Loader2, Lock, Plus, QrCode, RefreshCw, Save, Smartphone, Users, WalletCards } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
+import { getSelfCheckinUrl } from '../../../lib/selfCheckin'
 
 type Customer = {
   id: string
@@ -61,7 +62,7 @@ function addDays(days: number) {
 }
 
 export function CarWashMemberships() {
-  const { companyId, loading: authLoading } = useClientCompany()
+  const { companyId, company, loading: authLoading } = useClientCompany()
   const { can } = usePlanGate()
   const featureEnabled = can.memberships || can.wallet || can.onlinePayments
 
@@ -103,6 +104,18 @@ export function CarWashMemberships() {
   const activeMemberships = memberships.filter(item => item.status === 'active')
   const walletBalance = customers.reduce((sum, customer) => sum + Number(customer.wallet_balance || 0), 0)
   const recurringRevenue = activeMemberships.reduce((sum, item) => sum + Number(planMap.get(item.plan_id || '')?.price || 0), 0)
+  const activePlans = plans.filter(plan => plan.active)
+  const checkinUrl = getSelfCheckinUrl(company as any)
+  const previewUrl = checkinUrl ? `${checkinUrl}?preview=memberships` : ''
+  const journey = [
+    { label: 'الأدمن فعّل الميزة', done: featureEnabled, icon: CheckCircle2 },
+    { label: 'باقات شهرية جاهزة', done: activePlans.length > 0, icon: WalletCards },
+    { label: 'QR يعرض الباقات للعميل', done: can.memberships && Boolean(checkinUrl) && activePlans.length > 0, icon: QrCode },
+    { label: 'خصم من الاشتراك عند التسليم', done: can.memberships, icon: Save },
+    { label: 'المحفظة متاحة كطريقة دفع', done: can.wallet, icon: CreditCard },
+    { label: 'الدفع الإلكتروني النهائي', done: can.onlinePayments, icon: Smartphone },
+  ]
+  const journeyScore = Math.round((journey.filter(item => item.done).length / journey.length) * 100)
 
   const createPlan = async () => {
     if (!companyId || !planForm.name.trim()) return
@@ -229,7 +242,43 @@ export function CarWashMemberships() {
         <Stat icon={Users} label="مشتركون نشطون" value={activeMemberships.length.toLocaleString('en-US')} color="#4F6EF7" />
         <Stat icon={CreditCard} label="دخل شهري متوقع" value={`${money(recurringRevenue)} ر.س`} color="#10B981" />
         <Stat icon={WalletCards} label="أرصدة المحافظ" value={`${money(walletBalance)} ر.س`} color="#F59E0B" />
-        <Stat icon={CheckCircle2} label="باقات فعالة" value={plans.filter(plan => plan.active).length.toLocaleString('en-US')} color="#0EA5E9" />
+        <Stat icon={CheckCircle2} label="باقات فعالة" value={activePlans.length.toLocaleString('en-US')} color="#0EA5E9" />
+      </section>
+
+      <section className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <span className="text-xs font-bold text-emerald-600 font-tajawal">رحلة العميل من الجوال</span>
+            <h2 className="mt-1 text-lg font-black text-slate-950 font-cairo">جاهزية بيع الاشتراك من QR</h2>
+            <p className="mt-1 text-xs leading-6 text-slate-500 font-tajawal">
+              هذه الخريطة توضح ماذا يرى العميل وماذا يحدث داخل لوحة التشغيل. الدفع النهائي ينتظر ربط Moyasar/Apple Pay.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <div className="grid h-16 w-16 place-items-center rounded-2xl bg-[#0D1B3E] text-white">
+              <strong className="font-sora text-xl font-black">{journeyScore}%</strong>
+            </div>
+            {previewUrl && (
+              <a href={previewUrl} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-100 bg-sky-50 px-4 py-2 text-sm font-bold text-sky-700 font-cairo">
+                <ExternalLink size={15} />
+                معاينة العميل
+              </a>
+            )}
+          </div>
+        </div>
+        <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+          {journey.map(item => (
+            <article key={item.label} className={`rounded-2xl border p-4 ${item.done ? 'border-emerald-100 bg-emerald-50/60' : 'border-slate-200 bg-slate-50'}`}>
+              <div className={`mb-3 grid h-10 w-10 place-items-center rounded-xl ${item.done ? 'bg-emerald-100 text-emerald-700' : 'bg-white text-slate-500'}`}>
+                <item.icon size={18} />
+              </div>
+              <strong className="block text-sm leading-6 text-slate-950 font-cairo">{item.label}</strong>
+              <span className={`mt-2 inline-flex rounded-full px-2 py-1 text-[11px] font-bold font-tajawal ${item.done ? 'bg-emerald-100 text-emerald-700' : 'bg-white text-slate-500'}`}>
+                {item.done ? 'جاهز' : 'ينتظر'}
+              </span>
+            </article>
+          ))}
+        </div>
       </section>
 
       {feedback && <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 font-tajawal">{feedback}</div>}
