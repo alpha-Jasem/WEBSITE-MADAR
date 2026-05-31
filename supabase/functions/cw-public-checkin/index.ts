@@ -368,13 +368,41 @@ Deno.serve(async (req) => {
   if (action === 'lookup_customer') {
     const { data: customer } = await supabase
       .from('cw_customers')
-      .select('id, name, total_visits, free_washes_available')
+      .select('id, name, total_visits, free_washes_available, wallet_balance, membership_status')
       .eq('company_id', company.id)
       .eq('phone', phone)
       .maybeSingle()
 
+    let activeMembership = null
+    if (customer?.id) {
+      const { data: membership } = await supabase
+        .from('cw_customer_memberships')
+        .select('id, remaining_washes, ends_at, auto_renew, cw_membership_plans(name)')
+        .eq('company_id', company.id)
+        .eq('customer_id', customer.id)
+        .eq('status', 'active')
+        .gt('remaining_washes', 0)
+        .or(`ends_at.is.null,ends_at.gte.${new Date().toISOString()}`)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (membership?.id) {
+        const plan = Array.isArray(membership.cw_membership_plans)
+          ? membership.cw_membership_plans[0]
+          : membership.cw_membership_plans
+        activeMembership = {
+          id: membership.id,
+          plan_name: plan?.name || null,
+          remaining_washes: membership.remaining_washes || 0,
+          ends_at: membership.ends_at || null,
+          auto_renew: !!membership.auto_renew,
+        }
+      }
+    }
+
     return json({
-      customer: customer || null,
+      customer: customer ? { ...customer, active_membership: activeMembership } : null,
     })
   }
 

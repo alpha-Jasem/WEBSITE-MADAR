@@ -30,6 +30,15 @@ type KnownCustomer = {
   name: string | null
   total_visits?: number | null
   free_washes_available?: number | null
+  wallet_balance?: number | null
+  membership_status?: string | null
+  active_membership?: {
+    id: string
+    plan_name?: string | null
+    remaining_washes?: number | null
+    ends_at?: string | null
+    auto_renew?: boolean | null
+  } | null
 }
 
 type PublicMembershipPlan = {
@@ -71,6 +80,10 @@ function splitName(name?: string | null) {
 
 function qrUrl(value: string, size = 220) {
   return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=12&data=${encodeURIComponent(value)}`
+}
+
+function money(value: number) {
+  return value.toLocaleString('ar-SA', { maximumFractionDigits: 0 })
 }
 
 function sessionKey(token: string, phone: string) {
@@ -253,10 +266,13 @@ export function SelfCheckIn() {
   const selectedService = services.find(service => service.id === form.service_id) || null
   const selectedPlan = membershipPlans.find(plan => plan.id === selectedPlanId) || null
   const membershipFeatureEnabled = Boolean((company?.cw_automations as any)?.feature_flags?.memberships)
+  const hasActiveMembership = Boolean(knownCustomer?.active_membership && Number(knownCustomer.active_membership.remaining_washes || 0) > 0)
+  const walletBalance = Number(knownCustomer?.wallet_balance || 0)
   const vat = useMemo(() => {
     const price = selectedService?.price || 0
     return calcVAT(price, !!company?.tax_enabled, company?.vat_rate || 15, !!company?.price_includes_vat)
   }, [company, selectedService])
+  const walletCoversSelectedService = selectedService ? walletBalance >= vat.total_amount : false
 
   // Resend cooldown timer
   useEffect(() => {
@@ -668,6 +684,33 @@ export function SelfCheckIn() {
                 </div>
                 <button type="button" onClick={() => { setStep('phone'); setSubmitError('') }}>تغيير الرقم</button>
               </div>
+
+              {knownCustomer && (hasActiveMembership || walletBalance > 0 || Number(knownCustomer.free_washes_available || 0) > 0) && (
+                <div className="self-checkin-benefits" aria-label="مزايا العميل">
+                  {hasActiveMembership && (
+                    <div>
+                      <WalletCards size={17} />
+                      <span>اشتراك نشط</span>
+                      <strong>{knownCustomer.active_membership?.plan_name || 'باقة شهرية'} - {knownCustomer.active_membership?.remaining_washes || 0} غسلات متبقية</strong>
+                    </div>
+                  )}
+                  {walletBalance > 0 && (
+                    <div>
+                      <CreditCard size={17} />
+                      <span>رصيد المحفظة</span>
+                      <strong>{money(walletBalance)} ر.س{walletCoversSelectedService ? ' يكفي للخدمة المختارة' : ''}</strong>
+                    </div>
+                  )}
+                  {Number(knownCustomer.free_washes_available || 0) > 0 && (
+                    <div>
+                      <Sparkles size={17} />
+                      <span>مكافأة ولاء</span>
+                      <strong>{knownCustomer.free_washes_available} غسلة مجانية متاحة</strong>
+                    </div>
+                  )}
+                  <p>سيظهر رقمك مباشرة للفريق، ويتم الخصم من الاشتراك أو المحفظة عند التسليم إذا كانت الميزة مفعلة في المغسلة.</p>
+                </div>
+              )}
 
               {!knownCustomer && (
                 <div className="self-checkin-two">
