@@ -288,6 +288,15 @@ export function SelfCheckIn() {
 
   useEffect(() => {
     if (loading || !company || restoredSession || ticketCode) return
+    const previewMode = new URLSearchParams(window.location.search).get('preview')
+    if (previewMode === 'memberships') {
+      setForm(f => ({ ...f, phone: '966500000000', first_name: 'عميل', last_name: 'تجريبي' }))
+      setKnownCustomer(null)
+      setPurchaseMode('membership')
+      setStep('details')
+      setRestoredSession(true)
+      return
+    }
     const saved = readLastCheckinSession(token)
     if (!saved) {
       setRestoredSession(true)
@@ -301,6 +310,12 @@ export function SelfCheckIn() {
         setRestoredSession(true)
       })
   }, [loading, company, restoredSession, ticketCode, token])
+
+  useEffect(() => {
+    if (purchaseMode === 'membership' && !selectedPlanId && membershipPlans.length > 0) {
+      setSelectedPlanId(membershipPlans[0].id)
+    }
+  }, [membershipPlans, purchaseMode, selectedPlanId])
 
   const sendOtp = async () => {
     if (!company || sendingOtp || checkingPhone) return
