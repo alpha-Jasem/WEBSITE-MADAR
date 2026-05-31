@@ -8965,6 +8965,80 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   gap: 10px;
 }
 
+.self-checkin-choice {
+  display: grid;
+  gap: 10px;
+}
+
+.self-checkin-mode-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid #E2E8F0;
+  border-radius: 18px;
+  background: #F8FAFC;
+}
+
+.self-checkin-mode-tabs button {
+  min-height: 48px;
+  border-radius: 14px;
+  color: #475569;
+  background: transparent;
+  box-shadow: none;
+  font-size: 14px;
+}
+
+.self-checkin-mode-tabs button.active {
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #0D1B3E, #1565C0);
+  box-shadow: 0 14px 30px rgba(21,101,192,0.18);
+}
+
+.self-checkin-memberships {
+  display: grid;
+  gap: 10px;
+}
+
+.self-checkin-memberships button {
+  min-height: 96px;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 6px;
+  padding: 15px;
+  border: 1px solid #E2E8F0;
+  border-radius: 18px;
+  color: #0D1B3E;
+  background: #FFFFFF;
+  box-shadow: none;
+  text-align: right;
+}
+
+.self-checkin-memberships button.active {
+  border-color: rgba(16,185,129,0.45);
+  background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(0,191,255,0.08));
+  box-shadow: 0 14px 30px rgba(16,185,129,0.12);
+}
+
+.self-checkin-memberships button span {
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.self-checkin-memberships button strong {
+  color: #047857;
+  font-family: 'Sora', 'Cairo', sans-serif;
+  font-size: 19px;
+  font-weight: 900;
+}
+
+.self-checkin-memberships button small {
+  color: #64748B;
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 700;
+}
+
 .self-checkin-services button {
   min-height: 82px;
   display: grid;
@@ -9022,6 +9096,15 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   font-family: 'Sora', 'Cairo', sans-serif;
   font-size: 24px;
   font-weight: 900;
+}
+
+.self-checkin-price.membership {
+  background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(0,191,255,0.07));
+  border-color: rgba(16,185,129,0.2);
+}
+
+.self-checkin-price.membership strong {
+  color: #047857;
 }
 
 .self-checkin-error {
@@ -9384,9 +9467,23 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
     gap: 8px;
   }
 
+  .self-checkin-mode-tabs {
+    gap: 6px;
+    padding: 5px;
+  }
+
+  .self-checkin-memberships {
+    gap: 8px;
+  }
+
   .self-checkin-services button {
     min-height: 72px;
     padding: 10px 8px;
+  }
+
+  .self-checkin-memberships button {
+    min-height: 82px;
+    padding: 12px;
   }
 
   .self-checkin-services button span {
@@ -9395,6 +9492,10 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 
   .self-checkin-services button strong {
     font-size: 13px;
+  }
+
+  .self-checkin-memberships button strong {
+    font-size: 16px;
   }
 
   .self-checkin-card button[type="submit"],

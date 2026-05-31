@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { CheckCircle2, ExternalLink, Loader2, MessageCircle, Phone, RefreshCw, ShieldCheck, Sparkles, UserRound } from 'lucide-react'
+import { CheckCircle2, CreditCard, ExternalLink, Loader2, MessageCircle, Phone, RefreshCw, ShieldCheck, Sparkles, UserRound, WalletCards } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { calcVAT } from '../lib/vatUtils'
 import { getDailyTicketCode } from '../lib/carWashTickets'
@@ -30,6 +30,14 @@ type KnownCustomer = {
   name: string | null
   total_visits?: number | null
   free_washes_available?: number | null
+}
+
+type PublicMembershipPlan = {
+  id: string
+  name: string
+  price: number
+  washes_per_month: number
+  billing_cycle: string
 }
 
 const EMPTY_FORM = {
@@ -154,6 +162,7 @@ export function SelfCheckIn() {
   const { token = '' } = useParams()
   const [company, setCompany] = useState<CheckinCompany | null>(null)
   const [services, setServices] = useState<CWService[]>([])
+  const [membershipPlans, setMembershipPlans] = useState<PublicMembershipPlan[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [form, setForm] = useState(EMPTY_FORM)
@@ -166,6 +175,8 @@ export function SelfCheckIn() {
   const [queueId, setQueueId] = useState('')
   const [approvalPending, setApprovalPending] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const [purchaseMode, setPurchaseMode] = useState<'single' | 'membership'>('single')
+  const [selectedPlanId, setSelectedPlanId] = useState('')
   // OTP state
   const [sendingOtp, setSendingOtp] = useState(false)
   const [otpInput, setOtpInput] = useState('')
@@ -225,11 +236,14 @@ export function SelfCheckIn() {
         return
       }
 
-      const { data: serviceData } = await supabase
-        .rpc('get_public_checkin_services', { checkin_token: token })
+      const [{ data: serviceData }, { data: membershipData }] = await Promise.all([
+        supabase.rpc('get_public_checkin_services', { checkin_token: token }),
+        supabase.rpc('get_public_checkin_membership_plans', { checkin_token: token }),
+      ])
 
       setCompany(co)
       setServices((serviceData || []) as CWService[])
+      setMembershipPlans((membershipData || []) as PublicMembershipPlan[])
       setLoading(false)
     }
 
@@ -237,6 +251,8 @@ export function SelfCheckIn() {
   }, [token])
 
   const selectedService = services.find(service => service.id === form.service_id) || null
+  const selectedPlan = membershipPlans.find(plan => plan.id === selectedPlanId) || null
+  const membershipFeatureEnabled = Boolean((company?.cw_automations as any)?.feature_flags?.memberships)
   const vat = useMemo(() => {
     const price = selectedService?.price || 0
     return calcVAT(price, !!company?.tax_enabled, company?.vat_rate || 15, !!company?.price_includes_vat)
@@ -656,11 +672,49 @@ export function SelfCheckIn() {
                 <input value={form.plate} onChange={e => setForm({ ...form, plate: e.target.value })} placeholder="إذا كانت سهلة عليك" />
               </label>
 
+              {membershipFeatureEnabled && membershipPlans.length > 0 && (
+                <div className="self-checkin-choice">
+                  <div className="self-checkin-service-head">
+                    <strong>اختر طريقة البداية</strong>
+                    <span>غسلة اليوم أو اشتراك شهري</span>
+                  </div>
+                  <div className="self-checkin-mode-tabs" role="tablist" aria-label="طريقة الشراء">
+                    <button type="button" className={purchaseMode === 'single' ? 'active' : ''} onClick={() => setPurchaseMode('single')}>
+                      <CreditCard size={17} />
+                      غسلة واحدة
+                    </button>
+                    <button type="button" className={purchaseMode === 'membership' ? 'active' : ''} onClick={() => setPurchaseMode('membership')}>
+                      <WalletCards size={17} />
+                      اشتراك شهري
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <div className="self-checkin-service-head">
                   <strong>اختر الخدمة</strong>
                   <span>{services.length} خدمات متاحة</span>
                 </div>
+                {purchaseMode === 'membership' ? (
+                  <div className="self-checkin-memberships">
+                    {membershipPlans.map(plan => {
+                      const active = selectedPlanId === plan.id
+                      return (
+                        <button
+                          key={plan.id}
+                          type="button"
+                          className={active ? 'active' : ''}
+                          onClick={() => setSelectedPlanId(plan.id)}
+                        >
+                          <span>{plan.name}</span>
+                          <strong>{Number(plan.price || 0).toFixed(0)} ر.س / شهر</strong>
+                          <small>{plan.washes_per_month} غسلات شهرية</small>
+                        </button>
+                      )
+                    })}
+                  </div>
+                ) : (
                 <div className="self-checkin-services">
                   {services.map(service => {
                     const active = form.service_id === service.id
@@ -677,9 +731,18 @@ export function SelfCheckIn() {
                     )
                   })}
                 </div>
+                )}
               </div>
 
-              {selectedService && (
+              {purchaseMode === 'membership' && selectedPlan && (
+                <div className="self-checkin-price membership">
+                  <span>الاشتراك المختار</span>
+                  <strong>{Number(selectedPlan.price || 0).toFixed(2)} ر.س</strong>
+                  <small>{selectedPlan.washes_per_month} غسلات شهريا. الدفع الإلكتروني سيظهر في الخطوة التالية.</small>
+                </div>
+              )}
+
+              {purchaseMode === 'single' && selectedService && (
                 <div className="self-checkin-price">
                   <span>الإجمالي</span>
                   <strong>{vat.total_amount.toFixed(2)} ر.س</strong>
@@ -689,10 +752,16 @@ export function SelfCheckIn() {
 
               {submitError && <p className="self-checkin-error">{submitError}</p>}
 
+              {purchaseMode === 'membership' ? (
+                <button type="button" disabled={!selectedPlan} onClick={() => setSubmitError('اختيار الباقة جاهز. الخطوة التالية ستكون ربط الدفع الإلكتروني حتى يشتري العميل الاشتراك مباشرة من الجوال.')}>
+                  اختيار الباقة والمتابعة للدفع
+                </button>
+              ) : (
               <button type="submit" disabled={submitting || services.length === 0 || !selectedService}>
                 {submitting ? <Loader2 className="animate-spin" size={18} /> : null}
                 تسجيل السيارة وإصدار الرقم
               </button>
+              )}
             </>
           )}
         </form>
