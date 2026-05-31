@@ -12,12 +12,14 @@ import {
   ListChecks,
   LockKeyhole,
   MessageSquare,
+  PhoneCall,
   QrCode,
   RefreshCw,
   Send,
   ShieldCheck,
   SlidersHorizontal,
   Store,
+  TrendingUp,
   WalletCards,
   Workflow,
   Zap,
@@ -224,6 +226,29 @@ export const AdminControlCenter = () => {
     ...health.filter(row => row.score < 65).slice(0, 5).map(row => ({ label: `${row.company.name}: جاهزية ${row.score}%`, level: 'warn' })),
   ].slice(0, 10)
 
+  const salesOpportunities = health
+    .map(row => {
+      const companyFlags = flags(row.company)
+      const usage = messageUsage(row.company)
+      const reasons = [
+        row.score >= 70 && row.company.status === 'trial' ? 'جاهز للتحويل من تجربة إلى اشتراك' : '',
+        usage >= 70 ? `استهلاك رسائل ${usage}%` : '',
+        !companyFlags.memberships && row.carsToday >= 3 ? 'مناسب لبيع الاشتراكات الشهرية' : '',
+        !companyFlags.wallet && row.carsToday >= 3 ? 'مناسب لبيع المحفظة الرقمية' : '',
+        !companyFlags.online_payments && (companyFlags.memberships || companyFlags.wallet) ? 'جاهز لربط الدفع الإلكتروني' : '',
+        row.score < 70 ? `ناقص: ${row.issues.slice(0, 2).join('، ')}` : '',
+      ].filter(Boolean)
+      const priority = (row.company.status === 'trial' ? 20 : 0)
+        + (usage >= 70 ? 20 : 0)
+        + (row.score >= 70 ? 18 : 0)
+        + (row.carsToday >= 3 ? 14 : 0)
+        + (!companyFlags.memberships || !companyFlags.wallet ? 8 : 0)
+      return { row, reasons, priority }
+    })
+    .filter(item => item.reasons.length > 0)
+    .sort((a, b) => b.priority - a.priority)
+    .slice(0, 6)
+
   const diagnosed = health.find(row => row.company.id === diagnoseId) || health[0]
 
   const onboardingChecks = diagnosed ? [
@@ -284,6 +309,43 @@ export const AdminControlCenter = () => {
         <SmallCard icon={MessageSquare} label="OTP هذا الشهر" value={ops?.otp.month ?? 0} tone="#10B981" />
         <SmallCard icon={Gauge} label="تكلفة OTP" value={money(ops?.otp.estimated_sms_cost_sar ?? 0)} tone="#F59E0B" />
       </div>
+
+      <section className="admin-control-panel wide">
+        <header><TrendingUp size={18} /><h2>فرص البيع والترقية</h2></header>
+        <div className="grid gap-3 xl:grid-cols-3">
+          {salesOpportunities.length ? salesOpportunities.map(({ row, reasons, priority }) => (
+            <article key={row.company.id} className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-4">
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div>
+                  <strong className="block text-sm text-white font-cairo">{row.company.name}</strong>
+                  <span className="text-xs text-slate-500 font-tajawal">{PLAN_LABELS[row.company.plan] ?? row.company.plan} · جاهزية {row.score}%</span>
+                </div>
+                <em className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-bold not-italic text-emerald-300 font-sora">{priority}</em>
+              </div>
+              <div className="space-y-2">
+                {reasons.slice(0, 3).map(reason => (
+                  <p key={reason} className="flex items-center gap-2 text-xs leading-5 text-slate-300 font-tajawal">
+                    <Sparkles size={12} className="text-cyan-300" />
+                    {reason}
+                  </p>
+                ))}
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button type="button" onClick={() => setDiagnoseId(row.company.id)} className="inline-flex items-center gap-1 rounded-xl bg-cyan-500/10 px-3 py-2 text-xs font-bold text-cyan-200 font-tajawal">
+                  <SlidersHorizontal size={13} />
+                  تشخيص
+                </button>
+                <a href={`tel:${row.company.owner_phone || ''}`} className="inline-flex items-center gap-1 rounded-xl bg-white/[0.05] px-3 py-2 text-xs font-bold text-slate-200 font-tajawal">
+                  <PhoneCall size={13} />
+                  اتصال
+                </a>
+              </div>
+            </article>
+          )) : (
+            <div className="admin-empty-state xl:col-span-3">لا توجد فرص بيع واضحة الآن. شغّل العملاء التجريبيين أو فعّل QR حتى تظهر الفرص.</div>
+          )}
+        </div>
+      </section>
 
       <div className="admin-control-grid">
         <section className="admin-control-panel">
