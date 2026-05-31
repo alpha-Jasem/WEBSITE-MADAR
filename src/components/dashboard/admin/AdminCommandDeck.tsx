@@ -247,6 +247,7 @@ export const AdminCommandDeck = () => {
       desc: 'قاعدة البيانات والمصادقة',
       status: companies.length >= 0 ? 'متصل' : 'غير معروف',
       ok: true,
+      externalPending: false,
       icon: ShieldCheck,
     },
     {
@@ -254,20 +255,23 @@ export const AdminCommandDeck = () => {
       desc: 'تدفقات الأتمتة والويب هوك',
       status: automations.some(item => item.status === 'active') ? 'نشط' : 'يحتاج مراجعة',
       ok: automations.some(item => item.status === 'active'),
+      externalPending: false,
       icon: Workflow,
     },
     {
       name: 'WhatsApp API',
       desc: 'رسائل العملاء والولاء',
-      status: automations.some(item => item.type === 'whatsapp' && item.status === 'active') ? 'نشط' : 'تحقق من الأتمتة',
-      ok: automations.some(item => item.type === 'whatsapp' && item.status === 'active'),
+      status: automations.some(item => item.type === 'whatsapp' && item.status === 'active') ? 'نشط' : 'بانتظار توثيق Meta',
+      ok: true,
+      externalPending: !automations.some(item => item.type === 'whatsapp' && item.status === 'active'),
       icon: MessageSquare,
     },
     {
       name: 'Moyasar',
       desc: 'المدفوعات والترقيات',
-      status: companies.some(company => featureEnabled(company, 'online_payments')) ? 'مفعل لعملاء' : 'جاهز للتفعيل',
-      ok: companies.some(company => featureEnabled(company, 'online_payments')),
+      status: companies.some(company => featureEnabled(company, 'online_payments')) ? 'مفعل لعملاء' : 'بانتظار تفعيل مزود الدفع',
+      ok: true,
+      externalPending: !companies.some(company => featureEnabled(company, 'online_payments')),
       icon: CreditCard,
     },
   ]
@@ -313,12 +317,12 @@ export const AdminCommandDeck = () => {
     }
     if (!automations.some(item => item.type === 'whatsapp' && item.status === 'active')) {
       alerts.push({
-        id: 'whatsapp-review',
+        id: 'whatsapp-external-pending',
         tone: '#0EA5E9',
-        title: 'تحقق من واتساب قبل البيع',
-        desc: 'لا توجد أتمتة WhatsApp نشطة في بيانات النظام. راجع n8n أو أسرار Meta قبل تجربة العملاء.',
+        title: 'واتساب خارج تقييم جاهزية المنتج',
+        desc: 'التشغيل الداخلي جاهز، وواتساب ينتظر توثيق Meta أو موافقة مزود الرسائل. لا تعتبره خللاً في الداشبورد.',
         to: '/admin/n8n',
-        action: 'فتح n8n',
+        action: 'متابعة التكامل',
       })
     }
     if (alerts.length === 0) {
@@ -539,7 +543,7 @@ export const AdminCommandDeck = () => {
             {integrationHealth.map(item => {
               const Icon = item.icon
               return (
-                <div key={item.name} className={item.ok ? 'ok' : 'warn'}>
+                <div key={item.name} className={item.externalPending ? 'pending' : item.ok ? 'ok' : 'warn'}>
                   <Icon size={18} />
                   <span>
                     <strong>{item.name}</strong>

@@ -126,6 +126,16 @@ export const CarWashFinance = () => {
 
   const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0)
   const netProfit = revenue - totalExpenses - workerCost
+  const cashRevenue = paymentBreakdown.cash || 0
+  const posRevenue = ['mada', 'visa', 'stc_pay'].reduce((sum, key) => sum + (paymentBreakdown[key] || 0), 0)
+  const transferRevenue = paymentBreakdown.bank_transfer || 0
+  const otherRevenue = Math.max(0, revenue - cashRevenue - posRevenue - transferRevenue)
+  const marginPercent = revenue > 0 ? Math.round((netProfit / revenue) * 100) : 0
+  const closingChecks = [
+    { label: 'طابق الكاش الموجود بالصندوق', value: `${cashRevenue.toFixed(0)} ر.س`, tone: '#059669' },
+    { label: 'راجع عمليات مدى والبطاقات', value: `${posRevenue.toFixed(0)} ر.س`, tone: '#2563EB' },
+    { label: 'تأكد من المصاريف قبل الإغلاق', value: `${totalExpenses.toFixed(0)} ر.س`, tone: totalExpenses > revenue * 0.35 && revenue > 0 ? '#DC2626' : '#D97706' },
+  ]
   const financeInsights = [
     netProfit >= 0
       ? { title: 'الربح اليومي صحي', description: `صافي الربح الحالي ${netProfit.toFixed(0)} ر.س بعد المصاريف وتكاليف الموظفين.`, tone: 'green' as const }
@@ -242,6 +252,33 @@ export const CarWashFinance = () => {
         description="مؤشرات عملية للمالك قبل نهاية اليوم: هل نربح، أين الهدر، وكيف نرفع متوسط الفاتورة."
         items={financeInsights}
       />
+
+      <ClientPanel title="مركز تحصيل اليوم" description="ملخص تنفيذي قبل إغلاق الكاشير: النقد، الشبكة، التحويل، والهامش المتوقع.">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          {[
+            { label: 'نقد متوقع', value: `${cashRevenue.toFixed(0)} ر.س`, color: '#059669' },
+            { label: 'مدى وبطاقات', value: `${posRevenue.toFixed(0)} ر.س`, color: '#2563EB' },
+            { label: 'تحويلات', value: `${transferRevenue.toFixed(0)} ر.س`, color: '#7C3AED' },
+            { label: 'هامش صافي', value: revenue > 0 ? `${marginPercent}%` : '—', color: marginPercent >= 25 ? '#059669' : marginPercent >= 0 ? '#D97706' : '#DC2626' },
+          ].map(item => (
+            <div key={item.label} className="rounded-2xl p-4" style={{ background: `${item.color}10`, border: `1px solid ${item.color}22` }}>
+              <p className="text-xs text-slate-500 font-tajawal">{item.label}</p>
+              <p className="mt-2 text-xl font-black font-sora" style={{ color: item.color }}>{item.value}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+          {closingChecks.map(item => (
+            <div key={item.label} className="flex items-center justify-between gap-3 rounded-2xl bg-white p-3" style={{ border: '1px solid #E2E8F0' }}>
+              <span className="text-sm font-bold text-slate-700 font-tajawal">{item.label}</span>
+              <strong className="text-sm font-sora" style={{ color: item.tone }}>{item.value}</strong>
+            </div>
+          ))}
+        </div>
+        {otherRevenue > 0 && (
+          <p className="mt-3 text-xs text-slate-500 font-tajawal">يوجد {otherRevenue.toFixed(0)} ر.س في طرق دفع أخرى. راجعها قبل الإغلاق إذا كانت غير واضحة.</p>
+        )}
+      </ClientPanel>
 
       {/* Expenses, profit bar, workers cost — Pro feature */}
       <FeatureLock

@@ -1,6 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell } from 'recharts'
-import { BarChart3, Car, DollarSign, FileDown, Gift, Loader2, Star, TrendingUp, Users, ChevronDown } from 'lucide-react'
+import { BarChart3, Car, ClipboardCheck, DollarSign, FileDown, Gift, Loader2, Star, TrendingUp, Users, ChevronDown } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
@@ -191,6 +191,17 @@ export function CarWashReports() {
     avgTicket > 0
       ? { title: 'متوسط قيمة العميل', description: `متوسط الفاتورة في الفترة حوالي ${avgTicket} ر.س. ارفعها بإضافة خدمة تلميع أو عطر كخيار سريع.`, tone: avgTicket < 35 ? 'amber' as const : 'green' as const }
       : { title: 'انتظر بيانات أكثر', description: 'كلما زادت الزيارات أصبحت توصيات الإيراد أدق.', tone: 'slate' as const },
+  ]
+  const weeklyPlan = [
+    stats.services.length > 0
+      ? { title: 'عرض الخدمة الرابحة', value: stats.services[0][0], desc: 'ضعها كخيار أول في QR وكزر سريع للموظف.' }
+      : { title: 'تجهيز الخدمات', value: 'ناقص', desc: 'أضف خدمات واضحة حتى يصبح التقرير قابلًا للبيع.' },
+    stats.workerStats.length > 0
+      ? { title: 'معيار الوردية', value: stats.workerStats[0].name, desc: `استخدم أداء ${stats.workerStats[0].count} سيارة كهدف لباقي الفريق.` }
+      : { title: 'ربط الموظفين', value: 'مطلوب', desc: 'بدون worker_id لا يمكن بيع ميزة الأداء بجدية.' },
+    avgTicket > 0
+      ? { title: 'هدف متوسط الفاتورة', value: `${Math.max(avgTicket + 10, Math.round(avgTicket * 1.15))} ر.س`, desc: 'ارفع المتوسط بإضافة اختيار سريع لخدمة جانبية.' }
+      : { title: 'هدف الإيراد', value: 'بعد أول يوم', desc: 'يظهر الهدف عندما تتوفر زيارات كافية.' },
   ]
 
   const exportSalesCSV = () => {
@@ -399,6 +410,25 @@ export function CarWashReports() {
         description="بدل قراءة الرسوم فقط، هذه توصيات مباشرة للمالك لرفع المبيعات وتقليل الهدر."
         items={reportInsights}
       />
+
+      <div style={{ background: '#FFFFFF', border: '1px solid #D8E7F7', borderRadius: 18, padding: '18px 20px', boxShadow: '0 12px 30px rgba(15,23,42,0.04)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+          <ClipboardCheck size={17} color="#1565C0" />
+          <div>
+            <h2 style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>خطة الأسبوع من البيانات</h2>
+            <p style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: '3px 0 0' }}>ثلاث قرارات عملية قابلة للتنفيذ بدل تقرير جامد.</p>
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 12 }}>
+          {weeklyPlan.map(item => (
+            <div key={item.title} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 14, padding: 14 }}>
+              <p style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>{item.title}</p>
+              <strong style={{ display: 'block', marginTop: 6, color: '#0F172A', fontSize: 16, fontFamily: 'Cairo, sans-serif' }}>{item.value}</strong>
+              <span style={{ display: 'block', marginTop: 6, color: '#475569', fontSize: 12, lineHeight: 1.7, fontFamily: 'Tajawal, sans-serif' }}>{item.desc}</span>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Daily visits chart */}
       <div style={{

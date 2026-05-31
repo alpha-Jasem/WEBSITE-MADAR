@@ -12,6 +12,7 @@ interface WorkerStats {
   workerId: string
   carsToday: number
   commissionToday: number
+  revenueToday: number
 }
 
 const EMPTY_FORM = {
@@ -46,7 +47,7 @@ export const CarWashWorkers = () => {
     const [{ data: w }, { data: queue }] = await Promise.all([
       supabase.from('cw_workers').select('*').eq('company_id', companyId).eq('active', true).order('created_at'),
       supabase.from('cw_queue')
-        .select('worker_id, price, status')
+        .select('worker_id, price, subtotal, status')
         .eq('company_id', companyId)
         .eq('status', 'delivered')
         .gte('delivered_at', todayStart.toISOString()),
@@ -60,14 +61,16 @@ export const CarWashWorkers = () => {
     for (const item of queue || []) {
       if (!item.worker_id) continue
       if (!statsMap[item.worker_id]) {
-        statsMap[item.worker_id] = { workerId: item.worker_id, carsToday: 0, commissionToday: 0 }
+        statsMap[item.worker_id] = { workerId: item.worker_id, carsToday: 0, commissionToday: 0, revenueToday: 0 }
       }
       statsMap[item.worker_id].carsToday += 1
+      const itemRevenue = item.subtotal ?? item.price ?? 0
+      statsMap[item.worker_id].revenueToday += itemRevenue
       const worker = workersData.find(w => w.id === item.worker_id)
       if (worker) {
         const commission = worker.commission_type === 'fixed'
           ? worker.commission_value
-          : (item.price * worker.commission_value) / 100
+          : (itemRevenue * worker.commission_value) / 100
         statsMap[item.worker_id].commissionToday += commission
       }
     }
@@ -123,10 +126,13 @@ export const CarWashWorkers = () => {
     loadData()
   }
 
-  const getWorkerStats = (id: string) => stats.find(s => s.workerId === id) || { carsToday: 0, commissionToday: 0 }
+  const getWorkerStats = (id: string) => stats.find(s => s.workerId === id) || { carsToday: 0, commissionToday: 0, revenueToday: 0 }
   const rank = (id: string) => { const i = stats.findIndex(s => s.workerId === id); return i === -1 ? null : i + 1 }
   const bestStats = stats[0]
   const bestWorker = bestStats ? workers.find(w => w.id === bestStats.workerId) : null
+  const assignedDelivered = stats.reduce((sum, item) => sum + item.carsToday, 0)
+  const totalDelivered = assignedDelivered + unassignedDelivered
+  const assignmentRate = totalDelivered > 0 ? Math.round((assignedDelivered / totalDelivered) * 100) : 100
   const workerInsights = [
     bestWorker
       ? { title: 'أفضل أداء اليوم', description: `${bestWorker.name} متصدر بعدد ${bestStats.carsToday} سيارة. استخدمه كمرجع للوردية.`, tone: 'green' as const }
@@ -134,6 +140,9 @@ export const CarWashWorkers = () => {
     unassignedDelivered > 0
       ? { title: 'أصلح الربط الآن', description: `${unassignedDelivered} سيارة مسلمة بدون موظف. هذا يخرب العمولات والتقييمات.`, tone: 'red' as const }
       : { title: 'الربط جيد', description: 'كل السيارات المسلمة مربوطة بموظفين، وهذا يجعل الأداء قابل للقياس.', tone: 'green' as const },
+    totalDelivered > 0
+      ? { title: 'دقة توزيع العمل', description: `نسبة السيارات المرتبطة بموظف اليوم ${assignmentRate}%. الهدف التشغيلي 95% أو أعلى.`, tone: assignmentRate >= 95 ? 'green' as const : 'amber' as const }
+      : { title: 'ابدأ القياس من أول تسليم', description: 'كل سيارة يجب أن تحمل موظفًا مسؤولًا حتى يظهر الأداء الحقيقي.', tone: 'blue' as const },
     workers.length > 0
       ? { title: 'جهّز تقييم العميل', description: 'المرحلة التالية الأفضل: ربط تقييم 5 نجوم بعد التسليم باسم الموظف المسؤول.', tone: 'blue' as const }
       : { title: 'أضف الفريق أولاً', description: 'بدون موظفين لا يمكن قياس الأداء أو العمولات أو جودة الخدمة.', tone: 'amber' as const },
@@ -217,6 +226,16 @@ export const CarWashWorkers = () => {
                       <div className="p-3 rounded-xl text-center" style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)' }}>
                         <p className="text-xl font-bold font-sora" style={{ color: '#10B981' }}>{s.commissionToday.toFixed(0)}</p>
                         <p className="text-xs text-slate-500 font-tajawal">ر.س عمولة</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div className="p-3 rounded-xl text-center" style={{ background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.18)' }}>
+                        <p className="text-lg font-bold font-sora" style={{ color: '#0284C7' }}>{s.revenueToday.toFixed(0)}</p>
+                        <p className="text-xs text-slate-500 font-tajawal">ر.س مبيعات</p>
+                      </div>
+                      <div className="p-3 rounded-xl text-center" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.18)' }}>
+                        <p className="text-lg font-bold font-sora" style={{ color: '#D97706' }}>{s.carsToday > 0 ? Math.round(s.revenueToday / s.carsToday) : 0}</p>
+                        <p className="text-xs text-slate-500 font-tajawal">متوسط السيارة</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">

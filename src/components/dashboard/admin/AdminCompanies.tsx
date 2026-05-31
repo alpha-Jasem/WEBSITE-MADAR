@@ -193,6 +193,17 @@ export const AdminCompanies = () => {
   const walletEnabled = companies.filter(c => featureEnabled(c, 'wallet')).length
   const subscriptionsEnabled = companies.filter(c => featureEnabled(c, 'memberships')).length
   const expiringTrials = companies.filter(c => c.status === 'trial' && (daysUntil(c.plan_reset_at) ?? 99) <= 3)
+  const healthRows = Object.values(health)
+  const readyTenants = healthRows.filter(row => row.score >= 85).length
+  const needsSetupTenants = healthRows.filter(row => row.score >= 55 && row.score < 85).length
+  const atRiskTenants = healthRows.filter(row => row.score < 55).length
+  const topSetupIssue = healthRows
+    .flatMap(row => row.issues)
+    .reduce<Record<string, number>>((acc, issue) => {
+      acc[issue] = (acc[issue] || 0) + 1
+      return acc
+    }, {})
+  const commonIssue = Object.entries(topSetupIssue).sort((a, b) => b[1] - a[1])[0]
 
   return (
     <div className="space-y-6">
@@ -244,6 +255,21 @@ export const AdminCompanies = () => {
               <item.icon size={15} style={{ color: item.color }} />
             </div>
             <p className="text-2xl font-black font-sora" style={{ color: item.color }}>{item.value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
+        {[
+          { label: 'جاهزة للبيع والتسليم', value: readyTenants, desc: 'حسابات مغاسل مكتملة الخدمات، الفريق، وQR.', color: '#059669' },
+          { label: 'تحتاج ضبط قبل العرض', value: needsSetupTenants, desc: 'ناقصة خطوة أو خطوتين قبل تسليم العميل.', color: '#D97706' },
+          { label: 'خطر تجربة سيئة', value: atRiskTenants, desc: 'لا تعرضها للعميل قبل إصلاح الأساسيات.', color: '#DC2626' },
+          { label: 'أكثر نقص متكرر', value: commonIssue ? commonIssue[1] : 0, desc: commonIssue ? commonIssue[0] : 'لا توجد مشاكل متكررة', color: '#2563EB' },
+        ].map(item => (
+          <div key={item.label} className="rounded-2xl bg-white p-4" style={{ border: `1px solid ${item.color}24`, boxShadow: '0 12px 30px rgba(15,23,42,0.04)' }}>
+            <p className="text-xs font-bold font-cairo" style={{ color: item.color }}>{item.label}</p>
+            <p className="mt-2 text-2xl font-black font-sora" style={{ color: item.color }}>{item.value}</p>
+            <p className="mt-1 text-xs leading-6 text-slate-500 font-tajawal">{item.desc}</p>
           </div>
         ))}
       </div>
