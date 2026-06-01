@@ -17,6 +17,7 @@ type CheckinCompany = Pick<Company,
   'id' | 'name' | 'business_type' | 'industry' | 'status' | 'webhook_token' |
   'tax_enabled' | 'vat_rate' | 'price_includes_vat' | 'cw_loyalty_threshold' | 'plan'
 > & {
+  logo_url?: string | null
   public_checkin_token?: string | null
   cw_automations?: Record<string, any> | null
 }
@@ -213,7 +214,7 @@ export function SelfCheckIn() {
       } else {
         const direct = await supabase
           .from('companies')
-          .select('id, name, business_type, industry, status, webhook_token, tax_enabled, vat_rate, price_includes_vat, cw_loyalty_threshold, plan, cw_automations')
+          .select('id, name, logo_url, business_type, industry, status, webhook_token, tax_enabled, vat_rate, price_includes_vat, cw_loyalty_threshold, plan, cw_automations')
           .eq('webhook_token', token)
           .maybeSingle()
         companyData = direct.data
@@ -222,7 +223,7 @@ export function SelfCheckIn() {
         if (!companyData) {
           const fallback = await supabase
             .from('companies')
-            .select('id, name, business_type, industry, status, webhook_token, tax_enabled, vat_rate, price_includes_vat, cw_loyalty_threshold, plan, cw_automations')
+            .select('id, name, logo_url, business_type, industry, status, webhook_token, tax_enabled, vat_rate, price_includes_vat, cw_loyalty_threshold, plan, cw_automations')
             .eq('public_checkin_token', token)
             .maybeSingle()
           companyData = fallback.data
@@ -577,10 +578,11 @@ export function SelfCheckIn() {
 
   if (ticketCode) {
     const statusUrl = `${window.location.origin}/status/${token}/${queueId}`
+    const logoSrc = company.logo_url || '/logo-main.png'
     return (
       <main className="self-checkin-page" dir="rtl">
         <section className="self-checkin-success">
-          <img src="/logo-main.png" alt="Madar" />
+          <img src={logoSrc} alt={company.name} />
           <CheckCircle2 size={52} />
           <span>{company.name}</span>
           <h1>تم تسجيل سيارتك</h1>
@@ -596,11 +598,13 @@ export function SelfCheckIn() {
     )
   }
 
+  const logoSrc = company.logo_url || '/logo-main.png'
+
   return (
     <main className="self-checkin-page" dir="rtl">
       <section className="self-checkin-shell">
         <div className="self-checkin-intro">
-          <img src="/logo-main.png" alt="Madar" />
+          <img src={logoSrc} alt={company.name} />
           <span>تسجيل ذاتي سريع</span>
           <h1>{company.name}</h1>
           <p>اكتب رقم جوالك، اختر الخدمة، وخذ رقم تذكرة Live يظهر للفريق فوراً بدون انتظار عند الكاونتر.</p>

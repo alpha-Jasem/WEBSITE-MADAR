@@ -9,6 +9,7 @@ import type { QueueStatus } from '../types'
 type StatusCompany = {
   id: string
   name: string
+  logo_url?: string | null
   webhook_token: string | null
 }
 
@@ -74,7 +75,7 @@ export function CarWashStatus() {
     } else {
       const direct = await supabase
         .from('companies')
-        .select('id, name, webhook_token')
+        .select('id, name, logo_url, webhook_token')
         .eq('webhook_token', token)
         .maybeSingle()
       co = direct.data
@@ -83,7 +84,7 @@ export function CarWashStatus() {
     if (!co) {
       const fallback = await supabase
         .from('companies')
-        .select('id, name, webhook_token')
+        .select('id, name, logo_url, webhook_token')
         .eq('public_checkin_token', token)
         .maybeSingle()
       co = fallback.data
@@ -177,7 +178,7 @@ export function CarWashStatus() {
   return (
     <main className="self-checkin-page" dir="rtl">
       <section className="status-page-card">
-        <img src="/logo-main.png" alt="Madar" />
+        <img src={company.logo_url || '/logo-main.png'} alt={company.name} />
         <span>{company.name}</span>
         <h1>{statusTitle(item)}</h1>
         <p className="status-live-copy">{statusHint(item)}</p>

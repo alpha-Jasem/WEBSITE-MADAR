@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from 'react'
-import { User, Bell, Shield, Link2, Copy, Check, Mail, Loader2, MapPin, ClipboardList, Save, Users, Plus, Trash2, Eye, EyeOff, QrCode, ExternalLink } from 'lucide-react'
+import { User, Bell, Shield, Link2, Copy, Check, Mail, Loader2, MapPin, ClipboardList, Save, Users, Plus, Trash2, Eye, EyeOff, QrCode, ExternalLink, Image as ImageIcon, Building2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
@@ -39,6 +39,10 @@ export const ClientSettings = () => {
   const [selfSaved, setSelfSaved] = useState(false)
   const [serviceCount, setServiceCount] = useState(0)
   const [workerCount, setWorkerCount] = useState(0)
+  const [identityName, setIdentityName] = useState('')
+  const [identityLogoUrl, setIdentityLogoUrl] = useState('')
+  const [savingIdentity, setSavingIdentity] = useState(false)
+  const [identitySaved, setIdentitySaved] = useState(false)
 
   const template = getClientIndustryTemplate(company?.business_type, company?.industry)
   const isCarWash = template.type === 'car_wash'
@@ -48,6 +52,8 @@ export const ClientSettings = () => {
     if (company && (company as any).google_maps_url) {
       setMapsUrl((company as any).google_maps_url)
     }
+    setIdentityName(company?.name || '')
+    setIdentityLogoUrl((company as any)?.logo_url || '')
     const settings = getSelfCheckinSettings(company as any)
     setSelfEnabled(settings.enabled)
     setSelfApproval(settings.approvalRequired)
@@ -90,6 +96,19 @@ export const ClientSettings = () => {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const saveIdentity = async () => {
+    if (!companyId || !identityName.trim()) return
+    setSavingIdentity(true)
+    const normalizedLogo = identityLogoUrl.trim()
+    await supabase.from('companies').update({
+      name: identityName.trim(),
+      logo_url: normalizedLogo || null,
+    } as any).eq('id', companyId)
+    setSavingIdentity(false)
+    setIdentitySaved(true)
+    setTimeout(() => setIdentitySaved(false), 2500)
+  }
+
   const copyCheckin = () => {
     if (!checkinUrl) return
     navigator.clipboard.writeText(checkinUrl)
@@ -122,7 +141,7 @@ export const ClientSettings = () => {
     printWindow.document.write(`
       <html dir="rtl">
         <head>
-          <title>QR التسجيل الذاتي - ${company.name}</title>
+          <title>QR التسجيل الذاتي - ${identityName || company.name}</title>
           <style>
             body{margin:0;background:#eef6ff;font-family:Cairo,Tajawal,Arial,sans-serif;color:#0D1B3E}
             .sheet{width:794px;min-height:1123px;margin:0 auto;padding:54px;box-sizing:border-box;background:linear-gradient(160deg,#fff,#eef8ff)}
@@ -141,10 +160,10 @@ export const ClientSettings = () => {
         </head>
         <body>
           <div class="sheet">
-            <img class="logo" src="${window.location.origin}/logo-main.png" />
+            <img class="logo" src="${identityLogoUrl || `${window.location.origin}/logo-main.png`}" />
             <div class="hero">
               <span class="eyebrow">مدار OS للتسجيل الذاتي</span>
-              <h1>${company.name}</h1>
+              <h1>${identityName || company.name}</h1>
               <p>امسح الرمز وسجل سيارتك خلال أقل من دقيقة. سيظهر رقمك مباشرة على شاشة التشغيل.</p>
             </div>
             <img class="qr" src="${checkinQrUrl}" />
@@ -295,6 +314,56 @@ export const ClientSettings = () => {
       {isCarWash && <CarWashLaunchChecklist compact />}
 
       {/* Company info */}
+      {company && (
+        <div className="p-5 rounded-2xl space-y-4" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-2.5">
+              <Building2 size={16} className="text-cyan-400" />
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 font-cairo">هوية المغسلة</h3>
+                <p className="text-xs text-slate-500 font-tajawal">تظهر في صفحة التسجيل الذاتي، QR، شاشة العرض، وصفحة متابعة العميل.</p>
+              </div>
+            </div>
+            <div className="grid h-14 w-14 place-items-center overflow-hidden rounded-2xl bg-white" style={{ border: '1px solid #E2E8F0' }}>
+              {identityLogoUrl ? (
+                <img src={identityLogoUrl} alt={identityName || 'شعار المغسلة'} className="h-full w-full object-contain p-1.5" />
+              ) : (
+                <ImageIcon size={22} className="text-slate-400" />
+              )}
+            </div>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-[1fr_1.4fr]">
+            <label className="space-y-2">
+              <span className="text-xs font-bold text-slate-500 font-tajawal">اسم المغسلة الظاهر للعميل</span>
+              <input
+                value={identityName}
+                onChange={e => setIdentityName(e.target.value)}
+                placeholder="مثال: مغسلة النخبة"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition-all focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/10 font-tajawal"
+              />
+            </label>
+            <label className="space-y-2">
+              <span className="text-xs font-bold text-slate-500 font-tajawal">رابط شعار المغسلة</span>
+              <input
+                value={identityLogoUrl}
+                onChange={e => setIdentityLogoUrl(e.target.value)}
+                placeholder="https://example.com/logo.png"
+                dir="ltr"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-left text-sm text-slate-900 outline-none transition-all focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/10 font-sora"
+              />
+            </label>
+          </div>
+
+          <button onClick={saveIdentity} disabled={savingIdentity || !identityName.trim()}
+            className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold font-cairo disabled:opacity-50"
+            style={{ background: identitySaved ? 'rgba(16,185,129,0.12)' : 'rgba(0,191,255,0.12)', color: identitySaved ? '#059669' : '#0099CC', border: `1px solid ${identitySaved ? 'rgba(16,185,129,0.25)' : 'rgba(0,191,255,0.25)'}` }}>
+            {savingIdentity ? <Loader2 size={14} className="animate-spin" /> : identitySaved ? <Check size={14} /> : <Save size={14} />}
+            {identitySaved ? 'تم حفظ الهوية' : 'حفظ هوية المغسلة'}
+          </button>
+        </div>
+      )}
+
       {company && (
         <div className="p-5 rounded-2xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
           <div className="flex items-center gap-2.5 mb-4">

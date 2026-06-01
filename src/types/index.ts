@@ -29,6 +29,7 @@ export interface Company {
   owner_name: string
   owner_email: string
   owner_phone: string
+  logo_url?: string
   webhook_token?: string
   public_checkin_token?: string
   monthly_messages: number

@@ -115,7 +115,7 @@ export function CarWashQueueDisplay() {
     <main className="cw-display" dir="rtl">
       <header className="cw-display-header">
         <div className="cw-display-brand">
-          <img src="/logo-main.png" alt="Madar" />
+          <img src={(company as any)?.logo_url || '/logo-main.png'} alt={company?.name || 'Madar'} />
           <div>
             <span>مدار OS</span>
             <strong>{company?.name || 'شاشة تشغيل المغسلة'}</strong>
