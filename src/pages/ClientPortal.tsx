@@ -52,7 +52,7 @@ function buildNavItems(template: ReturnType<typeof getClientIndustryTemplate>): 
       { to: '/client/closing',       icon: ClipboardCheck, label: 'إغلاق اليوم' },
       { to: '/client/reports',       icon: BarChart3,      label: 'التقارير'     },
       { to: '/client/workers',       icon: Users2,         label: 'الموظفون'     },
-      { to: '/client/automations',   icon: Zap,            label: 'الأتمتة'      },
+      { to: '/client/automations',   icon: MessageSquare,  label: 'واتساب'      },
       { to: '/client/settings',      icon: Settings,       label: 'الإعدادات'    },
     ]
   }
