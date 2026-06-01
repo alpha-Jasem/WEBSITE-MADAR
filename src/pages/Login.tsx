@@ -193,7 +193,12 @@ export const Login = () => {
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-sm font-bold text-slate-700 font-tajawal">كلمة المرور</label>
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <label className="block text-sm font-bold text-slate-700 font-tajawal">كلمة المرور</label>
+                      <Link to="/forgot-password" className="text-xs font-bold text-[#0369A1] transition-colors hover:text-[#0D1B3E] font-tajawal">
+                        هل نسيت كلمة المرور؟
+                      </Link>
+                    </div>
                     <div className="relative">
                       <Lock size={17} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
                       <input
