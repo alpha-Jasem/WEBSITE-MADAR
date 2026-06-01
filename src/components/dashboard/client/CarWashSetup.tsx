@@ -34,6 +34,7 @@ const SECTION_STYLE = {
 
 export function CarWashSetup() {
   const { companyId, company, loading: authLoading } = useClientCompany()
+  const SAUDI_VAT_RATE = 15
 
   const [tab, setTab] = useState<'services' | 'hours' | 'loyalty' | 'vat' | 'qr'>('services')
   const [copiedUrl, setCopiedUrl] = useState(false)
@@ -57,7 +58,7 @@ export function CarWashSetup() {
 
   // VAT
   const [taxEnabled, setTaxEnabled] = useState(false)
-  const [vatRate, setVatRate] = useState(15)
+  const [vatRate, setVatRate] = useState(SAUDI_VAT_RATE)
   const [priceIncludesVat, setPriceIncludesVat] = useState(true)
   const [savingVat, setSavingVat] = useState(false)
   const [vatSaved, setVatSaved] = useState(false)
@@ -88,7 +89,7 @@ export function CarWashSetup() {
         if (c.cw_loyalty_threshold) setLoyaltyThreshold(c.cw_loyalty_threshold)
         if (c.google_maps_url) setReviewUrl(c.google_maps_url)
         setTaxEnabled(!!c.tax_enabled)
-        if (c.vat_rate) setVatRate(c.vat_rate)
+        setVatRate(SAUDI_VAT_RATE)
         setPriceIncludesVat(c.price_includes_vat !== false)
         if (c.cw_monthly_target) setMonthlyTarget(c.cw_monthly_target)
       }
@@ -167,9 +168,10 @@ export function CarWashSetup() {
   const saveVat = async () => {
     if (!companyId) return
     setSavingVat(true)
-    await supabase.from('companies').update({ tax_enabled: taxEnabled, vat_rate: vatRate, price_includes_vat: true } as any).eq('id', companyId)
+    await supabase.from('companies').update({ tax_enabled: taxEnabled, vat_rate: SAUDI_VAT_RATE, price_includes_vat: true } as any).eq('id', companyId)
+    setVatRate(SAUDI_VAT_RATE)
     setPriceIncludesVat(true)
-    logAudit(companyId, 'tax_settings_changed', { newValue: { tax_enabled: taxEnabled, vat_rate: vatRate, price_includes_vat: true } })
+    logAudit(companyId, 'tax_settings_changed', { newValue: { tax_enabled: taxEnabled, vat_rate: SAUDI_VAT_RATE, price_includes_vat: true } })
     setSavingVat(false)
     setVatSaved(true)
     setTimeout(() => setVatSaved(false), 3000)
@@ -424,13 +426,12 @@ export function CarWashSetup() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {/* VAT Rate */}
                 <div>
-                  <label style={{ display: 'block', fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', marginBottom: 8 }}>نسبة الضريبة %</label>
+                  <label style={{ display: 'block', fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', marginBottom: 8 }}>نسبة الضريبة</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <input type="text" inputMode="decimal" pattern="[0-9]*[.]?[0-9]*" value={vatRate} min={0} max={100}
-                      onChange={e => setVatRate(toSafeNumber(sanitizeDecimalInput(e.target.value), 15, 0, 100))}
-                      style={{ width: 80, background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: 10, padding: '8px 12px', color: '#0F172A', fontSize: 20, fontFamily: 'Sora, sans-serif', fontWeight: 700, outline: 'none', textAlign: 'center' }} />
-                    <span style={{ fontSize: 18, color: '#6366F1', fontFamily: 'Sora, sans-serif', fontWeight: 700 }}>%</span>
-                    <p style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>الضريبة المعتمدة في المملكة 15%</p>
+                    <div style={{ width: 86, background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: 10, padding: '8px 12px', color: '#0F172A', fontSize: 20, fontFamily: 'Sora, sans-serif', fontWeight: 700, textAlign: 'center' }}>
+                      {SAUDI_VAT_RATE}%
+                    </div>
+                    <p style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>ثابتة حسب ضريبة القيمة المضافة في السعودية، ولا تتغير من لوحة المغسلة.</p>
                   </div>
                 </div>
 
