@@ -170,7 +170,7 @@ export const ClientSettings = () => {
 
   // Team management
   const CW_PAGES = [
-    { path: '/client',            label: 'لوحة المغسلة'  },
+    { path: '/client',            label: 'الرئيسية'  },
     { path: '/client/queue',      label: 'لوحة التشغيل'  },
     { path: '/client/queue-display', label: 'شاشة العرض' },
     { path: '/client/leads',      label: 'العملاء' },

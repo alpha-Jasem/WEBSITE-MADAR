@@ -146,19 +146,19 @@ export function CarWashLaunchChecklist({ compact = false }: { compact?: boolean 
         <div>
           <span className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-1 text-xs font-bold text-sky-700 font-tajawal">
             <Sparkles size={13} />
-            جاهزية البيع والتشغيل
+            إعداد الحساب
           </span>
-          <h2 className="mt-3 text-xl font-black text-slate-950 font-cairo">هل المغسلة جاهزة يدخلها عميل جديد؟</h2>
+          <h2 className="mt-3 text-xl font-black text-slate-950 font-cairo">جاهزية الحساب للتشغيل</h2>
           <p className="mt-1 text-sm leading-6 text-slate-500 font-tajawal">
-            فحص سريع لأهم الأشياء التي تمنع العميل من الاشتراك أو تمنع الفريق من التشغيل بسلاسة.
+            فحص مختصر لأهم الإعدادات التي تجعل الحساب جاهزاً لاستقبال العملاء وتشغيل الفريق باحتراف.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="grid h-20 w-20 place-items-center rounded-2xl bg-[#0D1B3E] text-white">
+          <div className="grid h-20 w-20 place-items-center rounded-2xl border border-sky-200 bg-sky-50 text-sky-800 shadow-sm">
             <strong className="font-sora text-2xl font-black">{requiredScore}%</strong>
-            <span className="text-[10px] font-bold text-sky-100 font-tajawal">أساسي</span>
+            <span className="text-[10px] font-bold text-sky-700 font-tajawal">أساسي</span>
           </div>
-          <div className="grid h-20 w-20 place-items-center rounded-2xl bg-slate-50 text-slate-950">
+          <div className="grid h-20 w-20 place-items-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-950 shadow-sm">
             <strong className="font-sora text-2xl font-black">{totalScore}%</strong>
             <span className="text-[10px] font-bold text-slate-500 font-tajawal">كامل</span>
           </div>
@@ -167,20 +167,20 @@ export function CarWashLaunchChecklist({ compact = false }: { compact?: boolean 
 
       {blockers.length > 0 && (
         <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800 font-tajawal">
-          قبل البيع الفعلي: {blockers.map(item => item.label).join('، ')}
+          الخطوات المتبقية: {blockers.map(item => item.label).join('، ')}
         </div>
       )}
 
       <div className={`grid gap-3 ${compact ? 'md:grid-cols-2' : 'md:grid-cols-3 xl:grid-cols-4'}`}>
         {items.map(item => (
-          <Link key={item.id} to={item.to} className={`group rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-lg ${item.done ? 'border-emerald-100 bg-emerald-50/40' : 'border-slate-200 bg-slate-50'}`}>
+          <Link key={item.id} to={item.to} className={`group rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-lg ${item.done ? 'border-emerald-200 bg-white shadow-[0_10px_28px_rgba(16,185,129,0.08)]' : 'border-slate-200 bg-slate-50'}`}>
             <div className="mb-3 flex items-center justify-between">
               <span className={`grid h-10 w-10 place-items-center rounded-xl ${item.done ? 'bg-emerald-100 text-emerald-700' : 'bg-white text-slate-500'}`}>
                 <item.icon size={18} />
               </span>
               <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-bold font-tajawal ${item.done ? 'bg-emerald-100 text-emerald-700' : 'bg-white text-slate-500'}`}>
                 <CheckCircle2 size={12} />
-                {item.done ? 'جاهز' : 'ناقص'}
+                {item.done ? 'مكتمل' : 'ناقص'}
               </span>
             </div>
             <strong className="block text-sm text-slate-950 font-cairo">{item.label}</strong>

@@ -43,7 +43,7 @@ function buildNavItems(template: ReturnType<typeof getClientIndustryTemplate>): 
 
   if (template.type === 'car_wash') {
     return [
-      { to: '/client',               icon: Droplets,       label: 'لوحة المغسلة',  end: true },
+      { to: '/client',               icon: Droplets,       label: 'الرئيسية',  end: true },
       { to: '/client/queue',         icon: Car,            label: 'لوحة التشغيل' },
       { to: '/client/queue-display', icon: Monitor,        label: 'شاشة العرض'  },
       { to: '/client/leads',         icon: Users2,         label: 'العملاء'      },

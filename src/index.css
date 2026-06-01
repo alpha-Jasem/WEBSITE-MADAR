@@ -8402,10 +8402,21 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 @media (max-width: 640px) {
   .cw-hero {
     padding: 20px;
+    text-align: right;
   }
 
   .cw-hero h1 {
     font-size: 24px;
+  }
+
+  .cw-hero-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .cw-primary-action,
+  .cw-secondary-action {
+    flex: 1 1 100%;
   }
 
   .cw-kpi-grid,
@@ -8659,6 +8670,31 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 /* 25 ── إخفاء التعديلات التي تظهر بشكل غريب: border-bottom القاتمة */
 .dash-shell-client .dash-content [style*="borderBottom"][style*="rgba(255,255,255"] {
   border-bottom-color: rgba(0,191,255,0.15) !important;
+}
+
+@media (max-width: 768px) {
+  .dash-shell-client,
+  .dash-shell-client .dash-main,
+  .dash-shell-client .dash-content {
+    direction: rtl !important;
+    text-align: right;
+    overflow-x: hidden;
+  }
+
+  .dash-shell-client .dash-sidebar {
+    right: -270px !important;
+    left: auto !important;
+    border-radius: 22px 0 0 22px;
+  }
+
+  .dash-shell-client .dash-sidebar.open {
+    right: 0 !important;
+    left: auto !important;
+  }
+
+  .dash-shell-client .dash-topbar {
+    direction: rtl;
+  }
 }
 
 .dash-shell-admin {

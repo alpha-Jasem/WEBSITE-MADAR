@@ -268,9 +268,9 @@ export function CarWashOverview() {
     <div className="cw-command" dir="rtl">
       <section className="cw-hero">
         <div>
-          <span className="cw-eyebrow">مركز يوم المغسلة</span>
-          <h1>{company?.name ? `صباح التشغيل، ${company.name}` : 'لوحة تشغيل المغسلة'}</h1>
-          <p>تابع السيارات النشطة، التسليمات، الإيراد، العملاء والولاء من شاشة واحدة مصممة لسرعة القرار داخل المغسلة.</p>
+          <span className="cw-eyebrow">بوابة العميل</span>
+          <h1>{company?.name ? `لوحة إدارة ${company.name}` : 'لوحة إدارة المغسلة'}</h1>
+          <p>نظرة تنفيذية على التشغيل، السيارات، الإيرادات، العملاء، والجاهزية اليومية من شاشة واحدة واضحة.</p>
         </div>
         <div className="cw-hero-actions">
           <Link to="/client/queue?add=1" className="cw-primary-action">
@@ -302,9 +302,9 @@ export function CarWashOverview() {
                 <Sparkles size={13} />
                 تجربة Pro مفعلة {trialDaysLeft !== null ? `- باقي ${trialDaysLeft} يوم` : ''}
               </span>
-              <h2 className="mt-3 text-xl font-bold text-slate-950 font-cairo">مرحباً بك في مدار OS</h2>
+              <h2 className="mt-3 text-xl font-bold text-slate-950 font-cairo">خطوات تفعيل الحساب</h2>
               <p className="mt-1 max-w-2xl text-sm leading-7 text-slate-500 font-tajawal">
-                جهزنا لك الخدمات الأساسية وفتحنا التسجيل الذاتي QR خلال التجربة. اتبع هذه الخطوات عشان تكون المغسلة جاهزة للبيع والتشغيل أمام فريقك.
+                أكمل الإعدادات الأساسية ليكون الحساب جاهزاً لاستقبال أول سيارة وتشغيل الفريق بثقة خلال التجربة.
               </p>
             </div>
             <button type="button" onClick={dismissTrialGuide} className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 text-slate-400 transition-colors hover:text-slate-900">
@@ -314,11 +314,11 @@ export function CarWashOverview() {
 
           <div className="grid gap-3 md:grid-cols-5">
             {[
-              { title: 'راجع الخدمات', desc: 'عدّل الأسعار والمدة.', to: '/client/setup', icon: Droplets },
-              { title: 'اطبع QR', desc: 'ضعه عند مدخل المغسلة.', to: '/client/settings', icon: Monitor },
-              { title: 'جرّب المسار', desc: 'استقبال ثم خدمة ثم تسليم.', to: '/client/queue', icon: Car },
-              { title: 'أضف الموظفين', desc: 'تابع الأداء والصلاحيات.', to: '/client/workers', icon: Users },
-              { title: 'اختَر الباقة', desc: 'ثبّت الاشتراك بعد التجربة.', to: '/client/upgrade', icon: Wallet },
+              { title: 'الخدمات والأسعار', desc: 'راجع الخدمات قبل استقبال العملاء.', to: '/client/setup', icon: Droplets },
+              { title: 'رمز QR', desc: 'جهز رابط التسجيل الذاتي عند المدخل.', to: '/client/settings', icon: Monitor },
+              { title: 'تشغيل تجريبي', desc: 'اختبر الاستقبال والخدمة والتسليم.', to: '/client/queue', icon: Car },
+              { title: 'الفريق', desc: 'أضف الموظفين وحدد الصلاحيات.', to: '/client/workers', icon: Users },
+              { title: 'تثبيت الاشتراك', desc: 'اختر الباقة المناسبة بعد التجربة.', to: '/client/upgrade', icon: Wallet },
             ].map((item, index) => (
               <Link key={item.title} to={item.to} className="rounded-2xl border border-slate-100 bg-slate-50 p-4 transition-all hover:-translate-y-0.5 hover:border-sky-200 hover:bg-white hover:shadow-lg">
                 <div className="mb-3 flex items-center justify-between">
