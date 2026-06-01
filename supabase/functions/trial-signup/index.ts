@@ -267,9 +267,6 @@ Deno.serve(async (req) => {
         { company_id: company.id, name: 'غسيل داخلي وخارجي', price: 45, duration_minutes: 25, active: true },
         { company_id: company.id, name: 'غسيل بخار كامل', price: 85, duration_minutes: 45, active: true },
       ]),
-      supabase.from('cw_workers').insert([
-        { company_id: company.id, name: 'فريق الاستقبال', commission_type: 'fixed', commission_value: 0, active: true },
-      ]),
       supabase.from('logs').insert({
         company_id: company.id,
         level: 'success',

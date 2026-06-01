@@ -93,7 +93,7 @@ export function CarWashLaunchChecklist({ compact = false }: { compact?: boolean 
       id: 'memberships',
       label: 'الاشتراكات والمحفظة',
       detail: flags.memberships || flags.wallet ? (counts.activePlans > 0 ? `${counts.activePlans} باقة جاهزة` : 'أنشئ باقة شهرية واحدة على الأقل') : 'ميزة اختيارية من الإدارة',
-      done: flags.memberships || flags.wallet ? counts.activePlans > 0 : true,
+      done: flags.memberships || flags.wallet ? counts.activePlans > 0 : false,
       icon: WalletCards,
       to: '/client/memberships',
       required: false,
@@ -119,8 +119,14 @@ export function CarWashLaunchChecklist({ compact = false }: { compact?: boolean 
   ], [counts, flags.memberships, flags.wallet, checkinUrl, company?.google_maps_url])
 
   const requiredItems = items.filter(item => item.required)
+  const scoreItems = items.filter(item => {
+    if (item.required) return true
+    if (item.id === 'memberships') return Boolean(flags.memberships || flags.wallet)
+    if (item.id === 'closing') return counts.carsToday > 0 || counts.closingToday > 0
+    return true
+  })
   const requiredScore = pct(requiredItems.filter(item => item.done).length, requiredItems.length)
-  const totalScore = pct(items.filter(item => item.done).length, items.length)
+  const totalScore = pct(scoreItems.filter(item => item.done).length, scoreItems.length)
   const blockers = requiredItems.filter(item => !item.done)
 
   if (loading) {

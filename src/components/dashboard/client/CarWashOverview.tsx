@@ -229,14 +229,18 @@ export function CarWashOverview() {
     { label: 'رابط خرائط Google', done: Boolean(company?.google_maps_url) },
     { label: 'إعداد VAT', done: Boolean(company?.tax_enabled === false || company?.vat_rate) },
   ]
-  const operationsScore = Math.max(0, Math.min(100,
-    100
-      - stuckCars.length * 15
-      - (stats.ready.length > 3 ? 10 : 0)
-      - (pendingReviews > 0 ? 8 : 0)
-      - setupIssues.filter(item => !item.done).length * 7,
-  ))
+  const hasOperationalActivity = queue.length > 0 || visits.length > 0
+  const operationsScore = hasOperationalActivity
+    ? Math.max(0, Math.min(100,
+      100
+        - stuckCars.length * 15
+        - (stats.ready.length > 3 ? 10 : 0)
+        - (pendingReviews > 0 ? 8 : 0)
+        - setupIssues.filter(item => !item.done).length * 7,
+    ))
+    : 0
   const nextActions = [
+    !hasOperationalActivity ? 'جرّب تسجيل أول سيارة من QR أو لوحة التشغيل' : '',
     stuckCars.length > 0 ? `راجع ${stuckCars.length} سيارة متأخرة في المسار` : '',
     stats.ready.length > 0 ? `سلّم ${stats.ready.length} سيارة جاهزة` : '',
     pendingReviews > 0 ? `أرسل ${pendingReviews} طلب تقييم` : '',
@@ -342,7 +346,7 @@ export function CarWashOverview() {
         <article className="cw-ops-score">
           <span>مؤشر تشغيل اليوم</span>
           <strong>{operationsScore}%</strong>
-          <small>{operationsScore >= 85 ? 'التشغيل ممتاز' : operationsScore >= 65 ? 'يحتاج متابعة خفيفة' : 'يحتاج تدخل الآن'}</small>
+          <small>{!hasOperationalActivity ? 'لم يبدأ التشغيل اليوم' : operationsScore >= 85 ? 'التشغيل ممتاز' : operationsScore >= 65 ? 'يحتاج متابعة خفيفة' : 'يحتاج تدخل الآن'}</small>
         </article>
         <article className="cw-next-actions">
           <div>
