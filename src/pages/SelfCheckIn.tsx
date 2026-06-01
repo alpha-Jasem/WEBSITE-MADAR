@@ -271,7 +271,7 @@ export function SelfCheckIn() {
   const walletBalance = Number(knownCustomer?.wallet_balance || 0)
   const vat = useMemo(() => {
     const price = selectedService?.price || 0
-    return calcVAT(price, !!company?.tax_enabled, company?.vat_rate || 15, !!company?.price_includes_vat)
+    return calcVAT(price, !!company?.tax_enabled, company?.vat_rate || 15, company?.price_includes_vat !== false)
   }, [company, selectedService])
   const walletCoversSelectedService = selectedService ? walletBalance >= vat.total_amount : false
 

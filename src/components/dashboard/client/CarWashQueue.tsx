@@ -347,7 +347,7 @@ export const CarWashQueue = () => {
     const item = deliverModal
     const isMembershipPayment = selectedPayment === 'membership'
     const price = item.is_free_wash || isMembershipPayment ? 0 : item.price
-    const vat = calcVAT(price, company?.tax_enabled || false, company?.vat_rate || 15, company?.price_includes_vat || false)
+    const vat = calcVAT(price, company?.tax_enabled || false, company?.vat_rate || 15, company?.price_includes_vat !== false)
     const now = new Date().toISOString()
 
     // Look up customer first so we can link the visit record
@@ -1002,7 +1002,7 @@ export const CarWashQueue = () => {
               {/* Mini invoice */}
               {form.price && Number(form.price) > 0 && (() => {
                 const price = Number(form.price)
-                const vat = calcVAT(price, company?.tax_enabled || false, company?.vat_rate || 15, company?.price_includes_vat || false)
+                const vat = calcVAT(price, company?.tax_enabled || false, company?.vat_rate || 15, company?.price_includes_vat !== false)
                 return (
                   <div className="mt-4 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(0,191,255,0.22)' }}>
                     <div className="px-4 py-2" style={{ background: 'rgba(0,191,255,0.08)', borderBottom: '1px solid rgba(0,191,255,0.15)' }}>
@@ -1076,7 +1076,7 @@ export const CarWashQueue = () => {
             {/* VAT breakdown */}
             {(() => {
               const price = deliverModal.is_free_wash ? 0 : deliverModal.price
-              const vat = calcVAT(price, company?.tax_enabled || false, company?.vat_rate || 15, company?.price_includes_vat || false)
+              const vat = calcVAT(price, company?.tax_enabled || false, company?.vat_rate || 15, company?.price_includes_vat !== false)
               return (
                 <div className="mb-4 space-y-1.5 p-3 rounded-xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                   {deliverModal.is_free_wash ? (

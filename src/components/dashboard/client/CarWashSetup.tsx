@@ -58,7 +58,7 @@ export function CarWashSetup() {
   // VAT
   const [taxEnabled, setTaxEnabled] = useState(false)
   const [vatRate, setVatRate] = useState(15)
-  const [priceIncludesVat, setPriceIncludesVat] = useState(false)
+  const [priceIncludesVat, setPriceIncludesVat] = useState(true)
   const [savingVat, setSavingVat] = useState(false)
   const [vatSaved, setVatSaved] = useState(false)
 
@@ -89,7 +89,7 @@ export function CarWashSetup() {
         if (c.google_maps_url) setReviewUrl(c.google_maps_url)
         setTaxEnabled(!!c.tax_enabled)
         if (c.vat_rate) setVatRate(c.vat_rate)
-        setPriceIncludesVat(!!c.price_includes_vat)
+        setPriceIncludesVat(c.price_includes_vat !== false)
         if (c.cw_monthly_target) setMonthlyTarget(c.cw_monthly_target)
       }
       setLoading(false)
@@ -167,8 +167,9 @@ export function CarWashSetup() {
   const saveVat = async () => {
     if (!companyId) return
     setSavingVat(true)
-    await supabase.from('companies').update({ tax_enabled: taxEnabled, vat_rate: vatRate, price_includes_vat: priceIncludesVat } as any).eq('id', companyId)
-    logAudit(companyId, 'tax_settings_changed', { newValue: { tax_enabled: taxEnabled, vat_rate: vatRate, price_includes_vat: priceIncludesVat } })
+    await supabase.from('companies').update({ tax_enabled: taxEnabled, vat_rate: vatRate, price_includes_vat: true } as any).eq('id', companyId)
+    setPriceIncludesVat(true)
+    logAudit(companyId, 'tax_settings_changed', { newValue: { tax_enabled: taxEnabled, vat_rate: vatRate, price_includes_vat: true } })
     setSavingVat(false)
     setVatSaved(true)
     setTimeout(() => setVatSaved(false), 3000)
@@ -230,13 +231,18 @@ export function CarWashSetup() {
               <Plus size={13} /> إضافة خدمة
             </button>
           </div>
+          <div style={{ marginBottom: 14, padding: '12px 14px', borderRadius: 14, background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.18)' }}>
+            <p style={{ margin: 0, fontSize: 12, lineHeight: 1.8, color: '#0369A1', fontFamily: 'Tajawal, sans-serif' }}>
+              اكتب السعر النهائي الذي يدفعه العميل. إذا كتبت 25 ر.س فالإجمالي للعميل 25 ر.س، والنظام يفصل VAT داخلياً في الفواتير والتقارير.
+            </p>
+          </div>
 
           {services.length === 0 ? (
             <p style={{ textAlign: 'center', color: '#475569', fontFamily: 'Tajawal, sans-serif', fontSize: 13, padding: '20px 0' }}>لا توجد خدمات — أضف خدمتك الأولى</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 60px 32px', gap: 10, padding: '0 4px' }}>
-                {['اسم الخدمة', 'السعر (ر.س)', 'الوقت (دقيقة)', 'مفعّل', ''].map(h => (
+                {['اسم الخدمة', 'السعر النهائي شامل VAT', 'الوقت (دقيقة)', 'مفعّل', ''].map(h => (
                   <span key={h} style={{ fontSize: 11, color: '#475569', fontFamily: 'Tajawal, sans-serif', fontWeight: 600 }}>{h}</span>
                 ))}
               </div>
@@ -429,20 +435,17 @@ export function CarWashSetup() {
                 </div>
 
                 {/* Price includes VAT */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: '#FAFAFA', borderRadius: 14, border: '1px solid #E2E8F0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, padding: '14px 16px', background: 'rgba(16,185,129,0.08)', borderRadius: 14, border: '1px solid rgba(16,185,129,0.22)' }}>
                   <div>
-                    <p style={{ fontSize: 13, color: '#0F172A', fontFamily: 'Cairo, sans-serif', fontWeight: 600, margin: 0 }}>الأسعار تشمل الضريبة</p>
+                    <p style={{ fontSize: 13, color: '#065F46', fontFamily: 'Cairo, sans-serif', fontWeight: 700, margin: 0 }}>الأسعار شاملة الضريبة دائماً</p>
                     <p style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', margin: '4px 0 0' }}>
-                      {priceIncludesVat
-                        ? `مثال: سعر 115 ر.س = ${(115 / 1.15).toFixed(2)} ر.س + ${(115 - 115/1.15).toFixed(2)} ر.س ضريبة`
-                        : `مثال: سعر 100 ر.س + ${vatRate}% = ${(100 * (1 + vatRate/100)).toFixed(2)} ر.س للعميل`}
+                      مثال: سعر 25 ر.س = {(25 / (1 + vatRate/100)).toFixed(2)} ر.س قبل الضريبة + {(25 - 25 / (1 + vatRate/100)).toFixed(2)} ر.س VAT، والإجمالي للعميل يبقى 25 ر.س.
                     </p>
                   </div>
-                  <button
-                    onClick={() => setPriceIncludesVat(v => !v)}
-                    style={{ width: 48, height: 26, borderRadius: 99, border: 'none', cursor: 'pointer', background: priceIncludesVat ? '#6366F1' : '#E2E8F0', position: 'relative', transition: 'background 0.2s' }}>
-                    <span style={{ position: 'absolute', top: 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'right 0.2s, left 0.2s', right: priceIncludesVat ? 3 : 'auto', left: priceIncludesVat ? 'auto' : 3 }} />
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#059669', fontFamily: 'Cairo, sans-serif', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                    <Check size={14} />
+                    السعر النهائي
+                  </div>
                 </div>
 
                 {/* Summary */}

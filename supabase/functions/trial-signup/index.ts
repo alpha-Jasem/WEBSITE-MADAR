@@ -242,7 +242,7 @@ Deno.serve(async (req) => {
         public_checkin_token: generateToken(),
         tax_enabled: true,
         vat_rate: 15,
-        price_includes_vat: false,
+        price_includes_vat: true,
         cw_loyalty_threshold: 5,
         cw_automations: automations,
         cw_monthly_target: 20000,

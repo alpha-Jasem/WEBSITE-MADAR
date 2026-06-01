@@ -65,7 +65,7 @@ export const CarWashFinance = () => {
 
     const [{ data: visits }, { data: queue }, { data: workers }, { data: exps }] = await Promise.all([
       supabase.from('cw_visits')
-        .select('price, subtotal, vat_amount, payment_method, is_free_wash, discount_amount, payment_status, created_at, service_name')
+        .select('price, subtotal, vat_amount, total_amount, payment_method, is_free_wash, discount_amount, payment_status, created_at, service_name')
         .eq('company_id', companyId)
         .gte('created_at', rangeStart.toISOString())
         .not('payment_status', 'in', '("refunded","cancelled")'),
@@ -74,7 +74,8 @@ export const CarWashFinance = () => {
       supabase.from('cw_expenses').select('*').eq('company_id', companyId).gte('expense_date', expFrom).order('created_at', { ascending: false }),
     ])
 
-    const totalRevenue = (visits || []).reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0)
+    const visitTotal = (v: any) => v.is_free_wash ? 0 : Number(v.total_amount ?? ((v.subtotal ?? v.price ?? 0) + (v.vat_amount ?? 0)))
+    const totalRevenue = (visits || []).reduce((s, v) => s + visitTotal(v), 0)
     setRevenue(totalRevenue)
     setVisitCount((visits || []).length)
     setVisitsData(visits || [])
@@ -84,7 +85,7 @@ export const CarWashFinance = () => {
     let freeDiscount = 0
     for (const v of visits || []) {
       const pm = (v.payment_method as PaymentMethod) || 'cash'
-      breakdown[pm] = (breakdown[pm] || 0) + (v.subtotal ?? v.price ?? 0)
+      breakdown[pm] = (breakdown[pm] || 0) + visitTotal(v)
       if (v.is_free_wash) {
         freeCount++
         freeDiscount += v.discount_amount || 0
@@ -117,7 +118,7 @@ export const CarWashFinance = () => {
       'الخدمة': v.service_name || '',
       'قبل الضريبة': (v.subtotal ?? v.price ?? 0).toFixed(2),
       'الضريبة': (v.vat_amount ?? 0).toFixed(2),
-      'الإجمالي': (v.subtotal ?? v.price ?? 0).toFixed(2),
+      'الإجمالي': (v.is_free_wash ? 0 : Number(v.total_amount ?? ((v.subtotal ?? v.price ?? 0) + (v.vat_amount ?? 0)))).toFixed(2),
       'طريقة الدفع': v.payment_method || 'cash',
       'غسلة مجانية': v.is_free_wash ? 'نعم' : 'لا',
     }))

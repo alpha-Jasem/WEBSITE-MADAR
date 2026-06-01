@@ -441,7 +441,7 @@ Deno.serve(async (req) => {
     Number(selectedService.price || 0),
     !!company.tax_enabled,
     Number(company.vat_rate || 15),
-    !!company.price_includes_vat,
+    company.price_includes_vat !== false,
   )
 
   const { data: existingCustomer } = await supabase

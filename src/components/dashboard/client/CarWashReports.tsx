@@ -15,6 +15,7 @@ type CWVisit = {
   price: number | null
   subtotal: number | null
   vat_amount: number | null
+  total_amount: number | null
   payment_method: string | null
   is_free_wash: boolean | null
   discount_amount: number | null
@@ -104,7 +105,7 @@ export function CarWashReports() {
         until = new Date()
       }
       const [{ data: v }, { data: c }, { data: w }] = await Promise.all([
-        supabase.from('cw_visits').select('id, created_at, price, subtotal, vat_amount, payment_method, is_free_wash, discount_amount, service_name, customer_id, worker_id')
+        supabase.from('cw_visits').select('id, created_at, price, subtotal, vat_amount, total_amount, payment_method, is_free_wash, discount_amount, service_name, customer_id, worker_id')
           .eq('company_id', companyId)
           .gte('created_at', since.toISOString())
           .lte('created_at', until.toISOString())
@@ -130,7 +131,8 @@ export function CarWashReports() {
 
     const todayVisits = visits.filter(v => v.created_at.startsWith(todayStr)).length
     const monthVisits = visits.filter(v => v.created_at.startsWith(thisMonthStr)).length
-    const revenue = visits.reduce((sum, v) => sum + (v.subtotal ?? v.price ?? 0), 0)
+    const visitTotal = (v: CWVisit) => v.is_free_wash ? 0 : Number(v.total_amount ?? ((v.subtotal ?? v.price ?? 0) + (v.vat_amount ?? 0)))
+    const revenue = visits.reduce((sum, v) => sum + visitTotal(v), 0)
     const milestones = customers.filter(c => c.total_visits > 0 && c.total_visits % threshold === 0).length
     const freeWashCount = visits.filter(v => v.is_free_wash).length
     const freeWashDiscount = visits.filter(v => v.is_free_wash).reduce((s, v) => s + (v.discount_amount || 0), 0)
@@ -139,7 +141,7 @@ export function CarWashReports() {
     const paymentBreakdown: Record<string, number> = {}
     for (const v of visits.filter(v => v.created_at.startsWith(thisMonthStr))) {
       const pm = v.payment_method || 'cash'
-      paymentBreakdown[pm] = (paymentBreakdown[pm] || 0) + (v.subtotal ?? v.price ?? 0)
+      paymentBreakdown[pm] = (paymentBreakdown[pm] || 0) + visitTotal(v)
     }
 
     // Daily chart — up to 30 points regardless of selected range
@@ -152,7 +154,7 @@ export function CarWashReports() {
       return {
         date: d.toLocaleDateString('ar-SA', { weekday: 'short', day: 'numeric' }),
         visits: dayVisits.length,
-        revenue: dayVisits.reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0),
+        revenue: dayVisits.reduce((s, v) => s + visitTotal(v), 0),
       }
     })
 
@@ -169,7 +171,7 @@ export function CarWashReports() {
     // Worker performance
     const workerStats = workers.map(w => {
       const wVisits = visits.filter(v => v.worker_id === w.id)
-      const revenue = wVisits.reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0)
+      const revenue = wVisits.reduce((s, v) => s + visitTotal(v), 0)
       return { id: w.id, name: w.name, count: wVisits.length, revenue }
     }).filter(w => w.count > 0).sort((a, b) => b.count - a.count)
 
@@ -210,7 +212,7 @@ export function CarWashReports() {
       'الخدمة': v.service_name || '',
       'قبل الضريبة': (v.subtotal ?? v.price ?? 0).toFixed(2),
       'الضريبة': (v.vat_amount ?? 0).toFixed(2),
-      'الإجمالي': (v.is_free_wash ? 0 : (v.subtotal ?? v.price ?? 0)).toFixed(2),
+      'الإجمالي': (v.is_free_wash ? 0 : Number(v.total_amount ?? ((v.subtotal ?? v.price ?? 0) + (v.vat_amount ?? 0)))).toFixed(2),
       'طريقة الدفع': v.payment_method || 'cash',
       'غسلة مجانية': v.is_free_wash ? 'نعم' : 'لا',
       'خصم الولاء': (v.discount_amount ?? 0).toFixed(2),
@@ -399,7 +401,7 @@ export function CarWashReports() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
         <StatCard icon={Car} label="زيارات اليوم" value={stats.todayVisits} color="#22D3EE" />
         <StatCard icon={TrendingUp} label="زيارات هذا الشهر" value={stats.monthVisits} color="#4F6EF7" />
-        <StatCard icon={DollarSign} label={`إيرادات آخر ${days === 1 ? 'يوم' : days + ' يوم'}`} value={stats.revenue > 0 ? `${stats.revenue.toLocaleString()} ر.س` : '—'} sub="قبل الضريبة" color="#10B981" />
+        <StatCard icon={DollarSign} label={`إيرادات آخر ${days === 1 ? 'يوم' : days + ' يوم'}`} value={stats.revenue > 0 ? `${stats.revenue.toLocaleString()} ر.س` : '—'} sub="الإجمالي المحصل شامل VAT" color="#10B981" />
         <StatCard icon={Star} label="مكافآت ولاء" value={stats.milestones} sub={`وصلوا الغسلة ${threshold}`} color="#F59E0B" />
         <StatCard icon={Gift} label="غسلات مجانية" value={stats.freeWashCount} sub={stats.freeWashDiscount > 0 ? `خصم ${stats.freeWashDiscount.toFixed(0)} ر.س` : undefined} color="#F97316" />
         <StatCard icon={Users} label="إجمالي العملاء" value={customers.length} sub="مسجلون في النظام" color="#8B5CF6" />
