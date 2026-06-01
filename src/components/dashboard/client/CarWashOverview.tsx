@@ -294,8 +294,8 @@ export function CarWashOverview() {
       <section className="cw-hero">
         <div>
           <span className="cw-eyebrow">مركز اليوم</span>
-          <h1>{company?.name ? `إدارة يوم ${company.name}` : 'إدارة يوم المغسلة'}</h1>
-          <p>ابدأ من المبيعات، ثم راقب ضغط التشغيل، السيارات الجاهزة، والتنبيهات التي تحتاج قرار سريع.</p>
+          <h1>{company?.name ? `مركز تشغيل ${company.name}` : 'مركز تشغيل المغسلة'}</h1>
+          <p>مبيعات، سيارات، تسليمات وتنبيهات اليوم في شاشة واحدة.</p>
         </div>
         <div className="cw-hero-actions">
           <Link to="/client/queue?add=1" className="cw-primary-action">
