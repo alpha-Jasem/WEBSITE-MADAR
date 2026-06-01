@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { type CSSProperties, useEffect, useMemo, useState } from 'react'
 import {
   AlertCircle,
   ArrowUpLeft,
@@ -205,6 +205,24 @@ export function CarWashOverview() {
     return { active, delivered, ready, inService, revenue }
   }, [queue])
 
+  const sales = useMemo(() => {
+    const serviceMap = new Map<string, { count: number; revenue: number }>()
+    for (const item of stats.delivered) {
+      const name = item.service_name || 'خدمة مغسلة'
+      const current = serviceMap.get(name) || { count: 0, revenue: 0 }
+      current.count += 1
+      current.revenue += item.total_amount ?? item.price ?? 0
+      serviceMap.set(name, current)
+    }
+    const bestService = Array.from(serviceMap.entries())
+      .map(([name, data]) => ({ name, ...data }))
+      .sort((a, b) => b.revenue - a.revenue)[0]
+    const avgTicket = stats.delivered.length ? Math.round(stats.revenue / stats.delivered.length) : 0
+    const target = Number((company as any)?.cw_automations?.daily_revenue_goal || 1000)
+    const progress = target > 0 ? Math.min(100, Math.round((stats.revenue / target) * 100)) : 0
+    return { bestService, avgTicket, target, progress }
+  }, [company, stats.delivered, stats.revenue])
+
   const bestWorker = useMemo(() => {
     const scores = new Map<string, { name: string; cars: number; revenue: number }>()
     for (const row of workers) {
@@ -239,6 +257,13 @@ export function CarWashOverview() {
         - setupIssues.filter(item => !item.done).length * 7,
     ))
     : 0
+  const healthStatus = !hasOperationalActivity
+    ? { label: 'لم يبدأ التشغيل', tone: '#64748B', reason: 'سجل أول سيارة أو افتح لوحة التشغيل لبدء اليوم.' }
+    : operationsScore >= 85
+      ? { label: 'اليوم مستقر', tone: '#10B981', reason: 'التشغيل ماشي بدون ازدحام واضح أو تأخير مؤثر.' }
+      : operationsScore >= 65
+        ? { label: 'يحتاج متابعة', tone: '#F59E0B', reason: stats.ready.length > 0 ? 'فيه سيارات جاهزة تحتاج تسليم سريع.' : 'راجع الإعدادات والتنبيهات قبل الزحمة.' }
+        : { label: 'تدخل الآن', tone: '#EF4444', reason: stuckCars.length > 0 ? 'فيه سيارات متأخرة في المسار.' : 'فيه أكثر من مؤشر يحتاج قرار سريع.' }
   const nextActions = [
     !hasOperationalActivity ? 'جرّب تسجيل أول سيارة من QR أو لوحة التشغيل' : '',
     stuckCars.length > 0 ? `راجع ${stuckCars.length} سيارة متأخرة في المسار` : '',
@@ -268,9 +293,9 @@ export function CarWashOverview() {
     <div className="cw-command" dir="rtl">
       <section className="cw-hero">
         <div>
-          <span className="cw-eyebrow">بوابة العميل</span>
-          <h1>{company?.name ? `لوحة إدارة ${company.name}` : 'لوحة إدارة المغسلة'}</h1>
-          <p>نظرة تنفيذية على التشغيل، السيارات، الإيرادات، العملاء، والجاهزية اليومية من شاشة واحدة واضحة.</p>
+          <span className="cw-eyebrow">مركز اليوم</span>
+          <h1>{company?.name ? `إدارة يوم ${company.name}` : 'إدارة يوم المغسلة'}</h1>
+          <p>ابدأ من المبيعات، ثم راقب ضغط التشغيل، السيارات الجاهزة، والتنبيهات التي تحتاج قرار سريع.</p>
         </div>
         <div className="cw-hero-actions">
           <Link to="/client/queue?add=1" className="cw-primary-action">
@@ -291,8 +316,6 @@ export function CarWashOverview() {
           </Link>
         </div>
       </section>
-
-      <CarWashLaunchChecklist />
 
       {showTrialGuide && company?.status === 'trial' && (
         <section className="rounded-[24px] border border-sky-100 bg-white p-5 shadow-[0_20px_70px_rgba(15,23,42,0.08)]">
@@ -335,23 +358,53 @@ export function CarWashOverview() {
         </section>
       )}
 
+      <section className="cw-day-command">
+        <article className="cw-sales-card">
+          <div className="cw-sales-head">
+            <span>مبيعات اليوم</span>
+            <i><Wallet size={22} /></i>
+          </div>
+          <strong>{money(stats.revenue)} ر.س</strong>
+          <div className="cw-sales-progress">
+            <span style={{ width: `${sales.progress}%` }} />
+          </div>
+          <div className="cw-sales-meta">
+            <p><small>هدف اليوم</small><b>{money(sales.target)} ر.س</b></p>
+            <p><small>متوسط الفاتورة</small><b>{money(sales.avgTicket)} ر.س</b></p>
+            <p><small>أفضل خدمة</small><b>{sales.bestService?.name || 'تظهر بعد أول تسليم'}</b></p>
+          </div>
+        </article>
+
+        <article className="cw-health-card" style={{ '--health': healthStatus.tone } as CSSProperties}>
+          <span>صحة اليوم</span>
+          <strong>{healthStatus.label}</strong>
+          <p>{healthStatus.reason}</p>
+          <div>
+            <b>{operationsScore}%</b>
+            <small>مؤشر التشغيل</small>
+          </div>
+        </article>
+
+        <article className="cw-action-card">
+          <h2>أفضل قرار الآن</h2>
+          {(nextActions.length ? nextActions : ['كل شيء مستقر الآن']).slice(0, 3).map(action => (
+            <span key={action}><Sparkles size={13} /> {action}</span>
+          ))}
+        </article>
+      </section>
+
       <section className="cw-kpi-grid">
-        <Kpi icon={Car} label="سيارات في المسار" value={stats.active.length} hint={`${stats.inService.length} قيد الخدمة`} color="#00BFFF" />
-        <Kpi icon={CheckCircle2} label="جاهزة للتسليم" value={stats.ready.length} hint="تحتاج تسليم ودفع" color="#10B981" />
         <Kpi icon={Wallet} label="إيراد اليوم" value={`${money(stats.revenue)} ر.س`} hint={`${stats.delivered.length} سيارة مسلمة`} color="#1565C0" />
+        <Kpi icon={Car} label="سيارات اليوم" value={queue.length} hint={`${stats.active.length} في المسار الآن`} color="#00BFFF" />
+        <Kpi icon={CheckCircle2} label="جاهزة للتسليم" value={stats.ready.length} hint="تحتاج تسليم ودفع" color="#10B981" />
         <Kpi icon={MessageCircle} label="تقييمات معلقة" value={pendingReviews} hint="جاهزة لطلب واتساب" color={pendingReviews > 0 ? '#F59E0B' : '#10B981'} />
       </section>
 
       <section className="cw-ops-brief">
-        <article className="cw-ops-score">
-          <span>مؤشر تشغيل اليوم</span>
-          <strong>{operationsScore}%</strong>
-          <small>{!hasOperationalActivity ? 'لم يبدأ التشغيل اليوم' : operationsScore >= 85 ? 'التشغيل ممتاز' : operationsScore >= 65 ? 'يحتاج متابعة خفيفة' : 'يحتاج تدخل الآن'}</small>
-        </article>
-        <article className="cw-next-actions">
+        <article className="cw-next-actions cw-next-actions-wide">
           <div>
-            <h2>ماذا أفعل الآن؟</h2>
-            <p>أولوية سريعة مبنية على السيارات، الإعدادات، والتقييمات.</p>
+            <h2>تنبيهات مهمة فقط</h2>
+            <p>نظهر هنا الأشياء التي تمنع البيع أو تبطئ التشغيل، بدون إزعاج.</p>
           </div>
           <div>
             {(nextActions.length ? nextActions : ['كل شيء مستقر الآن']).slice(0, 4).map(action => (
@@ -368,6 +421,8 @@ export function CarWashOverview() {
           ))}
         </article>
       </section>
+
+      <CarWashLaunchChecklist compact />
 
       <section className="cw-main-grid">
         <div className="cw-panel cw-queue-panel">

@@ -8012,9 +8012,191 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   gap: 14px;
 }
 
+.cw-day-command {
+  display: grid;
+  grid-template-columns: minmax(320px, 1.25fr) minmax(240px, 0.78fr) minmax(280px, 0.92fr);
+  gap: 14px;
+}
+
+.cw-sales-card,
+.cw-health-card,
+.cw-action-card {
+  min-width: 0;
+  border: 1px solid rgba(0,191,255,0.18);
+  border-radius: 22px;
+  background: #FFFFFF;
+  box-shadow: 0 18px 55px rgba(13,27,62,0.08);
+}
+
+.cw-sales-card {
+  min-height: 238px;
+  padding: 22px;
+  overflow: hidden;
+  position: relative;
+  background:
+    radial-gradient(circle at 4% 4%, rgba(0,191,255,0.20), transparent 34%),
+    radial-gradient(circle at 96% 96%, rgba(21,101,192,0.16), transparent 38%),
+    linear-gradient(135deg, #FFFFFF 0%, #F7FAFD 100%);
+}
+
+.cw-sales-card::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: -70px;
+  bottom: -90px;
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  border: 34px solid rgba(0,191,255,0.08);
+  pointer-events: none;
+}
+
+.cw-sales-head,
+.cw-health-card div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cw-sales-head span,
+.cw-health-card span {
+  color: #52627A;
+  font: 900 13px 'Tajawal', sans-serif;
+}
+
+.cw-sales-head i {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #00BFFF, #1565C0);
+  box-shadow: 0 14px 30px rgba(0,191,255,0.22);
+  font-style: normal;
+}
+
+.cw-sales-card > strong {
+  display: block;
+  margin-top: 14px;
+  color: #071428;
+  font: 950 44px/1.1 'Sora', 'Cairo', sans-serif;
+}
+
+.cw-sales-progress {
+  height: 10px;
+  margin-top: 18px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #EAF4FF;
+  border: 1px solid rgba(0,191,255,0.14);
+}
+
+.cw-sales-progress span {
+  display: block;
+  height: 100%;
+  min-width: 8px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #00BFFF, #1565C0);
+}
+
+.cw-sales-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.cw-sales-meta p {
+  min-width: 0;
+  margin: 0;
+  padding: 12px;
+  border-radius: 15px;
+  background: rgba(255,255,255,0.72);
+  border: 1px solid rgba(13,27,62,0.07);
+}
+
+.cw-sales-meta small,
+.cw-health-card small {
+  display: block;
+  color: #8A98AC;
+  font: 800 11px 'Tajawal', sans-serif;
+}
+
+.cw-sales-meta b {
+  display: block;
+  margin-top: 4px;
+  overflow: hidden;
+  color: #0D1B3E;
+  font: 900 13px 'Cairo', sans-serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cw-health-card {
+  display: grid;
+  align-content: space-between;
+  gap: 12px;
+  padding: 20px;
+  border-color: color-mix(in srgb, var(--health, #10B981) 28%, transparent);
+  background:
+    radial-gradient(circle at 22% 0%, color-mix(in srgb, var(--health, #10B981) 16%, transparent), transparent 40%),
+    #FFFFFF;
+}
+
+.cw-health-card strong {
+  color: var(--health, #10B981);
+  font: 950 25px 'Cairo', sans-serif;
+}
+
+.cw-health-card p {
+  margin: 0;
+  color: #52627A;
+  font: 700 13px/1.8 'Tajawal', sans-serif;
+}
+
+.cw-health-card b {
+  color: #0D1B3E;
+  font: 950 30px 'Sora', sans-serif;
+}
+
+.cw-action-card {
+  display: grid;
+  align-content: center;
+  gap: 9px;
+  padding: 20px;
+}
+
+.cw-action-card h2 {
+  margin: 0 0 4px;
+  color: #0D1B3E;
+  font: 900 20px 'Cairo', sans-serif;
+}
+
+.cw-action-card span {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 11px;
+  border-radius: 13px;
+  color: #0D1B3E;
+  background: #F7FAFD;
+  border: 1px solid rgba(13,27,62,0.07);
+  font: 850 12.5px 'Tajawal', sans-serif;
+}
+
+.cw-action-card span svg {
+  flex-shrink: 0;
+  color: #00BFFF;
+}
+
 .cw-ops-brief {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr) 280px;
+  grid-template-columns: minmax(0, 1fr) 280px;
   gap: 14px;
 }
 
@@ -8416,6 +8598,14 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 }
 
 @media (max-width: 1180px) {
+  .cw-day-command {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.8fr);
+  }
+
+  .cw-sales-card {
+    grid-column: 1 / -1;
+  }
+
   .cw-kpi-grid,
   .cw-lane-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -8423,12 +8613,36 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 
   .cw-main-grid,
   .cw-bottom-grid,
+  .cw-ops-brief,
   .cw-hero {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 640px) {
+  .cw-day-command {
+    grid-template-columns: 1fr;
+  }
+
+  .cw-sales-card,
+  .cw-health-card,
+  .cw-action-card {
+    border-radius: 18px;
+  }
+
+  .cw-sales-card {
+    min-height: 0;
+    padding: 18px;
+  }
+
+  .cw-sales-card > strong {
+    font-size: 34px;
+  }
+
+  .cw-sales-meta {
+    grid-template-columns: 1fr;
+  }
+
   .cw-hero {
     padding: 20px;
     text-align: right;
