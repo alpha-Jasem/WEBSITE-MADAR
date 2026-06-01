@@ -263,7 +263,7 @@ export const PricingPage = () => {
                 padding: '28px 24px',
                 position: 'relative',
                 boxShadow: isPro ? `0 0 40px ${plan.glow}` : (isCurrentPaid || isTrialCurrent) ? `0 0 20px ${plan.glow}` : 'none',
-                transform: isPro ? 'scale(1.03)' : 'scale(1)',
+                transform: 'none',
               }}
             >
               {/* Badge */}
