@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect } from 'react'
-import { Check, Lock, Sparkles, Crown, Zap, Loader2, CheckCircle2, AlertCircle, CreditCard, Wallet, Repeat, Smartphone, MessageCircle } from 'lucide-react'
+import { Check, Lock, Sparkles, Crown, Zap, Loader2, CheckCircle2, AlertCircle, CreditCard, Wallet, Repeat, Smartphone } from 'lucide-react'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { supabase } from '../../../lib/supabase'
 import { MADAR_WHATSAPP_NUMBER } from '../../../lib/constants'
@@ -80,24 +80,24 @@ const PLANS = [
 
 const ADD_ONS = [
   {
+    key: 'wallet',
     icon: Wallet,
     title: 'المحفظة الرقمية',
     desc: 'رصيد للعميل النهائي يخصم منه تلقائياً عند الزيارة.',
-    price: 'إضافة مدفوعة',
     color: '#10B981',
   },
   {
+    key: 'memberships',
     icon: Repeat,
     title: 'اشتراكات العملاء الشهرية',
     desc: 'باقات 4 أو 8 غسلات أو Unlimited مع تذكير واتساب.',
-    price: 'مرحلة ثانية',
     color: '#F59E0B',
   },
   {
+    key: 'online_payments',
     icon: Smartphone,
     title: 'Apple Pay / Google Pay',
     desc: 'دفع مسبق عبر مزود الدفع وربطه بمحفظة العميل.',
-    price: 'يتطلب تفعيل',
     color: '#6366F1',
   },
 ]
@@ -118,17 +118,14 @@ function buildWhatsAppUrl(companyName: string, currentPlan: string, requestedPla
   return `https://wa.me/${MADAR_WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`
 }
 
-function buildAddonWhatsAppUrl(companyName: string, addonName: string) {
-  const msg = `أهلاً، أود تفعيل إضافة ${addonName} في Madar OS.\n\nالمنشأة: ${companyName}\n\nأرسلوا لي المتطلبات والتكلفة.`
-  return `https://wa.me/${MADAR_WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`
-}
-
 export const PricingPage = () => {
   const { company, companyId } = useClientCompany()
   const currentPlan = company?.plan ?? 'starter'
   const currentLabel = PLAN_LABEL_MAP[currentPlan] ?? 'Starter'
   const companyName = company?.name ?? 'منشأتي'
   const isTrial = company?.status === 'trial'
+  const featureFlags = ((company?.cw_automations as any)?.feature_flags || {}) as Record<string, boolean>
+  const visibleAddons = ADD_ONS.filter(addon => Boolean(featureFlags[addon.key]))
   const trialDaysLeft = company?.status === 'trial' && company?.plan_reset_at
     ? Math.max(0, Math.ceil((new Date(company.plan_reset_at).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
     : null
@@ -355,38 +352,30 @@ export const PricingPage = () => {
         })}
       </div>
 
-      <div className="rounded-3xl p-5" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-        <div className="mb-4 flex flex-col gap-1 text-right">
-          <p className="text-sm font-bold text-slate-900 font-cairo">إضافات مدفوعة للمرحلة الثانية</p>
-          <p className="text-xs text-slate-500 font-tajawal">تظهر للعميل فقط إذا فعّلها صاحب النظام من لوحة الإدارة لكل مغسلة.</p>
-        </div>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          {ADD_ONS.map(addon => (
-            <div key={addon.title} className="rounded-2xl p-4" style={{ background: '#FFFFFF', border: `1px solid ${addon.color}33` }}>
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: `${addon.color}18`, border: `1px solid ${addon.color}33` }}>
-                  <addon.icon size={18} style={{ color: addon.color }} />
+      {visibleAddons.length > 0 && (
+        <div className="rounded-3xl p-5" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+          <div className="mb-4 flex flex-col gap-1 text-right">
+            <p className="text-sm font-bold text-slate-900 font-cairo">إضافات مفعلة لحسابك</p>
+            <p className="text-xs text-slate-500 font-tajawal">هذه تظهر فقط للحسابات التي فعّل لها صاحب النظام إضافات مدفوعة من لوحة الإدارة.</p>
+          </div>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            {visibleAddons.map(addon => (
+              <div key={addon.title} className="rounded-2xl p-4" style={{ background: '#FFFFFF', border: `1px solid ${addon.color}33` }}>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: `${addon.color}18`, border: `1px solid ${addon.color}33` }}>
+                    <addon.icon size={18} style={{ color: addon.color }} />
+                  </div>
+                  <span className="rounded-full px-2.5 py-1 text-[11px] font-bold font-tajawal" style={{ color: addon.color, background: `${addon.color}12` }}>
+                    مفعلة
+                  </span>
                 </div>
-                <span className="rounded-full px-2.5 py-1 text-[11px] font-bold font-tajawal" style={{ color: addon.color, background: `${addon.color}12` }}>
-                  {addon.price}
-                </span>
+                <p className="text-sm font-bold text-slate-900 font-cairo">{addon.title}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500 font-tajawal">{addon.desc}</p>
               </div>
-              <p className="text-sm font-bold text-slate-900 font-cairo">{addon.title}</p>
-              <p className="mt-1 text-xs leading-5 text-slate-500 font-tajawal">{addon.desc}</p>
-              <a
-                href={buildAddonWhatsAppUrl(companyName, addon.title)}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-bold font-cairo transition-transform hover:-translate-y-0.5"
-                style={{ background: `${addon.color}12`, color: addon.color, border: `1px solid ${addon.color}25` }}
-              >
-                <MessageCircle size={14} />
-                طلب التفعيل
-              </a>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Bottom trust section */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
