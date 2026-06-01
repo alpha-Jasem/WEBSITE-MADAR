@@ -1,11 +1,9 @@
 ﻿import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { AlertTriangle, Car, Star, ClipboardCheck, Receipt, MessageSquare, Users2, Clock, ChevronDown, ChevronUp, Check, Loader2, QrCode, ShieldCheck, Copy, ExternalLink, Send } from 'lucide-react'
+import { Car, Star, ClipboardCheck, Receipt, MessageSquare, Users2, Clock, ChevronDown, ChevronUp, Check, Loader2, QrCode, ShieldCheck, Send } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
 import { FeatureLock } from '../../dash/FeatureLock'
-import { logAudit } from '../../../lib/auditLog'
 import { ClientInsightPanel, ClientPageHeader, ClientPanel } from './ClientUI'
 
 // ─── Static automation definitions ───────────────────────────────────────────
@@ -56,29 +54,6 @@ const DEFS: AutomationDef[] = [
     icon: Users2, color: '#6366F1',
     description: 'يُرسل رسالة يومية للعملاء غير النشطين لاستعادتهم',
     whenLabel: 'يومياً الساعة 10ص',
-  },
-]
-
-const CAMPAIGN_TEMPLATES = [
-  {
-    title: 'رجّع العملاء الغائبين',
-    desc: 'للعملاء الذين لم يزوروا المغسلة من فترة.',
-    text: 'اشتقنا لخدمتك في مغسلتنا. حياك الله في أي وقت، وفريقنا جاهز للعناية بسيارتك.',
-  },
-  {
-    title: 'طلب تقييم Google',
-    desc: 'بعد زيارة ناجحة أو تسليم ممتاز.',
-    text: 'شكراً لزيارتك. إذا أعجبتك الخدمة يسعدنا تقييمك على Google، رأيك يساعدنا نطور خدمتنا.',
-  },
-  {
-    title: 'رسالة شكر بعد الزيارة',
-    desc: 'رسالة لطيفة تبني علاقة مع العميل.',
-    text: 'شكراً لاختيارك مغسلتنا اليوم. نتمنى أن تكون الخدمة نالت رضاك، ونسعد بخدمتك دائماً.',
-  },
-  {
-    title: 'تذكير الولاء',
-    desc: 'لتشجيع العميل يكمل زياراته القادمة.',
-    text: 'زياراتك محفوظة في برنامج الولاء. كل زيارة تقربك أكثر من مكافأتك القادمة.',
   },
 ]
 
@@ -142,21 +117,6 @@ export function CarWashAutomations() {
     load()
   }, [authLoading, companyId])
 
-  const saveSelfCheckin = async (nextSelfCheckin = selfCheckin) => {
-    if (!companyId) return
-    const full = { ...automations, self_checkin: nextSelfCheckin }
-    await supabase.from('companies').update({ cw_automations: full } as any).eq('id', companyId)
-    logAudit(companyId, 'self_checkin_updated', { newValue: nextSelfCheckin })
-  }
-
-  const updateSelfCheckin = (updater: (current: typeof selfCheckin) => typeof selfCheckin) => {
-    setSelfCheckin(current => {
-      const next = updater(current)
-      saveSelfCheckin(next)
-      return next
-    })
-  }
-
   if (authLoading || loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, gap: 10 }}>
       <Loader2 size={18} className="animate-spin" color="#22D3EE" />
@@ -170,9 +130,6 @@ export function CarWashAutomations() {
   const getStats = (key: string) => {
     if (key === 'delivery_receipt') return { label: 'تسليم هذا الشهر', value: stats.deliveries }
     return null
-  }
-  const copyTemplate = async (text: string) => {
-    await navigator.clipboard?.writeText(text)
   }
   const enabledCount = DEFS.filter(def => automations[def.key]?.enabled !== false).length
   const disabledCount = DEFS.length - enabledCount
@@ -194,7 +151,7 @@ export function CarWashAutomations() {
       <ClientPageHeader
         eyebrow="مركز واتساب"
         title="واتساب والرسائل"
-        description="شغّل رسائل العملاء الأساسية، راقب استخدام الباقة، واستخدم قوالب حملات جاهزة بدون أي إعدادات تقنية."
+        description="راجع رسائل العملاء الأساسية، حالة واتساب، ورابط التسجيل الذاتي بدون إعدادات تقنية مربكة."
       />
 
       <ClientInsightPanel
@@ -283,51 +240,6 @@ export function CarWashAutomations() {
         </FeatureLock>
       </div>
 
-      {/* Campaign templates */}
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981' }} />
-            <span style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Cairo, sans-serif', fontWeight: 700, letterSpacing: 1 }}>
-              حملات يدوية آمنة
-            </span>
-            <span style={{ fontSize: 11, color: '#334155', fontFamily: 'Tajawal, sans-serif' }}>— صاحب المغسلة يراجع ويرسل بنفسه</span>
-          </div>
-          <Link to="/client/leads" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 12px', borderRadius: 10, background: '#0F172A', color: '#FFFFFF', textDecoration: 'none', fontFamily: 'Cairo, sans-serif', fontSize: 12, fontWeight: 700 }}>
-            <Send size={13} />
-            فتح العملاء وإرسال حملة
-            <ExternalLink size={12} />
-          </Link>
-        </div>
-
-        <ClientPanel>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 10 }}>
-            {CAMPAIGN_TEMPLATES.map(template => (
-              <div key={template.title} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 14, padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div>
-                  <p style={{ margin: 0, fontSize: 13, color: '#0F172A', fontFamily: 'Cairo, sans-serif', fontWeight: 800 }}>{template.title}</p>
-                  <p style={{ margin: '3px 0 0', fontSize: 11, color: '#64748B', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.6 }}>{template.desc}</p>
-                </div>
-                <p style={{ margin: 0, fontSize: 12, color: '#334155', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.75, background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: 10 }}>
-                  {template.text}
-                </p>
-                <button onClick={() => copyTemplate(template.text)} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '8px 10px', borderRadius: 10, border: '1px solid #CBD5E1', background: '#FFFFFF', color: '#0F172A', cursor: 'pointer', fontFamily: 'Cairo, sans-serif', fontSize: 12, fontWeight: 700 }}>
-                  <Copy size={13} />
-                  نسخ القالب
-                </button>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginTop: 14, padding: 12, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.22)', borderRadius: 12 }}>
-            <AlertTriangle size={16} color="#D97706" style={{ marginTop: 2, flexShrink: 0 }} />
-            <p style={{ margin: 0, fontSize: 12, color: '#92400E', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.8 }}>
-              لا يوجد عرض أو خصم يُرسل تلقائياً من مدار. أي خصم أو التزام مالي يكتبه صاحب المغسلة ويراجعه قبل الضغط على إرسال.
-            </p>
-          </div>
-        </ClientPanel>
-      </div>
-
       {/* Self Check-in Settings */}
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
@@ -337,68 +249,27 @@ export function CarWashAutomations() {
           </span>
         </div>
         <ClientPanel>
-
-          {/* Enable toggle */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 34, height: 34, borderRadius: 10, background: selfCheckin.enabled ? 'rgba(14,165,233,0.12)' : '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 14 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: selfCheckin.enabled ? 'rgba(14,165,233,0.12)' : '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <QrCode size={16} color={selfCheckin.enabled ? '#0EA5E9' : '#94A3B8'} />
               </div>
               <div>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>تفعيل التسجيل الذاتي</p>
-                <p style={{ margin: '2px 0 0', fontSize: 11, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>العميل يسجل سيارته بنفسه عبر QR Code</p>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>{selfCheckin.enabled ? 'التسجيل الذاتي مفعّل' : 'التسجيل الذاتي غير مفعّل'}</p>
+                <p style={{ margin: '3px 0 0', fontSize: 11, color: '#64748B', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.6 }}>رابط QR يسمح للعميل بتسجيل سيارته من جواله.</p>
               </div>
             </div>
-            <button
-              onClick={() => updateSelfCheckin(s => ({ ...s, enabled: !s.enabled }))}
-              style={{ width: 48, height: 26, borderRadius: 99, border: 'none', cursor: 'pointer', background: selfCheckin.enabled ? '#0EA5E9' : '#E2E8F0', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}
-            >
-              <span style={{ position: 'absolute', top: 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'right 0.2s, left 0.2s', right: selfCheckin.enabled ? 3 : 'auto', left: selfCheckin.enabled ? 'auto' : 3 }} />
-            </button>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 14 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(245,158,11,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <ShieldCheck size={16} color="#F59E0B" />
+              </div>
+              <div>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>مراجعة الموظف قبل الإدخال</p>
+                <p style={{ margin: '3px 0 0', fontSize: 11, color: '#64748B', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.6 }}>السيارة تظهر للموظف أولاً حتى يعتمدها ويدخلها المسار الصحيح.</p>
+              </div>
+            </div>
           </div>
-
-          {selfCheckin.enabled && (
-            <>
-              {/* Approval required */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingTop: 12, borderTop: '1px solid #E2E8F0' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 34, height: 34, borderRadius: 10, background: selfCheckin.approval_required ? 'rgba(245,158,11,0.1)' : '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <ShieldCheck size={16} color={selfCheckin.approval_required ? '#F59E0B' : '#94A3B8'} />
-                  </div>
-                  <div>
-                    <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>اعتماد الموظف مطلوب</p>
-                    <p style={{ margin: '2px 0 0', fontSize: 11, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>
-                      {selfCheckin.approval_required ? 'السيارة تنتظر موافقة الموظف قبل دخول المسار' : 'السيارة تدخل المسار مباشرة بعد التسجيل'}
-                    </p>
-                  </div>
-                </div>
-                  <button
-                  onClick={() => updateSelfCheckin(s => ({ ...s, approval_required: !s.approval_required }))}
-                  style={{ width: 48, height: 26, borderRadius: 99, border: 'none', cursor: 'pointer', background: selfCheckin.approval_required ? '#F59E0B' : '#E2E8F0', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}
-                >
-                  <span style={{ position: 'absolute', top: 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'right 0.2s, left 0.2s', right: selfCheckin.approval_required ? 3 : 'auto', left: selfCheckin.approval_required ? 'auto' : 3 }} />
-                </button>
-              </div>
-
-              {/* Anti-spam minutes */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingTop: 12, borderTop: '1px solid #E2E8F0' }}>
-                <div>
-                  <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>فترة الحماية من التكرار</p>
-                  <p style={{ margin: '2px 0 0', fontSize: 11, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>لا يُسمح لنفس الرقم بالتسجيل مرتين خلال هذه الفترة</p>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                  <input
-                    type="number"
-                    min={1} max={60}
-                    value={selfCheckin.anti_spam_minutes}
-                    onChange={e => updateSelfCheckin(s => ({ ...s, anti_spam_minutes: Math.max(1, Math.min(60, Number(e.target.value))) }))}
-                    style={{ width: 56, textAlign: 'center', padding: '6px 8px', borderRadius: 8, border: '1px solid #E2E8F0', background: '#fff', color: '#0F172A', fontFamily: 'Sora, sans-serif', fontSize: 14, fontWeight: 700, outline: 'none' }}
-                  />
-                  <span style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>دقيقة</span>
-                </div>
-              </div>
-            </>
-          )}
         </ClientPanel>
       </div>
 
