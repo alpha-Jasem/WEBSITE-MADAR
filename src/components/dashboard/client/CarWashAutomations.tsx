@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState } from 'react'
-import { Car, Star, ClipboardCheck, Receipt, Zap, MessageSquare, Users2, Clock, ChevronDown, ChevronUp, Save, Check, Loader2, Play, Pause, QrCode, ShieldCheck } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { AlertTriangle, Car, Star, ClipboardCheck, Receipt, MessageSquare, Users2, Clock, ChevronDown, ChevronUp, Save, Check, Loader2, Play, Pause, QrCode, ShieldCheck, Copy, ExternalLink, Send } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
@@ -11,7 +12,7 @@ import { ClientButton, ClientInsightPanel, ClientPageHeader, ClientPanel } from 
 
 type AutomationKey =
   | 'car_ready' | 'delivery_receipt' | 'loyalty_milestone' | 'daily_closing'
-  | 'review_request' | 'daily_reactivation' | 'weekly_promo' | 'post_followup'
+  | 'review_request' | 'daily_reactivation' | 'post_followup'
 
 interface AutomationDef {
   key: AutomationKey
@@ -21,7 +22,6 @@ interface AutomationDef {
   section: 'webhook' | 'scheduled'
   icon: React.ElementType
   color: string
-  aiGenerated?: boolean
 }
 
 const DEFS: AutomationDef[] = [
@@ -64,13 +64,6 @@ const DEFS: AutomationDef[] = [
     whenLabel: 'يومياً الساعة 10ص',
   },
   {
-    key: 'weekly_promo', label: 'عرض أسبوعي AI', section: 'scheduled',
-    icon: Zap, color: '#EC4899',
-    description: 'يُولّد الذكاء الاصطناعي عرضاً جذاباً أسبوعياً ويرسله للعملاء',
-    whenLabel: 'كل خميس الساعة 9ص',
-    aiGenerated: true,
-  },
-  {
     key: 'post_followup', label: 'متابعة بعد الخدمة', section: 'scheduled',
     icon: MessageSquare, color: '#14B8A6',
     description: 'يُرسل رسالة متابعة للعملاء بعد انتهاء الخدمة',
@@ -78,6 +71,28 @@ const DEFS: AutomationDef[] = [
   },
 ]
 
+const CAMPAIGN_TEMPLATES = [
+  {
+    title: 'رجّع العملاء الغائبين',
+    desc: 'للعملاء الذين لم يزوروا المغسلة من فترة.',
+    text: 'اشتقنا لخدمتك في مغسلتنا. حياك الله في أي وقت، وفريقنا جاهز للعناية بسيارتك.',
+  },
+  {
+    title: 'طلب تقييم Google',
+    desc: 'بعد زيارة ناجحة أو تسليم ممتاز.',
+    text: 'شكراً لزيارتك. إذا أعجبتك الخدمة يسعدنا تقييمك على Google، رأيك يساعدنا نطور خدمتنا.',
+  },
+  {
+    title: 'رسالة شكر بعد الزيارة',
+    desc: 'رسالة لطيفة تبني علاقة مع العميل.',
+    text: 'شكراً لاختيارك مغسلتنا اليوم. نتمنى أن تكون الخدمة نالت رضاك، ونسعد بخدمتك دائماً.',
+  },
+  {
+    title: 'تذكير الولاء',
+    desc: 'لتشجيع العميل يكمل زياراته القادمة.',
+    text: 'زياراتك محفوظة في برنامج الولاء. كل زيارة تقربك أكثر من مكافأتك القادمة.',
+  },
+]
 
 const SECTION_STYLE = {
   background: '#F8FAFC',
@@ -171,25 +186,32 @@ export function CarWashAutomations() {
     if (key === 'review_request') return { label: 'تقييم طُلب', value: stats.reviews }
     return null
   }
+  const copyTemplate = async (text: string) => {
+    await navigator.clipboard?.writeText(text)
+  }
   const enabledCount = DEFS.filter(def => automations[def.key]?.enabled !== false).length
   const disabledCount = DEFS.length - enabledCount
+  const messagesUsed = company?.messages_used || 0
+  const messageLimit = company?.message_limit || 2000
+  const remainingMessages = Math.max(0, messageLimit - messagesUsed)
+  const usagePercent = messageLimit > 0 ? Math.min(100, Math.round((messagesUsed / messageLimit) * 100)) : 0
   const automationInsights = [
-    { title: 'نسبة التشغيل', description: `${enabledCount} من ${DEFS.length} أتمتة مفعلة. كلما زادت الأتمتة قل ضغط الموظف.`, tone: disabledCount > 2 ? 'amber' as const : 'green' as const },
+    { title: 'رسائل واتساب الأساسية', description: `${enabledCount} من ${DEFS.length} رسائل تلقائية مفعلة. هذه الرسائل تقلل متابعة الموظف اليدوية.`, tone: disabledCount > 2 ? 'amber' as const : 'green' as const },
     stats.deliveries > 0
       ? { title: 'إيصالات التسليم تعمل مع التشغيل', description: `${stats.deliveries} عملية تسليم هذا الشهر، تأكد أن إيصال التسليم مفعل دائماً.`, tone: 'blue' as const }
       : { title: 'اختبر أول تسليم', description: 'بعد أول تسليم ستظهر بيانات الإيصالات والتقييمات هنا.', tone: 'slate' as const },
     stats.reviews > 0
       ? { title: 'التقييمات بدأت تتحرك', description: `${stats.reviews} طلب تقييم مرسل. راقب Google Maps وارفع التقييم العام.`, tone: 'green' as const }
-      : { title: 'فعّل طلب التقييم', description: 'طلب التقييم بعد الخدمة من أقوى أدوات رفع مبيعات المغسلة محلياً.', tone: 'amber' as const },
+      : { title: 'فعّل طلب التقييم', description: 'طلب التقييم بعد الخدمة من أقوى أدوات رفع ثقة العملاء محلياً.', tone: 'amber' as const },
   ]
 
   return (
     <div dir="rtl" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
       <ClientPageHeader
-        eyebrow="محرك الواتساب"
-        title="الأتمتة"
-        description="تحكم في تشغيل وإيقاف رسائل العملاء التلقائية بدون تعقيد."
+        eyebrow="مركز واتساب"
+        title="واتساب والرسائل"
+        description="شغّل رسائل العملاء الأساسية، راقب استخدام الباقة، واستخدم قوالب حملات جاهزة بدون أي إعدادات تقنية."
         actions={(
           <ClientButton onClick={saveAll} disabled={saving} tone={saved ? 'success' : 'primary'}>
             {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <Check size={14} /> : <Save size={14} />}
@@ -199,19 +221,43 @@ export function CarWashAutomations() {
       />
 
       <ClientInsightPanel
-        title="حالة محرك الرسائل"
-        description="خلاصة عملية تساعد المالك يعرف هل الأتمتة تبيع وتوفر وقت فعلاً."
+        title="حالة رسائل العملاء"
+        description="خلاصة عملية لصاحب المغسلة: ما الذي يعمل، وما الذي يحتاج انتباه سريع."
         items={automationInsights}
       />
 
-      {/* Webhook section */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+        <StatusTile
+          icon={MessageSquare}
+          title="حالة واتساب"
+          value="جاهز للإرسال"
+          hint="الإرسال يعتمد على إعدادات واتساب في النظام."
+          color="#10B981"
+        />
+        <StatusTile
+          icon={Send}
+          title="المتبقي من الباقة"
+          value={`${remainingMessages.toLocaleString('ar-SA')} رسالة`}
+          hint={`${messagesUsed.toLocaleString('ar-SA')} مستخدمة من ${messageLimit.toLocaleString('ar-SA')} (${usagePercent}%)`}
+          color={usagePercent > 85 ? '#F59E0B' : '#0EA5E9'}
+        />
+        <StatusTile
+          icon={ShieldCheck}
+          title="مسؤولية الحملات"
+          value="إرسال يدوي فقط"
+          hint="أي عرض أو خصم يكتبه صاحب المغسلة بنفسه قبل الإرسال."
+          color="#6366F1"
+        />
+      </div>
+
+      {/* Automatic messages */}
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
           <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22D3EE' }} />
           <span style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Cairo, sans-serif', fontWeight: 700, letterSpacing: 1 }}>
-            مرتبطة بلوحة التشغيل
+            رسائل مرتبطة بالتشغيل
           </span>
-          <span style={{ fontSize: 11, color: '#334155', fontFamily: 'Tajawal, sans-serif' }}>— تُرسل عند أحداث معينة</span>
+          <span style={{ fontSize: 11, color: '#334155', fontFamily: 'Tajawal, sans-serif' }}>— تُرسل عند حركة السيارة داخل لوحة التشغيل</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {webhookDefs.map(def => (
@@ -226,14 +272,14 @@ export function CarWashAutomations() {
         </div>
       </div>
 
-      {/* Scheduled section */}
+      {/* Scheduled customer care */}
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
           <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#8B5CF6' }} />
           <span style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Cairo, sans-serif', fontWeight: 700, letterSpacing: 1 }}>
-            مجدولة تلقائياً
+            رسائل عناية تلقائية
           </span>
-          <span style={{ fontSize: 11, color: '#334155', fontFamily: 'Tajawal, sans-serif' }}>— تعمل بدون أي تدخل</span>
+          <span style={{ fontSize: 11, color: '#334155', fontFamily: 'Tajawal, sans-serif' }}>— تقييم، متابعة، وتنشيط عملاء بدون متابعة يومية</span>
           {!can.scheduledAutomations && (
             <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 99, background: 'rgba(99,102,241,0.15)', color: '#818CF8', fontFamily: 'Sora, sans-serif', fontWeight: 700, marginRight: 4 }}>
               Pro
@@ -243,7 +289,7 @@ export function CarWashAutomations() {
         <FeatureLock
           locked={!can.scheduledAutomations}
           requiredPlan="pro"
-          featureName="الأتمتة المجدولة"
+          featureName="رسائل العناية التلقائية"
           benefit="فعّل رسائل إعادة التنشيط، طلب التقييم، والمتابعة التلقائية — ووفّر ساعات من العمل اليدوي"
           companyName={company?.name}
           currentPlan={planLabel}
@@ -260,6 +306,51 @@ export function CarWashAutomations() {
             ))}
           </div>
         </FeatureLock>
+      </div>
+
+      {/* Campaign templates */}
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981' }} />
+            <span style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Cairo, sans-serif', fontWeight: 700, letterSpacing: 1 }}>
+              حملات يدوية آمنة
+            </span>
+            <span style={{ fontSize: 11, color: '#334155', fontFamily: 'Tajawal, sans-serif' }}>— صاحب المغسلة يراجع ويرسل بنفسه</span>
+          </div>
+          <Link to="/client/leads" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 12px', borderRadius: 10, background: '#0F172A', color: '#FFFFFF', textDecoration: 'none', fontFamily: 'Cairo, sans-serif', fontSize: 12, fontWeight: 700 }}>
+            <Send size={13} />
+            فتح العملاء وإرسال حملة
+            <ExternalLink size={12} />
+          </Link>
+        </div>
+
+        <ClientPanel>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 10 }}>
+            {CAMPAIGN_TEMPLATES.map(template => (
+              <div key={template.title} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 14, padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div>
+                  <p style={{ margin: 0, fontSize: 13, color: '#0F172A', fontFamily: 'Cairo, sans-serif', fontWeight: 800 }}>{template.title}</p>
+                  <p style={{ margin: '3px 0 0', fontSize: 11, color: '#64748B', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.6 }}>{template.desc}</p>
+                </div>
+                <p style={{ margin: 0, fontSize: 12, color: '#334155', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.75, background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: 10 }}>
+                  {template.text}
+                </p>
+                <button onClick={() => copyTemplate(template.text)} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '8px 10px', borderRadius: 10, border: '1px solid #CBD5E1', background: '#FFFFFF', color: '#0F172A', cursor: 'pointer', fontFamily: 'Cairo, sans-serif', fontSize: 12, fontWeight: 700 }}>
+                  <Copy size={13} />
+                  نسخ القالب
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginTop: 14, padding: 12, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.22)', borderRadius: 12 }}>
+            <AlertTriangle size={16} color="#D97706" style={{ marginTop: 2, flexShrink: 0 }} />
+            <p style={{ margin: 0, fontSize: 12, color: '#92400E', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.8 }}>
+              لا يوجد عرض أو خصم يُرسل تلقائياً من مدار. أي خصم أو التزام مالي يكتبه صاحب المغسلة ويراجعه قبل الضغط على إرسال.
+            </p>
+          </div>
+        </ClientPanel>
       </div>
 
       {/* Self Check-in Settings */}
@@ -340,6 +431,35 @@ export function CarWashAutomations() {
   )
 }
 
+function StatusTile({
+  icon: Icon,
+  title,
+  value,
+  hint,
+  color,
+}: {
+  icon: React.ElementType
+  title: string
+  value: string
+  hint: string
+  color: string
+}) {
+  return (
+    <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 18, padding: 16, boxShadow: '0 14px 34px rgba(15,23,42,0.06)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ width: 38, height: 38, borderRadius: 12, background: `${color}14`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Icon size={17} color={color} />
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <p style={{ margin: 0, fontSize: 11, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>{title}</p>
+          <p style={{ margin: '2px 0 0', fontSize: 16, color: '#0F172A', fontFamily: 'Cairo, sans-serif', fontWeight: 800 }}>{value}</p>
+        </div>
+      </div>
+      <p style={{ margin: '10px 0 0', fontSize: 11, color: '#475569', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.7 }}>{hint}</p>
+    </div>
+  )
+}
+
 // ─── Automation Card ──────────────────────────────────────────────────────────
 
 interface CardProps {
@@ -352,7 +472,7 @@ interface CardProps {
 }
 
 function AutomationCard({ def, enabled, onToggle, expanded, onExpand, stat }: CardProps) {
-  const hasSettings = !!def.aiGenerated
+  const hasSettings = false
 
   return (
     <div style={{ ...SECTION_STYLE, opacity: enabled ? 1 : 0.55, transition: 'opacity 0.2s' }}>
@@ -403,16 +523,6 @@ function AutomationCard({ def, enabled, onToggle, expanded, onExpand, stat }: Ca
         </p>
       )}
 
-      {/* Expanded — AI-generated note only */}
-      {expanded && def.aiGenerated && (
-        <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #E2E8F0' }}>
-          <div style={{ padding: '12px 14px', background: 'rgba(236,72,153,0.06)', borderRadius: 12, border: '1px solid rgba(236,72,153,0.2)' }}>
-            <p style={{ fontSize: 12, color: '#F472B6', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>
-              ✨ هذه الرسالة يُولّدها الذكاء الاصطناعي تلقائياً كل أسبوع — لا تحتاج تعديلاً يدوياً
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
