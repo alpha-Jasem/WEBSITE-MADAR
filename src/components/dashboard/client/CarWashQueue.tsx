@@ -72,6 +72,7 @@ const EMPTY_FORM = {
   car_type: '',
   plate: '',
   service_id: '',
+  service_ids: [] as string[],
   service_name: '',
   price: '',
   worker_id: '',
@@ -208,6 +209,7 @@ export const CarWashQueue = () => {
       car_type: item.car_type || '',
       plate: item.plate || '',
       service_id: item.service_id || '',
+      service_ids: item.service_id ? [item.service_id] : [],
       service_name: item.service_name || '',
       price: item.price > 0 ? String(item.price) : '',
       worker_id: item.worker_id || '',
@@ -221,18 +223,23 @@ export const CarWashQueue = () => {
 
   const saveForm = async () => {
     const customerName = sanitizeNameText(form.customer_name).trim()
-    const serviceName = sanitizeNameText(form.service_name).trim()
+    const selectedServices = services.filter(service => form.service_ids.includes(service.id))
+    const serviceName = selectedServices.length > 0
+      ? selectedServices.map(service => service.name).join(' + ')
+      : sanitizeNameText(form.service_name).trim()
     const carType = sanitizeNameText(form.car_type).trim()
     if (!companyId || !customerName) return
     setSaving(true)
-    const price = Number(form.price) || 0
+    const price = selectedServices.length > 0
+      ? selectedServices.reduce((sum, service) => sum + Number(service.price || 0), 0)
+      : Number(form.price) || 0
 
     const payload = {
       customer_name: customerName,
       phone: form.phone || null,
       car_type: carType || null,
       plate: form.plate || null,
-      service_id: form.service_id || null,
+      service_id: selectedServices[0]?.id || form.service_id || null,
       service_name: serviceName || null,
       price: form.is_free_wash ? 0 : price,
       original_price: form.is_free_wash ? price : null,
@@ -306,6 +313,24 @@ export const CarWashQueue = () => {
     setEditingItem(null)
     setLoyaltyInfo(null)
     setSaving(false)
+  }
+
+  const toggleFormService = (service: CWService) => {
+    setForm(current => {
+      const exists = current.service_ids.includes(service.id)
+      const serviceIds = exists
+        ? current.service_ids.filter(id => id !== service.id)
+        : [...current.service_ids, service.id]
+      const selected = services.filter(item => serviceIds.includes(item.id))
+      const total = selected.reduce((sum, item) => sum + Number(item.price || 0), 0)
+      return {
+        ...current,
+        service_ids: serviceIds,
+        service_id: selected[0]?.id || '',
+        service_name: selected.map(item => item.name).join(' + '),
+        price: current.is_free_wash ? '0' : (selected.length > 0 ? String(total) : ''),
+      }
+    })
   }
 
   const moveNext = async (item: CWQueueItem) => {
@@ -894,11 +919,12 @@ export const CarWashQueue = () => {
                       <p className="text-xs text-amber-400 font-tajawal flex-1">العميل مستحق غسلة مجانية ✨</p>
                       <button
                         onClick={() => {
-                          const svc = services.find(s => s.id === form.service_id)
+                          const selectedServices = services.filter(s => form.service_ids.includes(s.id))
+                          const selectedTotal = selectedServices.reduce((sum, svc) => sum + Number(svc.price || 0), 0)
                           setForm(f => ({
                             ...f,
                             is_free_wash: !f.is_free_wash,
-                            price: !f.is_free_wash ? '0' : (svc ? String(svc.price) : f.price),
+                            price: !f.is_free_wash ? '0' : (selectedTotal > 0 ? String(selectedTotal) : f.price),
                           }))
                         }}
                         className="text-xs font-tajawal px-2 py-0.5 rounded-lg transition-all"
@@ -940,27 +966,34 @@ export const CarWashQueue = () => {
 
                 {/* Service */}
                 <div>
-                  <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">الخدمة</label>
+                  <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">الخدمات</label>
                   {services.length > 0 ? (
-                    <select
-                      value={form.service_id}
-                      onChange={e => {
-                        const svc = services.find(s => s.id === e.target.value)
-                        setForm(f => ({
-                          ...f,
-                          service_id: e.target.value,
-                          service_name: svc?.name || '',
-                          price: f.is_free_wash ? '0' : (svc ? String(svc.price) : f.price),
-                        }))
-                      }}
-                      className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-slate-900 outline-none focus:border-sky-400"
-                      style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }}
-                    >
-                      <option value="">اختر الخدمة</option>
-                      {services.map(s => (
-                        <option key={s.id} value={s.id}>{s.name} — {s.price} ر.س</option>
-                      ))}
-                    </select>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {services.map(service => {
+                        const active = form.service_ids.includes(service.id)
+                        return (
+                          <button
+                            key={service.id}
+                            type="button"
+                            onClick={() => toggleFormService(service)}
+                            className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-right transition-all"
+                            style={{
+                              background: active ? 'rgba(0,191,255,0.12)' : '#F8FAFC',
+                              border: `1px solid ${active ? 'rgba(0,191,255,0.35)' : '#CBD5E1'}`,
+                              color: active ? '#0369A1' : '#0F172A',
+                            }}
+                          >
+                            <span className="min-w-0">
+                              <strong className="block truncate text-sm font-bold font-tajawal">{service.name}</strong>
+                              <small className="block text-xs font-sora">{Number(service.price || 0).toLocaleString()} ر.س</small>
+                            </span>
+                            <span className="grid h-6 w-6 flex-shrink-0 place-items-center rounded-lg" style={{ background: active ? '#00BFFF' : '#E2E8F0', color: active ? '#fff' : '#64748B' }}>
+                              {active ? <Check size={13} /> : <Plus size={13} />}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
                   ) : (
                     <input
                       value={form.service_name}

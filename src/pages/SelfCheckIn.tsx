@@ -57,6 +57,7 @@ const EMPTY_FORM = {
   phone: '',
   plate: '',
   service_id: '',
+  service_ids: [] as string[],
 }
 
 function normalizePhone(value: string) {
@@ -265,16 +266,32 @@ export function SelfCheckIn() {
     load()
   }, [token])
 
-  const selectedService = services.find(service => service.id === form.service_id) || null
+  const selectedServices = services.filter(service => form.service_ids.includes(service.id))
+  const selectedService = selectedServices[0] || null
+  const selectedServiceName = selectedServices.map(service => service.name).join(' + ')
   const selectedPlan = membershipPlans.find(plan => plan.id === selectedPlanId) || null
   const membershipFeatureEnabled = Boolean((company?.cw_automations as any)?.feature_flags?.memberships)
   const hasActiveMembership = Boolean(knownCustomer?.active_membership && Number(knownCustomer.active_membership.remaining_washes || 0) > 0)
   const walletBalance = Number(knownCustomer?.wallet_balance || 0)
   const vat = useMemo(() => {
-    const price = selectedService?.price || 0
+    const price = selectedServices.reduce((sum, service) => sum + Number(service.price || 0), 0)
     return calcVAT(price, !!company?.tax_enabled, company?.vat_rate || 15, company?.price_includes_vat !== false)
-  }, [company, selectedService])
-  const walletCoversSelectedService = selectedService ? walletBalance >= vat.total_amount : false
+  }, [company, selectedServices])
+  const walletCoversSelectedService = selectedServices.length > 0 ? walletBalance >= vat.total_amount : false
+
+  const toggleService = (service: CWService) => {
+    setForm(current => {
+      const exists = current.service_ids.includes(service.id)
+      const serviceIds = exists
+        ? current.service_ids.filter(id => id !== service.id)
+        : [...current.service_ids, service.id]
+      return {
+        ...current,
+        service_ids: serviceIds,
+        service_id: serviceIds[0] || '',
+      }
+    })
+  }
 
   // Resend cooldown timer
   useEffect(() => {
@@ -422,7 +439,7 @@ export function SelfCheckIn() {
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
-    if (!company || !selectedService || submitting) return
+    if (!company || selectedServices.length === 0 || submitting) return
 
     const phone = normalizePhone(form.phone)
     const firstName = sanitizeNameText(form.first_name).trim()
@@ -447,7 +464,8 @@ export function SelfCheckIn() {
       customer_name: customerName || knownCustomer?.name || `عميل ${phone.slice(-4)}`,
       phone,
       plate: form.plate.trim().toUpperCase() || null,
-      service_id: selectedService.id,
+      service_id: selectedService?.id,
+      service_ids: selectedServices.map(service => service.id),
       verification_token: verificationToken,
     })
 
@@ -514,9 +532,9 @@ export function SelfCheckIn() {
         customer_name: customerName || knownCustomer?.name || `عميل ${phone.slice(-4)}`,
         phone,
         plate: form.plate.trim().toUpperCase() || null,
-        service_id: selectedService.id,
-        service_name: selectedService.name,
-        price: selectedService.price,
+        service_id: selectedService?.id,
+        service_name: selectedServiceName,
+        price: selectedServices.reduce((sum, service) => sum + Number(service.price || 0), 0),
         subtotal: vat.subtotal,
         vat_amount: vat.vat_amount,
         total_amount: vat.total_amount,
@@ -553,7 +571,7 @@ export function SelfCheckIn() {
       company_name: company.name,
       company_id: company.id,
       ticket_code: ticket,
-      service: selectedService.name,
+      service: selectedServiceName,
       status_url: `${window.location.origin}/status/${token}/${inserted.id}`,
       self_checkin: true,
     })
@@ -780,13 +798,13 @@ export function SelfCheckIn() {
                 ) : (
                 <div className="self-checkin-services">
                   {services.map(service => {
-                    const active = form.service_id === service.id
+                    const active = form.service_ids.includes(service.id)
                     return (
                       <button
                         key={service.id}
                         type="button"
                         className={active ? 'active' : ''}
-                        onClick={() => setForm({ ...form, service_id: service.id })}
+                        onClick={() => toggleService(service)}
                       >
                         <span>{service.name}</span>
                         <strong>{Number(service.price || 0).toFixed(0)} ر.س</strong>
@@ -805,10 +823,11 @@ export function SelfCheckIn() {
                 </div>
               )}
 
-              {purchaseMode === 'single' && selectedService && (
+              {purchaseMode === 'single' && selectedServices.length > 0 && (
                 <div className="self-checkin-price">
                   <span>الإجمالي</span>
                   <strong>{vat.total_amount.toFixed(2)} ر.س</strong>
+                  <small>{selectedServiceName}</small>
                   {company.tax_enabled && <small>حسب إعدادات ضريبة VAT في المغسلة</small>}
                 </div>
               )}
@@ -820,7 +839,7 @@ export function SelfCheckIn() {
                   اختيار الباقة والمتابعة للدفع
                 </button>
               ) : (
-              <button type="submit" disabled={submitting || services.length === 0 || !selectedService}>
+              <button type="submit" disabled={submitting || services.length === 0 || selectedServices.length === 0}>
                 {submitting ? <Loader2 className="animate-spin" size={18} /> : null}
                 تسجيل السيارة وإصدار الرقم
               </button>

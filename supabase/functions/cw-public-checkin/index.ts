@@ -232,6 +232,9 @@ Deno.serve(async (req) => {
   const carType = String(payload.car_type || '').trim()
   const plate = String(payload.plate || '').trim()
   const serviceId = String(payload.service_id || '').trim()
+  const serviceIds = Array.isArray(payload.service_ids)
+    ? payload.service_ids.map((id: unknown) => String(id || '').trim()).filter(Boolean)
+    : serviceId ? [serviceId] : []
   const otp = String(payload.otp || '').replace(/\D/g, '').slice(0, 4)
   const verificationToken = String(payload.verification_token || '').trim()
 
@@ -406,7 +409,7 @@ Deno.serve(async (req) => {
     })
   }
 
-  if (!serviceId) {
+  if (serviceIds.length === 0) {
     return json({ error: 'missing_required_fields' }, 400)
   }
 
@@ -427,18 +430,26 @@ Deno.serve(async (req) => {
     return json({ error: 'duplicate_recent_checkin', anti_spam_minutes: antiSpamMinutes }, 409)
   }
 
-  const { data: service, error: serviceError } = await supabase
+  const uniqueServiceIds = [...new Set(serviceIds)]
+  const { data: selectedServices, error: serviceError } = await supabase
     .from('cw_services')
     .select('id, name, price')
     .eq('company_id', company.id)
-    .eq('id', serviceId)
+    .in('id', uniqueServiceIds)
     .eq('active', true)
-    .maybeSingle()
+    .order('created_at')
 
-  if (serviceError || !service) return json({ error: 'invalid_service' }, 400)
-  const selectedService = service as Service
+  if (serviceError || !selectedServices || selectedServices.length !== uniqueServiceIds.length) {
+    return json({ error: 'invalid_service' }, 400)
+  }
+  const orderedServices = uniqueServiceIds
+    .map(id => (selectedServices as Service[]).find(service => service.id === id))
+    .filter(Boolean) as Service[]
+  const selectedService = orderedServices[0]
+  const serviceName = orderedServices.map(service => service.name).join(' + ')
+  const servicePrice = orderedServices.reduce((sum, service) => sum + Number(service.price || 0), 0)
   const vat = calcVAT(
-    Number(selectedService.price || 0),
+    servicePrice,
     !!company.tax_enabled,
     Number(company.vat_rate || 15),
     company.price_includes_vat !== false,
@@ -478,8 +489,8 @@ Deno.serve(async (req) => {
       car_type: carType || null,
       plate: plate || null,
       service_id: selectedService.id,
-      service_name: selectedService.name,
-      price: selectedService.price,
+      service_name: serviceName,
+      price: servicePrice,
       subtotal: vat.subtotal,
       vat_amount: vat.vat_amount,
       total_amount: vat.total_amount,
