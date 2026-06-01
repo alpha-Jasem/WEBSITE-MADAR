@@ -128,6 +128,7 @@ export const PricingPage = () => {
   const currentPlan = company?.plan ?? 'starter'
   const currentLabel = PLAN_LABEL_MAP[currentPlan] ?? 'Starter'
   const companyName = company?.name ?? 'منشأتي'
+  const isTrial = company?.status === 'trial'
   const trialDaysLeft = company?.status === 'trial' && company?.plan_reset_at
     ? Math.max(0, Math.ceil((new Date(company.plan_reset_at).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
     : null
@@ -219,7 +220,7 @@ export const PricingPage = () => {
       {/* Header */}
       <div className="text-center">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-tajawal mb-4" style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', color: '#A5B4FC' }}>
-          <Sparkles size={12} /> باقتك الحالية: {currentLabel}
+          <Sparkles size={12} /> {isTrial ? `تجربتك الحالية: ${currentLabel}` : `باقتك الحالية: ${currentLabel}`}
         </div>
         <h1 className="text-3xl font-bold text-slate-900 font-cairo mb-3">باقات مدار للمغاسل</h1>
         <p className="text-slate-400 font-tajawal text-base max-w-lg mx-auto leading-relaxed">
@@ -239,6 +240,8 @@ export const PricingPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {PLANS.map((plan, idx) => {
           const isCurrent = plan.id === currentPlan
+          const isCurrentPaid = isCurrent && !isTrial
+          const canActivateTrialPlan = isCurrent && isTrial
           const isUpgrade = idx > currentIndex
           const isDowngrade = idx < currentIndex
           const isPro = plan.id === 'growth'
@@ -248,11 +251,11 @@ export const PricingPage = () => {
               key={plan.id}
               style={{
                 background: isPro ? `linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.05))` : '#F8FAFC',
-                border: `1px solid ${isCurrent ? plan.color : isPro ? plan.border : '#E2E8F0'}`,
+                border: `1px solid ${(isCurrentPaid || canActivateTrialPlan) ? plan.color : isPro ? plan.border : '#E2E8F0'}`,
                 borderRadius: 20,
                 padding: '28px 24px',
                 position: 'relative',
-                boxShadow: isPro ? `0 0 40px ${plan.glow}` : isCurrent ? `0 0 20px ${plan.glow}` : 'none',
+                boxShadow: isPro ? `0 0 40px ${plan.glow}` : (isCurrentPaid || canActivateTrialPlan) ? `0 0 20px ${plan.glow}` : 'none',
                 transform: isPro ? 'scale(1.03)' : 'scale(1)',
               }}
             >
@@ -271,7 +274,7 @@ export const PricingPage = () => {
                 </div>
               )}
 
-              {isCurrent && (
+              {(isCurrentPaid || canActivateTrialPlan) && (
                 <div style={{
                   position: 'absolute', top: -13, left: '50%', transform: 'translateX(-50%)',
                   background: plan.color, color: '#F4F6FB',
@@ -279,7 +282,7 @@ export const PricingPage = () => {
                   fontSize: 11, fontWeight: 700, fontFamily: 'Tajawal, sans-serif',
                   whiteSpace: 'nowrap',
                 }}>
-                  باقتك الحالية ✓
+                  {canActivateTrialPlan ? 'تجربة حالية' : 'باقتك الحالية ✓'}
                 </div>
               )}
 
@@ -318,11 +321,11 @@ export const PricingPage = () => {
               </div>
 
               {/* CTA */}
-              {isCurrent ? (
+              {isCurrentPaid ? (
                 <div style={{ width: '100%', padding: '11px 0', borderRadius: 12, background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569', fontSize: 13, fontFamily: 'Tajawal, sans-serif', textAlign: 'center', fontWeight: 600 }}>
                   باقتك الحالية ✓
                 </div>
-              ) : isUpgrade ? (
+              ) : (isUpgrade || canActivateTrialPlan) ? (
                 <button
                   onClick={() => handlePay(plan.id)}
                   disabled={payingPlan !== null}
@@ -339,7 +342,7 @@ export const PricingPage = () => {
                 >
                   {payingPlan === plan.id
                     ? <><Loader2 size={14} className="animate-spin" /> جاري التوجيه...</>
-                    : <><CreditCard size={14} /> ادفع الآن — {plan.price} ر.س/شهر</>
+                    : <><CreditCard size={14} /> {canActivateTrialPlan ? 'ثبّت الاشتراك الآن' : 'ادفع الآن'} — {plan.price} ر.س/شهر</>
                   }
                 </button>
               ) : (

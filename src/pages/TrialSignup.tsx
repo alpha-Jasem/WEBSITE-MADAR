@@ -126,7 +126,7 @@ export function TrialSignup() {
           <div className="relative max-w-md">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-sky-300/20 bg-sky-300/10 px-3 py-1.5 text-xs font-tajawal text-sky-100">
               <Sparkles size={14} />
-              تجربة مجانية 14 يوم
+              تجربة مجانية 3 أيام
             </div>
             <h1 className="font-cairo text-4xl font-bold leading-[1.25] text-white">
               ابدأ تجربة مغسلتك اليوم بدون إعدادات معقدة.

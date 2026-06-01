@@ -248,7 +248,7 @@ export const Login = () => {
                   <div className="mt-4 rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-center">
                     <p className="text-xs text-slate-500 font-tajawal">ليس لديك حساب بعد؟</p>
                     <Link to="/trial" className="mt-1 inline-flex items-center justify-center gap-2 text-sm font-bold text-[#0369A1] font-cairo hover:text-[#0D1B3E]">
-                      ابدأ تجربة مجانية 14 يوم
+                      ابدأ تجربة مجانية 3 أيام
                       <ArrowLeft size={14} />
                     </Link>
                   </div>

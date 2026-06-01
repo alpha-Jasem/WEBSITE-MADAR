@@ -7,7 +7,7 @@ const corsHeaders = {
 }
 
 const TWILIO_VERIFY_BASE_URL = 'https://verify.twilio.com/v2'
-const TRIAL_DAYS = 14
+const TRIAL_DAYS = 3
 
 function json(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
