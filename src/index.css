@@ -5603,10 +5603,23 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   display: grid;
   gap: 16px;
   color: #0D1B3E;
+  width: 100%;
+  min-width: 0;
+}
+
+.cw-command > *,
+.cw-hero,
+.cw-hero > *,
+.cw-hero-actions,
+.dash-shell-client .dash-content > * {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .cw-hero {
   min-height: 190px;
+  width: 100%;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
@@ -9395,17 +9408,26 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 
 @media (max-width: 640px) {
   .madar-ai-assistant {
-    left: 12px;
-    right: 12px;
+    left: 14px;
+    right: auto;
     bottom: 14px;
   }
 
   .madar-ai-fab {
-    width: 100%;
+    width: 52px;
+    height: 52px;
+    min-height: 52px;
+    padding: 0;
+    border-radius: 18px;
+    box-shadow: 0 14px 34px rgba(13,27,62,0.22);
+  }
+
+  .madar-ai-fab span {
+    display: none;
   }
 
   .madar-ai-window {
-    width: 100%;
+    width: calc(100vw - 28px);
     max-height: calc(100vh - 86px);
     border-radius: 20px;
   }
