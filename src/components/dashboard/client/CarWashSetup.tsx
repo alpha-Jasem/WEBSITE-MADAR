@@ -4,6 +4,7 @@ import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { logAudit } from '../../../lib/auditLog'
 import { getSelfCheckinUrl } from '../../../lib/selfCheckin'
+import { sanitizeDecimalInput, sanitizeNameText, toSafeNumber } from '../../../lib/formSanitizers'
 import type { CWService } from '../../../types'
 
 type WorkingHours = { open: string; close: string; closed: boolean }
@@ -101,8 +102,21 @@ export function CarWashSetup() {
     if (!companyId) return
     setSavingServices(true)
 
-    const toInsert = services.filter(s => !s.id || s.id === '')
-    const toUpdate = services.filter(s => s.id && s.id !== '')
+    const normalizedServices = services.map(service => ({
+      ...service,
+      name: sanitizeNameText(service.name).trim(),
+      price: toSafeNumber(service.price),
+      duration_minutes: Math.round(toSafeNumber(service.duration_minutes, 20, 1, 600)),
+    }))
+
+    if (normalizedServices.some(service => !service.name || service.price < 0 || service.duration_minutes < 1)) {
+      alert('تأكد أن اسم الخدمة نص صحيح، والسعر والمدة أرقام فقط.')
+      setSavingServices(false)
+      return
+    }
+
+    const toInsert = normalizedServices.filter(s => !s.id || s.id === '')
+    const toUpdate = normalizedServices.filter(s => s.id && s.id !== '')
 
     await Promise.all([
       ...toInsert.map(s => supabase.from('cw_services').insert({ company_id: companyId, name: s.name, price: s.price, duration_minutes: s.duration_minutes, active: s.active })),
@@ -228,12 +242,17 @@ export function CarWashSetup() {
               </div>
               {services.map((s, i) => (
                 <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 60px 32px', gap: 10, alignItems: 'center' }}>
-                  <input value={s.name} onChange={e => updateService(i, 'name', e.target.value)}
+                  <input value={s.name} onChange={e => updateService(i, 'name', sanitizeNameText(e.target.value))}
                     placeholder="اسم الخدمة"
+                    type="text"
                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '8px 12px', color: '#1E293B', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
-                  <input type="number" value={s.price} onChange={e => updateService(i, 'price', Number(e.target.value))}
+                  <input type="text" inputMode="decimal" pattern="[0-9]*[.]?[0-9]*" value={String(s.price ?? '')} onChange={e => updateService(i, 'price', toSafeNumber(sanitizeDecimalInput(e.target.value)))}
+                    placeholder="0"
+                    dir="ltr"
                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '8px 12px', color: '#1E293B', fontSize: 13, fontFamily: 'Sora, sans-serif', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
-                  <input type="number" value={s.duration_minutes} onChange={e => updateService(i, 'duration_minutes', Number(e.target.value))}
+                  <input type="text" inputMode="numeric" pattern="[0-9]*" value={String(s.duration_minutes ?? '')} onChange={e => updateService(i, 'duration_minutes', Math.round(toSafeNumber(sanitizeDecimalInput(e.target.value), 20, 1, 600)))}
+                    placeholder="20"
+                    dir="ltr"
                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '8px 12px', color: '#1E293B', fontSize: 13, fontFamily: 'Sora, sans-serif', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <button onClick={() => updateService(i, 'active', !s.active)}
@@ -313,8 +332,8 @@ export function CarWashSetup() {
                   عدد الغسلات المدفوعة للحصول على الغسلة المجانية
                 </label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <input type="number" min={2} max={20} value={loyaltyThreshold}
-                    onChange={e => setLoyaltyThreshold(Number(e.target.value))}
+                  <input type="text" inputMode="numeric" pattern="[0-9]*" min={2} max={20} value={loyaltyThreshold}
+                    onChange={e => setLoyaltyThreshold(Math.round(toSafeNumber(sanitizeDecimalInput(e.target.value), 5, 2, 20)))}
                     style={{ width: 80, background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: 10, padding: '8px 12px', color: '#0F172A', fontSize: 18, fontFamily: 'Sora, sans-serif', fontWeight: 700, outline: 'none', textAlign: 'center' }} />
                   <div style={{ fontSize: 13, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>
                     كل <strong style={{ color: '#F59E0B' }}>{loyaltyThreshold}</strong> غسلات مدفوعة = الغسلة <strong style={{ color: '#10B981' }}>التالية مجانية</strong>
@@ -352,10 +371,12 @@ export function CarWashSetup() {
             </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 min={0}
                 value={monthlyTarget}
-                onChange={e => setMonthlyTarget(Number(e.target.value))}
+                onChange={e => setMonthlyTarget(Math.round(toSafeNumber(sanitizeDecimalInput(e.target.value), 0, 0, 1000000)))}
                 placeholder="5000"
                 dir="ltr"
                 style={{ width: 140, background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: 10, padding: '10px 14px', color: '#0F172A', fontSize: 18, fontFamily: 'Sora, sans-serif', fontWeight: 700, outline: 'none', textAlign: 'center' }}
@@ -399,8 +420,8 @@ export function CarWashSetup() {
                 <div>
                   <label style={{ display: 'block', fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', marginBottom: 8 }}>نسبة الضريبة %</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <input type="number" value={vatRate} min={0} max={100}
-                      onChange={e => setVatRate(Number(e.target.value))}
+                    <input type="text" inputMode="decimal" pattern="[0-9]*[.]?[0-9]*" value={vatRate} min={0} max={100}
+                      onChange={e => setVatRate(toSafeNumber(sanitizeDecimalInput(e.target.value), 15, 0, 100))}
                       style={{ width: 80, background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: 10, padding: '8px 12px', color: '#0F172A', fontSize: 20, fontFamily: 'Sora, sans-serif', fontWeight: 700, outline: 'none', textAlign: 'center' }} />
                     <span style={{ fontSize: 18, color: '#6366F1', fontFamily: 'Sora, sans-serif', fontWeight: 700 }}>%</span>
                     <p style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>الضريبة المعتمدة في المملكة 15%</p>

@@ -7,6 +7,7 @@ import { calcVAT } from '../../../lib/vatUtils'
 import { logAudit } from '../../../lib/auditLog'
 import { getDailyTicketCode } from '../../../lib/carWashTickets'
 import { clearSelfCheckinPending, isSelfCheckinPending } from '../../../lib/selfCheckin'
+import { sanitizeNameText } from '../../../lib/formSanitizers'
 import type { CWQueueItem, CWWorker, CWService, QueueStatus, PaymentMethod } from '../../../types'
 import { CarWashReceipt } from './CarWashReceipt'
 import { ClientInsightPanel } from './ClientUI'
@@ -219,17 +220,20 @@ export const CarWashQueue = () => {
   }
 
   const saveForm = async () => {
-    if (!companyId || !form.customer_name.trim()) return
+    const customerName = sanitizeNameText(form.customer_name).trim()
+    const serviceName = sanitizeNameText(form.service_name).trim()
+    const carType = sanitizeNameText(form.car_type).trim()
+    if (!companyId || !customerName) return
     setSaving(true)
     const price = Number(form.price) || 0
 
     const payload = {
-      customer_name: form.customer_name.trim(),
+      customer_name: customerName,
       phone: form.phone || null,
-      car_type: form.car_type || null,
+      car_type: carType || null,
       plate: form.plate || null,
       service_id: form.service_id || null,
-      service_name: form.service_name || null,
+      service_name: serviceName || null,
       price: form.is_free_wash ? 0 : price,
       original_price: form.is_free_wash ? price : null,
       discount_amount: form.is_free_wash ? price : 0,
@@ -278,20 +282,20 @@ export const CarWashQueue = () => {
           await supabase.from('cw_customers').insert({
             company_id: companyId,
             phone: normalizedPhone,
-            name: form.customer_name || null,
+            name: customerName || null,
             total_visits: 0,
             welcome_sent: true,
           })
           fireWebhook(N8N_REGISTER_WEBHOOK, {
             phone: normalizedPhone,
-            customer_name: form.customer_name || '',
+            customer_name: customerName || '',
             company_name: company?.name || 'المغسلة',
             company_id: companyId,
             is_new_customer: true,
           })
-        } else if (form.customer_name && existingCustomer) {
+        } else if (customerName && existingCustomer) {
           // Update name if provided
-          await supabase.from('cw_customers').update({ name: form.customer_name }).eq('id', existingCustomer.id)
+          await supabase.from('cw_customers').update({ name: customerName }).eq('id', existingCustomer.id)
         }
         void localPhone
       }
@@ -844,8 +848,9 @@ export const CarWashQueue = () => {
                   <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">اسم العميل *</label>
                   <input
                     value={form.customer_name}
-                    onChange={e => setForm(f => ({ ...f, customer_name: e.target.value }))}
+                    onChange={e => setForm(f => ({ ...f, customer_name: sanitizeNameText(e.target.value) }))}
                     placeholder="اسم العميل"
+                    type="text"
                     className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-slate-900 placeholder-slate-400 outline-none focus:border-sky-400"
                     style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }}
                   />
@@ -914,8 +919,9 @@ export const CarWashQueue = () => {
                     <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">نوع السيارة</label>
                     <input
                       value={form.car_type}
-                      onChange={e => setForm(f => ({ ...f, car_type: e.target.value }))}
+                      onChange={e => setForm(f => ({ ...f, car_type: sanitizeNameText(e.target.value) }))}
                       placeholder="تويوتا، هيونداي..."
+                      type="text"
                       className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-slate-900 placeholder-slate-400 outline-none focus:border-sky-400"
                       style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }}
                     />
@@ -958,8 +964,9 @@ export const CarWashQueue = () => {
                   ) : (
                     <input
                       value={form.service_name}
-                      onChange={e => setForm(f => ({ ...f, service_name: e.target.value }))}
+                      onChange={e => setForm(f => ({ ...f, service_name: sanitizeNameText(e.target.value) }))}
                       placeholder="غسيل عادي، بريميوم..."
+                      type="text"
                       className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-slate-900 placeholder-slate-400 outline-none focus:border-sky-400"
                       style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }}
                     />

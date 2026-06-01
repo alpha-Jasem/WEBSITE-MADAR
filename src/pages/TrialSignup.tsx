@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Building2, CheckCircle2, Eye, EyeOff, Loader2, Lock, Mail, MapPin, Phone, ShieldCheck, Sparkles, User } from 'lucide-react'
 import { signInWithPassword } from '../lib/supabase'
+import { sanitizeDigits, sanitizeNameText } from '../lib/formSanitizers'
 
 type Step = 'details' | 'otp' | 'done'
 
@@ -47,7 +48,12 @@ export function TrialSignup() {
 
   const set = (key: keyof typeof form) => (event: React.ChangeEvent<HTMLInputElement>) => {
     setError('')
-    setForm(current => ({ ...current, [key]: event.target.value }))
+    const rawValue = event.target.value
+    const value =
+      key === 'phone' ? sanitizeDigits(rawValue, 12) :
+      key === 'company_name' || key === 'owner_name' || key === 'city' ? sanitizeNameText(rawValue) :
+      rawValue
+    setForm(current => ({ ...current, [key]: value }))
   }
 
   const callTrialSignup = async (body: Record<string, unknown>) => {

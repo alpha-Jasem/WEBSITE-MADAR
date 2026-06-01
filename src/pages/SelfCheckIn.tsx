@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { calcVAT } from '../lib/vatUtils'
 import { getDailyTicketCode } from '../lib/carWashTickets'
 import { canUseSelfCheckin, getSelfCheckinSettings, markSelfCheckinNotes } from '../lib/selfCheckin'
+import { sanitizeDigits, sanitizeNameText } from '../lib/formSanitizers'
 import type { Company, CWService, Plan } from '../types'
 
 const N8N_REGISTER_WEBHOOK = 'https://keepcalm.app.n8n.cloud/webhook/cw-registration'
@@ -423,8 +424,8 @@ export function SelfCheckIn() {
     if (!company || !selectedService || submitting) return
 
     const phone = normalizePhone(form.phone)
-    const firstName = form.first_name.trim()
-    const lastName = form.last_name.trim()
+    const firstName = sanitizeNameText(form.first_name).trim()
+    const lastName = sanitizeNameText(form.last_name).trim()
     const customerName = [firstName, lastName].filter(Boolean).join(' ').trim()
 
     if (!isValidSaudiMobile(form.phone)) {
@@ -444,7 +445,7 @@ export function SelfCheckIn() {
       token,
       customer_name: customerName || knownCustomer?.name || `عميل ${phone.slice(-4)}`,
       phone,
-      plate: form.plate.trim() || null,
+      plate: form.plate.trim().toUpperCase() || null,
       service_id: selectedService.id,
       verification_token: verificationToken,
     })
@@ -511,7 +512,7 @@ export function SelfCheckIn() {
         company_id: company.id,
         customer_name: customerName || knownCustomer?.name || `عميل ${phone.slice(-4)}`,
         phone,
-        plate: form.plate.trim() || null,
+        plate: form.plate.trim().toUpperCase() || null,
         service_id: selectedService.id,
         service_name: selectedService.name,
         price: selectedService.price,
@@ -622,9 +623,9 @@ export function SelfCheckIn() {
                 رقم الجوال السعودي
                 <input
                   value={form.phone}
-                  onChange={e => setForm({ ...form, phone: e.target.value })}
+                  onChange={e => setForm({ ...form, phone: sanitizeDigits(e.target.value, 12) })}
                   required
-                  inputMode="tel"
+                  inputMode="numeric"
                   placeholder="05XXXXXXXX"
                   dir="ltr"
                 />
@@ -716,18 +717,18 @@ export function SelfCheckIn() {
                 <div className="self-checkin-two">
                   <label>
                     الاسم الأول
-                    <input value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} required placeholder="مثال: أحمد" />
+                    <input value={form.first_name} onChange={e => setForm({ ...form, first_name: sanitizeNameText(e.target.value) })} required type="text" placeholder="مثال: أحمد" />
                   </label>
                   <label>
                     الاسم الأخير
-                    <input value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} required placeholder="مثال: الحربي" />
+                    <input value={form.last_name} onChange={e => setForm({ ...form, last_name: sanitizeNameText(e.target.value) })} required type="text" placeholder="مثال: الحربي" />
                   </label>
                 </div>
               )}
 
               <label>
                 لوحة السيارة <span className="self-checkin-optional">اختياري</span>
-                <input value={form.plate} onChange={e => setForm({ ...form, plate: e.target.value })} placeholder="إذا كانت سهلة عليك" />
+                <input value={form.plate} onChange={e => setForm({ ...form, plate: e.target.value.replace(/[^\p{L}\d\s-]/gu, '').toUpperCase().slice(0, 12) })} placeholder="إذا كانت سهلة عليك" />
               </label>
 
               {membershipFeatureEnabled && membershipPlans.length > 0 && (
