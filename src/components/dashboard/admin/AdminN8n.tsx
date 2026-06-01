@@ -58,9 +58,9 @@ const workflowGroups = [
     icon: Users,
     color: '#EC4899',
     workflows: [
-      { id: 'Sg5bPRkgSmLCGCJX', name: 'CW — Customer Entry & Welcome',   active: false, trigger: 'Trigger (Sheets)', runs: null, updatedAt: '2026-05-15' },
-      { id: 'diBQsaD8c2BS4Jnq', name: 'CW — Weekly AI Promo',            active: false, trigger: 'Schedule (Thu 9am)', runs: null, updatedAt: '2026-05-19' },
-      { id: 'S1DQdOUyxXx08aiC', name: 'CW — Daily Customer Reactivation', active: false, trigger: 'Schedule (10am)', runs: null, updatedAt: '2026-05-19' },
+      { id: 'Sg5bPRkgSmLCGCJX', name: 'CW — Customer Entry & Welcome',   active: false, trigger: 'Supabase-owned', runs: null, updatedAt: '2026-06-01', supersededBy: 'Supabase' },
+      { id: 'diBQsaD8c2BS4Jnq', name: 'CW — Weekly AI Promo',            active: false, trigger: 'Supabase-owned', runs: null, updatedAt: '2026-06-01', supersededBy: 'Supabase' },
+      { id: 'S1DQdOUyxXx08aiC', name: 'CW — Daily Customer Reactivation', active: false, trigger: 'Supabase-owned', runs: null, updatedAt: '2026-06-01', supersededBy: 'Supabase' },
     ],
   },
 ]
@@ -192,6 +192,12 @@ export const AdminN8n = () => {
                             style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.3)' }}>
                             {w.trigger}
                           </span>
+                          {(w as any).supersededBy && (
+                            <span className="text-[10px] font-tajawal"
+                              style={{ color: '#38BDF8' }}>
+                              منقول إلى {(w as any).supersededBy}
+                            </span>
+                          )}
                           {w.runs && (
                             <span className="text-[10px] font-tajawal" style={{ color: 'rgba(255,255,255,0.25)' }}>
                               {w.runs} تشغيلة
@@ -206,7 +212,7 @@ export const AdminN8n = () => {
                           ? { background: 'rgba(16,185,129,0.1)', color: '#10B981', border: '1px solid rgba(16,185,129,0.2)' }
                           : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.25)', border: '1px solid rgba(255,255,255,0.07)' }
                         }>
-                        {w.active ? 'نشط' : 'موقف'}
+                        {w.active ? 'نشط' : (w as any).supersededBy ? 'Supabase' : 'موقف'}
                       </span>
 
                       {/* ID chip */}
