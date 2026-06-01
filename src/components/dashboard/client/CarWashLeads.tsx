@@ -521,7 +521,7 @@ export function CarWashLeads() {
                   placeholder="اكتب رسالتك هنا... مثال: عروض نهاية الأسبوع 🚗✨"
                   style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', outline: 'none', fontFamily: 'Tajawal, sans-serif', resize: 'vertical', boxSizing: 'border-box' }} />
                 <p style={{ fontSize: 11, color: '#334155', fontFamily: 'Tajawal, sans-serif', marginTop: 4 }}>
-                  ستُرسل عبر محرك مدار داخل Supabase بدون n8n
+                  ستُرسل للعملاء المحددين عبر واتساب بعد الضغط على إرسال
                 </p>
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
