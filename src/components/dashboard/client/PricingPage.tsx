@@ -247,7 +247,8 @@ export const PricingPage = () => {
         {PLANS.map((plan, idx) => {
           const isCurrent = plan.id === currentPlan
           const isCurrentPaid = isCurrent && !isTrial
-          const canActivateTrialPlan = isCurrent && isTrial
+          const canActivateTrialPlan = isTrial
+          const isTrialCurrent = isCurrent && isTrial
           const isUpgrade = !isSubscribed && idx > currentIndex
           const isDowngrade = idx < currentIndex
           const isPro = plan.id === 'growth'
@@ -257,11 +258,11 @@ export const PricingPage = () => {
               key={plan.id}
               style={{
                 background: isPro ? `linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.05))` : '#F8FAFC',
-                border: `1px solid ${(isCurrentPaid || canActivateTrialPlan) ? plan.color : isPro ? plan.border : '#E2E8F0'}`,
+                border: `1px solid ${(isCurrentPaid || isTrialCurrent) ? plan.color : isPro ? plan.border : '#E2E8F0'}`,
                 borderRadius: 20,
                 padding: '28px 24px',
                 position: 'relative',
-                boxShadow: isPro ? `0 0 40px ${plan.glow}` : (isCurrentPaid || canActivateTrialPlan) ? `0 0 20px ${plan.glow}` : 'none',
+                boxShadow: isPro ? `0 0 40px ${plan.glow}` : (isCurrentPaid || isTrialCurrent) ? `0 0 20px ${plan.glow}` : 'none',
                 transform: isPro ? 'scale(1.03)' : 'scale(1)',
               }}
             >
@@ -280,7 +281,7 @@ export const PricingPage = () => {
                 </div>
               )}
 
-              {(isCurrentPaid || canActivateTrialPlan) && (
+              {(isCurrentPaid || isTrialCurrent) && (
                 <div style={{
                   position: 'absolute', top: -13, left: '50%', transform: 'translateX(-50%)',
                   background: plan.color, color: '#F4F6FB',
@@ -288,7 +289,7 @@ export const PricingPage = () => {
                   fontSize: 11, fontWeight: 700, fontFamily: 'Tajawal, sans-serif',
                   whiteSpace: 'nowrap',
                 }}>
-                  {canActivateTrialPlan ? 'تجربة حالية' : 'باقتك الحالية ✓'}
+                  {isTrialCurrent ? 'تجربة حالية' : 'باقتك الحالية ✓'}
                 </div>
               )}
 

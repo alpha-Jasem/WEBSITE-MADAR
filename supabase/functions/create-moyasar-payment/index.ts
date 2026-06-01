@@ -29,6 +29,7 @@ serve(async (req) => {
     }
 
     const planPrices: Record<string, number> = {
+      starter: 29900,
       growth: 79900,
       enterprise: 199900,
     }
@@ -72,7 +73,7 @@ serve(async (req) => {
       body: JSON.stringify({
         amount,
         currency: 'SAR',
-        description: `Madar OS - ${plan === 'growth' ? 'Pro' : 'Premium'}`,
+        description: `Madar OS - ${plan === 'starter' ? 'Starter' : plan === 'growth' ? 'Pro' : 'Premium'}`,
         callback_url: callbackUrl,
         metadata: { plan, company_id },
       }),
