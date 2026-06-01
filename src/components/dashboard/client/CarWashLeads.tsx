@@ -115,23 +115,43 @@ export function CarWashLeads() {
   const [crudSaving, setCrudSaving] = useState(false)
   const [crudDeleting, setCrudDeleting] = useState(false)
 
-  const load = async () => {
+  const sortCustomers = (rows: CWCustomer[]) => rows.sort((a, b) => {
+    const aTime = new Date(a.last_visit_at || a.created_at || 0).getTime()
+    const bTime = new Date(b.last_visit_at || b.created_at || 0).getTime()
+    return bTime - aTime
+  })
+
+  const upsertCustomerLive = (row: CWCustomer) => {
+    setCustomers(prev => sortCustomers([row, ...prev.filter(customer => customer.id !== row.id)]))
+  }
+
+  const load = async (silent = false) => {
     if (!companyId) return
-    setLoading(true)
+    if (!silent) setLoading(true)
     const { data } = await supabase
       .from('cw_customers')
       .select('*')
       .eq('company_id', companyId)
       .order('last_visit_at', { ascending: false })
     setCustomers((data as CWCustomer[]) || [])
-    setLoading(false)
+    if (!silent) setLoading(false)
   }
 
   useEffect(() => {
     if (authLoading || !companyId) return
     load()
     const ch = supabase.channel('cw_leads_rt')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'cw_customers' }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cw_customers', filter: `company_id=eq.${companyId}` }, (payload: any) => {
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+          upsertCustomerLive(payload.new as CWCustomer)
+          return
+        }
+        if (payload.eventType === 'DELETE') {
+          setCustomers(prev => prev.filter(customer => customer.id !== payload.old?.id))
+          return
+        }
+        load(true)
+      })
       .subscribe()
     return () => { supabase.removeChannel(ch) }
   }, [authLoading, companyId])
@@ -218,10 +238,16 @@ export function CarWashLeads() {
       alert('هذا الرقم مسجّل مسبقاً')
       return
     }
-    await supabase.from('cw_customers').insert({
+    const { data: inserted, error } = await supabase.from('cw_customers').insert({
       company_id: companyId, phone, name: crudForm.name.trim() || null,
       total_visits: 0, welcome_sent: true, last_visit_at: new Date().toISOString(),
-    })
+    }).select('*').single()
+    if (error) {
+      setCrudSaving(false)
+      alert('تعذر إضافة العميل. حاول مرة أخرى.')
+      return
+    }
+    if (inserted) upsertCustomerLive(inserted as CWCustomer)
     fireWebhook(N8N_REGISTER_WEBHOOK, {
       phone, customer_name: crudForm.name.trim() || '',
       company_name: company?.name ?? 'المغسلة', company_id: companyId,
@@ -235,7 +261,8 @@ export function CarWashLeads() {
     setCrudSaving(true)
     const raw = crudForm.phone.replace(/\D/g, '')
     const phone = raw.startsWith('966') ? raw : raw.startsWith('0') ? `966${raw.slice(1)}` : `966${raw}`
-    await supabase.from('cw_customers').update({ name: crudForm.name.trim() || null, phone }).eq('id', editTarget.id)
+    const { data } = await supabase.from('cw_customers').update({ name: crudForm.name.trim() || null, phone }).eq('id', editTarget.id).select('*').single()
+    if (data) upsertCustomerLive(data as CWCustomer)
     setCrudSaving(false)
     setEditTarget(null)
   }
@@ -244,6 +271,7 @@ export function CarWashLeads() {
     if (!deleteTarget) return
     setCrudDeleting(true)
     await supabase.from('cw_customers').delete().eq('id', deleteTarget.id)
+    setCustomers(prev => prev.filter(customer => customer.id !== deleteTarget.id))
     setCrudDeleting(false)
     setDeleteTarget(null)
   }
