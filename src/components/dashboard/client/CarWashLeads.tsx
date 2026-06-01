@@ -238,22 +238,45 @@ export function CarWashLeads() {
       alert('هذا الرقم مسجّل مسبقاً')
       return
     }
+    const now = new Date().toISOString()
+    const tempId = `temp-${Date.now()}`
+    const optimisticCustomer: CWCustomer = {
+      id: tempId,
+      company_id: companyId,
+      phone,
+      name: crudForm.name.trim() || null,
+      total_visits: 0,
+      loyalty_tier: 'bronze',
+      last_visit_at: now,
+      google_review_requested: false,
+      welcome_sent: true,
+      created_at: now,
+    } as CWCustomer
+
+    setSearch('')
+    setFilter('all')
+    upsertCustomerLive(optimisticCustomer)
+    setShowAddModal(false)
+
     const { data: inserted, error } = await supabase.from('cw_customers').insert({
       company_id: companyId, phone, name: crudForm.name.trim() || null,
-      total_visits: 0, welcome_sent: true, last_visit_at: new Date().toISOString(),
+      total_visits: 0, welcome_sent: true, last_visit_at: now,
     }).select('*').single()
     if (error) {
+      setCustomers(prev => prev.filter(customer => customer.id !== tempId))
       setCrudSaving(false)
       alert('تعذر إضافة العميل. حاول مرة أخرى.')
       return
     }
-    if (inserted) upsertCustomerLive(inserted as CWCustomer)
+    if (inserted) {
+      setCustomers(prev => sortCustomers([(inserted as CWCustomer), ...prev.filter(customer => customer.id !== tempId && customer.id !== inserted.id)]))
+    }
     fireWebhook(N8N_REGISTER_WEBHOOK, {
       phone, customer_name: crudForm.name.trim() || '',
       company_name: company?.name ?? 'المغسلة', company_id: companyId,
     })
+    load(true)
     setCrudSaving(false)
-    setShowAddModal(false)
   }
 
   const updateCustomer = async () => {
