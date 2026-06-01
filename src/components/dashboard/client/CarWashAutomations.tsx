@@ -12,7 +12,7 @@ import { ClientInsightPanel, ClientPageHeader, ClientPanel } from './ClientUI'
 
 type AutomationKey =
   | 'car_ready' | 'delivery_receipt' | 'loyalty_milestone' | 'daily_closing'
-  | 'review_request' | 'daily_reactivation' | 'post_followup'
+  | 'daily_reactivation'
 
 interface AutomationDef {
   key: AutomationKey
@@ -33,9 +33,9 @@ const DEFS: AutomationDef[] = [
     whenLabel: 'عند الضغط على "جاهزة"',
   },
   {
-    key: 'delivery_receipt', label: 'إيصال التسليم', section: 'webhook',
+    key: 'delivery_receipt', label: 'إيصال التسليم والمتابعة', section: 'webhook',
     icon: Receipt, color: '#10B981',
-    description: 'يُرسل فاتورة واتساب للعميل فور تسليم سيارته وتأكيد الدفع',
+    description: 'يُرسل الإيصال مع رسالة شكر، متابعة رضا العميل، ورابط تقييم Google إذا كان متوفراً',
     whenLabel: 'عند تأكيد التسليم والدفع',
   },
   {
@@ -52,22 +52,10 @@ const DEFS: AutomationDef[] = [
   },
   // ── Scheduled ─────────────────────────────────────────────────────────
   {
-    key: 'review_request', label: 'طلب تقييم Google', section: 'scheduled',
-    icon: Star, color: '#F59E0B',
-    description: 'يُرسل رابط التقييم تلقائياً بعد فترة من تسليم السيارة',
-    whenLabel: 'بعد التسليم بفترة قصيرة',
-  },
-  {
     key: 'daily_reactivation', label: 'تنشيط العملاء', section: 'scheduled',
     icon: Users2, color: '#6366F1',
     description: 'يُرسل رسالة يومية للعملاء غير النشطين لاستعادتهم',
     whenLabel: 'يومياً الساعة 10ص',
-  },
-  {
-    key: 'post_followup', label: 'متابعة بعد الخدمة', section: 'scheduled',
-    icon: MessageSquare, color: '#14B8A6',
-    description: 'يُرسل رسالة متابعة للعملاء بعد انتهاء الخدمة',
-    whenLabel: 'كل ساعة — زيارات منجزة',
   },
 ]
 
@@ -181,7 +169,6 @@ export function CarWashAutomations() {
 
   const getStats = (key: string) => {
     if (key === 'delivery_receipt') return { label: 'تسليم هذا الشهر', value: stats.deliveries }
-    if (key === 'review_request') return { label: 'تقييم طُلب', value: stats.reviews }
     return null
   }
   const copyTemplate = async (text: string) => {
@@ -198,9 +185,7 @@ export function CarWashAutomations() {
     stats.deliveries > 0
       ? { title: 'إيصالات التسليم تعمل مع التشغيل', description: `${stats.deliveries} عملية تسليم هذا الشهر، تأكد أن إيصال التسليم مفعل دائماً.`, tone: 'blue' as const }
       : { title: 'اختبر أول تسليم', description: 'بعد أول تسليم ستظهر بيانات الإيصالات والتقييمات هنا.', tone: 'slate' as const },
-    stats.reviews > 0
-      ? { title: 'التقييمات بدأت تتحرك', description: `${stats.reviews} طلب تقييم مرسل. راقب Google Maps وارفع التقييم العام.`, tone: 'green' as const }
-      : { title: 'فعّل طلب التقييم', description: 'طلب التقييم بعد الخدمة من أقوى أدوات رفع ثقة العملاء محلياً.', tone: 'amber' as const },
+    { title: 'التقييم والمتابعة مدموجة', description: 'رسالة التسليم تجمع الإيصال، الشكر، متابعة الرضا، ورابط التقييم بدون إزعاج العميل برسائل إضافية.', tone: 'blue' as const },
   ]
 
   return (
@@ -270,7 +255,7 @@ export function CarWashAutomations() {
           <span style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Cairo, sans-serif', fontWeight: 700, letterSpacing: 1 }}>
             رسائل عناية تلقائية
           </span>
-          <span style={{ fontSize: 11, color: '#334155', fontFamily: 'Tajawal, sans-serif' }}>— تقييم، متابعة، وتنشيط عملاء بدون متابعة يومية</span>
+          <span style={{ fontSize: 11, color: '#334155', fontFamily: 'Tajawal, sans-serif' }}>— تنشيط العملاء الغائبين فقط، وباقي المتابعة مدموجة مع التسليم</span>
           {!can.scheduledAutomations && (
             <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 99, background: 'rgba(99,102,241,0.15)', color: '#818CF8', fontFamily: 'Sora, sans-serif', fontWeight: 700, marginRight: 4 }}>
               Pro
