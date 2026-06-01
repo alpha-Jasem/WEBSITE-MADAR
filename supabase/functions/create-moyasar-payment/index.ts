@@ -1,4 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,10 +14,16 @@ serve(async (req) => {
 
     const MOYASAR_SECRET_KEY = Deno.env.get('MOYASAR_SECRET_KEY')
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
     if (!MOYASAR_SECRET_KEY) {
       console.error('MOYASAR_SECRET_KEY not set')
       return new Response(JSON.stringify({ error: 'Payment gateway not configured' }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      return new Response(JSON.stringify({ error: 'Server config missing' }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
@@ -30,6 +37,27 @@ serve(async (req) => {
     if (!amount) {
       return new Response(JSON.stringify({ error: 'Invalid plan' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
+    const { data: company, error: companyError } = await supabase
+      .from('companies')
+      .select('id, status, plan')
+      .eq('id', company_id)
+      .maybeSingle()
+
+    if (companyError || !company) {
+      return new Response(JSON.stringify({ error: 'Company not found' }), {
+        status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    if (company.status === 'active') {
+      return new Response(JSON.stringify({ error: 'already_subscribed', message: 'Subscription is already active' }), {
+        status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
 

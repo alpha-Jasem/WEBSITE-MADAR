@@ -124,6 +124,7 @@ export const PricingPage = () => {
   const currentLabel = PLAN_LABEL_MAP[currentPlan] ?? 'Starter'
   const companyName = company?.name ?? 'منشأتي'
   const isTrial = company?.status === 'trial'
+  const isSubscribed = company?.status === 'active'
   const featureFlags = ((company?.cw_automations as any)?.feature_flags || {}) as Record<string, boolean>
   const visibleAddons = ADD_ONS.filter(addon => Boolean(featureFlags[addon.key]))
   const trialDaysLeft = company?.status === 'trial' && company?.plan_reset_at
@@ -231,6 +232,14 @@ export const PricingPage = () => {
             </p>
           </div>
         )}
+        {isSubscribed && (
+          <div className="mx-auto mt-5 max-w-xl rounded-2xl border border-emerald-100 bg-emerald-50 px-5 py-4 text-right shadow-sm">
+            <p className="text-sm font-bold text-emerald-800 font-cairo">اشتراكك مفعل</p>
+            <p className="mt-1 text-xs leading-5 text-emerald-700 font-tajawal">
+              تم تفعيل الاشتراك على باقة {currentLabel}. تم إيقاف الدفع من هذه الصفحة حتى لا يتم خصم اشتراك ثاني بالغلط.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Plan cards */}
@@ -239,7 +248,7 @@ export const PricingPage = () => {
           const isCurrent = plan.id === currentPlan
           const isCurrentPaid = isCurrent && !isTrial
           const canActivateTrialPlan = isCurrent && isTrial
-          const isUpgrade = idx > currentIndex
+          const isUpgrade = !isSubscribed && idx > currentIndex
           const isDowngrade = idx < currentIndex
           const isPro = plan.id === 'growth'
 
@@ -318,7 +327,11 @@ export const PricingPage = () => {
               </div>
 
               {/* CTA */}
-              {isCurrentPaid ? (
+              {isSubscribed ? (
+                <div style={{ width: '100%', padding: '11px 0', borderRadius: 12, background: '#FFFFFF', border: '1px solid #BBF7D0', color: '#047857', fontSize: 13, fontFamily: 'Tajawal, sans-serif', textAlign: 'center', fontWeight: 700 }}>
+                  {isCurrent ? 'تم الاشتراك في هذه الباقة ✓' : 'الاشتراك مفعل بالفعل'}
+                </div>
+              ) : isCurrentPaid ? (
                 <div style={{ width: '100%', padding: '11px 0', borderRadius: 12, background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569', fontSize: 13, fontFamily: 'Tajawal, sans-serif', textAlign: 'center', fontWeight: 600 }}>
                   باقتك الحالية ✓
                 </div>
