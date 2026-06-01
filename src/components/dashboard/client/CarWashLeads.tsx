@@ -167,13 +167,25 @@ export function CarWashLeads() {
     if (!companyId || !campaignMsg.trim() || selected.size === 0) return
     setSending(true)
     const phones = customers.filter(c => selected.has(c.id)).map(c => c.phone)
-    const { data: campaign } = await supabase.from('cw_campaigns').insert({ company_id: companyId, message: campaignMsg.trim(), phones, status: 'sending' }).select('id').single()
-    // Fire webhook immediately instead of waiting for polling
-    fetch('https://keepcalm.app.n8n.cloud/webhook/cw-campaign-send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ campaign_id: campaign?.id, message: campaignMsg.trim(), phones, company_id: companyId }),
-    }).catch(() => {})
+    const { data: campaign, error: campaignError } = await supabase
+      .from('cw_campaigns')
+      .insert({ company_id: companyId, message: campaignMsg.trim(), phones, status: 'pending' })
+      .select('id')
+      .single()
+
+    if (campaignError || !campaign?.id) {
+      setSending(false)
+      alert('تعذر إنشاء الحملة. حاول مرة أخرى.')
+      return
+    }
+
+    const { data: result, error: sendError } = await supabase.rpc('cw_send_campaign', { p_campaign_id: campaign.id })
+    if (sendError || result?.ok === false) {
+      setSending(false)
+      alert('تعذر تشغيل الحملة من محرك مدار. تحقق من إعدادات واتساب.')
+      return
+    }
+
     setSending(false)
     setSent(true)
     setTimeout(() => { setSent(false); setShowCampaign(false); setSelected(new Set()); setCampaignMsg('') }, 2500)
@@ -488,7 +500,7 @@ export function CarWashLeads() {
                   placeholder="اكتب رسالتك هنا... مثال: عروض نهاية الأسبوع 🚗✨"
                   style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', outline: 'none', fontFamily: 'Tajawal, sans-serif', resize: 'vertical', boxSizing: 'border-box' }} />
                 <p style={{ fontSize: 11, color: '#334155', fontFamily: 'Tajawal, sans-serif', marginTop: 4 }}>
-                  ستُرسل فوراً عبر WhatsApp
+                  ستُرسل عبر محرك مدار داخل Supabase بدون n8n
                 </p>
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
@@ -666,7 +678,7 @@ export function CarWashLeads() {
           display: 'flex', alignItems: 'center', gap: 8,
         }}>
           <span style={{ color: '#EF4444', fontWeight: 700 }}>⚠️ {inactive} عميل</span>
-          لم يزوروا المغسلة منذ أكثر من 30 يوماً — يُنصح بإرسال حملة reactivation عبر n8n.
+          لم يزوروا المغسلة منذ أكثر من 30 يوماً — يُنصح بإرسال حملة إعادة تنشيط من محرك مدار.
         </div>
       )}
     </div>
