@@ -317,6 +317,41 @@ export function CarWashOverview() {
         </div>
       </section>
 
+      <section className="cw-day-command">
+        <article className="cw-sales-card">
+          <div className="cw-sales-head">
+            <span>مبيعات اليوم</span>
+            <i><Wallet size={22} /></i>
+          </div>
+          <strong>{money(stats.revenue)} ر.س</strong>
+          <div className="cw-sales-progress">
+            <span style={{ width: `${sales.progress}%` }} />
+          </div>
+          <div className="cw-sales-meta">
+            <p><small>هدف اليوم</small><b>{money(sales.target)} ر.س</b></p>
+            <p><small>متوسط الفاتورة</small><b>{money(sales.avgTicket)} ر.س</b></p>
+            <p><small>أفضل خدمة</small><b>{sales.bestService?.name || 'تظهر بعد أول تسليم'}</b></p>
+          </div>
+        </article>
+
+        <article className="cw-health-card" style={{ '--health': healthStatus.tone } as CSSProperties}>
+          <span>صحة اليوم</span>
+          <strong>{healthStatus.label}</strong>
+          <p>{healthStatus.reason}</p>
+          <div>
+            <b>{operationsScore}%</b>
+            <small>مؤشر التشغيل</small>
+          </div>
+        </article>
+
+        <article className="cw-action-card">
+          <h2>أفضل قرار الآن</h2>
+          {(nextActions.length ? nextActions : ['كل شيء مستقر الآن']).slice(0, 3).map(action => (
+            <span key={action}><Sparkles size={13} /> {action}</span>
+          ))}
+        </article>
+      </section>
+
       {showTrialGuide && company?.status === 'trial' && (
         <section className="rounded-[24px] border border-sky-100 bg-white p-5 shadow-[0_20px_70px_rgba(15,23,42,0.08)]">
           <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -357,41 +392,6 @@ export function CarWashOverview() {
           </div>
         </section>
       )}
-
-      <section className="cw-day-command">
-        <article className="cw-sales-card">
-          <div className="cw-sales-head">
-            <span>مبيعات اليوم</span>
-            <i><Wallet size={22} /></i>
-          </div>
-          <strong>{money(stats.revenue)} ر.س</strong>
-          <div className="cw-sales-progress">
-            <span style={{ width: `${sales.progress}%` }} />
-          </div>
-          <div className="cw-sales-meta">
-            <p><small>هدف اليوم</small><b>{money(sales.target)} ر.س</b></p>
-            <p><small>متوسط الفاتورة</small><b>{money(sales.avgTicket)} ر.س</b></p>
-            <p><small>أفضل خدمة</small><b>{sales.bestService?.name || 'تظهر بعد أول تسليم'}</b></p>
-          </div>
-        </article>
-
-        <article className="cw-health-card" style={{ '--health': healthStatus.tone } as CSSProperties}>
-          <span>صحة اليوم</span>
-          <strong>{healthStatus.label}</strong>
-          <p>{healthStatus.reason}</p>
-          <div>
-            <b>{operationsScore}%</b>
-            <small>مؤشر التشغيل</small>
-          </div>
-        </article>
-
-        <article className="cw-action-card">
-          <h2>أفضل قرار الآن</h2>
-          {(nextActions.length ? nextActions : ['كل شيء مستقر الآن']).slice(0, 3).map(action => (
-            <span key={action}><Sparkles size={13} /> {action}</span>
-          ))}
-        </article>
-      </section>
 
       <section className="cw-kpi-grid">
         <Kpi icon={Wallet} label="إيراد اليوم" value={`${money(stats.revenue)} ر.س`} hint={`${stats.delivered.length} سيارة مسلمة`} color="#1565C0" />
