@@ -179,13 +179,6 @@ export function CarWashLeads() {
       return
     }
 
-    const { data: result, error: sendError } = await supabase.rpc('cw_send_campaign', { p_campaign_id: campaign.id })
-    if (sendError || result?.ok === false) {
-      setSending(false)
-      alert('تعذر تشغيل الحملة من محرك مدار. تحقق من إعدادات واتساب.')
-      return
-    }
-
     setSending(false)
     setSent(true)
     setTimeout(() => { setSent(false); setShowCampaign(false); setSelected(new Set()); setCampaignMsg('') }, 2500)
