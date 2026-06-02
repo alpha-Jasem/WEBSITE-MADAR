@@ -1,4 +1,5 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Plus, X, Loader2, TrendingUp, TrendingDown, Wallet, Users, DollarSign, ClipboardCheck, FileDown, Pencil } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
@@ -26,6 +27,7 @@ const CATEGORIES: { value: ExpenseCategory; label: string }[] = [
 const EMPTY_FORM = { amount: '', category: 'other' as ExpenseCategory, description: '' }
 
 export const CarWashFinance = () => {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [tab, setTab] = useState<'finance' | 'closing'>('finance')
   const { companyId, company, loading: authLoading } = useClientCompany()
   const { can, planLabel } = usePlanGate()
@@ -46,6 +48,15 @@ export const CarWashFinance = () => {
   const [visitsData, setVisitsData] = useState<any[]>([])
 
   const today = new Date().toISOString().slice(0, 10)
+
+  useEffect(() => {
+    setTab(searchParams.get('tab') === 'closing' ? 'closing' : 'finance')
+  }, [searchParams])
+
+  const selectTab = (nextTab: 'finance' | 'closing') => {
+    setTab(nextTab)
+    setSearchParams(nextTab === 'closing' ? { tab: 'closing' } : {}, { replace: true })
+  }
 
   const getDateRange = (d: number) => {
     const start = new Date()
@@ -200,7 +211,7 @@ export const CarWashFinance = () => {
           { key: 'finance', label: 'المالية',     icon: Wallet },
           { key: 'closing', label: 'إغلاق اليوم', icon: ClipboardCheck },
         ].map(({ key, label, icon: Icon }) => (
-          <button key={key} onClick={() => setTab(key as typeof tab)}
+          <button key={key} onClick={() => selectTab(key as typeof tab)}
             style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', fontSize: 13, fontFamily: 'Cairo, sans-serif', fontWeight: 700, cursor: 'pointer', border: 'none', background: 'transparent', borderBottom: tab === key ? '2px solid #22D3EE' : '2px solid transparent', color: tab === key ? '#22D3EE' : '#475569', transition: 'all 0.15s', marginBottom: -1 }}>
             <Icon size={14} />
             {label}

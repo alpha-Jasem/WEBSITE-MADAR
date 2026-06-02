@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState, useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { AlertTriangle, BarChart3, Calendar, Car, ClipboardCheck, CreditCard, Droplets, LayoutDashboard, Loader2, MessageSquare, Monitor, Settings, Users2, WalletCards, Wrench, Zap, Wallet } from 'lucide-react'
+import { AlertTriangle, BarChart3, Calendar, Car, CreditCard, Droplets, LayoutDashboard, Loader2, MessageSquare, Monitor, Settings, Users2, WalletCards, Wrench, Zap, Wallet } from 'lucide-react'
 import { DashShell } from '../components/dash/DashShell'
 import type { NavItem } from '../components/dash/DashSidebar'
 import { useClientCompany } from '../hooks/useClientCompany'
@@ -18,7 +18,6 @@ const CarWashQueueDisplay = lazy(() => import('../components/dashboard/client/Ca
 const CarWashWorkers     = lazy(() => import('../components/dashboard/client/CarWashWorkers').then(m => ({ default: m.CarWashWorkers })))
 const CarWashFinance     = lazy(() => import('../components/dashboard/client/CarWashFinance').then(m => ({ default: m.CarWashFinance })))
 const CarWashMemberships = lazy(() => import('../components/dashboard/client/CarWashMemberships').then(m => ({ default: m.CarWashMemberships })))
-const CarWashDailyClosing = lazy(() => import('../components/dashboard/client/CarWashDailyClosing').then(m => ({ default: m.CarWashDailyClosing })))
 const CarWashSeedDemo    = lazy(() => import('../components/dashboard/client/CarWashSeedDemo').then(m => ({ default: m.CarWashSeedDemo })))
 const ClientAutomations  = lazy(() => import('../components/dashboard/client/ClientAutomations').then(m => ({ default: m.ClientAutomations })))
 const CarWashAutomations = lazy(() => import('../components/dashboard/client/CarWashAutomations').then(m => ({ default: m.CarWashAutomations })))
@@ -49,7 +48,6 @@ function buildNavItems(template: ReturnType<typeof getClientIndustryTemplate>): 
       { to: '/client/leads',         icon: Users2,         label: 'العملاء'      },
       { to: '/client/memberships',   icon: WalletCards,    label: 'الاشتراكات'  },
       { to: '/client/finance',       icon: Wallet,         label: 'المالية'      },
-      { to: '/client/closing',       icon: ClipboardCheck, label: 'إغلاق اليوم' },
       { to: '/client/reports',       icon: BarChart3,      label: 'التقارير'     },
       { to: '/client/workers',       icon: Users2,         label: 'الموظفون'     },
       { to: '/client/automations',   icon: MessageSquare,  label: 'واتساب'      },
@@ -197,7 +195,7 @@ export const ClientPortal = () => {
             <Route path="queue-display" element={canAccess('/client/queue') ? <CarWashQueueDisplay /> : fallback} />
             <Route path="workers" element={canAccess('/client/workers') ? <CarWashWorkers /> : fallback} />
             <Route path="finance" element={canAccess('/client/finance') ? <CarWashFinance /> : fallback} />
-            <Route path="closing" element={canAccess('/client/closing') ? <CarWashDailyClosing /> : fallback} />
+            <Route path="closing" element={<Navigate to="/client/finance?tab=closing" replace />} />
             <Route path="setup" element={isCarWash ? <CarWashSetup /> : <ClientSetup />} />
             <Route path="appointments" element={<ClientAppointments />} />
             <Route path="conversations" element={<ClientConversations />} />
