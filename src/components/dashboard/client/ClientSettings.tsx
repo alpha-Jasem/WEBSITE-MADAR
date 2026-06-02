@@ -43,6 +43,8 @@ export const ClientSettings = () => {
   const [identityLogoUrl, setIdentityLogoUrl] = useState('')
   const [savingIdentity, setSavingIdentity] = useState(false)
   const [identitySaved, setIdentitySaved] = useState(false)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [logoError, setLogoError] = useState('')
 
   const template = getClientIndustryTemplate(company?.business_type, company?.industry)
   const isCarWash = template.type === 'car_wash'
@@ -99,12 +101,58 @@ export const ClientSettings = () => {
   const saveIdentity = async () => {
     if (!companyId || !identityName.trim()) return
     setSavingIdentity(true)
-    const normalizedLogo = identityLogoUrl.trim()
     await supabase.from('companies').update({
       name: identityName.trim(),
-      logo_url: normalizedLogo || null,
+      logo_url: identityLogoUrl || null,
     } as any).eq('id', companyId)
     setSavingIdentity(false)
+    setIdentitySaved(true)
+    setTimeout(() => setIdentitySaved(false), 2500)
+  }
+
+  const uploadLogo = async (file: File | null) => {
+    if (!companyId || !file) return
+    setLogoError('')
+    const allowed = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']
+    if (!allowed.includes(file.type)) {
+      setLogoError('ارفع شعار بصيغة PNG أو JPG أو WEBP أو SVG.')
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setLogoError('حجم الشعار لازم يكون أقل من 2MB.')
+      return
+    }
+
+    setUploadingLogo(true)
+    const extension = file.name.split('.').pop()?.toLowerCase() || 'png'
+    const path = `${companyId}/logo-${Date.now()}.${extension}`
+    const { error } = await supabase.storage.from('company-assets').upload(path, file, {
+      cacheControl: '3600',
+      upsert: false,
+    })
+
+    if (error) {
+      setLogoError('تعذر رفع الشعار. حاول مرة ثانية.')
+      setUploadingLogo(false)
+      return
+    }
+
+    const { data } = supabase.storage.from('company-assets').getPublicUrl(path)
+    const publicUrl = data.publicUrl
+    setIdentityLogoUrl(publicUrl)
+    await supabase.from('companies').update({
+      name: identityName.trim() || company?.name,
+      logo_url: publicUrl,
+    } as any).eq('id', companyId)
+    setUploadingLogo(false)
+    setIdentitySaved(true)
+    setTimeout(() => setIdentitySaved(false), 2500)
+  }
+
+  const removeLogo = async () => {
+    if (!companyId) return
+    setIdentityLogoUrl('')
+    await supabase.from('companies').update({ logo_url: null } as any).eq('id', companyId)
     setIdentitySaved(true)
     setTimeout(() => setIdentitySaved(false), 2500)
   }
@@ -343,16 +391,31 @@ export const ClientSettings = () => {
                 className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition-all focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/10 font-tajawal"
               />
             </label>
-            <label className="space-y-2">
-              <span className="text-xs font-bold text-slate-500 font-tajawal">رابط شعار المغسلة</span>
-              <input
-                value={identityLogoUrl}
-                onChange={e => setIdentityLogoUrl(e.target.value)}
-                placeholder="https://example.com/logo.png"
-                dir="ltr"
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-left text-sm text-slate-900 outline-none transition-all focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/10 font-sora"
-              />
-            </label>
+            <div className="space-y-2">
+              <span className="text-xs font-bold text-slate-500 font-tajawal">شعار المغسلة</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm font-bold text-cyan-700 transition-colors hover:bg-cyan-100 font-cairo">
+                  {uploadingLogo ? <Loader2 size={15} className="animate-spin" /> : <ImageIcon size={15} />}
+                  {uploadingLogo ? 'جاري رفع الشعار...' : 'رفع شعار من الجهاز'}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                    className="hidden"
+                    onChange={e => uploadLogo(e.target.files?.[0] || null)}
+                    disabled={uploadingLogo}
+                  />
+                </label>
+                {identityLogoUrl && (
+                  <button onClick={removeLogo}
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 font-cairo">
+                    <Trash2 size={15} />
+                    حذف الشعار
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-slate-500 font-tajawal">سيظهر الشعار في رابط QR وصفحة متابعة العميل وشاشة العرض. الحد الأقصى 2MB.</p>
+              {logoError && <p className="text-xs font-bold text-red-600 font-tajawal">{logoError}</p>}
+            </div>
           </div>
 
           <button onClick={saveIdentity} disabled={savingIdentity || !identityName.trim()}
