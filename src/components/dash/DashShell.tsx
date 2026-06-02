@@ -4,6 +4,7 @@ import { Menu, X } from 'lucide-react'
 import { DashSidebar, type NavItem } from './DashSidebar'
 import { useClientCompany } from '../../hooks/useClientCompany'
 import { MadarAIAssistant } from './MadarAIAssistant'
+import { MadarAgentWidget } from './MadarAgentWidget'
 
 interface Props {
   navItems: NavItem[]
@@ -57,11 +58,19 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
           {children}
         </main>
       </div>
-      <MadarAIAssistant
-        role={role}
-        companyId={role === 'client' ? company?.id ?? null : null}
-        pageTitle={pageTitle}
-      />
+      {role === 'client' ? (
+        <MadarAgentWidget
+          agentType="client_support"
+          companyId={company?.id ?? null}
+          pageTitle={pageTitle}
+        />
+      ) : (
+        <MadarAIAssistant
+          role={role}
+          companyId={null}
+          pageTitle={pageTitle}
+        />
+      )}
     </div>
   )
 }

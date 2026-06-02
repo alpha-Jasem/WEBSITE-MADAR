@@ -5,6 +5,7 @@ import { LoadingScreen }  from '../components/shared/LoadingScreen'
 import { ScrollProgress } from '../components/shared/ScrollProgress'
 import { WhatsAppButton } from '../components/shared/WhatsAppButton'
 import { CustomCursor }  from '../components/shared/CustomCursor'
+import { MadarAgentWidget } from '../components/dash/MadarAgentWidget'
 
 import { Navbar }        from '../components/public/Navbar'
 import { Hero }          from '../components/public/Hero'
@@ -49,6 +50,7 @@ export const HomePage = () => {
           </main>
           <Footer />
           <WhatsAppButton />
+          <MadarAgentWidget agentType="sales_website" pageTitle="موقع مدار" />
         </>
       )}
     </div>

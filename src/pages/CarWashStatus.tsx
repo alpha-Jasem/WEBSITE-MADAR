@@ -4,6 +4,7 @@ import { CheckCircle2, Clock, Droplets, Loader2, ShieldCheck, Sparkles } from 'l
 import { supabase } from '../lib/supabase'
 import { getDailyTicketCode } from '../lib/carWashTickets'
 import { isSelfCheckinPending } from '../lib/selfCheckin'
+import { MadarAgentWidget } from '../components/dash/MadarAgentWidget'
 import type { QueueStatus } from '../types'
 
 type StatusCompany = {
@@ -228,6 +229,7 @@ export function CarWashStatus() {
         </div>
 
       </section>
+      <MadarAgentWidget agentType="end_customer" publicToken={token} queueId={queueId} pageTitle={company.name} compact />
     </main>
   )
 }

@@ -6,6 +6,7 @@ import { calcVAT } from '../lib/vatUtils'
 import { getDailyTicketCode } from '../lib/carWashTickets'
 import { canUseSelfCheckin, getSelfCheckinSettings, markSelfCheckinNotes } from '../lib/selfCheckin'
 import { sanitizeDigits, sanitizeNameText } from '../lib/formSanitizers'
+import { MadarAgentWidget } from '../components/dash/MadarAgentWidget'
 import type { Company, CWService, Plan } from '../types'
 
 const N8N_REGISTER_WEBHOOK = 'https://keepcalm.app.n8n.cloud/webhook/cw-registration'
@@ -848,6 +849,7 @@ export function SelfCheckIn() {
           )}
         </form>
       </section>
+      <MadarAgentWidget agentType="end_customer" publicToken={token} pageTitle={company?.name || 'التسجيل الذاتي'} compact />
     </main>
   )
 }

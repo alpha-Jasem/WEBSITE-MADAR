@@ -9416,6 +9416,21 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   cursor: pointer;
 }
 
+.madar-agent-sales_website .madar-ai-fab {
+  background: linear-gradient(135deg, #0D1B3E, #0099CC 62%, #18D6A3);
+}
+
+.madar-agent-end_customer .madar-ai-fab {
+  min-height: 44px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #0D1B3E, #1565C0 62%, #22D3EE);
+}
+
+.madar-ai-assistant.compact {
+  left: 18px;
+  bottom: 18px;
+}
+
 .madar-ai-window {
   width: min(400px, calc(100vw - 28px));
   max-height: min(680px, calc(100vh - 96px));

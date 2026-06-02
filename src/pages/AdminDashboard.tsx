@@ -2,6 +2,7 @@ import { Routes, Route, useLocation } from 'react-router-dom'
 import {
   Activity,
   BarChart3,
+  Bot,
   Building2,
   Calendar,
   GitBranch,
@@ -27,6 +28,7 @@ import { AdminAppointments } from '../components/dashboard/admin/AdminAppointmen
 import { AdminConversations } from '../components/dashboard/admin/AdminConversations'
 import { AdminOverview } from '../components/dashboard/admin/AdminOverview'
 import { AdminControlCenter } from '../components/dashboard/admin/AdminControlCenter'
+import { AdminAIAgents } from '../components/dashboard/admin/AdminAIAgents'
 
 const navItems: NavItem[] = [
   { to: '/admin', icon: LayoutDashboard, label: 'مركز الإدارة', end: true },
@@ -37,6 +39,7 @@ const navItems: NavItem[] = [
   { to: '/admin/pipeline', icon: GitBranch, label: 'خط المبيعات' },
   { to: '/admin/appointments', icon: Calendar, label: 'الحجوزات' },
   { to: '/admin/conversations', icon: MessageSquare, label: 'المحادثات' },
+  { to: '/admin/ai-agents', icon: Bot, label: 'وكلاء AI' },
   { to: '/admin/automations', icon: Zap, label: 'الأتمتة' },
   { to: '/admin/n8n', icon: Workflow, label: 'n8n' },
   { to: '/admin/logs', icon: Activity, label: 'السجلات' },
@@ -69,6 +72,7 @@ export const AdminDashboard = () => {
         <Route path="pipeline" element={<AdminPipeline />} />
         <Route path="appointments" element={<AdminAppointments />} />
         <Route path="conversations" element={<AdminConversations />} />
+        <Route path="ai-agents" element={<AdminAIAgents />} />
         <Route path="*" element={<AdminOverview />} />
       </Routes>
     </DashShell>
