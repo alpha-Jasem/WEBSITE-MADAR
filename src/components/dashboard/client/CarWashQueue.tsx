@@ -106,6 +106,7 @@ export const CarWashQueue = () => {
   const [deliverModal, setDeliverModal] = useState<CWQueueItem | null>(null)
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('cash')
   const [delivering, setDelivering] = useState(false)
+  const [deliveryError, setDeliveryError] = useState('')
   const [receiptItem, setReceiptItem] = useState<CWQueueItem | null>(null)
   const [cancelConfirm, setCancelConfirm] = useState<string | null>(null)
   const [cancelling, setCancelling] = useState(false)
@@ -353,6 +354,7 @@ export const CarWashQueue = () => {
     if (next === 'delivered') {
       setDeliverModal(item)
       setSelectedPayment('cash')
+      setDeliveryError('')
       return
     }
 
@@ -369,6 +371,7 @@ export const CarWashQueue = () => {
   const confirmDelivery = async () => {
     if (!deliverModal || !companyId || delivering) return
     setDelivering(true)
+    setDeliveryError('')
     const item = deliverModal
     const isMembershipPayment = selectedPayment === 'membership'
     const price = item.is_free_wash || isMembershipPayment ? 0 : item.price
@@ -387,6 +390,25 @@ export const CarWashQueue = () => {
         .eq('phone', phone)
         .maybeSingle()
       customer = data
+      if (!customer) {
+        const { data: insertedCustomer, error: customerError } = await supabase
+          .from('cw_customers')
+          .insert({
+            company_id: companyId,
+            phone,
+            name: item.customer_name || null,
+            total_visits: 0,
+            welcome_sent: true,
+          })
+          .select('id, free_washes_available, loyalty_count, total_visits, wallet_balance')
+          .single()
+        if (customerError) {
+          setDeliveryError('تعذر تجهيز سجل العميل. حاول مرة ثانية.')
+          setDelivering(false)
+          return
+        }
+        customer = insertedCustomer
+      }
     }
 
     let membershipId: string | null = null
@@ -441,7 +463,7 @@ export const CarWashQueue = () => {
       } as any).eq('id', customer.id)
     }
 
-    await supabase.from('cw_queue').update({
+    const deliveryUpdate = {
       status: 'delivered',
       payment_method: selectedPayment,
       payment_status: 'paid',
@@ -450,9 +472,16 @@ export const CarWashQueue = () => {
       total_amount: vat.total_amount,
       discount_amount: isMembershipPayment ? item.price : item.discount_amount || 0,
       delivered_at: now,
-    }).eq('id', item.id)
+    }
 
-    await supabase.from('cw_visits').insert({
+    const { error: queueError } = await supabase.from('cw_queue').update(deliveryUpdate).eq('id', item.id)
+    if (queueError) {
+      setDeliveryError('تعذر نقل السيارة إلى تم التسليم. حاول مرة ثانية.')
+      setDelivering(false)
+      return
+    }
+
+    const { error: visitError } = await supabase.from('cw_visits').insert({
       company_id: item.company_id,
       customer_id: customer?.id || null,
       service_name: item.service_name,
@@ -473,6 +502,9 @@ export const CarWashQueue = () => {
       customer_name: item.customer_name || null,
       review_request_sent: false,
     })
+    if (visitError) {
+      setDeliveryError('تم تسليم السيارة، لكن تعذر حفظ سجل الزيارة. سيتم تحديث الشاشة.')
+    }
 
     // Loyalty update
     if (phone && companyId) {
@@ -514,12 +546,18 @@ export const CarWashQueue = () => {
 
     const deliveredItem: CWQueueItem = {
       ...item,
+      status: 'delivered',
       payment_method: selectedPayment,
       payment_status: 'paid',
       subtotal: vat.subtotal,
       vat_amount: vat.vat_amount,
       total_amount: vat.total_amount,
+      discount_amount: isMembershipPayment ? item.price : item.discount_amount || 0,
+      delivered_at: now,
     }
+
+    setItems(prev => prev.map(row => row.id === item.id ? deliveredItem : row))
+    void loadItems(companyId)
 
     setDelivering(false)
     setDeliverModal(null)
@@ -1173,6 +1211,12 @@ export const CarWashQueue = () => {
                   ))}
                 </div>
               </div>
+            )}
+
+            {deliveryError && (
+              <p className="mb-3 rounded-xl px-3 py-2 text-xs font-bold text-amber-200 font-tajawal" style={{ background: 'rgba(245,158,11,0.14)', border: '1px solid rgba(245,158,11,0.32)' }}>
+                {deliveryError}
+              </p>
             )}
 
             <button
