@@ -109,11 +109,11 @@ export const CLIENT_INDUSTRY_TEMPLATES: Record<BusinessType, ClientIndustryTempl
     activityChartTitle: 'حركة حجوزات الغسيل هذا الأسبوع',
     intakeChartTitle: 'عملاء جدد للمغسلة',
     navLabels: {
-      overview: 'لوحة المغسلة',
+      overview: 'الرئيسية',
       setup: 'باقات الغسيل',
       appointments: 'حجوزات الغسيل',
       conversations: 'طلبات واتساب',
-      automations: 'تذكيرات وولاء',
+      automations: 'واتساب',
       leads: 'العملاء',
       reports: 'تقارير الاشتراك',
       settings: 'إعدادات المغسلة',

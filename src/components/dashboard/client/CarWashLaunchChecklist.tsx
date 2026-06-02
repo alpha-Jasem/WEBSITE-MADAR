@@ -113,7 +113,7 @@ export function CarWashLaunchChecklist({ compact = false }: { compact?: boolean 
       detail: counts.closingToday > 0 ? 'تم تسجيل إغلاق اليوم' : 'اختبر إغلاق اليوم بعد أول تشغيل',
       done: counts.closingToday > 0 || counts.carsToday === 0,
       icon: ClipboardCheck,
-      to: '/client/closing',
+      to: '/client/finance?tab=closing',
       required: false,
     },
   ], [counts, flags.memberships, flags.wallet, checkinUrl, company?.google_maps_url])

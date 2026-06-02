@@ -46,7 +46,7 @@ export const MadarAIAssistant = ({ role, companyId, pageTitle }: Props) => {
 
   const greeting = role === 'admin'
     ? 'أنا مساعد مدار AI للإدارة. أقدر أساعدك في الشركات، المبيعات، الاشتراكات، OTP، n8n، وصحة المنصة.'
-    : 'أنا مساعد مدار AI للمغسلة. أقدر أحلل التشغيل، المالية، العملاء، الموظفين، التقارير، والأتمتة من الصفحة الحالية.'
+    : 'أنا مساعد مدار AI للمغسلة. أقدر أحلل التشغيل، المالية، العملاء، الموظفين، التقارير، وواتساب من الصفحة الحالية.'
 
   const suggestions = useMemo(() => pageSuggestions(role, location.pathname), [role, location.pathname])
   const messages = useMemo<ChatMessage[]>(() => [

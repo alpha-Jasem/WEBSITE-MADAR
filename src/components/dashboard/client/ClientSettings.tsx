@@ -244,7 +244,7 @@ export const ClientSettings = () => {
     { path: '/client/finance',    label: 'المالية'        },
     { path: '/client/reports',    label: 'التقارير'      },
     { path: '/client/workers',    label: 'الموظفون'      },
-    { path: '/client/automations',label: 'الأتمتة'       },
+    { path: '/client/automations',label: 'واتساب'       },
     { path: '/client/settings',   label: 'الإعدادات'     },
   ]
 
