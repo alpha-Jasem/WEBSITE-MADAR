@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Plus, X, Loader2, Clock, ChevronRight, Car, Pencil, Check, Gift, ChevronDown, ChevronUp, Receipt, AlertTriangle } from 'lucide-react'
+import { Plus, X, Loader2, Clock, ChevronRight, Car, Pencil, Check, Gift, ChevronDown, ChevronUp, Receipt, AlertTriangle, RefreshCw } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { calcVAT } from '../../../lib/vatUtils'
@@ -107,6 +107,9 @@ export const CarWashQueue = () => {
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('cash')
   const [delivering, setDelivering] = useState(false)
   const [deliveryError, setDeliveryError] = useState('')
+  const [queueError, setQueueError] = useState('')
+  const [queueNotice, setQueueNotice] = useState('')
+  const [lastSyncAt, setLastSyncAt] = useState<string | null>(null)
   const [receiptItem, setReceiptItem] = useState<CWQueueItem | null>(null)
   const [cancelConfirm, setCancelConfirm] = useState<string | null>(null)
   const [cancelling, setCancelling] = useState(false)
@@ -117,13 +120,24 @@ export const CarWashQueue = () => {
   const loadItems = async (cid: string) => {
     const todayStart = new Date()
     todayStart.setHours(0, 0, 0, 0)
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('cw_queue')
       .select('*, worker:cw_workers(id, name, commission_type, commission_value)')
       .eq('company_id', cid)
       .gte('created_at', todayStart.toISOString())
       .order('created_at')
+    if (error) {
+      setQueueError('تعذر تحديث لوحة التشغيل. تحقق من الاتصال وحاول مرة ثانية.')
+      return
+    }
     setItems((data as CWQueueItem[]) || [])
+    setLastSyncAt(new Date().toISOString())
+    setQueueError('')
+  }
+
+  const showQueueNotice = (message: string) => {
+    setQueueNotice(message)
+    window.setTimeout(() => setQueueNotice(current => current === message ? '' : current), 3500)
   }
 
   useEffect(() => {
@@ -337,9 +351,18 @@ export const CarWashQueue = () => {
   const moveNext = async (item: CWQueueItem) => {
     if (isSelfCheckinPending(item.notes)) {
       setMovingId(item.id)
-      await supabase.from('cw_queue').update({ notes: clearSelfCheckinPending(item.notes) }).eq('id', item.id)
+      setQueueError('')
+      const clearedNotes = clearSelfCheckinPending(item.notes)
+      const { error } = await supabase.from('cw_queue').update({ notes: clearedNotes }).eq('id', item.id)
+      if (error) {
+        setQueueError('تعذر اعتماد السيارة. حاول مرة ثانية.')
+        setMovingId(null)
+        return
+      }
+      setItems(prev => prev.map(row => row.id === item.id ? { ...row, notes: clearedNotes } : row))
       logAudit(companyId || '', 'self_checkin_approved', { entityType: 'cw_queue', entityId: item.id })
       setMovingId(null)
+      showQueueNotice('تم اعتماد السيارة وإدخالها للمسار.')
       return
     }
 
@@ -360,12 +383,20 @@ export const CarWashQueue = () => {
 
     setWorkerRequiredId(null)
     setMovingId(item.id)
+    setQueueError('')
     const updates: Record<string, unknown> = { status: next }
     if (item.status === 'received' && next === 'washing' && !item.started_at) updates.started_at = new Date().toISOString()
-    await supabase.from('cw_queue').update(updates).eq('id', item.id)
+    const { error } = await supabase.from('cw_queue').update(updates).eq('id', item.id)
+    if (error) {
+      setQueueError('تعذر نقل السيارة للمرحلة التالية. حاول مرة ثانية.')
+      setMovingId(null)
+      return
+    }
+    setItems(prev => prev.map(row => row.id === item.id ? { ...row, ...updates, status: next } as CWQueueItem : row))
 
     const cwAuto = (company as any)?.cw_automations || {}
     setMovingId(null)
+    showQueueNotice(next === 'washing' ? 'تم بدء الخدمة ونقل السيارة إلى قيد الخدمة.' : 'تم نقل السيارة إلى جاهزة.')
   }
 
   const confirmDelivery = async () => {
@@ -557,6 +588,7 @@ export const CarWashQueue = () => {
     }
 
     setItems(prev => prev.map(row => row.id === item.id ? deliveredItem : row))
+    showQueueNotice('تم تسليم السيارة ونقلها إلى تم التسليم.')
     void loadItems(companyId)
 
     setDelivering(false)
@@ -614,6 +646,9 @@ export const CarWashQueue = () => {
       ? { title: 'متوسط مدة الخدمة', description: `متوسط السيارات المسلمة اليوم ${avgMinutes} دقيقة. الهدف المثالي للمغسلة السريعة 20-35 دقيقة.`, tone: avgMinutes > 45 ? 'amber' as const : 'blue' as const }
       : { title: 'ابدأ بقياس الوقت', description: 'بعد أول تسليم سيظهر متوسط مدة الخدمة تلقائياً لمراقبة أداء اليوم.', tone: 'blue' as const },
   ]
+  const lastSyncLabel = lastSyncAt
+    ? new Date(lastSyncAt).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })
+    : 'لم يتم التحديث بعد'
 
   if (authLoading || loading) return (
     <div className="flex items-center justify-center h-64 gap-3">
@@ -662,15 +697,28 @@ export const CarWashQueue = () => {
             <p className="mt-2 text-sm md:text-base font-tajawal leading-7" style={{ color: '#415169' }}>
               أربع خطوات واضحة للموظف: استلام، قيد الخدمة، جاهزة، ثم تسليم. كل سيارة تتحرك بزر واحد بدون تفاصيل زائدة.
             </p>
+            <p className="mt-2 text-xs font-bold font-tajawal" style={{ color: '#64748B' }}>
+              آخر تحديث: {lastSyncLabel}
+            </p>
           </div>
-          <button
-            onClick={openAdd}
-            className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-slate-950 font-tajawal transition-transform hover:-translate-y-0.5"
-            style={{ background: 'linear-gradient(135deg, #D9F99D, #34D399)' }}
-          >
-            <Plus size={17} />
-            إضافة سيارة
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => companyId && loadItems(companyId)}
+              className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold font-tajawal transition-transform hover:-translate-y-0.5"
+              style={{ background: '#FFFFFF', color: '#0D1B3E', border: '1px solid rgba(0,191,255,0.28)' }}
+            >
+              <RefreshCw size={16} />
+              تحديث
+            </button>
+            <button
+              onClick={openAdd}
+              className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-slate-950 font-tajawal transition-transform hover:-translate-y-0.5"
+              style={{ background: 'linear-gradient(135deg, #D9F99D, #34D399)' }}
+            >
+              <Plus size={17} />
+              إضافة سيارة
+            </button>
+          </div>
         </div>
 
         <div className="relative mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -695,6 +743,20 @@ export const CarWashQueue = () => {
           ))}
         </div>
       </div>
+
+      {queueNotice && (
+        <div className="flex items-center gap-3 rounded-xl px-4 py-3" style={{ background: 'rgba(16,185,129,0.10)', border: '1px solid rgba(16,185,129,0.28)' }}>
+          <Check size={18} style={{ color: '#059669' }} />
+          <p className="text-sm font-bold font-tajawal" style={{ color: '#047857' }}>{queueNotice}</p>
+        </div>
+      )}
+
+      {queueError && (
+        <div className="flex items-center gap-3 rounded-xl px-4 py-3" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.28)' }}>
+          <AlertTriangle size={18} style={{ color: '#DC2626' }} />
+          <p className="text-sm font-bold font-tajawal" style={{ color: '#B91C1C' }}>{queueError}</p>
+        </div>
+      )}
 
       <ClientInsightPanel
         title="أولويات التشغيل الآن"
