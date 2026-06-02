@@ -1,715 +1,183 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
 
-    <!-- ══════════════════════════════════════════════════
-         PRIMARY SEO
-    ══════════════════════════════════════════════════ -->
-    <title>MADAR | حوّل رسائل ومكالمات شركتك إلى موظف مبيعات يعمل 24/7</title>
-    <meta name="description" content="MADAR تركّب مساعد AI يرد على واتساب والمكالمات، يحجز المواعيد، يتابع المهتمين، ويحوّل التواصل اليومي إلى حجوزات ومبيعات من لوحة واحدة. احصل على خريطة نمو مجانية." />
-    <meta name="keywords" content="أتمتة الأعمال, ذكاء اصطناعي, واتساب بوت, وكيل AI, voice agent, وكيل صوتي, أتمتة المكالمات, أتمتة CRM, حجز مواعيد ذكي, chatbot عربي, MADAR, مدار, أتمتة السعودية, AI Saudi Arabia, WhatsApp automation, voice AI Saudi, business automation Saudi, بوت واتساب عيادة, أتمتة عقارات, ذكاء اصطناعي جدة" />
-    <meta name="author" content="MADAR AI Automation" />
+    <title>مدار OS للمغاسل | نظام تشغيل سيارات وQR ومالية وتقارير</title>
+    <meta
+      name="description"
+      content="مدار OS منصة SaaS عربية لتشغيل مغاسل السيارات: لوحة تشغيل السيارات، QR تسجيل ذاتي، شاشة عرض Live، عملاء وولاء، مالية وVAT، تقارير، ومساعد AI متخصص. ابدأ تجربة 3 أيام."
+    />
+    <meta
+      name="keywords"
+      content="نظام مغاسل سيارات, برنامج مغسلة سيارات, إدارة مغاسل, نظام تشغيل مغسلة, QR مغسلة سيارات, برنامج ولاء مغسلة, تقارير مغسلة, مدار OS, Madar software, SaaS مغاسل السعودية"
+    />
+    <meta name="author" content="Madar.software" />
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
     <meta name="googlebot" content="index, follow" />
-    <meta name="rating" content="general" />
-    <meta name="revisit-after" content="7 days" />
-    <meta name="last-modified" content="2026-05-20" />
+    <meta name="theme-color" content="#0D1B3E" />
+    <meta name="color-scheme" content="light" />
     <link rel="canonical" href="https://madar.software/" />
 
-    <!-- ══════════════════════════════════════════════════
-         LANGUAGE & GEO
-    ══════════════════════════════════════════════════ -->
     <meta name="language" content="Arabic" />
-    <meta name="geo.region" content="SA-02" />
-    <meta name="geo.placename" content="Jeddah, Saudi Arabia" />
-    <meta name="geo.position" content="21.4858;39.1925" />
-    <meta name="ICBM" content="21.4858, 39.1925" />
-    <link rel="alternate" hreflang="ar" href="https://madar.software/" />
-    <link rel="alternate" hreflang="en" href="https://madar.software/" />
+    <meta name="geo.region" content="SA" />
+    <meta name="geo.placename" content="Saudi Arabia" />
+    <link rel="alternate" hreflang="ar-SA" href="https://madar.software/" />
     <link rel="alternate" hreflang="x-default" href="https://madar.software/" />
-    <link rel="alternate" type="text/plain" href="https://madar.software/llms.txt" title="LLMs.txt — AI context for MADAR" />
+    <link rel="alternate" type="text/plain" href="https://madar.software/llms.txt" title="Madar OS context for AI" />
 
-    <!-- ══════════════════════════════════════════════════
-         OPEN GRAPH (Facebook / LinkedIn / WhatsApp)
-    ══════════════════════════════════════════════════ -->
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="MADAR AI Automation" />
-    <meta property="og:title" content="MADAR | مساعد AI يرد على واتساب والمكالمات ويحجز 24/7" />
-    <meta property="og:description" content="نظام يرد على الرسائل والمكالمات، يحجز، يتابع، ويكشف أين تضيع الحجوزات. ابدأ بخريطة نمو مجانية لشركتك." />
+    <meta property="og:site_name" content="Madar.software" />
+    <meta property="og:title" content="مدار OS للمغاسل | شغّل السيارات والعملاء والمالية من شاشة واحدة" />
+    <meta
+      property="og:description"
+      content="نظام SaaS عربي للمغاسل: QR تسجيل ذاتي، لوحة تشغيل سيارات، شاشة عرض Live، عملاء وولاء، تقارير، مالية وVAT، ومساعد AI. واتساب API يتفعل بعد اعتماد Meta."
+    />
     <meta property="og:url" content="https://madar.software/" />
     <meta property="og:image" content="https://madar.software/og-image.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="MADAR — نظام AI للرد على واتساب والمكالمات والحجز والمتابعة" />
+    <meta property="og:image:alt" content="مدار OS للمغاسل - لوحة تشغيل السيارات والعميل والمالية" />
     <meta property="og:locale" content="ar_SA" />
-    <meta property="og:locale:alternate" content="en_US" />
 
-    <!-- ══════════════════════════════════════════════════
-         TWITTER / X CARD
-    ══════════════════════════════════════════════════ -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@madar_ai" />
-    <meta name="twitter:creator" content="@madar_ai" />
-    <meta name="twitter:title" content="MADAR | رسائلك ومكالماتك تصير قناة مبيعات" />
-    <meta name="twitter:description" content="مساعد AI يرد على واتساب والمكالمات ويحجز ويتابع العملاء تلقائياً. احصل على خريطة نمو مجانية." />
+    <meta name="twitter:title" content="مدار OS للمغاسل" />
+    <meta
+      name="twitter:description"
+      content="لوحة تشغيل سيارات، QR تسجيل ذاتي، شاشة عرض، مالية وتقارير، ومساعد AI متخصص للمغاسل."
+    />
     <meta name="twitter:image" content="https://madar.software/og-image.jpg" />
-    <meta name="twitter:image:alt" content="MADAR AI Automation" />
+    <meta name="twitter:image:alt" content="مدار OS للمغاسل" />
 
-    <!-- ══════════════════════════════════════════════════
-         FAVICON & ICONS
-    ══════════════════════════════════════════════════ -->
     <link rel="icon" type="image/png" href="/favicon-logo.png" sizes="any" />
     <link rel="apple-touch-icon" href="/favicon-logo.png" />
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#05060A" />
-    <meta name="msapplication-TileColor" content="#4F6EF7" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="MADAR AI" />
 
-    <!-- ══════════════════════════════════════════════════
-         PERFORMANCE
-    ══════════════════════════════════════════════════ -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://aacnqiuwrpzgxhzdavaq.supabase.co" />
     <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
     <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-
     <link
-      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700&family=Sora:wght@400;500;600;700;800&family=Work+Sans:wght@400;500;600;700&display=swap&subset=arabic,latin"
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700&family=Sora:wght@400;500;600;700;800&display=swap&subset=arabic,latin"
       rel="stylesheet"
     />
 
-    <!-- ══════════════════════════════════════════════════
-         STRUCTURED DATA — JSON-LD
-    ══════════════════════════════════════════════════ -->
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@graph": [
-        {
-          "@type": ["Organization", "ProfessionalService"],
-          "@id": "https://madar.software/#organization",
-          "name": "MADAR AI Automation",
-          "alternateName": ["مدار", "MADAR", "Madar AI", "Madar.software"],
-          "url": "https://madar.software",
-          "logo": {
-            "@type": "ImageObject",
-            "url": "https://madar.software/logo.png",
-            "width": 400,
-            "height": 400
-          },
-          "image": "https://madar.software/og-image.jpg",
-          "description": "شركة متخصصة في بناء أنظمة واتساب ومكالمات وCRM بالذكاء الاصطناعي لتحويل التواصل إلى حجوزات ومبيعات: رد فوري، voice agent، حجز تلقائي، متابعة عملاء، ولوحات قياس واضحة للشركات في السعودية.",
-          "foundingDate": "2024",
-          "foundingLocation": {
-            "@type": "Place",
-            "name": "جدة، المملكة العربية السعودية"
-          },
-          "address": {
-            "@type": "PostalAddress",
-            "addressLocality": "Jeddah",
-            "addressRegion": "Makkah",
-            "addressCountry": "SA"
-          },
-          "contactPoint": [
-            {
-              "@type": "ContactPoint",
-              "telephone": "+966-54-666-6005",
-              "contactType": "customer service",
-              "availableLanguage": ["Arabic", "English"]
-            }
-          ],
-          "email": "info@madar.ai",
-          "telephone": "+966546666005",
-          "priceRange": "$$",
-          "sameAs": [
-            "https://wa.me/966546666005",
-            "https://www.instagram.com/madar.software",
-            "https://www.tiktok.com/@madar.solution"
-          ],
-          "areaServed": [
-            {
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://madar.software/#organization",
+            "name": "Madar.software",
+            "alternateName": ["مدار", "مدار OS", "Madar OS"],
+            "url": "https://madar.software",
+            "logo": "https://madar.software/logo-main.png",
+            "image": "https://madar.software/og-image.jpg",
+            "description": "شركة SaaS سعودية تبني نظام مدار OS لتشغيل مغاسل السيارات والعيادات بواجهات عربية، QR، تقارير، أتمتة، ومساعد AI.",
+            "telephone": "+966546666005",
+            "areaServed": {
               "@type": "Country",
               "name": "Saudi Arabia"
             },
-            {
-              "@type": "City",
-              "name": "Jeddah"
-            },
-            {
-              "@type": "City",
-              "name": "Riyadh"
-            },
-            {
-              "@type": "City",
-              "name": "Dammam"
-            }
-          ],
-          "knowsAbout": [
-            "أتمتة الأعمال",
-            "الذكاء الاصطناعي",
-            "واتساب بوت",
-            "أتمتة CRM",
-            "حجز مواعيد ذكي",
-            "وكلاء AI",
-            "مساعدي مبيعات AI",
-            "WhatsApp Automation",
-            "AI Customer Support",
-            "Business Automation Saudi Arabia"
-          ]
-        },
-        {
-          "@type": "WebSite",
-          "@id": "https://madar.software/#website",
-          "url": "https://madar.software",
-          "name": "MADAR AI Automation",
-          "description": "نظام واتساب ومكالمات وCRM يحوّل التواصل إلى حجوزات ومبيعات",
-          "publisher": { "@id": "https://madar.software/#organization" },
-          "inLanguage": ["ar", "en"]
-        },
-        {
-          "@type": "WebPage",
-          "@id": "https://madar.software/#webpage",
-          "url": "https://madar.software",
-          "name": "MADAR | حوّل رسائل ومكالمات شركتك إلى موظف مبيعات يعمل 24/7",
-          "isPartOf": { "@id": "https://madar.software/#website" },
-          "about": { "@id": "https://madar.software/#organization" },
-          "description": "MADAR تركّب مساعد AI يرد على واتساب والمكالمات، يحجز المواعيد، يتابع المهتمين، ويحوّل التواصل اليومي إلى حجوزات ومبيعات.",
-          "inLanguage": ["ar", "en"],
-          "datePublished": "2024-01-01",
-          "dateModified": "2026-05-20",
-          "breadcrumb": {
-            "@type": "BreadcrumbList",
-            "itemListElement": [
-              { "@type": "ListItem", "position": 1, "name": "الرئيسية", "item": "https://madar.software" }
+            "sameAs": [
+              "https://wa.me/966546666005",
+              "https://www.instagram.com/madar.software",
+              "https://www.tiktok.com/@madar.solution"
+            ]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://madar.software/#website",
+            "url": "https://madar.software/",
+            "name": "مدار OS للمغاسل",
+            "publisher": { "@id": "https://madar.software/#organization" },
+            "inLanguage": "ar-SA"
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://madar.software/#software",
+            "name": "مدار OS",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Web",
+            "url": "https://madar.software/",
+            "description": "منصة SaaS عربية لإدارة مغاسل السيارات: لوحة تشغيل، QR تسجيل ذاتي، شاشة عرض Live، عملاء وولاء، مالية وVAT، تقارير، ومساعد AI.",
+            "offers": [
+              {
+                "@type": "Offer",
+                "name": "Starter",
+                "price": "299",
+                "priceCurrency": "SAR",
+                "availability": "https://schema.org/InStock"
+              },
+              {
+                "@type": "Offer",
+                "name": "Pro",
+                "price": "799",
+                "priceCurrency": "SAR",
+                "availability": "https://schema.org/InStock"
+              },
+              {
+                "@type": "Offer",
+                "name": "Premium",
+                "price": "1999",
+                "priceCurrency": "SAR",
+                "availability": "https://schema.org/InStock"
+              }
+            ],
+            "publisher": { "@id": "https://madar.software/#organization" }
+          },
+          {
+            "@type": "FAQPage",
+            "@id": "https://madar.software/#faq",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "هل يمكن بيع مدار OS قبل اعتماد واتساب API؟",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "نعم، يمكن تشغيل النظام داخلياً للمغسلة عبر لوحة التشغيل، QR، العملاء، المالية، والتقارير. رسائل واتساب الرسمية تتفعل بعد اعتماد Meta وربط رقم واتساب بزنس."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "ما أهم مزايا مدار OS للمغاسل؟",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "لوحة تشغيل السيارات، تسجيل ذاتي عبر QR، شاشة عرض Live، إدارة العملاء والولاء، المالية والضريبة، التقارير، ومساعد مدار AI."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "هل توجد تجربة مجانية؟",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "نعم، يمكن بدء تجربة قصيرة لمدة 3 أيام لتجربة التشغيل الأساسي قبل الاشتراك."
+                }
+              }
             ]
           }
-        },
-        {
-          "@type": "ItemList",
-          "name": "خدمات MADAR AI",
-          "itemListElement": [
-            {
-              "@type": "Service",
-              "position": 1,
-              "name": "وكلاء ذكاء اصطناعي للعملاء",
-              "description": "ردود فورية، ذكية، وشخصية على مدار الساعة 24/7. وكيل AI يرد على كل استفسار، ويتعامل مع الاعتراضات، ويوجّه العميل نحو الشراء. رد أقل من ثانية، يدعم العربية والإنجليزية، متكامل مع CRM.",
-              "provider": { "@id": "https://madar.software/#organization" },
-              "areaServed": "SA",
-              "serviceType": "AI Customer Agent"
-            },
-            {
-              "@type": "Service",
-              "position": 2,
-              "name": "أتمتة واتساب الذكية",
-              "description": "نردّ على عملائك في واتساب تلقائياً — من أول رسالة وحتى إتمام الحجز والمتابعة. ردود تلقائية، متابعة مبيعات، وتحليلات حية.",
-              "provider": { "@id": "https://madar.software/#organization" },
-              "areaServed": "SA",
-              "serviceType": "WhatsApp Automation"
-            },
-            {
-              "@type": "Service",
-              "position": 3,
-              "name": "نظام حجز المواعيد AI",
-              "description": "عملاؤك يحجزون مواعيدهم تلقائياً — التذكير، إعادة الجدولة، والتأكيد يحدث بلا موظفين. حجز 24/7، تذكير تلقائي، تقليل الغياب 80%.",
-              "provider": { "@id": "https://madar.software/#organization" },
-              "areaServed": "SA",
-              "serviceType": "AI Appointment Booking"
-            },
-            {
-              "@type": "Service",
-              "position": 4,
-              "name": "أتمتة إدارة علاقات العملاء CRM",
-              "description": "تسجيل تلقائي للعملاء، متابعة المبيعات، وتحليل سلوك العملاء في لوحة واحدة. إدخال تلقائي، تقارير مبيعات، تقسيم العملاء.",
-              "provider": { "@id": "https://madar.software/#organization" },
-              "areaServed": "SA",
-              "serviceType": "CRM Automation"
-            },
-            {
-              "@type": "Service",
-              "position": 5,
-              "name": "مساعد المبيعات الذكي AI",
-              "description": "وكيل مبيعات ذكي يتابع المحتملين، يرسل عروضاً مخصصة، ويغلق الصفقات — موظف مبيعات لا يتعب ولا ينام.",
-              "provider": { "@id": "https://madar.software/#organization" },
-              "areaServed": "SA",
-              "serviceType": "AI Sales Assistant"
-            },
-            {
-              "@type": "Service",
-              "position": 6,
-              "name": "تطبيقات الجوال iOS وAndroid",
-              "description": "نبني تطبيقات احترافية لعملك على iOS وAndroid — سريعة، جميلة، ومتكاملة مع أنظمة AI وواتساب.",
-              "provider": { "@id": "https://madar.software/#organization" },
-              "areaServed": "SA",
-              "serviceType": "Mobile App Development"
-            }
-          ]
-        },
-        {
-          "@type": "FAQPage",
-          "mainEntity": [
-            {
-              "@type": "Question",
-              "name": "ما هي خدمات MADAR AI؟",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "تقدم MADAR خدمات أتمتة الأعمال بالذكاء الاصطناعي تشمل: وكلاء AI للعملاء، أتمتة واتساب، حجز مواعيد ذكي، أتمتة CRM، مساعدي مبيعات AI، وتطبيقات الجوال iOS وAndroid."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "كم يستغرق تنفيذ نظام الأتمتة؟",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "نبدأ بتحليل مجاني ونسلّم النظام خلال 7-21 يوماً حسب تعقيد المشروع، مع اختبار شامل قبل التسليم."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "هل تعملون مع جميع القطاعات؟",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "نعم، نخدم أكثر من 8 قطاعات: العيادات والمستشفيات، العقارات والتطوير، المطاعم والكافيهات، التجارة الإلكترونية، التعليم والتدريب، السيارات، الصحة واللياقة، وشركات الخدمات."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "ما هي الباقات المتاحة وأسعارها؟",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "نقدم 3 باقات: Starter للشركات الناشئة، Growth للشركات المتنامية (الأكثر شيوعاً)، وEnterprise للشركات الكبيرة. جميع المشاريع مخصصة — تواصل معنا لتسعير يناسب ميزانيتك."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "هل يعمل واتساب بوت مع العيادات الطبية؟",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "نعم، نبني أنظمة واتساب AI متخصصة للعيادات تشمل: حجز المواعيد التلقائي 24/7، إرسال تذكيرات للمرضى قبل الموعد بـ 24 ساعة، والرد الفوري على الاستفسارات — مما يقلل المكالمات اليدوية بنسبة 80% ويزيد الحجوزات 3 أضعاف."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "هل يمكن أتمتة المبيعات عبر واتساب في السعودية؟",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "نعم، MADAR متخصصة في بناء أنظمة مبيعات مؤتمتة عبر واتساب للشركات السعودية — من استقبال العميل المحتمل، إلى التأهيل، وإرسال العروض، وإغلاق الصفقة تلقائياً."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "كم تكلفة بوت واتساب للأعمال في السعودية؟",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "تختلف التكلفة حسب حجم الرسائل، مسار البيع، وعدد التكاملات المطلوبة. نقدم خريطة نمو مجانية لتحديد أعلى أتمتة أثراً قبل التسعير. تواصل معنا عبر واتساب على +966546666005."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "ما الفرق بين MADAR والشركات الأخرى للأتمتة؟",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "MADAR تبني أنظمة مخصصة بالكامل لعملك — وليس حلولاً جاهزة. نضمن النتائج خلال 30 يوماً ونقدم دعماً مستمراً. فريقنا متخصص في السوق السعودي والمحتوى العربي."
-              }
-            }
-          ]
-        }
-      ]
-    }
+        ]
+      }
     </script>
   </head>
   <body>
-    <script>
-      (function () {
-        var isPortal = /^\/(admin|client|solar)(\/|$)/.test(window.location.pathname)
-        if (!isPortal) return
-        document.documentElement.style.setProperty('--madar-preloader-bg', 'linear-gradient(135deg, #f8fcff 0%, #eef9ff 48%, #f7fbff 100%)')
-        document.documentElement.style.setProperty('--madar-preloader-grid', 'linear-gradient(rgba(0,149,255,0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(0,149,255,0.055) 1px, transparent 1px)')
-        document.documentElement.style.setProperty('--madar-preloader-brand', '#0f172a')
-        document.documentElement.style.setProperty('--madar-preloader-muted', '#64748b')
-        document.documentElement.style.setProperty('--madar-preloader-glow', 'rgba(0,191,255,0.16)')
-        document.documentElement.style.setProperty('--madar-preloader-logo-filter', 'drop-shadow(0 12px 24px rgba(15,84,122,0.12))')
-        document.documentElement.style.setProperty('--madar-preloader-public-copy', 'none')
-        document.documentElement.style.setProperty('--madar-preloader-portal-copy', 'inline')
-        document.documentElement.style.setProperty('--madar-preloader-chrome', 'none')
-      })()
-    </script>
-    <div id="root">
-      <!-- Pre-JS loading screen — replaced instantly when React mounts -->
-      <div id="pre-loader" style="
-        position:fixed;inset:0;background:var(--madar-preloader-bg,#080C14);
-        display:flex;flex-direction:column;align-items:center;justify-content:center;
-        gap:32px;z-index:9999;font-family:'Sora',system-ui,sans-serif;
-        background-image:var(--madar-preloader-grid,none);background-size:38px 38px;
-      ">
-        <!-- Ambient glow -->
-        <div style="
-          position:absolute;top:35%;left:50%;transform:translate(-50%,-50%);
-          width:500px;height:500px;border-radius:50%;
-          background:radial-gradient(circle,var(--madar-preloader-glow,rgba(34,211,238,0.07)) 0%,transparent 65%);
-          filter:blur(60px);pointer-events:none;
-        "></div>
-        <!-- Logo row -->
-        <div style="display:var(--madar-preloader-chrome,flex);align-items:center;gap:12px;position:relative;">
-          <img src="/logo-main.png" alt="Madar"
-            style="height:48px;width:auto;object-fit:contain;filter:var(--madar-preloader-logo-filter,drop-shadow(0 0 16px rgba(34,211,238,0.4)));"
-            onerror="this.style.display='none'" />
-          <span style="font-size:24px;font-weight:700;letter-spacing:-0.3px;line-height:1;">
-            <span style="color:var(--madar-preloader-brand,#fff);">Madar</span><span style="color:#22D3EE;">.software</span>
-          </span>
-        </div>
-        <!-- Spinner -->
-        <div style="display:var(--madar-preloader-chrome,block);position:relative;width:44px;height:44px;">
-          <div style="
-            position:absolute;inset:0;border-radius:50%;
-            border:2px solid rgba(34,211,238,0.1);
-          "></div>
-          <div style="
-            position:absolute;inset:0;border-radius:50%;
-            border:2px solid transparent;border-top-color:#22D3EE;
-            animation:preload-spin 0.9s linear infinite;
-          "></div>
-          <div style="
-            position:absolute;inset:6px;border-radius:50%;
-            border:2px solid transparent;border-top-color:rgba(99,102,241,0.5);
-            animation:preload-spin 1.4s linear infinite reverse;
-          "></div>
-        </div>
-        <p style="color:var(--madar-preloader-muted,rgba(71,85,105,0.85));font-size:13px;font-family:'Tajawal',sans-serif;">
-          <span style="display:var(--madar-preloader-public-copy,inline);">جاري التحميل...</span>
-          <span style="display:var(--madar-preloader-portal-copy,none);">جاري تجهيز اللوحة...</span>
-        </p>
-      </div>
-      <style>
-        @keyframes preload-spin { to { transform: rotate(360deg); } }
-      </style>
-    </div>
-    <script type="module" src="/src/main.tsx"></script>
-    <script>
-      // Remove pre-loader once React mounts
-      document.addEventListener('DOMContentLoaded', function() {
-        const observer = new MutationObserver(function() {
-          const root = document.getElementById('root')
-          const loader = document.getElementById('pre-loader')
-          if (root && loader && root.children.length > 1) {
-            loader.style.transition = 'opacity 0.4s ease'
-            loader.style.opacity = '0'
-            setTimeout(function() { if (loader.parentNode) loader.parentNode.removeChild(loader) }, 400)
-            observer.disconnect()
-          }
-        })
-        observer.observe(document.getElementById('root'), { childList: true })
-      })
-    </script>
-
-    <!-- ══════════════════════════════════════════════════
-         NOSCRIPT FALLBACK — مرئي لمحركات البحث التي لا تشغّل JS
-         هذا المحتوى يُفهرسه قوقل ويرفع تقييم SEO للموقع
-    ══════════════════════════════════════════════════ -->
+    <div id="root"></div>
     <noscript>
-      <div style="font-family: 'Cairo', 'Tajawal', Arial, sans-serif; direction: rtl; background: #050810; color: #ffffff; padding: 40px 24px; max-width: 1200px; margin: 0 auto;">
-
-        <!-- الهيدر -->
-        <header style="text-align: center; padding: 60px 0 40px;">
-          <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 16px; color: #00BFFF;">
-            MADAR — حوّل رسائل ومكالمات شركتك إلى موظف مبيعات يعمل 24/7
-          </h1>
-          <p style="font-size: 1.2rem; color: rgba(255,255,255,0.75); max-width: 700px; margin: 0 auto 24px; line-height: 1.8;">
-            نركّب مساعد AI يرد على واتساب والمكالمات، يحجز المواعيد، يتابع المهتمين، ويحوّل التواصل اليومي إلى حجوزات ومبيعات.
-            شركة سعودية تبني أنظمة تشغيل ومبيعات للشركات المحلية. جدة، المملكة العربية السعودية.
-            اكتشف <a href="#services" style="color: #00BFFF; text-decoration: underline;">خدماتنا في الذكاء الاصطناعي</a>،
-            أو تعرّف على <a href="#how-it-works" style="color: #00BFFF; text-decoration: underline;">آلية عملنا</a>،
-            أو <a href="#contact" style="color: #00BFFF; text-decoration: underline;">احصل على خريطة نمو مجانية</a> الآن.
-          </p>
-          <p style="font-size: 1rem; color: rgba(255,255,255,0.5);">
-            رد وحجز ومتابعة من واتساب والمكالمات | خريطة نمو مجانية | +966 54 666 6005
-          </p>
-          <p style="font-size: 0.85rem; color: rgba(255,255,255,0.35); max-width: 650px; margin: 16px auto 0; line-height: 1.8;">
-            وفقاً لـ <a href="https://www.mckinsey.com/capabilities/mckinsey-digital/our-insights/the-economic-potential-of-generative-ai" target="_blank" rel="noopener noreferrer" style="color: rgba(0,191,255,0.6);">McKinsey Global Institute</a>،
-            يمكن للأتمتة توفير حتى 30% من تكاليف التشغيل. وتُشير
-            <a href="https://www.gartner.com/en/information-technology/insights/artificial-intelligence" target="_blank" rel="noopener noreferrer" style="color: rgba(0,191,255,0.6);">Gartner</a>
-            إلى أن 80% من الشركات ستعتمد الذكاء الاصطناعي بحلول 2026. وتؤكد
-            <a href="https://hbr.org/2023/04/how-generative-ai-is-changing-creative-work" target="_blank" rel="noopener noreferrer" style="color: rgba(0,191,255,0.6);">Harvard Business Review</a>
-            أن الشركات التي تتبنى الأتمتة مبكراً تحقق ميزة تنافسية مستدامة.
-          </p>
-        </header>
-
-        <main>
-
-          <!-- قسم الخدمات -->
-          <section style="padding: 60px 0;" id="services">
-            <h2 style="font-size: 2rem; font-weight: 700; text-align: center; margin-bottom: 16px; color: #00BFFF;">
-              خدماتنا في أتمتة الأعمال بالذكاء الاصطناعي
-            </h2>
-            <p style="text-align: center; color: rgba(255,255,255,0.55); margin-bottom: 40px; font-size: 1rem;">
-              تعرّف على <a href="#how-it-works" style="color: #00BFFF; text-decoration: underline;">آلية تنفيذ مشروعك</a> أو
-              <a href="#industries" style="color: #00BFFF; text-decoration: underline;">القطاعات التي نخدمها</a> أو
-              <a href="#contact" style="color: #00BFFF; text-decoration: underline;">تواصل معنا مباشرة</a>.
-            </p>
-
-            <article style="margin-bottom: 32px; padding: 24px; background: rgba(0,191,255,0.05); border: 1px solid rgba(0,191,255,0.15); border-radius: 16px;">
-              <h3 style="font-size: 1.3rem; font-weight: 700; color: #00BFFF; margin-bottom: 12px;">
-                1. وكلاء ذكاء اصطناعي للعملاء — AI Customer Agents
-              </h3>
-              <p style="color: rgba(255,255,255,0.75); line-height: 1.8;">
-                ردود فورية، ذكية، وشخصية على مدار الساعة 24/7. وكيل AI يرد على كل استفسار في أقل من ثانية،
-                ويتعامل مع الاعتراضات، ويوجّه العميل نحو الشراء. يدعم العربية والإنجليزية ومتكامل مع CRM.
-                الأكثر طلباً من عملائنا في السعودية.
-              </p>
-            </article>
-
-            <article style="margin-bottom: 32px; padding: 24px; background: rgba(6,182,212,0.05); border: 1px solid rgba(6,182,212,0.15); border-radius: 16px;">
-              <h3 style="font-size: 1.3rem; font-weight: 700; color: #06B6D4; margin-bottom: 12px;">
-                2. أتمتة واتساب الذكية — Smart WhatsApp Automation
-              </h3>
-              <p style="color: rgba(255,255,255,0.75); line-height: 1.8;">
-                نردّ على عملائك في واتساب تلقائياً — من أول رسالة وحتى إتمام الحجز والمتابعة.
-                ردود تلقائية 24 ساعة، متابعة مبيعات، وتحليلات حية. حل مثالي للعيادات والعقارات
-                والمطاعم والتجارة الإلكترونية في المملكة العربية السعودية.
-              </p>
-            </article>
-
-            <article style="margin-bottom: 32px; padding: 24px; background: rgba(0,153,204,0.05); border: 1px solid rgba(0,153,204,0.15); border-radius: 16px;">
-              <h3 style="font-size: 1.3rem; font-weight: 700; color: #0099CC; margin-bottom: 12px;">
-                3. نظام حجز المواعيد بالذكاء الاصطناعي — AI Appointment Booking
-              </h3>
-              <p style="color: rgba(255,255,255,0.75); line-height: 1.8;">
-                عملاؤك يحجزون مواعيدهم تلقائياً عبر واتساب — التذكير، إعادة الجدولة، والتأكيد يحدث بلا موظفين.
-                حجز 24/7، تذكير تلقائي قبل الموعد، تقليل الغياب بنسبة 80%.
-                مثالي للعيادات الطبية، صالونات التجميل، والمراكز التدريبية.
-              </p>
-            </article>
-
-            <article style="margin-bottom: 32px; padding: 24px; background: rgba(21,101,192,0.05); border: 1px solid rgba(21,101,192,0.15); border-radius: 16px;">
-              <h3 style="font-size: 1.3rem; font-weight: 700; color: #4A9EFF; margin-bottom: 12px;">
-                4. أتمتة إدارة علاقات العملاء CRM — CRM Automation
-              </h3>
-              <p style="color: rgba(255,255,255,0.75); line-height: 1.8;">
-                تسجيل تلقائي للعملاء، متابعة المبيعات، وتحليل سلوك العملاء في لوحة تحكم واحدة.
-                إدخال بيانات تلقائي، تقارير مبيعات تفصيلية، تقسيم العملاء لشرائح، ومتابعة pipeline المبيعات.
-              </p>
-            </article>
-
-            <article style="margin-bottom: 32px; padding: 24px; background: rgba(6,182,212,0.05); border: 1px solid rgba(6,182,212,0.15); border-radius: 16px;">
-              <h3 style="font-size: 1.3rem; font-weight: 700; color: #06B6D4; margin-bottom: 12px;">
-                5. مساعد المبيعات بالذكاء الاصطناعي — AI Sales Assistant
-              </h3>
-              <p style="color: rgba(255,255,255,0.75); line-height: 1.8;">
-                وكيل مبيعات ذكي يتابع العملاء المحتملين تلقائياً، يرسل عروضاً مخصصة، ويغلق الصفقات —
-                موظف مبيعات لا يتعب ولا ينام. متابعة تلقائية، عروض مخصصة، وتحليل pipeline المبيعات.
-              </p>
-            </article>
-
-            <article style="margin-bottom: 32px; padding: 24px; background: rgba(124,58,237,0.05); border: 1px solid rgba(124,58,237,0.15); border-radius: 16px;">
-              <h3 style="font-size: 1.3rem; font-weight: 700; color: #A78BFA; margin-bottom: 12px;">
-                6. تطبيقات الجوال iOS وAndroid — Mobile App Development
-              </h3>
-              <p style="color: rgba(255,255,255,0.75); line-height: 1.8;">
-                نبني تطبيقات جوال احترافية لعملك على iOS وAndroid — سريعة، جميلة، ومتكاملة مع أنظمة AI وواتساب.
-                واجهة مستخدم احترافية، ربط كامل بأنظمة الذكاء الاصطناعي، وتجربة مستخدم استثنائية.
-              </p>
-            </article>
-          </section>
-
-          <!-- قسم القطاعات -->
-          <section style="padding: 60px 0;" id="industries">
-            <h2 style="font-size: 2rem; font-weight: 700; text-align: center; margin-bottom: 16px; color: #00BFFF;">
-              القطاعات التي نخدمها في المملكة العربية السعودية
-            </h2>
-            <p style="text-align: center; color: rgba(255,255,255,0.6); margin-bottom: 40px;">
-              نطبّق حلول أتمتة الأعمال بالذكاء الاصطناعي على أكثر من 8 قطاعات
-            </p>
-
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
-              <div style="padding: 20px; background: rgba(0,191,255,0.05); border: 1px solid rgba(0,191,255,0.15); border-radius: 12px;">
-                <h3 style="color: #00BFFF; font-weight: 700; margin-bottom: 8px;">العيادات والمستشفيات</h3>
-                <p style="color: rgba(255,255,255,0.65); font-size: 0.9rem; line-height: 1.7;">
-                  حجز مواعيد تلقائي 24/7 عبر واتساب، ردود فورية على استفسارات المرضى،
-                  تذكيرات تلقائية قبل الموعد بـ 24 ساعة. يزيد الحجوزات 3 أضعاف ويقلل المكالمات اليدوية 80%.
-                </p>
-              </div>
-
-              <div style="padding: 20px; background: rgba(74,158,255,0.05); border: 1px solid rgba(74,158,255,0.15); border-radius: 12px;">
-                <h3 style="color: #4A9EFF; font-weight: 700; margin-bottom: 8px;">العقارات والتطوير</h3>
-                <p style="color: rgba(255,255,255,0.65); font-size: 0.9rem; line-height: 1.7;">
-                  وكيل عقاري ذكي يعمل طوال اليوم — يستقبل المحتملين، يؤهّلهم،
-                  ويجدول الجولات تلقائياً. متابعة فورية للعملاء المحتملين وتقليل وقت الاستجابة.
-                </p>
-              </div>
-
-              <div style="padding: 20px; background: rgba(251,146,60,0.05); border: 1px solid rgba(251,146,60,0.15); border-radius: 12px;">
-                <h3 style="color: #FB923C; font-weight: 700; margin-bottom: 8px;">المطاعم والكافيهات</h3>
-                <p style="color: rgba(255,255,255,0.65); font-size: 0.9rem; line-height: 1.7;">
-                  استقبال طلبات واتساب تلقائياً، إدارة الحجوزات، وإرسال العروض اليومية.
-                  نظام متكامل يقلل أخطاء الطلبات ويزيد رضا العملاء.
-                </p>
-              </div>
-
-              <div style="padding: 20px; background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.15); border-radius: 12px;">
-                <h3 style="color: #10B981; font-weight: 700; margin-bottom: 8px;">التجارة الإلكترونية</h3>
-                <p style="color: rgba(255,255,255,0.65); font-size: 0.9rem; line-height: 1.7;">
-                  رد تلقائي على استفسارات المنتجات، متابعة الطلبات، وإرسال عروض مخصصة.
-                  زيادة مبيعات التجارة الإلكترونية عبر أتمتة خدمة العملاء.
-                </p>
-              </div>
-
-              <div style="padding: 20px; background: rgba(139,92,246,0.05); border: 1px solid rgba(139,92,246,0.15); border-radius: 12px;">
-                <h3 style="color: #8B5CF6; font-weight: 700; margin-bottom: 8px;">التعليم والتدريب</h3>
-                <p style="color: rgba(255,255,255,0.65); font-size: 0.9rem; line-height: 1.7;">
-                  تسجيل الطلاب تلقائياً، تذكيرات المحاضرات والجلسات، ومتابعة أداء الطلاب.
-                  وكيل تعليمي ذكي يجيب على أسئلة الطلاب 24 ساعة.
-                </p>
-              </div>
-
-              <div style="padding: 20px; background: rgba(245,158,11,0.05); border: 1px solid rgba(245,158,11,0.15); border-radius: 12px;">
-                <h3 style="color: #F59E0B; font-weight: 700; margin-bottom: 8px;">الصحة واللياقة البدنية</h3>
-                <p style="color: rgba(255,255,255,0.65); font-size: 0.9rem; line-height: 1.7;">
-                  حجز الجلسات التدريبية، متابعة خطط التغذية، وإرسال تذكيرات الاشتراكات.
-                  أتمتة كاملة لصالات الجيم ومراكز اللياقة البدنية.
-                </p>
-              </div>
-
-              <div style="padding: 20px; background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.15); border-radius: 12px;">
-                <h3 style="color: #EF4444; font-weight: 700; margin-bottom: 8px;">السيارات</h3>
-                <p style="color: rgba(255,255,255,0.65); font-size: 0.9rem; line-height: 1.7;">
-                  رد تلقائي على استفسارات السيارات، تحديد مواعيد التجربة والصيانة،
-                  ومتابعة العملاء المحتملين في معارض السيارات.
-                </p>
-              </div>
-
-              <div style="padding: 20px; background: rgba(20,184,166,0.05); border: 1px solid rgba(20,184,166,0.15); border-radius: 12px;">
-                <h3 style="color: #14B8A6; font-weight: 700; margin-bottom: 8px;">شركات الخدمات</h3>
-                <p style="color: rgba(255,255,255,0.65); font-size: 0.9rem; line-height: 1.7;">
-                  أتمتة الاستفسارات، إرسال العروض التلقائية، وإدارة طلبات الخدمة.
-                  حل متكامل لشركات الخدمات المهنية والاستشارات في السعودية.
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <!-- قسم كيف نعمل -->
-          <section style="padding: 60px 0;" id="how-it-works">
-            <h2 style="font-size: 2rem; font-weight: 700; text-align: center; margin-bottom: 40px; color: #00BFFF;">
-              كيف نبني نظام الأتمتة لعملك — 3 خطوات فقط
-            </h2>
-
-            <div style="display: flex; flex-direction: column; gap: 24px;">
-              <div style="padding: 28px; background: rgba(0,191,255,0.05); border: 1px solid rgba(0,191,255,0.2); border-radius: 16px;">
-                <h3 style="color: #00BFFF; font-weight: 700; font-size: 1.2rem; margin-bottom: 12px;">
-                  الخطوة 01 — تحليل عملك (30 دقيقة مجاناً)
-                </h3>
-                <p style="color: rgba(255,255,255,0.75); line-height: 1.8;">
-                  نبدأ بجلسة استراتيجية مجانية نفهم فيها عمليات شركتك، نقاط الضعف، وأهدافك.
-                  نحدد أين يمكن للذكاء الاصطناعي أن يحقق أكبر تأثير ونضع خطة واضحة قابلة للقياس.
-                </p>
-              </div>
-
-              <div style="padding: 28px; background: rgba(0,153,204,0.05); border: 1px solid rgba(0,153,204,0.2); border-radius: 16px;">
-                <h3 style="color: #0099CC; font-weight: 700; font-size: 1.2rem; margin-bottom: 12px;">
-                  الخطوة 02 — تصميم وبناء النظام (7–14 يوم)
-                </h3>
-                <p style="color: rgba(255,255,255,0.75); line-height: 1.8;">
-                  فريقنا يصمم ويبني نظام AI مخصص لعملك — من الكود إلى الواجهات والتكاملات.
-                  كل شيء يُبنى ويُختبر بشكل شامل قبل التسليم. برمجة مخصصة بالكامل لعملك.
-                </p>
-              </div>
-
-              <div style="padding: 28px; background: rgba(0,191,255,0.05); border: 1px solid rgba(0,191,255,0.2); border-radius: 16px;">
-                <h3 style="color: #00BFFF; font-weight: 700; font-size: 1.2rem; margin-bottom: 12px;">
-                  الخطوة 03 — الإطلاق والأتمتة (مستمر)
-                </h3>
-                <p style="color: rgba(255,255,255,0.75); line-height: 1.8;">
-                  نطلق النظام ونتابع أداءه، ندرّب فريقك، ونوفر دعماً مستمراً لضمان أفضل النتائج.
-                  نظامك يشتغل حتى وأنت نايم — إطلاق تدريجي آمن، تدريب كامل للفريق، ومراقبة مستمرة.
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <!-- قسم الأسئلة الشائعة -->
-          <section style="padding: 60px 0;" id="faq">
-            <h2 style="font-size: 2rem; font-weight: 700; text-align: center; margin-bottom: 40px; color: #00BFFF;">
-              الأسئلة الشائعة — أتمتة الأعمال بالذكاء الاصطناعي
-            </h2>
-
-            <div style="display: flex; flex-direction: column; gap: 20px;">
-              <div style="padding: 24px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;">
-                <h3 style="color: #ffffff; font-weight: 700; margin-bottom: 8px;">هل يعمل واتساب بوت مع العيادات الطبية؟</h3>
-                <p style="color: rgba(255,255,255,0.65); line-height: 1.8;">
-                  نعم، نبني أنظمة واتساب AI متخصصة للعيادات تشمل: حجز المواعيد التلقائي 24/7،
-                  تذكيرات المرضى قبل الموعد، والرد الفوري على الاستفسارات —
-                  مما يقلل المكالمات اليدوية 80% ويزيد الحجوزات 3 أضعاف.
-                </p>
-              </div>
-
-              <div style="padding: 24px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;">
-                <h3 style="color: #ffffff; font-weight: 700; margin-bottom: 8px;">كم يستغرق تنفيذ نظام الأتمتة؟</h3>
-                <p style="color: rgba(255,255,255,0.65); line-height: 1.8;">
-                  نبدأ بتحليل مجاني ونسلّم النظام خلال 7-21 يوماً حسب تعقيد المشروع،
-                  مع اختبار شامل قبل التسليم.
-                </p>
-              </div>
-
-              <div style="padding: 24px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;">
-                <h3 style="color: #ffffff; font-weight: 700; margin-bottom: 8px;">هل يمكن أتمتة المبيعات عبر واتساب في السعودية؟</h3>
-                <p style="color: rgba(255,255,255,0.65); line-height: 1.8;">
-                  نعم، MADAR متخصصة في بناء أنظمة مبيعات مؤتمتة عبر واتساب للشركات السعودية —
-                  من استقبال العميل المحتمل، إلى التأهيل، وإرسال العروض، وإغلاق الصفقة تلقائياً.
-                </p>
-              </div>
-
-              <div style="padding: 24px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;">
-                <h3 style="color: #ffffff; font-weight: 700; margin-bottom: 8px;">ما هي القطاعات التي تخدمها MADAR؟</h3>
-                <p style="color: rgba(255,255,255,0.65); line-height: 1.8;">
-                  نخدم أكثر من 8 قطاعات: العيادات والمستشفيات، العقارات والتطوير، المطاعم والكافيهات،
-                  التجارة الإلكترونية، التعليم والتدريب، السيارات، الصحة واللياقة، وشركات الخدمات.
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <!-- قسم التواصل -->
-          <section style="padding: 60px 0; text-align: center;" id="contact">
-            <h2 style="font-size: 2rem; font-weight: 700; margin-bottom: 24px; color: #00BFFF;">
-              تواصل معنا — خريطة نمو مجانية
-            </h2>
-            <p style="color: rgba(255,255,255,0.7); font-size: 1.1rem; margin-bottom: 32px; line-height: 1.8;">
-              هل تريد معرفة أين تضيع الرسائل والمكالمات والحجوزات؟
-              تواصل معنا الآن للحصول على خريطة نمو مجانية بلا التزام.
-            </p>
-            <div style="display: flex; flex-direction: column; gap: 12px; align-items: center;">
-              <p style="color: #ffffff; font-size: 1rem;">
-                واتساب: <a href="https://wa.me/966546666005" style="color: #00BFFF; text-decoration: none;">+966 54 666 6005</a>
-              </p>
-              <p style="color: #ffffff; font-size: 1rem;">
-                البريد الإلكتروني: <a href="mailto:info@madar.ai" style="color: #00BFFF; text-decoration: none;">info@madar.ai</a>
-              </p>
-              <p style="color: rgba(255,255,255,0.6); font-size: 0.95rem;">
-                الموقع: جدة، المملكة العربية السعودية
-              </p>
-              <p style="color: rgba(255,255,255,0.6); font-size: 0.95rem;">
-                انستغرام: <a href="https://www.instagram.com/madar.software" style="color: #00BFFF; text-decoration: none;">@madar.software</a>
-                &nbsp;|&nbsp;
-                تيك توك: <a href="https://www.tiktok.com/@madar.solution" style="color: #00BFFF; text-decoration: none;">@madar.solution</a>
-              </p>
-            </div>
-          </section>
-
-        </main>
-
-        <footer style="text-align: center; padding: 40px 0; border-top: 1px solid rgba(255,255,255,0.08); margin-top: 40px; color: rgba(255,255,255,0.4); font-size: 0.875rem;">
-          <p>&copy; 2024–2026 MADAR AI Automation. جميع الحقوق محفوظة.</p>
-          <p style="margin-top: 8px;">
-            <a href="https://madar.software/privacy" style="color: rgba(255,255,255,0.5); text-decoration: none; margin-left: 16px;">سياسة الخصوصية</a>
-            <a href="https://madar.software/terms" style="color: rgba(255,255,255,0.5); text-decoration: none;">شروط الاستخدام</a>
-          </p>
-        </footer>
-
-      </div>
+      <main style="font-family: Cairo, Tahoma, sans-serif; direction: rtl; padding: 32px; max-width: 860px; margin: auto; line-height: 1.9;">
+        <h1>مدار OS للمغاسل</h1>
+        <p>
+          منصة SaaS عربية لتشغيل مغاسل السيارات: لوحة تشغيل السيارات، QR تسجيل ذاتي،
+          شاشة عرض Live، عملاء وولاء، مالية وVAT، تقارير، ومساعد AI متخصص.
+        </p>
+        <p>
+          لتجربة النظام تواصل عبر واتساب:
+          <a href="https://wa.me/966546666005">+966 54 666 6005</a>
+        </p>
+      </main>
     </noscript>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

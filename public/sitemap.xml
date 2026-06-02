@@ -2,79 +2,35 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
-
-  <!-- الصفحة الرئيسية -->
   <url>
     <loc>https://madar.software/</loc>
-    <lastmod>2026-05-20</lastmod>
+    <lastmod>2026-06-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://madar.software/" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://madar.software/" />
+    <xhtml:link rel="alternate" hreflang="ar-SA" href="https://madar.software/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://madar.software/" />
     <image:image>
       <image:loc>https://madar.software/og-image.jpg</image:loc>
-      <image:title>MADAR AI — أتمتة الأعمال بالذكاء الاصطناعي</image:title>
-      <image:caption>شركة MADAR لأتمتة الأعمال بالذكاء الاصطناعي — جدة، المملكة العربية السعودية</image:caption>
+      <image:title>مدار OS للمغاسل</image:title>
+      <image:caption>نظام تشغيل مغاسل السيارات: QR، لوحة تشغيل، عملاء، مالية وتقارير.</image:caption>
     </image:image>
   </url>
-
-  <!-- قسم الخدمات -->
   <url>
-    <loc>https://madar.software/#services</loc>
-    <lastmod>2026-05-20</lastmod>
+    <loc>https://madar.software/trial</loc>
+    <lastmod>2026-06-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
-
-  <!-- قسم كيف نعمل -->
-  <url>
-    <loc>https://madar.software/#how-it-works</loc>
-    <lastmod>2026-05-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <!-- قسم دراسات الحالة -->
-  <url>
-    <loc>https://madar.software/#case-studies</loc>
-    <lastmod>2026-05-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <!-- قسم القطاعات -->
-  <url>
-    <loc>https://madar.software/#industries</loc>
-    <lastmod>2026-05-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <!-- قسم التواصل -->
-  <url>
-    <loc>https://madar.software/#contact</loc>
-    <lastmod>2026-05-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <!-- سياسة الخصوصية -->
   <url>
     <loc>https://madar.software/privacy</loc>
-    <lastmod>2026-05-20</lastmod>
+    <lastmod>2026-06-03</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://madar.software/privacy" />
   </url>
-
-  <!-- شروط الاستخدام -->
   <url>
     <loc>https://madar.software/terms</loc>
-    <lastmod>2026-05-20</lastmod>
+    <lastmod>2026-06-03</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://madar.software/terms" />
   </url>
-
 </urlset>
