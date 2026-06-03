@@ -115,9 +115,9 @@ export const PlatformHome = () => {
 
         {/* Orbs */}
         <div ref={orb1Ref} className="absolute pointer-events-none"
-          style={{ top: '12%', left: '8%', width: 520, height: 420, background: 'radial-gradient(ellipse, rgba(0,191,255,0.08) 0%, transparent 70%)', filter: 'blur(55px)' }} />
+          style={{ top: '12%', left: '8%', width: 520, height: 420, background: 'radial-gradient(ellipse, rgba(0,191,255,0.08) 0%, transparent 70%)', filter: 'blur(55px)', willChange: 'transform' }} />
         <div ref={orb2Ref} className="absolute pointer-events-none"
-          style={{ bottom: '18%', right: '6%', width: 420, height: 360, background: 'radial-gradient(ellipse, rgba(16,185,129,0.07) 0%, transparent 70%)', filter: 'blur(55px)' }} />
+          style={{ bottom: '18%', right: '6%', width: 420, height: 360, background: 'radial-gradient(ellipse, rgba(16,185,129,0.07) 0%, transparent 70%)', filter: 'blur(55px)', willChange: 'transform' }} />
 
         <div className="relative z-10 max-w-4xl mx-auto px-4">
           {/* Badge */}
@@ -273,7 +273,7 @@ export const PlatformHome = () => {
             {/* Animated connector line */}
             <div className="connector-line hidden md:block absolute top-[44px] pointer-events-none"
               style={{
-                insetInlineStart: '16%', insetInlineEnd: '16%', height: 1,
+                left: '16%', right: '16%', height: 1,
                 backgroundImage: 'repeating-linear-gradient(90deg, rgba(0,191,255,0.35) 0, rgba(0,191,255,0.35) 7px, transparent 7px, transparent 16px)',
               }} />
 

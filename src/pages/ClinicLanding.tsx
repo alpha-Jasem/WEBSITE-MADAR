@@ -225,14 +225,15 @@ export const ClinicLanding = () => {
               </div>
             </motion.div>
 
-            {/* Right — Clinic Dashboard Mockup (GSAP float) */}
+            {/* Right — Clinic Dashboard Mockup (GSAP float on wrapper) */}
             <motion.div
-              ref={mockupRef}
               initial={{ opacity: 0, x: 40 }}
               animate={heroInView ? { opacity: 1, x: 0 } : {}}
               transition={{ duration: 0.9, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
             >
-              <ClinicDashMockup />
+              <div ref={mockupRef} style={{ willChange: 'transform' }}>
+                <ClinicDashMockup />
+              </div>
             </motion.div>
           </div>
         </div>
@@ -315,7 +316,7 @@ export const ClinicLanding = () => {
             {/* Animated connector — drawn by GSAP on scroll */}
             <div className="nora-connector hidden md:block absolute top-[44px] pointer-events-none"
               style={{
-                insetInlineStart: '16%', insetInlineEnd: '16%', height: 1,
+                left: '16%', right: '16%', height: 1,
                 backgroundImage: `repeating-linear-gradient(90deg, ${ACCENT}40 0, ${ACCENT}40 7px, transparent 7px, transparent 16px)`,
               }} />
 
