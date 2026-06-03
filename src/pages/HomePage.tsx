@@ -146,8 +146,8 @@ export const HomePage = () => {
     const ctx = gsap.context(() => {
       gsap.fromTo(
         heroImageRef.current,
-        { scale: 1.08 },
-        { scale: 1, duration: 2.2, ease: 'power3.out' },
+        { autoAlpha: 0.92 },
+        { autoAlpha: 1, duration: 1.2, ease: 'power3.out' },
       )
       gsap.from('.hero-copy > *', {
         y: 34,
@@ -320,28 +320,30 @@ export const HomePage = () => {
       </AnimatePresence>
 
       <main>
-        <section className="relative min-h-screen overflow-hidden bg-[#071322]">
+        <section className="relative min-h-screen overflow-hidden bg-white">
           <img
             ref={heroImageRef}
             src="/madar-carwash-hero-real.png"
             alt="Madar OS car wash hero"
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-contain object-center"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,19,34,0.78)_0%,rgba(7,19,34,0.34)_36%,rgba(7,19,34,0.08)_70%)] lg:bg-[linear-gradient(90deg,rgba(7,19,34,0.72)_0%,rgba(7,19,34,0.24)_34%,rgba(7,19,34,0)_70%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.94)_0%,rgba(255,255,255,0.78)_31%,rgba(255,255,255,0.26)_52%,rgba(255,255,255,0)_72%)]" />
+          <div className="absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-white/80 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-white/70 to-transparent" />
           <div className="hero-pulse absolute bottom-[24%] left-[26%] hidden h-20 w-20 rounded-full border-2 border-[#00BFFF]/70 bg-[#00BFFF]/10 shadow-[0_0_55px_rgba(0,191,255,0.55)] lg:block" />
 
-          <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl items-end px-4 pb-12 pt-28 sm:px-6 lg:items-center lg:px-8 lg:pb-0">
-            <div className="hero-copy max-w-2xl rounded-[32px] border border-white/14 bg-[#071322]/38 p-6 text-white shadow-[0_34px_90px_rgba(0,0,0,0.30)] backdrop-blur-md sm:p-8 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-0">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/12 px-4 py-2 text-xs font-black text-[#BDEFFF] font-cairo backdrop-blur">
+          <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl items-center px-4 pb-12 pt-28 sm:px-6 lg:px-8">
+            <div className="hero-copy max-w-2xl text-[#0D1B3E]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/78 px-5 py-2.5 text-sm font-black text-[#0D1B3E] shadow-sm backdrop-blur-xl font-cairo">
                 <span className="h-2 w-2 rounded-full bg-[#00BFFF]" />
                 نظام تشغيل ذكي للمغاسل
               </div>
-              <h1 className="mt-6 text-4xl font-black leading-[1.12] tracking-normal font-cairo sm:text-5xl lg:text-7xl">
-                المغسلة تبدأ من المسح.
-                <span className="block text-[#8FE7FF]">والإدارة تبدأ من مدار.</span>
+              <h1 className="mt-8 text-5xl font-black leading-[1.08] tracking-normal drop-shadow-[0_2px_0_rgba(255,255,255,0.85)] font-cairo sm:text-6xl lg:text-7xl">
+                إدارة أسهل.
+                <span className="block text-[#008FE8]">مبيعات أعلى.</span>
               </h1>
-              <p className="mt-6 max-w-xl text-lg leading-9 text-white/86 font-tajawal">
-                مدار OS ينظم استقبال السيارات، أرقام الانتظار، حالة الخدمة، العملاء، المالية، والتقارير من مكان واحد مصمم ليوم العمل داخل المغسلة.
+              <p className="mt-6 max-w-xl text-xl leading-9 text-slate-700 drop-shadow-[0_1px_0_rgba(255,255,255,0.65)] font-tajawal">
+                من استقبال السيارة إلى التسليم والدفع والتقارير، كل شيء في نظام واحد ذكي وسهل الاستخدام.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
@@ -353,7 +355,7 @@ export const HomePage = () => {
                 </Link>
                 <a
                   href="#dashboard"
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/24 bg-white/12 px-6 py-4 text-base font-black text-white backdrop-blur font-cairo"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-sky-200 bg-white/82 px-6 py-4 text-base font-black text-[#0D1B3E] shadow-sm backdrop-blur-xl font-cairo"
                 >
                   شاهد الديمو الحي
                   <Monitor size={18} />
