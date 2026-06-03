@@ -13,45 +13,21 @@ gsap.registerPlugin(ScrollTrigger)
 export const PlatformHome = () => {
   const { t, language } = useLanguage()
 
-  const rootRef    = useRef<HTMLDivElement>(null)
-  const scanRef    = useRef<HTMLDivElement>(null)
-  const orb1Ref    = useRef<HTMLDivElement>(null)
-  const orb2Ref    = useRef<HTMLDivElement>(null)
-  const gridRef    = useRef<HTMLDivElement>(null)
-  const badgeRef   = useRef<HTMLDivElement>(null)
-  const h1Ref      = useRef<HTMLHeadingElement>(null)
-  const subtitleRef = useRef<HTMLParagraphElement>(null)
-  const ctasRef    = useRef<HTMLDivElement>(null)
-  const statsRef   = useRef<HTMLDivElement>(null)
+  const rootRef  = useRef<HTMLDivElement>(null)
+  const scanRef  = useRef<HTMLDivElement>(null)
+  const orb1Ref  = useRef<HTMLDivElement>(null)
+  const orb2Ref  = useRef<HTMLDivElement>(null)
 
   const scrollToProducts = () =>
     document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })
 
-  /* ─── Hero cinematic entrance ─────────────────────────── */
+  /* ─── Scan line + orb drift (GSAP continuous — no opacity:0 risk) ── */
   useEffect(() => {
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
-
-      tl.from(gridRef.current, { opacity: 0, duration: 0.7 })
-        .from(badgeRef.current, { y: -20, opacity: 0, duration: 0.4 }, '-=0.3')
-        .from(h1Ref.current!.querySelectorAll('.word-split'),
-          { y: 32, opacity: 0, stagger: 0.05, duration: 0.5 }, '-=0.2')
-        .from(subtitleRef.current, { y: 14, opacity: 0, duration: 0.38 }, '-=0.2')
-        .from(Array.from(ctasRef.current?.children ?? []),
-          { y: 12, opacity: 0, stagger: 0.08, duration: 0.32, ease: 'back.out(1.6)' }, '-=0.18')
-        .from(Array.from(statsRef.current?.children ?? []),
-          { y: 10, opacity: 0, stagger: 0.07, duration: 0.28 }, '-=0.1')
-
-      /* Scan line sweep */
-      gsap.to(scanRef.current, {
-        y: '100vh', duration: 4, repeat: -1, ease: 'none', delay: 0.8,
-      })
-
-      /* Orb drift */
+      gsap.to(scanRef.current, { y: '100vh', duration: 4, repeat: -1, ease: 'none', delay: 0.8 })
       gsap.to(orb1Ref.current, { y: -28, x: 18, duration: 5.5, repeat: -1, yoyo: true, ease: 'power1.inOut' })
       gsap.to(orb2Ref.current, { y: 22, x: -14, duration: 6.5, repeat: -1, yoyo: true, ease: 'power1.inOut', delay: 1 })
     }, rootRef)
-
     return () => ctx.revert()
   }, [])
 
@@ -101,7 +77,9 @@ export const PlatformHome = () => {
         style={{ minHeight: '100vh', paddingTop: 100, paddingBottom: 60 }}>
 
         {/* Animated grid */}
-        <div ref={gridRef} className="absolute inset-0 pointer-events-none"
+        <motion.div
+          className="absolute inset-0 pointer-events-none"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.9 }}
           style={{
             backgroundImage: 'linear-gradient(rgba(0,191,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(0,191,255,0.035) 1px, transparent 1px)',
             backgroundSize: '60px 60px',
@@ -125,8 +103,10 @@ export const PlatformHome = () => {
             {/* Text column */}
             <div className="flex flex-col items-center lg:items-start">
               {/* Badge */}
-              <div ref={badgeRef}
+              <motion.div
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-7"
+                initial={{ opacity: 0, y: -18 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
                 style={{ background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.25)' }}
               >
                 <Zap size={12} style={{ color: '#00BFFF' }} />
@@ -134,32 +114,44 @@ export const PlatformHome = () => {
                   style={{ color: '#00BFFF' }}>
                   AI Operating Systems
                 </span>
-              </div>
+              </motion.div>
 
-              {/* H1 — split words */}
-              <h1 ref={h1Ref}
+              {/* H1 — split words with Framer Motion stagger */}
+              <motion.h1
                 className={`text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight flex flex-wrap justify-center lg:justify-start gap-x-3 gap-y-1 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}
+                initial="hidden" animate="visible"
+                variants={{ visible: { transition: { staggerChildren: 0.06, delayChildren: 0.35 } } }}
               >
                 {h1Text.split(' ').map((word, i) => (
-                  <span key={i} className="word-split inline-block"
-                    style={{ color: accentWords.has(word) ? '#00BFFF' : 'white' }}>
+                  <motion.span
+                    key={i}
+                    className="inline-block"
+                    variants={{ hidden: { opacity: 0, y: 32 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } } }}
+                    style={{ color: accentWords.has(word) ? '#00BFFF' : 'white' }}
+                  >
                     {word}
-                  </span>
+                  </motion.span>
                 ))}
-              </h1>
+              </motion.h1>
 
               {/* Subtitle */}
-              <p ref={subtitleRef}
+              <motion.p
                 className={`text-lg sm:text-xl max-w-xl mb-10 leading-relaxed text-center lg:text-start ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
+                initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, delay: 0.72, ease: [0.16, 1, 0.3, 1] }}
                 style={{ color: 'rgba(255,255,255,0.5)' }}>
                 {t(
                   'منصة Madar OS — أنظمة تشغيل مبنية لكل قطاع. جاهزة للتشغيل الفوري. بدون تعقيد.',
                   'Madar OS Platform — purpose-built operating systems for every sector. Ready to run. No complexity.'
                 )}
-              </p>
+              </motion.p>
 
               {/* CTAs */}
-              <div ref={ctasRef} className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3">
+              <motion.div
+                className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3"
+                initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.88, ease: [0.16, 1, 0.3, 1] }}
+              >
                 <button
                   onClick={scrollToProducts}
                   className={`flex items-center gap-2.5 px-8 py-4 rounded-2xl text-base font-semibold text-white cursor-pointer ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
@@ -179,10 +171,14 @@ export const PlatformHome = () => {
                 >
                   {t('احجز جلسة مجانية', 'Book a Free Session')}
                 </button>
-              </div>
+              </motion.div>
 
               {/* Stats */}
-              <div ref={statsRef} className="flex flex-wrap items-center justify-center lg:justify-start gap-0 mt-8">
+              <motion.div
+                className="flex flex-wrap items-center justify-center lg:justify-start gap-0 mt-8"
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 1.05, ease: [0.16, 1, 0.3, 1] }}
+              >
                 {[
                   { value: t('٢ قطاعات', '2 Sectors'),        label: t('مغاسل، عيادات', 'Car Wash · Clinic') },
                   { value: t('٢٤/٧', '24/7'),                  label: t('ذكاء اصطناعي لا ينام', 'AI never sleeps') },
@@ -196,7 +192,7 @@ export const PlatformHome = () => {
                       style={{ color: 'rgba(255,255,255,0.32)' }}>{s.label}</div>
                   </div>
                 ))}
-              </div>
+              </motion.div>
             </div>
 
             {/* Visual column — floating product preview cards */}
