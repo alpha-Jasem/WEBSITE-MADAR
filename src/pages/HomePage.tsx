@@ -26,80 +26,122 @@ import { openWhatsAppChat } from '../lib/whatsapp'
 const adminPhone = '966546666005'
 
 const features = [
-  { icon: Gauge, title: 'لوحة تشغيل السيارات', text: 'كل سيارة تتحرك بين الاستلام، قيد الخدمة، جاهزة، وتم التسليم بزر واحد.' },
-  { icon: QrCode, title: 'QR تسجيل ذاتي', text: 'العميل يسجل نفسه ويأخذ رقم انتظار بدون ضغط على موظف الاستقبال.' },
-  { icon: Monitor, title: 'شاشة عرض Live', text: 'اعرض أرقام الدور وحالة السيارات على شاشة كبيرة داخل المغسلة.' },
-  { icon: Users, title: 'العملاء والولاء', text: 'سجل العملاء، الزيارات، المكافآت، وأفضل العملاء من مكان واحد.' },
-  { icon: BarChart3, title: 'مالية وVAT', text: 'إيراد اليوم، طرق الدفع، ضريبة القيمة المضافة، وإغلاق اليوم.' },
-  { icon: Bot, title: 'مساعد مدار AI', text: 'مساعد متخصص يشرح الصفحة ويقترح قرارات تشغيلية لصاحب المغسلة.' },
+  {
+    icon: Gauge,
+    title: 'لوحة تشغيل واضحة',
+    text: 'استقبال، قيد الخدمة، جاهزة، وتم التسليم في مسار واحد يفهمه الموظف بسرعة.',
+  },
+  {
+    icon: QrCode,
+    title: 'تسجيل ذاتي عبر QR',
+    text: 'خفف ضغط الاستقبال وخلي العميل يدخل بياناته بنفسه ويحصل على رقم انتظار واضح.',
+  },
+  {
+    icon: Monitor,
+    title: 'شاشة عرض مباشرة',
+    text: 'اعرض أرقام الدور وحالة السيارات داخل المغسلة بطريقة احترافية أمام العملاء.',
+  },
+  {
+    icon: Users,
+    title: 'عملاء وولاء',
+    text: 'اعرف العملاء المتكررين، عدد الزيارات، والمكافآت من مكان واحد بدون دفاتر.',
+  },
+  {
+    icon: BarChart3,
+    title: 'مالية وضريبة VAT',
+    text: 'تابع الإيراد، طرق الدفع، الضريبة، وإغلاق اليوم بأرقام جاهزة للقرار.',
+  },
+  {
+    icon: Bot,
+    title: 'دعم مدار AI',
+    text: 'مساعد متخصص يشرح الصفحات ويقترح خطوات عملية لصاحب المغسلة وفريقه.',
+  },
 ]
 
-const problems = [
-  { title: 'الزحمة عند الاستقبال', text: 'كل عميل يحتاج شرح وخدمة ورقم وانتظار. QR يقلل هذا الضغط من أول يوم.' },
-  { title: 'السيارات تضيع بين المراحل', text: 'بدل السؤال كل مرة: وين السيارة؟ تصبح الحالة ظاهرة للموظف والمالك.' },
-  { title: 'الإيراد آخر اليوم غير واضح', text: 'المالك يحتاج يعرف النقد، الشبكة، الضريبة، والتسليمات بدون دفاتر.' },
+const trustPoints = [
+  {
+    icon: ShieldCheck,
+    title: 'جاهز للبيع اليوم',
+    text: 'التشغيل الأساسي يعمل بدون انتظار تفعيل WhatsApp API أو بوابة الدفع.',
+  },
+  {
+    icon: CreditCard,
+    title: 'اشتراك بتحويل بنكي',
+    text: 'ابدأ بالتحويل والتفعيل اليدوي الآن، وأضف الدفع الإلكتروني لاحقاً عند الجاهزية.',
+  },
+  {
+    icon: TrendingUp,
+    title: 'مصمم لزيادة السيطرة',
+    text: 'النظام يوضح أين السيارات، أين الإيراد، ومن يحتاج متابعة في نفس اللحظة.',
+  },
+]
+
+const outcomes = [
+  'تقليل الزحام على موظف الاستقبال',
+  'رفع ثقة العميل لأنه يرى حالة سيارته بوضوح',
+  'تسريع التسليم وتقليل الأخطاء اليدوية',
+  'معرفة الإيراد والضريبة وإغلاق اليوم بدون تخمين',
 ]
 
 const flow = [
   'العميل يمسح QR أو الموظف يضيف السيارة',
-  'النظام يصدر رقم انتظار واضح مثل A-014',
-  'الموظف يحرك السيارة بين المراحل بزر واحد',
+  'مدار يصدر رقم انتظار واضح مثل A-014',
+  'الفريق يحرك السيارة بين المراحل بزر واحد',
   'العميل يرى الحالة على شاشة العرض أو صفحة الحالة',
-  'المالك يغلق اليوم بتقرير مالي واضح',
+  'المالك يغلق اليوم بتقرير مالي مرتب',
 ]
 
 const plans = [
   {
     name: 'Starter',
     price: '299',
-    note: 'للمغسلة الصغيرة التي تريد ترتيب التشغيل الأساسي.',
+    note: 'للمغسلة التي تريد ترتيب التشغيل الأساسي بسرعة وبتكلفة منخفضة.',
     cta: 'ابدأ Starter',
     points: [
       'لوحة تشغيل السيارات',
       'إضافة السيارات من الموظف',
-      'العملاء الأساسيون',
-      'مالية يومية بسيطة',
+      'سجل العملاء الأساسي',
+      'مالية يومية مبسطة',
       'تقارير تشغيل مختصرة',
-      'بدون QR ذاتي',
     ],
   },
   {
     name: 'Pro',
     price: '699',
-    badge: 'الباقة التي نوصي بها',
-    note: 'للمغسلة التي تريد تجربة عميل أسرع وواجهة تشغيل احترافية.',
+    badge: 'الأفضل لمعظم المغاسل',
+    note: 'للإدارة التي تريد تجربة عميل أسرع، شاشة عرض، وقرارات أوضح كل يوم.',
     cta: 'اطلب Pro',
     points: [
       'كل مزايا Starter',
-      'QR تسجيل ذاتي',
-      'شاشة عرض Live',
+      'QR للتسجيل الذاتي',
+      'شاشة عرض مباشرة',
       'صفحة حالة للعميل',
       'العملاء والولاء',
       'VAT وإغلاق اليوم',
-      'تقارير PDF/CSV',
+      'تقارير PDF وCSV',
       'مساعد مدار AI',
     ],
   },
   {
     name: 'Premium',
     price: '1,499',
-    note: 'للمغاسل الجادة أو التي تحتاج متابعة أداء أعمق.',
+    note: 'للمغاسل الجادة أو الفروع التي تحتاج متابعة أعمق وتجهيزات خاصة.',
     cta: 'ناقش Premium',
     points: [
       'كل مزايا Pro',
-      'أداء الموظفين والعمولات',
+      'تحليل أداء الموظفين',
       'تقارير متقدمة',
       'دعم أولوية',
       'إعداد وتشغيل مخصص',
-      'تجهيز ميزات اختيارية لاحقاً',
+      'تجهيز مزايا اختيارية لاحقاً',
     ],
   },
 ]
 
 const faqs = [
   {
-    q: 'هل أقدر أبدأ بدون واتساب API؟',
-    a: 'نعم. التشغيل، QR، العملاء، المالية، التقارير، ومساعد AI تعمل الآن. واتساب الرسمي يتفعل بعد اعتماد Meta وربط الرقم.',
+    q: 'هل أقدر أبدأ بدون WhatsApp API؟',
+    a: 'نعم. التشغيل، QR، العملاء، المالية، التقارير، ومساعد AI تعمل الآن. واتساب الرسمي يتفعل لاحقاً بعد اعتماد Meta وربط الرقم.',
   },
   {
     q: 'كيف يتم الدفع حالياً؟',
@@ -107,11 +149,11 @@ const faqs = [
   },
   {
     q: 'هل التجربة مجانية؟',
-    a: 'نعم، التجربة 3 أيام عشان صاحب المغسلة يشوف التشغيل الحقيقي قبل الاشتراك.',
+    a: 'نعم، التجربة 3 أيام حتى يرى صاحب المغسلة طريقة التشغيل قبل الاشتراك.',
   },
   {
     q: 'هل QR إلزامي؟',
-    a: 'لا. يمكن تشغيل النظام بإضافة السيارة من الموظف، وQR يكون ميزة إضافية لتخفيف ضغط الاستقبال.',
+    a: 'لا. يمكن تشغيل النظام بإضافة السيارة من الموظف، وQR يكون خياراً لتقليل ضغط الاستقبال وتسريع دخول العملاء.',
   },
 ]
 
@@ -130,15 +172,17 @@ export const HomePage = () => {
     if (!lead.name.trim() || !lead.phone.trim()) return
     setSending(true)
     try {
-      await supabase.from('leads').insert([{
-        name: lead.name.trim(),
-        phone: lead.phone.trim(),
-        email: '',
-        service: 'madar_os_car_wash_demo',
-        message: `النشاط: ${lead.business || 'مغسلة سيارات'} | المدينة: ${lead.city || 'غير محددة'} | عرض افتتاحي Pro 499 لأول شهرين`,
-        source: 'website',
-        status: 'new',
-      }])
+      await supabase.from('leads').insert([
+        {
+          name: lead.name.trim(),
+          phone: lead.phone.trim(),
+          email: '',
+          service: 'madar_os_car_wash_demo',
+          message: `النشاط: ${lead.business || 'مغسلة سيارات'} | المدينة: ${lead.city || 'غير محددة'} | مهتم بتجربة مدار OS للمغاسل`,
+          source: 'website',
+          status: 'new',
+        },
+      ])
       setDone(true)
       setLead({ name: '', phone: '', business: '', city: '' })
     } finally {
@@ -153,20 +197,35 @@ export const HomePage = () => {
           <Link to="/" className="flex items-center gap-3">
             <img src="/logo-main.png" alt="Madar.software" className="h-12 w-auto object-contain" />
             <div>
-              <p className="font-sora text-lg font-bold leading-none">Madar<span className="text-[#00BFFF]"> OS</span></p>
-              <p className="mt-1 text-[11px] font-bold text-slate-500 font-tajawal">نظام تشغيل للمغاسل والعيادات</p>
+              <p className="font-sora text-lg font-bold leading-none">
+                Madar<span className="text-[#00BFFF]"> OS</span>
+              </p>
+              <p className="mt-1 text-[11px] font-bold text-slate-500 font-tajawal">
+                نظام تشغيل للمغاسل والعيادات
+              </p>
             </div>
           </Link>
 
           <nav className="hidden items-center gap-6 text-sm font-bold text-slate-600 font-cairo lg:flex">
-            <a href="#features" className="hover:text-[#0099CC]">المميزات</a>
-            <a href="#pricing" className="hover:text-[#0099CC]">الأسعار</a>
-            <a href="#flow" className="hover:text-[#0099CC]">طريقة العمل</a>
-            <a href="#faq" className="hover:text-[#0099CC]">الأسئلة</a>
+            <a href="#features" className="hover:text-[#0099CC]">
+              المميزات
+            </a>
+            <a href="#pricing" className="hover:text-[#0099CC]">
+              الأسعار
+            </a>
+            <a href="#flow" className="hover:text-[#0099CC]">
+              طريقة العمل
+            </a>
+            <a href="#faq" className="hover:text-[#0099CC]">
+              الأسئلة
+            </a>
           </nav>
 
           <div className="flex items-center gap-2">
-            <Link to="/login" className="hidden rounded-xl border border-sky-100 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm font-cairo sm:inline-flex">
+            <Link
+              to="/login"
+              className="hidden rounded-xl border border-sky-100 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm font-cairo sm:inline-flex"
+            >
               تسجيل الدخول
             </Link>
             <Link
@@ -193,11 +252,7 @@ export const HomePage = () => {
 
         <section className="border-y border-sky-100 bg-white py-8">
           <div className="mx-auto grid max-w-7xl gap-4 px-4 sm:px-6 md:grid-cols-3 lg:px-8">
-            {[
-              { icon: ShieldCheck, title: 'يعمل بدون واتساب API الآن', text: 'الواتساب الرسمي إضافة لاحقة بعد اعتماد Meta.' },
-              { icon: CreditCard, title: 'تحويل بنكي حالياً', text: 'نفعّل الحساب يدوياً بعد وصول الإيصال.' },
-              { icon: TrendingUp, title: 'مصمم للبيع للمغاسل', text: 'يعالج التشغيل والزحمة والتقارير قبل أي إضافات.' },
-            ].map(({ icon: Icon, title, text }) => (
+            {trustPoints.map(({ icon: Icon, title, text }) => (
               <div key={title} className="flex items-start gap-3 rounded-2xl bg-[#F5FAFF] p-4">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-[#0099CC] shadow-sm">
                   <Icon size={20} />
@@ -212,191 +267,241 @@ export const HomePage = () => {
         </section>
 
         <section id="features" className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-          <div className="mb-10 grid gap-5 lg:grid-cols-[0.8fr_1fr] lg:items-end">
-            <div>
-              <p className="text-sm font-black text-[#0099CC] font-cairo">ليش صاحب المغسلة يحتاجه؟</p>
-              <h2 className="mt-2 text-3xl font-black leading-tight font-cairo sm:text-4xl">
-                لا تبيع برنامج. بيع تشغيل مغسلة بدون فوضى.
-              </h2>
-            </div>
-            <div className="grid gap-3 md:grid-cols-3">
-              {problems.map(item => (
-                <div key={item.title} className="rounded-2xl border border-sky-100 bg-white p-4 shadow-sm">
-                  <p className="font-black font-cairo">{item.title}</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600 font-tajawal">{item.text}</p>
-                </div>
-              ))}
-            </div>
+          <div className="max-w-3xl">
+            <p className="text-sm font-black text-[#0099CC] font-cairo">لماذا مدار OS؟</p>
+            <h2 className="mt-3 text-3xl font-black leading-tight font-cairo sm:text-4xl">
+              لأن صاحب المغسلة يحتاج نظام تشغيل، وليس مجرد برنامج تسجيل.
+            </h2>
+            <p className="mt-4 text-lg leading-8 text-slate-600 font-tajawal">
+              مدار يجمع السيارات، العملاء، المالية، شاشة العرض، والتقارير في تجربة واحدة بسيطة. الهدف أن يعرف الفريق ماذا يعمل الآن، ويعرف المالك ماذا يحدث في نهاية اليوم.
+            </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {features.map(({ icon: Icon, title, text }) => (
-              <div key={title} className="rounded-3xl border border-sky-100 bg-white p-6 shadow-[0_12px_32px_rgba(13,27,62,0.06)]">
-                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8F7FF] text-[#0099CC]">
+              <div key={title} className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-[#0099CC]">
                   <Icon size={22} />
                 </div>
-                <h3 className="text-lg font-black font-cairo">{title}</h3>
-                <p className="mt-2 text-sm leading-7 text-slate-600 font-tajawal">{text}</p>
+                <h3 className="mt-5 text-xl font-black font-cairo">{title}</h3>
+                <p className="mt-3 leading-7 text-slate-600 font-tajawal">{text}</p>
               </div>
             ))}
           </div>
         </section>
 
-        <section id="pricing" className="bg-[#071322] py-20 text-white">
+        <section className="bg-[#0D1B3E] py-20 text-white">
+          <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
+            <div>
+              <p className="text-sm font-black text-[#00BFFF] font-cairo">الأثر التجاري</p>
+              <h2 className="mt-3 text-3xl font-black leading-tight font-cairo sm:text-4xl">
+                تجربة أهدأ للعميل، وتحكم أقوى لصاحب المغسلة.
+              </h2>
+              <p className="mt-4 leading-8 text-slate-300 font-tajawal">
+                عندما يعرف العميل رقمه وحالة سيارته، تقل الأسئلة. وعندما يعرف المالك الإيراد والسيارات والموظفين، يصبح القرار أسرع.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {outcomes.map((item) => (
+                <div key={item} className="rounded-3xl border border-white/10 bg-white/8 p-5">
+                  <Check className="text-[#00BFFF]" size={22} />
+                  <p className="mt-4 text-lg font-black leading-7 font-cairo">{item}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="flow" className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+          <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr]">
+            <div>
+              <p className="text-sm font-black text-[#0099CC] font-cairo">طريقة العمل</p>
+              <h2 className="mt-3 text-3xl font-black leading-tight font-cairo sm:text-4xl">
+                من دخول السيارة إلى إغلاق اليوم، كل خطوة واضحة.
+              </h2>
+              <p className="mt-4 leading-8 text-slate-600 font-tajawal">
+                الفكرة ليست أن يضغط الموظف كثيراً. الفكرة أن تكون الحركة اليومية مختصرة، مفهومة، وتنعكس مباشرة على الشاشة والتقارير.
+              </p>
+              <button
+                onClick={requestDemo}
+                className="mt-7 inline-flex items-center gap-2 rounded-2xl bg-[#00BFFF] px-6 py-4 text-base font-black text-[#071322] shadow-[0_18px_38px_rgba(0,191,255,0.28)] font-cairo"
+              >
+                تحدث معنا عن مغسلتك
+                <MessageCircle size={18} />
+              </button>
+            </div>
+
+            <div className="rounded-[32px] border border-sky-100 bg-white p-5 shadow-sm">
+              {flow.map((step, index) => (
+                <div key={step} className="flex gap-4 border-b border-sky-50 py-5 last:border-b-0">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#0D1B3E] font-sora text-sm font-black text-white">
+                    {index + 1}
+                  </div>
+                  <div>
+                    <p className="text-lg font-black font-cairo">{step}</p>
+                    <p className="mt-1 text-sm text-slate-500 font-tajawal">
+                      خطوة عملية داخل اليوم، بدون تعقيد أو شاشات مشتتة.
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="pricing" className="bg-white py-20">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="mb-10 text-center">
-              <p className="text-sm font-black text-[#00BFFF] font-cairo">الباقات والأسعار</p>
-              <h2 className="mt-2 text-3xl font-black font-cairo sm:text-4xl">سعر واضح، وتفعيل يدوي الآن بتحويل بنكي.</h2>
-              <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-300 font-tajawal">
-                لا ننتظر Moyasar ولا Meta عشان نبدأ البيع. التشغيل الأساسي جاهز، والدفع الإلكتروني وواتساب الرسمي إضافات لاحقة.
+            <div className="mx-auto max-w-3xl text-center">
+              <p className="text-sm font-black text-[#0099CC] font-cairo">الباقات</p>
+              <h2 className="mt-3 text-3xl font-black leading-tight font-cairo sm:text-4xl">
+                ابدأ بسيطاً، ثم افتح المزايا حسب نمو المغسلة.
+              </h2>
+              <p className="mt-4 leading-8 text-slate-600 font-tajawal">
+                الدفع الإلكتروني وWhatsApp API إضافات يتم تفعيلها لاحقاً عند جاهزية الحسابات الرسمية. الأساس اليوم هو تشغيل المغسلة بثقة.
               </p>
             </div>
 
-            <div className="mb-6 rounded-3xl border border-cyan-300/30 bg-cyan-400/10 p-5 text-center">
-              <p className="text-lg font-black text-cyan-100 font-cairo">عرض افتتاحي: Pro بـ 499 ر.س لأول شهرين لأول 10 مغاسل</p>
-              <p className="mt-2 text-sm text-cyan-50/80 font-tajawal">بعد الشهرين يرجع السعر إلى 699 ر.س شهرياً. رسوم التأسيس مجانية في العرض الافتتاحي.</p>
-            </div>
-
-            <div className="grid gap-4 lg:grid-cols-3">
-              {plans.map(plan => (
-                <div key={plan.name} className={`relative rounded-3xl border bg-white p-6 text-[#0D1B3E] shadow-[0_20px_60px_rgba(0,0,0,0.20)] ${plan.badge ? 'border-[#00BFFF] lg:scale-[1.03]' : 'border-white/10'}`}>
+            <div className="mt-12 grid gap-5 lg:grid-cols-3">
+              {plans.map((plan) => (
+                <div
+                  key={plan.name}
+                  className={`relative rounded-[32px] border p-6 shadow-sm ${
+                    plan.badge
+                      ? 'border-[#00BFFF] bg-[#F5FAFF] shadow-[0_24px_60px_rgba(0,153,204,0.16)]'
+                      : 'border-sky-100 bg-white'
+                  }`}
+                >
                   {plan.badge && (
-                    <span className="absolute -top-3 right-6 rounded-full bg-[#00BFFF] px-4 py-1.5 text-xs font-black text-[#071322] font-cairo">{plan.badge}</span>
+                    <div className="absolute -top-4 right-6 rounded-full bg-[#00BFFF] px-4 py-2 text-xs font-black text-[#071322] font-cairo">
+                      {plan.badge}
+                    </div>
                   )}
-                  <h3 className="font-sora text-2xl font-black">{plan.name}</h3>
-                  <p className="mt-2 min-h-[56px] text-sm leading-7 text-slate-600 font-tajawal">{plan.note}</p>
-                  <div className="my-6 border-y border-sky-100 py-5">
+                  <h3 className="text-2xl font-black font-cairo">{plan.name}</h3>
+                  <p className="mt-2 min-h-[56px] leading-7 text-slate-600 font-tajawal">{plan.note}</p>
+                  <div className="mt-6 flex items-end gap-2">
                     <span className="font-sora text-5xl font-black">{plan.price}</span>
-                    <span className="mr-2 text-sm font-bold text-slate-500 font-cairo">ر.س / شهر</span>
+                    <span className="mb-2 text-sm font-bold text-slate-500 font-tajawal">ر.س / شهر</span>
                   </div>
-                  <div className="space-y-3">
-                    {plan.points.map(point => (
+                  <button
+                    onClick={requestDemo}
+                    className={`mt-6 w-full rounded-2xl px-5 py-4 text-base font-black font-cairo ${
+                      plan.badge ? 'bg-[#0D1B3E] text-white' : 'border border-sky-100 bg-white text-[#0D1B3E]'
+                    }`}
+                  >
+                    {plan.cta}
+                  </button>
+                  <div className="mt-6 space-y-3">
+                    {plan.points.map((point) => (
                       <div key={point} className="flex items-center gap-2 text-sm font-bold text-slate-700 font-tajawal">
-                        <Check size={16} className="text-emerald-500" />
+                        <Check size={17} className="text-emerald-500" />
                         {point}
                       </div>
                     ))}
                   </div>
-                  <button
-                    onClick={requestDemo}
-                    className={`mt-7 w-full rounded-2xl px-5 py-3.5 text-sm font-black font-cairo ${plan.badge ? 'bg-[#0D1B3E] text-white' : 'border border-sky-100 bg-sky-50 text-[#0D1B3E]'}`}
-                  >
-                    {plan.cta}
-                  </button>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        <section id="flow" className="mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[0.8fr_1fr] lg:items-center lg:px-8">
-          <div>
-            <p className="text-sm font-black text-[#0099CC] font-cairo">طريقة البيع والتشغيل</p>
-            <h2 className="mt-2 text-3xl font-black leading-tight font-cairo sm:text-4xl">من أول تجربة إلى أول تقرير يومي.</h2>
-            <p className="mt-4 text-sm leading-7 text-slate-600 font-tajawal">
-              الهدف أن صاحب المغسلة يشوف قيمة النظام خلال أيام، وليس بعد شهر. لذلك نبدأ بتشغيل بسيط ثم نضيف الميزات حسب جاهزية كل عميل.
-            </p>
-          </div>
-          <div className="space-y-3">
-            {flow.map((item, index) => (
-              <div key={item} className="flex items-center gap-4 rounded-2xl border border-sky-100 bg-white p-4 shadow-sm">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#00BFFF] font-sora text-sm font-black text-[#071322]">{index + 1}</span>
-                <p className="font-bold font-cairo">{item}</p>
+        <section className="mx-auto grid max-w-7xl gap-6 px-4 py-20 sm:px-6 lg:grid-cols-3 lg:px-8">
+          {[
+            { icon: Zap, title: 'تركيب سريع', text: 'نجهز الحساب، الخدمات، الموظفين، وشعار المغسلة خلال وقت قصير.' },
+            { icon: Wallet, title: 'مزايا اختيارية لاحقاً', text: 'المحفظة، اشتراكات العملاء، وApple Pay تبقى ميزات مدفوعة عند جاهزية مزود الدفع.' },
+            { icon: Clock, title: 'مناسب للبيع الآن', text: 'ابدأ بالميزات التشغيلية التي تعطي قيمة مباشرة، ثم فعّل التكاملات الرسمية تدريجياً.' },
+          ].map(({ icon: Icon, title, text }) => (
+            <div key={title} className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-[#0099CC]">
+                <Icon size={22} />
               </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="bg-white py-20">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="grid gap-4 lg:grid-cols-3">
-              {[
-                { icon: MessageCircle, title: 'واتساب الرسمي لاحقاً', text: 'حتى يكتمل اعتماد Meta، لا نبيع الواتساب كميزة جاهزة 100%. نبيعه كتفعيل لاحق.' },
-                { icon: Wallet, title: 'المدفوعات لاحقاً', text: 'Moyasar وApple Pay والمحفظة الرقمية إضافات اختيارية بعد دخول أول مبيعات.' },
-                { icon: Zap, title: 'ابدأ الآن', text: 'العميل يشتري التشغيل: QR، لوحة السيارات، العملاء، المالية، التقارير، والشاشة.' },
-              ].map(({ icon: Icon, title, text }) => (
-                <div key={title} className="rounded-3xl border border-sky-100 bg-[#F5FAFF] p-6">
-                  <Icon size={24} className="text-[#0099CC]" />
-                  <h3 className="mt-4 text-lg font-black font-cairo">{title}</h3>
-                  <p className="mt-2 text-sm leading-7 text-slate-600 font-tajawal">{text}</p>
-                </div>
-              ))}
+              <h3 className="mt-5 text-xl font-black font-cairo">{title}</h3>
+              <p className="mt-3 leading-7 text-slate-600 font-tajawal">{text}</p>
             </div>
-          </div>
+          ))}
         </section>
 
-        <section id="faq" className="mx-auto max-w-5xl px-4 py-20 sm:px-6 lg:px-8">
-          <div className="mb-8 text-center">
-            <p className="text-sm font-black text-[#0099CC] font-cairo">أسئلة البيع المهمة</p>
-            <h2 className="mt-2 text-3xl font-black font-cairo sm:text-4xl">إجابات واضحة قبل الاشتراك.</h2>
-          </div>
-          <div className="space-y-3">
-            {faqs.map(item => (
-              <div key={item.q} className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
-                <p className="font-black font-cairo">{item.q}</p>
-                <p className="mt-2 text-sm leading-7 text-slate-600 font-tajawal">{item.a}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section id="demo" className="bg-[#0D1B3E] py-20 text-white">
-          <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.9fr_1fr] lg:px-8">
+        <section id="faq" className="bg-white py-20">
+          <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
             <div>
-              <p className="text-sm font-black text-[#00BFFF] font-cairo">جاهز تبدأ البيع؟</p>
-              <h2 className="mt-2 text-3xl font-black leading-tight font-cairo sm:text-4xl">
-                خل صاحب المغسلة يشوف النظام، مو يسمع عنه فقط.
+              <p className="text-sm font-black text-[#0099CC] font-cairo">قبل الاشتراك</p>
+              <h2 className="mt-3 text-3xl font-black leading-tight font-cairo sm:text-4xl">
+                إجابات واضحة قبل قرار التجربة.
               </h2>
-              <p className="mt-4 text-sm leading-7 text-slate-300 font-tajawal">
-                سجل بياناته، وابدأ معه تجربة قصيرة. إذا شاف السيارات، QR، المالية، وإغلاق اليوم بعينه، قرار الاشتراك يصير أسهل.
+              <p className="mt-4 leading-8 text-slate-600 font-tajawal">
+                لا نبيع وعوداً مبهمة. نوضح ما يعمل الآن، وما يتم تفعيله لاحقاً حسب جاهزية الحسابات الرسمية.
               </p>
-              <div className="mt-6 flex flex-wrap gap-3 text-sm font-bold font-cairo">
-                <span className="rounded-full bg-white/10 px-4 py-2"><Clock size={14} className="ml-1 inline" /> إعداد خلال 24 ساعة</span>
-                <span className="rounded-full bg-white/10 px-4 py-2"><Sparkles size={14} className="ml-1 inline" /> تجربة 3 أيام</span>
-                <span className="rounded-full bg-white/10 px-4 py-2"><CreditCard size={14} className="ml-1 inline" /> تحويل بنكي مؤقت</span>
+            </div>
+            <div className="space-y-4">
+              {faqs.map((item) => (
+                <div key={item.q} className="rounded-3xl border border-sky-100 bg-[#F5FAFF] p-6">
+                  <h3 className="text-lg font-black font-cairo">{item.q}</h3>
+                  <p className="mt-3 leading-7 text-slate-600 font-tajawal">{item.a}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+          <div className="grid overflow-hidden rounded-[36px] bg-[#0D1B3E] text-white lg:grid-cols-[0.95fr_1.05fr]">
+            <div className="p-8 sm:p-10 lg:p-12">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-black text-[#00BFFF] font-cairo">
+                <Sparkles size={15} />
+                تجربة 3 أيام
               </div>
+              <h2 className="mt-6 text-3xl font-black leading-tight font-cairo sm:text-4xl">
+                خل صاحب المغسلة يشوف النظام على بياناته، ثم يقرر.
+              </h2>
+              <p className="mt-4 leading-8 text-slate-300 font-tajawal">
+                نأخذ بيانات التواصل، نجهز الحساب، ونرسل له رابط الدخول. التجربة قصيرة وواضحة: هل النظام رتب يوم العمل؟ هل قلل الفوضى؟ هل يستحق الاشتراك؟
+              </p>
             </div>
 
-            <form onSubmit={submitLead} className="rounded-3xl border border-white/10 bg-white p-5 text-[#0D1B3E] shadow-[0_30px_80px_rgba(0,0,0,0.18)]">
-              <div className="grid gap-3 sm:grid-cols-2">
+            <form onSubmit={submitLead} className="bg-white p-8 text-[#0D1B3E] sm:p-10 lg:p-12">
+              <h3 className="text-2xl font-black font-cairo">اطلب تجربة مدار OS</h3>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <input
                   value={lead.name}
-                  onChange={event => setLead({ ...lead, name: event.target.value })}
-                  className="rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm font-bold outline-none font-tajawal"
-                  placeholder="اسم صاحب المغسلة"
+                  onChange={(event) => setLead((prev) => ({ ...prev, name: event.target.value }))}
+                  className="rounded-2xl border border-sky-100 bg-[#F5FAFF] px-4 py-4 font-tajawal outline-none focus:border-[#00BFFF]"
+                  placeholder="اسمك"
                 />
                 <input
                   value={lead.phone}
-                  onChange={event => setLead({ ...lead, phone: event.target.value })}
-                  className="rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm font-bold outline-none font-sora"
-                  placeholder="05XXXXXXXX"
-                  dir="ltr"
+                  onChange={(event) => setLead((prev) => ({ ...prev, phone: event.target.value }))}
+                  className="rounded-2xl border border-sky-100 bg-[#F5FAFF] px-4 py-4 font-tajawal outline-none focus:border-[#00BFFF]"
+                  placeholder="رقم الجوال"
                 />
                 <input
                   value={lead.business}
-                  onChange={event => setLead({ ...lead, business: event.target.value })}
-                  className="rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm font-bold outline-none font-tajawal"
+                  onChange={(event) => setLead((prev) => ({ ...prev, business: event.target.value }))}
+                  className="rounded-2xl border border-sky-100 bg-[#F5FAFF] px-4 py-4 font-tajawal outline-none focus:border-[#00BFFF]"
                   placeholder="اسم المغسلة"
                 />
                 <input
                   value={lead.city}
-                  onChange={event => setLead({ ...lead, city: event.target.value })}
-                  className="rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm font-bold outline-none font-tajawal"
+                  onChange={(event) => setLead((prev) => ({ ...prev, city: event.target.value }))}
+                  className="rounded-2xl border border-sky-100 bg-[#F5FAFF] px-4 py-4 font-tajawal outline-none focus:border-[#00BFFF]"
                   placeholder="المدينة"
                 />
               </div>
               <button
                 disabled={sending}
-                className="mt-4 w-full rounded-2xl bg-[#00BFFF] px-5 py-4 text-base font-black text-[#071322] disabled:opacity-60 font-cairo"
+                className="mt-5 w-full rounded-2xl bg-[#00BFFF] px-6 py-4 text-base font-black text-[#071322] disabled:opacity-60 font-cairo"
               >
-                {sending ? 'جاري التسجيل...' : done ? 'تم تسجيل الطلب' : 'سجل طلب تجربة'}
+                {sending ? 'جار إرسال الطلب...' : 'أرسل طلب التجربة'}
               </button>
+              {done && (
+                <p className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 font-tajawal">
+                  تم استلام طلبك. سنتواصل معك لتجهيز الحساب.
+                </p>
+              )}
               <button
                 type="button"
-                onClick={() => openWhatsAppChat(`مرحباً، أريد تجربة مدار OS. الاسم: ${lead.name || 'غير محدد'}، الجوال: ${lead.phone || 'غير محدد'}`)}
-                className="mt-3 w-full rounded-2xl border border-sky-100 bg-white px-5 py-3 text-sm font-black text-[#0D1B3E] font-cairo"
+                onClick={requestDemo}
+                className="mt-3 w-full rounded-2xl border border-sky-100 bg-white px-6 py-4 text-base font-black text-[#0D1B3E] font-cairo"
               >
-                أو ابدأ مباشرة على واتساب
+                أو تواصل واتساب مباشرة
               </button>
             </form>
           </div>
@@ -404,17 +509,20 @@ export const HomePage = () => {
       </main>
 
       <footer className="border-t border-sky-100 bg-white py-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 text-sm text-slate-500 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-          <p className="font-bold font-cairo">© 2026 Madar.software — نظام تشغيل للمغاسل والعيادات.</p>
-          <div className="flex gap-4 font-bold font-cairo">
-            <a href={`https://wa.me/${adminPhone}`} target="_blank" rel="noreferrer" className="text-[#0099CC]">واتساب</a>
-            <Link to="/privacy">الخصوصية</Link>
-            <Link to="/terms">الشروط</Link>
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 text-sm text-slate-500 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
+          <p>© 2026 Madar.software — نظام تشغيل للمغاسل والعيادات.</p>
+          <div className="flex items-center gap-4">
+            <a href={`https://wa.me/${adminPhone}`} className="font-bold text-[#0099CC]">
+              واتساب
+            </a>
+            <Link to="/login" className="font-bold text-slate-700">
+              دخول العملاء
+            </Link>
           </div>
         </div>
       </footer>
 
-      <MadarAgentWidget agentType="sales_website" pageTitle="موقع مدار" />
+      <MadarAgentWidget agentType="sales_website" label="اسأل مدار AI" />
     </div>
   )
 }
