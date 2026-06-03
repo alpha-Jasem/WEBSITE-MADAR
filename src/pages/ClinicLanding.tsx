@@ -1,6 +1,8 @@
-import { useRef } from 'react'
+import { useRef, useEffect } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { Stethoscope, Calendar, Bot, Shield, BarChart3, ArrowRight, ArrowLeft, Check, TrendingUp, Clock, Users, Phone, MessageSquare } from 'lucide-react'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { Navbar }    from '../components/public/Navbar'
 import { Footer }    from '../components/public/Footer'
 import { ClinicDashMockup } from '../components/public/ClinicDashMockup'
@@ -8,6 +10,8 @@ import { MadarAgentWidget } from '../components/dash/MadarAgentWidget'
 import { DottedSurface }    from '../components/ui/dotted-surface'
 import { useLanguage }      from '../context/LanguageContext'
 import { openWhatsAppChat } from '../lib/whatsapp'
+
+gsap.registerPlugin(ScrollTrigger)
 
 const ACCENT = '#10B981'
 
@@ -47,16 +51,61 @@ export const ClinicLanding = () => {
   const { t, language } = useLanguage()
   const ArrowIcon = language === 'ar' ? ArrowLeft : ArrowRight
 
+  const rootRef     = useRef<HTMLDivElement>(null)
   const heroRef     = useRef(null)
   const featuresRef = useRef(null)
   const caseRef     = useRef(null)
+  const mockupRef   = useRef<HTMLDivElement>(null)
+  const h1Ref       = useRef<HTMLHeadingElement>(null)
 
   const heroInView     = useInView(heroRef,     { once: true })
   const featuresInView = useInView(featuresRef, { once: true, margin: '-80px' })
   const caseInView     = useInView(caseRef,     { once: true, margin: '-80px' })
 
+  /* ─── Mockup float + H1 split ─────────────────────── */
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      /* Float the dashboard mockup */
+      gsap.to(mockupRef.current, {
+        y: -12, duration: 3, repeat: -1, yoyo: true, ease: 'power1.inOut',
+      })
+
+      /* H1 split words entrance */
+      const words = h1Ref.current?.querySelectorAll('.clinic-word')
+      if (words?.length) {
+        gsap.from(words, {
+          y: 36, opacity: 0, stagger: 0.09, duration: 0.65, ease: 'power3.out', delay: 0.3,
+        })
+      }
+    }, rootRef)
+    return () => ctx.revert()
+  }, [])
+
+  /* ─── How Nora Works animations ───────────────────── */
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      /* Connector line draws on scroll */
+      gsap.from('.nora-connector', {
+        scaleX: 0,
+        transformOrigin: language === 'ar' ? 'right center' : 'left center',
+        duration: 1.1, ease: 'power2.inOut',
+        scrollTrigger: { trigger: '.nora-steps', start: 'top 80%' },
+      })
+
+      /* Step cards: scale + fade + icon wiggle */
+      gsap.utils.toArray<HTMLElement>('.nora-step').forEach((card, i) => {
+        const tl = gsap.timeline({
+          scrollTrigger: { trigger: card, start: 'top 88%' },
+        })
+        tl.from(card, { scale: 0.9, opacity: 0, duration: 0.55, ease: 'back.out(1.4)', delay: i * 0.13 })
+          .from(card.querySelector('.nora-icon'), { rotation: -12, duration: 0.4, ease: 'back.out(2)' }, '-=0.3')
+      })
+    }, rootRef)
+    return () => ctx.revert()
+  }, [language])
+
   return (
-    <div className="min-h-screen" style={{ background: '#050810' }}>
+    <div ref={rootRef} className="min-h-screen" style={{ background: '#050810' }}>
       <Navbar />
 
       {/* ── Hero ── */}
@@ -88,11 +137,25 @@ export const ClinicLanding = () => {
                 </span>
               </div>
 
-              {/* Headline */}
-              <h1 className={`text-4xl sm:text-5xl xl:text-6xl font-bold leading-[1.15] tracking-tight text-white ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>
-                {t(
-                  <><span style={{ color: ACCENT }} className="font-cairo">نورة</span> تحجز<br />وأنت مرتاح</>,
-                  <><span style={{ color: ACCENT }}>Nora</span> Books<br />While You Rest</>
+              {/* Headline — split words for GSAP */}
+              <h1 ref={h1Ref} className={`text-4xl sm:text-5xl xl:text-6xl font-bold leading-[1.15] tracking-tight text-white flex flex-wrap gap-x-3 gap-y-1 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>
+                {language === 'ar' ? (
+                  <>
+                    <span className="clinic-word inline-block" style={{ color: ACCENT }}>نورة</span>
+                    <span className="clinic-word inline-block">تحجز</span>
+                    <span className="clinic-word inline-block w-full" />
+                    <span className="clinic-word inline-block">وأنت</span>
+                    <span className="clinic-word inline-block">مرتاح</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="clinic-word inline-block" style={{ color: ACCENT }}>Nora</span>
+                    <span className="clinic-word inline-block">Books</span>
+                    <span className="clinic-word inline-block w-full" />
+                    <span className="clinic-word inline-block">While</span>
+                    <span className="clinic-word inline-block">You</span>
+                    <span className="clinic-word inline-block">Rest</span>
+                  </>
                 )}
               </h1>
 
@@ -162,8 +225,9 @@ export const ClinicLanding = () => {
               </div>
             </motion.div>
 
-            {/* Right — Clinic Dashboard Mockup */}
+            {/* Right — Clinic Dashboard Mockup (GSAP float) */}
             <motion.div
+              ref={mockupRef}
               initial={{ opacity: 0, x: 40 }}
               animate={heroInView ? { opacity: 1, x: 0 } : {}}
               transition={{ duration: 0.9, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
@@ -247,9 +311,13 @@ export const ClinicLanding = () => {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
-            <div className="hidden md:block absolute top-[44px] inset-x-[16%] h-px pointer-events-none"
-              style={{ backgroundImage: `repeating-linear-gradient(90deg, ${ACCENT}35 0, ${ACCENT}35 6px, transparent 6px, transparent 14px)` }} />
+          <div className="nora-steps grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+            {/* Animated connector — drawn by GSAP on scroll */}
+            <div className="nora-connector hidden md:block absolute top-[44px] pointer-events-none"
+              style={{
+                insetInlineStart: '16%', insetInlineEnd: '16%', height: 1,
+                backgroundImage: `repeating-linear-gradient(90deg, ${ACCENT}40 0, ${ACCENT}40 7px, transparent 7px, transparent 16px)`,
+              }} />
 
             {[
               {
@@ -268,17 +336,13 @@ export const ClinicLanding = () => {
                 desc:  { ar: 'رسالة واتساب تلقائية — اسمه، الدكتور، الوقت. كل شيء جاهز.', en: 'Automatic WhatsApp message — name, doctor, time. All set.' },
               },
             ].map((step, i) => (
-              <motion.div
+              <div
                 key={i}
-                initial={{ opacity: 0, y: 32 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-40px' }}
-                transition={{ duration: 0.55, delay: i * 0.14, ease: [0.22, 1, 0.36, 1] }}
-                className="relative flex flex-col items-center text-center gap-4 p-7 rounded-2xl"
+                className="nora-step relative flex flex-col items-center text-center gap-4 p-7 rounded-2xl"
                 style={{ background: `${ACCENT}06`, border: `1px solid ${ACCENT}15` }}
               >
                 <div className="relative">
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                  <div className="nora-icon w-14 h-14 rounded-2xl flex items-center justify-center"
                     style={{ background: `linear-gradient(135deg, #0D2B1E, ${ACCENT})`, boxShadow: `0 6px 24px ${ACCENT}35` }}>
                     <step.Icon size={22} className="text-white" />
                   </div>
@@ -294,7 +358,7 @@ export const ClinicLanding = () => {
                   style={{ color: 'rgba(255,255,255,0.5)' }}>
                   {language === 'ar' ? step.desc.ar : step.desc.en}
                 </p>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
