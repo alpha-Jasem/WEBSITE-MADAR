@@ -102,7 +102,7 @@ export const PlatformHome = () => {
             className="flex flex-wrap items-center justify-center gap-6 mt-16"
           >
             {[
-              { value: t('٣ قطاعات', '3 Sectors'), label: t('مغاسل، عيادات، عقار', 'Car Wash · Clinic · Real Estate') },
+              { value: t('٢ قطاعات', '2 Sectors'), label: t('مغاسل، عيادات', 'Car Wash · Clinic') },
               { value: t('٢٤/٧', '24/7'), label: t('ذكاء اصطناعي لا ينام', 'AI that never sleeps') },
               { value: t('١١+ workflow', '11+ Workflows'), label: t('أتمتة جاهزة لكل قطاع', 'Ready per sector') },
             ].map((stat, i) => (
