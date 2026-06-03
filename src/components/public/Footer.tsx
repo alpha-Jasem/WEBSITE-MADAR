@@ -10,6 +10,7 @@ const navLinks = [
   { ar: 'كيف يعمل',   en: 'How It Works',  href: '#how-it-works' },
   { ar: 'أعمالنا',     en: 'Case Studies', href: '#case-studies' },
   { ar: 'القطاعات',   en: 'Industries',   href: '#industries' },
+  { ar: 'داشبورد العيادات', en: 'Clinic Dashboard', href: 'https://noor-clinic-dashboard.netlify.app' },
 ]
 
 const services = [
@@ -23,9 +24,13 @@ const services = [
 
 export const Footer = () => {
   const { language, t } = useLanguage()
-  const year = new Date().getFullYear()
+  const year = 2026
 
   const scrollTo = (href: string) => {
+    if (href.startsWith('http')) {
+      window.open(href, '_blank', 'noopener,noreferrer')
+      return
+    }
     document.querySelector(href)?.scrollIntoView({ behavior: 'smooth' })
   }
 

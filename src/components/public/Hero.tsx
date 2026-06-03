@@ -256,9 +256,9 @@ export const Hero = () => {
   ]
 
   const stats = [
-    { val: 10, suffix: 'x', ar: 'أسرع في الرد',       en: 'Faster response' },
-    { val: 80, suffix: '%', ar: 'تقليل الفرص الضائعة', en: 'Fewer missed opportunities' },
-    { val: 3,  suffix: 'x', ar: 'فرص حجز أكثر',       en: 'More booking opportunities' },
+    { val: 10, suffix: 'x', ar: 'أسرع في الرد عن موظف', en: 'Faster than a human agent' },
+    { val: 68, suffix: '%', ar: 'زيادة معدل التقييمات', en: 'More reviews collected' },
+    { val: 24, suffix: '/7', ar: 'تغطية بدون موظف إضافي', en: 'Coverage without extra staff' },
   ]
 
   return (
@@ -382,12 +382,12 @@ export const Hero = () => {
               <motion.button
                 whileHover={{ scale: 1.02, borderColor: 'rgba(255,255,255,0.2)' }}
                 whileTap={{ scale: 0.97 }}
-                onClick={() => document.querySelector('#how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+                onClick={() => window.open('https://noor-clinic-dashboard.netlify.app', '_blank', 'noopener,noreferrer')}
                 className={`flex items-center justify-center gap-2 px-7 py-4 rounded-xl font-medium text-base cursor-pointer border transition-all ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
                 style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)', background: 'rgba(255,255,255,0.04)' }}
               >
                 <Play size={14} style={{ color: '#00BFFF' }} />
-                <span>{t('شاهد كيف تزيد الحجوزات', 'See How Bookings Grow')}</span>
+                <span>{t('شاهد الداشبورد', 'View Dashboard')}</span>
               </motion.button>
             </motion.div>
 
