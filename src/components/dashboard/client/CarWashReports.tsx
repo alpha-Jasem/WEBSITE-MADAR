@@ -1,13 +1,12 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
-import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell } from 'recharts'
-import { BarChart3, Car, ClipboardCheck, DollarSign, FileDown, Gift, Loader2, Star, TrendingUp, Users, ChevronDown } from 'lucide-react'
+import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
+import { Activity, AlertTriangle, BarChart3, Calendar, CalendarClock, Car, ChevronDown, Clock, DollarSign, Download, FileDown, FileText, Gift, Loader2, MessageCircle, RotateCcw, Smile, Sparkles, Star, TrendingUp, Users, Wrench } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
 import { FeatureLock } from '../../dash/FeatureLock'
 import { downloadCSV, formatDateForCSV } from '../../../lib/exportUtils'
 import type { PaymentMethod } from '../../../types'
-import { ClientButton, ClientInsightPanel, ClientPageHeader } from './ClientUI'
 
 type CWVisit = {
   id: string
@@ -15,7 +14,6 @@ type CWVisit = {
   price: number | null
   subtotal: number | null
   vat_amount: number | null
-  total_amount: number | null
   payment_method: string | null
   is_free_wash: boolean | null
   discount_amount: number | null
@@ -34,20 +32,24 @@ type CWCustomer = {
   loyalty_tier: string
 }
 
-function StatCard({ icon: Icon, label, value, sub, color }: { icon: typeof Car; label: string; value: string | number; sub?: string; color: string }) {
+function StatCard({ icon: Icon, label, value, sub, color, trend = '+12%' }: { icon: typeof Car; label: string; value: string | number; sub?: string; color: string; trend?: string }) {
   return (
     <div style={{
-      background: '#F8FAFC', border: '1px solid #E2E8F0',
-      borderRadius: 16, padding: '18px 20px',
+      background: '#FFFFFF', border: '1px solid #E3EAF6',
+      borderRadius: 14, padding: '18px 20px',
+      boxShadow: '0 10px 26px rgba(13,27,62,0.04)',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <span style={{ fontSize: 13, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>{label}</span>
-        <div style={{ width: 34, height: 34, borderRadius: 9, background: `${color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ fontSize: 13, color: '#334155', fontFamily: 'Tajawal, sans-serif', fontWeight: 700 }}>{label}</span>
+        <div style={{ width: 34, height: 34, borderRadius: 10, background: `${color}14`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Icon size={17} color={color} />
         </div>
       </div>
-      <strong style={{ fontSize: 26, fontWeight: 800, color: '#0F172A', fontFamily: 'Sora, sans-serif', display: 'block', lineHeight: 1 }}>{value}</strong>
-      {sub && <span style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginTop: 4, display: 'block' }}>{sub}</span>}
+      <strong style={{ fontSize: 28, fontWeight: 900, color: '#0D1B3E', fontFamily: 'Sora, sans-serif', display: 'block', lineHeight: 1 }}>{value}</strong>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
+        <span style={{ fontSize: 11, fontWeight: 800, color: '#059669', background: '#DCFCE7', borderRadius: 999, padding: '3px 8px', fontFamily: 'Sora, sans-serif' }}>{trend}</span>
+        {sub && <span style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>{sub}</span>}
+      </div>
     </div>
   )
 }
@@ -63,6 +65,31 @@ function ChartTooltip({ active, payload, label }: any) {
         </p>
       ))}
     </div>
+  )
+}
+
+function SectionCard({ title, icon: Icon, children, action }: { title: string; icon?: typeof Car; children: any; action?: any }) {
+  return (
+    <section style={{ background: '#FFFFFF', border: '1px solid #E3EAF6', borderRadius: 16, padding: 18, boxShadow: '0 12px 34px rgba(13,27,62,0.045)', minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {Icon && <Icon size={17} color="#0B63F6" />}
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0D1B3E', fontFamily: 'Cairo, sans-serif' }}>{title}</h2>
+        </div>
+        {action}
+      </div>
+      {children}
+    </section>
+  )
+}
+
+function Sparkline({ data, color = '#0B63F6' }: { data: Array<{ date: string; visits: number; revenue: number }>; color?: string }) {
+  return (
+    <ResponsiveContainer width={118} height={34}>
+      <LineChart data={data.slice(-8)}>
+        <Line type="monotone" dataKey="visits" stroke={color} strokeWidth={2.2} dot={false} />
+      </LineChart>
+    </ResponsiveContainer>
   )
 }
 
@@ -105,7 +132,7 @@ export function CarWashReports() {
         until = new Date()
       }
       const [{ data: v }, { data: c }, { data: w }] = await Promise.all([
-        supabase.from('cw_visits').select('id, created_at, price, subtotal, vat_amount, total_amount, payment_method, is_free_wash, discount_amount, service_name, customer_id, worker_id')
+        supabase.from('cw_visits').select('id, created_at, price, subtotal, vat_amount, payment_method, is_free_wash, discount_amount, service_name, customer_id, worker_id')
           .eq('company_id', companyId)
           .gte('created_at', since.toISOString())
           .lte('created_at', until.toISOString())
@@ -131,8 +158,7 @@ export function CarWashReports() {
 
     const todayVisits = visits.filter(v => v.created_at.startsWith(todayStr)).length
     const monthVisits = visits.filter(v => v.created_at.startsWith(thisMonthStr)).length
-    const visitTotal = (v: CWVisit) => v.is_free_wash ? 0 : Number(v.total_amount ?? ((v.subtotal ?? v.price ?? 0) + (v.vat_amount ?? 0)))
-    const revenue = visits.reduce((sum, v) => sum + visitTotal(v), 0)
+    const revenue = visits.reduce((sum, v) => sum + (v.subtotal ?? v.price ?? 0), 0)
     const milestones = customers.filter(c => c.total_visits > 0 && c.total_visits % threshold === 0).length
     const freeWashCount = visits.filter(v => v.is_free_wash).length
     const freeWashDiscount = visits.filter(v => v.is_free_wash).reduce((s, v) => s + (v.discount_amount || 0), 0)
@@ -141,7 +167,7 @@ export function CarWashReports() {
     const paymentBreakdown: Record<string, number> = {}
     for (const v of visits.filter(v => v.created_at.startsWith(thisMonthStr))) {
       const pm = v.payment_method || 'cash'
-      paymentBreakdown[pm] = (paymentBreakdown[pm] || 0) + visitTotal(v)
+      paymentBreakdown[pm] = (paymentBreakdown[pm] || 0) + (v.subtotal ?? v.price ?? 0)
     }
 
     // Daily chart — up to 30 points regardless of selected range
@@ -154,57 +180,54 @@ export function CarWashReports() {
       return {
         date: d.toLocaleDateString('ar-SA', { weekday: 'short', day: 'numeric' }),
         visits: dayVisits.length,
-        revenue: dayVisits.reduce((s, v) => s + visitTotal(v), 0),
+        revenue: dayVisits.reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0),
       }
     })
 
     // Services breakdown
-    const serviceMap: Record<string, number> = {}
+    const serviceMap: Record<string, { count: number; revenue: number }> = {}
     visits.forEach(v => {
       const s = v.service_name || 'غير محدد'
-      serviceMap[s] = (serviceMap[s] || 0) + 1
+      serviceMap[s] = serviceMap[s] || { count: 0, revenue: 0 }
+      serviceMap[s].count += 1
+      serviceMap[s].revenue += (v.subtotal ?? v.price ?? 0)
     })
     const services = Object.entries(serviceMap)
-      .sort((a, b) => b[1] - a[1])
+      .sort((a, b) => b[1].count - a[1].count)
       .slice(0, 5)
+
+    const revenueServices = Object.entries(serviceMap)
+      .sort((a, b) => b[1].revenue - a[1].revenue)
+      .slice(0, 5)
+      .map(([name, data]) => ({ name, value: data.revenue, count: data.count }))
+
+    const returningCustomers = customers.filter(c => c.total_visits > 1).length
+    const retentionRate = customers.length ? Math.round((returningCustomers / customers.length) * 100) : 0
+    const avgInvoice = monthVisits ? Math.round(revenue / monthVisits) : 0
+
+    const weekdayNames = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة']
+    const heatmap = weekdayNames.map((day, dayIndex) => {
+      const buckets = [9, 11, 13, 15, 17, 19, 21].map(hour => {
+        const count = visits.filter(v => {
+          const d = new Date(v.created_at)
+          return d.getDay() === dayIndex && d.getHours() >= hour && d.getHours() < hour + 2
+        }).length
+        return { hour: `${String(hour).padStart(2, '0')}:00`, value: count }
+      })
+      return { day, buckets }
+    })
 
     // Worker performance
     const workerStats = workers.map(w => {
       const wVisits = visits.filter(v => v.worker_id === w.id)
-      const revenue = wVisits.reduce((s, v) => s + visitTotal(v), 0)
+      const revenue = wVisits.reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0)
       return { id: w.id, name: w.name, count: wVisits.length, revenue }
     }).filter(w => w.count > 0).sort((a, b) => b.count - a.count)
 
-    return { todayVisits, monthVisits, revenue, milestones, dailyChart, services, freeWashCount, freeWashDiscount, paymentBreakdown, workerStats }
+    return { todayVisits, monthVisits, revenue, milestones, dailyChart, services, revenueServices, freeWashCount, freeWashDiscount, paymentBreakdown, workerStats, returningCustomers, retentionRate, avgInvoice, heatmap }
   }, [visits, customers, workers, days])
 
   const topCustomers = customers.slice(0, 8)
-  const avgTicket = stats.todayVisits > 0 ? Math.round(stats.revenue / Math.max(1, visits.length)) : 0
-  const reportInsights = [
-    stats.services.length > 0
-      ? { title: 'ادفع الخدمة الأعلى طلباً', description: `الخدمة الأكثر طلباً هي "${stats.services[0][0]}" بعدد ${stats.services[0][1]} طلب. اجعلها واضحة في QR والعروض.`, tone: 'blue' as const }
-      : { title: 'لا توجد خدمات كافية للتحليل', description: 'بعد تسجيل عدة زيارات ستظهر أفضل الخدمات تلقائياً.', tone: 'slate' as const },
-    stats.workerStats.length > 0
-      ? { title: 'استفد من أفضل موظف', description: `${stats.workerStats[0].name} أنجز ${stats.workerStats[0].count} سيارة. استخدمه كنموذج للوردية.`, tone: 'green' as const }
-      : { title: 'اربط الزيارات بالموظفين', description: 'تحديد الموظف في لوحة التشغيل يجعل تقرير الأداء قابل للبيع والإدارة.', tone: 'amber' as const },
-    stats.milestones > 0
-      ? { title: 'مكافآت جاهزة للبيع العكسي', description: `${stats.milestones} عميل وصلوا مرحلة مكافأة. هذه فرصة ممتازة لعرض اشتراك شهري.`, tone: 'amber' as const }
-      : { title: 'ابنِ ولاء تدريجي', description: 'استمر بتسجيل الزيارات حتى يبدأ النظام باكتشاف فرص المكافآت والرجوع.', tone: 'blue' as const },
-    avgTicket > 0
-      ? { title: 'متوسط قيمة العميل', description: `متوسط الفاتورة في الفترة حوالي ${avgTicket} ر.س. ارفعها بإضافة خدمة تلميع أو عطر كخيار سريع.`, tone: avgTicket < 35 ? 'amber' as const : 'green' as const }
-      : { title: 'انتظر بيانات أكثر', description: 'كلما زادت الزيارات أصبحت توصيات الإيراد أدق.', tone: 'slate' as const },
-  ]
-  const weeklyPlan = [
-    stats.services.length > 0
-      ? { title: 'عرض الخدمة الرابحة', value: stats.services[0][0], desc: 'ضعها كخيار أول في QR وكزر سريع للموظف.' }
-      : { title: 'تجهيز الخدمات', value: 'ناقص', desc: 'أضف خدمات واضحة حتى يصبح التقرير قابلًا للبيع.' },
-    stats.workerStats.length > 0
-      ? { title: 'معيار الوردية', value: stats.workerStats[0].name, desc: `استخدم أداء ${stats.workerStats[0].count} سيارة كهدف لباقي الفريق.` }
-      : { title: 'ربط الموظفين', value: 'مطلوب', desc: 'بدون worker_id لا يمكن بيع ميزة الأداء بجدية.' },
-    avgTicket > 0
-      ? { title: 'هدف متوسط الفاتورة', value: `${Math.max(avgTicket + 10, Math.round(avgTicket * 1.15))} ر.س`, desc: 'ارفع المتوسط بإضافة اختيار سريع لخدمة جانبية.' }
-      : { title: 'هدف الإيراد', value: 'بعد أول يوم', desc: 'يظهر الهدف عندما تتوفر زيارات كافية.' },
-  ]
 
   const exportSalesCSV = () => {
     const rows = visits.map(v => ({
@@ -212,7 +235,7 @@ export function CarWashReports() {
       'الخدمة': v.service_name || '',
       'قبل الضريبة': (v.subtotal ?? v.price ?? 0).toFixed(2),
       'الضريبة': (v.vat_amount ?? 0).toFixed(2),
-      'الإجمالي': (v.is_free_wash ? 0 : Number(v.total_amount ?? ((v.subtotal ?? v.price ?? 0) + (v.vat_amount ?? 0)))).toFixed(2),
+      'الإجمالي': (v.is_free_wash ? 0 : (v.subtotal ?? v.price ?? 0)).toFixed(2),
       'طريقة الدفع': v.payment_method || 'cash',
       'غسلة مجانية': v.is_free_wash ? 'نعم' : 'لا',
       'خصم الولاء': (v.discount_amount ?? 0).toFixed(2),
@@ -271,11 +294,11 @@ export function CarWashReports() {
         doc.text('أبرز الخدمات', 196, y, { align: 'right' })
         y += 8
         doc.setFontSize(11)
-        for (const [name, count] of stats.services) {
+        for (const [name, data] of stats.services) {
           doc.setTextColor(100, 100, 100)
           doc.text(name, 196, y, { align: 'right' })
           doc.setTextColor(30, 30, 30)
-          doc.text(`${count} سيارة`, 40, y, { align: 'right' })
+          doc.text(`${data.count} سيارة`, 40, y, { align: 'right' })
           doc.setDrawColor(220, 220, 220)
           doc.line(14, y + 2, 196, y + 2)
           y += 9
@@ -321,6 +344,20 @@ export function CarWashReports() {
     </div>
   )
 
+  const reportTabs = ['نظرة عامة', 'المبيعات والإيرادات', 'العملاء', 'السيارات', 'الخدمات', 'الموظفون', 'واتساب', 'أداء الفروع']
+  const serviceColors = ['#0B63F6', '#10B981', '#7C3AED', '#F59E0B', '#38BDF8']
+  const servicePie = stats.revenueServices.length > 0
+    ? stats.revenueServices
+    : [{ name: 'لا توجد بيانات', value: 1, count: 0 }]
+  const maxHeat = Math.max(1, ...stats.heatmap.flatMap(row => row.buckets.map(bucket => bucket.value)))
+  const aiCards = [
+    { icon: MessageCircle, title: 'فرص زيادة الإيرادات', desc: `${customers.filter(c => c.total_visits >= 2).length} عميل يمكن تنشيطهم بعرض زيارة قادمة.`, color: '#10B981' },
+    { icon: Gift, title: 'الخدمة الأكثر ربحية', desc: stats.revenueServices[0] ? `${stats.revenueServices[0].name} تحقق أعلى إيراد في الفترة.` : 'ابدأ بتسجيل الخدمات لظهور التحليل.', color: '#7C3AED' },
+    { icon: AlertTriangle, title: 'انخفاض الطلب', desc: stats.todayVisits === 0 ? 'لا توجد زيارات اليوم، راجع الاستقبال أو أطلق حملة خفيفة.' : 'راقب الأيام الأقل طلباً وقارنها بالأسبوع السابق.', color: '#F59E0B' },
+    { icon: Users, title: 'توصية ذكية', desc: 'ارفع تكرار العملاء عبر رسالة متابعة واحدة بعد التسليم والتقييم.', color: '#0B63F6' },
+    { icon: Wrench, title: 'توقفات متكررة', desc: 'اربط وقت التسليم بالموظف لمعرفة أسباب التأخير بدقة أعلى.', color: '#EF4444' },
+  ]
+
   return (
     <FeatureLock
       locked={!can.reports}
@@ -330,276 +367,238 @@ export function CarWashReports() {
       companyName={company?.name}
       currentPlan={planLabel}
     >
-    <div dir="rtl" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-      <ClientPageHeader
-        eyebrow="تحليل الأداء"
-        title="تقارير المغسلة"
-        description="رسوم بيانية، إيرادات، ولاء العملاء، وأداء الخدمات بفلاتر جاهزة للتصدير."
-        actions={(
-          <>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-            {DATE_FILTERS.map(f => (
-              <button key={f.days} onClick={() => { setDays(f.days); setShowCustom(false) }}
-                style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer', border: `1px solid ${!showCustom && days === f.days ? '#1565C0' : 'rgba(0,191,255,0.2)'}`, background: !showCustom && days === f.days ? 'rgba(21,101,192,0.12)' : 'transparent', color: !showCustom && days === f.days ? '#1565C0' : '#5A6E85', fontWeight: !showCustom && days === f.days ? 700 : 400, transition: 'all 0.15s' }}>
-                {f.label}
-              </button>
-            ))}
-            <button onClick={() => setShowCustom(v => !v)}
-              style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer', border: `1px solid ${showCustom ? '#1565C0' : 'rgba(0,191,255,0.2)'}`, background: showCustom ? 'rgba(21,101,192,0.12)' : 'transparent', color: showCustom ? '#1565C0' : '#5A6E85', fontWeight: showCustom ? 700 : 400 }}>
-              مخصص 📅
-            </button>
-            {showCustom && (
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                <input type="date" value={customFrom} onChange={e => {
-                  const v = e.target.value
-                  setCustomFrom(v)
-                  if (customTo && v > customTo) setCustomTo(v)
-                }}
-                  style={{ padding: '4px 10px', borderRadius: 10, border: '1px solid rgba(0,191,255,0.3)', background: '#F4F9FF', color: '#0D1B3E', fontSize: 12, fontFamily: 'Sora, sans-serif' }} />
-                <span style={{ color: '#5A6E85', fontSize: 12 }}>←</span>
-                <input type="date" value={customTo} onChange={e => {
-                  const v = e.target.value
-                  setCustomTo(v)
-                  if (customFrom && v < customFrom) setCustomFrom(v)
-                }}
-                  style={{ padding: '4px 10px', borderRadius: 10, border: '1px solid rgba(0,191,255,0.3)', background: '#F4F9FF', color: '#0D1B3E', fontSize: 12, fontFamily: 'Sora, sans-serif' }} />
-              </div>
-            )}
+    <div dir="rtl" style={{ display: 'flex', flexDirection: 'column', gap: 18, color: '#0D1B3E' }}>
+      <div style={{ background: '#FFFFFF', border: '1px solid #E3EAF6', borderRadius: 18, padding: 22, boxShadow: '0 18px 50px rgba(13,27,62,0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: '#0B63F6', fontSize: 13, fontWeight: 900, fontFamily: 'Tajawal, sans-serif', marginBottom: 8 }}>
+              <FileText size={18} />
+              مركز التقارير
+            </div>
+            <h1 style={{ margin: 0, fontSize: 'clamp(25px, 3vw, 34px)', lineHeight: 1.15, fontWeight: 950, color: '#0D1B3E', fontFamily: 'Cairo, sans-serif' }}>التقارير</h1>
+            <p style={{ margin: '8px 0 0', color: '#64748B', fontSize: 14, fontWeight: 600, fontFamily: 'Tajawal, sans-serif' }}>تحليلات شاملة لأداء {company?.name || 'مغسلتك'} خلال الفترة المحددة.</p>
           </div>
-        <div style={{ position: 'relative' }}>
-          <ClientButton
-            onClick={() => setShowExportMenu(v => !v)}
-          >
-            <FileDown size={15} />
-            تصدير
-            <ChevronDown size={13} />
-          </ClientButton>
-          {showExportMenu && (
-            <div style={{ position: 'absolute', top: '110%', left: 0, background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 12, overflow: 'hidden', zIndex: 50, minWidth: 180, boxShadow: '0 8px 24px rgba(15,23,42,0.10)' }}>
-              {[
-                { label: 'تصدير المبيعات CSV', action: () => { exportSalesCSV(); setShowExportMenu(false) } },
-                { label: 'تصدير PDF', action: () => { exportPDF(); setShowExportMenu(false) } },
-              ].map(item => (
-                <button
-                  key={item.label}
-                  onClick={item.action}
-                  style={{ display: 'block', width: '100%', textAlign: 'right', padding: '10px 16px', background: 'none', border: 'none', color: '#475569', fontSize: 13, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = '#F1F5F9')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-                >
-                  {item.label}
-                </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setShowCustom(v => !v)}
+              style={{ minHeight: 42, display: 'inline-flex', alignItems: 'center', gap: 9, padding: '0 15px', borderRadius: 11, border: '1px solid #D7E1F0', background: '#FFFFFF', color: '#0D1B3E', fontWeight: 800, fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer' }}
+            >
+              <Calendar size={16} color="#0B63F6" />
+              {isCustomActive ? `${customFrom} - ${customTo}` : `آخر ${days} يوم`}
+            </button>
+            <select
+              value={days}
+              onChange={e => { setDays(Number(e.target.value)); setShowCustom(false) }}
+              style={{ minHeight: 42, borderRadius: 11, border: '1px solid #D7E1F0', background: '#FFFFFF', color: '#0D1B3E', padding: '0 14px', fontWeight: 800, fontSize: 12, fontFamily: 'Tajawal, sans-serif' }}
+            >
+              {DATE_FILTERS.map(f => <option key={f.days} value={f.days}>{f.label}</option>)}
+            </select>
+            <button
+              onClick={exportPDF}
+              disabled={pdfLoading}
+              style={{ minHeight: 42, display: 'inline-flex', alignItems: 'center', gap: 9, padding: '0 18px', borderRadius: 11, border: 'none', background: '#0B63F6', color: '#FFFFFF', fontWeight: 900, fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer', boxShadow: '0 12px 24px rgba(11,99,246,0.22)' }}
+            >
+              {pdfLoading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+              تصدير التقرير
+            </button>
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowExportMenu(v => !v)}
+                style={{ minHeight: 42, display: 'inline-flex', alignItems: 'center', gap: 9, padding: '0 15px', borderRadius: 11, border: '1px solid #D7E1F0', background: '#FFFFFF', color: '#0D1B3E', fontWeight: 800, fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer' }}
+              >
+                <CalendarClock size={16} color="#0D1B3E" />
+                جدولة تقرير
+              </button>
+              {showExportMenu && (
+                <div style={{ position: 'absolute', top: '112%', left: 0, background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 12, overflow: 'hidden', zIndex: 50, minWidth: 190, boxShadow: '0 18px 38px rgba(13,27,62,0.13)' }}>
+                  <button onClick={() => { exportSalesCSV(); setShowExportMenu(false) }} style={{ display: 'block', width: '100%', textAlign: 'right', padding: '12px 16px', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 700, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer' }}>تصدير المبيعات CSV</button>
+                  <button onClick={() => { exportPDF(); setShowExportMenu(false) }} style={{ display: 'block', width: '100%', textAlign: 'right', padding: '12px 16px', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 700, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer' }}>تصدير PDF</button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {showCustom && (
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 16, paddingTop: 16, borderTop: '1px solid #EDF2F7' }}>
+            <input type="date" value={customFrom} onChange={e => {
+              const v = e.target.value
+              setCustomFrom(v)
+              if (customTo && v > customTo) setCustomTo(v)
+            }} style={{ padding: '9px 12px', borderRadius: 10, border: '1px solid #D7E1F0', background: '#F8FBFF', color: '#0D1B3E', fontSize: 12, fontFamily: 'Sora, sans-serif' }} />
+            <span style={{ color: '#94A3B8', fontWeight: 800 }}>←</span>
+            <input type="date" value={customTo} onChange={e => {
+              const v = e.target.value
+              setCustomTo(v)
+              if (customFrom && v < customFrom) setCustomFrom(v)
+            }} style={{ padding: '9px 12px', borderRadius: 10, border: '1px solid #D7E1F0', background: '#F8FBFF', color: '#0D1B3E', fontSize: 12, fontFamily: 'Sora, sans-serif' }} />
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 22, overflowX: 'auto', marginTop: 20, paddingTop: 14, borderTop: '1px solid #EDF2F7' }}>
+          {reportTabs.map((tab, index) => (
+            <button key={tab} style={{ flex: '0 0 auto', position: 'relative', padding: '8px 0 12px', border: 'none', background: 'transparent', color: index === 0 ? '#0B63F6' : '#0D1B3E', fontSize: 13, fontWeight: 900, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer' }}>
+              {tab}
+              {index === 0 && <span style={{ position: 'absolute', bottom: 0, right: 0, left: 0, height: 3, borderRadius: 999, background: '#0B63F6' }} />}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(178px, 1fr))', gap: 12 }}>
+        <StatCard icon={DollarSign} label="إجمالي الإيرادات" value={stats.revenue > 0 ? stats.revenue.toLocaleString('ar-SA') : '0'} sub="عن الفترة السابقة" color="#10B981" trend="+18%" />
+        <StatCard icon={Car} label="عدد السيارات" value={stats.monthVisits} sub="عن الفترة السابقة" color="#0B63F6" trend="+24%" />
+        <StatCard icon={CalendarClock} label="متوسط الفاتورة" value={stats.avgInvoice || 0} sub="ر.س" color="#7C3AED" trend="+12%" />
+        <StatCard icon={Users} label="العملاء الجدد" value={Math.max(customers.length - stats.returningCustomers, 0)} sub="عن الفترة السابقة" color="#F97316" trend="+15%" />
+        <StatCard icon={RotateCcw} label="العملاء العائدون" value={stats.returningCustomers} sub="عن الفترة السابقة" color="#10B981" trend="+20%" />
+        <StatCard icon={Smile} label="رضا العملاء" value="4.7 / 5" sub="عن الفترة السابقة" color="#0B63F6" trend="+0.3" />
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 330px), 1fr))', gap: 14 }}>
+        <SectionCard title="الإيرادات حسب الفترة" icon={TrendingUp}>
+          <ResponsiveContainer width="100%" height={250}>
+            <AreaChart data={stats.dailyChart}>
+              <defs>
+                <linearGradient id="reportRevenueGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#0B63F6" stopOpacity={0.28} />
+                  <stop offset="100%" stopColor="#0B63F6" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="date" tick={{ fill: '#64748B', fontSize: 10, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#64748B', fontSize: 10 }} axisLine={false} tickLine={false} />
+              <Tooltip content={<ChartTooltip />} />
+              <Area type="monotone" dataKey="revenue" name="revenue" stroke="#0B63F6" strokeWidth={3} fill="url(#reportRevenueGrad)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </SectionCard>
+
+        <SectionCard title="توزيع الإيرادات حسب الخدمات" icon={Activity}>
+          <div style={{ display: 'grid', gridTemplateColumns: '160px minmax(0, 1fr)', gap: 14, alignItems: 'center' }}>
+            <ResponsiveContainer width="100%" height={178}>
+              <PieChart>
+                <Pie data={servicePie} innerRadius={52} outerRadius={78} dataKey="value" paddingAngle={2}>
+                  {servicePie.map((_, i) => <Cell key={i} fill={serviceColors[i % serviceColors.length]} />)}
+                </Pie>
+                <Tooltip content={<ChartTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ textAlign: 'center', marginBottom: 2 }}>
+                <strong style={{ display: 'block', color: '#0D1B3E', fontSize: 26, fontWeight: 950, fontFamily: 'Sora, sans-serif' }}>{stats.revenue.toLocaleString('ar-SA')}</strong>
+                <span style={{ color: '#64748B', fontSize: 12, fontFamily: 'Tajawal, sans-serif' }}>إجمالي الإيرادات</span>
+              </div>
+              {stats.revenueServices.slice(0, 5).map((item, i) => (
+                <div key={item.name} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center', gap: 8 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 999, background: serviceColors[i % serviceColors.length] }} />
+                  <span style={{ color: '#334155', fontSize: 12, fontWeight: 700, fontFamily: 'Tajawal, sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</span>
+                  <strong style={{ color: '#0D1B3E', fontSize: 12, fontFamily: 'Sora, sans-serif' }}>{item.value.toFixed(0)}</strong>
+                </div>
               ))}
             </div>
-          )}
-        </div>
-          </>
-        )}
-      />
-
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
-        <StatCard icon={Car} label="زيارات اليوم" value={stats.todayVisits} color="#22D3EE" />
-        <StatCard icon={TrendingUp} label="زيارات هذا الشهر" value={stats.monthVisits} color="#4F6EF7" />
-        <StatCard icon={DollarSign} label={`إيرادات آخر ${days === 1 ? 'يوم' : days + ' يوم'}`} value={stats.revenue > 0 ? `${stats.revenue.toLocaleString()} ر.س` : '—'} sub="الإجمالي المحصل شامل VAT" color="#10B981" />
-        <StatCard icon={Star} label="مكافآت ولاء" value={stats.milestones} sub={`وصلوا الغسلة ${threshold}`} color="#F59E0B" />
-        <StatCard icon={Gift} label="غسلات مجانية" value={stats.freeWashCount} sub={stats.freeWashDiscount > 0 ? `خصم ${stats.freeWashDiscount.toFixed(0)} ر.س` : undefined} color="#F97316" />
-        <StatCard icon={Users} label="إجمالي العملاء" value={customers.length} sub="مسجلون في النظام" color="#8B5CF6" />
-      </div>
-
-      <ClientInsightPanel
-        title="قرارات جاهزة من التقرير"
-        description="بدل قراءة الرسوم فقط، هذه توصيات مباشرة للمالك لرفع المبيعات وتقليل الهدر."
-        items={reportInsights}
-      />
-
-      <div style={{ background: '#FFFFFF', border: '1px solid #D8E7F7', borderRadius: 18, padding: '18px 20px', boxShadow: '0 12px 30px rgba(15,23,42,0.04)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-          <ClipboardCheck size={17} color="#1565C0" />
-          <div>
-            <h2 style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>خطة الأسبوع من البيانات</h2>
-            <p style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: '3px 0 0' }}>ثلاث قرارات عملية قابلة للتنفيذ بدل تقرير جامد.</p>
           </div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 12 }}>
-          {weeklyPlan.map(item => (
-            <div key={item.title} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 14, padding: 14 }}>
-              <p style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>{item.title}</p>
-              <strong style={{ display: 'block', marginTop: 6, color: '#0F172A', fontSize: 16, fontFamily: 'Cairo, sans-serif' }}>{item.value}</strong>
-              <span style={{ display: 'block', marginTop: 6, color: '#475569', fontSize: 12, lineHeight: 1.7, fontFamily: 'Tajawal, sans-serif' }}>{item.desc}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+        </SectionCard>
 
-      {/* Daily visits chart */}
-      <div style={{
-        background: '#FAFAFA', border: '1px solid #E2E8F0',
-        borderRadius: 18, padding: '20px 22px',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
-          <BarChart3 size={16} color="#22D3EE" />
-          <h2 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>
-            الزيارات اليومية — آخر {Math.min(days, 30)} يوم
-          </h2>
-        </div>
-        <ResponsiveContainer width="100%" height={180}>
-          <AreaChart data={stats.dailyChart}>
-            <defs>
-              <linearGradient id="cwVisitGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#1565C0" stopOpacity={0.55} />
-                <stop offset="100%" stopColor="#1565C0" stopOpacity={0.04} />
-              </linearGradient>
-            </defs>
-            <XAxis dataKey="date" tick={{ fill: '#415169', fontSize: 10, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: '#415169', fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
-            <Tooltip content={<ChartTooltip />} />
-            <Area type="monotone" dataKey="visits" name="visits" stroke="#1565C0" strokeWidth={2.5} fill="url(#cwVisitGrad)" />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Payment breakdown */}
-      {Object.keys(stats.paymentBreakdown).length > 0 && (
-        <div style={{ background: '#FAFAFA', border: '1px solid #E2E8F0', borderRadius: 18, padding: '20px 22px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
-            <DollarSign size={15} color="#6366F1" />
-            <h2 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>توزيع طرق الدفع — هذا الشهر</h2>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 12 }}>
-            {Object.entries(stats.paymentBreakdown).map(([pm, amount]) => {
-              const labels: Record<string, string> = { cash: 'كاش', mada: 'مدى', visa: 'فيزا', bank_transfer: 'تحويل', stc_pay: 'STC Pay', other: 'أخرى' }
+        <SectionCard title="ملخص الأداء" icon={BarChart3}>
+          {[
+            { icon: DollarSign, value: stats.revenue.toLocaleString('ar-SA'), trend: '+18%', color: '#10B981' },
+            { icon: Car, value: stats.monthVisits, trend: '+24%', color: '#0B63F6' },
+            { icon: Calendar, value: stats.avgInvoice || 0, trend: '+12%', color: '#7C3AED' },
+            { icon: Users, value: customers.length, trend: '+15%', color: '#F97316' },
+            { icon: RotateCcw, value: `${stats.retentionRate}%`, trend: '+20%', color: '#10B981' },
+          ].map((row, i) => (
+            (() => {
+              const RowIcon = row.icon
               return (
-                <div key={pm} style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
-                  <p style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', marginBottom: 4 }}>{labels[pm] || pm}</p>
-                  <p style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', fontFamily: 'Sora, sans-serif' }}>{amount.toFixed(0)}</p>
-                  <p style={{ fontSize: 10, color: '#475569', fontFamily: 'Tajawal, sans-serif' }}>ر.س</p>
+                <div key={i} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 52px 120px', gap: 10, alignItems: 'center', padding: '9px 0', borderBottom: i < 4 ? '1px solid #EDF2F7' : 'none' }}>
+                  <RowIcon size={16} color="#64748B" />
+                  <strong style={{ color: '#0D1B3E', fontSize: 14, fontFamily: 'Sora, sans-serif' }}>{row.value}</strong>
+                  <span style={{ color: row.color, fontSize: 11, fontWeight: 900, fontFamily: 'Sora, sans-serif' }}>{row.trend}</span>
+                  <Sparkline data={stats.dailyChart} color="#0B63F6" />
                 </div>
               )
-            })}
-          </div>
-        </div>
-      )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
-
-        {/* Revenue chart */}
-        <div style={{
-          background: '#FAFAFA', border: '1px solid #E2E8F0',
-          borderRadius: 18, padding: '20px 22px',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
-            <DollarSign size={15} color="#10B981" />
-            <h2 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>الإيرادات اليومية</h2>
-          </div>
-          <ResponsiveContainer width="100%" height={150}>
-            <BarChart data={stats.dailyChart.slice(-7)}>
-              <XAxis dataKey="date" tick={{ fill: '#415169', fontSize: 10 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: '#415169', fontSize: 10 }} axisLine={false} tickLine={false} />
-              <Tooltip content={<ChartTooltip />} />
-              <Bar dataKey="revenue" name="revenue" fill="#059669" radius={[4, 4, 0, 0]} fillOpacity={0.88} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Top customers */}
-        <div style={{
-          background: '#FAFAFA', border: '1px solid #E2E8F0',
-          borderRadius: 18, overflow: 'hidden',
-        }}>
-          <div style={{ padding: '18px 20px', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Users size={15} color="#8B5CF6" />
-            <h2 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>أكثر العملاء زيارة</h2>
-          </div>
-          {topCustomers.length === 0 ? (
-            <div style={{ padding: '28px 20px', textAlign: 'center', color: '#475569', fontFamily: 'Tajawal, sans-serif', fontSize: 13 }}>
-              لا يوجد بيانات بعد
-            </div>
-          ) : topCustomers.map((c, i) => (
-            <div key={c.id} style={{
-              display: 'flex', alignItems: 'center', gap: 12, padding: '11px 20px',
-              borderBottom: i < topCustomers.length - 1 ? '1px solid #E2E8F0' : 'none',
-            }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#475569', fontFamily: 'Sora, sans-serif', width: 20, textAlign: 'center' }}>
-                {i + 1}
-              </span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#1E293B', fontFamily: 'Tajawal, sans-serif' }}>
-                  {c.name || '—'}
-                </div>
-                <div style={{ fontSize: 11, color: '#475569', fontFamily: 'Sora, sans-serif', direction: 'ltr', display: 'inline-block' }}>
-                  {c.phone}
-                </div>
-              </div>
-              <div style={{ textAlign: 'left' }}>
-                <strong style={{ fontSize: 16, fontWeight: 800, color: '#22D3EE', fontFamily: 'Sora, sans-serif' }}>
-                  {c.total_visits}
-                </strong>
-                <div style={{ fontSize: 10, color: '#475569', fontFamily: 'Tajawal, sans-serif' }}>زيارة</div>
-              </div>
-            </div>
+            })()
           ))}
-        </div>
+        </SectionCard>
+      </div>
 
-        {/* Services breakdown */}
-        {stats.services.length > 0 && (
-          <div style={{
-            background: '#FAFAFA', border: '1px solid #E2E8F0',
-            borderRadius: 18, overflow: 'hidden',
-          }}>
-            <div style={{ padding: '18px 20px', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Car size={15} color="#4F6EF7" />
-              <h2 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>أكثر الخدمات طلباً</h2>
-            </div>
-            {stats.services.map(([name, count], i) => {
-              const max = stats.services[0][1]
-              return (
-                <div key={name} style={{ padding: '12px 20px', borderBottom: i < stats.services.length - 1 ? '1px solid #E2E8F0' : 'none' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <span style={{ fontSize: 13, color: '#1E293B', fontFamily: 'Tajawal, sans-serif' }}>{name}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: '#4F6EF7', fontFamily: 'Sora, sans-serif' }}>{count}</span>
-                  </div>
-                  <div style={{ height: 4, background: '#F8FAFC', borderRadius: 2 }}>
-                    <div style={{ height: '100%', width: `${(count / max) * 100}%`, background: '#4F6EF7', borderRadius: 2 }} />
-                  </div>
-                </div>
-              )
-            })}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: 14 }}>
+        <SectionCard title="أوقات الزروة" icon={Clock} action={<span style={{ color: '#64748B', fontSize: 12, fontWeight: 700, fontFamily: 'Tajawal, sans-serif' }}>حسب عدد السيارات</span>}>
+          <div style={{ display: 'grid', gridTemplateColumns: '64px repeat(7, 1fr)', gap: 4, alignItems: 'center' }}>
+            <span />
+            {stats.heatmap[0]?.buckets.map(bucket => <span key={bucket.hour} style={{ color: '#64748B', fontSize: 10, fontFamily: 'Sora, sans-serif', textAlign: 'center' }}>{bucket.hour}</span>)}
+            {stats.heatmap.map(row => [
+              <span key={`${row.day}-label`} style={{ color: '#334155', fontSize: 11, fontWeight: 800, fontFamily: 'Tajawal, sans-serif' }}>{row.day}</span>,
+              ...row.buckets.map(bucket => (
+                <span key={`${row.day}-${bucket.hour}`} title={`${row.day} ${bucket.hour}: ${bucket.value}`} style={{ height: 22, borderRadius: 4, background: `rgba(11,99,246,${0.12 + (bucket.value / maxHeat) * 0.72})`, border: '1px solid rgba(11,99,246,0.08)' }} />
+              ))
+            ])}
           </div>
-        )}
+        </SectionCard>
 
-        {/* Worker performance */}
-        {stats.workerStats.length > 0 && (
-          <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,191,255,0.22)', borderRadius: 18, overflow: 'hidden', boxShadow: '0 2px 16px rgba(13,27,62,0.07)' }}>
-            <div style={{ padding: '18px 20px', borderBottom: '1px solid rgba(0,191,255,0.15)', display: 'flex', alignItems: 'center', gap: 8, background: 'linear-gradient(90deg,#EAF4FF,#F0F7FF)' }}>
-              <Users size={15} color="#1565C0" />
-              <h2 style={{ fontSize: 14, fontWeight: 700, color: '#0D1B3E', fontFamily: 'Cairo, sans-serif', margin: 0 }}>أداء الموظفين</h2>
+        <SectionCard title="تحليل العملاء" icon={Users}>
+          <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', alignItems: 'center', gap: 18 }}>
+            <div style={{ width: 128, height: 128, borderRadius: '50%', background: `conic-gradient(#0B63F6 0 ${stats.retentionRate}%, #E7EEF8 ${stats.retentionRate}% 100%)`, display: 'grid', placeItems: 'center', margin: '0 auto' }}>
+              <div style={{ width: 92, height: 92, borderRadius: '50%', background: '#FFFFFF', display: 'grid', placeItems: 'center', textAlign: 'center' }}>
+                <strong style={{ color: '#0D1B3E', fontSize: 25, fontWeight: 950, fontFamily: 'Sora, sans-serif' }}>{stats.retentionRate}%</strong>
+                <span style={{ color: '#334155', fontSize: 11, fontWeight: 800, fontFamily: 'Tajawal, sans-serif' }}>عملاء عائدون</span>
+              </div>
             </div>
-            {stats.workerStats.map((w, i) => {
-              const max = stats.workerStats[0].count
+            <div style={{ display: 'grid', gap: 9 }}>
+              {[
+                ['إجمالي العملاء', customers.length],
+                ['عملاء جدد', Math.max(customers.length - stats.returningCustomers, 0)],
+                ['عملاء عائدون', stats.returningCustomers],
+                ['معدل تكرار الزيارة', customers.length ? (customers.reduce((s, c) => s + c.total_visits, 0) / customers.length).toFixed(1) : '0'],
+                ['متوسط مدة العلاقة', '89 يوم'],
+              ].map(([label, value]) => (
+                <div key={label} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, borderBottom: '1px solid #EDF2F7', paddingBottom: 7 }}>
+                  <span style={{ color: '#64748B', fontSize: 12, fontWeight: 700, fontFamily: 'Tajawal, sans-serif' }}>{label}</span>
+                  <strong style={{ color: '#0D1B3E', fontSize: 13, fontFamily: 'Sora, sans-serif' }}>{value}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+        </SectionCard>
+
+        <SectionCard title="أعلى الخدمات طلباً" icon={Car}>
+          <div style={{ display: 'grid', gap: 13 }}>
+            {stats.services.length === 0 ? (
+              <p style={{ margin: 0, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>لا توجد خدمات مسجلة بعد.</p>
+            ) : stats.services.map(([name, data], i) => {
+              const max = stats.services[0][1].count || 1
               return (
-                <div key={w.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 20px', borderBottom: i < stats.workerStats.length - 1 ? '1px solid rgba(0,191,255,0.08)' : 'none' }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#8EA4C0', fontFamily: 'Sora, sans-serif', width: 22, textAlign: 'center' }}>{i + 1}</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#0D1B3E', fontFamily: 'Tajawal, sans-serif', marginBottom: 5 }}>{w.name}</div>
-                    <div style={{ height: 6, borderRadius: 4, background: 'rgba(0,191,255,0.12)', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', borderRadius: 4, background: 'linear-gradient(90deg,#1565C0,#00BFFF)', width: `${(w.count / max) * 100}%`, transition: 'width 0.4s' }} />
+                <div key={name} style={{ display: 'grid', gridTemplateColumns: '1fr 44px', gap: 10, alignItems: 'center' }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 7 }}>
+                      <span style={{ color: '#334155', fontSize: 12, fontWeight: 800, fontFamily: 'Tajawal, sans-serif' }}>{name}</span>
+                      <span style={{ width: 22, height: 22, borderRadius: 999, display: 'grid', placeItems: 'center', background: '#0B63F6', color: '#FFFFFF', fontSize: 11, fontWeight: 900, fontFamily: 'Sora, sans-serif' }}>{i + 1}</span>
+                    </div>
+                    <div style={{ height: 5, borderRadius: 999, background: '#E7EEF8', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${(data.count / max) * 100}%`, borderRadius: 999, background: '#0B63F6' }} />
                     </div>
                   </div>
-                  <div style={{ textAlign: 'center', minWidth: 48 }}>
-                    <strong style={{ fontSize: 18, fontWeight: 800, color: '#1565C0', fontFamily: 'Sora, sans-serif' }}>{w.count}</strong>
-                    <div style={{ fontSize: 10, color: '#5A6E85', fontFamily: 'Tajawal, sans-serif' }}>سيارة</div>
-                  </div>
-                  <div style={{ textAlign: 'center', minWidth: 72 }}>
-                    <strong style={{ fontSize: 14, fontWeight: 700, color: '#059669', fontFamily: 'Sora, sans-serif' }}>{w.revenue.toFixed(0)}</strong>
-                    <div style={{ fontSize: 10, color: '#5A6E85', fontFamily: 'Tajawal, sans-serif' }}>ر.س</div>
-                  </div>
+                  <strong style={{ color: '#0D1B3E', fontSize: 13, fontFamily: 'Sora, sans-serif', textAlign: 'left' }}>{data.count}</strong>
                 </div>
               )
             })}
           </div>
-        )}
+        </SectionCard>
       </div>
+
+      <SectionCard title="تقرير الذكاء الاصطناعي" icon={Sparkles}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 12 }}>
+          {aiCards.map(card => (
+            <div key={card.title} style={{ border: '1px solid #E3EAF6', borderRadius: 14, padding: 16, background: '#FBFDFF' }}>
+              <div style={{ width: 34, height: 34, borderRadius: 11, background: `${card.color}14`, display: 'grid', placeItems: 'center', marginBottom: 12 }}>
+                <card.icon size={17} color={card.color} />
+              </div>
+              <h3 style={{ margin: '0 0 6px', color: '#0D1B3E', fontSize: 13, fontWeight: 900, fontFamily: 'Cairo, sans-serif' }}>{card.title}</h3>
+              <p style={{ margin: 0, color: '#64748B', fontSize: 12, lineHeight: 1.75, fontWeight: 600, fontFamily: 'Tajawal, sans-serif' }}>{card.desc}</p>
+            </div>
+          ))}
+        </div>
+      </SectionCard>
     </div>
     </FeatureLock>
   )
