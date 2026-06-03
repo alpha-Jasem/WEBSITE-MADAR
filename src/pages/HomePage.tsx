@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  ArrowLeft,
   BarChart3,
   Bot,
   Check,
@@ -183,69 +182,13 @@ export const HomePage = () => {
 
       <main>
         <section className="relative overflow-hidden bg-white">
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,191,255,0.045)_1px,transparent_1px),linear-gradient(rgba(0,191,255,0.045)_1px,transparent_1px)] bg-[size:48px_48px]" />
-          <div className="relative mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
-            <div className="grid items-center gap-8 lg:grid-cols-[0.72fr_1.28fr]">
-              <div className="z-10 py-8 lg:py-16">
-                <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-700 font-cairo">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  ركّب النظام خلال 24 ساعة، وابدأ بتجربة 3 أيام
-                </div>
-                <h1 className="text-4xl font-black leading-[1.16] tracking-normal text-[#0D1B3E] font-cairo sm:text-5xl lg:text-6xl">
-                  إدارة أسهل.
-                  <span className="block text-[#0099CC]">مبيعات أعلى.</span>
-                </h1>
-                <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600 font-tajawal">
-                  مدار OS ينقل المغسلة من الدفاتر والمتابعة اليدوية إلى نظام تشغيل واضح: سيارات، QR، عملاء، مالية، تقارير، وشاشة عرض من مكان واحد.
-                </p>
-
-                <div className="mt-8 rounded-2xl border border-sky-100 bg-sky-50/80 p-4">
-                  <p className="text-sm font-black text-[#0D1B3E] font-cairo">العرض الافتتاحي لأول 10 مغاسل</p>
-                  <p className="mt-1 text-sm leading-7 text-slate-600 font-tajawal">
-                    باقة Pro بسعر <strong className="font-sora text-[#0099CC]">499 ر.س</strong> لأول شهرين، بعدها 699 ر.س شهرياً. الدفع حالياً بتحويل بنكي وتفعيل يدوي.
-                  </p>
-                </div>
-
-                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                  <Link
-                    to="/trial"
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#00BFFF] px-6 py-4 text-base font-black text-[#071322] shadow-[0_18px_38px_rgba(0,191,255,0.28)] font-cairo"
-                  >
-                    ابدأ تجربة 3 أيام
-                    <ArrowLeft size={18} />
-                  </Link>
-                  <button
-                    onClick={requestDemo}
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-sky-200 bg-white px-6 py-4 text-base font-black text-[#0D1B3E] shadow-sm font-cairo"
-                  >
-                    كلمنا على واتساب
-                    <MessageCircle size={18} />
-                  </button>
-                </div>
-
-                <div className="mt-8 grid grid-cols-3 gap-3">
-                  {[
-                    ['24h', 'إعداد سريع'],
-                    ['3', 'أيام تجربة'],
-                    ['499', 'عرض Pro'],
-                  ].map(([value, label]) => (
-                    <div key={label} className="rounded-2xl border border-sky-100 bg-white p-4 shadow-sm">
-                      <p className="font-sora text-2xl font-black text-[#0D1B3E]">{value}</p>
-                      <p className="mt-1 text-xs font-bold text-slate-500 font-tajawal">{label}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="relative">
-                <img
-                  src="/madar-os-hero-realistic.png"
-                  alt="مدار OS للمغاسل - لوحة تشغيل السيارات وQR"
-                  className="w-full rounded-[28px] border border-sky-100 object-cover shadow-[0_30px_90px_rgba(13,27,62,0.18)]"
-                />
-              </div>
-            </div>
-          </div>
+          <img
+            src="/madar-os-hero-realistic.png"
+            alt="Madar OS hero"
+            className="block w-full object-cover"
+            style={{ minHeight: 'calc(100vh - 80px)', objectPosition: 'center top' }}
+          />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white to-transparent" />
         </section>
 
         <section className="border-y border-sky-100 bg-white py-8">
