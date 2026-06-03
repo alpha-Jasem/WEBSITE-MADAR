@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
-import { Car, Stethoscope, Building2, ArrowLeft, ArrowRight, Check, Clock, Zap } from 'lucide-react'
+import { Car, Stethoscope, ArrowLeft, ArrowRight, Check, Clock, Zap } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useLanguage } from '../../context/LanguageContext'
 
@@ -59,33 +59,6 @@ const products = [
       ctaEn: 'Explore Clinic OS',
     },
   },
-  {
-    id: 'real-estate',
-    href: null,
-    icon: Building2,
-    accent: '#F59E0B',
-    glow: 'rgba(245,158,11,0.12)',
-    gradient: 'linear-gradient(135deg, #2B1E05 0%, #F59E0B 100%)',
-    badge: { ar: 'قريباً', en: 'Coming Soon' },
-    ar: {
-      tag: 'Real Estate OS',
-      name: 'نظام تشغيل العقارات',
-      tagline: 'من الاستفسار إلى الصفقة — أوتوماتيك',
-      features: ['تأهيل العملاء المحتملين', 'جدولة جولات تلقائية', 'CRM + pipeline المبيعات'],
-      metric: { value: '٣×', label: 'إغلاق صفقات أسرع' },
-      cta: 'قريباً',
-      ctaEn: 'Coming Soon',
-    },
-    en: {
-      tag: 'Real Estate OS',
-      name: 'Real Estate Operating System',
-      tagline: 'From Inquiry to Deal — Automated',
-      features: ['Lead qualification', 'Auto tour scheduling', 'CRM + sales pipeline'],
-      metric: { value: '3×', label: 'Faster deal closing' },
-      cta: 'Coming Soon',
-      ctaEn: 'Coming Soon',
-    },
-  },
 ]
 
 export const ProductsSection = () => {
@@ -136,7 +109,7 @@ export const ProductsSection = () => {
         </motion.div>
 
         {/* Product cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-3xl mx-auto">
           {products.map((p, i) => {
             const Icon = p.icon
             const content = language === 'ar' ? p.ar : p.en
