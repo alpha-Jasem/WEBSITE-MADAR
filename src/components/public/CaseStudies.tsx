@@ -27,36 +27,36 @@ import { openWhatsAppChat } from '../../lib/whatsapp'
 
 const cases = [
   {
-    industry: { ar: 'عيادة طبية', en: 'Medical Clinic' },
-    tag: { ar: 'واتساب + حجوزات', en: 'WhatsApp + Booking' },
+    industry: { ar: 'مغسلة سيارات', en: 'Car Wash' },
+    tag: { ar: 'واتساب + إدارة تشغيل', en: 'WhatsApp + Operations' },
     gradient: 'linear-gradient(135deg, #0D1B3E, #00BFFF)',
     glow: 'rgba(0,191,255,0.12)',
     metrics: [
-      { icon: Clock,      before: { ar: '+٣ ساعات',  en: '3+ Hours' },   after: { ar: '< ١ دقيقة', en: '< 1 Min' },   label: { ar: 'وقت الاستجابة', en: 'Response Time' }, color: '#0D1B3E' },
-      { icon: Users,      before: { ar: '٣٠%',        en: '30%' },         after: { ar: '٧٨%',        en: '78%' },       label: { ar: 'معدل التحويل',  en: 'Conversion Rate' }, color: '#00BFFF' },
-      { icon: DollarSign, before: { ar: '٢٢٠٠٠ ر.س', en: 'SAR 22K' },     after: { ar: '٩٠٠٠ ر.س',  en: 'SAR 9K' },    label: { ar: 'تكلفة شهرية',  en: 'Monthly Cost' }, color: '#1565C0' },
+      { icon: Clock,      before: { ar: 'يدوي (دقائق)', en: 'Manual (minutes)' }, after: { ar: 'أقل من ثانية', en: 'Under 1 second' }, label: { ar: 'وقت الرد', en: 'Response Time' }, color: '#0D1B3E' },
+      { icon: Users,      before: { ar: '٠%', en: '0%' }, after: { ar: '٦٨%', en: '68%' }, label: { ar: 'نسبة تحصيل التقييمات', en: 'Reviews Collected' }, color: '#00BFFF' },
+      { icon: DollarSign, before: { ar: '+٤٠ ساعة', en: '40+ hours' }, after: { ar: '٤ ساعات', en: '4 hours' }, label: { ar: 'ساعات عمل يدوي شهرياً', en: 'Monthly Manual Work' }, color: '#1565C0' },
     ],
     testimony: {
-      ar: '"كنا نفقد عشرات المرضى شهرياً بسبب التأخر في الرد. الآن النظام يرد في ثوانٍ ويملأ جدولنا تلقائياً."',
-      en: '"We were losing dozens of patients monthly due to slow responses. Now the system replies in seconds and fills our schedule automatically."',
+      ar: '"قبل مدار كنا نفوت زبائن كل يوم بدون ما ندري. الحين كل زيارة تنحفظ، والعميل يوصله رسالة تلقائية، والتقارير جاهزة بدون ما نسأل أحد."',
+      en: '"Before Madar, we missed customers every day without realizing it. Now every visit is saved, customers receive automatic messages, and reports are ready without asking anyone."',
     },
-    author: { ar: 'د. فارس العمري — عيادة الأمل', en: 'Dr. Faris Al-Omari — Al-Amal Clinic' },
+    author: { ar: 'فريق مغسلة نايف — الرياض', en: 'Naif Car Wash Team — Riyadh' },
   },
   {
-    industry: { ar: 'شركة عقارات', en: 'Real Estate Agency' },
-    tag: { ar: 'CRM + مبيعات AI', en: 'CRM + AI Sales' },
+    industry: { ar: 'عيادة أسنان', en: 'Dental Clinic' },
+    tag: { ar: 'مساعد صوتي + حجوزات', en: 'Voice Assistant + Booking' },
     gradient: 'linear-gradient(135deg, #1565C0, #0099CC)',
     glow: 'rgba(21,101,192,0.12)',
     metrics: [
-      { icon: TrendingUp,  before: { ar: '١٥%',        en: '15%' },         after: { ar: '٤٢%',        en: '42%' },       label: { ar: 'إغلاق الصفقات',  en: 'Deal Closure' }, color: '#1565C0' },
-      { icon: Clock,       before: { ar: '٧٢ ساعة',    en: '72 Hours' },    after: { ar: '٢ ساعة',    en: '2 Hours' },   label: { ar: 'وقت المتابعة',   en: 'Follow-up Time' }, color: '#0099CC' },
-      { icon: DollarSign,  before: { ar: '٣.٢م ر.س',   en: 'SAR 3.2M' },    after: { ar: '٨.٧م ر.س',  en: 'SAR 8.7M' },  label: { ar: 'المبيعات الشهرية', en: 'Monthly Sales' }, color: '#1565C0' },
+      { icon: TrendingUp,  before: { ar: '+٣ ساعات', en: '3+ hours' }, after: { ar: 'أقل من دقيقة', en: 'Under 1 minute' }, label: { ar: 'وقت تأكيد الحجز', en: 'Booking Confirmation Time' }, color: '#1565C0' },
+      { icon: Clock,       before: { ar: '٤٠%', en: '40%' }, after: { ar: '٠%', en: '0%' }, label: { ar: 'حجوزات ضائعة بسبب عدم الرد', en: 'Bookings Lost to No Reply' }, color: '#0099CC' },
+      { icon: DollarSign,  before: { ar: '٠', en: '0' }, after: { ar: '24/7', en: '24/7' }, label: { ar: 'ساعات الاستقبال الإضافية المغطاة', en: 'Extra Reception Coverage' }, color: '#1565C0' },
     ],
     testimony: {
-      ar: '"النظام يتابع المحتملين أفضل من أي موظف مبيعات. وفّرنا ٦٠٪ من تكاليف المبيعات ورفعنا الإيرادات ١٧٢٪."',
-      en: '"The system follows up with prospects better than any salesperson. We saved 60% in sales costs and grew revenue by 172%."',
+      ar: '"نورة تستقبل الحجوزات بالليل والعطل وأنا مرتاح. الداشبورد يعطيني كل شيء في مكان واحد."',
+      en: '"Noura handles bookings at night and during holidays while I stay relaxed. The dashboard gives me everything in one place."',
     },
-    author: { ar: 'خالد الدوسري — مجموعة الدوسري العقارية', en: 'Khalid Al-Dosari — Al-Dosari Real Estate Group' },
+    author: { ar: 'إدارة عيادات نور — جدة', en: 'Noor Dental Clinics Management — Jeddah' },
   },
 ]
 

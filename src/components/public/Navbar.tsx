@@ -133,7 +133,7 @@ export const Navbar = () => {
               style={{ background: 'linear-gradient(135deg, #0D1B3E, #0099CC)', boxShadow: '0 4px 16px rgba(0,153,204,0.3)' }}
             >
               <Calendar size={13} />
-              <span>{t('خريطة نمو مجانية', 'Free Growth Map')}</span>
+              <span>{t('احجز جلسة مجانية', 'Book a Free Session')}</span>
             </motion.button>
           </div>
 
@@ -194,7 +194,7 @@ export const Navbar = () => {
                 className={`w-full px-4 py-3 rounded-xl text-white text-sm font-semibold cursor-pointer ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
                 style={{ background: 'linear-gradient(135deg, #0D1B3E, #0099CC)' }}
               >
-                {t('احصل على خريطة نمو مجانية', 'Get a Free Growth Map')}
+                {t('احجز جلسة مجانية', 'Book a Free Session')}
               </button>
             </nav>
           </motion.div>

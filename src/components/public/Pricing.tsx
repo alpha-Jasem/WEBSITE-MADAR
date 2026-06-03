@@ -11,24 +11,24 @@ const plans = [
     gradient: 'linear-gradient(135deg, rgba(13,27,62,0.03), rgba(0,191,255,0.03))',
     border: '#E2EBF8',
     featured: false,
-    ar: { name: 'Starter', tagline: 'لبداية الردود الذكية', price: 'حسب المشروع', priceNote: 'يبدأ من', desc: 'نظام رد ذكي يوقف ضياع الرسائل والمكالمات ويعطيك بداية واضحة', features: ['رد واتساب أو مكالمات AI', 'حتى ١٠٠٠ تفاعل شهرياً', 'تكامل مع منصة واحدة', 'لوحة تحليلات بسيطة', 'دعم تقني شهر واحد'], cta: 'ابدأ بإيقاف التسرب' },
-    en: { name: 'Starter', tagline: 'Start Smart Replies', price: 'Project-Based', priceNote: 'Starting from', desc: 'A smart response system that stops missed messages and calls and gives you a clear starting point', features: ['WhatsApp or AI call response', 'Up to 1,000 interactions/month', 'Single platform integration', 'Basic analytics dashboard', '1 month technical support'], cta: 'Stop the Leak' },
+    ar: { name: 'Starter', tagline: 'لبداية الردود الذكية', price: '٢,٩٩٩ ر.س', priceNote: 'يبدأ من', priceSubNote: 'دفعة واحدة + ٢٩٩ ر.س/شهر', desc: 'نظام رد ذكي يوقف ضياع الرسائل والمكالمات ويعطيك بداية واضحة', features: ['رد واتساب أو مكالمات AI', 'حتى ١٠٠٠ تفاعل شهرياً', 'تكامل مع منصة واحدة', 'لوحة تحليلات بسيطة', 'دعم تقني شهر واحد'], cta: 'ابدأ بإيقاف التسرب' },
+    en: { name: 'Starter', tagline: 'Start Smart Replies', price: 'SAR 2,999', priceNote: 'Starting from', priceSubNote: 'One-time + SAR 299/month', desc: 'A smart response system that stops missed messages and calls and gives you a clear starting point', features: ['WhatsApp or AI call response', 'Up to 1,000 interactions/month', 'Single platform integration', 'Basic analytics dashboard', '1 month technical support'], cta: 'Stop the Leak' },
   },
   {
     key: 'growth',
     gradient: 'linear-gradient(135deg, rgba(13,27,62,0.03), rgba(0,191,255,0.05))',
     border: '#00BFFF',
     featured: true,
-    ar: { name: 'Growth', tagline: 'لتحويل التواصل إلى حجوزات', price: 'حسب المشروع', priceNote: 'الأكثر شيوعاً', desc: 'النظام الكامل للرد على الرسائل والمكالمات، الحجز، المتابعة، والتحليلات في مكان واحد', features: ['وكيل AI واتساب + مكالمات', 'نظام حجز مواعيد متكامل', 'أتمتة CRM كاملة', 'تفاعلات غير محدودة', 'تكامل مع ٣ منصات', 'لوحة تحليلات متقدمة', 'دعم تقني ٦ أشهر', 'تقارير أداء أسبوعية'], cta: 'ابنِ محرك النمو' },
-    en: { name: 'Growth', tagline: 'Turn Contact Into Bookings', price: 'Project-Based', priceNote: 'Most Popular', desc: 'The complete system for messages, calls, booking, follow-up, and analytics in one place', features: ['AI WhatsApp + voice agent', 'Integrated appointment booking', 'Full CRM automation', 'Unlimited interactions', 'Integration with 3 platforms', 'Advanced analytics dashboard', '6 months technical support', 'Weekly performance reports'], cta: 'Build the Growth Engine' },
+    ar: { name: 'Growth', tagline: 'لتحويل التواصل إلى حجوزات', price: '٧,٩٩٩ ر.س', priceNote: 'الأكثر شيوعاً', priceSubNote: 'دفعة واحدة + ٧٩٩ ر.س/شهر', desc: 'النظام الكامل للرد على الرسائل والمكالمات، الحجز، المتابعة، والتحليلات في مكان واحد', features: ['وكيل AI واتساب + مكالمات', 'نظام حجز مواعيد متكامل', 'أتمتة CRM كاملة', 'تفاعلات غير محدودة', 'تكامل مع ٣ منصات', 'لوحة تحليلات متقدمة', 'دعم تقني ٦ أشهر', 'تقارير أداء أسبوعية'], cta: 'ابنِ محرك النمو' },
+    en: { name: 'Growth', tagline: 'Turn Contact Into Bookings', price: 'SAR 7,999', priceNote: 'Most Popular', priceSubNote: 'One-time + SAR 799/month', desc: 'The complete system for messages, calls, booking, follow-up, and analytics in one place', features: ['AI WhatsApp + voice agent', 'Integrated appointment booking', 'Full CRM automation', 'Unlimited interactions', 'Integration with 3 platforms', 'Advanced analytics dashboard', '6 months technical support', 'Weekly performance reports'], cta: 'Build the Growth Engine' },
   },
   {
     key: 'enterprise',
     gradient: 'linear-gradient(135deg, rgba(245,158,11,0.05), rgba(239,68,68,0.03))',
     border: '#E2EBF8',
     featured: false,
-    ar: { name: 'Enterprise', tagline: 'لمن يريد نظام تشغيل كامل', price: 'تسعير مخصص', priceNote: 'تواصل معنا', desc: 'منظومة تشغيل ومبيعات متعددة الفروع مع دعم مخصص وتكاملات بلا حدود', features: ['جميع مزايا Growth', 'أنظمة AI غير محدودة', 'تكاملات مخصصة بلا حدود', 'مدير حساب مخصص', 'SLA مضمون ٩٩.٩٪', 'تدريب الفريق الكامل', 'دعم أولوية ٢٤/٧', 'تقارير تنفيذية متقدمة'], cta: 'ناقش التوسع' },
-    en: { name: 'Enterprise', tagline: 'For a Full Operating System', price: 'Custom Pricing', priceNote: 'Contact Us', desc: 'Multi-branch sales and operations system with dedicated support and unlimited integrations', features: ['Everything in Growth', 'Unlimited AI systems', 'Unlimited custom integrations', 'Dedicated account manager', '99.9% guaranteed SLA', 'Full team training', '24/7 priority support', 'Advanced executive reports'], cta: 'Discuss Scale' },
+    ar: { name: 'Enterprise', tagline: 'لمن يريد نظام تشغيل كامل', price: 'تسعير مخصص', priceNote: 'تواصل معنا', priceSubNote: 'حسب الحجم والتكاملات', desc: 'منظومة تشغيل ومبيعات متعددة الفروع مع دعم مخصص وتكاملات بلا حدود', features: ['جميع مزايا Growth', 'أنظمة AI غير محدودة', 'تكاملات مخصصة بلا حدود', 'مدير حساب مخصص', 'SLA مضمون ٩٩.٩٪', 'تدريب الفريق الكامل', 'دعم أولوية ٢٤/٧', 'تقارير تنفيذية متقدمة'], cta: 'ناقش التوسع' },
+    en: { name: 'Enterprise', tagline: 'For a Full Operating System', price: 'Custom Pricing', priceNote: 'Contact Us', priceSubNote: 'Based on size and integrations', desc: 'Multi-branch sales and operations system with dedicated support and unlimited integrations', features: ['Everything in Growth', 'Unlimited AI systems', 'Unlimited custom integrations', 'Dedicated account manager', '99.9% guaranteed SLA', 'Full team training', '24/7 priority support', 'Advanced executive reports'], cta: 'Discuss Scale' },
   },
 ]
 
@@ -89,6 +89,7 @@ export const Pricing = () => {
                 <div className="py-3 border-y" style={{ borderColor: '#E2EBF8' }}>
                   {!plan.featured && <p className={`text-[10px] mb-0.5 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: '#7A96BE' }}>{content.priceNote}</p>}
                   <p className={`text-2xl font-bold ${language === 'ar' ? 'font-cairo' : 'font-sora'}`} style={{ color: '#0D1B3E' }}>{content.price}</p>
+                  <p className={`text-[10px] mt-1 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: '#7A96BE' }}>{content.priceSubNote}</p>
                 </div>
 
                 <p className={`text-sm ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: '#3B5280' }}>{content.desc}</p>
@@ -151,7 +152,7 @@ export const Pricing = () => {
 
         <motion.p initial={{ opacity: 0 }} animate={inView ? { opacity: 1 } : {}} transition={{ delay: 0.6 }}
           className={`text-center text-xs mt-8 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: '#7A96BE' }}>
-          {t('جميع المشاريع تشمل: تحليل تسرب مجاني، بناء مخصص، اختبار قبل الإطلاق، وخطة تحسين بعد التشغيل', 'All projects include: free leakage analysis, custom build, pre-launch testing, and a post-launch optimization plan')}
+          {t('السعر يشمل البناء والتركيب والاختبار — الاشتراك للدعم والتشغيل المستمر', 'Price includes build, setup, and testing — subscription covers support and ongoing operations')}
         </motion.p>
       </div>
     </section>

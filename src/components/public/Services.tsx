@@ -11,8 +11,8 @@ const services = [
     glow: 'rgba(0,191,255,0.12)',
     glowHover: 'rgba(0,191,255,0.22)',
     featured: true,
-    ar: { tag: 'الأقوى للتحويل', title: 'موظف مبيعات AI للرسائل والمكالمات', desc: 'يرد على واتساب والاتصالات، يفهم احتياج العميل، يجاوب الاعتراضات، ويأخذه للخطوة التالية: حجز، عرض سعر، أو مكالمة.', features: ['رد فوري', 'مكالمات 24/7', 'CRM متكامل'] },
-    en: { tag: 'Best for Conversion', title: 'AI Sales Agent for Messages and Calls', desc: 'Handles WhatsApp and phone calls, understands intent, answers objections, and moves the customer to the next step: booking, quote, or call.', features: ['Instant response', '24/7 calls', 'CRM integrated'] },
+    ar: { tag: 'الأقوى للتحويل', title: 'موظف مبيعات AI للرسائل والمكالمات', desc: 'يرد على واتساب والاتصالات، يفهم احتياج العميل، يجاوب الاعتراضات، ويأخذه للخطوة التالية: حجز، عرض سعر، أو مكالمة.', features: ['رد فوري', 'مكالمات 24/7', 'CRM متكامل', 'مغاسل السيارات ✓', 'العيادات ✓'] },
+    en: { tag: 'Best for Conversion', title: 'AI Sales Agent for Messages and Calls', desc: 'Handles WhatsApp and phone calls, understands intent, answers objections, and moves the customer to the next step: booking, quote, or call.', features: ['Instant response', '24/7 calls', 'CRM integrated', 'Car Washes ✓', 'Clinics ✓'] },
   },
   {
     icon: MessageSquare,
