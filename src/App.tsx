@@ -16,6 +16,7 @@ import { Privacy } from './pages/Privacy'
 import { Terms } from './pages/Terms'
 import { SelfCheckIn } from './pages/SelfCheckIn'
 import { CarWashStatus } from './pages/CarWashStatus'
+import { ClinicLanding } from './pages/ClinicLanding'
 
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
 const ClientPortal = lazy(() => import('./pages/ClientPortal').then(m => ({ default: m.ClientPortal })))
@@ -33,6 +34,9 @@ function AppRoutes() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/trial" element={<TrialSignup />} />
+          <Route path="/clinic"      element={<ClinicLanding />} />
+          <Route path="/car-wash"    element={<Navigate to="/" replace />} />
+          <Route path="/real-estate" element={<Navigate to="/" replace />} />
           <Route path="/checkin/:token" element={<SelfCheckIn />} />
           <Route path="/status/:token/:queueId" element={<CarWashStatus />} />
           <Route path="/auth/callback" element={<AuthCallback />} />

@@ -291,6 +291,28 @@ export function CarWashOverview() {
 
   return (
     <div className="cw-command" dir="rtl">
+
+      {/* Car Wash OS identity bar */}
+      <div className="flex items-center justify-between px-5 py-2.5 mb-2 rounded-xl"
+        style={{ background: 'rgba(0,191,255,0.06)', border: '1px solid rgba(0,191,255,0.15)' }}>
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-lg flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #0D1B3E, #00BFFF)' }}>
+            <Car size={12} className="text-white" />
+          </div>
+          <span className="text-xs font-bold text-white font-sora">Car Wash OS</span>
+          <span className="text-[10px] font-tajawal" style={{ color: 'rgba(0,191,255,0.6)' }}>
+            · powered by Madar
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+          <span className="text-[10px] font-tajawal" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            {company?.name || 'المغسلة'} — نشط
+          </span>
+        </div>
+      </div>
+
       <section className="cw-hero">
         <div>
           <span className="cw-eyebrow">مركز اليوم</span>
