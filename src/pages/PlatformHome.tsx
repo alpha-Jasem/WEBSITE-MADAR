@@ -32,15 +32,15 @@ export const PlatformHome = () => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
 
-      tl.from(gridRef.current, { opacity: 0, duration: 1 })
-        .from(badgeRef.current, { y: -28, opacity: 0, duration: 0.55 }, '-=0.4')
+      tl.from(gridRef.current, { opacity: 0, duration: 0.7 })
+        .from(badgeRef.current, { y: -20, opacity: 0, duration: 0.4 }, '-=0.3')
         .from(h1Ref.current!.querySelectorAll('.word-split'),
-          { y: 44, opacity: 0, stagger: 0.07, duration: 0.65 }, '-=0.2')
-        .from(subtitleRef.current, { y: 20, opacity: 0, duration: 0.5 }, '-=0.3')
+          { y: 32, opacity: 0, stagger: 0.05, duration: 0.5 }, '-=0.2')
+        .from(subtitleRef.current, { y: 14, opacity: 0, duration: 0.38 }, '-=0.2')
         .from(Array.from(ctasRef.current?.children ?? []),
-          { y: 18, opacity: 0, stagger: 0.1, duration: 0.45, ease: 'back.out(1.6)' }, '-=0.25')
+          { y: 12, opacity: 0, stagger: 0.08, duration: 0.32, ease: 'back.out(1.6)' }, '-=0.18')
         .from(Array.from(statsRef.current?.children ?? []),
-          { y: 14, opacity: 0, stagger: 0.1, duration: 0.4 }, '-=0.15')
+          { y: 10, opacity: 0, stagger: 0.07, duration: 0.28 }, '-=0.1')
 
       /* Scan line sweep */
       gsap.to(scanRef.current, {
@@ -179,7 +179,7 @@ export const PlatformHome = () => {
           </div>
 
           {/* Stats */}
-          <div ref={statsRef} className="flex flex-wrap items-center justify-center gap-0 mt-16">
+          <div ref={statsRef} className="flex flex-wrap items-center justify-center gap-0 mt-8">
             {[
               { value: t('٢ قطاعات', '2 Sectors'),        label: t('مغاسل، عيادات', 'Car Wash · Clinic') },
               { value: t('٢٤/٧', '24/7'),                  label: t('ذكاء اصطناعي لا ينام', 'AI that never sleeps') },
@@ -244,7 +244,7 @@ export const PlatformHome = () => {
       </section>
 
       {/* ════ HOW IT WORKS ════ */}
-      <section className="relative py-24 overflow-hidden" style={{ background: '#05060A' }}>
+      <section className="relative py-16 overflow-hidden" style={{ background: '#05060A' }}>
         <div className="absolute inset-0 pointer-events-none"
           style={{
             backgroundImage: 'linear-gradient(rgba(255,255,255,0.01) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.01) 1px, transparent 1px)',
@@ -252,7 +252,7 @@ export const PlatformHome = () => {
           }} />
 
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-4"
               style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
               <span className={`text-[11px] font-semibold tracking-widest uppercase ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
