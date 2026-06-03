@@ -97,8 +97,8 @@ export const PlatformHome = () => {
       <Navbar />
 
       {/* ════ HERO ════ */}
-      <section id="hero" className="relative flex flex-col items-center justify-center text-center overflow-hidden"
-        style={{ minHeight: '100vh', paddingTop: 100 }}>
+      <section id="hero" className="relative flex items-center overflow-hidden"
+        style={{ minHeight: '100vh', paddingTop: 100, paddingBottom: 60 }}>
 
         {/* Animated grid */}
         <div ref={gridRef} className="absolute inset-0 pointer-events-none"
@@ -119,80 +119,183 @@ export const PlatformHome = () => {
         <div ref={orb2Ref} className="absolute pointer-events-none"
           style={{ bottom: '18%', right: '6%', width: 420, height: 360, background: 'radial-gradient(ellipse, rgba(16,185,129,0.07) 0%, transparent 70%)', filter: 'blur(55px)', willChange: 'transform' }} />
 
-        <div className="relative z-10 max-w-4xl mx-auto px-4">
-          {/* Badge */}
-          <div ref={badgeRef}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-7"
-            style={{ background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.25)' }}
-          >
-            <Zap size={12} style={{ color: '#00BFFF' }} />
-            <span className={`text-xs font-semibold tracking-widest uppercase ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
-              style={{ color: '#00BFFF' }}>
-              AI Operating Systems
-            </span>
-          </div>
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
 
-          {/* H1 — split words */}
-          <h1 ref={h1Ref}
-            className={`text-4xl sm:text-6xl lg:text-7xl font-bold mb-6 leading-tight flex flex-wrap justify-center gap-x-3 gap-y-1 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}
-          >
-            {h1Text.split(' ').map((word, i) => (
-              <span key={i} className="word-split inline-block"
-                style={{ color: accentWords.has(word) ? '#00BFFF' : 'white' }}>
-                {word}
-              </span>
-            ))}
-          </h1>
-
-          {/* Subtitle */}
-          <p ref={subtitleRef}
-            className={`text-lg sm:text-xl max-w-2xl mx-auto mb-10 leading-relaxed ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
-            style={{ color: 'rgba(255,255,255,0.5)' }}>
-            {t(
-              'منصة Madar OS — أنظمة تشغيل مبنية لكل قطاع. جاهزة للتشغيل الفوري. بدون تعقيد.',
-              'Madar OS Platform — purpose-built operating systems for every sector. Ready to run. No complexity.'
-            )}
-          </p>
-
-          {/* CTAs */}
-          <div ref={ctasRef} className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <button
-              onClick={scrollToProducts}
-              className={`flex items-center gap-2.5 px-8 py-4 rounded-2xl text-base font-semibold text-white cursor-pointer ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
-              style={{ background: 'linear-gradient(135deg, #0D1B3E, #0099CC)', boxShadow: '0 4px 24px rgba(0,153,204,0.35)' }}
-              onMouseEnter={e => gsap.to(e.currentTarget, { boxShadow: '0 0 36px rgba(0,191,255,0.5)', scale: 1.03, duration: 0.25 })}
-              onMouseLeave={e => gsap.to(e.currentTarget, { boxShadow: '0 4px 24px rgba(0,153,204,0.35)', scale: 1, duration: 0.25 })}
-            >
-              <span>{t('استكشف المنتجات', 'Explore Products')}</span>
-              <ArrowDown size={16} />
-            </button>
-
-            <button
-              onClick={() => window.open('https://wa.me/966546666005', '_blank')}
-              className={`flex items-center gap-2 px-7 py-4 rounded-2xl text-base font-medium cursor-pointer ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
-              style={{ border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.65)' }}
-              onMouseEnter={e => gsap.to(e.currentTarget, { borderColor: 'rgba(255,255,255,0.3)', color: 'white', duration: 0.2 })}
-              onMouseLeave={e => gsap.to(e.currentTarget, { borderColor: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.65)', duration: 0.2 })}
-            >
-              {t('احجز جلسة مجانية', 'Book a Free Session')}
-            </button>
-          </div>
-
-          {/* Stats */}
-          <div ref={statsRef} className="flex flex-wrap items-center justify-center gap-0 mt-8">
-            {[
-              { value: t('٢ قطاعات', '2 Sectors'),        label: t('مغاسل، عيادات', 'Car Wash · Clinic') },
-              { value: t('٢٤/٧', '24/7'),                  label: t('ذكاء اصطناعي لا ينام', 'AI that never sleeps') },
-              { value: t('١١+ workflow', '11+ Workflows'),  label: t('أتمتة جاهزة', 'Automations ready') },
-            ].map((s, i) => (
-              <div key={i} className="text-center px-8 py-2"
-                style={{ borderInlineStart: i > 0 ? '1px solid rgba(255,255,255,0.07)' : 'none' }}>
-                <div className={`text-2xl font-bold ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}
-                  style={{ color: '#00BFFF' }}>{s.value}</div>
-                <div className={`text-xs mt-1 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
-                  style={{ color: 'rgba(255,255,255,0.32)' }}>{s.label}</div>
+            {/* Text column */}
+            <div className="flex flex-col items-center lg:items-start">
+              {/* Badge */}
+              <div ref={badgeRef}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-7"
+                style={{ background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.25)' }}
+              >
+                <Zap size={12} style={{ color: '#00BFFF' }} />
+                <span className={`text-xs font-semibold tracking-widest uppercase ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
+                  style={{ color: '#00BFFF' }}>
+                  AI Operating Systems
+                </span>
               </div>
-            ))}
+
+              {/* H1 — split words */}
+              <h1 ref={h1Ref}
+                className={`text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight flex flex-wrap justify-center lg:justify-start gap-x-3 gap-y-1 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}
+              >
+                {h1Text.split(' ').map((word, i) => (
+                  <span key={i} className="word-split inline-block"
+                    style={{ color: accentWords.has(word) ? '#00BFFF' : 'white' }}>
+                    {word}
+                  </span>
+                ))}
+              </h1>
+
+              {/* Subtitle */}
+              <p ref={subtitleRef}
+                className={`text-lg sm:text-xl max-w-xl mb-10 leading-relaxed text-center lg:text-start ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
+                style={{ color: 'rgba(255,255,255,0.5)' }}>
+                {t(
+                  'منصة Madar OS — أنظمة تشغيل مبنية لكل قطاع. جاهزة للتشغيل الفوري. بدون تعقيد.',
+                  'Madar OS Platform — purpose-built operating systems for every sector. Ready to run. No complexity.'
+                )}
+              </p>
+
+              {/* CTAs */}
+              <div ref={ctasRef} className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3">
+                <button
+                  onClick={scrollToProducts}
+                  className={`flex items-center gap-2.5 px-8 py-4 rounded-2xl text-base font-semibold text-white cursor-pointer ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
+                  style={{ background: 'linear-gradient(135deg, #0D1B3E, #0099CC)', boxShadow: '0 4px 24px rgba(0,153,204,0.35)' }}
+                  onMouseEnter={e => gsap.to(e.currentTarget, { boxShadow: '0 0 36px rgba(0,191,255,0.5)', scale: 1.03, duration: 0.25 })}
+                  onMouseLeave={e => gsap.to(e.currentTarget, { boxShadow: '0 4px 24px rgba(0,153,204,0.35)', scale: 1, duration: 0.25 })}
+                >
+                  <span>{t('استكشف المنتجات', 'Explore Products')}</span>
+                  <ArrowDown size={16} />
+                </button>
+                <button
+                  onClick={() => window.open('https://wa.me/966546666005', '_blank')}
+                  className={`flex items-center gap-2 px-7 py-4 rounded-2xl text-base font-medium cursor-pointer ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
+                  style={{ border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.65)' }}
+                  onMouseEnter={e => gsap.to(e.currentTarget, { borderColor: 'rgba(255,255,255,0.3)', color: 'white', duration: 0.2 })}
+                  onMouseLeave={e => gsap.to(e.currentTarget, { borderColor: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.65)', duration: 0.2 })}
+                >
+                  {t('احجز جلسة مجانية', 'Book a Free Session')}
+                </button>
+              </div>
+
+              {/* Stats */}
+              <div ref={statsRef} className="flex flex-wrap items-center justify-center lg:justify-start gap-0 mt-8">
+                {[
+                  { value: t('٢ قطاعات', '2 Sectors'),        label: t('مغاسل، عيادات', 'Car Wash · Clinic') },
+                  { value: t('٢٤/٧', '24/7'),                  label: t('ذكاء اصطناعي لا ينام', 'AI never sleeps') },
+                  { value: t('١١+ workflow', '11+ Workflows'),  label: t('أتمتة جاهزة', 'Automations ready') },
+                ].map((s, i) => (
+                  <div key={i} className="text-center lg:text-start px-6 py-2"
+                    style={{ borderInlineStart: i > 0 ? '1px solid rgba(255,255,255,0.07)' : 'none' }}>
+                    <div className={`text-2xl font-bold ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}
+                      style={{ color: '#00BFFF' }}>{s.value}</div>
+                    <div className={`text-xs mt-1 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
+                      style={{ color: 'rgba(255,255,255,0.32)' }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Visual column — floating product preview cards */}
+            <div className="hidden lg:flex flex-col gap-5">
+              {/* Clinic OS card */}
+              <motion.div
+                animate={{ y: [-8, 8, -8] }}
+                transition={{ repeat: Infinity, duration: 4.5, ease: 'easeInOut' }}
+                className="rounded-2xl p-5"
+                style={{
+                  background: 'rgba(16,185,129,0.06)',
+                  border: '1px solid rgba(16,185,129,0.22)',
+                  boxShadow: '0 20px 60px rgba(16,185,129,0.12)',
+                }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ background: 'linear-gradient(135deg, #0D2B1E, #10B981)' }}>
+                      <Stethoscope size={15} className="text-white" />
+                    </div>
+                    <span className={`text-sm font-bold text-white ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>Clinic OS</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#4ADE80' }} />
+                    <span className={`text-[10px] ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.35)' }}>{t('نشط', 'Live')}</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  {[
+                    { val: '١٨', lbl: t('موعد اليوم', "Today's appts") },
+                    { val: '٧٨٪', lbl: t('تحويل المرضى', 'Patient rate') },
+                    { val: '٠', lbl: t('حجز مزدوج', 'Double bookings') },
+                    { val: '٢٤/٧', lbl: t('تغطية نورة', 'Nora coverage') },
+                  ].map((m, i) => (
+                    <div key={i} className="rounded-xl px-3 py-2.5"
+                      style={{ background: 'rgba(16,185,129,0.08)' }}>
+                      <div className={`text-base font-bold ${language === 'ar' ? 'font-cairo' : 'font-sora'}`} style={{ color: '#10B981' }}>{m.val}</div>
+                      <div className={`text-[10px] ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.38)' }}>{m.lbl}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
+                  style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.12)' }}>
+                  <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#10B981' }} />
+                  <span className={`text-[11px] text-white ${language === 'ar' ? 'font-cairo' : 'font-work'}`}>
+                    {t('نورة — آخر حجز منذ ٣ دقائق', 'Nora — last booking 3 min ago')}
+                  </span>
+                </div>
+              </motion.div>
+
+              {/* Car Wash OS card */}
+              <motion.div
+                animate={{ y: [8, -8, 8] }}
+                transition={{ repeat: Infinity, duration: 5.5, ease: 'easeInOut', delay: 1.5 }}
+                className="rounded-2xl p-5 ms-8"
+                style={{
+                  background: 'rgba(0,191,255,0.06)',
+                  border: '1px solid rgba(0,191,255,0.22)',
+                  boxShadow: '0 20px 60px rgba(0,191,255,0.10)',
+                }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ background: 'linear-gradient(135deg, #0D1B3E, #00BFFF)' }}>
+                      <Car size={15} className="text-white" />
+                    </div>
+                    <span className={`text-sm font-bold text-white ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>Car Wash OS</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#4ADE80' }} />
+                    <span className={`text-[10px] ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.35)' }}>{t('نشط', 'Live')}</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  {[
+                    { val: '١٢', lbl: t('في الطابور', 'In queue') },
+                    { val: '+٤٠', lbl: t('دقيقة توفير', 'Min saved/day') },
+                    { val: '١١', lbl: 'WhatsApp flows' },
+                    { val: '٣', lbl: t('يُشطَف الآن', 'Being washed') },
+                  ].map((m, i) => (
+                    <div key={i} className="rounded-xl px-3 py-2.5"
+                      style={{ background: 'rgba(0,191,255,0.08)' }}>
+                      <div className={`text-base font-bold ${language === 'ar' ? 'font-cairo' : 'font-sora'}`} style={{ color: '#00BFFF' }}>{m.val}</div>
+                      <div className={`text-[10px] ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.38)' }}>{m.lbl}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
+                  style={{ background: 'rgba(0,191,255,0.05)', border: '1px solid rgba(0,191,255,0.12)' }}>
+                  <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#00BFFF' }} />
+                  <span className={`text-[11px] text-white ${language === 'ar' ? 'font-cairo' : 'font-work'}`}>
+                    {t('الطابور: BMW سوداء • ١٠ دق', 'Queue: Black BMW • 10 min')}
+                  </span>
+                </div>
+              </motion.div>
+            </div>
+
           </div>
         </div>
 
@@ -205,36 +308,57 @@ export const PlatformHome = () => {
       </section>
 
       {/* ════ TRUST STRIP ════ */}
-      <section className="trust-strip py-9"
+      <section className="trust-strip py-12"
         style={{ background: '#07080F', borderTop: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <div className="max-w-4xl mx-auto px-4 flex flex-col items-center gap-5">
-          <p className={`text-[11px] font-semibold tracking-[0.22em] uppercase ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
-            style={{ color: 'rgba(255,255,255,0.22)' }}>
-            {t('يستخدمونه الآن', 'Live Right Now')}
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
+        <div className="max-w-5xl mx-auto px-4 flex flex-col items-center gap-7">
+
+          {/* Decorated title row */}
+          <div className="flex items-center gap-4 w-full max-w-xs">
+            <div className="flex-1 h-px" style={{ background: 'linear-gradient(to left, rgba(255,255,255,0.12), transparent)' }} />
+            <p className={`text-[11px] font-semibold tracking-[0.22em] uppercase whitespace-nowrap ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
+              style={{ color: 'rgba(255,255,255,0.35)' }}>
+              {t('في الإنتاج الآن', 'Live in Production')}
+            </p>
+            <div className="flex-1 h-px" style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.12), transparent)' }} />
+          </div>
+
+          {/* Client chips */}
+          <div className="flex flex-wrap justify-center gap-5">
             {[
-              { name: t('مغسلة نايف', 'Nayef Car Wash'), product: 'Car Wash OS', accent: '#00BFFF', Icon: Car },
-              { name: t('عيادات نور', 'Noor Clinics'),   product: 'Clinic OS',   accent: '#10B981', Icon: Stethoscope },
+              {
+                name:    t('مغسلة نايف', 'Nayef Car Wash'),
+                product: 'Car Wash OS',
+                metric:  t('+٤٠ دقيقة توفير / يوم', '+40 min saved / day'),
+                accent:  '#00BFFF',
+                Icon:    Car,
+              },
+              {
+                name:    t('عيادات نور', 'Noor Clinics'),
+                product: 'Clinic OS',
+                metric:  t('٧٨٪ تحويل المرضى', '78% patient conversion'),
+                accent:  '#10B981',
+                Icon:    Stethoscope,
+              },
             ].map((client, i) => (
-              <div key={i} className="trust-chip flex items-center gap-3 px-5 py-3 rounded-2xl cursor-default"
+              <div key={i} className="trust-chip flex items-center gap-4 px-6 py-4 rounded-2xl cursor-default"
                 style={{ background: `${client.accent}0A`, border: `1px solid ${client.accent}22` }}
                 onMouseEnter={e => gsap.to(e.currentTarget, { borderColor: `${client.accent}55`, background: `${client.accent}14`, duration: 0.25 })}
                 onMouseLeave={e => gsap.to(e.currentTarget, { borderColor: `${client.accent}22`, background: `${client.accent}0A`, duration: 0.25 })}
               >
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: `${client.accent}20` }}>
-                  <client.Icon size={14} style={{ color: client.accent }} />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: `${client.accent}20`, boxShadow: `0 4px 16px ${client.accent}22` }}>
+                  <client.Icon size={17} style={{ color: client.accent }} />
                 </div>
                 <div>
-                  <p className={`text-sm font-bold text-white leading-none mb-0.5 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>{client.name}</p>
-                  <p className="text-[10px] font-work" style={{ color: client.accent }}>{client.product}</p>
+                  <p className={`text-sm font-bold text-white leading-none mb-1 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>{client.name}</p>
+                  <p className={`text-[11px] mb-0.5 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: client.accent }}>{client.product}</p>
+                  <p className={`text-[10px] ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.3)' }}>{client.metric}</p>
                 </div>
-                <div className="flex items-center gap-1.5 ms-2">
-                  <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#4ADE80' }} />
-                  <span className={`text-[10px] ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
-                    style={{ color: 'rgba(255,255,255,0.32)' }}>
-                    {t('نشط', 'Live')}
+                <div className="flex flex-col items-center gap-1 ms-2">
+                  <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#4ADE80', boxShadow: '0 0 6px #4ADE80' }} />
+                  <span className={`text-[9px] font-semibold tracking-wider ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
+                    style={{ color: '#4ADE80' }}>
+                    {t('نشط', 'LIVE')}
                   </span>
                 </div>
               </div>
@@ -271,7 +395,7 @@ export const PlatformHome = () => {
 
           <div className="steps-grid grid grid-cols-1 md:grid-cols-3 gap-6 relative">
             {/* Animated connector line */}
-            <div className="connector-line hidden md:block absolute top-[44px] pointer-events-none"
+            <div className="connector-line hidden md:block absolute top-[56px] pointer-events-none"
               style={{
                 left: '16%', right: '16%', height: 1,
                 backgroundImage: 'repeating-linear-gradient(90deg, rgba(0,191,255,0.35) 0, rgba(0,191,255,0.35) 7px, transparent 7px, transparent 16px)',
