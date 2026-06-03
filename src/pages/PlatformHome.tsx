@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { ArrowDown, Zap } from 'lucide-react'
+import { ArrowDown, Zap, Car, Stethoscope, LayoutGrid, Rocket, Bot } from 'lucide-react'
 import { Navbar } from '../components/public/Navbar'
 import { ProductsSection } from '../components/public/ProductsSection'
 import { Footer } from '../components/public/Footer'
@@ -129,6 +129,122 @@ export const PlatformHome = () => {
             <ArrowDown size={18} style={{ color: 'rgba(255,255,255,0.2)' }} />
           </motion.div>
         </motion.div>
+      </section>
+
+      {/* Trust Strip */}
+      <section className="py-8 relative overflow-hidden"
+        style={{ background: '#07080F', borderTop: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="max-w-4xl mx-auto px-4 flex flex-col items-center gap-5">
+          <p className={`text-[11px] font-semibold tracking-[0.2em] uppercase ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
+            style={{ color: 'rgba(255,255,255,0.28)' }}>
+            {t('يستخدمونه الآن', 'Live Right Now')}
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            {[
+              { name: t('مغسلة نايف', 'Nayef Car Wash'), product: 'Car Wash OS', accent: '#00BFFF', Icon: Car },
+              { name: t('عيادات نور', 'Noor Clinics'),   product: 'Clinic OS',   accent: '#10B981', Icon: Stethoscope },
+            ].map((client, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * i, duration: 0.5 }}
+                className="flex items-center gap-3 px-5 py-3 rounded-2xl"
+                style={{ background: `${client.accent}09`, border: `1px solid ${client.accent}25` }}
+              >
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: `${client.accent}20` }}>
+                  <client.Icon size={14} style={{ color: client.accent }} />
+                </div>
+                <div>
+                  <p className={`text-sm font-bold text-white leading-none mb-0.5 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>{client.name}</p>
+                  <p className="text-[10px] font-work" style={{ color: client.accent }}>{client.product}</p>
+                </div>
+                <div className="flex items-center gap-1 ms-1">
+                  <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#4ADE80' }} />
+                  <span className={`text-[10px] ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.35)' }}>
+                    {t('نشط', 'Live')}
+                  </span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="relative py-24 overflow-hidden" style={{ background: '#05060A' }}>
+        <div className="absolute inset-0 pointer-events-none"
+          style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px)', backgroundSize: '64px 64px' }} />
+
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-60px' }}
+            transition={{ duration: 0.65 }}
+            className="text-center mb-16"
+          >
+            <h2 className={`text-3xl sm:text-4xl font-bold text-white mb-3 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>
+              {t('شلون يشتغل النظام؟', 'How Does It Work?')}
+            </h2>
+            <p className={`text-base max-w-md mx-auto ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
+              style={{ color: 'rgba(255,255,255,0.45)' }}>
+              {t('ثلاث خطوات بس — وبعدها النظام يشتغل بدونك.', 'Just three steps — then it runs without you.')}
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+            <div className="hidden md:block absolute top-[44px] inset-x-[16%] h-px pointer-events-none"
+              style={{ backgroundImage: 'repeating-linear-gradient(90deg, rgba(0,191,255,0.25) 0, rgba(0,191,255,0.25) 6px, transparent 6px, transparent 14px)' }} />
+
+            {[
+              {
+                num: '١', Icon: LayoutGrid,
+                title: { ar: 'اختار نظامك', en: 'Pick Your System' },
+                desc:  { ar: 'مغسلة أو عيادة — كل واحد عنده نظامه الخاص اللي يناسبه.', en: 'Car wash or clinic — each gets a system built just for it.' },
+              },
+              {
+                num: '٢', Icon: Rocket,
+                title: { ar: 'نحن نجهّزه في 48 ساعة', en: 'We Set It Up in 48 Hours' },
+                desc:  { ar: 'فريقنا يجهّز كل شيء. ما تحتاج تعرف أي شيء تقني.', en: 'Our team handles everything. Zero tech knowledge required.' },
+              },
+              {
+                num: '٣', Icon: Bot,
+                title: { ar: 'اتفرج كيف يشتغل بدونك', en: 'Watch It Run Without You' },
+                desc:  { ar: 'الذكاء الاصطناعي يشتغل ٢٤/٧. أنت تجمع الفلوس وترتاح.', en: 'AI runs 24/7. You collect revenue and relax.' },
+              },
+            ].map((step, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 32 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-40px' }}
+                transition={{ duration: 0.55, delay: i * 0.14, ease: [0.22, 1, 0.36, 1] }}
+                className="relative flex flex-col items-center text-center gap-4 p-7 rounded-2xl"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+              >
+                <div className="relative">
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                    style={{ background: 'linear-gradient(135deg, #0D1B3E, #0099CC)', boxShadow: '0 6px 24px rgba(0,153,204,0.3)' }}>
+                    <step.Icon size={22} className="text-white" />
+                  </div>
+                  <div className="absolute -top-2 -end-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold font-sora"
+                    style={{ background: '#00BFFF', color: '#050810' }}>
+                    {step.num}
+                  </div>
+                </div>
+                <h3 className={`text-lg font-bold text-white ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>
+                  {language === 'ar' ? step.title.ar : step.title.en}
+                </h3>
+                <p className={`text-sm leading-relaxed ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
+                  style={{ color: 'rgba(255,255,255,0.5)' }}>
+                  {language === 'ar' ? step.desc.ar : step.desc.en}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* Products */}

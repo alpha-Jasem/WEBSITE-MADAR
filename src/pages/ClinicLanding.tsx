@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
-import { Stethoscope, Calendar, Bot, Shield, BarChart3, ArrowRight, ArrowLeft, Check, TrendingUp, Clock, Users } from 'lucide-react'
+import { Stethoscope, Calendar, Bot, Shield, BarChart3, ArrowRight, ArrowLeft, Check, TrendingUp, Clock, Users, Phone, MessageSquare } from 'lucide-react'
 import { Navbar }    from '../components/public/Navbar'
 import { Footer }    from '../components/public/Footer'
 import { ClinicDashMockup } from '../components/public/ClinicDashMockup'
@@ -219,6 +219,83 @@ export const ClinicLanding = () => {
                 </motion.div>
               )
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── How Nora Works ── */}
+      <section className="relative py-24 overflow-hidden" style={{ background: '#050810' }}>
+        <div className="absolute top-0 inset-x-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${ACCENT}25, transparent)` }} />
+
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-60px' }}
+            transition={{ duration: 0.65 }}
+            className="text-center mb-16"
+          >
+            <h2 className={`text-3xl sm:text-4xl font-bold text-white mb-3 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>
+              {t(
+                <>كيف تشتغل <span style={{ color: ACCENT }}>نورة</span>؟</>,
+                <>How Does <span style={{ color: ACCENT }}>Nora</span> Work?</>
+              )}
+            </h2>
+            <p className={`text-base max-w-sm mx-auto ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
+              style={{ color: 'rgba(255,255,255,0.45)' }}>
+              {t('بدون ما تتدخل — تشتغل لوحدها.', 'No intervention needed — runs completely on its own.')}
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+            <div className="hidden md:block absolute top-[44px] inset-x-[16%] h-px pointer-events-none"
+              style={{ backgroundImage: `repeating-linear-gradient(90deg, ${ACCENT}35 0, ${ACCENT}35 6px, transparent 6px, transparent 14px)` }} />
+
+            {[
+              {
+                num: '١', Icon: Phone,
+                title: { ar: 'مريض يتصل أو يواتس', en: 'Patient Calls or WhatsApps' },
+                desc:  { ar: 'في أي وقت — الليل، العطلة، وقت الدوام. نورة دايماً موجودة.', en: 'Anytime — nights, weekends, working hours. Nora is always available.' },
+              },
+              {
+                num: '٢', Icon: Calendar,
+                title: { ar: 'نورة تحجز له موعد', en: 'Nora Books the Appointment' },
+                desc:  { ar: 'تفحص الجدول، تختار الدكتور المناسب، وتثبت الموعد فوراً.', en: 'Checks the schedule, picks the right doctor, confirms instantly.' },
+              },
+              {
+                num: '٣', Icon: MessageSquare,
+                title: { ar: 'يوصله تأكيد فوري', en: 'Instant Confirmation Sent' },
+                desc:  { ar: 'رسالة واتساب تلقائية — اسمه، الدكتور، الوقت. كل شيء جاهز.', en: 'Automatic WhatsApp message — name, doctor, time. All set.' },
+              },
+            ].map((step, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 32 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-40px' }}
+                transition={{ duration: 0.55, delay: i * 0.14, ease: [0.22, 1, 0.36, 1] }}
+                className="relative flex flex-col items-center text-center gap-4 p-7 rounded-2xl"
+                style={{ background: `${ACCENT}06`, border: `1px solid ${ACCENT}15` }}
+              >
+                <div className="relative">
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                    style={{ background: `linear-gradient(135deg, #0D2B1E, ${ACCENT})`, boxShadow: `0 6px 24px ${ACCENT}35` }}>
+                    <step.Icon size={22} className="text-white" />
+                  </div>
+                  <div className="absolute -top-2 -end-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold font-sora"
+                    style={{ background: ACCENT, color: '#050810' }}>
+                    {step.num}
+                  </div>
+                </div>
+                <h3 className={`text-lg font-bold text-white ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>
+                  {language === 'ar' ? step.title.ar : step.title.en}
+                </h3>
+                <p className={`text-sm leading-relaxed ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
+                  style={{ color: 'rgba(255,255,255,0.5)' }}>
+                  {language === 'ar' ? step.desc.ar : step.desc.en}
+                </p>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
