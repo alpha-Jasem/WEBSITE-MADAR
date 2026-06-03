@@ -320,32 +320,32 @@ export const HomePage = () => {
       </AnimatePresence>
 
       <main>
-        <section className="relative min-h-screen overflow-hidden bg-white">
+        <section className="relative overflow-hidden bg-white">
           <img
             ref={heroImageRef}
             src="/madar-carwash-hero-real.png"
             alt="Madar OS car wash hero"
-            className="absolute inset-0 h-full w-full object-contain object-center"
+            className="block h-auto w-full"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.94)_0%,rgba(255,255,255,0.78)_31%,rgba(255,255,255,0.26)_52%,rgba(255,255,255,0)_72%)]" />
-          <div className="absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-white/80 to-transparent" />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.98)_0%,rgba(255,255,255,0.90)_24%,rgba(255,255,255,0.48)_45%,rgba(255,255,255,0.04)_68%)]" />
+          <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/90 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-white/70 to-transparent" />
           <div className="hero-pulse absolute bottom-[24%] left-[26%] hidden h-20 w-20 rounded-full border-2 border-[#00BFFF]/70 bg-[#00BFFF]/10 shadow-[0_0_55px_rgba(0,191,255,0.55)] lg:block" />
 
-          <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl items-center px-4 pb-12 pt-28 sm:px-6 lg:px-8">
-            <div className="hero-copy max-w-2xl text-[#0D1B3E]">
+          <div className="absolute inset-0 z-10 mx-auto flex max-w-7xl items-center px-4 pt-16 sm:px-6 lg:px-8">
+            <div className="hero-copy ml-auto w-full max-w-[580px] text-[#0D1B3E] lg:ml-0">
               <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/78 px-5 py-2.5 text-sm font-black text-[#0D1B3E] shadow-sm backdrop-blur-xl font-cairo">
                 <span className="h-2 w-2 rounded-full bg-[#00BFFF]" />
                 نظام تشغيل ذكي للمغاسل
               </div>
-              <h1 className="mt-8 text-5xl font-black leading-[1.08] tracking-normal drop-shadow-[0_2px_0_rgba(255,255,255,0.85)] font-cairo sm:text-6xl lg:text-7xl">
+              <h1 className="mt-7 text-4xl font-black leading-[1.08] tracking-normal drop-shadow-[0_2px_0_rgba(255,255,255,0.85)] font-cairo sm:text-6xl lg:text-7xl">
                 إدارة أسهل.
                 <span className="block text-[#008FE8]">مبيعات أعلى.</span>
               </h1>
-              <p className="mt-6 max-w-xl text-xl leading-9 text-slate-700 drop-shadow-[0_1px_0_rgba(255,255,255,0.65)] font-tajawal">
+              <p className="mt-5 max-w-xl text-base leading-8 text-slate-700 drop-shadow-[0_1px_0_rgba(255,255,255,0.65)] font-tajawal sm:text-xl">
                 من استقبال السيارة إلى التسليم والدفع والتقارير، كل شيء في نظام واحد ذكي وسهل الاستخدام.
               </p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <Link
                   to="/trial"
                   className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#00BFFF] px-6 py-4 text-base font-black text-[#071322] shadow-[0_18px_45px_rgba(0,191,255,0.36)] font-cairo"
