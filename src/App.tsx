@@ -6,6 +6,7 @@ import { ActiveProfileProvider } from './context/ActiveProfileContext'
 import { ProtectedRoute } from './components/shared/ProtectedRoute'
 import { LoadingScreen } from './components/shared/LoadingScreen'
 import { ErrorBoundary, reloadForFreshAssets } from './components/shared/ErrorBoundary'
+import { PlatformHome } from './pages/PlatformHome'
 import { HomePage } from './pages/HomePage'
 import { Login } from './pages/Login'
 import { ForgotPassword } from './pages/ForgotPassword'
@@ -29,13 +30,13 @@ function AppRoutes() {
     <ErrorBoundary resetKey={location.pathname}>
       <Suspense fallback={<LoadingScreen variant="portal" />}>
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<PlatformHome />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/trial" element={<TrialSignup />} />
           <Route path="/clinic"      element={<ClinicLanding />} />
-          <Route path="/car-wash"    element={<Navigate to="/" replace />} />
+          <Route path="/car-wash"    element={<HomePage />} />
           <Route path="/real-estate" element={<Navigate to="/" replace />} />
           <Route path="/checkin/:token" element={<SelfCheckIn />} />
           <Route path="/status/:token/:queueId" element={<CarWashStatus />} />
