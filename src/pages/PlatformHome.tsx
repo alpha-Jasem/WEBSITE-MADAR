@@ -36,6 +36,7 @@ export const PlatformHome = () => {
     const ctx = gsap.context(() => {
       gsap.from('.trust-chip', {
         y: 28, opacity: 0, stagger: 0.15, duration: 0.6, ease: 'power2.out',
+        immediateRender: false,
         scrollTrigger: { trigger: '.trust-strip', start: 'top 88%' },
       })
     }, rootRef)
@@ -45,17 +46,16 @@ export const PlatformHome = () => {
   /* ─── How It Works ScrollTrigger ────────────────────── */
   useEffect(() => {
     const ctx = gsap.context(() => {
-      /* Connector line draws */
       gsap.from('.connector-line', {
         scaleX: 0,
         transformOrigin: language === 'ar' ? 'right center' : 'left center',
         duration: 1.1, ease: 'power2.inOut',
+        immediateRender: false,
         scrollTrigger: { trigger: '.steps-grid', start: 'top 80%' },
       })
-
-      /* Cards stagger in */
       gsap.from('.step-card', {
         y: 40, opacity: 0, stagger: 0.14, duration: 0.65, ease: 'power2.out',
+        immediateRender: false,
         scrollTrigger: { trigger: '.steps-grid', start: 'top 82%' },
       })
     }, rootRef)

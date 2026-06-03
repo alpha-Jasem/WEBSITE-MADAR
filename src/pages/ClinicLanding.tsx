@@ -70,13 +70,8 @@ export const ClinicLanding = () => {
         y: -12, duration: 3, repeat: -1, yoyo: true, ease: 'power1.inOut',
       })
 
-      /* H1 split words entrance */
-      const words = h1Ref.current?.querySelectorAll('.clinic-word')
-      if (words?.length) {
-        gsap.from(words, {
-          y: 36, opacity: 0, stagger: 0.09, duration: 0.65, ease: 'power3.out', delay: 0.3,
-        })
-      }
+      /* H1 words: removed GSAP opacity:0 (Safari freezes rAF on load).
+         The parent motion.div handles the hero entrance via Framer Motion. */
     }, rootRef)
     return () => ctx.revert()
   }, [])
@@ -89,6 +84,7 @@ export const ClinicLanding = () => {
         scaleX: 0,
         transformOrigin: language === 'ar' ? 'right center' : 'left center',
         duration: 1.1, ease: 'power2.inOut',
+        immediateRender: false,
         scrollTrigger: { trigger: '.nora-steps', start: 'top 80%' },
       })
 
@@ -97,8 +93,8 @@ export const ClinicLanding = () => {
         const tl = gsap.timeline({
           scrollTrigger: { trigger: card, start: 'top 88%' },
         })
-        tl.from(card, { scale: 0.9, opacity: 0, duration: 0.55, ease: 'back.out(1.4)', delay: i * 0.13 })
-          .from(card.querySelector('.nora-icon'), { rotation: -12, duration: 0.4, ease: 'back.out(2)' }, '-=0.3')
+        tl.from(card, { scale: 0.9, opacity: 0, duration: 0.55, ease: 'back.out(1.4)', delay: i * 0.13, immediateRender: false })
+          .from(card.querySelector('.nora-icon'), { rotation: -12, duration: 0.4, ease: 'back.out(2)', immediateRender: false }, '-=0.3')
       })
     }, rootRef)
     return () => ctx.revert()
