@@ -327,7 +327,7 @@ export const HomePage = () => {
             alt="Madar OS car wash hero"
             className="block h-auto w-full"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.98)_0%,rgba(255,255,255,0.90)_24%,rgba(255,255,255,0.48)_45%,rgba(255,255,255,0.04)_68%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(270deg,rgba(255,255,255,0.98)_0%,rgba(255,255,255,0.90)_24%,rgba(255,255,255,0.48)_45%,rgba(255,255,255,0.04)_68%)]" />
           <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/90 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-white/70 to-transparent" />
           <div className="hero-pulse absolute bottom-[24%] left-[26%] hidden h-20 w-20 rounded-full border-2 border-[#00BFFF]/70 bg-[#00BFFF]/10 shadow-[0_0_55px_rgba(0,191,255,0.55)] lg:block" />
