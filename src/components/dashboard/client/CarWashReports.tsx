@@ -344,7 +344,6 @@ export function CarWashReports() {
     </div>
   )
 
-  const reportTabs = ['نظرة عامة', 'المبيعات والإيرادات', 'العملاء', 'السيارات', 'الخدمات', 'الموظفون', 'واتساب', 'أداء الفروع']
   const serviceColors = ['#0B63F6', '#10B981', '#7C3AED', '#F59E0B', '#38BDF8']
   const servicePie = stats.revenueServices.length > 0
     ? stats.revenueServices
@@ -436,14 +435,6 @@ export function CarWashReports() {
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 22, overflowX: 'auto', marginTop: 20, paddingTop: 14, borderTop: '1px solid #EDF2F7' }}>
-          {reportTabs.map((tab, index) => (
-            <button key={tab} style={{ flex: '0 0 auto', position: 'relative', padding: '8px 0 12px', border: 'none', background: 'transparent', color: index === 0 ? '#0B63F6' : '#0D1B3E', fontSize: 13, fontWeight: 900, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer' }}>
-              {tab}
-              {index === 0 && <span style={{ position: 'absolute', bottom: 0, right: 0, left: 0, height: 3, borderRadius: 999, background: '#0B63F6' }} />}
-            </button>
-          ))}
-        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(178px, 1fr))', gap: 12 }}>
