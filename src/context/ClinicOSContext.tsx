@@ -1,102 +1,62 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import type { PackageType } from '../types/clinicOS'
-
-interface DemoUser {
-  name: string
-  clinicName: string
-  email: string
-}
+import { supabase, signOut } from '../lib/supabase'
+import { useNavigate } from 'react-router-dom'
 
 interface ClinicOSContextValue {
-  isDemo: boolean
   packageType: PackageType
   setPackageType: (p: PackageType) => void
-  isLoggedIn: boolean
-  login: (email: string, password: string) => Promise<void>
-  logout: () => void
-  signup: (data: SignupData) => Promise<void>
-  demoUser: DemoUser | null
-}
-
-interface SignupData {
-  ownerName: string
   clinicName: string
-  email: string
-  phone: string
-  city: string
-  clinicType: string
-  password: string
+  userName: string
+  logout: () => void
 }
 
 const ClinicOSContext = createContext<ClinicOSContextValue | null>(null)
 
-const STORAGE_KEY = 'clinicos_session'
+const PACKAGE_KEY = 'clinicos_package'
 
 export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [packageType, setPackageTypeState] = useState<PackageType>('growth')
-  const [demoUser, setDemoUser] = useState<DemoUser | null>(null)
+  const navigate = useNavigate()
+  const [packageType, setPackageTypeState] = useState<PackageType>(() =>
+    (localStorage.getItem(PACKAGE_KEY) as PackageType) || 'growth'
+  )
+  const [clinicName, setClinicName] = useState('')
+  const [userName, setUserName] = useState('')
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        const session = JSON.parse(raw)
-        setIsLoggedIn(true)
-        setDemoUser(session.user)
-        setPackageTypeState(session.packageType || 'growth')
+    const load = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const [{ data: company }, { data: userRow }] = await Promise.all([
+        supabase.from('companies').select('name, package_type').eq('auth_user_id', user.id).single(),
+        supabase.from('users').select('full_name').eq('id', user.id).single(),
+      ])
+
+      if (company?.name) setClinicName(company.name)
+      if (userRow?.full_name) setUserName(userRow.full_name)
+      if (company?.package_type) {
+        const pkg = company.package_type as PackageType
+        setPackageTypeState(pkg)
+        localStorage.setItem(PACKAGE_KEY, pkg)
       }
-    } catch { /* ignore */ }
+    }
+    load()
   }, [])
-
-  const login = async (email: string, _password: string) => {
-    await new Promise(r => setTimeout(r, 800))
-    const user: DemoUser = {
-      name: 'د. أحمد الحربي',
-      clinicName: 'عيادات نور للأسنان',
-      email,
-    }
-    setDemoUser(user)
-    setIsLoggedIn(true)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ user, packageType }))
-  }
-
-  const signup = async (data: SignupData) => {
-    await new Promise(r => setTimeout(r, 1000))
-    const user: DemoUser = {
-      name: data.ownerName,
-      clinicName: data.clinicName,
-      email: data.email,
-    }
-    localStorage.setItem('clinicos_pending_user', JSON.stringify(user))
-  }
-
-  const logout = () => {
-    setIsLoggedIn(false)
-    setDemoUser(null)
-    localStorage.removeItem(STORAGE_KEY)
-  }
 
   const setPackageType = (p: PackageType) => {
     setPackageTypeState(p)
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const session = JSON.parse(raw)
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...session, packageType: p }))
-    }
+    localStorage.setItem(PACKAGE_KEY, p)
+  }
+
+  const logout = async () => {
+    await signOut()
+    localStorage.removeItem(PACKAGE_KEY)
+    navigate('/login', { replace: true })
   }
 
   return (
-    <ClinicOSContext.Provider value={{
-      isDemo: true,
-      packageType,
-      setPackageType,
-      isLoggedIn,
-      login,
-      logout,
-      signup,
-      demoUser,
-    }}>
+    <ClinicOSContext.Provider value={{ packageType, setPackageType, clinicName, userName, logout }}>
       {children}
     </ClinicOSContext.Provider>
   )

@@ -52,7 +52,7 @@ const PACKAGES = [
 
 export const PackageSelector = () => {
   const navigate = useNavigate()
-  const { setPackageType, demoUser } = useClinicOS()
+  const { setPackageType, userName } = useClinicOS()
 
   const select = (pkg: PackageType) => {
     setPackageType(pkg)
@@ -70,9 +70,9 @@ export const PackageSelector = () => {
             </div>
             <span style={{ fontSize: 16, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>مدار — نظام الحجز الذكي</span>
           </div>
-          {demoUser && (
+          {userName && (
             <p style={{ fontSize: 14, color: '#64748B', fontFamily: 'Tajawal, sans-serif', marginBottom: 16 }}>
-              أهلاً {demoUser.name} 👋 — اختر الباقة التي تريد تجربتها
+              أهلاً {userName} 👋 — اختر الباقة التي تريد تجربتها
             </p>
           )}
           <h1 style={{ fontSize: 28, fontWeight: 900, color: '#0F172A', margin: 0, fontFamily: 'Cairo, sans-serif' }}>

@@ -122,10 +122,10 @@ export const ClinicOSLanding = () => {
           <a href="#pricing" style={{ fontSize: 13, color: '#475569', textDecoration: 'none', fontWeight: 600 }}>الأسعار</a>
           <a href="#how" style={{ fontSize: 13, color: '#475569', textDecoration: 'none', fontWeight: 600 }}>كيف يعمل</a>
           <a href="#faq" style={{ fontSize: 13, color: '#475569', textDecoration: 'none', fontWeight: 600 }}>الأسئلة الشائعة</a>
-          <button onClick={() => navigate('/clinic-os/login')} style={{ padding: '8px 18px', borderRadius: 8, background: '#EEF2FF', color: '#4F46E5', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+          <button onClick={() => navigate('/login')} style={{ padding: '8px 18px', borderRadius: 8, background: '#EEF2FF', color: '#4F46E5', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
             تسجيل الدخول
           </button>
-          <button onClick={() => navigate('/clinic-os/demo-signup')} style={{ padding: '8px 18px', borderRadius: 8, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+          <button onClick={() => navigate('/trial')} style={{ padding: '8px 18px', borderRadius: 8, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
             جرب مجاناً
           </button>
         </div>
@@ -154,7 +154,7 @@ export const ClinicOSLanding = () => {
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <motion.button
               whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-              onClick={() => navigate('/clinic-os/demo-signup')}
+              onClick={() => navigate('/trial')}
               style={{ padding: '14px 32px', borderRadius: 10, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', border: 'none', fontSize: 15, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
             >
               جرب الداشبورد مجاناً <ArrowLeft size={16} />
@@ -327,7 +327,7 @@ export const ClinicOSLanding = () => {
                   ))}
                 </div>
                 <button
-                  onClick={() => navigate('/clinic-os/demo-signup')}
+                  onClick={() => navigate('/trial')}
                   style={{ width: '100%', padding: '13px', borderRadius: 10, background: pkg.ctaBg, color: 'white', border: 'none', fontSize: 14, fontWeight: 800, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}
                 >
                   {pkg.cta}
@@ -404,7 +404,7 @@ export const ClinicOSLanding = () => {
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <motion.button
               whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-              onClick={() => navigate('/clinic-os/demo-signup')}
+              onClick={() => navigate('/trial')}
               style={{ padding: '14px 36px', borderRadius: 10, background: 'white', color: '#4F46E5', border: 'none', fontSize: 15, fontWeight: 800, cursor: 'pointer' }}
             >
               جرب الداشبورد مجاناً

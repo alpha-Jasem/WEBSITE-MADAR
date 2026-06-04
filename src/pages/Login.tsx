@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Eye, EyeOff, Loader2, Lock, Mail, ArrowLeft, Shield, User, CheckCircle2, Building2 } from 'lucide-react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
-import { signInWithPassword, getCurrentUser, signOut } from '../lib/supabase'
+import { signInWithPassword, getCurrentUser, signOut, supabase } from '../lib/supabase'
 
 type Portal = 'client' | 'admin'
 
@@ -41,6 +41,19 @@ export const Login = () => {
       await signOut()
       setError('حسابك مخصص للإدارة، استخدم بوابة الإدارة')
       return
+    }
+
+    if (role === 'client') {
+      const { data: company } = await supabase
+        .from('companies')
+        .select('business_type')
+        .eq('auth_user_id', profile.id)
+        .maybeSingle()
+
+      if (company?.business_type === 'clinic') {
+        navigate(redirectTo || '/clinic-os/dashboard', { replace: true })
+        return
+      }
     }
 
     navigate(redirectTo || (role === 'admin' ? '/admin' : '/client'), { replace: true })

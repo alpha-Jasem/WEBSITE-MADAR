@@ -19,6 +19,7 @@ import { SelfCheckIn } from './pages/SelfCheckIn'
 import { CarWashStatus } from './pages/CarWashStatus'
 import { ClinicLanding } from './pages/ClinicLanding'
 import { ClinicOSProvider } from './context/ClinicOSContext'
+// Note: ClinicOSProvider wraps only /clinic-os/dashboard/* routes (protected)
 
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
 const ClientPortal = lazy(() => import('./pages/ClientPortal').then(m => ({ default: m.ClientPortal })))
@@ -26,10 +27,6 @@ const SolarEngine = lazy(() => import('./pages/SolarEngine').then(m => ({ defaul
 
 // Clinic OS public pages
 const ClinicOSLanding = lazy(() => import('./pages/clinicOS/ClinicOSLanding').then(m => ({ default: m.ClinicOSLanding })))
-const DemoSignup = lazy(() => import('./pages/clinicOS/DemoSignup').then(m => ({ default: m.DemoSignup })))
-const DemoConfirm = lazy(() => import('./pages/clinicOS/DemoConfirm').then(m => ({ default: m.DemoConfirm })))
-const ClinicOSLogin = lazy(() => import('./pages/clinicOS/ClinicOSLogin').then(m => ({ default: m.ClinicOSLogin })))
-const PackageSelector = lazy(() => import('./pages/clinicOS/PackageSelector').then(m => ({ default: m.PackageSelector })))
 
 // Clinic OS dashboard
 const ClinicOSDashboardLayout = lazy(() => import('./components/clinicOS/layout/ClinicOSDashboardLayout').then(m => ({ default: m.ClinicOSDashboardLayout })))
@@ -90,16 +87,18 @@ function AppRoutes() {
             }
           />
           {/* Clinic OS public */}
-          <Route path="/clinic-os" element={<ClinicOSProvider><ClinicOSLanding /></ClinicOSProvider>} />
-          <Route path="/clinic-os/demo-signup" element={<ClinicOSProvider><DemoSignup /></ClinicOSProvider>} />
-          <Route path="/clinic-os/demo-confirm" element={<ClinicOSProvider><DemoConfirm /></ClinicOSProvider>} />
-          <Route path="/clinic-os/login" element={<ClinicOSProvider><ClinicOSLogin /></ClinicOSProvider>} />
-          <Route path="/clinic-os/demo/select" element={<ClinicOSProvider><PackageSelector /></ClinicOSProvider>} />
+          <Route path="/clinic-os" element={<ClinicOSLanding />} />
 
-          {/* Clinic OS dashboard */}
+          {/* Clinic OS dashboard — protected */}
           <Route
             path="/clinic-os/dashboard"
-            element={<ClinicOSProvider><ClinicOSDashboardLayout /></ClinicOSProvider>}
+            element={
+              <ProtectedRoute requiredRole="client">
+                <ClinicOSProvider>
+                  <ClinicOSDashboardLayout />
+                </ClinicOSProvider>
+              </ProtectedRoute>
+            }
           >
             <Route index element={<DashboardOverview />} />
             <Route path="appointments" element={<Appointments />} />

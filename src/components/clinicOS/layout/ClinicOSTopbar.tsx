@@ -1,17 +1,10 @@
 import { useState } from 'react'
 import { Search, Bell, ChevronDown, LogOut, User } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 
 export const ClinicOSTopbar = ({ pageTitle }: { pageTitle?: string }) => {
-  const { demoUser, logout } = useClinicOS()
+  const { userName, logout } = useClinicOS()
   const [showMenu, setShowMenu] = useState(false)
-  const navigate = useNavigate()
-
-  const handleLogout = () => {
-    logout()
-    navigate('/clinic-os/login')
-  }
 
   return (
     <header style={{ height: 60, background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', flexShrink: 0, direction: 'rtl' }}>
@@ -53,14 +46,14 @@ export const ClinicOSTopbar = ({ pageTitle }: { pageTitle?: string }) => {
               <User size={12} style={{ color: 'white' }} />
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', lineHeight: 1.2 }}>{demoUser?.name || 'د. أحمد الحربي'}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', lineHeight: 1.2 }}>{userName || 'مدير العيادة'}</div>
               <div style={{ fontSize: 10, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>مدير العيادة</div>
             </div>
             <ChevronDown size={13} style={{ color: '#94A3B8' }} />
           </button>
           {showMenu && (
             <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '6px', minWidth: 160, boxShadow: '0 8px 24px rgba(0,0,0,0.1)', zIndex: 100, direction: 'rtl' }}>
-              <button onClick={handleLogout} style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, color: '#DC2626', fontFamily: 'Tajawal, sans-serif' }}>
+              <button onClick={logout} style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, color: '#DC2626', fontFamily: 'Tajawal, sans-serif' }}>
                 <LogOut size={14} />
                 تسجيل الخروج
               </button>

@@ -16,7 +16,7 @@ const todayAppts = DEMO_APPOINTMENTS.filter(a => a.appointment_date === TODAY)
 const needsReview = todayAppts.filter(a => a.status === 'needs_review')
 
 export const DashboardOverview = () => {
-  const { demoUser, packageType } = useClinicOS()
+  const { userName, packageType } = useClinicOS()
   const isAIPro = packageType === 'ai_pro'
   const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null)
 
@@ -45,7 +45,7 @@ export const DashboardOverview = () => {
       {/* Greeting */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
         <h1 style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: '0 0 4px 0' }}>
-          {greeting()} 👋 {demoUser?.name || 'د. أحمد الحربي'}
+          {greeting()} 👋 {userName || 'مدير العيادة'}
         </h1>
         <p style={{ fontSize: 14, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>هذا ملخص تشغيل العيادة اليوم · {new Date().toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
       </motion.div>
