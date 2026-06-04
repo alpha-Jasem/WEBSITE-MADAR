@@ -151,6 +151,117 @@ Deno.serve(async (req) => {
 
   if (!validSaudiMobile(phone)) return json({ error: 'invalid_saudi_phone' }, 400)
 
+  if (action === 'create_email_signup') {
+    const companyName = String(payload.company_name || '').trim()
+    const ownerName = String(payload.owner_name || '').trim()
+    const city = String(payload.city || '').trim()
+    const password = String(payload.password || '')
+
+    if (!email.includes('@') || !companyName || !ownerName || password.length < 8) {
+      return json({ error: 'missing_required_fields' }, 400)
+    }
+
+    const existingCompany = await findExistingCompany(supabase, email, phone)
+    if (existingCompany) return json({ error: 'company_already_exists' }, 409)
+
+    const { data: existingAuth } = await supabase.auth.admin.listUsers()
+    const alreadyRegistered = existingAuth?.users?.some(user => user.email?.toLowerCase() === email)
+    if (alreadyRegistered) return json({ error: 'email_already_registered' }, 409)
+
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: false,
+      phone: `+${phone}`,
+      phone_confirm: false,
+      user_metadata: {
+        full_name: ownerName,
+        company_name: companyName,
+        signup_source: 'trial',
+        confirmation_channel: 'email',
+      },
+    })
+
+    if (authError || !authData.user) {
+      return json({ error: 'auth_user_create_failed', message: authError?.message }, 400)
+    }
+
+    const authUserId = authData.user.id
+    const features = defaultFeatureFlags()
+    const automations = {
+      feature_flags: features,
+      self_checkin: { enabled: true, otp_required: true },
+      onboarding: {
+        status: 'trial_started',
+        source: 'self_service',
+        trial_days: TRIAL_DAYS,
+        city,
+        confirmation_channel: 'email',
+      },
+    }
+
+    const { data: company, error: companyError } = await supabase
+      .from('companies')
+      .insert({
+        name: companyName,
+        industry: 'car_wash',
+        business_type: 'car_wash',
+        plan: 'growth',
+        status: 'trial',
+        owner_name: ownerName,
+        owner_email: email,
+        owner_phone: phone,
+        auth_user_id: authUserId,
+        message_limit: 10000,
+        messages_used: 0,
+        plan_reset_at: trialEndsAt(),
+        public_checkin_token: generateToken(),
+        tax_enabled: true,
+        vat_rate: 15,
+        price_includes_vat: true,
+        cw_loyalty_threshold: 5,
+        cw_automations: automations,
+        cw_monthly_target: 20000,
+      })
+      .select('*')
+      .single()
+
+    if (companyError || !company) {
+      await supabase.auth.admin.deleteUser(authUserId)
+      return json({ error: 'company_create_failed', message: companyError?.message }, 400)
+    }
+
+    await Promise.all([
+      supabase.from('users').insert({
+        id: authUserId,
+        email,
+        full_name: ownerName,
+        role: 'client',
+      }),
+      supabase.from('cw_services').insert([
+        { company_id: company.id, name: 'غسيل خارجي سريع', price: 25, duration_minutes: 15, active: true },
+        { company_id: company.id, name: 'غسيل داخلي وخارجي', price: 45, duration_minutes: 25, active: true },
+        { company_id: company.id, name: 'غسيل بخار كامل', price: 85, duration_minutes: 45, active: true },
+      ]),
+      supabase.from('logs').insert({
+        company_id: company.id,
+        level: 'success',
+        event: 'trial_signup_email_created',
+        message: 'Self-service trial account created with email confirmation',
+        meta: { email, phone, company_name: companyName, trial_days: TRIAL_DAYS },
+      }),
+    ])
+
+    return json({
+      ok: true,
+      company_id: company.id,
+      trial_days: TRIAL_DAYS,
+      plan: 'growth',
+      requires_email_confirmation: true,
+      redirect_to: '/login?portal=client',
+    })
+  }
+
   if (action === 'send_otp') {
     if (!email.includes('@')) return json({ error: 'invalid_email' }, 400)
 
