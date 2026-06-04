@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { StatCard } from '../../../components/clinicOS/ui/StatCard'
 import { EmptyState } from '../../../components/clinicOS/ui/EmptyState'
 import { StatCardSkeleton, TableRowSkeleton } from '../../../components/clinicOS/ui/LoadingSkeleton'
+import { NewAppointmentModal } from '../../../components/clinicOS/ui/NewAppointmentModal'
 import { useClinicPatients, useClinicAppointments } from '../../../lib/clinicOSQueries'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 import type { Patient } from '../../../types/clinicOS'
@@ -27,6 +28,7 @@ export const Patients = () => {
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [selected, setSelected] = useState<Patient | null>(null)
+  const [showNewAppt, setShowNewAppt] = useState(false)
 
   const filtered = allPatients.filter(p => {
     if (search && !p.name.includes(search) && !p.phone.includes(search)) return false
@@ -159,12 +161,18 @@ export const Patients = () => {
               </div>
             )}
             <div style={{ display: 'flex', gap: 8 }}>
-              <button style={{ flex: 1, padding: '9px', borderRadius: 8, background: '#4F46E5', color: 'white', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>موعد جديد</button>
-              <button style={{ flex: 1, padding: '9px', borderRadius: 8, background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>واتساب</button>
+              <button onClick={() => setShowNewAppt(true)} style={{ flex: 1, padding: '9px', borderRadius: 8, background: '#4F46E5', color: 'white', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>موعد جديد</button>
+              <button onClick={() => { const clean = selected!.phone.replace(/\D/g,''); window.open('https://wa.me/966' + clean.replace(/^0/,''), '_blank', 'noopener,noreferrer') }} style={{ flex: 1, padding: '9px', borderRadius: 8, background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>واتساب</button>
             </div>
           </motion.div>
         )}
       </div>
+      {showNewAppt && (
+        <NewAppointmentModal
+          onClose={() => setShowNewAppt(false)}
+          onCreated={() => setShowNewAppt(false)}
+        />
+      )}
     </div>
   )
 }

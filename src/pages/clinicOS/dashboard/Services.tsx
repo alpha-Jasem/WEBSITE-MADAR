@@ -1,15 +1,36 @@
 import { useState } from 'react'
-import { Stethoscope, Plus, Clock, DollarSign, AlertCircle, CheckCircle } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { Stethoscope, Plus, Clock, DollarSign, AlertCircle, CheckCircle, X } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { StatCard } from '../../../components/clinicOS/ui/StatCard'
-import { useClinicServices } from '../../../lib/clinicOSQueries'
+import { useClinicServices, createService } from '../../../lib/clinicOSQueries'
 import { useClinicOS } from '../../../context/ClinicOSContext'
+import { useToast } from '../../../lib/useToast'
 import type { Service } from '../../../types/clinicOS'
 
 export const Services = () => {
   const { companyId, isDemo } = useClinicOS()
+  const { showToast } = useToast()
   const { data: services = [], refetch } = useClinicServices(companyId, isDemo)
   const [selected, setSelected] = useState<Service | null>(null)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [newSvc, setNewSvc] = useState({ name: '', category: '', duration_minutes: 30, buffer_minutes: 5, price: 0, requires_approval: false, available_for_ai: true })
+  const [saving, setSaving] = useState(false)
+
+  const handleAddService = async () => {
+    if (!newSvc.name.trim() || !newSvc.category.trim()) {
+      showToast('الاسم والفئة مطلوبان', 'warning'); return
+    }
+    if (isDemo) { showToast('لا يمكن الإضافة في وضع التجربة', 'info'); return }
+    setSaving(true)
+    try {
+      await createService({ ...newSvc, active: true, available_for_whatsapp: true, company_id: companyId! })
+      showToast('تم إضافة الخدمة بنجاح', 'success')
+      setShowAddModal(false)
+      setNewSvc({ name: '', category: '', duration_minutes: 30, buffer_minutes: 5, price: 0, requires_approval: false, available_for_ai: true })
+      refetch()
+    } catch { showToast('حدث خطأ أثناء الإضافة', 'error') }
+    finally { setSaving(false) }
+  }
 
   const toggleActive = async (id: string) => {
     const svc = services.find(s => s.id === id)
@@ -26,7 +47,7 @@ export const Services = () => {
           <h1 style={{ fontSize: 20, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: '0 0 4px 0' }}>الخدمات</h1>
           <p style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>إدارة الخدمات والأسعار والمدد وقواعد الحجز</p>
         </div>
-        <button style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 8, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>
+        <button onClick={() => setShowAddModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 8, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>
           <Plus size={14} /> إضافة خدمة
         </button>
       </div>
@@ -92,10 +113,60 @@ export const Services = () => {
                 </div>
               ))}
             </div>
-            <button style={{ width: '100%', marginTop: 16, padding: '9px', borderRadius: 8, background: '#4F46E5', color: 'white', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>تعديل الخدمة</button>
+            <button onClick={() => showToast('تعديل الخدمة — قريباً في التحديث القادم', 'info')} style={{ width: '100%', marginTop: 16, padding: '9px', borderRadius: 8, background: '#4F46E5', color: 'white', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>تعديل الخدمة</button>
           </motion.div>
         )}
       </div>
+
+      {/* Add Service Modal */}
+      <AnimatePresence>
+        {showAddModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', direction: 'rtl' }}>
+            <motion.div initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }}
+              style={{ background: '#FFFFFF', borderRadius: 16, padding: '28px', width: 460, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <h2 style={{ fontSize: 17, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>إضافة خدمة جديدة</h2>
+                <button onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  {[{ label: 'اسم الخدمة', key: 'name', placeholder: 'تنظيف الأسنان' }, { label: 'الفئة', key: 'category', placeholder: 'وقاية' }].map(f => (
+                    <div key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', fontFamily: 'Cairo, sans-serif' }}>{f.label}</label>
+                      <input value={(newSvc as Record<string, unknown>)[f.key] as string} onChange={e => setNewSvc(p => ({ ...p, [f.key]: e.target.value }))} placeholder={f.placeholder}
+                        style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', direction: 'rtl' }} />
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                  {[{ label: 'المدة (دق)', key: 'duration_minutes' }, { label: 'Buffer (دق)', key: 'buffer_minutes' }, { label: 'السعر (ريال)', key: 'price' }].map(f => (
+                    <div key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', fontFamily: 'Cairo, sans-serif' }}>{f.label}</label>
+                      <input type="number" min={0} value={(newSvc as Record<string, unknown>)[f.key] as number} onChange={e => setNewSvc(p => ({ ...p, [f.key]: Number(e.target.value) }))}
+                        style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', textAlign: 'center' }} />
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: 16 }}>
+                  {[{ label: 'يحتاج موافقة', key: 'requires_approval' }, { label: 'متاح للحجز الذكي', key: 'available_for_ai' }].map(f => (
+                    <label key={f.key} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13, fontFamily: 'Tajawal, sans-serif', color: '#334155' }}>
+                      <input type="checkbox" checked={(newSvc as Record<string, unknown>)[f.key] as boolean} onChange={e => setNewSvc(p => ({ ...p, [f.key]: e.target.checked }))} />
+                      {f.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+                <button onClick={handleAddService} disabled={saving} style={{ flex: 1, padding: '11px', borderRadius: 8, background: saving ? '#94A3B8' : '#4F46E5', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'Cairo, sans-serif' }}>
+                  {saving ? 'جاري الحفظ...' : 'إضافة الخدمة'}
+                </button>
+                <button onClick={() => setShowAddModal(false)} style={{ padding: '11px 18px', borderRadius: 8, background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>إلغاء</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

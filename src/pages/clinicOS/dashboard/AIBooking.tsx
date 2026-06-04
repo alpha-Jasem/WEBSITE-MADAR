@@ -6,8 +6,10 @@ import { StatCard } from '../../../components/clinicOS/ui/StatCard'
 import { StatusBadge } from '../../../components/clinicOS/ui/StatusBadge'
 import { UpgradeCard } from '../../../components/clinicOS/ui/UpgradeCard'
 import { EmptyState } from '../../../components/clinicOS/ui/EmptyState'
-import { useClinicAICalls } from '../../../lib/clinicOSQueries'
+import { useClinicAICalls, updateAICallStatus } from '../../../lib/clinicOSQueries'
 import { useClinicOS } from '../../../context/ClinicOSContext'
+import { useToast } from '../../../lib/useToast'
+import { notifyAICallReviewed } from '../../../lib/clinicN8n'
 import type { AICallLog } from '../../../types/clinicOS'
 
 const HOURLY_DATA = [
@@ -26,10 +28,35 @@ const FAILURE_REASONS = [
 const TABS = ['نظرة عامة', 'المكالمات', 'المحادثات', 'تحتاج مراجعة', 'الإعدادات']
 
 export const AIBooking = () => {
-  const { packageType, companyId, isDemo } = useClinicOS()
-  const { data: DEMO_AI_CALLS = [] } = useClinicAICalls(companyId, isDemo)
+  const { packageType, companyId, clinicName, isDemo } = useClinicOS()
+  const { showToast } = useToast()
+  const { data: DEMO_AI_CALLS = [], refetch } = useClinicAICalls(companyId, isDemo)
   const [activeTab, setActiveTab] = useState(0)
   const [selectedCall, setSelectedCall] = useState<AICallLog | null>(null)
+  const [processingId, setProcessingId] = useState<string | null>(null)
+
+  const handleReviewAction = async (call: AICallLog, action: 'confirmed' | 'rejected') => {
+    if (isDemo) {
+      showToast(action === 'confirmed' ? 'تم تأكيد الحجز' : 'تم رفض الطلب', action === 'confirmed' ? 'success' : 'warning')
+      return
+    }
+    setProcessingId(call.id)
+    try {
+      await updateAICallStatus(call.id, action)
+      notifyAICallReviewed(call.phone, action, clinicName || 'العيادة', companyId || '')
+      showToast(action === 'confirmed' ? 'تم تأكيد الحجز وإشعار المريض' : 'تم رفض الطلب', action === 'confirmed' ? 'success' : 'warning')
+      refetch()
+    } catch {
+      showToast('حدث خطأ، حاول مرة أخرى', 'error')
+    } finally {
+      setProcessingId(null)
+    }
+  }
+
+  const handleWhatsApp = (phone: string) => {
+    const clean = phone.replace(/\D/g, '')
+    window.open('https://wa.me/966' + clean.replace(/^0/, ''), '_blank', 'noopener,noreferrer')
+  }
 
   if (packageType !== 'ai_pro') {
     return (
@@ -161,9 +188,9 @@ export const AIBooking = () => {
                   {call.summary && <p style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>{call.summary}</p>}
                 </div>
                 <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                  <button style={{ padding: '7px 14px', borderRadius: 8, background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>تأكيد</button>
-                  <button style={{ padding: '7px 14px', borderRadius: 8, background: '#EFF9FF', color: '#0369A1', border: '1px solid #BAE6FD', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>واتساب</button>
-                  <button style={{ padding: '7px 14px', borderRadius: 8, background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>رفض</button>
+                  <button disabled={processingId === call.id} onClick={() => handleReviewAction(call, 'confirmed')} style={{ padding: '7px 14px', borderRadius: 8, background: processingId === call.id ? '#F1F5F9' : '#ECFDF5', color: processingId === call.id ? '#94A3B8' : '#059669', border: '1px solid #A7F3D0', fontSize: 12, fontWeight: 700, cursor: processingId === call.id ? 'not-allowed' : 'pointer', fontFamily: 'Cairo, sans-serif' }}>تأكيد</button>
+                  <button onClick={() => handleWhatsApp(call.phone)} style={{ padding: '7px 14px', borderRadius: 8, background: '#EFF9FF', color: '#0369A1', border: '1px solid #BAE6FD', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>واتساب</button>
+                  <button disabled={processingId === call.id} onClick={() => handleReviewAction(call, 'rejected')} style={{ padding: '7px 14px', borderRadius: 8, background: processingId === call.id ? '#F1F5F9' : '#FEF2F2', color: processingId === call.id ? '#94A3B8' : '#DC2626', border: '1px solid #FECACA', fontSize: 12, fontWeight: 700, cursor: processingId === call.id ? 'not-allowed' : 'pointer', fontFamily: 'Cairo, sans-serif' }}>رفض</button>
                 </div>
               </div>
             </motion.div>
@@ -193,7 +220,7 @@ export const AIBooking = () => {
               </div>
             ))}
           </div>
-          <button style={{ marginTop: 20, padding: '10px 24px', borderRadius: 8, background: '#4F46E5', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>حفظ الإعدادات</button>
+          <button onClick={() => showToast('تم حفظ إعدادات المساعد الذكي', 'success')} style={{ marginTop: 20, padding: '10px 24px', borderRadius: 8, background: '#4F46E5', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>حفظ الإعدادات</button>
         </div>
       )}
 

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Calendar, Users, CheckCircle, MessageSquare, AlertTriangle, Bot, Phone, Clock, Plus } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
@@ -7,6 +8,7 @@ import { StatusBadge, SourceBadge } from '../../../components/clinicOS/ui/Status
 import { ActivityFeed } from '../../../components/clinicOS/ui/ActivityFeed'
 import { UpgradeCard } from '../../../components/clinicOS/ui/UpgradeCard'
 import { AppointmentDrawer } from '../../../components/clinicOS/ui/AppointmentDrawer'
+import { NewAppointmentModal } from '../../../components/clinicOS/ui/NewAppointmentModal'
 import { StatCardSkeleton } from '../../../components/clinicOS/ui/LoadingSkeleton'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 import { useClinicTodayAppointments, useClinicStats, useClinicWeeklyChart, useClinicDoctors } from '../../../lib/clinicOSQueries'
@@ -14,8 +16,10 @@ import type { Appointment } from '../../../types/clinicOS'
 
 export const DashboardOverview = () => {
   const { userName, packageType, companyId, isDemo } = useClinicOS()
+  const navigate = useNavigate()
   const isAIPro = packageType === 'ai_pro'
   const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null)
+  const [showNewAppt, setShowNewAppt] = useState(false)
 
   const { data: todayAppts = [], loading: loadingAppts } = useClinicTodayAppointments(companyId, isDemo)
   const { data: stats, loading: loadingStats } = useClinicStats(companyId, isDemo)
@@ -84,7 +88,7 @@ export const DashboardOverview = () => {
               </span>
             )}
           </div>
-          <button style={{ padding: '6px 14px', borderRadius: 8, background: '#C2410C', color: 'white', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif', whiteSpace: 'nowrap' }}>مراجعة الآن</button>
+          <button onClick={() => navigate('/clinic-os/dashboard/appointments')} style={{ padding: '6px 14px', borderRadius: 8, background: '#C2410C', color: 'white', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif', whiteSpace: 'nowrap' }}>مراجعة الآن</button>
         </motion.div>
       )}
 
@@ -96,14 +100,14 @@ export const DashboardOverview = () => {
             <span style={{ fontSize: 15, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>مواعيد اليوم</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>{todayAppts.length} موعد</span>
-              <button style={{ padding: '5px 12px', borderRadius: 7, background: '#EEF2FF', color: '#4F46E5', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>عرض الكل</button>
+              <button onClick={() => navigate('/clinic-os/dashboard/appointments')} style={{ padding: '5px 12px', borderRadius: 7, background: '#EEF2FF', color: '#4F46E5', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>عرض الكل</button>
             </div>
           </div>
           {todayAppts.length === 0 ? (
             <div style={{ padding: '40px 20px', textAlign: 'center' }}>
               <Calendar size={32} style={{ color: '#CBD5E1', margin: '0 auto 10px' }} />
               <p style={{ fontSize: 14, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>لا توجد مواعيد اليوم</p>
-              <button style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 8, background: '#EEF2FF', color: '#4F46E5', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>
+              <button onClick={() => setShowNewAppt(true)} style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 8, background: '#EEF2FF', color: '#4F46E5', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>
                 <Plus size={12} /> إضافة موعد
               </button>
             </div>
@@ -208,6 +212,7 @@ export const DashboardOverview = () => {
       </motion.div>
 
       {selectedAppt && <AppointmentDrawer appointment={selectedAppt} onClose={() => setSelectedAppt(null)} />}
+      {showNewAppt && <NewAppointmentModal onClose={() => setShowNewAppt(false)} onCreated={() => setShowNewAppt(false)} />}
     </div>
   )
 }

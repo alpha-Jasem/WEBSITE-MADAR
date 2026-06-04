@@ -4,6 +4,7 @@ import { DEMO_PATIENTS, DEMO_DOCTORS, DEMO_SERVICES, getAvailableSlots } from '.
 import type { Appointment, Doctor, Service, Patient } from '../../../types/clinicOS'
 import { useClinicDoctors, useClinicServices, useClinicPatients, createAppointment } from '../../../lib/clinicOSQueries'
 import { useClinicOS } from '../../../context/ClinicOSContext'
+import { notifyApptCreated } from '../../../lib/clinicN8n'
 
 interface Props {
   onClose: () => void
@@ -14,7 +15,7 @@ interface Props {
 const TODAY = new Date().toISOString().split('T')[0]
 
 export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props) => {
-  const { companyId, isDemo } = useClinicOS()
+  const { companyId, isDemo, clinicName } = useClinicOS()
 
   const { data: doctorsData } = useClinicDoctors(companyId, isDemo)
   const { data: servicesData } = useClinicServices(companyId, isDemo)
@@ -83,13 +84,26 @@ export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props)
     }
 
     try {
+      let finalAppt: Appointment
       if (isDemo) {
-        // In demo mode, create a local-only appointment without hitting Supabase
-        const localAppt: Appointment = { id: `apt-new-${Date.now()}`, ...apptData } as Appointment
-        onCreated(localAppt)
+        finalAppt = { id: `apt-new-${Date.now()}`, ...apptData } as Appointment
+        onCreated(finalAppt)
       } else {
-        const created = await createAppointment(apptData)
-        onCreated(created)
+        finalAppt = await createAppointment(apptData)
+        onCreated(finalAppt)
+      }
+      // Fire n8n notification — silent fail
+      if (sendWhatsApp) {
+        notifyApptCreated({
+          patient_phone: patient.phone,
+          patient_name: patient.name,
+          doctor_name: selectedDoctor.name,
+          service_name: selectedService.name,
+          appointment_date: appointmentDate,
+          start_time: selectedSlot,
+          clinic_name: clinicName || 'العيادة',
+          company_id: companyId || '',
+        })
       }
       onClose()
     } catch (e: unknown) {

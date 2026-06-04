@@ -6,6 +6,8 @@ import { StatusBadge } from '../../../components/clinicOS/ui/StatusBadge'
 import { EmptyState } from '../../../components/clinicOS/ui/EmptyState'
 import { useClinicMessages } from '../../../lib/clinicOSQueries'
 import { useClinicOS } from '../../../context/ClinicOSContext'
+import { useToast } from '../../../lib/useToast'
+import { retryWhatsAppMessage } from '../../../lib/clinicN8n'
 
 const TABS = ['صندوق الوارد', 'المجدولة', 'القوالب', 'الفاشلة', 'السجل']
 
@@ -28,8 +30,18 @@ const SCHEDULED = [
 
 export const Messages = () => {
   const { companyId, isDemo } = useClinicOS()
+  const { showToast } = useToast()
   const { data: DEMO_MESSAGES = [] } = useClinicMessages(companyId, isDemo)
   const [activeTab, setActiveTab] = useState(0)
+
+  const handleRetry = (msgId: string) => {
+    retryWhatsAppMessage(msgId, companyId || '')
+    showToast('تم إرسال طلب إعادة الإرسال', 'info')
+  }
+
+  const handleEditTemplate = () => {
+    showToast('تعديل القوالب — قريباً في التحديث القادم', 'info')
+  }
   const failed = DEMO_MESSAGES.filter(m => m.status === 'failed')
 
   const stats = {
@@ -112,7 +124,7 @@ export const Messages = () => {
             <motion.div key={t.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} style={{ background: '#FFFFFF', borderRadius: 12, border: '1px solid #E2E8F0', padding: '16px' }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', marginBottom: 8 }}>{t.name}</div>
               <p style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.7, margin: '0 0 12px 0', minHeight: 52 }}>{t.body}</p>
-              <button style={{ padding: '6px 14px', borderRadius: 7, background: '#EEF2FF', color: '#4F46E5', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>تعديل</button>
+              <button onClick={handleEditTemplate} style={{ padding: '6px 14px', borderRadius: 7, background: '#EEF2FF', color: '#4F46E5', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>تعديل</button>
             </motion.div>
           ))}
         </div>
@@ -131,7 +143,7 @@ export const Messages = () => {
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>{msg.recipient_name} · {msg.recipient_phone}</div>
                   <div style={{ fontSize: 12, color: '#DC2626', fontFamily: 'Tajawal, sans-serif', marginTop: 2 }}>{msg.failed_reason}</div>
                 </div>
-                <button style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>
+                <button onClick={() => handleRetry(msg.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>
                   <RefreshCw size={12} /> إعادة الإرسال
                 </button>
               </motion.div>

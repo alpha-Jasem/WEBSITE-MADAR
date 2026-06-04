@@ -1,19 +1,40 @@
 import { useState } from 'react'
-import { UserCheck, Calendar, Clock, Plus } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { UserCheck, Calendar, Clock, Plus, X } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { StatCard } from '../../../components/clinicOS/ui/StatCard'
 import { StatusBadge } from '../../../components/clinicOS/ui/StatusBadge'
-import { useClinicDoctors, useClinicTodayAppointments } from '../../../lib/clinicOSQueries'
+import { useClinicDoctors, useClinicTodayAppointments, createDoctor } from '../../../lib/clinicOSQueries'
 import { useClinicOS } from '../../../context/ClinicOSContext'
+import { useToast } from '../../../lib/useToast'
 import type { Doctor } from '../../../types/clinicOS'
 
 const TODAY = new Date().toISOString().split('T')[0]
 
 export const Doctors = () => {
   const { companyId, isDemo } = useClinicOS()
-  const { data: doctors = [] } = useClinicDoctors(companyId, isDemo)
+  const { showToast } = useToast()
+  const { data: doctors = [], refetch } = useClinicDoctors(companyId, isDemo)
   const { data: todayAppts = [] } = useClinicTodayAppointments(companyId, isDemo)
   const [selected, setSelected] = useState<Doctor | null>(null)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [newDoc, setNewDoc] = useState({ name: '', specialty: '', max_appointments_per_day: 12, emergency_slots_per_day: 2 })
+  const [saving, setSaving] = useState(false)
+
+  const handleAddDoctor = async () => {
+    if (!newDoc.name.trim() || !newDoc.specialty.trim()) {
+      showToast('الاسم والتخصص مطلوبان', 'warning'); return
+    }
+    if (isDemo) { showToast('لا يمكن الإضافة في وضع التجربة', 'info'); return }
+    setSaving(true)
+    try {
+      await createDoctor({ ...newDoc, company_id: companyId!, status: 'available' as const })
+      showToast('تم إضافة الطبيب بنجاح', 'success')
+      setShowAddModal(false)
+      setNewDoc({ name: '', specialty: '', max_appointments_per_day: 12, emergency_slots_per_day: 2 })
+      refetch()
+    } catch { showToast('حدث خطأ أثناء الإضافة', 'error') }
+    finally { setSaving(false) }
+  }
 
   const docAppts = (id: string) => todayAppts.filter(a => a.doctor_id === id)
 
@@ -24,7 +45,7 @@ export const Doctors = () => {
           <h1 style={{ fontSize: 20, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: '0 0 4px 0' }}>الأطباء</h1>
           <p style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>إدارة جداول الأطباء والتوافر والطاقة الاستيعابية</p>
         </div>
-        <button style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 8, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>
+        <button onClick={() => setShowAddModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 8, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>
           <Plus size={14} /> إضافة طبيب
         </button>
       </div>
@@ -80,7 +101,7 @@ export const Doctors = () => {
                     <td style={{ padding: '12px 16px', fontSize: 13, color: '#64748B', fontFamily: 'Cairo, sans-serif' }}>{doc.max_appointments_per_day}</td>
                     <td style={{ padding: '12px 16px', fontSize: 12, color: doc.next_available ? '#059669' : '#DC2626', fontFamily: 'Cairo, sans-serif', fontWeight: 600 }}>{doc.next_available || 'غير متاح'}</td>
                     <td style={{ padding: '12px 16px' }}>
-                      <button style={{ padding: '5px 12px', borderRadius: 6, background: '#EEF2FF', color: '#4F46E5', border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>عرض</button>
+                      <button onClick={e => { e.stopPropagation(); setSelected(doc) }} style={{ padding: '5px 12px', borderRadius: 6, background: '#EEF2FF', color: '#4F46E5', border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>عرض</button>
                     </td>
                   </motion.tr>
                 )
@@ -107,12 +128,58 @@ export const Doctors = () => {
               </div>
             ))}
             <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
-              <button style={{ flex: 1, padding: '9px', borderRadius: 8, background: '#4F46E5', color: 'white', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>تعديل الجدول</button>
-              <button style={{ flex: 1, padding: '9px', borderRadius: 8, background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>التقارير</button>
+              <button onClick={() => showToast('تعديل الجدول — قريباً في التحديث القادم', 'info')} style={{ flex: 1, padding: '9px', borderRadius: 8, background: '#4F46E5', color: 'white', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>تعديل الجدول</button>
+              <button onClick={() => showToast('تقارير الطبيب — قريباً في التحديث القادم', 'info')} style={{ flex: 1, padding: '9px', borderRadius: 8, background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>التقارير</button>
             </div>
           </motion.div>
         )}
       </div>
+
+      {/* Add Doctor Modal */}
+      <AnimatePresence>
+        {showAddModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', direction: 'rtl' }}>
+            <motion.div initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }}
+              style={{ background: '#FFFFFF', borderRadius: 16, padding: '28px', width: 420, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <h2 style={{ fontSize: 17, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>إضافة طبيب جديد</h2>
+                <button onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {[
+                  { label: 'الاسم الكامل', key: 'name', placeholder: 'د. محمد الأحمدي' },
+                  { label: 'التخصص', key: 'specialty', placeholder: 'طب الأسنان العام' },
+                ].map(f => (
+                  <div key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                    <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', fontFamily: 'Cairo, sans-serif' }}>{f.label}</label>
+                    <input value={(newDoc as Record<string, string | number>)[f.key] as string} onChange={e => setNewDoc(p => ({ ...p, [f.key]: e.target.value }))} placeholder={f.placeholder}
+                      style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', direction: 'rtl' }} />
+                  </div>
+                ))}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  {[
+                    { label: 'أقصى مواعيد/يوم', key: 'max_appointments_per_day' },
+                    { label: 'فتحات طوارئ', key: 'emergency_slots_per_day' },
+                  ].map(f => (
+                    <div key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', fontFamily: 'Cairo, sans-serif' }}>{f.label}</label>
+                      <input type="number" min={1} value={(newDoc as Record<string, string | number>)[f.key] as number} onChange={e => setNewDoc(p => ({ ...p, [f.key]: Number(e.target.value) }))}
+                        style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', textAlign: 'center' }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+                <button onClick={handleAddDoctor} disabled={saving} style={{ flex: 1, padding: '11px', borderRadius: 8, background: saving ? '#94A3B8' : '#4F46E5', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'Cairo, sans-serif' }}>
+                  {saving ? 'جاري الحفظ...' : 'إضافة الطبيب'}
+                </button>
+                <button onClick={() => setShowAddModal(false)} style={{ padding: '11px 18px', borderRadius: 8, background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>إلغاء</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

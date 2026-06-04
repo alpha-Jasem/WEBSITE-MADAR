@@ -5,6 +5,8 @@ import type { Appointment, AppointmentStatus } from '../../../types/clinicOS'
 import { DEMO_SERVICES } from '../../../lib/clinicOSDemoData'
 import { updateAppointmentStatus } from '../../../lib/clinicOSQueries'
 import { useToast } from '../../../lib/useToast'
+import { notifyApptConfirmed, notifyApptCancelled } from '../../../lib/clinicN8n'
+import { useClinicOS } from '../../../context/ClinicOSContext'
 
 interface AppointmentDrawerProps {
   appointment: Appointment | null
@@ -35,6 +37,7 @@ const TIMELINE_EVENTS = [
 
 export const AppointmentDrawer = ({ appointment, onClose, onConfirm, onCancel }: AppointmentDrawerProps) => {
   const { showToast } = useToast()
+  const { clinicName, companyId } = useClinicOS()
   const [localStatus, setLocalStatus] = useState<AppointmentStatus | null>(null)
   const [isConfirming, setIsConfirming] = useState(false)
   const [isCancelling, setIsCancelling] = useState(false)
@@ -54,6 +57,16 @@ export const AppointmentDrawer = ({ appointment, onClose, onConfirm, onCancel }:
       await updateAppointmentStatus(appointment.id, 'confirmed')
       onConfirm?.(appointment.id)
       showToast('تم تأكيد الموعد بنجاح', 'success')
+      notifyApptConfirmed({
+        patient_phone: appointment.patient_phone,
+        patient_name: appointment.patient_name,
+        doctor_name: appointment.doctor_name,
+        service_name: appointment.service_name,
+        appointment_date: appointment.appointment_date,
+        start_time: appointment.start_time,
+        clinic_name: clinicName || 'العيادة',
+        company_id: companyId || '',
+      })
     } catch {
       setLocalStatus(prev)
       showToast('تعذر تأكيد الموعد، حاول مرة أخرى', 'error')
@@ -71,6 +84,16 @@ export const AppointmentDrawer = ({ appointment, onClose, onConfirm, onCancel }:
       await updateAppointmentStatus(appointment.id, 'cancelled')
       onCancel?.(appointment.id)
       showToast('تم إلغاء الموعد', 'warning')
+      notifyApptCancelled({
+        patient_phone: appointment.patient_phone,
+        patient_name: appointment.patient_name,
+        doctor_name: appointment.doctor_name,
+        service_name: appointment.service_name,
+        appointment_date: appointment.appointment_date,
+        start_time: appointment.start_time,
+        clinic_name: clinicName || 'العيادة',
+        company_id: companyId || '',
+      })
     } catch {
       setLocalStatus(prev)
       showToast('تعذر إلغاء الموعد، حاول مرة أخرى', 'error')

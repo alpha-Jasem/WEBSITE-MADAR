@@ -320,3 +320,39 @@ export async function createPatient(data: Partial<Patient>) {
   if (error) throw error
   return result as Patient
 }
+
+export async function createDoctor(data: Partial<Doctor>) {
+  const { data: result, error } = await supabase
+    .from('clinic_os_doctors')
+    .insert(data)
+    .select()
+    .single()
+  if (error) throw error
+  return result as Doctor
+}
+
+export async function createService(data: Partial<Service>) {
+  const { data: result, error } = await supabase
+    .from('clinic_os_services')
+    .insert(data)
+    .select()
+    .single()
+  if (error) throw error
+  return result as Service
+}
+
+export async function updateService(id: string, data: Partial<Service>) {
+  const { error } = await supabase
+    .from('clinic_os_services')
+    .update(data)
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function updateAICallStatus(id: string, status: 'confirmed' | 'rejected') {
+  const { error } = await supabase
+    .from('clinic_os_ai_calls')
+    .update({ status, needs_review: false })
+    .eq('id', id)
+  if (error) throw error
+}

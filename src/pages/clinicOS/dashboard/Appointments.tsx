@@ -10,6 +10,24 @@ import { useClinicAppointments, useClinicDoctors, useClinicWaitlist } from '../.
 import { useClinicOS } from '../../../context/ClinicOSContext'
 import type { Appointment } from '../../../types/clinicOS'
 
+function exportAppointmentsCSV(rows: Appointment[]) {
+  const headers = ['المريض', 'الجوال', 'الطبيب', 'الخدمة', 'التاريخ', 'الوقت', 'الحالة', 'المصدر']
+  const lines = [
+    headers.join(','),
+    ...rows.map(a => [
+      a.patient_name, a.patient_phone, a.doctor_name, a.service_name,
+      a.appointment_date, a.start_time, a.status, a.source,
+    ].map(v => `"${v}"`).join(',')),
+  ]
+  const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `appointments-${new Date().toISOString().split('T')[0]}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 const TODAY = new Date().toISOString().split('T')[0]
 
 const TABS = ['قائمة', 'تقويم', 'حسب الطبيب', 'تحتاج مراجعة', 'قائمة الانتظار']
@@ -87,7 +105,7 @@ export const Appointments = () => {
           <p style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>إدارة الحجوزات، التأكيدات، والجداول</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', borderRadius: 8, background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>
+          <button onClick={() => exportAppointmentsCSV(filtered)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', borderRadius: 8, background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>
             <Download size={14} /> تصدير
           </button>
           <button onClick={() => setShowNewAppt(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 8, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>
