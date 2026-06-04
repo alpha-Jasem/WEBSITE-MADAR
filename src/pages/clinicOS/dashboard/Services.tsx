@@ -7,8 +7,8 @@ import { useClinicOS } from '../../../context/ClinicOSContext'
 import type { Service } from '../../../types/clinicOS'
 
 export const Services = () => {
-  const { companyId } = useClinicOS()
-  const { data: services = [], refetch } = useClinicServices(companyId)
+  const { companyId, isDemo } = useClinicOS()
+  const { data: services = [], refetch } = useClinicServices(companyId, isDemo)
   const [selected, setSelected] = useState<Service | null>(null)
 
   const toggleActive = async (id: string) => {

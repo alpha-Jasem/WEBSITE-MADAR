@@ -26,8 +26,8 @@ const FAILURE_REASONS = [
 const TABS = ['نظرة عامة', 'المكالمات', 'المحادثات', 'تحتاج مراجعة', 'الإعدادات']
 
 export const AIBooking = () => {
-  const { packageType, companyId } = useClinicOS()
-  const { data: DEMO_AI_CALLS = [] } = useClinicAICalls(companyId)
+  const { packageType, companyId, isDemo } = useClinicOS()
+  const { data: DEMO_AI_CALLS = [] } = useClinicAICalls(companyId, isDemo)
   const [activeTab, setActiveTab] = useState(0)
   const [selectedCall, setSelectedCall] = useState<AICallLog | null>(null)
 

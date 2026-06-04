@@ -1,5 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
+import {
+  DEMO_DOCTORS, DEMO_SERVICES, DEMO_PATIENTS, DEMO_APPOINTMENTS,
+  DEMO_MESSAGES, DEMO_AI_CALLS, DEMO_WAITLIST, DEMO_STATS,
+} from './clinicOSDemoData'
 import type {
   Doctor, Service, Patient, Appointment, MessageLog, AICallLog, Waitlist, AppointmentStatus,
 } from '../types/clinicOS'
@@ -32,8 +36,9 @@ function useFetch<T>(fetcher: () => Promise<T>, deps: unknown[]) {
 
 // ─── Doctors ───────────────────────────────────────────────────────────────────
 
-export function useClinicDoctors(companyId: string | null) {
+export function useClinicDoctors(companyId: string | null, isDemo = false) {
   return useFetch<Doctor[]>(async () => {
+    if (isDemo) return DEMO_DOCTORS
     if (!companyId) return []
     const { data, error } = await supabase
       .from('clinic_os_doctors')
@@ -42,13 +47,14 @@ export function useClinicDoctors(companyId: string | null) {
       .order('name')
     if (error) throw error
     return (data ?? []) as Doctor[]
-  }, [companyId])
+  }, [companyId, isDemo])
 }
 
 // ─── Services ─────────────────────────────────────────────────────────────────
 
-export function useClinicServices(companyId: string | null) {
+export function useClinicServices(companyId: string | null, isDemo = false) {
   return useFetch<Service[]>(async () => {
+    if (isDemo) return DEMO_SERVICES
     if (!companyId) return []
     const { data, error } = await supabase
       .from('clinic_os_services')
@@ -57,13 +63,14 @@ export function useClinicServices(companyId: string | null) {
       .order('name')
     if (error) throw error
     return (data ?? []) as Service[]
-  }, [companyId])
+  }, [companyId, isDemo])
 }
 
 // ─── Patients ─────────────────────────────────────────────────────────────────
 
-export function useClinicPatients(companyId: string | null) {
+export function useClinicPatients(companyId: string | null, isDemo = false) {
   return useFetch<Patient[]>(async () => {
+    if (isDemo) return DEMO_PATIENTS
     if (!companyId) return []
     const { data, error } = await supabase
       .from('clinic_os_patients')
@@ -72,13 +79,17 @@ export function useClinicPatients(companyId: string | null) {
       .order('name')
     if (error) throw error
     return (data ?? []) as Patient[]
-  }, [companyId])
+  }, [companyId, isDemo])
 }
 
 // ─── Appointments ─────────────────────────────────────────────────────────────
 
-export function useClinicAppointments(companyId: string | null, dateFilter?: string) {
+export function useClinicAppointments(companyId: string | null, dateFilter?: string, isDemo = false) {
   return useFetch<Appointment[]>(async () => {
+    if (isDemo) {
+      if (!dateFilter) return DEMO_APPOINTMENTS
+      return DEMO_APPOINTMENTS.filter(a => a.appointment_date === dateFilter)
+    }
     if (!companyId) return []
     let query = supabase
       .from('clinic_os_appointments')
@@ -92,18 +103,19 @@ export function useClinicAppointments(companyId: string | null, dateFilter?: str
     const { data, error } = await query
     if (error) throw error
     return (data ?? []) as Appointment[]
-  }, [companyId, dateFilter])
+  }, [companyId, dateFilter, isDemo])
 }
 
-export function useClinicTodayAppointments(companyId: string | null) {
+export function useClinicTodayAppointments(companyId: string | null, isDemo = false) {
   const today = new Date().toISOString().split('T')[0]
-  return useClinicAppointments(companyId, today)
+  return useClinicAppointments(companyId, today, isDemo)
 }
 
 // ─── Messages ─────────────────────────────────────────────────────────────────
 
-export function useClinicMessages(companyId: string | null) {
+export function useClinicMessages(companyId: string | null, isDemo = false) {
   return useFetch<MessageLog[]>(async () => {
+    if (isDemo) return DEMO_MESSAGES
     if (!companyId) return []
     const { data, error } = await supabase
       .from('clinic_os_messages')
@@ -113,13 +125,14 @@ export function useClinicMessages(companyId: string | null) {
       .limit(100)
     if (error) throw error
     return (data ?? []) as MessageLog[]
-  }, [companyId])
+  }, [companyId, isDemo])
 }
 
 // ─── AI Calls ─────────────────────────────────────────────────────────────────
 
-export function useClinicAICalls(companyId: string | null) {
+export function useClinicAICalls(companyId: string | null, isDemo = false) {
   return useFetch<AICallLog[]>(async () => {
+    if (isDemo) return DEMO_AI_CALLS
     if (!companyId) return []
     const { data, error } = await supabase
       .from('clinic_os_ai_calls')
@@ -129,13 +142,14 @@ export function useClinicAICalls(companyId: string | null) {
       .limit(100)
     if (error) throw error
     return (data ?? []) as AICallLog[]
-  }, [companyId])
+  }, [companyId, isDemo])
 }
 
 // ─── Waitlist ─────────────────────────────────────────────────────────────────
 
-export function useClinicWaitlist(companyId: string | null) {
+export function useClinicWaitlist(companyId: string | null, isDemo = false) {
   return useFetch<Waitlist[]>(async () => {
+    if (isDemo) return DEMO_WAITLIST
     if (!companyId) return []
     const { data, error } = await supabase
       .from('clinic_os_waitlist')
@@ -144,7 +158,7 @@ export function useClinicWaitlist(companyId: string | null) {
       .order('priority', { ascending: true })
     if (error) throw error
     return (data ?? []) as Waitlist[]
-  }, [companyId])
+  }, [companyId, isDemo])
 }
 
 // ─── Dashboard Stats ──────────────────────────────────────────────────────────
@@ -160,11 +174,21 @@ export interface ClinicStats {
   calls_handled?: number
 }
 
-export function useClinicStats(companyId: string | null) {
+export function useClinicStats(companyId: string | null, isDemo = false) {
   const today = new Date().toISOString().split('T')[0]
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]
 
   return useFetch<ClinicStats>(async () => {
+    if (isDemo) return {
+      today_appointments: DEMO_STATS.today_appointments,
+      confirmed: DEMO_STATS.confirmed,
+      pending: DEMO_STATS.pending,
+      needs_review: DEMO_STATS.needs_review,
+      new_patients_month: DEMO_STATS.new_patients_month,
+      whatsapp_messages: DEMO_STATS.whatsapp_messages,
+      ai_bookings_today: DEMO_STATS.ai_bookings_today,
+      calls_handled: DEMO_STATS.calls_handled,
+    }
     if (!companyId) return {
       today_appointments: 0, confirmed: 0, pending: 0,
       needs_review: 0, new_patients_month: 0, whatsapp_messages: 0,
@@ -206,15 +230,32 @@ export function useClinicStats(companyId: string | null) {
       ai_bookings_today: aiCallRows.filter(c => c.result === 'booked').length,
       calls_handled: aiCallRows.length,
     }
-  }, [companyId])
+  }, [companyId, isDemo])
 }
 
 // ─── Weekly Chart Data ────────────────────────────────────────────────────────
 
 export interface WeeklyPoint { day: string; appointments: number; completed: number }
 
-export function useClinicWeeklyChart(companyId: string | null) {
+export function useClinicWeeklyChart(companyId: string | null, isDemo = false) {
   return useFetch<WeeklyPoint[]>(async () => {
+    if (isDemo) {
+      // Return a realistic weekly spread from DEMO_APPOINTMENTS
+      const DAY_NAMES: Record<string, string> = {
+        '0': 'الأحد', '1': 'الإثنين', '2': 'الثلاثاء',
+        '3': 'الأربعاء', '4': 'الخميس', '5': 'الجمعة', '6': 'السبت',
+      }
+      return Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(); d.setDate(d.getDate() - 6 + i)
+        const dateStr = d.toISOString().split('T')[0]
+        const dayRows = DEMO_APPOINTMENTS.filter(a => a.appointment_date === dateStr)
+        return {
+          day: DAY_NAMES[String(d.getDay())],
+          appointments: dayRows.length || Math.floor(Math.random() * 8) + 2,
+          completed: dayRows.filter(a => a.status === 'completed').length || Math.floor(Math.random() * 5),
+        }
+      })
+    }
     if (!companyId) return []
 
     const days = Array.from({ length: 7 }, (_, i) => {
@@ -247,7 +288,7 @@ export function useClinicWeeklyChart(companyId: string | null) {
         completed: dayRows.filter(r => r.status === 'completed').length,
       }
     })
-  }, [companyId])
+  }, [companyId, isDemo])
 }
 
 // ─── Mutations ────────────────────────────────────────────────────────────────

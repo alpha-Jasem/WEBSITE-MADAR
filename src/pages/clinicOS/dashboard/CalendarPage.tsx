@@ -21,8 +21,8 @@ function getWeekDates(baseDate: Date) {
 }
 
 export const CalendarPage = () => {
-  const { companyId } = useClinicOS()
-  const { data: allAppointments = [] } = useClinicAppointments(companyId)
+  const { companyId, isDemo } = useClinicOS()
+  const { data: allAppointments = [] } = useClinicAppointments(companyId, undefined, isDemo)
   const [view, setView] = useState<'day'|'week'|'month'>('week')
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null)

@@ -20,9 +20,9 @@ const TAG_CFG: Record<string, { label: string; color: string; bg: string }> = {
 }
 
 export const Patients = () => {
-  const { companyId } = useClinicOS()
-  const { data: allPatients = [] } = useClinicPatients(companyId)
-  const { data: allAppointments = [] } = useClinicAppointments(companyId)
+  const { companyId, isDemo } = useClinicOS()
+  const { data: allPatients = [] } = useClinicPatients(companyId, isDemo)
+  const { data: allAppointments = [] } = useClinicAppointments(companyId, undefined, isDemo)
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [selected, setSelected] = useState<Patient | null>(null)

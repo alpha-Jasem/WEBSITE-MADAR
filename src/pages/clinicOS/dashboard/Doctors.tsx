@@ -10,9 +10,9 @@ import type { Doctor } from '../../../types/clinicOS'
 const TODAY = new Date().toISOString().split('T')[0]
 
 export const Doctors = () => {
-  const { companyId } = useClinicOS()
-  const { data: doctors = [] } = useClinicDoctors(companyId)
-  const { data: todayAppts = [] } = useClinicTodayAppointments(companyId)
+  const { companyId, isDemo } = useClinicOS()
+  const { data: doctors = [] } = useClinicDoctors(companyId, isDemo)
+  const { data: todayAppts = [] } = useClinicTodayAppointments(companyId, isDemo)
   const [selected, setSelected] = useState<Doctor | null>(null)
 
   const docAppts = (id: string) => todayAppts.filter(a => a.doctor_id === id)

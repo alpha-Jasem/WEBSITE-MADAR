@@ -12,14 +12,14 @@ import { useClinicTodayAppointments, useClinicStats, useClinicWeeklyChart, useCl
 import type { Appointment } from '../../../types/clinicOS'
 
 export const DashboardOverview = () => {
-  const { userName, packageType, companyId } = useClinicOS()
+  const { userName, packageType, companyId, isDemo } = useClinicOS()
   const isAIPro = packageType === 'ai_pro'
   const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null)
 
-  const { data: todayAppts = [] } = useClinicTodayAppointments(companyId)
-  const { data: stats } = useClinicStats(companyId)
-  const { data: weeklyData = [] } = useClinicWeeklyChart(companyId)
-  const { data: doctors = [] } = useClinicDoctors(companyId)
+  const { data: todayAppts = [] } = useClinicTodayAppointments(companyId, isDemo)
+  const { data: stats } = useClinicStats(companyId, isDemo)
+  const { data: weeklyData = [] } = useClinicWeeklyChart(companyId, isDemo)
+  const { data: doctors = [] } = useClinicDoctors(companyId, isDemo)
 
   const needsReview = todayAppts.filter(a => a.status === 'needs_review')
 

@@ -10,7 +10,7 @@ const WA_MESSAGES = {
 }
 
 export const DemoModeBanner = () => {
-  const { packageType } = useClinicOS()
+  const { packageType, isDemo } = useClinicOS()
   const [dismissed, setDismissed] = useState(false)
 
   const handleWhatsApp = () => {
@@ -18,7 +18,7 @@ export const DemoModeBanner = () => {
     window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer')
   }
 
-  if (dismissed) return null
+  if (!isDemo || dismissed) return null
 
   return (
     <div style={{ background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, direction: 'rtl' }}>

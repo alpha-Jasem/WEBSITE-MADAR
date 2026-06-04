@@ -27,8 +27,8 @@ const SCHEDULED = [
 ]
 
 export const Messages = () => {
-  const { companyId } = useClinicOS()
-  const { data: DEMO_MESSAGES = [] } = useClinicMessages(companyId)
+  const { companyId, isDemo } = useClinicOS()
+  const { data: DEMO_MESSAGES = [] } = useClinicMessages(companyId, isDemo)
   const [activeTab, setActiveTab] = useState(0)
   const failed = DEMO_MESSAGES.filter(m => m.status === 'failed')
 
