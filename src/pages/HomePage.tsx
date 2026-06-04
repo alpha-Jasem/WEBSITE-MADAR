@@ -334,28 +334,28 @@ export const HomePage = () => {
 
           <div className="absolute inset-0 z-10 mx-auto flex max-w-7xl items-start px-4 pt-28 sm:items-center sm:px-6 sm:pt-16 lg:px-8">
             <div className="hero-copy ml-auto w-full max-w-[580px] text-[#0D1B3E] lg:ml-0">
-              <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/78 px-5 py-2.5 text-sm font-black text-[#0D1B3E] shadow-sm backdrop-blur-xl font-cairo">
+              <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/70 px-3.5 py-2 text-xs font-black text-[#0D1B3E] shadow-sm backdrop-blur-xl font-cairo sm:px-5 sm:py-2.5 sm:text-sm">
                 <span className="h-2 w-2 rounded-full bg-[#00BFFF]" />
                 نظام تشغيل ذكي للمغاسل
               </div>
-              <h1 className="mt-7 text-4xl font-black leading-[1.08] tracking-normal drop-shadow-[0_2px_0_rgba(255,255,255,0.85)] font-cairo sm:text-6xl lg:text-7xl">
+              <h1 className="mt-5 text-[2rem] font-black leading-[1.08] tracking-normal drop-shadow-[0_2px_0_rgba(255,255,255,0.85)] font-cairo sm:mt-7 sm:text-6xl lg:text-7xl">
                 إدارة أسهل.
                 <span className="block text-[#008FE8]">مبيعات أعلى.</span>
               </h1>
-              <p className="mt-5 max-w-xl rounded-2xl border border-white/70 bg-white/72 px-5 py-4 text-base font-bold leading-8 text-slate-800 shadow-sm backdrop-blur-md font-tajawal sm:text-xl">
+              <p className="mt-4 max-w-[340px] rounded-2xl border border-white/60 bg-white/58 px-4 py-3 text-sm font-bold leading-7 text-slate-800 shadow-sm backdrop-blur-md font-tajawal sm:mt-5 sm:max-w-xl sm:bg-white/72 sm:px-5 sm:py-4 sm:text-xl sm:leading-8">
                 من استقبال السيارة إلى التسليم والدفع والتقارير، كل شيء في نظام واحد ذكي وسهل الاستخدام.
               </p>
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-5 flex flex-col items-start gap-2.5 sm:mt-7 sm:flex-row sm:items-center sm:gap-3">
                 <Link
                   to="/trial"
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#00BFFF] px-6 py-4 text-base font-black text-[#071322] shadow-[0_18px_45px_rgba(0,191,255,0.36)] font-cairo"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#00BFFF] px-4 py-3 text-sm font-black text-[#071322] shadow-[0_14px_32px_rgba(0,191,255,0.30)] font-cairo sm:rounded-2xl sm:px-6 sm:py-4 sm:text-base sm:shadow-[0_18px_45px_rgba(0,191,255,0.36)]"
                 >
                   ابدأ تجربة 3 أيام
                   <ChevronLeft size={18} />
                 </Link>
                 <a
                   href="#dashboard"
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-sky-200 bg-white/82 px-6 py-4 text-base font-black text-[#0D1B3E] shadow-sm backdrop-blur-xl font-cairo"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-200 bg-white/74 px-4 py-3 text-sm font-black text-[#0D1B3E] shadow-sm backdrop-blur-xl font-cairo sm:rounded-2xl sm:bg-white/82 sm:px-6 sm:py-4 sm:text-base"
                 >
                   شاهد الديمو الحي
                   <Monitor size={18} />
