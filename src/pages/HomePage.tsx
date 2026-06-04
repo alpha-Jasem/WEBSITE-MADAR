@@ -394,7 +394,7 @@ export const HomePage = () => {
 
         <section id="dashboard" className="overflow-hidden bg-[#F5FAFF] py-20">
           <div className="mx-auto max-w-[1500px] px-4 sm:px-6 lg:px-8">
-            <div className="gsap-reveal mx-auto max-w-4xl text-center">
+            <div className="mx-auto max-w-4xl text-center">
               <p className="text-sm font-black text-[#0099CC] font-cairo">الدليل داخل المنتج</p>
               <h2 className="mt-3 text-3xl font-black leading-tight font-cairo sm:text-5xl">
                 الداشبورد يثبت لصاحب المغسلة أن اليوم صار تحت السيطرة.
@@ -589,7 +589,7 @@ export const HomePage = () => {
 
         <section className="bg-[#071322] py-20 text-white">
           <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
-            <div className="gsap-reveal">
+            <div>
               <p className="text-sm font-black text-[#00BFFF] font-cairo">لماذا يشتريها صاحب المغسلة؟</p>
               <h2 className="mt-3 text-3xl font-black leading-tight font-cairo sm:text-5xl">
                 لأن مدار يحل ثلاث لحظات تسبب الفوضى كل يوم.
@@ -604,7 +604,7 @@ export const HomePage = () => {
                 ['02', 'التشغيل يصير مرئي: كل سيارة لها مرحلة ومسؤولية واضحة.'],
                 ['03', 'الإغلاق يصير أسرع: الإيراد وVAT وعدد السيارات جاهزة آخر اليوم.'],
               ].map(([title, text]) => (
-                <div key={title} className="gsap-reveal rounded-[30px] border border-white/10 bg-white/8 p-6">
+                <div key={title} className="rounded-[30px] border border-white/10 bg-white/8 p-6">
                   <p className="font-sora text-sm font-black text-[#00BFFF]">{title}</p>
                   <p className="mt-4 text-xl font-black leading-8 font-cairo">{text}</p>
                 </div>
@@ -676,7 +676,7 @@ export const HomePage = () => {
 
         <section id="faq" className="bg-[#F5FAFF] py-20">
           <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
-            <div className="gsap-reveal">
+            <div>
               <p className="text-sm font-black text-[#0099CC] font-cairo">قرار الاشتراك</p>
               <h2 className="mt-3 text-3xl font-black leading-tight font-cairo sm:text-5xl">كل ما يحتاجه صاحب المغسلة قبل البدء.</h2>
               <p className="mt-5 leading-8 text-slate-600 font-tajawal">
@@ -685,7 +685,7 @@ export const HomePage = () => {
             </div>
             <div className="space-y-4">
               {faq.map((item) => (
-                <div key={item.q} className="gsap-reveal rounded-3xl border border-sky-100 bg-white p-6 shadow-sm">
+                <div key={item.q} className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm">
                   <h3 className="text-lg font-black font-cairo">{item.q}</h3>
                   <p className="mt-3 leading-7 text-slate-600 font-tajawal">{item.a}</p>
                 </div>
@@ -696,7 +696,7 @@ export const HomePage = () => {
 
         <section id="contact" className="bg-white px-4 py-20 sm:px-6 lg:px-8">
           <div className="mx-auto grid max-w-7xl overflow-hidden rounded-[36px] bg-[#071B35] text-white lg:grid-cols-[0.95fr_1.05fr]">
-            <div className="gsap-reveal p-8 sm:p-10 lg:p-12">
+            <div className="p-8 sm:p-10 lg:p-12">
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-black text-[#00BFFF] font-cairo">
                 <Sparkles size={15} />
                 الخطوة التالية
