@@ -10614,3 +10614,56 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   0%   { background-position: -200% 0; }
   100% { background-position:  200% 0; }
 }
+
+/* ─── Clinic OS Dashboard — Responsive ─────────────────────────────────── */
+
+@media (max-width: 767px) {
+  .hide-on-mobile { display: none !important; }
+
+  /* stat grids: 2 cols on mobile */
+  .cos-stat-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+  /* main two-column layout: stack */
+  .cos-main-grid {
+    grid-template-columns: 1fr !important;
+  }
+  /* services / doctors side panel: full width */
+  .cos-side-panel {
+    width: 100% !important;
+  }
+  /* table: scroll horizontally */
+  .cos-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* calendar week grid: min-width for scroll */
+  .cos-calendar-week {
+    min-width: 640px;
+  }
+  /* page headers: stack */
+  .cos-page-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+  /* filter row: wrap */
+  .cos-filters {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+  .cos-filters input,
+  .cos-filters select {
+    min-width: 120px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cos-stat-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .cos-stat-grid-lg {
+    grid-template-columns: 1fr !important;
+  }
+}

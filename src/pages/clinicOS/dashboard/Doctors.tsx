@@ -29,7 +29,7 @@ export const Doctors = () => {
         </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}>
+      <div className="cos-stat-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}>
         {[
           { icon: UserCheck, label: 'إجمالي الأطباء', value: doctors.length, color: '#4F46E5', bgColor: '#EEF2FF', borderColor: '#C7D2FE' },
           { icon: UserCheck, label: 'متاح اليوم', value: doctors.filter(d => d.status === 'available' || d.status === 'busy').length, color: '#059669', bgColor: '#ECFDF5', borderColor: '#A7F3D0' },

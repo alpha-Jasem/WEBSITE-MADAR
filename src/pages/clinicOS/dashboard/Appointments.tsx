@@ -81,7 +81,7 @@ export const Appointments = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, direction: 'rtl' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      <div className="cos-page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <h1 style={{ fontSize: 20, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: '0 0 4px 0' }}>المواعيد</h1>
           <p style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>إدارة الحجوزات، التأكيدات، والجداول</p>
@@ -97,7 +97,7 @@ export const Appointments = () => {
       </div>
 
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 12 }}>
+      <div className="cos-stat-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 12 }}>
         {[
           { icon: Calendar, label: 'الإجمالي', value: stats.total, color: '#4F46E5', bgColor: '#EEF2FF', borderColor: '#C7D2FE' },
           { icon: CheckCircle, label: 'مؤكدة', value: stats.confirmed, color: '#059669', bgColor: '#ECFDF5', borderColor: '#A7F3D0' },

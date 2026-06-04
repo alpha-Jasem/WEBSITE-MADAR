@@ -89,9 +89,9 @@ export const CalendarPage = () => {
 
       {/* Week View */}
       {view === 'week' && (
-        <div style={{ background: '#FFFFFF', borderRadius: 14, border: '1px solid #E2E8F0', overflow: 'hidden', flex: 1 }}>
+        <div style={{ background: '#FFFFFF', borderRadius: 14, border: '1px solid #E2E8F0', overflow: 'auto', flex: 1 }}>
           {/* Day headers */}
-          <div style={{ display: 'grid', gridTemplateColumns: '60px repeat(7, 1fr)', borderBottom: '1px solid #E2E8F0' }}>
+          <div className="cos-calendar-week" style={{ display: 'grid', gridTemplateColumns: '60px repeat(7, minmax(80px, 1fr))', borderBottom: '1px solid #E2E8F0' }}>
             <div style={{ padding: '12px 8px', borderLeft: '1px solid #E2E8F0' }} />
             {weekDates.map(d => {
               const ds = d.toISOString().split('T')[0]
@@ -109,7 +109,7 @@ export const CalendarPage = () => {
           {/* Time slots */}
           <div style={{ overflowY: 'auto', maxHeight: 520 }}>
             {HOURS.map(hour => (
-              <div key={hour} style={{ display: 'grid', gridTemplateColumns: '60px repeat(7, 1fr)', borderBottom: '1px solid #F8FAFC', minHeight: 60 }}>
+              <div key={hour} className="cos-calendar-week" style={{ display: 'grid', gridTemplateColumns: '60px repeat(7, minmax(80px, 1fr))', borderBottom: '1px solid #F8FAFC', minHeight: 60 }}>
                 <div style={{ padding: '8px 8px', fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', borderLeft: '1px solid #F1F5F9', paddingTop: 4, textAlign: 'center' }}>{hour}</div>
                 {weekDates.map(d => {
                   const ds = d.toISOString().split('T')[0]

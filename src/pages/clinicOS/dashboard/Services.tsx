@@ -31,10 +31,10 @@ export const Services = () => {
         </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+      <div className="cos-stat-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
         {[
           { icon: Stethoscope, label: 'خدمات نشطة', value: services.filter(s => s.active).length, color: '#059669', bgColor: '#ECFDF5', borderColor: '#A7F3D0' },
-          { icon: Clock, label: 'متوسط المدة', value: `${Math.round(services.reduce((s, x) => s + x.duration_minutes, 0) / services.length)} دق`, color: '#4F46E5', bgColor: '#EEF2FF', borderColor: '#C7D2FE' },
+          { icon: Clock, label: 'متوسط المدة', value: services.length ? `${Math.round(services.reduce((s, x) => s + x.duration_minutes, 0) / services.length)} دق` : '—', color: '#4F46E5', bgColor: '#EEF2FF', borderColor: '#C7D2FE' },
           { icon: DollarSign, label: 'الأكثر حجزاً', value: 'تنظيف الأسنان', color: '#7C3AED', bgColor: '#F5F3FF', borderColor: '#DDD6FE' },
           { icon: AlertCircle, label: 'تحتاج موافقة', value: services.filter(s => s.requires_approval).length, color: '#C2410C', bgColor: '#FFF7ED', borderColor: '#FED7AA' },
         ].map((s, i) => <StatCard key={i} {...s} />)}
@@ -73,7 +73,7 @@ export const Services = () => {
         </div>
 
         {selected && (
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ width: 280, background: '#FFFFFF', borderRadius: 14, border: '1px solid #E2E8F0', padding: '20px', flexShrink: 0 }}>
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="cos-side-panel" style={{ width: 280, background: '#FFFFFF', borderRadius: 14, border: '1px solid #E2E8F0', padding: '20px', flexShrink: 0 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <h3 style={{ fontSize: 15, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>{selected.name}</h3>
               <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', fontSize: 18 }}>×</button>

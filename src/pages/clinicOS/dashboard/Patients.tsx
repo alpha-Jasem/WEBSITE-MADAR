@@ -46,7 +46,7 @@ export const Patients = () => {
         <p style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>إدارة سجلات المرضى، الزيارات، والتواصل</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}>
+      <div className="cos-stat-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}>
         {[
           { icon: Users, label: 'إجمالي المرضى', value: allPatients.length, color: '#4F46E5', bgColor: '#EEF2FF', borderColor: '#C7D2FE' },
           { icon: UserPlus, label: 'مرضى جدد هذا الشهر', value: allPatients.filter(p => p.patient_type === 'new').length, color: '#059669', bgColor: '#ECFDF5', borderColor: '#A7F3D0' },
