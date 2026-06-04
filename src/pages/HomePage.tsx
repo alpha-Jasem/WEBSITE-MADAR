@@ -34,17 +34,18 @@ gsap.registerPlugin(ScrollTrigger)
 const adminPhone = '966546666005'
 
 const navLinks = [
-  { href: '#experience', label: 'التجربة' },
-  { href: '#dashboard', label: 'الديمو' },
+  { href: '#experience', label: 'طريقة QR' },
+  { href: '#dashboard', label: 'الدليل' },
   { href: '#pricing', label: 'الباقات' },
   { href: '#faq', label: 'الأسئلة' },
+  { href: '#contact', label: 'واتساب' },
 ]
 
 const flow = [
-  { icon: QrCode, title: 'مسح QR', text: 'العميل يبدأ بنفسه من مدخل المغسلة.' },
-  { icon: Car, title: 'رقم انتظار', text: 'مدار يصدر كود واضح مثل A-014.' },
-  { icon: Gauge, title: 'تحديث الحالة', text: 'الفريق يحرك السيارة بين المراحل بزر واحد.' },
-  { icon: CircleDollarSign, title: 'تسليم وإغلاق', text: 'الفاتورة والإيراد وإغلاق اليوم في مسار واحد.' },
+  { icon: QrCode, title: 'يمسح QR', text: 'العميل يسجل نفسه من المدخل بدون انتظار الكاشير.' },
+  { icon: Car, title: 'يحصل على رقم', text: 'مدار يصدر كود واضح مثل A-014 يعرفه العميل والموظف.' },
+  { icon: Gauge, title: 'الفريق يحرّك الحالة', text: 'استلام، قيد الخدمة، جاهزة، تم التسليم بزر واحد.' },
+  { icon: CircleDollarSign, title: 'تسليم وإغلاق', text: 'الفاتورة، الإيراد، وضريبة VAT تدخل في إغلاق اليوم.' },
 ]
 
 const features = [
@@ -365,10 +366,13 @@ export const HomePage = () => {
         <section id="experience" className="relative overflow-hidden bg-white py-20">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-3xl text-center">
-              <p className="text-sm font-black text-[#0099CC] font-cairo">من لحظة الدخول إلى التسليم</p>
+              <p className="text-sm font-black text-[#0099CC] font-cairo">كيف يعمل QR داخل المغسلة؟</p>
               <h2 className="mt-3 text-3xl font-black leading-tight font-cairo sm:text-5xl">
-                كل خطوة في يوم المغسلة تصبح واضحة، سريعة، وقابلة للقياس.
+                العميل يدخل أسرع، والموظف يشوف السيارة مباشرة.
               </h2>
+              <p className="mx-auto mt-5 max-w-2xl leading-8 text-slate-600 font-tajawal">
+                لا تطبيق، ولا تسجيل طويل. مسح QR، اختيار الخدمة، رقم انتظار، ثم متابعة مباشرة في لوحة التشغيل.
+              </p>
             </div>
             <div className="relative mt-14 grid gap-4 lg:grid-cols-4">
               <div className="absolute left-12 right-12 top-[52px] hidden h-0.5 bg-sky-100 lg:block" />
@@ -391,12 +395,12 @@ export const HomePage = () => {
         <section id="dashboard" className="overflow-hidden bg-[#F5FAFF] py-20">
           <div className="mx-auto max-w-[1500px] px-4 sm:px-6 lg:px-8">
             <div className="gsap-reveal mx-auto max-w-4xl text-center">
-              <p className="text-sm font-black text-[#0099CC] font-cairo">ديمو حي قابل للضغط</p>
+              <p className="text-sm font-black text-[#0099CC] font-cairo">الدليل داخل المنتج</p>
               <h2 className="mt-3 text-3xl font-black leading-tight font-cairo sm:text-5xl">
-                شاهد كيف تتحول المغسلة إلى مركز تشغيل واضح.
+                الداشبورد يثبت لصاحب المغسلة أن اليوم صار تحت السيطرة.
               </h2>
               <p className="mx-auto mt-5 max-w-3xl text-lg leading-9 text-slate-600 font-tajawal">
-                اضغط على مراحل السيارة، غيّر التبويبات، وافتح إغلاق اليوم. هذا ليس صورة ثابتة، هذه تجربة مصغرة من المنتج.
+                حركة السيارات، العملاء، الإيراد، VAT، وإغلاق اليوم تظهر في مكان واحد. هذا هو الفرق بين برنامج “يسجل بيانات” ونظام يشغّل المغسلة.
               </p>
               <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {features.map(({ icon: Icon, title, text }) => (
@@ -586,18 +590,19 @@ export const HomePage = () => {
         <section className="bg-[#071322] py-20 text-white">
           <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
             <div className="gsap-reveal">
-              <p className="text-sm font-black text-[#00BFFF] font-cairo">قبل وبعد مدار</p>
+              <p className="text-sm font-black text-[#00BFFF] font-cairo">لماذا يشتريها صاحب المغسلة؟</p>
               <h2 className="mt-3 text-3xl font-black leading-tight font-cairo sm:text-5xl">
-                حوّل يوم المغسلة من متابعة عشوائية إلى مركز تشغيل.
+                لأن مدار يحل ثلاث لحظات تسبب الفوضى كل يوم.
               </h2>
               <p className="mt-5 text-lg leading-9 text-white/72 font-tajawal">
-                العميل يعرف دوره، الموظف يعرف الخطوة التالية، والمالك يعرف الإيراد قبل نهاية اليوم.
+                الاستقبال، متابعة السيارة، وإغلاق الإيراد. إذا هذه اللحظات صارت واضحة، المغسلة تشتغل أسرع والمالك يثق بالأرقام.
               </p>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-3">
               {[
-                ['قبل', 'زحمة استقبال، أسئلة كثيرة، وتسليم غير واضح.'],
-                ['بعد', 'QR، شاشة عرض، مسار سيارات، وإغلاق مالي واضح.'],
+                ['01', 'الدخول يصير ذاتي: العميل يسجل نفسه ويأخذ رقم انتظار واضح.'],
+                ['02', 'التشغيل يصير مرئي: كل سيارة لها مرحلة ومسؤولية واضحة.'],
+                ['03', 'الإغلاق يصير أسرع: الإيراد وVAT وعدد السيارات جاهزة آخر اليوم.'],
               ].map(([title, text]) => (
                 <div key={title} className="gsap-reveal rounded-[30px] border border-white/10 bg-white/8 p-6">
                   <p className="font-sora text-sm font-black text-[#00BFFF]">{title}</p>
@@ -610,13 +615,13 @@ export const HomePage = () => {
 
         <section id="pricing" className="bg-white py-20">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="gsap-reveal mx-auto max-w-3xl text-center">
+            <div className="mx-auto max-w-3xl text-center">
               <p className="text-sm font-black text-[#0099CC] font-cairo">الباقات</p>
               <h2 className="mt-3 text-3xl font-black leading-tight font-cairo sm:text-5xl">
-                ابدأ بسيطاً، ثم افتح المزايا حسب نمو المغسلة.
+                اختر الباقة وابدأ تشغيل المغسلة بدون تعقيد.
               </h2>
               <p className="mt-5 leading-8 text-slate-600 font-tajawal">
-                ابدأ بتشغيل المغسلة من اليوم الأول، ثم فعّل الرسائل والدفع الرقمي كخيارات توسع حسب احتياجك وخطة النمو.
+                عرض الإطلاق لأول 5 مغاسل فقط. نفعّل الحساب يدوياً بعد التحويل، ثم نضيف أي تكاملات اختيارية عند الحاجة.
               </p>
             </div>
 
@@ -653,7 +658,7 @@ export const HomePage = () => {
                       plan.badge ? 'bg-[#071B35] text-white' : 'border border-sky-100 bg-white text-[#071B35]'
                     }`}
                   >
-                    اطلب الباقة
+                    احجز {plan.name} على واتساب
                   </button>
                   <div className="mt-6 space-y-3">
                     {plan.points.map((point) => (
@@ -689,23 +694,34 @@ export const HomePage = () => {
           </div>
         </section>
 
-        <section className="bg-white px-4 py-20 sm:px-6 lg:px-8">
+        <section id="contact" className="bg-white px-4 py-20 sm:px-6 lg:px-8">
           <div className="mx-auto grid max-w-7xl overflow-hidden rounded-[36px] bg-[#071B35] text-white lg:grid-cols-[0.95fr_1.05fr]">
             <div className="gsap-reveal p-8 sm:p-10 lg:p-12">
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-black text-[#00BFFF] font-cairo">
                 <Sparkles size={15} />
-                تجربة 3 أيام
+                الخطوة التالية
               </div>
               <h2 className="mt-6 text-3xl font-black leading-tight font-cairo sm:text-5xl">
-                ابدأ تجربة مدار OS لمغسلتك خلال دقائق.
+                احجز مكانك ضمن أول 5 مغاسل بسعر الإطلاق.
               </h2>
               <p className="mt-5 leading-8 text-white/72 font-tajawal">
-                سجل بياناتك، وسيتم تجهيز حساب تجريبي يوضح طريقة استقبال السيارات، متابعة التشغيل، العملاء، المالية، وإغلاق اليوم من لوحة واحدة.
+                أرسل لنا اسم المغسلة والمدينة على واتساب، ونجهز لك تجربة 3 أيام على مسار تشغيل واضح: QR، طابور السيارات، العملاء، المالية، وإغلاق اليوم.
               </p>
+              <button
+                type="button"
+                onClick={requestDemo}
+                className="mt-8 inline-flex items-center justify-center gap-2 rounded-2xl bg-[#00BFFF] px-7 py-4 text-base font-black text-[#071322] shadow-[0_18px_45px_rgba(0,191,255,0.28)] font-cairo"
+              >
+                تواصل واتساب الآن
+                <MessageCircle size={18} />
+              </button>
             </div>
 
             <form onSubmit={submitLead} className="bg-white p-8 text-[#071322] sm:p-10 lg:p-12">
-              <h3 className="text-2xl font-black font-cairo">اطلب تجربة مدار OS</h3>
+              <h3 className="text-2xl font-black font-cairo">أو اترك بياناتك ونجهز التواصل</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-500 font-tajawal">
+                الواتساب أسرع. النموذج مناسب إذا تبي نرجع لك بتفاصيل الباقة والتفعيل.
+              </p>
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <input value={lead.name} onChange={(event) => setLead((prev) => ({ ...prev, name: event.target.value }))} className="rounded-2xl border border-sky-100 bg-[#F5FAFF] px-4 py-4 font-tajawal outline-none focus:border-[#00BFFF]" placeholder="اسمك" />
                 <input value={lead.phone} onChange={(event) => setLead((prev) => ({ ...prev, phone: event.target.value }))} className="rounded-2xl border border-sky-100 bg-[#F5FAFF] px-4 py-4 font-tajawal outline-none focus:border-[#00BFFF]" placeholder="رقم الجوال" />
@@ -717,7 +733,7 @@ export const HomePage = () => {
               </button>
               {done && <p className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 font-tajawal">تم استلام طلبك. سنتواصل معك لتجهيز الحساب.</p>}
               <button type="button" onClick={requestDemo} className="mt-3 w-full rounded-2xl border border-sky-100 bg-white px-6 py-4 text-base font-black text-[#071B35] font-cairo">
-                أو تواصل واتساب مباشرة
+                تواصل واتساب بدلاً من النموذج
               </button>
             </form>
           </div>
