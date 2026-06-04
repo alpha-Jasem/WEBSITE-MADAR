@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Building2, CheckCircle2, Eye, EyeOff, Loader2, Lock, Mail, MapPin, Phone, ShieldCheck, Sparkles, User } from 'lucide-react'
-import { signInWithPassword } from '../lib/supabase'
+import { ArrowLeft, Building2, CheckCircle2, Eye, EyeOff, Loader2, Lock, Mail, MapPin, Phone, Sparkles, User } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 import { sanitizeDigits, sanitizeNameText } from '../lib/formSanitizers'
 
-type Step = 'details' | 'otp' | 'done'
+type Step = 'details' | 'email' | 'done'
 
 const FIELD_CLASS = 'w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 pr-11 text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-[#00BFFF] focus:ring-4 focus:ring-sky-400/15 font-tajawal'
 
@@ -18,9 +18,7 @@ function errorText(code: string) {
     invalid_email: 'أدخل بريد إلكتروني صحيح.',
     company_already_exists: 'يوجد حساب مسجل مسبقاً بنفس البريد أو رقم الجوال.',
     email_already_registered: 'هذا البريد مسجل مسبقاً. استخدم تسجيل الدخول.',
-    otp_send_failed: 'تعذر إرسال رمز التحقق. حاول مرة أخرى.',
-    otp_not_approved: 'رمز التحقق غير صحيح أو انتهت صلاحيته.',
-    otp_failed: 'تعذر التحقق من الرمز. حاول مرة أخرى.',
+    email_confirmation_send_failed: 'تم إنشاء الحساب، لكن تعذر إرسال بريد التأكيد. اضغط إعادة إرسال أو تواصل معنا.',
     auth_user_create_failed: 'تعذر إنشاء حساب الدخول. ربما البريد مستخدم مسبقاً.',
     company_create_failed: 'تعذر إنشاء المنشأة. تواصل معنا لإكمالها يدوياً.',
     missing_required_fields: 'أكمل البيانات المطلوبة.',
@@ -32,9 +30,9 @@ export function TrialSignup() {
   const navigate = useNavigate()
   const [step, setStep] = useState<Step>('details')
   const [loading, setLoading] = useState(false)
+  const [resending, setResending] = useState(false)
   const [showPass, setShowPass] = useState(false)
   const [error, setError] = useState('')
-  const [otp, setOtp] = useState('')
   const [form, setForm] = useState({
     company_name: '',
     owner_name: '',
@@ -70,7 +68,17 @@ export function TrialSignup() {
     return data
   }
 
-  const sendOtp = async (event: React.FormEvent) => {
+  const resendConfirmationEmail = async () => {
+    const email = form.email.trim().toLowerCase()
+    const { error: resendError } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    })
+    if (resendError) throw new Error('email_confirmation_send_failed')
+  }
+
+  const submitSignup = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!form.company_name.trim() || !form.owner_name.trim() || !form.email.trim() || form.password.length < 8) {
       setError('أكمل اسم المغسلة، اسم المالك، البريد، وكلمة مرور من 8 أحرف على الأقل.')
@@ -81,11 +89,13 @@ export function TrialSignup() {
     setError('')
     try {
       await callTrialSignup({
-        action: 'send_otp',
+        action: 'create_email_signup',
+        ...form,
         phone,
-        email: form.email,
+        email: form.email.trim().toLowerCase(),
       })
-      setStep('otp')
+      await resendConfirmationEmail()
+      setStep('email')
     } catch (err: any) {
       setError(errorText(err.message))
     } finally {
@@ -93,25 +103,15 @@ export function TrialSignup() {
     }
   }
 
-  const verifySignup = async (event: React.FormEvent) => {
-    event.preventDefault()
-    setLoading(true)
+  const handleResend = async () => {
+    setResending(true)
     setError('')
     try {
-      const data = await callTrialSignup({
-        action: 'verify_signup',
-        ...form,
-        phone,
-        otp,
-      })
-      const { error: loginError } = await signInWithPassword(form.email, form.password)
-      if (loginError) throw new Error('login_failed')
-      setStep('done')
-      navigate(data.redirect_to || '/client?welcome=trial', { replace: true })
+      await resendConfirmationEmail()
     } catch (err: any) {
-      setError(err.message === 'login_failed' ? 'تم إنشاء الحساب، لكن تعذر الدخول التلقائي. سجل دخولك من صفحة الدخول.' : errorText(err.message))
+      setError(errorText(err.message))
     } finally {
-      setLoading(false)
+      setResending(false)
     }
   }
 
@@ -143,7 +143,7 @@ export function TrialSignup() {
           </div>
 
           <div className="relative grid gap-3">
-            {['OTP برسالة SMS لحماية حساب المالك', 'خدمات مغسلة جاهزة للتعديل', 'ترقية مدفوعة بعد التجربة عند الجاهزية'].map(item => (
+            {['تأكيد عبر البريد الإلكتروني لحماية حساب المالك', 'خدمات مغسلة جاهزة للتعديل', 'ترقية مدفوعة بعد التجربة عند الجاهزية'].map(item => (
               <div key={item} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/10 px-4 py-3">
                 <CheckCircle2 size={17} className="text-sky-300" />
                 <span className="font-tajawal text-sm text-white/80">{item}</span>
@@ -171,7 +171,7 @@ export function TrialSignup() {
                 إنشاء تجربة مجانية
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-500 font-tajawal">
-                أنشئ حساب مغسلة كامل، تحقق من رقم الجوال، وادخل للوحة التشغيل مباشرة.
+                أنشئ حساب مغسلة كامل، ثم أكد بريدك الإلكتروني للدخول للوحة التشغيل.
               </p>
             </div>
 
@@ -179,10 +179,10 @@ export function TrialSignup() {
               <div className="mb-6 grid grid-cols-3 gap-2">
                 {[
                   ['details', 'البيانات'],
-                  ['otp', 'التحقق'],
+                  ['email', 'تأكيد البريد'],
                   ['done', 'الدخول'],
                 ].map(([key, label], index) => {
-                  const active = step === key || (step === 'otp' && index === 0) || (step === 'done' && index < 3)
+                  const active = step === key || (step === 'email' && index === 0) || (step === 'done' && index < 3)
                   return (
                     <div key={key} className="rounded-xl px-3 py-2 text-center text-xs font-bold font-tajawal" style={{ background: active ? '#E0F7FF' : '#F8FAFC', color: active ? '#0369A1' : '#94A3B8' }}>
                       {label}
@@ -192,7 +192,7 @@ export function TrialSignup() {
               </div>
 
               {step === 'details' && (
-                <form onSubmit={sendOtp} className="space-y-4">
+                <form onSubmit={submitSignup} className="space-y-4">
                   <Field icon={Building2} label="اسم المغسلة" value={form.company_name} onChange={set('company_name')} placeholder="مثال: مغسلة مدار" />
                   <Field icon={User} label="اسم المالك" value={form.owner_name} onChange={set('owner_name')} placeholder="الاسم الأول والأخير" />
                   <Field icon={MapPin} label="المدينة" value={form.city} onChange={set('city')} placeholder="جدة، الرياض، الدمام..." />
@@ -219,46 +219,46 @@ export function TrialSignup() {
                     </div>
                   </div>
 
-                  <Submit loading={loading} text="إرسال رمز التحقق" loadingText="جاري إرسال الرمز..." />
+                  <Submit loading={loading} text="إرسال رابط التأكيد عبر البريد" loadingText="جاري تجهيز الحساب..." />
                 </form>
               )}
 
-              {step === 'otp' && (
-                <form onSubmit={verifySignup} className="space-y-5">
+              {step === 'email' && (
+                <div className="space-y-5">
                   <div className="rounded-2xl border border-sky-100 bg-sky-50 p-4">
                     <div className="flex items-start gap-3">
-                      <ShieldCheck size={20} className="mt-0.5 text-sky-600" />
+                      <Mail size={20} className="mt-0.5 text-sky-600" />
                       <div>
-                        <p className="text-sm font-bold text-slate-900 font-cairo">أرسلنا رمز تحقق SMS</p>
-                        <p className="mt-1 text-xs leading-5 text-slate-500 font-tajawal">أدخل الرمز المرسل إلى +{phone}. بعد التحقق سننشئ الحساب وندخلك للوحة التشغيل.</p>
+                        <p className="text-sm font-bold text-slate-900 font-cairo">أرسلنا رابط التأكيد إلى بريدك الإلكتروني</p>
+                        <p className="mt-1 text-xs leading-5 text-slate-500 font-tajawal">
+                          افتح الرسالة على {form.email.trim().toLowerCase()} واضغط رابط التأكيد. بعدها سجل دخولك بنفس البريد وكلمة المرور.
+                        </p>
                       </div>
                     </div>
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-bold text-slate-700 font-tajawal">رمز التحقق</label>
-                    <input
-                      value={otp}
-                      onChange={event => { setError(''); setOtp(normalizeDigits(event.target.value).slice(0, 8)) }}
-                      placeholder="123456"
-                      required
-                      dir="ltr"
-                      inputMode="numeric"
-                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-4 text-center text-2xl font-bold tracking-[0.35em] text-slate-950 outline-none transition-all focus:border-[#00BFFF] focus:ring-4 focus:ring-sky-400/15 font-sora"
-                    />
                   </div>
 
                   <div className="flex gap-3">
                     <button type="button" onClick={() => setStep('details')} className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-500 font-tajawal hover:text-slate-900">
                       تعديل البيانات
                     </button>
-                    <button type="button" onClick={() => sendOtp({ preventDefault: () => {} } as React.FormEvent)} disabled={loading} className="rounded-xl border border-sky-100 px-5 py-3 text-sm font-bold text-sky-700 font-tajawal hover:bg-sky-50 disabled:opacity-60">
-                      إعادة إرسال
+                    <button type="button" onClick={handleResend} disabled={resending} className="inline-flex items-center gap-2 rounded-xl border border-sky-100 px-5 py-3 text-sm font-bold text-sky-700 font-tajawal hover:bg-sky-50 disabled:opacity-60">
+                      {resending && <Loader2 size={15} className="animate-spin" />}
+                      إعادة إرسال الرابط
                     </button>
                   </div>
 
-                  <Submit loading={loading} text="إنشاء الحساب والدخول" loadingText="جاري تجهيز اللوحة..." />
-                </form>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/login?portal=client', { replace: true })}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold text-white transition-all font-cairo"
+                    style={{
+                      background: 'linear-gradient(135deg, #00BFFF, #1565C0)',
+                      boxShadow: '0 16px 34px rgba(0,191,255,0.24)',
+                    }}
+                  >
+                    فتح صفحة الدخول
+                  </button>
+                </div>
               )}
 
               {error && (
