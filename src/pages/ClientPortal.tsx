@@ -117,7 +117,7 @@ function TrialExpiredGate() {
             </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <a href="/client/upgrade" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#0B63F6] px-6 py-3.5 text-sm font-black text-white shadow-[0_18px_34px_rgba(11,99,246,0.24)] transition hover:bg-[#0956D8] hover:shadow-[0_20px_40px_rgba(11,99,246,0.30)] font-cairo">
+              <a href="/client/upgrade" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#0B63F6] px-6 py-3.5 text-sm font-black !text-white shadow-[0_18px_34px_rgba(11,99,246,0.24)] transition hover:bg-[#0956D8] hover:shadow-[0_20px_40px_rgba(11,99,246,0.30)] font-cairo">
                 <CreditCard size={17} />
                 اختيار الباقة المناسبة
               </a>
