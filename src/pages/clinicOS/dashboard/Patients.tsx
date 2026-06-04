@@ -3,7 +3,8 @@ import { Users, UserPlus, AlertTriangle, Star, Search, ChevronLeft } from 'lucid
 import { motion } from 'framer-motion'
 import { StatCard } from '../../../components/clinicOS/ui/StatCard'
 import { EmptyState } from '../../../components/clinicOS/ui/EmptyState'
-import { DEMO_PATIENTS, DEMO_APPOINTMENTS } from '../../../lib/clinicOSDemoData'
+import { useClinicPatients, useClinicAppointments } from '../../../lib/clinicOSQueries'
+import { useClinicOS } from '../../../context/ClinicOSContext'
 import type { Patient } from '../../../types/clinicOS'
 
 const TODAY = new Date().toISOString().split('T')[0]
@@ -19,11 +20,14 @@ const TAG_CFG: Record<string, { label: string; color: string; bg: string }> = {
 }
 
 export const Patients = () => {
+  const { companyId } = useClinicOS()
+  const { data: allPatients = [] } = useClinicPatients(companyId)
+  const { data: allAppointments = [] } = useClinicAppointments(companyId)
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [selected, setSelected] = useState<Patient | null>(null)
 
-  const filtered = DEMO_PATIENTS.filter(p => {
+  const filtered = allPatients.filter(p => {
     if (search && !p.name.includes(search) && !p.phone.includes(search)) return false
     if (typeFilter === 'new' && p.patient_type !== 'new') return false
     if (typeFilter === 'returning' && p.patient_type !== 'returning') return false
@@ -31,7 +35,7 @@ export const Patients = () => {
     return true
   })
 
-  const patientAppts = selected ? DEMO_APPOINTMENTS.filter(a => a.patient_id === selected.id) : []
+  const patientAppts = selected ? allAppointments.filter(a => a.patient_id === selected.id) : []
   const upcoming = patientAppts.filter(a => a.appointment_date >= TODAY && !['cancelled','no_show'].includes(a.status))
   const history = patientAppts.filter(a => a.appointment_date < TODAY || ['completed','cancelled','no_show'].includes(a.status))
 
@@ -44,11 +48,11 @@ export const Patients = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}>
         {[
-          { icon: Users, label: 'إجمالي المرضى', value: DEMO_PATIENTS.length, color: '#4F46E5', bgColor: '#EEF2FF', borderColor: '#C7D2FE' },
-          { icon: UserPlus, label: 'مرضى جدد هذا الشهر', value: DEMO_PATIENTS.filter(p => p.patient_type === 'new').length, color: '#059669', bgColor: '#ECFDF5', borderColor: '#A7F3D0' },
-          { icon: Users, label: 'مرضى مراجعون', value: DEMO_PATIENTS.filter(p => p.patient_type === 'returning').length, color: '#7C3AED', bgColor: '#F5F3FF', borderColor: '#DDD6FE' },
-          { icon: AlertTriangle, label: 'غياب متكرر', value: DEMO_PATIENTS.filter(p => p.no_show_count > 1).length, color: '#DC2626', bgColor: '#FEF2F2', borderColor: '#FECACA' },
-          { icon: Star, label: 'يحتاج متابعة', value: DEMO_PATIENTS.filter(p => p.tags.includes('needs_followup')).length, color: '#C2410C', bgColor: '#FFF7ED', borderColor: '#FED7AA' },
+          { icon: Users, label: 'إجمالي المرضى', value: allPatients.length, color: '#4F46E5', bgColor: '#EEF2FF', borderColor: '#C7D2FE' },
+          { icon: UserPlus, label: 'مرضى جدد هذا الشهر', value: allPatients.filter(p => p.patient_type === 'new').length, color: '#059669', bgColor: '#ECFDF5', borderColor: '#A7F3D0' },
+          { icon: Users, label: 'مرضى مراجعون', value: allPatients.filter(p => p.patient_type === 'returning').length, color: '#7C3AED', bgColor: '#F5F3FF', borderColor: '#DDD6FE' },
+          { icon: AlertTriangle, label: 'غياب متكرر', value: allPatients.filter(p => p.no_show_count > 1).length, color: '#DC2626', bgColor: '#FEF2F2', borderColor: '#FECACA' },
+          { icon: Star, label: 'يحتاج متابعة', value: allPatients.filter(p => p.tags.includes('needs_followup')).length, color: '#C2410C', bgColor: '#FFF7ED', borderColor: '#FED7AA' },
         ].map((s, i) => <StatCard key={i} {...s} />)}
       </div>
 

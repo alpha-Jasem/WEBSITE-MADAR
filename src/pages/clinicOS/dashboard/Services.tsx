@@ -2,14 +2,22 @@ import { useState } from 'react'
 import { Stethoscope, Plus, Clock, DollarSign, AlertCircle, CheckCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { StatCard } from '../../../components/clinicOS/ui/StatCard'
-import { DEMO_SERVICES } from '../../../lib/clinicOSDemoData'
+import { useClinicServices } from '../../../lib/clinicOSQueries'
+import { useClinicOS } from '../../../context/ClinicOSContext'
 import type { Service } from '../../../types/clinicOS'
 
 export const Services = () => {
+  const { companyId } = useClinicOS()
+  const { data: services = [], refetch } = useClinicServices(companyId)
   const [selected, setSelected] = useState<Service | null>(null)
-  const [services, setServices] = useState(DEMO_SERVICES)
 
-  const toggleActive = (id: string) => setServices(prev => prev.map(s => s.id === id ? { ...s, active: !s.active } : s))
+  const toggleActive = async (id: string) => {
+    const svc = services.find(s => s.id === id)
+    if (!svc) return
+    const { supabase } = await import('../../../lib/supabase')
+    await supabase.from('clinic_os_services').update({ active: !svc.active }).eq('id', id)
+    refetch()
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, direction: 'rtl' }}>

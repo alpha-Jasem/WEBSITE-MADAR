@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Calendar, CheckCircle, Clock, X, AlertCircle, Download, Plus, Search, Filter } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { StatCard } from '../../../components/clinicOS/ui/StatCard'
@@ -6,7 +6,8 @@ import { StatusBadge, SourceBadge } from '../../../components/clinicOS/ui/Status
 import { AppointmentDrawer } from '../../../components/clinicOS/ui/AppointmentDrawer'
 import { EmptyState } from '../../../components/clinicOS/ui/EmptyState'
 import { NewAppointmentModal } from '../../../components/clinicOS/ui/NewAppointmentModal'
-import { DEMO_APPOINTMENTS, DEMO_DOCTORS, DEMO_WAITLIST } from '../../../lib/clinicOSDemoData'
+import { useClinicAppointments, useClinicDoctors, useClinicWaitlist } from '../../../lib/clinicOSQueries'
+import { useClinicOS } from '../../../context/ClinicOSContext'
 import type { Appointment } from '../../../types/clinicOS'
 
 const TODAY = new Date().toISOString().split('T')[0]
@@ -21,7 +22,13 @@ export const Appointments = () => {
   const [statusFilter, setStatusFilter] = useState('')
   const [sourceFilter, setSourceFilter] = useState('')
   const [dateFilter, setDateFilter] = useState('today')
-  const [appointments, setAppointments] = useState<Appointment[]>(DEMO_APPOINTMENTS)
+  const { companyId } = useClinicOS()
+  const { data: allAppointments = [], refetch } = useClinicAppointments(companyId)
+  const { data: _doctors = [] } = useClinicDoctors(companyId)
+  const { data: _waitlist = [] } = useClinicWaitlist(companyId)
+  const [appointments, setAppointments] = useState<Appointment[]>([])
+
+  useEffect(() => { setAppointments(allAppointments) }, [allAppointments])
 
   const getDateRange = () => {
     const today = new Date()
@@ -57,8 +64,16 @@ export const Appointments = () => {
     needs_review: filtered.filter(a => a.status === 'needs_review').length,
   }
 
-  const handleConfirm = (id: string) => setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'confirmed' as const } : a))
-  const handleCancel = (id: string) => setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'cancelled' as const } : a))
+  const handleConfirm = async (id: string) => {
+    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'confirmed' as const } : a))
+    const { updateAppointmentStatus } = await import('../../../lib/clinicOSQueries')
+    await updateAppointmentStatus(id, 'confirmed').catch(() => refetch())
+  }
+  const handleCancel = async (id: string) => {
+    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'cancelled' as const } : a))
+    const { updateAppointmentStatus } = await import('../../../lib/clinicOSQueries')
+    await updateAppointmentStatus(id, 'cancelled').catch(() => refetch())
+  }
 
   const needsReview = appointments.filter(a => a.status === 'needs_review')
   const listData = activeTab === 3 ? needsReview : filtered
@@ -177,7 +192,7 @@ export const Appointments = () => {
 
       {activeTab === 4 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {DEMO_WAITLIST.map((w, i) => (
+          {_waitlist.map((w, i) => (
             <motion.div key={w.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }} style={{ background: '#FFFFFF', borderRadius: 12, border: '1px solid #E2E8F0', padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
               <div style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg, #4F46E540, #4F46E5)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <span style={{ fontSize: 14, fontWeight: 800, color: 'white' }}>{w.patient_name.charAt(0)}</span>
@@ -200,7 +215,7 @@ export const Appointments = () => {
 
       {activeTab === 2 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
-          {DEMO_DOCTORS.map(doc => {
+          {_doctors.map(doc => {
             const docAppts = appointments.filter(a => a.doctor_id === doc.id && a.appointment_date === TODAY)
             return (
               <div key={doc.id} style={{ background: '#FFFFFF', borderRadius: 14, border: '1px solid #E2E8F0', overflow: 'hidden' }}>

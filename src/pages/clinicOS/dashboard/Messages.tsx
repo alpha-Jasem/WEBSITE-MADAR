@@ -4,7 +4,8 @@ import { motion } from 'framer-motion'
 import { StatCard } from '../../../components/clinicOS/ui/StatCard'
 import { StatusBadge } from '../../../components/clinicOS/ui/StatusBadge'
 import { EmptyState } from '../../../components/clinicOS/ui/EmptyState'
-import { DEMO_MESSAGES } from '../../../lib/clinicOSDemoData'
+import { useClinicMessages } from '../../../lib/clinicOSQueries'
+import { useClinicOS } from '../../../context/ClinicOSContext'
 
 const TABS = ['صندوق الوارد', 'المجدولة', 'القوالب', 'الفاشلة', 'السجل']
 
@@ -26,6 +27,8 @@ const SCHEDULED = [
 ]
 
 export const Messages = () => {
+  const { companyId } = useClinicOS()
+  const { data: DEMO_MESSAGES = [] } = useClinicMessages(companyId)
   const [activeTab, setActiveTab] = useState(0)
   const failed = DEMO_MESSAGES.filter(m => m.status === 'failed')
 

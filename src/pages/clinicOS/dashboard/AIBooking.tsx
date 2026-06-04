@@ -6,7 +6,7 @@ import { StatCard } from '../../../components/clinicOS/ui/StatCard'
 import { StatusBadge } from '../../../components/clinicOS/ui/StatusBadge'
 import { UpgradeCard } from '../../../components/clinicOS/ui/UpgradeCard'
 import { EmptyState } from '../../../components/clinicOS/ui/EmptyState'
-import { DEMO_AI_CALLS } from '../../../lib/clinicOSDemoData'
+import { useClinicAICalls } from '../../../lib/clinicOSQueries'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 import type { AICallLog } from '../../../types/clinicOS'
 
@@ -26,7 +26,8 @@ const FAILURE_REASONS = [
 const TABS = ['نظرة عامة', 'المكالمات', 'المحادثات', 'تحتاج مراجعة', 'الإعدادات']
 
 export const AIBooking = () => {
-  const { packageType } = useClinicOS()
+  const { packageType, companyId } = useClinicOS()
+  const { data: DEMO_AI_CALLS = [] } = useClinicAICalls(companyId)
   const [activeTab, setActiveTab] = useState(0)
   const [selectedCall, setSelectedCall] = useState<AICallLog | null>(null)
 

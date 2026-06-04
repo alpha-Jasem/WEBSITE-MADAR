@@ -3,15 +3,19 @@ import { UserCheck, Calendar, Clock, Plus } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { StatCard } from '../../../components/clinicOS/ui/StatCard'
 import { StatusBadge } from '../../../components/clinicOS/ui/StatusBadge'
-import { DEMO_DOCTORS, DEMO_APPOINTMENTS } from '../../../lib/clinicOSDemoData'
+import { useClinicDoctors, useClinicTodayAppointments } from '../../../lib/clinicOSQueries'
+import { useClinicOS } from '../../../context/ClinicOSContext'
 import type { Doctor } from '../../../types/clinicOS'
 
 const TODAY = new Date().toISOString().split('T')[0]
 
 export const Doctors = () => {
+  const { companyId } = useClinicOS()
+  const { data: doctors = [] } = useClinicDoctors(companyId)
+  const { data: todayAppts = [] } = useClinicTodayAppointments(companyId)
   const [selected, setSelected] = useState<Doctor | null>(null)
 
-  const docAppts = (id: string) => DEMO_APPOINTMENTS.filter(a => a.doctor_id === id && a.appointment_date === TODAY)
+  const docAppts = (id: string) => todayAppts.filter(a => a.doctor_id === id)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, direction: 'rtl' }}>
@@ -27,11 +31,11 @@ export const Doctors = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}>
         {[
-          { icon: UserCheck, label: 'إجمالي الأطباء', value: DEMO_DOCTORS.length, color: '#4F46E5', bgColor: '#EEF2FF', borderColor: '#C7D2FE' },
-          { icon: UserCheck, label: 'متاح اليوم', value: DEMO_DOCTORS.filter(d => d.status === 'available' || d.status === 'busy').length, color: '#059669', bgColor: '#ECFDF5', borderColor: '#A7F3D0' },
-          { icon: Calendar, label: 'محجوز بالكامل', value: DEMO_DOCTORS.filter(d => d.status === 'fully_booked').length, color: '#DC2626', bgColor: '#FEF2F2', borderColor: '#FECACA' },
-          { icon: Clock, label: 'إجازة اليوم', value: DEMO_DOCTORS.filter(d => d.status === 'off_today').length, color: '#64748B', bgColor: '#F1F5F9', borderColor: '#CBD5E1' },
-          { icon: UserCheck, label: 'فتحات طوارئ', value: DEMO_DOCTORS.reduce((s, d) => s + d.emergency_slots_per_day, 0), color: '#C2410C', bgColor: '#FFF7ED', borderColor: '#FED7AA' },
+          { icon: UserCheck, label: 'إجمالي الأطباء', value: doctors.length, color: '#4F46E5', bgColor: '#EEF2FF', borderColor: '#C7D2FE' },
+          { icon: UserCheck, label: 'متاح اليوم', value: doctors.filter(d => d.status === 'available' || d.status === 'busy').length, color: '#059669', bgColor: '#ECFDF5', borderColor: '#A7F3D0' },
+          { icon: Calendar, label: 'محجوز بالكامل', value: doctors.filter(d => d.status === 'fully_booked').length, color: '#DC2626', bgColor: '#FEF2F2', borderColor: '#FECACA' },
+          { icon: Clock, label: 'إجازة اليوم', value: doctors.filter(d => d.status === 'off_today').length, color: '#64748B', bgColor: '#F1F5F9', borderColor: '#CBD5E1' },
+          { icon: UserCheck, label: 'فتحات طوارئ', value: doctors.reduce((s, d) => s + d.emergency_slots_per_day, 0), color: '#C2410C', bgColor: '#FFF7ED', borderColor: '#FED7AA' },
         ].map((s, i) => <StatCard key={i} {...s} />)}
       </div>
 
@@ -46,7 +50,7 @@ export const Doctors = () => {
               </tr>
             </thead>
             <tbody>
-              {DEMO_DOCTORS.map((doc, i) => {
+              {doctors.map((doc, i) => {
                 const appts = docAppts(doc.id)
                 return (
                   <motion.tr key={doc.id} initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06 }}

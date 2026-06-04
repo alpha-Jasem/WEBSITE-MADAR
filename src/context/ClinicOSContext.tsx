@@ -8,6 +8,7 @@ interface ClinicOSContextValue {
   setPackageType: (p: PackageType) => void
   clinicName: string
   userName: string
+  companyId: string | null
   logout: () => void
 }
 
@@ -22,6 +23,7 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
   )
   const [clinicName, setClinicName] = useState('')
   const [userName, setUserName] = useState('')
+  const [companyId, setCompanyId] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -29,10 +31,11 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
       if (!user) return
 
       const [{ data: company }, { data: userRow }] = await Promise.all([
-        supabase.from('companies').select('name, package_type').eq('auth_user_id', user.id).single(),
+        supabase.from('companies').select('id, name, package_type').eq('auth_user_id', user.id).single(),
         supabase.from('users').select('full_name').eq('id', user.id).single(),
       ])
 
+      if (company?.id) setCompanyId(company.id)
       if (company?.name) setClinicName(company.name)
       if (userRow?.full_name) setUserName(userRow.full_name)
       if (company?.package_type) {
@@ -56,7 +59,7 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <ClinicOSContext.Provider value={{ packageType, setPackageType, clinicName, userName, logout }}>
+    <ClinicOSContext.Provider value={{ packageType, setPackageType, clinicName, userName, companyId, logout }}>
       {children}
     </ClinicOSContext.Provider>
   )

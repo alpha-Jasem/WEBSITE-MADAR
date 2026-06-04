@@ -3,7 +3,8 @@ import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { StatusBadge } from '../../../components/clinicOS/ui/StatusBadge'
 import { AppointmentDrawer } from '../../../components/clinicOS/ui/AppointmentDrawer'
-import { DEMO_APPOINTMENTS } from '../../../lib/clinicOSDemoData'
+import { useClinicAppointments } from '../../../lib/clinicOSQueries'
+import { useClinicOS } from '../../../context/ClinicOSContext'
 import type { Appointment } from '../../../types/clinicOS'
 
 const HOURS = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00']
@@ -20,6 +21,8 @@ function getWeekDates(baseDate: Date) {
 }
 
 export const CalendarPage = () => {
+  const { companyId } = useClinicOS()
+  const { data: allAppointments = [] } = useClinicAppointments(companyId)
   const [view, setView] = useState<'day'|'week'|'month'>('week')
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null)
@@ -34,7 +37,7 @@ export const CalendarPage = () => {
   }
 
   const getApptForSlot = (dateStr: string, hour: string) => {
-    return DEMO_APPOINTMENTS.filter(a => {
+    return allAppointments.filter(a => {
       if (a.appointment_date !== dateStr) return false
       if (doctorFilter && a.doctor_id !== doctorFilter) return false
       return a.start_time >= hour && a.start_time < `${String(Number(hour.split(':')[0]) + 1).padStart(2,'0')}:00`
