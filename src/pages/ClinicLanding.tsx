@@ -426,6 +426,157 @@ export const ClinicLanding = () => {
         </div>
       </section>
 
+      {/* ════════════════════════ PRICING ════════════════════════ */}
+      <section className="relative z-10 py-28" style={{ background: BG, borderTop:`1px solid ${BORDER}` }}>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+
+          <motion.div
+            initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }}
+            viewport={{ once:true }} transition={{ duration:0.55 }}
+            className="text-center mb-16">
+            <p className={`text-[11px] font-semibold tracking-[0.25em] uppercase mb-4 ${isAr ? 'font-cairo' : 'font-work'}`}
+              style={{ color: EM }}>
+              {t('الأسعار', 'Pricing')}
+            </p>
+            <h2 className={`text-4xl sm:text-5xl font-black mb-4 ${isAr ? 'font-cairo' : 'font-sora'}`}
+              style={{ color: DARK, letterSpacing:'-0.025em' }}>
+              {t('خطط واضحة — بدون رسوم خفية', 'Clear Plans — No Hidden Fees')}
+            </h2>
+            <p className={`text-base max-w-md mx-auto ${isAr ? 'font-tajawal' : 'font-work'}`}
+              style={{ color: MID }}>
+              {t('اشتراك سنوي شامل — لا عمولة على الحجوزات', 'Annual subscription — no commission per booking')}
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+            {/* Growth */}
+            <motion.div
+              initial={{ opacity:0, y:28 }} whileInView={{ opacity:1, y:0 }}
+              viewport={{ once:true }} transition={{ duration:0.6, delay:0.05 }}
+              className="rounded-3xl p-8 flex flex-col"
+              style={{ background: WHITE, border:`1px solid ${BORDER}`, boxShadow:'0 4px 24px rgba(15,23,42,0.06)' }}>
+              <div className="inline-flex px-3 py-1 rounded-full mb-5 self-start"
+                style={{ background:'#ECFDF5', border:'1px solid #A7F3D0' }}>
+                <span className={`text-xs font-bold ${isAr ? 'font-cairo' : 'font-work'}`}
+                  style={{ color:'#059669' }}>
+                  {t('عرض إطلاق', 'Launch Offer')}
+                </span>
+              </div>
+              <h3 className={`text-xl font-black mb-2 ${isAr ? 'font-cairo' : 'font-sora'}`}
+                style={{ color: DARK }}>
+                {t('باقة نمو الحجوزات', 'Booking Growth Plan')}
+              </h3>
+              <p className={`text-sm mb-6 ${isAr ? 'font-tajawal' : 'font-work'}`}
+                style={{ color: MID }}>
+                {t('حجز واتساب تلقائي ٢٤/٧', 'Automated WhatsApp booking 24/7')}
+              </p>
+              <div className="flex items-baseline gap-1 mb-8">
+                <span className={`text-4xl font-black ${isAr ? 'font-cairo' : 'font-sora'}`}
+                  style={{ color: EM, letterSpacing:'-1px' }}>
+                  {t('٦,٩٠٠', '6,900')}
+                </span>
+                <span className={`text-base ${isAr ? 'font-tajawal' : 'font-work'}`}
+                  style={{ color: MID }}>
+                  {t('ريال / سنة', 'SAR / year')}
+                </span>
+              </div>
+              <ul className="flex flex-col gap-3 mb-8 flex-1">
+                {(isAr ? [
+                  'حجز مباشر عبر واتساب ٢٤/٧','تأكيدات وتذكيرات تلقائية',
+                  'داشبورد المواعيد والمرضى','جدول الأطباء وقائمة الانتظار',
+                  'تقارير أسبوعية','دعم إعداد كامل',
+                ] : [
+                  '24/7 WhatsApp booking','Auto confirmations & reminders',
+                  'Appointments & patients dashboard','Doctor schedule & waitlist',
+                  'Weekly reports','Full onboarding support',
+                ]).map((f, i) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <Check size={13} strokeWidth={3} className="mt-0.5 flex-shrink-0" style={{ color: EM }} />
+                    <span className={`text-sm ${isAr ? 'font-tajawal' : 'font-work'}`}
+                      style={{ color: DARK }}>{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <motion.button
+                whileHover={{ scale:1.02 }} whileTap={{ scale:0.97 }}
+                onClick={() => openWhatsAppChat()}
+                className={`w-full py-3.5 rounded-2xl font-bold text-sm cursor-pointer ${isAr ? 'font-cairo' : 'font-work'}`}
+                style={{ background:`${EM}15`, color: EM2, border:`1px solid ${EM_BORDER}` }}>
+                {t('تواصل معنا', 'Contact Us')}
+              </motion.button>
+            </motion.div>
+
+            {/* AI Pro */}
+            <motion.div
+              initial={{ opacity:0, y:28 }} whileInView={{ opacity:1, y:0 }}
+              viewport={{ once:true }} transition={{ duration:0.6, delay:0.14 }}
+              className="rounded-3xl p-8 flex flex-col relative"
+              style={{ background:`linear-gradient(145deg, #0F172A, #1E293B)`, border:`1px solid rgba(255,255,255,0.08)`, boxShadow:`0 20px 60px rgba(16,185,129,0.15)` }}>
+              <div className="absolute -top-3.5 right-6 px-4 py-1.5 rounded-full text-xs font-black text-white"
+                style={{ background:`linear-gradient(135deg, ${EM2}, ${CY})`, fontFamily: isAr ? 'Cairo, sans-serif' : 'inherit' }}>
+                ⭐ {t('الأكثر طلباً', 'Most Popular')}
+              </div>
+              <div className="inline-flex px-3 py-1 rounded-full mb-5 self-start"
+                style={{ background:'rgba(16,185,129,0.15)', border:'1px solid rgba(16,185,129,0.3)' }}>
+                <span className={`text-xs font-bold ${isAr ? 'font-cairo' : 'font-work'}`}
+                  style={{ color:'#6EE7B7' }}>
+                  {t('عرض إطلاق', 'Launch Offer')}
+                </span>
+              </div>
+              <h3 className={`text-xl font-black mb-2 ${isAr ? 'font-cairo' : 'font-sora'}`}
+                style={{ color:'#FFFFFF' }}>
+                {t('باقة الحجز الذكي ٢٤/٧', 'AI Booking 24/7 Plan')}
+              </h3>
+              <p className={`text-sm mb-6 ${isAr ? 'font-tajawal' : 'font-work'}`}
+                style={{ color:'rgba(255,255,255,0.6)' }}>
+                {t('كل شيء + وكيل AI للمكالمات', 'Everything + AI call agent')}
+              </p>
+              <div className="flex items-baseline gap-1 mb-8">
+                <span className={`text-4xl font-black ${isAr ? 'font-cairo' : 'font-sora'}`}
+                  style={{ color: EM, letterSpacing:'-1px' }}>
+                  {t('١٩,٩٠٠', '19,900')}
+                </span>
+                <span className={`text-base ${isAr ? 'font-tajawal' : 'font-work'}`}
+                  style={{ color:'rgba(255,255,255,0.5)' }}>
+                  {t('ريال / سنة', 'SAR / year')}
+                </span>
+              </div>
+              <ul className="flex flex-col gap-3 mb-8 flex-1">
+                {(isAr ? [
+                  'كل مزايا باقة النمو','وكيل AI يستقبل ويحجز بالمكالمات',
+                  'نسخ وتحليل المحادثات تلقائياً','تحليلات AI وتقارير ذكية',
+                  'قائمة انتظار ذكية بأولوية AI','اكتشاف تعارضات المواعيد تلقائياً',
+                ] : [
+                  'Everything in Growth','AI agent handles & books via calls',
+                  'Auto call transcription & analysis','AI analytics & smart reports',
+                  'AI-priority smart waitlist','Automatic conflict detection',
+                ]).map((f, i) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <Check size={13} strokeWidth={3} className="mt-0.5 flex-shrink-0" style={{ color: EM }} />
+                    <span className={`text-sm ${isAr ? 'font-tajawal' : 'font-work'}`}
+                      style={{ color:'rgba(255,255,255,0.85)' }}>{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <motion.button
+                whileHover={{ scale:1.02, boxShadow:`0 8px 32px ${EM}40` }} whileTap={{ scale:0.97 }}
+                onClick={() => openWhatsAppChat()}
+                className={`w-full py-3.5 rounded-2xl font-bold text-sm cursor-pointer text-white ${isAr ? 'font-cairo' : 'font-work'}`}
+                style={{ background:`linear-gradient(135deg, ${EM2}, ${EM})`, boxShadow:`0 4px 16px ${EM}30` }}>
+                {t('تواصل معنا', 'Contact Us')}
+              </motion.button>
+            </motion.div>
+          </div>
+
+          <motion.p
+            initial={{ opacity:0 }} whileInView={{ opacity:1 }} viewport={{ once:true }} transition={{ delay:0.3 }}
+            className={`text-center text-xs mt-10 ${isAr ? 'font-tajawal' : 'font-work'}`}
+            style={{ color:'#94A3B8' }}>
+            {t('الأسعار لا تشمل ضريبة القيمة المضافة · للاستفسار: info@madar.software', 'Prices exclude VAT · Inquiries: info@madar.software')}
+          </motion.p>
+        </div>
+      </section>
+
       {/* ════════════════════════ CTA ════════════════════════ */}
       <section className="relative z-10 py-24"
         style={{ background: `linear-gradient(135deg, #ECFDF5 0%, #F0F9FF 100%)`, borderTop:`1px solid ${EM_BORDER}` }}>
