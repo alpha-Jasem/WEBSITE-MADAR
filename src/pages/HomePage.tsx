@@ -327,35 +327,37 @@ export const HomePage = () => {
             alt="Madar OS car wash hero"
             className="absolute inset-0 h-full w-full object-cover object-[35%_center] lg:static lg:block lg:h-auto lg:object-contain"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(255,255,255,0.66)_34%,rgba(255,255,255,0.18)_66%,rgba(255,255,255,0.02)_100%)] sm:bg-[linear-gradient(270deg,rgba(255,255,255,0.98)_0%,rgba(255,255,255,0.90)_24%,rgba(255,255,255,0.48)_45%,rgba(255,255,255,0.04)_68%)]" />
-          <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/90 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-white/70 to-transparent" />
-          <div className="hero-pulse absolute bottom-[24%] left-[26%] hidden h-20 w-20 rounded-full border-2 border-[#00BFFF]/70 bg-[#00BFFF]/10 shadow-[0_0_55px_rgba(0,191,255,0.55)] lg:block" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,10,28,0.20)_0%,rgba(3,10,28,0.03)_42%,rgba(3,10,28,0.58)_100%)] sm:bg-[linear-gradient(270deg,rgba(255,255,255,0.98)_0%,rgba(255,255,255,0.90)_24%,rgba(255,255,255,0.48)_45%,rgba(255,255,255,0.04)_68%)]" />
+          <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-white/70 to-transparent sm:from-white/90" />
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#03112A]/72 via-[#03112A]/18 to-transparent sm:h-28 sm:from-white/70 sm:via-transparent" />
+                    <div className="pointer-events-none absolute inset-x-5 top-[102px] h-px bg-gradient-to-r from-transparent via-[#37DFFF]/85 to-transparent shadow-[0_0_24px_rgba(55,223,255,0.65)] sm:hidden" />
+          <div className="pointer-events-none absolute bottom-[27%] left-[24%] h-16 w-16 rounded-full border border-[#37DFFF]/45 bg-[#00BFFF]/10 shadow-[0_0_45px_rgba(0,191,255,0.50)] sm:hidden" />
+          <div className="pointer-events-none absolute bottom-[27%] left-[24%] h-16 w-16 animate-ping rounded-full border border-[#37DFFF]/30 sm:hidden" />          <div className="hero-pulse absolute bottom-[24%] left-[26%] hidden h-20 w-20 rounded-full border-2 border-[#00BFFF]/70 bg-[#00BFFF]/10 shadow-[0_0_55px_rgba(0,191,255,0.55)] lg:block" />
 
           <div className="absolute inset-0 z-10 mx-auto flex max-w-7xl items-start px-4 pt-28 sm:items-center sm:px-6 sm:pt-16 lg:px-8">
-            <div className="hero-copy ml-auto w-full max-w-[580px] text-[#0D1B3E] lg:ml-0">
-              <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/70 px-3.5 py-2 text-xs font-black text-[#0D1B3E] shadow-sm backdrop-blur-xl font-cairo sm:px-5 sm:py-2.5 sm:text-sm">
+            <div className="hero-copy ml-auto w-full max-w-[342px] rounded-[30px] border border-white/22 bg-[#06142E]/46 p-4 text-white shadow-[0_28px_80px_rgba(0,25,70,0.34)] backdrop-blur-xl lg:ml-0 sm:max-w-[580px] sm:border-0 sm:bg-transparent sm:p-0 sm:text-[#0D1B3E] sm:shadow-none sm:backdrop-blur-0">
+              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200/35 bg-white/12 px-3.5 py-2 text-xs font-black text-cyan-50 shadow-[0_0_28px_rgba(0,191,255,0.18)] backdrop-blur-xl font-cairo sm:border-sky-200 sm:bg-white/70 sm:text-[#0D1B3E] sm:shadow-sm sm:px-5 sm:py-2.5 sm:text-sm">
                 <span className="h-2 w-2 rounded-full bg-[#00BFFF]" />
                 نظام تشغيل ذكي للمغاسل
               </div>
-              <h1 className="mt-5 text-[2rem] font-black leading-[1.08] tracking-normal drop-shadow-[0_2px_0_rgba(255,255,255,0.85)] font-cairo sm:mt-7 sm:text-6xl lg:text-7xl">
+              <h1 className="mt-5 text-[2rem] font-black leading-[1.08] tracking-normal drop-shadow-[0_8px_28px_rgba(0,0,0,0.55)] font-cairo sm:mt-7 sm:text-6xl sm:drop-shadow-[0_2px_0_rgba(255,255,255,0.85)] lg:text-7xl">
                 إدارة أسهل.
-                <span className="block text-[#008FE8]">مبيعات أعلى.</span>
+                <span className="block text-[#35D9FF] sm:text-[#008FE8]">مبيعات أعلى.</span>
               </h1>
-              <p className="mt-3 max-w-[300px] rounded-xl border border-white/50 bg-white/48 px-3 py-2.5 text-[13px] font-bold leading-6 text-slate-800 shadow-sm backdrop-blur-md font-tajawal sm:mt-5 sm:max-w-xl sm:rounded-2xl sm:bg-white/72 sm:px-5 sm:py-4 sm:text-xl sm:leading-8">
+              <p className="mt-3 max-w-[286px] rounded-2xl border border-cyan-100/20 bg-[#041226]/34 px-3 py-2 text-[12.5px] font-bold leading-6 text-cyan-50/92 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_18px_48px_rgba(0,25,70,0.22)] backdrop-blur-md font-tajawal sm:mt-5 sm:max-w-xl sm:rounded-2xl sm:border-white/50 sm:bg-white/72 sm:px-5 sm:py-4 sm:text-xl sm:leading-8 sm:text-slate-800 sm:shadow-sm">
                 من استقبال السيارة إلى التسليم والدفع والتقارير، كل شيء في نظام واحد ذكي وسهل الاستخدام.
               </p>
               <div className="mt-5 flex flex-col items-start gap-2.5 sm:mt-7 sm:flex-row sm:items-center sm:gap-3">
                 <Link
                   to="/trial"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#00BFFF] px-4 py-3 text-sm font-black text-[#071322] shadow-[0_14px_32px_rgba(0,191,255,0.30)] font-cairo sm:rounded-2xl sm:px-6 sm:py-4 sm:text-base sm:shadow-[0_18px_45px_rgba(0,191,255,0.36)]"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#00BFFF] px-4 py-2.5 text-sm font-black text-[#031122] shadow-[0_0_0_1px_rgba(255,255,255,0.32),0_16px_36px_rgba(0,191,255,0.34)] font-cairo sm:rounded-2xl sm:px-6 sm:py-4 sm:text-base sm:text-[#071322] sm:shadow-[0_18px_45px_rgba(0,191,255,0.36)]"
                 >
                   ابدأ تجربة 3 أيام
                   <ChevronLeft size={18} />
                 </Link>
                 <a
                   href="#dashboard"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-200 bg-white/74 px-4 py-3 text-sm font-black text-[#0D1B3E] shadow-sm backdrop-blur-xl font-cairo sm:rounded-2xl sm:bg-white/82 sm:px-6 sm:py-4 sm:text-base"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/22 bg-white/10 px-4 py-2.5 text-sm font-black text-cyan-50 shadow-sm backdrop-blur-xl font-cairo sm:rounded-2xl sm:border-sky-200 sm:bg-white/82 sm:px-6 sm:py-4 sm:text-base sm:text-[#0D1B3E]"
                 >
                   شاهد الديمو الحي
                   <Monitor size={18} />
