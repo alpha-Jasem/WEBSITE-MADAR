@@ -1,9 +1,11 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
-import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
-import { Activity, AlertTriangle, BarChart3, Bell, Calendar, CalendarClock, Car, CheckCircle2, Clock, DollarSign, Download, FileText, Gift, Loader2, MessageCircle, Plus, QrCode, RotateCcw, Sparkles, Star, TrendingUp, Users, Wrench } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
+import { Activity, AlertTriangle, Bell, Calendar, CalendarClock, Car, CheckCircle2, DollarSign, Download, FileText, Loader2, MessageCircle, Plus, QrCode, Sparkles, Star, TrendingUp, Users, Wrench } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { downloadCSV, formatDateForCSV } from '../../../lib/exportUtils'
+import type { QueueStatus } from '../../../types'
 
 type CWVisit = {
   id: string
@@ -20,6 +22,23 @@ type CWVisit = {
 }
 
 type CWWorker = { id: string; name: string }
+type CWServiceLite = { id: string; name: string; active: boolean }
+type CWQueueOverviewItem = {
+  id: string
+  created_at: string
+  started_at: string | null
+  delivered_at: string | null
+  customer_name: string | null
+  phone: string | null
+  service_name: string | null
+  price: number | null
+  subtotal: number | null
+  total_amount: number | null
+  worker_id: string | null
+  status: QueueStatus
+  payment_status: string | null
+  notes: string | null
+}
 
 type CWCustomer = {
   id: string
@@ -28,6 +47,21 @@ type CWCustomer = {
   total_visits: number
   loyalty_tier: string
 }
+
+const STATUS_LABELS: Record<QueueStatus, string> = {
+  received: 'استلام',
+  washing: 'قيد الخدمة',
+  drying: 'تجفيف',
+  ready: 'جاهزة',
+  delivered: 'تم التسليم',
+  cancelled: 'ملغاة',
+}
+
+const formatSAR = (value: number) =>
+  value > 0 ? value.toLocaleString('ar-SA') : '0'
+
+const isToday = (value?: string | null) =>
+  Boolean(value && value.startsWith(new Date().toISOString().slice(0, 10)))
 
 function StatCard({ icon: Icon, label, value, sub, color, trend = '+12%' }: { icon: typeof Car; label: string; value: string | number; sub?: string; color: string; trend?: string }) {
   return (
@@ -95,9 +129,10 @@ export function CarWashOverview() {
   const threshold = (company as any)?.cw_loyalty_threshold || 5
   const [visits, setVisits] = useState<CWVisit[]>([])
   const [customers, setCustomers] = useState<CWCustomer[]>([])
+  const [queueItems, setQueueItems] = useState<CWQueueOverviewItem[]>([])
+  const [services, setServices] = useState<CWServiceLite[]>([])
   const [loading, setLoading] = useState(true)
   const [pdfLoading, setPdfLoading] = useState(false)
-  const [showExportMenu, setShowExportMenu] = useState(false)
   const [days, setDays] = useState(30)
   const [customFrom, setCustomFrom] = useState('')
   const [customTo, setCustomTo] = useState('')
@@ -127,7 +162,9 @@ export function CarWashOverview() {
         since.setDate(since.getDate() - days)
         until = new Date()
       }
-      const [{ data: v }, { data: c }, { data: w }] = await Promise.all([
+      const todayStart = new Date()
+      todayStart.setHours(0, 0, 0, 0)
+      const [{ data: v }, { data: c }, { data: w }, { data: q }, { data: s }] = await Promise.all([
         supabase.from('cw_visits').select('id, created_at, price, subtotal, vat_amount, payment_method, is_free_wash, discount_amount, service_name, customer_id, worker_id')
           .eq('company_id', companyId)
           .gte('created_at', since.toISOString())
@@ -138,10 +175,17 @@ export function CarWashOverview() {
           .order('total_visits', { ascending: false })
           .limit(50),
         supabase.from('cw_workers').select('id, name').eq('company_id', companyId),
+        supabase.from('cw_queue').select('id, created_at, started_at, delivered_at, customer_name, phone, service_name, price, subtotal, total_amount, worker_id, status, payment_status, notes')
+          .eq('company_id', companyId)
+          .gte('created_at', todayStart.toISOString())
+          .order('created_at', { ascending: true }),
+        supabase.from('cw_services').select('id, name, active').eq('company_id', companyId).order('created_at', { ascending: true }),
       ])
       setVisits((v as CWVisit[]) || [])
       setCustomers((c as CWCustomer[]) || [])
       setWorkers((w as CWWorker[]) || [])
+      setQueueItems((q as CWQueueOverviewItem[]) || [])
+      setServices((s as CWServiceLite[]) || [])
       setLoading(false)
     }
     load()
@@ -153,6 +197,19 @@ export function CarWashOverview() {
     const thisMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
 
     const todayVisits = visits.filter(v => v.created_at.startsWith(todayStr)).length
+    const todayQueueItems = queueItems.filter(item => isToday(item.created_at) || isToday(item.delivered_at))
+    const activeQueue = todayQueueItems.filter(item => !['delivered', 'cancelled'].includes(item.status))
+    const readyQueue = todayQueueItems.filter(item => item.status === 'ready')
+    const deliveredQueue = todayQueueItems.filter(item => item.status === 'delivered' || isToday(item.delivered_at))
+    const queueStatusCounts = {
+      received: todayQueueItems.filter(item => item.status === 'received').length,
+      service: todayQueueItems.filter(item => item.status === 'washing' || item.status === 'drying').length,
+      ready: readyQueue.length,
+      delivered: deliveredQueue.length,
+      active: activeQueue.length,
+      total: todayQueueItems.filter(item => item.status !== 'cancelled').length,
+      unassigned: activeQueue.filter(item => !item.worker_id).length,
+    }
     const monthVisits = visits.filter(v => v.created_at.startsWith(thisMonthStr)).length
     const revenue = visits.reduce((sum, v) => sum + (v.subtotal ?? v.price ?? 0), 0)
     const milestones = customers.filter(c => c.total_visits > 0 && c.total_visits % threshold === 0).length
@@ -220,8 +277,8 @@ export function CarWashOverview() {
       return { id: w.id, name: w.name, count: wVisits.length, revenue }
     }).filter(w => w.count > 0).sort((a, b) => b.count - a.count)
 
-    return { todayVisits, monthVisits, revenue, milestones, dailyChart, services, revenueServices, freeWashCount, freeWashDiscount, paymentBreakdown, workerStats, returningCustomers, retentionRate, avgInvoice, heatmap }
-  }, [visits, customers, workers, days])
+    return { todayVisits, monthVisits, revenue, milestones, dailyChart, services, revenueServices, freeWashCount, freeWashDiscount, paymentBreakdown, workerStats, returningCustomers, retentionRate, avgInvoice, heatmap, queueStatusCounts, activeQueue, readyQueue, deliveredQueue, todayQueueItems }
+  }, [visits, customers, workers, queueItems, days])
 
   const topCustomers = customers.slice(0, 8)
 
@@ -341,30 +398,40 @@ export function CarWashOverview() {
   )
 
   const serviceColors = ['#0B63F6', '#10B981', '#7C3AED', '#F59E0B', '#38BDF8']
-  const servicePie = stats.revenueServices.length > 0
-    ? stats.revenueServices
-    : [{ name: 'لا توجد بيانات', value: 1, count: 0 }]
-  const displayCars = Math.max(stats.monthVisits, stats.todayVisits, 0)
+  const activeServices = services.filter(service => service.active).length
+  const displayCars = stats.queueStatusCounts.total
   const statusFlow = [
-    { label: 'استلام', value: Math.max(stats.todayVisits, Math.round(displayCars * 0.14)), icon: Car, color: '#0B63F6' },
-    { label: 'قيد الخدمة', value: Math.round(displayCars * 0.21), icon: Wrench, color: '#0B63F6' },
-    { label: 'جاهزة', value: Math.round(displayCars * 0.08), icon: CheckCircle2, color: '#10B981' },
-    { label: 'تم التسليم', value: displayCars, icon: Car, color: '#0D1B3E' },
+    { label: 'استلام', value: stats.queueStatusCounts.received, icon: Car, color: '#0B63F6', to: '/client/queue' },
+    { label: 'قيد الخدمة', value: stats.queueStatusCounts.service, icon: Wrench, color: '#0B63F6', to: '/client/queue' },
+    { label: 'جاهزة', value: stats.queueStatusCounts.ready, icon: CheckCircle2, color: '#10B981', to: '/client/queue' },
+    { label: 'تم التسليم', value: stats.queueStatusCounts.delivered, icon: Car, color: '#0D1B3E', to: '/client/finance?tab=closing' },
   ]
+  const completionRate = displayCars ? Math.round((stats.queueStatusCounts.delivered / displayCars) * 100) : 0
   const aiCards = [
-    { icon: TrendingUp, title: 'فرص زيادة الإيرادات اليوم', desc: `${Math.max(stats.returningCustomers, 0)} عميل عائد مناسب لرسالة عرض خفيفة.`, color: '#0B63F6' },
-    { icon: Users, title: `${Math.max(customers.length - stats.returningCustomers, 0)} عميل لم يزوروا من 30 يوم`, desc: 'اقترح إرسال عرض مخصص لهم بدون خصم عشوائي.', color: '#6D5DFB' },
-    { icon: Star, title: `${stats.freeWashCount} غسلات مجانية`, desc: 'راجع مكافآت الولاء حتى لا تؤثر على إيراد اليوم.', color: '#F59E0B' },
-    { icon: Plus, title: 'خدمة إضافية مقترحة', desc: stats.services[0] ? `${stats.services[0][0]} هي الأعلى طلباً، اعرض ترقية مرتبطة بها.` : 'أضف الخدمات من الإعدادات لتفعيل التحليل.', color: '#10B981' },
+    { icon: TrendingUp, title: 'قرار اليوم', desc: stats.queueStatusCounts.ready > 0 ? `يوجد ${stats.queueStatusCounts.ready} سيارة جاهزة. الأولوية الآن للتسليم والتحصيل.` : 'لا توجد سيارات جاهزة الآن. ركز على إدخال السيارات الجديدة بسرعة.', color: '#0B63F6', to: '/client/queue' },
+    { icon: Users, title: `${customers.length} عميل محفوظ`, desc: stats.returningCustomers > 0 ? `${stats.returningCustomers} عميل عائد يمكن متابعته من صفحة العملاء.` : 'ابدأ بتجميع العملاء من QR ولوحة التشغيل.', color: '#6D5DFB', to: '/client/leads' },
+    { icon: Star, title: `${stats.freeWashCount} غسلات مجانية`, desc: 'راجع مكافآت الولاء قبل إغلاق اليوم حتى تكون الإيرادات واضحة.', color: '#F59E0B', to: '/client/finance?tab=closing' },
+    { icon: Plus, title: activeServices ? `${activeServices} خدمات فعالة` : 'الخدمات غير جاهزة', desc: activeServices ? 'الخدمات مفعلة ويمكن تعديل الأسعار من الإعدادات.' : 'أضف خدمات وأسعار واقعية قبل البيع الفعلي.', color: '#10B981', to: '/client/settings' },
   ]
   const notifications = [
-    { title: `${statusFlow[2].value} سيارات جاهزة للتسليم`, desc: 'اضغط من لوحة التشغيل لإشعار العميل', time: 'منذ دقيقتين', icon: Car, color: '#10B981' },
-    { title: `${Math.max(stats.returningCustomers, 0)} عملاء لم يزوروا من 30 يوم`, desc: 'يوجد عرض مخصص لهم', time: 'منذ 15 دقيقة', icon: Users, color: '#7C3AED' },
-    { title: 'مخزون مواد التنظيف منخفض', desc: 'ينبغي إعادة الطلب', time: 'منذ 45 دقيقة', icon: AlertTriangle, color: '#F97316' },
+    stats.queueStatusCounts.ready > 0 ? { title: `${stats.queueStatusCounts.ready} سيارات جاهزة للتسليم`, desc: 'افتح لوحة التشغيل وأكمل التسليم والتحصيل', time: 'الآن', icon: Car, color: '#10B981', to: '/client/queue' } : null,
+    stats.queueStatusCounts.unassigned > 0 ? { title: `${stats.queueStatusCounts.unassigned} سيارات بدون موظف`, desc: 'عيّن الموظف حتى يظهر أداء العاملين بدقة', time: 'اليوم', icon: Users, color: '#7C3AED', to: '/client/queue' } : null,
+    !company?.google_maps_url ? { title: 'رابط تقييم Google غير مضاف', desc: 'أضفه من الإعدادات حتى تعمل طلبات التقييم', time: 'إعداد ناقص', icon: AlertTriangle, color: '#F97316', to: '/client/settings' } : null,
+    activeServices === 0 ? { title: 'لا توجد خدمات مفعلة', desc: 'أضف الخدمات والأسعار قبل تشغيل QR', time: 'إعداد ناقص', icon: Wrench, color: '#F97316', to: '/client/settings' } : null,
+  ].filter(Boolean) as Array<{ title: string; desc: string; time: string; icon: typeof Car; color: string; to: string }>
+  const actionableNotifications = notifications.length ? notifications : [
+    { title: 'لا توجد تنبيهات حرجة', desc: 'التشغيل مستقر حالياً حسب بيانات اليوم', time: 'الآن', icon: CheckCircle2, color: '#10B981', to: '/client/queue' },
   ]
-  const upcoming = (stats.services.length ? stats.services : [['غسيل خارجي', { count: 1, revenue: 0 }], ['تلميع داخلي', { count: 1, revenue: 0 }], ['باقة شاملة', { count: 1, revenue: 0 }]]).slice(0, 3)
+  const upcoming = stats.activeQueue.slice(0, 4)
+  const paymentRows = Object.entries(stats.paymentBreakdown)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+  const paymentPie = paymentRows.length
+    ? paymentRows.map(([name, value]) => ({ name, value }))
+    : [{ name: 'لا توجد مدفوعات', value: 1 }]
+  const expectedActiveRevenue = stats.activeQueue.reduce((sum, item) => sum + (item.total_amount || item.subtotal || item.price || stats.avgInvoice || 0), 0)
   const todayText = new Date().toLocaleDateString('ar-SA', { day: 'numeric', month: 'long', weekday: 'long' })
-  const checkinTarget = `${window.location.origin}/checkin/${(company as any)?.webhook_token || companyId || 'demo'}`
+  const checkinTarget = `${window.location.origin}/checkin/${(company as any)?.public_checkin_token || (company as any)?.webhook_token || companyId || 'demo'}`
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(checkinTarget)}`
 
   return (<div dir="rtl" style={{ color: '#0D1B3E' }}>
@@ -374,7 +441,14 @@ export function CarWashOverview() {
         .cw-card-pad { padding:16px; }
         .cw-title { margin:0; color:#0D1B3E; font-family:Cairo,sans-serif; font-weight:950; }
         .cw-muted { color:#64748B; font-family:Tajawal,sans-serif; }
+        .cw-link { text-decoration:none; color:inherit; }
+        .cw-clickable { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+        .cw-clickable:hover { transform: translateY(-2px); box-shadow:0 18px 46px rgba(13,27,62,.08); border-color:#BFD3F1; }
+        .cw-insight-grid { display:grid; grid-template-columns:minmax(290px, 1.1fr) minmax(220px, .8fr) minmax(190px, .65fr); gap:14px; }
+        .cw-stage-arrow { position:absolute; left:-15px; top:50%; color:#0D1B3E; font-size:22px; transform:translateY(-50%); }
         @media (max-width: 1280px) { .cw-board { grid-template-columns: 1fr; } }
+        @media (max-width: 920px) { .cw-insight-grid { grid-template-columns:1fr; } .cw-stage-arrow { display:none; } }
+        @media (max-width: 640px) { .cw-card-pad { padding:14px; } .cw-board { gap:12px; } }
       `}</style>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'center', flexWrap: 'wrap', marginBottom: 18 }}>
@@ -383,8 +457,8 @@ export function CarWashOverview() {
             <Users size={21} color="#0D1B3E" />
           </div>
           <div>
-            <strong style={{ display: 'block', fontSize: 14, fontFamily: 'Cairo,sans-serif', color: '#0D1B3E' }}>مدير النظام</strong>
-            <span className="cw-muted" style={{ fontSize: 12 }}>مدير</span>
+            <strong style={{ display: 'block', fontSize: 14, fontFamily: 'Cairo,sans-serif', color: '#0D1B3E' }}>{company?.owner_name || 'مدير النظام'}</strong>
+            <span className="cw-muted" style={{ fontSize: 12 }}>{company?.name || 'المغسلة'}</span>
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
             {[Bell, MessageCircle].map((Icon, i) => (
@@ -432,47 +506,57 @@ export function CarWashOverview() {
 
           <div className="cw-card cw-card-pad">
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-              <h3 className="cw-title" style={{ fontSize: 15 }}>التنبيهات</h3>
-              <button style={{ border: 'none', background: 'transparent', color: '#0B63F6', fontWeight: 900, fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>عرض الكل</button>
+              <h3 className="cw-title" style={{ fontSize: 15 }}>التنبيهات العملية</h3>
+              <Link to="/client/queue" style={{ border: 'none', background: 'transparent', color: '#0B63F6', fontWeight: 900, fontSize: 12, fontFamily: 'Tajawal,sans-serif', textDecoration: 'none' }}>لوحة التشغيل</Link>
             </div>
-            {notifications.map((n, i) => {
+            {actionableNotifications.map((n, i) => {
               const Icon = n.icon
               return (
-                <div key={n.title} style={{ display: 'grid', gridTemplateColumns: '34px 1fr auto', gap: 10, alignItems: 'center', padding: '11px 0', borderBottom: i < notifications.length - 1 ? '1px solid #EEF3FA' : 'none' }}>
+                <Link to={n.to} className="cw-link cw-clickable" key={n.title} style={{ display: 'grid', gridTemplateColumns: '34px 1fr auto', gap: 10, alignItems: 'center', padding: '11px 8px', borderRadius: 12, borderBottom: i < actionableNotifications.length - 1 ? '1px solid #EEF3FA' : 'none' }}>
                   <span style={{ width: 34, height: 34, borderRadius: 12, background: `${n.color}14`, display: 'grid', placeItems: 'center' }}><Icon size={16} color={n.color} /></span>
                   <span><strong style={{ display: 'block', color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>{n.title}</strong><em className="cw-muted" style={{ display: 'block', fontSize: 11, fontStyle: 'normal' }}>{n.desc}</em></span>
                   <small className="cw-muted" style={{ fontSize: 10 }}>{n.time}</small>
-                </div>
+                </Link>
               )
             })}
           </div>
 
           <div className="cw-card cw-card-pad">
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-              <h3 className="cw-title" style={{ fontSize: 15 }}>المواعيد القادمة</h3>
-              <button style={{ border: 'none', background: 'transparent', color: '#0B63F6', fontWeight: 900, fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>عرض الكل</button>
+              <h3 className="cw-title" style={{ fontSize: 15 }}>السيارات النشطة الآن</h3>
+              <Link to="/client/queue" style={{ border: 'none', background: 'transparent', color: '#0B63F6', fontWeight: 900, fontSize: 12, fontFamily: 'Tajawal,sans-serif', textDecoration: 'none' }}>عرض الكل</Link>
             </div>
-            {upcoming.map(([name], i) => (
-              <div key={`${name}-${i}`} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, alignItems: 'center', padding: '11px 0', borderBottom: i < upcoming.length - 1 ? '1px solid #EEF3FA' : 'none' }}>
-                <span><strong style={{ color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>{name}</strong><em className="cw-muted" style={{ display: 'block', fontSize: 11, fontStyle: 'normal' }}>{['محمد أحمد', 'سعد العتيبي', 'خالد الشهري'][i] || 'عميل'}</em></span>
-                <span style={{ textAlign: 'left' }}><strong style={{ display: 'block', color: '#0D1B3E', fontSize: 13, fontFamily: 'Sora,sans-serif' }}>{['10:30', '11:00', '11:30'][i]} ص</strong><em style={{ fontStyle: 'normal', fontSize: 10, color: i === 2 ? '#F97316' : '#10B981', background: i === 2 ? '#FFEDD5' : '#DCFCE7', borderRadius: 999, padding: '2px 7px', fontFamily: 'Tajawal,sans-serif' }}>{i === 2 ? 'قيد الانتظار' : 'مؤكد'}</em></span>
-              </div>
-            ))}
+            {upcoming.length ? upcoming.map((item, i) => (
+              <Link to="/client/queue" className="cw-link cw-clickable" key={item.id} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, alignItems: 'center', padding: '11px 8px', borderRadius: 12, borderBottom: i < upcoming.length - 1 ? '1px solid #EEF3FA' : 'none' }}>
+                <span>
+                  <strong style={{ color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>{item.service_name || 'خدمة غير محددة'}</strong>
+                  <em className="cw-muted" style={{ display: 'block', fontSize: 11, fontStyle: 'normal' }}>{item.customer_name || item.phone || 'عميل بدون اسم'}</em>
+                </span>
+                <span style={{ textAlign: 'left' }}>
+                  <strong style={{ display: 'block', color: '#0D1B3E', fontSize: 13, fontFamily: 'Sora,sans-serif' }}>{formatSAR(item.total_amount || item.subtotal || item.price || 0)}</strong>
+                  <em style={{ fontStyle: 'normal', fontSize: 10, color: item.status === 'ready' ? '#10B981' : '#0B63F6', background: item.status === 'ready' ? '#DCFCE7' : '#DBEAFE', borderRadius: 999, padding: '2px 7px', fontFamily: 'Tajawal,sans-serif' }}>{STATUS_LABELS[item.status]}</em>
+                </span>
+              </Link>
+            )) : (
+              <Link to="/client/queue" className="cw-link" style={{ display: 'block', border: '1px dashed #D7E1F0', borderRadius: 14, padding: 14, textAlign: 'center', color: '#64748B', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>
+                لا توجد سيارات نشطة الآن. افتح لوحة التشغيل لإضافة أول سيارة.
+              </Link>
+            )}
           </div>
         </aside>
 
         <main style={{ display: 'grid', gap: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'start', flexWrap: 'wrap' }}>
-            <div><span className="cw-muted" style={{ fontSize: 13, fontWeight: 800 }}>مرحباً بك، مدير النظام</span><h1 className="cw-title" style={{ fontSize: 'clamp(26px, 3vw, 34px)' }}>نظرة عامة على اليوم</h1></div>
+            <div><span className="cw-muted" style={{ fontSize: 13, fontWeight: 800 }}>مرحباً بك، {company?.owner_name || 'مدير النظام'}</span><h1 className="cw-title" style={{ fontSize: 'clamp(26px, 3vw, 34px)' }}>مركز تشغيل اليوم</h1></div>
             <div style={{ textAlign: 'left' }}><strong style={{ color: '#0D1B3E', fontFamily: 'Cairo,sans-serif' }}>{todayText}</strong><span className="cw-muted" style={{ display: 'block', fontSize: 12 }}>{company?.name || 'المغسلة'}</span></div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(155px, 1fr))', gap: 12 }}>
-            <StatCard icon={DollarSign} label="إجمالي الإيرادات" value={stats.revenue > 0 ? stats.revenue.toLocaleString('ar-SA') : '0'} sub="عن أمس" color="#10B981" trend="+18%" />
-            <StatCard icon={Car} label="عدد السيارات" value={displayCars} sub="عن أمس" color="#0B63F6" trend="+24%" />
-            <StatCard icon={CalendarClock} label="متوسط الفاتورة" value={stats.avgInvoice || 0} sub="ر.س" color="#7C3AED" trend="+12%" />
-            <StatCard icon={Users} label="العملاء الجدد" value={Math.max(customers.length - stats.returningCustomers, 0)} sub="عن أمس" color="#F97316" trend="+15%" />
-            <StatCard icon={Star} label="التقييمات الجديدة" value={Math.max(stats.milestones, 0)} sub="عن أمس" color="#38BDF8" trend="+8%" />
+            <StatCard icon={DollarSign} label="إجمالي الإيرادات" value={formatSAR(stats.revenue)} sub="ر.س في الفترة" color="#10B981" trend="فعلي" />
+            <StatCard icon={Car} label="سيارات اليوم" value={displayCars} sub={`${stats.queueStatusCounts.active} نشطة الآن`} color="#0B63F6" trend="اليوم" />
+            <StatCard icon={CalendarClock} label="متوسط الفاتورة" value={stats.avgInvoice || 0} sub="ر.س" color="#7C3AED" trend="محسوب" />
+            <StatCard icon={Users} label="العملاء المسجلون" value={customers.length} sub={`${stats.returningCustomers} عائدون`} color="#F97316" trend="CRM" />
+            <StatCard icon={Star} label="مكافآت الولاء" value={Math.max(stats.milestones, 0)} sub={`هدف ${threshold} زيارات`} color="#38BDF8" trend="ولاء" />
           </div>
 
           <div className="cw-card cw-card-pad">
@@ -481,23 +565,23 @@ export function CarWashOverview() {
               {statusFlow.map((step, i) => {
                 const Icon = step.icon
                 return (
-                  <div key={step.label} style={{ border: `1.5px solid ${step.color}`, borderRadius: 14, minHeight: 130, display: 'grid', placeItems: 'center', textAlign: 'center', position: 'relative', background: step.label === 'جاهزة' ? '#F0FDF4' : '#FFFFFF' }}>
+                  <Link to={step.to} className="cw-link cw-clickable" key={step.label} style={{ border: `1.5px solid ${step.color}`, borderRadius: 14, minHeight: 130, display: 'grid', placeItems: 'center', textAlign: 'center', position: 'relative', background: step.label === 'جاهزة' ? '#F0FDF4' : '#FFFFFF' }}>
                     <Icon size={28} color={step.color} />
                     <strong style={{ color: step.color, fontSize: 14, fontWeight: 950, fontFamily: 'Cairo,sans-serif' }}>{step.label}</strong>
                     <span style={{ color: '#0D1B3E', fontSize: 25, fontWeight: 950, fontFamily: 'Sora,sans-serif' }}>{step.value}</span>
                     <em className="cw-muted" style={{ fontSize: 12, fontStyle: 'normal' }}>سيارة</em>
-                    {i < statusFlow.length - 1 && <span style={{ position: 'absolute', left: -15, top: '50%', color: '#0D1B3E', fontSize: 22 }}>←</span>}
-                  </div>
+                    {i < statusFlow.length - 1 && <span className="cw-stage-arrow">←</span>}
+                  </Link>
                 )
               })}
             </div>
             <div style={{ marginTop: 22, display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'center' }}>
-              <div style={{ height: 6, borderRadius: 999, background: '#DDE8F7', position: 'relative' }}><span style={{ position: 'absolute', inset: '0 0 0 43%', borderRadius: 999, background: '#0B63F6' }} /></div>
-              <strong style={{ color: '#10B981', fontFamily: 'Sora,sans-serif' }}>57% مكتمل</strong>
+              <div style={{ height: 6, borderRadius: 999, background: '#DDE8F7', position: 'relative', overflow: 'hidden' }}><span style={{ position: 'absolute', inset: `0 0 0 ${100 - completionRate}%`, borderRadius: 999, background: '#0B63F6' }} /></div>
+              <strong style={{ color: completionRate >= 70 ? '#10B981' : '#0B63F6', fontFamily: 'Sora,sans-serif' }}>{completionRate}% مكتمل</strong>
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(290px, 1.1fr) minmax(220px, .8fr) minmax(190px, .65fr)', gap: 14 }}>
+          <div className="cw-insight-grid">
             <SectionCard title="أداء الإيرادات" icon={TrendingUp}>
               <ResponsiveContainer width="100%" height={190}>
                 <AreaChart data={stats.dailyChart}>
@@ -511,19 +595,25 @@ export function CarWashOverview() {
             </SectionCard>
 
             <SectionCard title="أفضل الخدمات اليوم" icon={Car}>
-              {(stats.services.length ? stats.services : upcoming).slice(0, 4).map(([name, data], i) => (
+              {stats.services.length ? stats.services.slice(0, 4).map(([name, data], i) => (
                 <div key={`${name}-${i}`} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, padding: '9px 0', borderBottom: i < 3 ? '1px solid #EEF3FA' : 'none' }}>
                   <span><strong style={{ display: 'block', color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>{name}</strong><em className="cw-muted" style={{ fontStyle: 'normal', fontSize: 11 }}>{(data as any).count || 0} سيارة</em></span>
                   <strong style={{ color: '#0D1B3E', fontSize: 13, fontFamily: 'Sora,sans-serif' }}>{((data as any).revenue || 0).toLocaleString('ar-SA')}</strong>
                 </div>
-              ))}
+              )) : (
+                <Link to="/client/settings" className="cw-link" style={{ display: 'block', border: '1px dashed #D7E1F0', borderRadius: 14, padding: 14, textAlign: 'center', color: '#64748B', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>
+                  لا توجد خدمات منفذة في الفترة. راجع إعدادات الخدمات أو أضف سيارة من لوحة التشغيل.
+                </Link>
+              )}
             </SectionCard>
 
-            <SectionCard title="مصادر العملاء" icon={Activity}>
+            <SectionCard title="توزيع طرق الدفع" icon={Activity}>
               <ResponsiveContainer width="100%" height={138}>
-                <PieChart><Pie data={servicePie} innerRadius={38} outerRadius={58} dataKey="value">{servicePie.map((_, i) => <Cell key={i} fill={serviceColors[i % serviceColors.length]} />)}</Pie></PieChart>
+                <PieChart><Pie data={paymentPie} innerRadius={38} outerRadius={58} dataKey="value">{paymentPie.map((_, i) => <Cell key={i} fill={serviceColors[i % serviceColors.length]} />)}</Pie></PieChart>
               </ResponsiveContainer>
-              <div style={{ display: 'grid', gap: 6 }}>{['واتساب', 'محمد', 'مباشر', 'أخرى'].map((name, i) => <span key={name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontFamily: 'Tajawal,sans-serif', color: '#64748B' }}><em style={{ fontStyle: 'normal' }}>{name}</em><b style={{ color: '#0D1B3E' }}>{[42, 28, 20, 10][i]}%</b></span>)}</div>
+              <div style={{ display: 'grid', gap: 6 }}>
+                {paymentRows.length ? paymentRows.map(([name, value], i) => <span key={name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontFamily: 'Tajawal,sans-serif', color: '#64748B' }}><em style={{ fontStyle: 'normal' }}>{name}</em><b style={{ color: '#0D1B3E' }}>{formatSAR(value)} ر.س</b></span>) : <span className="cw-muted" style={{ fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>لا توجد مدفوعات في الفترة.</span>}
+              </div>
             </SectionCard>
           </div>
         </main>
@@ -531,26 +621,27 @@ export function CarWashOverview() {
         <aside style={{ display: 'grid', gap: 14 }}>
           <div className="cw-card cw-card-pad">
             <h3 className="cw-title" style={{ fontSize: 17, marginBottom: 14 }}><Sparkles size={18} color="#0B63F6" /> مساعد الذكاء الاصطناعي</h3>
-            <button style={{ width: '100%', height: 40, border: 'none', borderRadius: 10, background: '#F3F7FF', color: '#0B63F6', fontWeight: 950, fontFamily: 'Tajawal,sans-serif', marginBottom: 12 }}>فرص زيادة الإيرادات اليوم</button>
+            <Link to={aiCards[0].to} className="cw-link cw-clickable" style={{ width: '100%', minHeight: 40, border: 'none', borderRadius: 10, background: '#F3F7FF', color: '#0B63F6', fontWeight: 950, fontFamily: 'Tajawal,sans-serif', marginBottom: 12, display: 'grid', placeItems: 'center', textAlign: 'center', padding: '10px 12px' }}>{aiCards[0].title}</Link>
             {aiCards.slice(1).map(card => {
               const Icon = card.icon
               return (
-                <div key={card.title} style={{ display: 'grid', gridTemplateColumns: '38px 1fr', gap: 10, alignItems: 'center', border: '1px solid #EEF3FA', borderRadius: 12, padding: 12, marginBottom: 10 }}>
+                <Link to={card.to} className="cw-link cw-clickable" key={card.title} style={{ display: 'grid', gridTemplateColumns: '38px 1fr', gap: 10, alignItems: 'center', border: '1px solid #EEF3FA', borderRadius: 12, padding: 12, marginBottom: 10 }}>
                   <span style={{ width: 38, height: 38, borderRadius: 12, background: `${card.color}12`, display: 'grid', placeItems: 'center' }}><Icon size={18} color={card.color} /></span>
                   <span><strong style={{ display: 'block', color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>{card.title}</strong><em className="cw-muted" style={{ display: 'block', fontSize: 11, fontStyle: 'normal' }}>{card.desc}</em></span>
-                </div>
+                </Link>
               )
             })}
           </div>
           <div className="cw-card cw-card-pad" style={{ textAlign: 'center', background: 'linear-gradient(180deg,#FFFFFF,#F8FBFF)' }}>
-            <h3 className="cw-title" style={{ fontSize: 15 }}>الإيراد المتوقع من الفرص</h3>
-            <strong style={{ display: 'block', marginTop: 14, color: '#0D1B3E', fontSize: 34, fontWeight: 950, fontFamily: 'Sora,sans-serif' }}>4,200</strong>
+            <h3 className="cw-title" style={{ fontSize: 15 }}>إيراد السيارات النشطة</h3>
+            <strong style={{ display: 'block', marginTop: 14, color: '#0D1B3E', fontSize: 34, fontWeight: 950, fontFamily: 'Sora,sans-serif' }}>{formatSAR(expectedActiveRevenue)}</strong>
             <span className="cw-muted" style={{ fontSize: 12 }}>ر.س</span>
-            <button style={{ width: '100%', height: 46, border: 'none', borderRadius: 12, background: '#0B63F6', color: '#fff', fontWeight: 950, fontFamily: 'Tajawal,sans-serif', marginTop: 20 }}>عرض كل الفرص</button>
+            <Link to="/client/queue" className="cw-link" style={{ width: '100%', height: 46, border: 'none', borderRadius: 12, background: '#0B63F6', color: '#fff', fontWeight: 950, fontFamily: 'Tajawal,sans-serif', marginTop: 20, display: 'grid', placeItems: 'center' }}>فتح لوحة التشغيل</Link>
           </div>
         </aside>
       </div>
     </div>
   )
 }
+
 
