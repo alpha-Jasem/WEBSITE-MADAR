@@ -121,7 +121,7 @@ function TrialExpiredGate() {
                 <CreditCard size={17} />
                 اختيار الباقة المناسبة
               </a>
-              <a href="mailto:info@madar.software" className="inline-flex items-center justify-center rounded-2xl border border-[#C8D8F5] bg-white px-6 py-3.5 text-sm font-bold text-[#0D1B3E] transition hover:border-[#0B63F6] hover:text-[#0B63F6] font-cairo">
+              <a href="https://wa.me/966546666005?text=%D8%A3%D8%A8%D8%BA%D9%89%20%D9%85%D8%B3%D8%A7%D8%B9%D8%AF%D8%A9%20%D9%81%D9%8A%20%D8%AA%D9%81%D8%B9%D9%8A%D9%84%20%D8%A7%D8%B4%D8%AA%D8%B1%D8%A7%D9%83%20%D9%85%D8%AF%D8%A7%D8%B1%20OS" target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-2xl border border-[#C8D8F5] bg-white px-6 py-3.5 text-sm font-bold text-[#0D1B3E] transition hover:border-[#0B63F6] hover:text-[#0B63F6] font-cairo">
                 تواصل مع الدعم
               </a>
             </div>
