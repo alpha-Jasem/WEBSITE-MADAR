@@ -335,8 +335,8 @@ export const HomePage = () => {
           <div className="pointer-events-none absolute bottom-[27%] left-[24%] h-16 w-16 animate-ping rounded-full border border-[#37DFFF]/30 sm:hidden" />          <div className="hero-pulse absolute bottom-[24%] left-[26%] hidden h-20 w-20 rounded-full border-2 border-[#00BFFF]/70 bg-[#00BFFF]/10 shadow-[0_0_55px_rgba(0,191,255,0.55)] lg:block" />
 
           <div className="absolute inset-0 z-10 mx-auto flex max-w-7xl items-start px-4 pt-28 sm:items-center sm:px-6 sm:pt-16 lg:px-8">
-            <div className="hero-copy ml-auto w-full max-w-[342px] rounded-[30px] border border-white/22 bg-[#06142E]/46 p-4 text-white shadow-[0_28px_80px_rgba(0,25,70,0.34)] backdrop-blur-xl lg:ml-0 sm:max-w-[580px] sm:border-0 sm:bg-transparent sm:p-0 sm:text-[#0D1B3E] sm:shadow-none sm:backdrop-blur-0">
-              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200/35 bg-white/12 px-3.5 py-2 text-xs font-black text-cyan-50 shadow-[0_0_28px_rgba(0,191,255,0.18)] backdrop-blur-xl font-cairo sm:border-sky-200 sm:bg-white/70 sm:text-[#0D1B3E] sm:shadow-sm sm:px-5 sm:py-2.5 sm:text-sm">
+            <div className="hero-copy ml-auto w-full max-w-[342px] rounded-[30px] border border-[rgba(255,255,255,0.22)] bg-[rgba(6,20,46,0.46)] p-4 text-white shadow-[0_28px_80px_rgba(0,25,70,0.34)] backdrop-blur-xl lg:ml-0 sm:max-w-[580px] sm:border-0 sm:bg-transparent sm:p-0 sm:text-[#0D1B3E] sm:shadow-none sm:backdrop-blur-0">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(165,243,252,0.35)] bg-[rgba(255,255,255,0.12)] px-3.5 py-2 text-xs font-black text-cyan-50 shadow-[0_0_28px_rgba(0,191,255,0.18)] backdrop-blur-xl font-cairo sm:border-sky-200 sm:bg-white/70 sm:text-[#0D1B3E] sm:shadow-sm sm:px-5 sm:py-2.5 sm:text-sm">
                 <span className="h-2 w-2 rounded-full bg-[#00BFFF]" />
                 نظام تشغيل ذكي للمغاسل
               </div>
@@ -344,7 +344,7 @@ export const HomePage = () => {
                 إدارة أسهل.
                 <span className="block text-[#35D9FF] sm:text-[#008FE8]">مبيعات أعلى.</span>
               </h1>
-              <p className="mt-3 max-w-[286px] rounded-2xl border border-cyan-100/20 bg-[#041226]/34 px-3 py-2 text-[12.5px] font-bold leading-6 text-cyan-50/92 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_18px_48px_rgba(0,25,70,0.22)] backdrop-blur-md font-tajawal sm:mt-5 sm:max-w-xl sm:rounded-2xl sm:border-white/50 sm:bg-white/72 sm:px-5 sm:py-4 sm:text-xl sm:leading-8 sm:text-slate-800 sm:shadow-sm">
+              <p className="mt-3 max-w-[286px] rounded-2xl border border-[rgba(207,250,254,0.20)] bg-[rgba(4,18,38,0.34)] px-3 py-2 text-[12.5px] font-bold leading-6 text-cyan-50/92 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_18px_48px_rgba(0,25,70,0.22)] backdrop-blur-md font-tajawal sm:mt-5 sm:max-w-xl sm:rounded-2xl sm:border-white/50 sm:bg-white/72 sm:px-5 sm:py-4 sm:text-xl sm:leading-8 sm:text-slate-800 sm:shadow-sm">
                 من استقبال السيارة إلى التسليم والدفع والتقارير، كل شيء في نظام واحد ذكي وسهل الاستخدام.
               </p>
               <div className="mt-5 flex flex-col items-start gap-2.5 sm:mt-7 sm:flex-row sm:items-center sm:gap-3">
@@ -357,7 +357,7 @@ export const HomePage = () => {
                 </Link>
                 <a
                   href="#dashboard"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/22 bg-white/10 px-4 py-2.5 text-sm font-black text-cyan-50 shadow-sm backdrop-blur-xl font-cairo sm:rounded-2xl sm:border-sky-200 sm:bg-white/82 sm:px-6 sm:py-4 sm:text-base sm:text-[#0D1B3E]"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[rgba(255,255,255,0.22)] bg-[rgba(255,255,255,0.10)] px-4 py-2.5 text-sm font-black text-cyan-50 shadow-sm backdrop-blur-xl font-cairo sm:rounded-2xl sm:border-sky-200 sm:bg-white/82 sm:px-6 sm:py-4 sm:text-base sm:text-[#0D1B3E]"
                 >
                   شاهد الديمو الحي
                   <Monitor size={18} />
