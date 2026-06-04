@@ -342,7 +342,7 @@ export const HomePage = () => {
                 إدارة أسهل.
                 <span className="block text-[#008FE8]">مبيعات أعلى.</span>
               </h1>
-              <p className="mt-4 max-w-[340px] rounded-2xl border border-white/60 bg-white/58 px-4 py-3 text-sm font-bold leading-7 text-slate-800 shadow-sm backdrop-blur-md font-tajawal sm:mt-5 sm:max-w-xl sm:bg-white/72 sm:px-5 sm:py-4 sm:text-xl sm:leading-8">
+              <p className="mt-3 max-w-[300px] rounded-xl border border-white/50 bg-white/48 px-3 py-2.5 text-[13px] font-bold leading-6 text-slate-800 shadow-sm backdrop-blur-md font-tajawal sm:mt-5 sm:max-w-xl sm:rounded-2xl sm:bg-white/72 sm:px-5 sm:py-4 sm:text-xl sm:leading-8">
                 من استقبال السيارة إلى التسليم والدفع والتقارير، كل شيء في نظام واحد ذكي وسهل الاستخدام.
               </p>
               <div className="mt-5 flex flex-col items-start gap-2.5 sm:mt-7 sm:flex-row sm:items-center sm:gap-3">
