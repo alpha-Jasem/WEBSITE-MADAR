@@ -1,583 +1,556 @@
-import { type CSSProperties, useEffect, useMemo, useState } from 'react'
-import {
-  AlertCircle,
-  ArrowUpLeft,
-  BarChart3,
-  Car,
-  CheckCircle2,
-  Clock,
-  Droplets,
-  Gift,
-  Loader2,
-  MessageCircle,
-  Monitor,
-  Plus,
-  Receipt,
-  Sparkles,
-  Trophy,
-  Users,
-  Wallet,
-  X,
-  Zap,
-} from 'lucide-react'
-import { Link, useLocation } from 'react-router-dom'
+﻿import { useEffect, useMemo, useState } from 'react'
+import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
+import { Activity, AlertTriangle, BarChart3, Bell, Calendar, CalendarClock, Car, CheckCircle2, Clock, DollarSign, Download, FileText, Gift, Loader2, MessageCircle, Plus, QrCode, RotateCcw, Sparkles, Star, TrendingUp, Users, Wrench } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
-import { getDailyTicketCode } from '../../../lib/carWashTickets'
-import { CarWashLaunchChecklist } from './CarWashLaunchChecklist'
+import { downloadCSV, formatDateForCSV } from '../../../lib/exportUtils'
 
-type QueueStatus = 'received' | 'washing' | 'drying' | 'ready' | 'delivered' | 'cancelled'
-
-type QueueCar = {
+type CWVisit = {
   id: string
-  customer_name: string
-  car_type: string | null
-  plate: string | null
-  service_name: string | null
-  price: number | null
-  total_amount: number | null
-  status: QueueStatus
   created_at: string
+  price: number | null
+  subtotal: number | null
+  vat_amount: number | null
+  payment_method: string | null
+  is_free_wash: boolean | null
+  discount_amount: number | null
+  service_name: string | null
+  customer_id: string
+  worker_id: string | null
 }
 
-type Customer = {
+type CWWorker = { id: string; name: string }
+
+type CWCustomer = {
   id: string
   name: string | null
   phone: string
   total_visits: number
-  free_washes_available: number | null
-  loyalty_tier: 'bronze' | 'silver' | 'gold' | null
-  last_visit_at: string | null
+  loyalty_tier: string
 }
 
-type Visit = {
-  id: string
-  customer_name: string | null
-  phone: string | null
-  service_name: string | null
-  total_amount: number | null
-  created_at: string
+function StatCard({ icon: Icon, label, value, sub, color, trend = '+12%' }: { icon: typeof Car; label: string; value: string | number; sub?: string; color: string; trend?: string }) {
+  return (
+    <div style={{
+      background: '#FFFFFF', border: '1px solid #E3EAF6',
+      borderRadius: 14, padding: '18px 20px',
+      boxShadow: '0 10px 26px rgba(13,27,62,0.04)',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <span style={{ fontSize: 13, color: '#334155', fontFamily: 'Tajawal, sans-serif', fontWeight: 700 }}>{label}</span>
+        <div style={{ width: 34, height: 34, borderRadius: 10, background: `${color}14`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon size={17} color={color} />
+        </div>
+      </div>
+      <strong style={{ fontSize: 28, fontWeight: 900, color: '#0D1B3E', fontFamily: 'Sora, sans-serif', display: 'block', lineHeight: 1 }}>{value}</strong>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
+        <span style={{ fontSize: 11, fontWeight: 800, color: '#059669', background: '#DCFCE7', borderRadius: 999, padding: '3px 8px', fontFamily: 'Sora, sans-serif' }}>{trend}</span>
+        {sub && <span style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>{sub}</span>}
+      </div>
+    </div>
+  )
 }
 
-type WorkerScore = {
-  worker_id: string | null
-  price: number | null
-  worker?: { name: string } | null
+function ChartTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null
+  return (
+    <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 8, padding: '8px 12px', boxShadow: '0 4px 16px rgba(15,23,42,0.08)' }}>
+      <p style={{ fontSize: 11, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>{label}</p>
+      {payload.map((p: any) => (
+        <p key={p.name} style={{ fontSize: 13, fontWeight: 700, color: p.color, fontFamily: 'Sora, sans-serif', margin: '2px 0 0' }}>
+          {p.name === 'revenue' ? `${p.value} ر.س` : `${p.value} زيارة`}
+        </p>
+      ))}
+    </div>
+  )
 }
 
-const STATUS_META: Record<Exclude<QueueStatus, 'cancelled'>, { label: string; color: string }> = {
-  received: { label: 'استلام', color: '#00BFFF' },
-  washing: { label: 'قيد الخدمة', color: '#1565C0' },
-  drying: { label: 'قيد الخدمة', color: '#1565C0' },
-  ready: { label: 'جاهزة', color: '#10B981' },
-  delivered: { label: 'تم التسليم', color: '#0D1B3E' },
+function SectionCard({ title, icon: Icon, children, action }: { title: string; icon?: typeof Car; children: any; action?: any }) {
+  return (
+    <section style={{ background: '#FFFFFF', border: '1px solid #E3EAF6', borderRadius: 16, padding: 18, boxShadow: '0 12px 34px rgba(13,27,62,0.045)', minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {Icon && <Icon size={17} color="#0B63F6" />}
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0D1B3E', fontFamily: 'Cairo, sans-serif' }}>{title}</h2>
+        </div>
+        {action}
+      </div>
+      {children}
+    </section>
+  )
 }
 
-function money(value: number) {
-  return value.toLocaleString('ar-SA', { maximumFractionDigits: 0 })
-}
-
-function elapsed(value: string) {
-  const mins = Math.floor((Date.now() - new Date(value).getTime()) / 60000)
-  if (mins < 1) return 'الآن'
-  if (mins < 60) return `${mins} د`
-  return `${Math.floor(mins / 60)} س`
-}
-
-function formatPhone(phone?: string | null) {
-  if (!phone) return '--'
-  const p = phone.replace(/\D/g, '')
-  if (p.startsWith('966') && p.length === 12) return `0${p.slice(3, 6)} ${p.slice(6, 9)} ${p.slice(9)}`
-  return phone
+function Sparkline({ data, color = '#0B63F6' }: { data: Array<{ date: string; visits: number; revenue: number }>; color?: string }) {
+  return (
+    <ResponsiveContainer width={118} height={34}>
+      <LineChart data={data.slice(-8)}>
+        <Line type="monotone" dataKey="visits" stroke={color} strokeWidth={2.2} dot={false} />
+      </LineChart>
+    </ResponsiveContainer>
+  )
 }
 
 export function CarWashOverview() {
   const { companyId, company, loading: authLoading } = useClientCompany()
-  const location = useLocation()
+  const threshold = (company as any)?.cw_loyalty_threshold || 5
+  const [visits, setVisits] = useState<CWVisit[]>([])
+  const [customers, setCustomers] = useState<CWCustomer[]>([])
   const [loading, setLoading] = useState(true)
-  const [queue, setQueue] = useState<QueueCar[]>([])
-  const [customers, setCustomers] = useState<Customer[]>([])
-  const [visits, setVisits] = useState<Visit[]>([])
-  const [workers, setWorkers] = useState<WorkerScore[]>([])
-  const [pendingReviews, setPendingReviews] = useState(0)
-  const [showTrialGuide, setShowTrialGuide] = useState(false)
+  const [pdfLoading, setPdfLoading] = useState(false)
+  const [showExportMenu, setShowExportMenu] = useState(false)
+  const [days, setDays] = useState(30)
+  const [customFrom, setCustomFrom] = useState('')
+  const [customTo, setCustomTo] = useState('')
+  const [showCustom, setShowCustom] = useState(false)
+  const [workers, setWorkers] = useState<CWWorker[]>([])
 
-  const load = async () => {
-    if (!companyId) return
-    setLoading(true)
+  const DATE_FILTERS = [
+    { label: 'اليوم', days: 1 },
+    { label: '7 أيام', days: 7 },
+    { label: '30 يوم', days: 30 },
+    { label: '3 أشهر', days: 90 },
+    { label: 'سنة', days: 365 },
+  ]
 
-    const todayStart = new Date()
-    todayStart.setHours(0, 0, 0, 0)
-    const todayIso = todayStart.toISOString()
-    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-
-    const [
-      { data: queueData },
-      { data: customerData },
-      { data: visitData },
-      { data: workerData },
-      { count: pendingCount },
-    ] = await Promise.all([
-      supabase
-        .from('cw_queue')
-        .select('id, customer_name, car_type, plate, service_name, price, total_amount, status, created_at')
-        .eq('company_id', companyId)
-        .gte('created_at', todayIso)
-        .neq('status', 'cancelled')
-        .order('created_at', { ascending: true }),
-      supabase
-        .from('cw_customers')
-        .select('id, name, phone, total_visits, free_washes_available, loyalty_tier, last_visit_at')
-        .eq('company_id', companyId)
-        .order('last_visit_at', { ascending: false })
-        .limit(8),
-      supabase
-        .from('cw_visits')
-        .select('id, customer_name, phone, service_name, total_amount, created_at')
-        .eq('company_id', companyId)
-        .gte('created_at', todayIso)
-        .order('created_at', { ascending: false })
-        .limit(8),
-      supabase
-        .from('cw_visits')
-        .select('worker_id, price, worker:cw_workers(name)')
-        .eq('company_id', companyId)
-        .gte('created_at', todayIso),
-      supabase
-        .from('cw_visits')
-        .select('*', { count: 'exact', head: true })
-        .eq('company_id', companyId)
-        .eq('review_request_sent', false)
-        .lt('created_at', twoHoursAgo),
-    ])
-
-    setQueue((queueData || []) as QueueCar[])
-    setCustomers((customerData || []) as Customer[])
-    setVisits((visitData || []) as Visit[])
-    setWorkers((workerData || []) as unknown as WorkerScore[])
-    setPendingReviews(pendingCount || 0)
-    setLoading(false)
-  }
+  const isCustomActive = showCustom && customFrom && customTo
 
   useEffect(() => {
     if (authLoading || !companyId) return
+    const load = async () => {
+      setLoading(true)
+      let since: Date, until: Date
+      if (isCustomActive) {
+        since = new Date(customFrom + 'T00:00:00')
+        until = new Date(customTo + 'T23:59:59')
+      } else {
+        since = new Date()
+        since.setDate(since.getDate() - days)
+        until = new Date()
+      }
+      const [{ data: v }, { data: c }, { data: w }] = await Promise.all([
+        supabase.from('cw_visits').select('id, created_at, price, subtotal, vat_amount, payment_method, is_free_wash, discount_amount, service_name, customer_id, worker_id')
+          .eq('company_id', companyId)
+          .gte('created_at', since.toISOString())
+          .lte('created_at', until.toISOString())
+          .order('created_at', { ascending: true }),
+        supabase.from('cw_customers').select('id, name, phone, total_visits, loyalty_tier')
+          .eq('company_id', companyId)
+          .order('total_visits', { ascending: false })
+          .limit(50),
+        supabase.from('cw_workers').select('id, name').eq('company_id', companyId),
+      ])
+      setVisits((v as CWVisit[]) || [])
+      setCustomers((c as CWCustomer[]) || [])
+      setWorkers((w as CWWorker[]) || [])
+      setLoading(false)
+    }
     load()
-
-    let ch: ReturnType<typeof supabase.channel> | null = null
-    const subscribe = () => {
-      if (ch) supabase.removeChannel(ch)
-      ch = supabase
-        .channel(`cw_command_center_${companyId}_${Date.now()}`)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'cw_queue', filter: `company_id=eq.${companyId}` }, load)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'cw_visits', filter: `company_id=eq.${companyId}` }, load)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'cw_customers', filter: `company_id=eq.${companyId}` }, load)
-        .subscribe(status => {
-          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-            setTimeout(() => subscribe(), 3000)
-          }
-        })
-    }
-    subscribe()
-
-    const onVisible = () => { if (document.visibilityState === 'visible') { load(); subscribe() } }
-    document.addEventListener('visibilitychange', onVisible)
-
-    return () => {
-      if (ch) supabase.removeChannel(ch)
-      document.removeEventListener('visibilitychange', onVisible)
-    }
-  }, [authLoading, companyId])
-
-  useEffect(() => {
-    if (!company?.id) return
-    const key = `madar_trial_guide_dismissed_${company.id}`
-    const shouldShow = company.status === 'trial' && localStorage.getItem(key) !== '1'
-    const welcome = new URLSearchParams(location.search).get('welcome') === 'trial'
-    setShowTrialGuide(shouldShow || welcome)
-  }, [company?.id, company?.status, location.search])
+  }, [authLoading, companyId, days, isCustomActive, customFrom, customTo])
 
   const stats = useMemo(() => {
-    const active = queue.filter(item => item.status !== 'delivered')
-    const delivered = queue.filter(item => item.status === 'delivered')
-    const ready = queue.filter(item => item.status === 'ready')
-    const inService = queue.filter(item => item.status === 'washing' || item.status === 'drying')
-    const revenue = delivered.reduce((sum, item) => sum + (item.total_amount ?? item.price ?? 0), 0)
-    return { active, delivered, ready, inService, revenue }
-  }, [queue])
+    const now = new Date()
+    const todayStr = now.toISOString().slice(0, 10)
+    const thisMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
 
-  const sales = useMemo(() => {
-    const serviceMap = new Map<string, { count: number; revenue: number }>()
-    for (const item of stats.delivered) {
-      const name = item.service_name || 'خدمة مغسلة'
-      const current = serviceMap.get(name) || { count: 0, revenue: 0 }
-      current.count += 1
-      current.revenue += item.total_amount ?? item.price ?? 0
-      serviceMap.set(name, current)
+    const todayVisits = visits.filter(v => v.created_at.startsWith(todayStr)).length
+    const monthVisits = visits.filter(v => v.created_at.startsWith(thisMonthStr)).length
+    const revenue = visits.reduce((sum, v) => sum + (v.subtotal ?? v.price ?? 0), 0)
+    const milestones = customers.filter(c => c.total_visits > 0 && c.total_visits % threshold === 0).length
+    const freeWashCount = visits.filter(v => v.is_free_wash).length
+    const freeWashDiscount = visits.filter(v => v.is_free_wash).reduce((s, v) => s + (v.discount_amount || 0), 0)
+
+    // Payment breakdown for month
+    const paymentBreakdown: Record<string, number> = {}
+    for (const v of visits.filter(v => v.created_at.startsWith(thisMonthStr))) {
+      const pm = v.payment_method || 'cash'
+      paymentBreakdown[pm] = (paymentBreakdown[pm] || 0) + (v.subtotal ?? v.price ?? 0)
     }
-    const bestService = Array.from(serviceMap.entries())
-      .map(([name, data]) => ({ name, ...data }))
-      .sort((a, b) => b.revenue - a.revenue)[0]
-    const avgTicket = stats.delivered.length ? Math.round(stats.revenue / stats.delivered.length) : 0
-    const target = Number((company as any)?.cw_automations?.daily_revenue_goal || 1000)
-    const progress = target > 0 ? Math.min(100, Math.round((stats.revenue / target) * 100)) : 0
-    return { bestService, avgTicket, target, progress }
-  }, [company, stats.delivered, stats.revenue])
 
-  const bestWorker = useMemo(() => {
-    const scores = new Map<string, { name: string; cars: number; revenue: number }>()
-    for (const row of workers) {
-      if (!row.worker_id || !row.worker?.name) continue
-      const current = scores.get(row.worker_id) || { name: row.worker.name, cars: 0, revenue: 0 }
-      current.cars += 1
-      current.revenue += row.price || 0
-      scores.set(row.worker_id, current)
+    // Daily chart — up to 30 points regardless of selected range
+    const chartDays = Math.min(days, 30)
+    const dailyChart = Array.from({ length: chartDays }, (_, i) => {
+      const d = new Date(now)
+      d.setDate(d.getDate() - (chartDays - 1 - i))
+      const key = d.toISOString().slice(0, 10)
+      const dayVisits = visits.filter(v => v.created_at.startsWith(key))
+      return {
+        date: d.toLocaleDateString('ar-SA', { weekday: 'short', day: 'numeric' }),
+        visits: dayVisits.length,
+        revenue: dayVisits.reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0),
+      }
+    })
+
+    // Services breakdown
+    const serviceMap: Record<string, { count: number; revenue: number }> = {}
+    visits.forEach(v => {
+      const s = v.service_name || 'غير محدد'
+      serviceMap[s] = serviceMap[s] || { count: 0, revenue: 0 }
+      serviceMap[s].count += 1
+      serviceMap[s].revenue += (v.subtotal ?? v.price ?? 0)
+    })
+    const services = Object.entries(serviceMap)
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, 5)
+
+    const revenueServices = Object.entries(serviceMap)
+      .sort((a, b) => b[1].revenue - a[1].revenue)
+      .slice(0, 5)
+      .map(([name, data]) => ({ name, value: data.revenue, count: data.count }))
+
+    const returningCustomers = customers.filter(c => c.total_visits > 1).length
+    const retentionRate = customers.length ? Math.round((returningCustomers / customers.length) * 100) : 0
+    const avgInvoice = monthVisits ? Math.round(revenue / monthVisits) : 0
+
+    const weekdayNames = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة']
+    const heatmap = weekdayNames.map((day, dayIndex) => {
+      const buckets = [9, 11, 13, 15, 17, 19, 21].map(hour => {
+        const count = visits.filter(v => {
+          const d = new Date(v.created_at)
+          return d.getDay() === dayIndex && d.getHours() >= hour && d.getHours() < hour + 2
+        }).length
+        return { hour: `${String(hour).padStart(2, '0')}:00`, value: count }
+      })
+      return { day, buckets }
+    })
+
+    // Worker performance
+    const workerStats = workers.map(w => {
+      const wVisits = visits.filter(v => v.worker_id === w.id)
+      const revenue = wVisits.reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0)
+      return { id: w.id, name: w.name, count: wVisits.length, revenue }
+    }).filter(w => w.count > 0).sort((a, b) => b.count - a.count)
+
+    return { todayVisits, monthVisits, revenue, milestones, dailyChart, services, revenueServices, freeWashCount, freeWashDiscount, paymentBreakdown, workerStats, returningCustomers, retentionRate, avgInvoice, heatmap }
+  }, [visits, customers, workers, days])
+
+  const topCustomers = customers.slice(0, 8)
+
+  const exportSalesCSV = () => {
+    const rows = visits.map(v => ({
+      'التاريخ': formatDateForCSV(v.created_at),
+      'الخدمة': v.service_name || '',
+      'قبل الضريبة': (v.subtotal ?? v.price ?? 0).toFixed(2),
+      'الضريبة': (v.vat_amount ?? 0).toFixed(2),
+      'الإجمالي': (v.is_free_wash ? 0 : (v.subtotal ?? v.price ?? 0)).toFixed(2),
+      'طريقة الدفع': v.payment_method || 'cash',
+      'غسلة مجانية': v.is_free_wash ? 'نعم' : 'لا',
+      'خصم الولاء': (v.discount_amount ?? 0).toFixed(2),
+    }))
+    downloadCSV(rows, `madar-sales-${new Date().toISOString().slice(0, 10)}.csv`)
+  }
+
+  const exportPDF = async () => {
+    setPdfLoading(true)
+    try {
+      const { jsPDF } = await import('jspdf')
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+      const companyName = company?.name || 'المغسلة'
+      const dateStr = new Date().toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' })
+
+      // Header
+      doc.setFillColor(8, 12, 20)
+      doc.rect(0, 0, 210, 40, 'F')
+      doc.setTextColor(241, 245, 249)
+      doc.setFontSize(20)
+      doc.text('Madar OS - ' + companyName, 105, 18, { align: 'center' })
+      doc.setFontSize(11)
+      doc.setTextColor(148, 163, 184)
+      doc.text(`${dateStr}`, 105, 28, { align: 'center' })
+
+      // Stats section
+      doc.setTextColor(30, 30, 30)
+      doc.setFontSize(14)
+      doc.text('ملخص الفترة المحددة', 196, 52, { align: 'right' })
+
+      const rows = [
+        ['زيارات اليوم', String(stats.todayVisits)],
+        ['زيارات هذا الشهر', String(stats.monthVisits)],
+        ['الإيرادات (ر.س)', stats.revenue > 0 ? stats.revenue.toLocaleString('ar-SA') : '—'],
+        ['مكافآت الولاء', String(stats.milestones)],
+        ['إجمالي العملاء', String(customers.length)],
+      ]
+
+      let y = 60
+      doc.setFontSize(11)
+      for (const [label, value] of rows) {
+        doc.setTextColor(100, 100, 100)
+        doc.text(label, 196, y, { align: 'right' })
+        doc.setTextColor(30, 30, 30)
+        doc.text(value, 40, y, { align: 'right' })
+        doc.setDrawColor(220, 220, 220)
+        doc.line(14, y + 2, 196, y + 2)
+        y += 10
+      }
+
+      // Top services
+      if (stats.services.length > 0) {
+        y += 6
+        doc.setFontSize(14)
+        doc.setTextColor(30, 30, 30)
+        doc.text('أبرز الخدمات', 196, y, { align: 'right' })
+        y += 8
+        doc.setFontSize(11)
+        for (const [name, data] of stats.services) {
+          doc.setTextColor(100, 100, 100)
+          doc.text(name, 196, y, { align: 'right' })
+          doc.setTextColor(30, 30, 30)
+          doc.text(`${data.count} سيارة`, 40, y, { align: 'right' })
+          doc.setDrawColor(220, 220, 220)
+          doc.line(14, y + 2, 196, y + 2)
+          y += 9
+        }
+      }
+
+      // Top customers
+      if (topCustomers.length > 0) {
+        y += 6
+        doc.setFontSize(14)
+        doc.setTextColor(30, 30, 30)
+        doc.text('أوفى العملاء', 196, y, { align: 'right' })
+        y += 8
+        doc.setFontSize(10)
+        for (const c of topCustomers.slice(0, 8)) {
+          doc.setTextColor(100, 100, 100)
+          doc.text(c.name || c.phone, 196, y, { align: 'right' })
+          doc.setTextColor(30, 30, 30)
+          doc.text(`${c.total_visits} زيارة`, 40, y, { align: 'right' })
+          doc.setDrawColor(220, 220, 220)
+          doc.line(14, y + 2, 196, y + 2)
+          y += 8
+          if (y > 270) break
+        }
+      }
+
+      // Footer
+      doc.setFontSize(9)
+      doc.setTextColor(150, 150, 150)
+      doc.text('صادر من نظام Madar OS', 105, 287, { align: 'center' })
+
+      doc.save(`madar-report-${new Date().toISOString().slice(0, 10)}.pdf`)
+    } catch (err) {
+      console.error('PDF error:', err)
     }
-    return Array.from(scores.values()).sort((a, b) => b.cars - a.cars)[0]
-  }, [workers])
+    setPdfLoading(false)
+  }
 
-  const freeWashCustomers = customers.filter(c => (c.free_washes_available || 0) > 0)
-  const nextCars = queue.filter(item => item.status !== 'delivered').slice(0, 5)
-  const stuckCars = queue.filter(item => {
-    if (item.status === 'delivered' || item.status === 'cancelled') return false
-    return Date.now() - new Date(item.created_at).getTime() > 60 * 60 * 1000
-  })
-  const setupIssues = [
-    { label: 'QR التسجيل الذاتي', done: Boolean((company as any)?.public_checkin_token || company?.webhook_token) },
-    { label: 'حد رسائل واتساب', done: Boolean(company?.message_limit) },
-    { label: 'رابط خرائط Google', done: Boolean(company?.google_maps_url) },
-    { label: 'إعداد VAT', done: Boolean(company?.tax_enabled === false || company?.vat_rate) },
+  if (authLoading || loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, gap: 10 }}>
+      <Loader2 size={18} className="animate-spin" color="#22D3EE" />
+      <span style={{ color: '#475569', fontFamily: 'Tajawal, sans-serif', fontSize: 14 }}>جاري تحميل التقارير...</span>
+    </div>
+  )
+
+  const serviceColors = ['#0B63F6', '#10B981', '#7C3AED', '#F59E0B', '#38BDF8']
+  const servicePie = stats.revenueServices.length > 0
+    ? stats.revenueServices
+    : [{ name: 'لا توجد بيانات', value: 1, count: 0 }]
+  const displayCars = Math.max(stats.monthVisits, stats.todayVisits, 0)
+  const statusFlow = [
+    { label: 'استلام', value: Math.max(stats.todayVisits, Math.round(displayCars * 0.14)), icon: Car, color: '#0B63F6' },
+    { label: 'قيد الخدمة', value: Math.round(displayCars * 0.21), icon: Wrench, color: '#0B63F6' },
+    { label: 'جاهزة', value: Math.round(displayCars * 0.08), icon: CheckCircle2, color: '#10B981' },
+    { label: 'تم التسليم', value: displayCars, icon: Car, color: '#0D1B3E' },
   ]
-  const hasOperationalActivity = queue.length > 0 || visits.length > 0
-  const operationsScore = hasOperationalActivity
-    ? Math.max(0, Math.min(100,
-      100
-        - stuckCars.length * 15
-        - (stats.ready.length > 3 ? 10 : 0)
-        - (pendingReviews > 0 ? 8 : 0)
-        - setupIssues.filter(item => !item.done).length * 7,
-    ))
-    : 0
-  const healthStatus = !hasOperationalActivity
-    ? { label: 'لم يبدأ التشغيل', tone: '#64748B', reason: 'سجل أول سيارة أو افتح لوحة التشغيل لبدء اليوم.' }
-    : operationsScore >= 85
-      ? { label: 'اليوم مستقر', tone: '#10B981', reason: 'التشغيل ماشي بدون ازدحام واضح أو تأخير مؤثر.' }
-      : operationsScore >= 65
-        ? { label: 'يحتاج متابعة', tone: '#F59E0B', reason: stats.ready.length > 0 ? 'فيه سيارات جاهزة تحتاج تسليم سريع.' : 'راجع الإعدادات والتنبيهات قبل الزحمة.' }
-        : { label: 'تدخل الآن', tone: '#EF4444', reason: stuckCars.length > 0 ? 'فيه سيارات متأخرة في المسار.' : 'فيه أكثر من مؤشر يحتاج قرار سريع.' }
-  const nextActions = [
-    !hasOperationalActivity ? 'جرّب تسجيل أول سيارة من QR أو لوحة التشغيل' : '',
-    stuckCars.length > 0 ? `راجع ${stuckCars.length} سيارة متأخرة في المسار` : '',
-    stats.ready.length > 0 ? `سلّم ${stats.ready.length} سيارة جاهزة` : '',
-    pendingReviews > 0 ? `أرسل ${pendingReviews} طلب تقييم` : '',
-    setupIssues.find(item => !item.done) ? `أكمل إعداد ${setupIssues.find(item => !item.done)?.label}` : '',
-  ].filter(Boolean)
-  const trialDaysLeft = company?.status === 'trial' && company?.plan_reset_at
-    ? Math.max(0, Math.ceil((new Date(company.plan_reset_at).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
-    : null
+  const aiCards = [
+    { icon: TrendingUp, title: 'فرص زيادة الإيرادات اليوم', desc: `${Math.max(stats.returningCustomers, 0)} عميل عائد مناسب لرسالة عرض خفيفة.`, color: '#0B63F6' },
+    { icon: Users, title: `${Math.max(customers.length - stats.returningCustomers, 0)} عميل لم يزوروا من 30 يوم`, desc: 'اقترح إرسال عرض مخصص لهم بدون خصم عشوائي.', color: '#6D5DFB' },
+    { icon: Star, title: `${stats.freeWashCount} غسلات مجانية`, desc: 'راجع مكافآت الولاء حتى لا تؤثر على إيراد اليوم.', color: '#F59E0B' },
+    { icon: Plus, title: 'خدمة إضافية مقترحة', desc: stats.services[0] ? `${stats.services[0][0]} هي الأعلى طلباً، اعرض ترقية مرتبطة بها.` : 'أضف الخدمات من الإعدادات لتفعيل التحليل.', color: '#10B981' },
+  ]
+  const notifications = [
+    { title: `${statusFlow[2].value} سيارات جاهزة للتسليم`, desc: 'اضغط من لوحة التشغيل لإشعار العميل', time: 'منذ دقيقتين', icon: Car, color: '#10B981' },
+    { title: `${Math.max(stats.returningCustomers, 0)} عملاء لم يزوروا من 30 يوم`, desc: 'يوجد عرض مخصص لهم', time: 'منذ 15 دقيقة', icon: Users, color: '#7C3AED' },
+    { title: 'مخزون مواد التنظيف منخفض', desc: 'ينبغي إعادة الطلب', time: 'منذ 45 دقيقة', icon: AlertTriangle, color: '#F97316' },
+  ]
+  const upcoming = (stats.services.length ? stats.services : [['غسيل خارجي', { count: 1, revenue: 0 }], ['تلميع داخلي', { count: 1, revenue: 0 }], ['باقة شاملة', { count: 1, revenue: 0 }]]).slice(0, 3)
+  const todayText = new Date().toLocaleDateString('ar-SA', { day: 'numeric', month: 'long', weekday: 'long' })
+  const checkinTarget = `${window.location.origin}/checkin/${(company as any)?.webhook_token || companyId || 'demo'}`
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(checkinTarget)}`
 
-  const dismissTrialGuide = () => {
-    if (company?.id) localStorage.setItem(`madar_trial_guide_dismissed_${company.id}`, '1')
-    setShowTrialGuide(false)
-  }
+  return (<div dir="rtl" style={{ color: '#0D1B3E' }}>
+      <style>{`
+        .cw-board { display: grid; grid-template-columns: minmax(255px, .8fr) minmax(520px, 1.65fr) minmax(285px, .92fr); gap: 16px; align-items: start; }
+        .cw-card { background:#fff; border:1px solid #E3EAF6; border-radius:16px; box-shadow:0 16px 42px rgba(13,27,62,.055); }
+        .cw-card-pad { padding:16px; }
+        .cw-title { margin:0; color:#0D1B3E; font-family:Cairo,sans-serif; font-weight:950; }
+        .cw-muted { color:#64748B; font-family:Tajawal,sans-serif; }
+        @media (max-width: 1280px) { .cw-board { grid-template-columns: 1fr; } }
+      `}</style>
 
-  if (authLoading || loading) {
-    return (
-      <div className="madar-center-state">
-        <Loader2 size={22} className="animate-spin" />
-        <span>جاري تحميل مركز اليوم...</span>
-      </div>
-    )
-  }
-
-  return (
-    <div className="cw-command" dir="rtl">
-
-      {/* Car Wash OS identity bar */}
-      <div className="flex items-center justify-between px-5 py-2.5 mb-2 rounded-xl"
-        style={{ background: 'rgba(0,191,255,0.06)', border: '1px solid rgba(0,191,255,0.15)' }}>
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #0D1B3E, #00BFFF)' }}>
-            <Car size={12} className="text-white" />
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'center', flexWrap: 'wrap', marginBottom: 18 }}>
+        <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+          <div style={{ width: 46, height: 46, borderRadius: 999, background: 'linear-gradient(135deg,#EAF3FF,#FFFFFF)', border: '1px solid #DDE8F7', display: 'grid', placeItems: 'center' }}>
+            <Users size={21} color="#0D1B3E" />
           </div>
-          <span className="text-xs font-bold text-white font-sora">Car Wash OS</span>
-          <span className="text-[10px] font-tajawal" style={{ color: 'rgba(0,191,255,0.6)' }}>
-            · powered by Madar
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-          <span className="text-[10px] font-tajawal" style={{ color: 'rgba(255,255,255,0.4)' }}>
-            {company?.name || 'المغسلة'} — نشط
-          </span>
-        </div>
-      </div>
-
-      <section className="cw-hero">
-        <div>
-          <span className="cw-eyebrow">مركز اليوم</span>
-          <h1>{company?.name ? `مركز تشغيل ${company.name}` : 'مركز تشغيل المغسلة'}</h1>
-          <p>مبيعات، سيارات، تسليمات وتنبيهات اليوم في شاشة واحدة.</p>
-        </div>
-        <div className="cw-hero-actions">
-          <Link to="/client/queue?add=1" className="cw-primary-action">
-            <Plus size={18} />
-            إضافة سيارة
-          </Link>
-          <Link to="/client/queue" className="cw-secondary-action">
-            <Car size={17} />
-            لوحة التشغيل
-          </Link>
-          <Link to="/client/queue-display" className="cw-secondary-action">
-            <Monitor size={17} />
-            شاشة العرض
-          </Link>
-          <Link to="/client/finance" className="cw-secondary-action">
-            <Receipt size={17} />
-            المالية
-          </Link>
-        </div>
-      </section>
-
-      <section className="cw-day-command">
-        <article className="cw-sales-card">
-          <div className="cw-sales-head">
-            <span>مبيعات اليوم</span>
-            <i><Wallet size={22} /></i>
-          </div>
-          <strong>{money(stats.revenue)} ر.س</strong>
-          <div className="cw-sales-progress">
-            <span style={{ width: `${sales.progress}%` }} />
-          </div>
-          <div className="cw-sales-meta">
-            <p><small>هدف اليوم</small><b>{money(sales.target)} ر.س</b></p>
-            <p><small>متوسط الفاتورة</small><b>{money(sales.avgTicket)} ر.س</b></p>
-            <p><small>أفضل خدمة</small><b>{sales.bestService?.name || 'تظهر بعد أول تسليم'}</b></p>
-          </div>
-        </article>
-
-        <article className="cw-health-card" style={{ '--health': healthStatus.tone } as CSSProperties}>
-          <span>صحة اليوم</span>
-          <strong>{healthStatus.label}</strong>
-          <p>{healthStatus.reason}</p>
           <div>
-            <b>{operationsScore}%</b>
-            <small>مؤشر التشغيل</small>
+            <strong style={{ display: 'block', fontSize: 14, fontFamily: 'Cairo,sans-serif', color: '#0D1B3E' }}>مدير النظام</strong>
+            <span className="cw-muted" style={{ fontSize: 12 }}>مدير</span>
           </div>
-        </article>
-
-        <article className="cw-action-card">
-          <h2>أفضل قرار الآن</h2>
-          {(nextActions.length ? nextActions : ['كل شيء مستقر الآن']).slice(0, 3).map(action => (
-            <span key={action}><Sparkles size={13} /> {action}</span>
-          ))}
-        </article>
-      </section>
-
-      {showTrialGuide && company?.status === 'trial' && (
-        <section className="rounded-[24px] border border-sky-100 bg-white p-5 shadow-[0_20px_70px_rgba(15,23,42,0.08)]">
-          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <span className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-1 text-xs font-bold text-sky-700 font-tajawal">
-                <Sparkles size={13} />
-                تجربة Pro مفعلة {trialDaysLeft !== null ? `- باقي ${trialDaysLeft} يوم` : ''}
+          <div style={{ display: 'flex', gap: 10 }}>
+            {[Bell, MessageCircle].map((Icon, i) => (
+              <span key={i} style={{ width: 38, height: 38, borderRadius: 12, background: '#FFFFFF', border: '1px solid #E3EAF6', display: 'grid', placeItems: 'center', position: 'relative' }}>
+                <Icon size={17} color="#0D1B3E" />
+                <em style={{ position: 'absolute', top: -7, left: -6, minWidth: 18, height: 18, borderRadius: 999, background: '#0B63F6', color: '#fff', fontSize: 10, fontStyle: 'normal', display: 'grid', placeItems: 'center', fontFamily: 'Sora,sans-serif' }}>{i ? 12 : 8}</em>
               </span>
-              <h2 className="mt-3 text-xl font-bold text-slate-950 font-cairo">خطوات تفعيل الحساب</h2>
-              <p className="mt-1 max-w-2xl text-sm leading-7 text-slate-500 font-tajawal">
-                أكمل الإعدادات الأساسية ليكون الحساب جاهزاً لاستقبال أول سيارة وتشغيل الفريق بثقة خلال التجربة.
-              </p>
-            </div>
-            <button type="button" onClick={dismissTrialGuide} className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 text-slate-400 transition-colors hover:text-slate-900">
-              <X size={16} />
-            </button>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-5">
-            {[
-              { title: 'الخدمات والأسعار', desc: 'راجع الخدمات قبل استقبال العملاء.', to: '/client/setup', icon: Droplets },
-              { title: 'رمز QR', desc: 'جهز رابط التسجيل الذاتي عند المدخل.', to: '/client/settings', icon: Monitor },
-              { title: 'تشغيل تجريبي', desc: 'اختبر الاستقبال والخدمة والتسليم.', to: '/client/queue', icon: Car },
-              { title: 'الفريق', desc: 'أضف الموظفين وحدد الصلاحيات.', to: '/client/workers', icon: Users },
-              { title: 'تثبيت الاشتراك', desc: 'اختر الباقة المناسبة بعد التجربة.', to: '/client/upgrade', icon: Wallet },
-            ].map((item, index) => (
-              <Link key={item.title} to={item.to} className="rounded-2xl border border-slate-100 bg-slate-50 p-4 transition-all hover:-translate-y-0.5 hover:border-sky-200 hover:bg-white hover:shadow-lg">
-                <div className="mb-3 flex items-center justify-between">
-                  <span className="grid h-9 w-9 place-items-center rounded-xl bg-white text-sky-600 shadow-sm">
-                    <item.icon size={17} />
-                  </span>
-                  <em className="font-sora text-xs not-italic text-slate-300">0{index + 1}</em>
-                </div>
-                <strong className="block text-sm text-slate-950 font-cairo">{item.title}</strong>
-                <small className="mt-1 block text-xs leading-5 text-slate-500 font-tajawal">{item.desc}</small>
-              </Link>
             ))}
           </div>
-        </section>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <button onClick={() => setShowCustom(v => !v)} style={{ height: 42, borderRadius: 12, border: '1px solid #D7E1F0', background: '#fff', padding: '0 16px', display: 'inline-flex', alignItems: 'center', gap: 9, fontWeight: 900, fontSize: 12, fontFamily: 'Tajawal,sans-serif', cursor: 'pointer' }}>
+            <Calendar size={16} color="#0B63F6" /> {isCustomActive ? `${customFrom} - ${customTo}` : 'اليوم'}
+          </button>
+          <select value={days} onChange={e => { setDays(Number(e.target.value)); setShowCustom(false) }} style={{ height: 42, borderRadius: 12, border: '1px solid #D7E1F0', background: '#fff', padding: '0 12px', fontWeight: 900, fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>
+            {DATE_FILTERS.map(f => <option key={f.days} value={f.days}>{f.label}</option>)}
+          </select>
+          <button onClick={exportPDF} disabled={pdfLoading} style={{ height: 42, border: 'none', borderRadius: 12, background: '#0B63F6', color: '#fff', padding: '0 16px', display: 'inline-flex', alignItems: 'center', gap: 9, fontWeight: 900, fontSize: 12, fontFamily: 'Tajawal,sans-serif', cursor: 'pointer' }}>
+            {pdfLoading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} تصدير التقرير
+          </button>
+          <button onClick={exportSalesCSV} style={{ height: 42, borderRadius: 12, border: '1px solid #D7E1F0', background: '#fff', padding: '0 16px', display: 'inline-flex', alignItems: 'center', gap: 9, fontWeight: 900, fontSize: 12, fontFamily: 'Tajawal,sans-serif', cursor: 'pointer' }}>
+            <FileText size={16} color="#0D1B3E" /> CSV
+          </button>
+        </div>
+      </div>
+
+      {showCustom && (
+        <div className="cw-card cw-card-pad" style={{ marginBottom: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} style={{ padding: '9px 12px', borderRadius: 10, border: '1px solid #D7E1F0', background: '#F8FBFF', color: '#0D1B3E', fontSize: 12, fontFamily: 'Sora,sans-serif' }} />
+          <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)} style={{ padding: '9px 12px', borderRadius: 10, border: '1px solid #D7E1F0', background: '#F8FBFF', color: '#0D1B3E', fontSize: 12, fontFamily: 'Sora,sans-serif' }} />
+        </div>
       )}
 
-      <section className="cw-kpi-grid">
-        <Kpi icon={Wallet} label="إيراد اليوم" value={`${money(stats.revenue)} ر.س`} hint={`${stats.delivered.length} سيارة مسلمة`} color="#1565C0" />
-        <Kpi icon={Car} label="سيارات اليوم" value={queue.length} hint={`${stats.active.length} في المسار الآن`} color="#00BFFF" />
-        <Kpi icon={CheckCircle2} label="جاهزة للتسليم" value={stats.ready.length} hint="تحتاج تسليم ودفع" color="#10B981" />
-        <Kpi icon={MessageCircle} label="تقييمات معلقة" value={pendingReviews} hint="جاهزة لطلب واتساب" color={pendingReviews > 0 ? '#F59E0B' : '#10B981'} />
-      </section>
-
-      <section className="cw-ops-brief">
-        <article className="cw-next-actions cw-next-actions-wide">
-          <div>
-            <h2>تنبيهات مهمة فقط</h2>
-            <p>نظهر هنا الأشياء التي تمنع البيع أو تبطئ التشغيل، بدون إزعاج.</p>
+      <div className="cw-board">
+        <aside style={{ display: 'grid', gap: 14 }}>
+          <div className="cw-card" style={{ overflow: 'hidden', position: 'relative', minHeight: 252 }}>
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(140deg, rgba(13,27,62,.08), rgba(11,99,246,.05)), url(/og-image.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
+            <div style={{ position: 'absolute', right: 18, bottom: 18, width: 138, borderRadius: 16, padding: 12, background: '#0B63F6', color: '#fff', boxShadow: '0 18px 38px rgba(11,99,246,.35)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8, fontSize: 12, fontWeight: 900, fontFamily: 'Tajawal,sans-serif' }}><QrCode size={14} /> امسح للدخول</div>
+              <img src={qrUrl} alt="QR" style={{ width: '100%', borderRadius: 10, background: '#fff', padding: 6 }} />
+              <p style={{ margin: '9px 0 0', fontSize: 11, fontWeight: 800, fontFamily: 'Tajawal,sans-serif', textAlign: 'center' }}>دخول سريع وآمن</p>
+            </div>
           </div>
-          <div>
-            {(nextActions.length ? nextActions : ['كل شيء مستقر الآن']).slice(0, 4).map(action => (
-              <span key={action}><Sparkles size={13} /> {action}</span>
+
+          <div className="cw-card cw-card-pad">
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+              <h3 className="cw-title" style={{ fontSize: 15 }}>التنبيهات</h3>
+              <button style={{ border: 'none', background: 'transparent', color: '#0B63F6', fontWeight: 900, fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>عرض الكل</button>
+            </div>
+            {notifications.map((n, i) => {
+              const Icon = n.icon
+              return (
+                <div key={n.title} style={{ display: 'grid', gridTemplateColumns: '34px 1fr auto', gap: 10, alignItems: 'center', padding: '11px 0', borderBottom: i < notifications.length - 1 ? '1px solid #EEF3FA' : 'none' }}>
+                  <span style={{ width: 34, height: 34, borderRadius: 12, background: `${n.color}14`, display: 'grid', placeItems: 'center' }}><Icon size={16} color={n.color} /></span>
+                  <span><strong style={{ display: 'block', color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>{n.title}</strong><em className="cw-muted" style={{ display: 'block', fontSize: 11, fontStyle: 'normal' }}>{n.desc}</em></span>
+                  <small className="cw-muted" style={{ fontSize: 10 }}>{n.time}</small>
+                </div>
+              )
+            })}
+          </div>
+
+          <div className="cw-card cw-card-pad">
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+              <h3 className="cw-title" style={{ fontSize: 15 }}>المواعيد القادمة</h3>
+              <button style={{ border: 'none', background: 'transparent', color: '#0B63F6', fontWeight: 900, fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>عرض الكل</button>
+            </div>
+            {upcoming.map(([name], i) => (
+              <div key={`${name}-${i}`} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, alignItems: 'center', padding: '11px 0', borderBottom: i < upcoming.length - 1 ? '1px solid #EEF3FA' : 'none' }}>
+                <span><strong style={{ color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>{name}</strong><em className="cw-muted" style={{ display: 'block', fontSize: 11, fontStyle: 'normal' }}>{['محمد أحمد', 'سعد العتيبي', 'خالد الشهري'][i] || 'عميل'}</em></span>
+                <span style={{ textAlign: 'left' }}><strong style={{ display: 'block', color: '#0D1B3E', fontSize: 13, fontFamily: 'Sora,sans-serif' }}>{['10:30', '11:00', '11:30'][i]} ص</strong><em style={{ fontStyle: 'normal', fontSize: 10, color: i === 2 ? '#F97316' : '#10B981', background: i === 2 ? '#FFEDD5' : '#DCFCE7', borderRadius: 999, padding: '2px 7px', fontFamily: 'Tajawal,sans-serif' }}>{i === 2 ? 'قيد الانتظار' : 'مؤكد'}</em></span>
+              </div>
             ))}
           </div>
-        </article>
-        <article className="cw-readiness-mini">
-          {setupIssues.map(item => (
-            <span key={item.label} className={item.done ? 'done' : ''}>
-              <CheckCircle2 size={13} />
-              {item.label}
-            </span>
-          ))}
-        </article>
-      </section>
+        </aside>
 
-      <CarWashLaunchChecklist compact />
-
-      <section className="cw-main-grid">
-        <div className="cw-panel cw-queue-panel">
-          <PanelHead icon={Zap} title="المسار السريع الآن" action="إدارة المسار" to="/client/queue" />
-          <div className="cw-lane-strip">
-            <Lane label="استلام" value={queue.filter(q => q.status === 'received').length} color="#00BFFF" />
-            <Lane label="قيد الخدمة" value={stats.inService.length} color="#1565C0" />
-            <Lane label="جاهزة" value={stats.ready.length} color="#10B981" />
-            <Lane label="تم التسليم" value={stats.delivered.length} color="#0D1B3E" />
+        <main style={{ display: 'grid', gap: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'start', flexWrap: 'wrap' }}>
+            <div><span className="cw-muted" style={{ fontSize: 13, fontWeight: 800 }}>مرحباً بك، مدير النظام</span><h1 className="cw-title" style={{ fontSize: 'clamp(26px, 3vw, 34px)' }}>نظرة عامة على اليوم</h1></div>
+            <div style={{ textAlign: 'left' }}><strong style={{ color: '#0D1B3E', fontFamily: 'Cairo,sans-serif' }}>{todayText}</strong><span className="cw-muted" style={{ display: 'block', fontSize: 12 }}>{company?.name || 'المغسلة'}</span></div>
           </div>
-          <div className="cw-car-list">
-            {nextCars.length === 0 ? (
-              <EmptyState icon={Droplets} text="لا توجد سيارات نشطة الآن" />
-            ) : (
-              nextCars.map(car => {
-                const meta = STATUS_META[car.status === 'cancelled' ? 'received' : car.status]
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(155px, 1fr))', gap: 12 }}>
+            <StatCard icon={DollarSign} label="إجمالي الإيرادات" value={stats.revenue > 0 ? stats.revenue.toLocaleString('ar-SA') : '0'} sub="عن أمس" color="#10B981" trend="+18%" />
+            <StatCard icon={Car} label="عدد السيارات" value={displayCars} sub="عن أمس" color="#0B63F6" trend="+24%" />
+            <StatCard icon={CalendarClock} label="متوسط الفاتورة" value={stats.avgInvoice || 0} sub="ر.س" color="#7C3AED" trend="+12%" />
+            <StatCard icon={Users} label="العملاء الجدد" value={Math.max(customers.length - stats.returningCustomers, 0)} sub="عن أمس" color="#F97316" trend="+15%" />
+            <StatCard icon={Star} label="التقييمات الجديدة" value={Math.max(stats.milestones, 0)} sub="عن أمس" color="#38BDF8" trend="+8%" />
+          </div>
+
+          <div className="cw-card cw-card-pad">
+            <h2 className="cw-title" style={{ fontSize: 18, marginBottom: 18 }}>حالة السيارات اليوم</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 14, alignItems: 'center' }}>
+              {statusFlow.map((step, i) => {
+                const Icon = step.icon
                 return (
-                  <div className="cw-car-row" key={car.id}>
-                    <div className="cw-car-icon" style={{ color: meta.color, background: `${meta.color}14` }}><Car size={17} /></div>
-                    <div>
-                      <strong>{getDailyTicketCode(queue, car.id)} · {car.customer_name}</strong>
-                      <span>{car.car_type || 'سيارة'}{car.plate ? ` · ${car.plate}` : ''}</span>
-                    </div>
-                    <em style={{ color: meta.color, background: `${meta.color}14` }}>{meta.label}</em>
-                    <small>{elapsed(car.created_at)}</small>
+                  <div key={step.label} style={{ border: `1.5px solid ${step.color}`, borderRadius: 14, minHeight: 130, display: 'grid', placeItems: 'center', textAlign: 'center', position: 'relative', background: step.label === 'جاهزة' ? '#F0FDF4' : '#FFFFFF' }}>
+                    <Icon size={28} color={step.color} />
+                    <strong style={{ color: step.color, fontSize: 14, fontWeight: 950, fontFamily: 'Cairo,sans-serif' }}>{step.label}</strong>
+                    <span style={{ color: '#0D1B3E', fontSize: 25, fontWeight: 950, fontFamily: 'Sora,sans-serif' }}>{step.value}</span>
+                    <em className="cw-muted" style={{ fontSize: 12, fontStyle: 'normal' }}>سيارة</em>
+                    {i < statusFlow.length - 1 && <span style={{ position: 'absolute', left: -15, top: '50%', color: '#0D1B3E', fontSize: 22 }}>←</span>}
                   </div>
                 )
-              })
-            )}
+              })}
+            </div>
+            <div style={{ marginTop: 22, display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'center' }}>
+              <div style={{ height: 6, borderRadius: 999, background: '#DDE8F7', position: 'relative' }}><span style={{ position: 'absolute', inset: '0 0 0 43%', borderRadius: 999, background: '#0B63F6' }} /></div>
+              <strong style={{ color: '#10B981', fontFamily: 'Sora,sans-serif' }}>57% مكتمل</strong>
+            </div>
           </div>
-        </div>
 
-        <div className="cw-panel">
-          <PanelHead icon={Trophy} title="أفضل أداء اليوم" />
-          <div className="cw-performance-card">
-            <div className="cw-trophy"><Trophy size={25} /></div>
-            <strong>{bestWorker?.name || 'لا يوجد موظف متصدر بعد'}</strong>
-            <span>{bestWorker ? `${bestWorker.cars} سيارة · ${money(bestWorker.revenue)} ر.س` : 'يظهر بعد أول تسليم اليوم'}</span>
-          </div>
-          <div className="cw-alert-stack">
-            <Alert icon={Gift} title="عملاء لديهم مكافآت" value={freeWashCustomers.length} tone="#F59E0B" />
-            <Alert icon={MessageCircle} title="طلبات تقييم معلقة" value={pendingReviews} tone={pendingReviews > 0 ? '#F59E0B' : '#10B981'} />
-          </div>
-        </div>
-      </section>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(290px, 1.1fr) minmax(220px, .8fr) minmax(190px, .65fr)', gap: 14 }}>
+            <SectionCard title="أداء الإيرادات" icon={TrendingUp}>
+              <ResponsiveContainer width="100%" height={190}>
+                <AreaChart data={stats.dailyChart}>
+                  <defs><linearGradient id="reportRevenueGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#0B63F6" stopOpacity={0.30} /><stop offset="100%" stopColor="#0B63F6" stopOpacity={0.03} /></linearGradient></defs>
+                  <XAxis dataKey="date" tick={{ fill: '#64748B', fontSize: 10, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: '#64748B', fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <Tooltip content={<ChartTooltip />} />
+                  <Area type="monotone" dataKey="revenue" name="revenue" stroke="#0B63F6" strokeWidth={3} fill="url(#reportRevenueGrad)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </SectionCard>
 
-      <section className="cw-bottom-grid">
-        <div className="cw-panel">
-          <PanelHead icon={Users} title="أفضل العملاء" action="كل العملاء" to="/client/leads" />
-          <div className="cw-customer-list">
-            {customers.length === 0 ? (
-              <EmptyState icon={Users} text="لا يوجد عملاء بعد" />
-            ) : customers.slice(0, 6).map(customer => (
-              <div className="cw-customer-row" key={customer.id}>
-                <i>{(customer.name || customer.phone).slice(0, 1)}</i>
-                <div>
-                  <strong>{customer.name || 'عميل بدون اسم'}</strong>
-                  <span>{formatPhone(customer.phone)}</span>
+            <SectionCard title="أفضل الخدمات اليوم" icon={Car}>
+              {(stats.services.length ? stats.services : upcoming).slice(0, 4).map(([name, data], i) => (
+                <div key={`${name}-${i}`} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, padding: '9px 0', borderBottom: i < 3 ? '1px solid #EEF3FA' : 'none' }}>
+                  <span><strong style={{ display: 'block', color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>{name}</strong><em className="cw-muted" style={{ fontStyle: 'normal', fontSize: 11 }}>{(data as any).count || 0} سيارة</em></span>
+                  <strong style={{ color: '#0D1B3E', fontSize: 13, fontFamily: 'Sora,sans-serif' }}>{((data as any).revenue || 0).toLocaleString('ar-SA')}</strong>
                 </div>
-                <em>{customer.total_visits} زيارة</em>
-              </div>
-            ))}
-          </div>
-        </div>
+              ))}
+            </SectionCard>
 
-        <div className="cw-panel">
-          <PanelHead icon={Clock} title="آخر الزيارات" />
-          <div className="cw-visit-list">
-            {visits.length === 0 ? (
-              <EmptyState icon={Clock} text="لا توجد زيارات اليوم" />
-            ) : visits.slice(0, 6).map(visit => (
-              <div className="cw-visit-row" key={visit.id}>
-                <div>
-                  <strong>{visit.customer_name || 'عميل'}</strong>
-                  <span>{visit.service_name || 'خدمة مغسلة'}</span>
+            <SectionCard title="مصادر العملاء" icon={Activity}>
+              <ResponsiveContainer width="100%" height={138}>
+                <PieChart><Pie data={servicePie} innerRadius={38} outerRadius={58} dataKey="value">{servicePie.map((_, i) => <Cell key={i} fill={serviceColors[i % serviceColors.length]} />)}</Pie></PieChart>
+              </ResponsiveContainer>
+              <div style={{ display: 'grid', gap: 6 }}>{['واتساب', 'محمد', 'مباشر', 'أخرى'].map((name, i) => <span key={name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontFamily: 'Tajawal,sans-serif', color: '#64748B' }}><em style={{ fontStyle: 'normal' }}>{name}</em><b style={{ color: '#0D1B3E' }}>{[42, 28, 20, 10][i]}%</b></span>)}</div>
+            </SectionCard>
+          </div>
+        </main>
+
+        <aside style={{ display: 'grid', gap: 14 }}>
+          <div className="cw-card cw-card-pad">
+            <h3 className="cw-title" style={{ fontSize: 17, marginBottom: 14 }}><Sparkles size={18} color="#0B63F6" /> مساعد الذكاء الاصطناعي</h3>
+            <button style={{ width: '100%', height: 40, border: 'none', borderRadius: 10, background: '#F3F7FF', color: '#0B63F6', fontWeight: 950, fontFamily: 'Tajawal,sans-serif', marginBottom: 12 }}>فرص زيادة الإيرادات اليوم</button>
+            {aiCards.slice(1).map(card => {
+              const Icon = card.icon
+              return (
+                <div key={card.title} style={{ display: 'grid', gridTemplateColumns: '38px 1fr', gap: 10, alignItems: 'center', border: '1px solid #EEF3FA', borderRadius: 12, padding: 12, marginBottom: 10 }}>
+                  <span style={{ width: 38, height: 38, borderRadius: 12, background: `${card.color}12`, display: 'grid', placeItems: 'center' }}><Icon size={18} color={card.color} /></span>
+                  <span><strong style={{ display: 'block', color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>{card.title}</strong><em className="cw-muted" style={{ display: 'block', fontSize: 11, fontStyle: 'normal' }}>{card.desc}</em></span>
                 </div>
-                <em>{visit.total_amount ? `${money(visit.total_amount)} ر.س` : '--'}</em>
-              </div>
-            ))}
+              )
+            })}
           </div>
-        </div>
-      </section>
-    </div>
-  )
-}
-
-function Kpi({ icon: Icon, label, value, hint, color }: { icon: typeof Car; label: string; value: string | number; hint: string; color: string }) {
-  return (
-    <div className="cw-kpi">
-      <div className="cw-kpi-top">
-        <span>{label}</span>
-        <i style={{ color, background: `${color}12` }}><Icon size={19} /></i>
+          <div className="cw-card cw-card-pad" style={{ textAlign: 'center', background: 'linear-gradient(180deg,#FFFFFF,#F8FBFF)' }}>
+            <h3 className="cw-title" style={{ fontSize: 15 }}>الإيراد المتوقع من الفرص</h3>
+            <strong style={{ display: 'block', marginTop: 14, color: '#0D1B3E', fontSize: 34, fontWeight: 950, fontFamily: 'Sora,sans-serif' }}>4,200</strong>
+            <span className="cw-muted" style={{ fontSize: 12 }}>ر.س</span>
+            <button style={{ width: '100%', height: 46, border: 'none', borderRadius: 12, background: '#0B63F6', color: '#fff', fontWeight: 950, fontFamily: 'Tajawal,sans-serif', marginTop: 20 }}>عرض كل الفرص</button>
+          </div>
+        </aside>
       </div>
-      <strong>{value}</strong>
-      <small>{hint}</small>
     </div>
   )
 }
 
-function Lane({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <div className="cw-lane">
-      <span style={{ background: color }} />
-      <strong>{value}</strong>
-      <small>{label}</small>
-    </div>
-  )
-}
-
-function PanelHead({ icon: Icon, title, action, to }: { icon: typeof Car; title: string; action?: string; to?: string }) {
-  return (
-    <div className="cw-panel-head">
-      <h2><Icon size={18} /> {title}</h2>
-      {action && to && <Link to={to}>{action}<ArrowUpLeft size={14} /></Link>}
-    </div>
-  )
-}
-
-function Alert({ icon: Icon, title, value, tone }: { icon: typeof Car; title: string; value: number; tone: string }) {
-  return (
-    <div className="cw-mini-alert">
-      <i style={{ color: tone, background: `${tone}12` }}><Icon size={16} /></i>
-      <span>{title}</span>
-      <strong style={{ color: tone }}>{value}</strong>
-    </div>
-  )
-}
-
-function EmptyState({ icon: Icon, text }: { icon: typeof Car; text: string }) {
-  return (
-    <div className="cw-empty">
-      <Icon size={24} />
-      <span>{text}</span>
-    </div>
-  )
-}

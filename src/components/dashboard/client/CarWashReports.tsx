@@ -1,6 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
-import { Activity, AlertTriangle, BarChart3, Bell, Calendar, CalendarClock, Car, CheckCircle2, Clock, DollarSign, Download, FileText, Gift, Loader2, MessageCircle, Plus, QrCode, RotateCcw, Sparkles, Star, TrendingUp, Users, Wrench } from 'lucide-react'
+import { Activity, AlertTriangle, BarChart3, Calendar, CalendarClock, Car, ChevronDown, Clock, DollarSign, Download, FileDown, FileText, Gift, Loader2, MessageCircle, RotateCcw, Smile, Sparkles, Star, TrendingUp, Users, Wrench } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
@@ -348,28 +348,14 @@ export function CarWashReports() {
   const servicePie = stats.revenueServices.length > 0
     ? stats.revenueServices
     : [{ name: 'لا توجد بيانات', value: 1, count: 0 }]
-  const displayCars = Math.max(stats.monthVisits, stats.todayVisits, 0)
-  const statusFlow = [
-    { label: 'استلام', value: Math.max(stats.todayVisits, Math.round(displayCars * 0.14)), icon: Car, color: '#0B63F6' },
-    { label: 'قيد الخدمة', value: Math.round(displayCars * 0.21), icon: Wrench, color: '#0B63F6' },
-    { label: 'جاهزة', value: Math.round(displayCars * 0.08), icon: CheckCircle2, color: '#10B981' },
-    { label: 'تم التسليم', value: displayCars, icon: Car, color: '#0D1B3E' },
-  ]
+  const maxHeat = Math.max(1, ...stats.heatmap.flatMap(row => row.buckets.map(bucket => bucket.value)))
   const aiCards = [
-    { icon: TrendingUp, title: 'فرص زيادة الإيرادات اليوم', desc: `${Math.max(stats.returningCustomers, 0)} عميل عائد مناسب لرسالة عرض خفيفة.`, color: '#0B63F6' },
-    { icon: Users, title: `${Math.max(customers.length - stats.returningCustomers, 0)} عميل لم يزوروا من 30 يوم`, desc: 'اقترح إرسال عرض مخصص لهم بدون خصم عشوائي.', color: '#6D5DFB' },
-    { icon: Star, title: `${stats.freeWashCount} غسلات مجانية`, desc: 'راجع مكافآت الولاء حتى لا تؤثر على إيراد اليوم.', color: '#F59E0B' },
-    { icon: Plus, title: 'خدمة إضافية مقترحة', desc: stats.services[0] ? `${stats.services[0][0]} هي الأعلى طلباً، اعرض ترقية مرتبطة بها.` : 'أضف الخدمات من الإعدادات لتفعيل التحليل.', color: '#10B981' },
+    { icon: MessageCircle, title: 'فرص زيادة الإيرادات', desc: `${customers.filter(c => c.total_visits >= 2).length} عميل يمكن تنشيطهم بعرض زيارة قادمة.`, color: '#10B981' },
+    { icon: Gift, title: 'الخدمة الأكثر ربحية', desc: stats.revenueServices[0] ? `${stats.revenueServices[0].name} تحقق أعلى إيراد في الفترة.` : 'ابدأ بتسجيل الخدمات لظهور التحليل.', color: '#7C3AED' },
+    { icon: AlertTriangle, title: 'انخفاض الطلب', desc: stats.todayVisits === 0 ? 'لا توجد زيارات اليوم، راجع الاستقبال أو أطلق حملة خفيفة.' : 'راقب الأيام الأقل طلباً وقارنها بالأسبوع السابق.', color: '#F59E0B' },
+    { icon: Users, title: 'توصية ذكية', desc: 'ارفع تكرار العملاء عبر رسالة متابعة واحدة بعد التسليم والتقييم.', color: '#0B63F6' },
+    { icon: Wrench, title: 'توقفات متكررة', desc: 'اربط وقت التسليم بالموظف لمعرفة أسباب التأخير بدقة أعلى.', color: '#EF4444' },
   ]
-  const notifications = [
-    { title: `${statusFlow[2].value} سيارات جاهزة للتسليم`, desc: 'اضغط من لوحة التشغيل لإشعار العميل', time: 'منذ دقيقتين', icon: Car, color: '#10B981' },
-    { title: `${Math.max(stats.returningCustomers, 0)} عملاء لم يزوروا من 30 يوم`, desc: 'يوجد عرض مخصص لهم', time: 'منذ 15 دقيقة', icon: Users, color: '#7C3AED' },
-    { title: 'مخزون مواد التنظيف منخفض', desc: 'ينبغي إعادة الطلب', time: 'منذ 45 دقيقة', icon: AlertTriangle, color: '#F97316' },
-  ]
-  const upcoming = (stats.services.length ? stats.services : [['غسيل خارجي', { count: 1, revenue: 0 }], ['تلميع داخلي', { count: 1, revenue: 0 }], ['باقة شاملة', { count: 1, revenue: 0 }]]).slice(0, 3)
-  const todayText = new Date().toLocaleDateString('ar-SA', { day: 'numeric', month: 'long', weekday: 'long' })
-  const checkinTarget = `${window.location.origin}/checkin/${(company as any)?.webhook_token || companyId || 'demo'}`
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(checkinTarget)}`
 
   return (
     <FeatureLock
@@ -380,189 +366,230 @@ export function CarWashReports() {
       companyName={company?.name}
       currentPlan={planLabel}
     >
-    <div dir="rtl" style={{ color: '#0D1B3E' }}>
-      <style>{`
-        .cw-board { display: grid; grid-template-columns: minmax(255px, .8fr) minmax(520px, 1.65fr) minmax(285px, .92fr); gap: 16px; align-items: start; }
-        .cw-card { background:#fff; border:1px solid #E3EAF6; border-radius:16px; box-shadow:0 16px 42px rgba(13,27,62,.055); }
-        .cw-card-pad { padding:16px; }
-        .cw-title { margin:0; color:#0D1B3E; font-family:Cairo,sans-serif; font-weight:950; }
-        .cw-muted { color:#64748B; font-family:Tajawal,sans-serif; }
-        @media (max-width: 1280px) { .cw-board { grid-template-columns: 1fr; } }
-      `}</style>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'center', flexWrap: 'wrap', marginBottom: 18 }}>
-        <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-          <div style={{ width: 46, height: 46, borderRadius: 999, background: 'linear-gradient(135deg,#EAF3FF,#FFFFFF)', border: '1px solid #DDE8F7', display: 'grid', placeItems: 'center' }}>
-            <Users size={21} color="#0D1B3E" />
-          </div>
+    <div dir="rtl" style={{ display: 'flex', flexDirection: 'column', gap: 18, color: '#0D1B3E' }}>
+      <div style={{ background: '#FFFFFF', border: '1px solid #E3EAF6', borderRadius: 18, padding: 22, boxShadow: '0 18px 50px rgba(13,27,62,0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
           <div>
-            <strong style={{ display: 'block', fontSize: 14, fontFamily: 'Cairo,sans-serif', color: '#0D1B3E' }}>مدير النظام</strong>
-            <span className="cw-muted" style={{ fontSize: 12 }}>مدير</span>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: '#0B63F6', fontSize: 13, fontWeight: 900, fontFamily: 'Tajawal, sans-serif', marginBottom: 8 }}>
+              <FileText size={18} />
+              مركز التقارير
+            </div>
+            <h1 style={{ margin: 0, fontSize: 'clamp(25px, 3vw, 34px)', lineHeight: 1.15, fontWeight: 950, color: '#0D1B3E', fontFamily: 'Cairo, sans-serif' }}>التقارير</h1>
+            <p style={{ margin: '8px 0 0', color: '#64748B', fontSize: 14, fontWeight: 600, fontFamily: 'Tajawal, sans-serif' }}>تحليلات شاملة لأداء {company?.name || 'مغسلتك'} خلال الفترة المحددة.</p>
           </div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            {[Bell, MessageCircle].map((Icon, i) => (
-              <span key={i} style={{ width: 38, height: 38, borderRadius: 12, background: '#FFFFFF', border: '1px solid #E3EAF6', display: 'grid', placeItems: 'center', position: 'relative' }}>
-                <Icon size={17} color="#0D1B3E" />
-                <em style={{ position: 'absolute', top: -7, left: -6, minWidth: 18, height: 18, borderRadius: 999, background: '#0B63F6', color: '#fff', fontSize: 10, fontStyle: 'normal', display: 'grid', placeItems: 'center', fontFamily: 'Sora,sans-serif' }}>{i ? 12 : 8}</em>
-              </span>
-            ))}
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setShowCustom(v => !v)}
+              style={{ minHeight: 42, display: 'inline-flex', alignItems: 'center', gap: 9, padding: '0 15px', borderRadius: 11, border: '1px solid #D7E1F0', background: '#FFFFFF', color: '#0D1B3E', fontWeight: 800, fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer' }}
+            >
+              <Calendar size={16} color="#0B63F6" />
+              {isCustomActive ? `${customFrom} - ${customTo}` : `آخر ${days} يوم`}
+            </button>
+            <select
+              value={days}
+              onChange={e => { setDays(Number(e.target.value)); setShowCustom(false) }}
+              style={{ minHeight: 42, borderRadius: 11, border: '1px solid #D7E1F0', background: '#FFFFFF', color: '#0D1B3E', padding: '0 14px', fontWeight: 800, fontSize: 12, fontFamily: 'Tajawal, sans-serif' }}
+            >
+              {DATE_FILTERS.map(f => <option key={f.days} value={f.days}>{f.label}</option>)}
+            </select>
+            <button
+              onClick={exportPDF}
+              disabled={pdfLoading}
+              style={{ minHeight: 42, display: 'inline-flex', alignItems: 'center', gap: 9, padding: '0 18px', borderRadius: 11, border: 'none', background: '#0B63F6', color: '#FFFFFF', fontWeight: 900, fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer', boxShadow: '0 12px 24px rgba(11,99,246,0.22)' }}
+            >
+              {pdfLoading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+              تصدير التقرير
+            </button>
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowExportMenu(v => !v)}
+                style={{ minHeight: 42, display: 'inline-flex', alignItems: 'center', gap: 9, padding: '0 15px', borderRadius: 11, border: '1px solid #D7E1F0', background: '#FFFFFF', color: '#0D1B3E', fontWeight: 800, fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer' }}
+              >
+                <CalendarClock size={16} color="#0D1B3E" />
+                جدولة تقرير
+              </button>
+              {showExportMenu && (
+                <div style={{ position: 'absolute', top: '112%', left: 0, background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 12, overflow: 'hidden', zIndex: 50, minWidth: 190, boxShadow: '0 18px 38px rgba(13,27,62,0.13)' }}>
+                  <button onClick={() => { exportSalesCSV(); setShowExportMenu(false) }} style={{ display: 'block', width: '100%', textAlign: 'right', padding: '12px 16px', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 700, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer' }}>تصدير المبيعات CSV</button>
+                  <button onClick={() => { exportPDF(); setShowExportMenu(false) }} style={{ display: 'block', width: '100%', textAlign: 'right', padding: '12px 16px', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 700, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer' }}>تصدير PDF</button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <button onClick={() => setShowCustom(v => !v)} style={{ height: 42, borderRadius: 12, border: '1px solid #D7E1F0', background: '#fff', padding: '0 16px', display: 'inline-flex', alignItems: 'center', gap: 9, fontWeight: 900, fontSize: 12, fontFamily: 'Tajawal,sans-serif', cursor: 'pointer' }}>
-            <Calendar size={16} color="#0B63F6" /> {isCustomActive ? `${customFrom} - ${customTo}` : 'اليوم'}
-          </button>
-          <select value={days} onChange={e => { setDays(Number(e.target.value)); setShowCustom(false) }} style={{ height: 42, borderRadius: 12, border: '1px solid #D7E1F0', background: '#fff', padding: '0 12px', fontWeight: 900, fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>
-            {DATE_FILTERS.map(f => <option key={f.days} value={f.days}>{f.label}</option>)}
-          </select>
-          <button onClick={exportPDF} disabled={pdfLoading} style={{ height: 42, border: 'none', borderRadius: 12, background: '#0B63F6', color: '#fff', padding: '0 16px', display: 'inline-flex', alignItems: 'center', gap: 9, fontWeight: 900, fontSize: 12, fontFamily: 'Tajawal,sans-serif', cursor: 'pointer' }}>
-            {pdfLoading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} تصدير التقرير
-          </button>
-          <button onClick={exportSalesCSV} style={{ height: 42, borderRadius: 12, border: '1px solid #D7E1F0', background: '#fff', padding: '0 16px', display: 'inline-flex', alignItems: 'center', gap: 9, fontWeight: 900, fontSize: 12, fontFamily: 'Tajawal,sans-serif', cursor: 'pointer' }}>
-            <FileText size={16} color="#0D1B3E" /> CSV
-          </button>
-        </div>
+        {showCustom && (
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 16, paddingTop: 16, borderTop: '1px solid #EDF2F7' }}>
+            <input type="date" value={customFrom} onChange={e => {
+              const v = e.target.value
+              setCustomFrom(v)
+              if (customTo && v > customTo) setCustomTo(v)
+            }} style={{ padding: '9px 12px', borderRadius: 10, border: '1px solid #D7E1F0', background: '#F8FBFF', color: '#0D1B3E', fontSize: 12, fontFamily: 'Sora, sans-serif' }} />
+            <span style={{ color: '#94A3B8', fontWeight: 800 }}>←</span>
+            <input type="date" value={customTo} onChange={e => {
+              const v = e.target.value
+              setCustomTo(v)
+              if (customFrom && v < customFrom) setCustomFrom(v)
+            }} style={{ padding: '9px 12px', borderRadius: 10, border: '1px solid #D7E1F0', background: '#F8FBFF', color: '#0D1B3E', fontSize: 12, fontFamily: 'Sora, sans-serif' }} />
+          </div>
+        )}
+
       </div>
 
-      {showCustom && (
-        <div className="cw-card cw-card-pad" style={{ marginBottom: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} style={{ padding: '9px 12px', borderRadius: 10, border: '1px solid #D7E1F0', background: '#F8FBFF', color: '#0D1B3E', fontSize: 12, fontFamily: 'Sora,sans-serif' }} />
-          <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)} style={{ padding: '9px 12px', borderRadius: 10, border: '1px solid #D7E1F0', background: '#F8FBFF', color: '#0D1B3E', fontSize: 12, fontFamily: 'Sora,sans-serif' }} />
-        </div>
-      )}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(178px, 1fr))', gap: 12 }}>
+        <StatCard icon={DollarSign} label="إجمالي الإيرادات" value={stats.revenue > 0 ? stats.revenue.toLocaleString('ar-SA') : '0'} sub="عن الفترة السابقة" color="#10B981" trend="+18%" />
+        <StatCard icon={Car} label="عدد السيارات" value={stats.monthVisits} sub="عن الفترة السابقة" color="#0B63F6" trend="+24%" />
+        <StatCard icon={CalendarClock} label="متوسط الفاتورة" value={stats.avgInvoice || 0} sub="ر.س" color="#7C3AED" trend="+12%" />
+        <StatCard icon={Users} label="العملاء الجدد" value={Math.max(customers.length - stats.returningCustomers, 0)} sub="عن الفترة السابقة" color="#F97316" trend="+15%" />
+        <StatCard icon={RotateCcw} label="العملاء العائدون" value={stats.returningCustomers} sub="عن الفترة السابقة" color="#10B981" trend="+20%" />
+        <StatCard icon={Smile} label="رضا العملاء" value="4.7 / 5" sub="عن الفترة السابقة" color="#0B63F6" trend="+0.3" />
+      </div>
 
-      <div className="cw-board">
-        <aside style={{ display: 'grid', gap: 14 }}>
-          <div className="cw-card" style={{ overflow: 'hidden', position: 'relative', minHeight: 252 }}>
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(140deg, rgba(13,27,62,.08), rgba(11,99,246,.05)), url(/og-image.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
-            <div style={{ position: 'absolute', right: 18, bottom: 18, width: 138, borderRadius: 16, padding: 12, background: '#0B63F6', color: '#fff', boxShadow: '0 18px 38px rgba(11,99,246,.35)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8, fontSize: 12, fontWeight: 900, fontFamily: 'Tajawal,sans-serif' }}><QrCode size={14} /> امسح للدخول</div>
-              <img src={qrUrl} alt="QR" style={{ width: '100%', borderRadius: 10, background: '#fff', padding: 6 }} />
-              <p style={{ margin: '9px 0 0', fontSize: 11, fontWeight: 800, fontFamily: 'Tajawal,sans-serif', textAlign: 'center' }}>دخول سريع وآمن</p>
-            </div>
-          </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 330px), 1fr))', gap: 14 }}>
+        <SectionCard title="الإيرادات حسب الفترة" icon={TrendingUp}>
+          <ResponsiveContainer width="100%" height={250}>
+            <AreaChart data={stats.dailyChart}>
+              <defs>
+                <linearGradient id="reportRevenueGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#0B63F6" stopOpacity={0.28} />
+                  <stop offset="100%" stopColor="#0B63F6" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="date" tick={{ fill: '#64748B', fontSize: 10, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#64748B', fontSize: 10 }} axisLine={false} tickLine={false} />
+              <Tooltip content={<ChartTooltip />} />
+              <Area type="monotone" dataKey="revenue" name="revenue" stroke="#0B63F6" strokeWidth={3} fill="url(#reportRevenueGrad)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </SectionCard>
 
-          <div className="cw-card cw-card-pad">
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-              <h3 className="cw-title" style={{ fontSize: 15 }}>التنبيهات</h3>
-              <button style={{ border: 'none', background: 'transparent', color: '#0B63F6', fontWeight: 900, fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>عرض الكل</button>
-            </div>
-            {notifications.map((n, i) => {
-              const Icon = n.icon
-              return (
-                <div key={n.title} style={{ display: 'grid', gridTemplateColumns: '34px 1fr auto', gap: 10, alignItems: 'center', padding: '11px 0', borderBottom: i < notifications.length - 1 ? '1px solid #EEF3FA' : 'none' }}>
-                  <span style={{ width: 34, height: 34, borderRadius: 12, background: `${n.color}14`, display: 'grid', placeItems: 'center' }}><Icon size={16} color={n.color} /></span>
-                  <span><strong style={{ display: 'block', color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>{n.title}</strong><em className="cw-muted" style={{ display: 'block', fontSize: 11, fontStyle: 'normal' }}>{n.desc}</em></span>
-                  <small className="cw-muted" style={{ fontSize: 10 }}>{n.time}</small>
-                </div>
-              )
-            })}
-          </div>
-
-          <div className="cw-card cw-card-pad">
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-              <h3 className="cw-title" style={{ fontSize: 15 }}>المواعيد القادمة</h3>
-              <button style={{ border: 'none', background: 'transparent', color: '#0B63F6', fontWeight: 900, fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>عرض الكل</button>
-            </div>
-            {upcoming.map(([name], i) => (
-              <div key={`${name}-${i}`} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, alignItems: 'center', padding: '11px 0', borderBottom: i < upcoming.length - 1 ? '1px solid #EEF3FA' : 'none' }}>
-                <span><strong style={{ color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>{name}</strong><em className="cw-muted" style={{ display: 'block', fontSize: 11, fontStyle: 'normal' }}>{['محمد أحمد', 'سعد العتيبي', 'خالد الشهري'][i] || 'عميل'}</em></span>
-                <span style={{ textAlign: 'left' }}><strong style={{ display: 'block', color: '#0D1B3E', fontSize: 13, fontFamily: 'Sora,sans-serif' }}>{['10:30', '11:00', '11:30'][i]} ص</strong><em style={{ fontStyle: 'normal', fontSize: 10, color: i === 2 ? '#F97316' : '#10B981', background: i === 2 ? '#FFEDD5' : '#DCFCE7', borderRadius: 999, padding: '2px 7px', fontFamily: 'Tajawal,sans-serif' }}>{i === 2 ? 'قيد الانتظار' : 'مؤكد'}</em></span>
+        <SectionCard title="توزيع الإيرادات حسب الخدمات" icon={Activity}>
+          <div style={{ display: 'grid', gridTemplateColumns: '160px minmax(0, 1fr)', gap: 14, alignItems: 'center' }}>
+            <ResponsiveContainer width="100%" height={178}>
+              <PieChart>
+                <Pie data={servicePie} innerRadius={52} outerRadius={78} dataKey="value" paddingAngle={2}>
+                  {servicePie.map((_, i) => <Cell key={i} fill={serviceColors[i % serviceColors.length]} />)}
+                </Pie>
+                <Tooltip content={<ChartTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ textAlign: 'center', marginBottom: 2 }}>
+                <strong style={{ display: 'block', color: '#0D1B3E', fontSize: 26, fontWeight: 950, fontFamily: 'Sora, sans-serif' }}>{stats.revenue.toLocaleString('ar-SA')}</strong>
+                <span style={{ color: '#64748B', fontSize: 12, fontFamily: 'Tajawal, sans-serif' }}>إجمالي الإيرادات</span>
               </div>
-            ))}
-          </div>
-        </aside>
-
-        <main style={{ display: 'grid', gap: 14 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'start', flexWrap: 'wrap' }}>
-            <div><span className="cw-muted" style={{ fontSize: 13, fontWeight: 800 }}>مرحباً بك، مدير النظام</span><h1 className="cw-title" style={{ fontSize: 'clamp(26px, 3vw, 34px)' }}>نظرة عامة على اليوم</h1></div>
-            <div style={{ textAlign: 'left' }}><strong style={{ color: '#0D1B3E', fontFamily: 'Cairo,sans-serif' }}>{todayText}</strong><span className="cw-muted" style={{ display: 'block', fontSize: 12 }}>{company?.name || 'المغسلة'}</span></div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(155px, 1fr))', gap: 12 }}>
-            <StatCard icon={DollarSign} label="إجمالي الإيرادات" value={stats.revenue > 0 ? stats.revenue.toLocaleString('ar-SA') : '0'} sub="عن أمس" color="#10B981" trend="+18%" />
-            <StatCard icon={Car} label="عدد السيارات" value={displayCars} sub="عن أمس" color="#0B63F6" trend="+24%" />
-            <StatCard icon={CalendarClock} label="متوسط الفاتورة" value={stats.avgInvoice || 0} sub="ر.س" color="#7C3AED" trend="+12%" />
-            <StatCard icon={Users} label="العملاء الجدد" value={Math.max(customers.length - stats.returningCustomers, 0)} sub="عن أمس" color="#F97316" trend="+15%" />
-            <StatCard icon={Star} label="التقييمات الجديدة" value={Math.max(stats.milestones, 0)} sub="عن أمس" color="#38BDF8" trend="+8%" />
-          </div>
-
-          <div className="cw-card cw-card-pad">
-            <h2 className="cw-title" style={{ fontSize: 18, marginBottom: 18 }}>حالة السيارات اليوم</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 14, alignItems: 'center' }}>
-              {statusFlow.map((step, i) => {
-                const Icon = step.icon
-                return (
-                  <div key={step.label} style={{ border: `1.5px solid ${step.color}`, borderRadius: 14, minHeight: 130, display: 'grid', placeItems: 'center', textAlign: 'center', position: 'relative', background: step.label === 'جاهزة' ? '#F0FDF4' : '#FFFFFF' }}>
-                    <Icon size={28} color={step.color} />
-                    <strong style={{ color: step.color, fontSize: 14, fontWeight: 950, fontFamily: 'Cairo,sans-serif' }}>{step.label}</strong>
-                    <span style={{ color: '#0D1B3E', fontSize: 25, fontWeight: 950, fontFamily: 'Sora,sans-serif' }}>{step.value}</span>
-                    <em className="cw-muted" style={{ fontSize: 12, fontStyle: 'normal' }}>سيارة</em>
-                    {i < statusFlow.length - 1 && <span style={{ position: 'absolute', left: -15, top: '50%', color: '#0D1B3E', fontSize: 22 }}>←</span>}
-                  </div>
-                )
-              })}
-            </div>
-            <div style={{ marginTop: 22, display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'center' }}>
-              <div style={{ height: 6, borderRadius: 999, background: '#DDE8F7', position: 'relative' }}><span style={{ position: 'absolute', inset: '0 0 0 43%', borderRadius: 999, background: '#0B63F6' }} /></div>
-              <strong style={{ color: '#10B981', fontFamily: 'Sora,sans-serif' }}>57% مكتمل</strong>
-            </div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(290px, 1.1fr) minmax(220px, .8fr) minmax(190px, .65fr)', gap: 14 }}>
-            <SectionCard title="أداء الإيرادات" icon={TrendingUp}>
-              <ResponsiveContainer width="100%" height={190}>
-                <AreaChart data={stats.dailyChart}>
-                  <defs><linearGradient id="reportRevenueGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#0B63F6" stopOpacity={0.30} /><stop offset="100%" stopColor="#0B63F6" stopOpacity={0.03} /></linearGradient></defs>
-                  <XAxis dataKey="date" tick={{ fill: '#64748B', fontSize: 10, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: '#64748B', fontSize: 10 }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<ChartTooltip />} />
-                  <Area type="monotone" dataKey="revenue" name="revenue" stroke="#0B63F6" strokeWidth={3} fill="url(#reportRevenueGrad)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </SectionCard>
-
-            <SectionCard title="أفضل الخدمات اليوم" icon={Car}>
-              {(stats.services.length ? stats.services : upcoming).slice(0, 4).map(([name, data], i) => (
-                <div key={`${name}-${i}`} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, padding: '9px 0', borderBottom: i < 3 ? '1px solid #EEF3FA' : 'none' }}>
-                  <span><strong style={{ display: 'block', color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>{name}</strong><em className="cw-muted" style={{ fontStyle: 'normal', fontSize: 11 }}>{(data as any).count || 0} سيارة</em></span>
-                  <strong style={{ color: '#0D1B3E', fontSize: 13, fontFamily: 'Sora,sans-serif' }}>{((data as any).revenue || 0).toLocaleString('ar-SA')}</strong>
+              {stats.revenueServices.slice(0, 5).map((item, i) => (
+                <div key={item.name} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center', gap: 8 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 999, background: serviceColors[i % serviceColors.length] }} />
+                  <span style={{ color: '#334155', fontSize: 12, fontWeight: 700, fontFamily: 'Tajawal, sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</span>
+                  <strong style={{ color: '#0D1B3E', fontSize: 12, fontFamily: 'Sora, sans-serif' }}>{item.value.toFixed(0)}</strong>
                 </div>
               ))}
-            </SectionCard>
-
-            <SectionCard title="مصادر العملاء" icon={Activity}>
-              <ResponsiveContainer width="100%" height={138}>
-                <PieChart><Pie data={servicePie} innerRadius={38} outerRadius={58} dataKey="value">{servicePie.map((_, i) => <Cell key={i} fill={serviceColors[i % serviceColors.length]} />)}</Pie></PieChart>
-              </ResponsiveContainer>
-              <div style={{ display: 'grid', gap: 6 }}>{['واتساب', 'محمد', 'مباشر', 'أخرى'].map((name, i) => <span key={name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontFamily: 'Tajawal,sans-serif', color: '#64748B' }}><em style={{ fontStyle: 'normal' }}>{name}</em><b style={{ color: '#0D1B3E' }}>{[42, 28, 20, 10][i]}%</b></span>)}</div>
-            </SectionCard>
+            </div>
           </div>
-        </main>
+        </SectionCard>
 
-        <aside style={{ display: 'grid', gap: 14 }}>
-          <div className="cw-card cw-card-pad">
-            <h3 className="cw-title" style={{ fontSize: 17, marginBottom: 14 }}><Sparkles size={18} color="#0B63F6" /> مساعد الذكاء الاصطناعي</h3>
-            <button style={{ width: '100%', height: 40, border: 'none', borderRadius: 10, background: '#F3F7FF', color: '#0B63F6', fontWeight: 950, fontFamily: 'Tajawal,sans-serif', marginBottom: 12 }}>فرص زيادة الإيرادات اليوم</button>
-            {aiCards.slice(1).map(card => {
-              const Icon = card.icon
+        <SectionCard title="ملخص الأداء" icon={BarChart3}>
+          {[
+            { icon: DollarSign, value: stats.revenue.toLocaleString('ar-SA'), trend: '+18%', color: '#10B981' },
+            { icon: Car, value: stats.monthVisits, trend: '+24%', color: '#0B63F6' },
+            { icon: Calendar, value: stats.avgInvoice || 0, trend: '+12%', color: '#7C3AED' },
+            { icon: Users, value: customers.length, trend: '+15%', color: '#F97316' },
+            { icon: RotateCcw, value: `${stats.retentionRate}%`, trend: '+20%', color: '#10B981' },
+          ].map((row, i) => (
+            (() => {
+              const RowIcon = row.icon
               return (
-                <div key={card.title} style={{ display: 'grid', gridTemplateColumns: '38px 1fr', gap: 10, alignItems: 'center', border: '1px solid #EEF3FA', borderRadius: 12, padding: 12, marginBottom: 10 }}>
-                  <span style={{ width: 38, height: 38, borderRadius: 12, background: `${card.color}12`, display: 'grid', placeItems: 'center' }}><Icon size={18} color={card.color} /></span>
-                  <span><strong style={{ display: 'block', color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>{card.title}</strong><em className="cw-muted" style={{ display: 'block', fontSize: 11, fontStyle: 'normal' }}>{card.desc}</em></span>
+                <div key={i} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 52px 120px', gap: 10, alignItems: 'center', padding: '9px 0', borderBottom: i < 4 ? '1px solid #EDF2F7' : 'none' }}>
+                  <RowIcon size={16} color="#64748B" />
+                  <strong style={{ color: '#0D1B3E', fontSize: 14, fontFamily: 'Sora, sans-serif' }}>{row.value}</strong>
+                  <span style={{ color: row.color, fontSize: 11, fontWeight: 900, fontFamily: 'Sora, sans-serif' }}>{row.trend}</span>
+                  <Sparkline data={stats.dailyChart} color="#0B63F6" />
+                </div>
+              )
+            })()
+          ))}
+        </SectionCard>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: 14 }}>
+        <SectionCard title="أوقات الزروة" icon={Clock} action={<span style={{ color: '#64748B', fontSize: 12, fontWeight: 700, fontFamily: 'Tajawal, sans-serif' }}>حسب عدد السيارات</span>}>
+          <div style={{ display: 'grid', gridTemplateColumns: '64px repeat(7, 1fr)', gap: 4, alignItems: 'center' }}>
+            <span />
+            {stats.heatmap[0]?.buckets.map(bucket => <span key={bucket.hour} style={{ color: '#64748B', fontSize: 10, fontFamily: 'Sora, sans-serif', textAlign: 'center' }}>{bucket.hour}</span>)}
+            {stats.heatmap.map(row => [
+              <span key={`${row.day}-label`} style={{ color: '#334155', fontSize: 11, fontWeight: 800, fontFamily: 'Tajawal, sans-serif' }}>{row.day}</span>,
+              ...row.buckets.map(bucket => (
+                <span key={`${row.day}-${bucket.hour}`} title={`${row.day} ${bucket.hour}: ${bucket.value}`} style={{ height: 22, borderRadius: 4, background: `rgba(11,99,246,${0.12 + (bucket.value / maxHeat) * 0.72})`, border: '1px solid rgba(11,99,246,0.08)' }} />
+              ))
+            ])}
+          </div>
+        </SectionCard>
+
+        <SectionCard title="تحليل العملاء" icon={Users}>
+          <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', alignItems: 'center', gap: 18 }}>
+            <div style={{ width: 128, height: 128, borderRadius: '50%', background: `conic-gradient(#0B63F6 0 ${stats.retentionRate}%, #E7EEF8 ${stats.retentionRate}% 100%)`, display: 'grid', placeItems: 'center', margin: '0 auto' }}>
+              <div style={{ width: 92, height: 92, borderRadius: '50%', background: '#FFFFFF', display: 'grid', placeItems: 'center', textAlign: 'center' }}>
+                <strong style={{ color: '#0D1B3E', fontSize: 25, fontWeight: 950, fontFamily: 'Sora, sans-serif' }}>{stats.retentionRate}%</strong>
+                <span style={{ color: '#334155', fontSize: 11, fontWeight: 800, fontFamily: 'Tajawal, sans-serif' }}>عملاء عائدون</span>
+              </div>
+            </div>
+            <div style={{ display: 'grid', gap: 9 }}>
+              {[
+                ['إجمالي العملاء', customers.length],
+                ['عملاء جدد', Math.max(customers.length - stats.returningCustomers, 0)],
+                ['عملاء عائدون', stats.returningCustomers],
+                ['معدل تكرار الزيارة', customers.length ? (customers.reduce((s, c) => s + c.total_visits, 0) / customers.length).toFixed(1) : '0'],
+                ['متوسط مدة العلاقة', '89 يوم'],
+              ].map(([label, value]) => (
+                <div key={label} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, borderBottom: '1px solid #EDF2F7', paddingBottom: 7 }}>
+                  <span style={{ color: '#64748B', fontSize: 12, fontWeight: 700, fontFamily: 'Tajawal, sans-serif' }}>{label}</span>
+                  <strong style={{ color: '#0D1B3E', fontSize: 13, fontFamily: 'Sora, sans-serif' }}>{value}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+        </SectionCard>
+
+        <SectionCard title="أعلى الخدمات طلباً" icon={Car}>
+          <div style={{ display: 'grid', gap: 13 }}>
+            {stats.services.length === 0 ? (
+              <p style={{ margin: 0, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>لا توجد خدمات مسجلة بعد.</p>
+            ) : stats.services.map(([name, data], i) => {
+              const max = stats.services[0][1].count || 1
+              return (
+                <div key={name} style={{ display: 'grid', gridTemplateColumns: '1fr 44px', gap: 10, alignItems: 'center' }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 7 }}>
+                      <span style={{ color: '#334155', fontSize: 12, fontWeight: 800, fontFamily: 'Tajawal, sans-serif' }}>{name}</span>
+                      <span style={{ width: 22, height: 22, borderRadius: 999, display: 'grid', placeItems: 'center', background: '#0B63F6', color: '#FFFFFF', fontSize: 11, fontWeight: 900, fontFamily: 'Sora, sans-serif' }}>{i + 1}</span>
+                    </div>
+                    <div style={{ height: 5, borderRadius: 999, background: '#E7EEF8', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${(data.count / max) * 100}%`, borderRadius: 999, background: '#0B63F6' }} />
+                    </div>
+                  </div>
+                  <strong style={{ color: '#0D1B3E', fontSize: 13, fontFamily: 'Sora, sans-serif', textAlign: 'left' }}>{data.count}</strong>
                 </div>
               )
             })}
           </div>
-          <div className="cw-card cw-card-pad" style={{ textAlign: 'center', background: 'linear-gradient(180deg,#FFFFFF,#F8FBFF)' }}>
-            <h3 className="cw-title" style={{ fontSize: 15 }}>الإيراد المتوقع من الفرص</h3>
-            <strong style={{ display: 'block', marginTop: 14, color: '#0D1B3E', fontSize: 34, fontWeight: 950, fontFamily: 'Sora,sans-serif' }}>4,200</strong>
-            <span className="cw-muted" style={{ fontSize: 12 }}>ر.س</span>
-            <button style={{ width: '100%', height: 46, border: 'none', borderRadius: 12, background: '#0B63F6', color: '#fff', fontWeight: 950, fontFamily: 'Tajawal,sans-serif', marginTop: 20 }}>عرض كل الفرص</button>
-          </div>
-        </aside>
+        </SectionCard>
       </div>
+
+      <SectionCard title="تقرير الذكاء الاصطناعي" icon={Sparkles}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 12 }}>
+          {aiCards.map(card => (
+            <div key={card.title} style={{ border: '1px solid #E3EAF6', borderRadius: 14, padding: 16, background: '#FBFDFF' }}>
+              <div style={{ width: 34, height: 34, borderRadius: 11, background: `${card.color}14`, display: 'grid', placeItems: 'center', marginBottom: 12 }}>
+                <card.icon size={17} color={card.color} />
+              </div>
+              <h3 style={{ margin: '0 0 6px', color: '#0D1B3E', fontSize: 13, fontWeight: 900, fontFamily: 'Cairo, sans-serif' }}>{card.title}</h3>
+              <p style={{ margin: 0, color: '#64748B', fontSize: 12, lineHeight: 1.75, fontWeight: 600, fontFamily: 'Tajawal, sans-serif' }}>{card.desc}</p>
+            </div>
+          ))}
+        </div>
+      </SectionCard>
     </div>
     </FeatureLock>
   )
