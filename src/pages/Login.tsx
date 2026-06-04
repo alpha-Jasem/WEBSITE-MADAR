@@ -259,14 +259,14 @@ export const Login = () => {
                   </button>
                 </form>
 
-                <p className="mt-6 text-center text-xs text-slate-400 font-tajawal">
-                  للدعم: <a href="mailto:info@madar.software" className="font-bold text-[#0099CC] hover:text-[#0D1B3E]">info@madar.software</a>
-                </p>
                 {portal === 'client' && (
-                  <div className="mt-4 rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-center">
-                    <p className="text-xs text-slate-500 font-tajawal">ليس لديك حساب بعد؟</p>
-                    <Link to="/trial" className="mt-1 inline-flex items-center justify-center gap-2 text-sm font-bold text-[#0369A1] font-cairo hover:text-[#0D1B3E]">
-                      ابدأ تجربة مجانية 3 أيام
+                  <div className="mt-5 rounded-2xl border border-sky-100 bg-sky-50 px-4 py-4 text-center">
+                    <p className="text-xs font-bold text-slate-500 font-tajawal">ليس لديك حساب؟ ابدأ معنا</p>
+                    <Link
+                      to="/trial"
+                      className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#007BFF] px-4 py-3 text-sm font-black text-white shadow-[0_14px_28px_rgba(0,123,255,0.22)] transition-transform hover:-translate-y-0.5 font-cairo"
+                    >
+                      إنشاء حساب
                       <ArrowLeft size={14} />
                     </Link>
                   </div>
