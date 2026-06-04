@@ -21,13 +21,13 @@ const VI  = '#6366F1'  // violet accent
 
 /* ── Glass card helper ─────────────────────────── */
 const glassCard = (accent?: string): React.CSSProperties => ({
-  background : 'rgba(255,255,255,0.035)',
-  border     : `1px solid ${accent ? accent + '28' : 'rgba(255,255,255,0.07)'}`,
+  background : 'rgba(4,8,14,0.58)',
+  border     : `1px solid ${accent ? accent + '35' : 'rgba(255,255,255,0.10)'}`,
   boxShadow  : accent
-    ? `inset 0 1px 0 ${accent}15, 0 1px 40px ${accent}08`
-    : 'inset 0 1px 0 rgba(255,255,255,0.06)',
-  backdropFilter       : 'blur(12px)',
-  WebkitBackdropFilter : 'blur(12px)',
+    ? `inset 0 1px 0 ${accent}20, 0 4px 40px rgba(0,0,0,0.4)`
+    : 'inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 40px rgba(0,0,0,0.35)',
+  backdropFilter       : 'blur(20px)',
+  WebkitBackdropFilter : 'blur(20px)',
 })
 
 /* ── Features ──────────────────────────────────── */
@@ -81,17 +81,24 @@ export const ClinicLanding = () => {
 
       {/* ══ AURORA LAYER (emerald-dominant for clinic) ══ */}
       <div aria-hidden className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
-        <div style={{ position:'absolute', top:'0%', left:'5%', width:800, height:700,
-          background:`radial-gradient(ellipse, ${EM}20 0%, transparent 65%)`,
-          filter:'blur(100px)', animation:'aur-a 20s ease-in-out infinite', willChange:'transform' }} />
-        <div style={{ position:'absolute', top:'30%', right:'2%', width:600, height:500,
-          background:`radial-gradient(ellipse, ${CY}14 0%, transparent 65%)`,
-          filter:'blur(90px)', animation:'aur-b 26s ease-in-out infinite', willChange:'transform' }} />
-        <div style={{ position:'absolute', bottom:'5%', left:'30%', width:500, height:400,
-          background:`radial-gradient(ellipse, ${VI}10 0%, transparent 65%)`,
-          filter:'blur(90px)', animation:'aur-c 17s ease-in-out infinite', willChange:'transform' }} />
+        {/* Wide emerald curtain — main aurora */}
+        <div style={{ position:'absolute', top:'-15%', left:'-5%', right:'-5%', height:'80vh',
+          background:'radial-gradient(ellipse 92% 68% at 50% 0%, rgba(16,185,129,0.52) 0%, rgba(0,180,100,0.28) 35%, rgba(0,100,70,0.12) 62%, transparent 80%)',
+          filter:'blur(50px)', animation:'aur-a 20s ease-in-out infinite', willChange:'transform' }} />
+        {/* Left emerald column */}
+        <div style={{ position:'absolute', top:'-8%', left:'0%', width:660, height:720,
+          background:'radial-gradient(ellipse, rgba(16,185,129,0.42) 0%, transparent 60%)',
+          filter:'blur(52px)', animation:'aur-c 17s ease-in-out infinite', willChange:'transform' }} />
+        {/* Right cyan column */}
+        <div style={{ position:'absolute', top:'-5%', right:'0%', width:560, height:640,
+          background:'radial-gradient(ellipse, rgba(0,191,255,0.26) 0%, transparent 62%)',
+          filter:'blur(52px)', animation:'aur-b 26s ease-in-out infinite', willChange:'transform' }} />
+        {/* Violet bottom */}
+        <div style={{ position:'absolute', bottom:'5%', left:'30%', width:560, height:400,
+          background:'radial-gradient(ellipse, rgba(99,102,241,0.16) 0%, transparent 65%)',
+          filter:'blur(70px)', animation:'aur-a 22s ease-in-out infinite 4s', willChange:'transform' }} />
         <div style={{ position:'absolute', inset:0,
-          backgroundImage:'linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px)',
+          backgroundImage:'linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px)',
           backgroundSize:'64px 64px' }} />
       </div>
 
