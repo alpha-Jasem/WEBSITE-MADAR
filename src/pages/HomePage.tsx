@@ -364,7 +364,7 @@ export const HomePage = () => {
 
         <section id="experience" className="relative overflow-hidden bg-white py-20">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="gsap-reveal mx-auto max-w-3xl text-center">
+            <div className="mx-auto max-w-3xl text-center">
               <p className="text-sm font-black text-[#0099CC] font-cairo">من لحظة الدخول إلى التسليم</p>
               <h2 className="mt-3 text-3xl font-black leading-tight font-cairo sm:text-5xl">
                 كل خطوة في يوم المغسلة تصبح واضحة، سريعة، وقابلة للقياس.
@@ -624,7 +624,7 @@ export const HomePage = () => {
               {plans.map((plan) => (
                 <div
                   key={plan.name}
-                  className={`gsap-reveal relative rounded-[32px] border p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl ${
+                  className={`relative rounded-[32px] border p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl ${
                     plan.badge ? 'border-[#00BFFF] bg-[#F5FAFF]' : 'border-sky-100 bg-white'
                   }`}
                 >
