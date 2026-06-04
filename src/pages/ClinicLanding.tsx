@@ -13,11 +13,13 @@ import { useLanguage }      from '../context/LanguageContext'
 import { openWhatsAppChat } from '../lib/whatsapp'
 
 /* ── Design tokens ─────────────────────────────────────── */
-const NAVY    = '#0F2044'
-const NAVY2   = '#1B3A6B'
-const PT_MID  = '#9B9B9B'   // platinum mid
-const PT_LITE = '#E5E4E2'   // platinum light
-const BG2     = '#F4F6F9'   // section alternate
+const NAVY      = '#0F2044'
+const NAVY2     = '#1B3A6B'
+const PT_MID    = '#9B9B9B'   // platinum mid
+const PT_LITE   = '#E5E4E2'   // platinum light
+const BG2       = '#F4F6F9'   // section alternate
+const MADAR_BLUE = '#0099CC'  // Madar logo blue
+const MADAR_DARK = '#0D1B3E'  // Madar logo dark navy
 
 /* ── Features ──────────────────────────────────────────── */
 const features = [
@@ -33,13 +35,13 @@ const features = [
   },
   {
     icon: Shield,
-    ar: { title: 'Supabase + Google Calendar', desc: 'Supabase هو مصدر الحقيقة الوحيد. Google Calendar مرآة مرنة — الحجز ينجح حتى لو التقويم فشل.' },
-    en: { title: 'Supabase + Google Calendar', desc: 'Supabase is the single source of truth. Google Calendar is a resilient mirror — booking succeeds even if the calendar fails.' },
+    ar: { title: 'تكامل ذكي مع التقويم', desc: 'مصدر حقيقة واحد يدير جميع القنوات — الحجز ينجح تلقائياً ودائماً، بغض النظر عن أي خلل خارجي.' },
+    en: { title: 'Smart Calendar Sync', desc: 'A single source of truth manages all channels — booking succeeds automatically and reliably, regardless of any external issue.' },
   },
   {
     icon: BarChart3,
-    ar: { title: 'داشبورد إدارة المواعيد', desc: 'KPIs لحظية، تقويم شهري، قائمة المرضى، تقارير الأطباء — مع تحديث حي عبر Supabase Realtime.' },
-    en: { title: 'Appointment Management Dashboard', desc: 'Live KPIs, monthly calendar, patient list, doctor reports — with real-time updates via Supabase Realtime.' },
+    ar: { title: 'داشبورد إدارة المواعيد', desc: 'KPIs لحظية، تقويم شهري، قائمة المرضى، تقارير الأطباء — كل شيء يتحدث فورياً في مكان واحد.' },
+    en: { title: 'Appointment Management Dashboard', desc: 'Live KPIs, monthly calendar, patient list, doctor reports — everything updates instantly in one place.' },
   },
 ]
 
@@ -78,9 +80,9 @@ export const ClinicLanding = () => {
             backgroundImage: `linear-gradient(${PT_LITE}60 1px, transparent 1px), linear-gradient(90deg, ${PT_LITE}60 1px, transparent 1px)`,
             backgroundSize: '60px 60px',
           }} />
-        {/* Radial glow — navy tint center */}
+        {/* Radial glow — blue tint top left, navy tint top right */}
         <div className="absolute top-0 inset-x-0 pointer-events-none"
-          style={{ height: 480, background: `radial-gradient(ellipse 80% 60% at 50% -10%, ${NAVY}09 0%, transparent 70%)` }} />
+          style={{ height: 520, background: `radial-gradient(ellipse 60% 50% at 30% -5%, ${MADAR_BLUE}12 0%, transparent 65%), radial-gradient(ellipse 60% 50% at 70% -5%, ${NAVY}0A 0%, transparent 65%)` }} />
 
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
 
@@ -89,11 +91,11 @@ export const ClinicLanding = () => {
             initial={{ opacity: 0, y: -16 }} animate={heroInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-7"
-            style={{ background: `${PT_LITE}80`, border: `1px solid ${PT_MID}50` }}
+            style={{ background: `${MADAR_BLUE}10`, border: `1px solid ${MADAR_BLUE}40` }}
           >
-            <Sparkles size={11} style={{ color: NAVY }} />
+            <Sparkles size={11} style={{ color: MADAR_BLUE }} />
             <span className={`text-xs font-semibold tracking-widest uppercase ${isAr ? 'font-cairo' : 'font-work'}`}
-              style={{ color: NAVY }}>
+              style={{ color: MADAR_BLUE }}>
               Clinic OS — Madar
             </span>
           </motion.div>
@@ -106,8 +108,8 @@ export const ClinicLanding = () => {
             style={{ color: NAVY }}
           >
             {t(
-              <>نظّم عيادتك.<br /><span style={{ background: `linear-gradient(135deg, ${PT_MID}, ${NAVY})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>دع الذكاء يحجز.</span></>,
-              <>Manage Your Clinic.<br /><span style={{ background: `linear-gradient(135deg, ${PT_MID}, ${NAVY})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Let AI Book.</span></>
+              <>نظّم عيادتك.<br /><span style={{ background: `linear-gradient(135deg, ${MADAR_BLUE}, ${NAVY})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>دع الذكاء يحجز.</span></>,
+              <>Manage Your Clinic.<br /><span style={{ background: `linear-gradient(135deg, ${MADAR_BLUE}, ${NAVY})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Let AI Book.</span></>
             )}
           </motion.h1>
 
@@ -153,11 +155,11 @@ export const ClinicLanding = () => {
             transition={{ duration: 0.45, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
           >
             <motion.button
-              whileHover={{ scale: 1.02, boxShadow: `0 8px 32px ${NAVY}30` }}
+              whileHover={{ scale: 1.02, boxShadow: `0 8px 32px ${MADAR_BLUE}40` }}
               whileTap={{ scale: 0.97 }}
               onClick={() => openWhatsAppChat()}
               className={`inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl text-white font-semibold text-base cursor-pointer ${isAr ? 'font-cairo' : 'font-work'}`}
-              style={{ background: NAVY, boxShadow: `0 4px 20px ${NAVY}25` }}
+              style={{ background: `linear-gradient(135deg, ${MADAR_DARK}, ${MADAR_BLUE})`, boxShadow: `0 4px 20px ${MADAR_BLUE}30` }}
             >
               <span>{t('احجز عرضاً توضيحياً', 'Book a Demo')}</span>
               <ArrowIcon size={16} />
@@ -180,14 +182,15 @@ export const ClinicLanding = () => {
             transition={{ duration: 0.4, delay: 0.52 }}
           >
             {[
-              { val: '٢٤/٧', label: { ar: 'بدون توقف', en: 'Always on' } },
-              { val: '٧٨٪',  label: { ar: 'معدل التحويل', en: 'Conversion rate' } },
-              { val: '٠',    label: { ar: 'حجز مزدوج', en: 'Double bookings' } },
-              { val: '< ١ دق', label: { ar: 'تأكيد الحجز', en: 'Booking confirm' } },
+              { val: '٢٤/٧', label: { ar: 'بدون توقف', en: 'Always on' }, blue: true },
+              { val: '٧٨٪',  label: { ar: 'معدل التحويل', en: 'Conversion rate' }, blue: false },
+              { val: '٠',    label: { ar: 'حجز مزدوج', en: 'Double bookings' }, blue: true },
+              { val: '< ١ دق', label: { ar: 'تأكيد الحجز', en: 'Booking confirm' }, blue: false },
             ].map((s, i) => (
               <div key={i} className="text-center px-7 py-2"
                 style={{ borderInlineStart: i > 0 ? `1px solid ${PT_MID}30` : 'none' }}>
-                <div className={`text-2xl font-bold ${isAr ? 'font-cairo' : 'font-sora'}`} style={{ color: NAVY }}>{s.val}</div>
+                <div className={`text-2xl font-bold ${isAr ? 'font-cairo' : 'font-sora'}`}
+                  style={{ color: s.blue ? MADAR_BLUE : NAVY }}>{s.val}</div>
                 <div className={`text-xs mt-0.5 ${isAr ? 'font-tajawal' : 'font-work'}`} style={{ color: PT_MID }}>
                   {isAr ? s.label.ar : s.label.en}
                 </div>
@@ -204,8 +207,8 @@ export const ClinicLanding = () => {
             {/* Browser chrome frame */}
             <div className="rounded-2xl overflow-hidden"
               style={{
-                boxShadow: `0 32px 80px ${NAVY}18, 0 8px 24px ${NAVY}10`,
-                border: `1px solid ${PT_MID}30`,
+                boxShadow: `0 32px 80px ${MADAR_BLUE}18, 0 8px 24px ${NAVY}10`,
+                border: `1px solid ${MADAR_BLUE}30`,
               }}>
               {/* Top bar */}
               <div className="flex items-center gap-2 px-4 py-3"
@@ -238,8 +241,8 @@ export const ClinicLanding = () => {
             className="text-center mb-14"
           >
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-4"
-              style={{ background: `${PT_LITE}80`, border: `1px solid ${PT_MID}40` }}>
-              <span className={`text-[11px] font-semibold tracking-widest uppercase ${isAr ? 'font-cairo' : 'font-work'}`} style={{ color: NAVY }}>
+              style={{ background: `${MADAR_BLUE}10`, border: `1px solid ${MADAR_BLUE}35` }}>
+              <span className={`text-[11px] font-semibold tracking-widest uppercase ${isAr ? 'font-cairo' : 'font-work'}`} style={{ color: MADAR_BLUE }}>
                 {t('المزايا', 'Features')}
               </span>
             </div>
@@ -265,8 +268,8 @@ export const ClinicLanding = () => {
                   style={{ border: `1px solid ${PT_LITE}`, boxShadow: `0 2px 8px ${NAVY}06` }}
                 >
                   <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ background: `linear-gradient(135deg, ${PT_LITE}, ${PT_MID})` }}>
-                    <Icon size={20} style={{ color: NAVY }} />
+                    style={{ background: i % 2 === 0 ? `linear-gradient(135deg, ${MADAR_DARK}, ${MADAR_BLUE})` : `linear-gradient(135deg, ${PT_LITE}, ${PT_MID})` }}>
+                    <Icon size={20} style={{ color: i % 2 === 0 ? '#FFFFFF' : NAVY }} />
                   </div>
                   <div>
                     <h3 className={`font-bold mb-1.5 ${isAr ? 'font-cairo' : 'font-sora'}`} style={{ color: NAVY }}>{c.title}</h3>
@@ -289,8 +292,8 @@ export const ClinicLanding = () => {
             className="text-center mb-16"
           >
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-4"
-              style={{ background: `${PT_LITE}80`, border: `1px solid ${PT_MID}40` }}>
-              <span className={`text-[11px] font-semibold tracking-widest uppercase ${isAr ? 'font-cairo' : 'font-work'}`} style={{ color: NAVY }}>
+              style={{ background: `${MADAR_BLUE}10`, border: `1px solid ${MADAR_BLUE}35` }}>
+              <span className={`text-[11px] font-semibold tracking-widest uppercase ${isAr ? 'font-cairo' : 'font-work'}`} style={{ color: MADAR_BLUE }}>
                 {t('كيف يعمل', 'How It Works')}
               </span>
             </div>
@@ -326,7 +329,7 @@ export const ClinicLanding = () => {
                     <step.Icon size={22} style={{ color: NAVY }} />
                   </div>
                   <div className="absolute -top-2 -end-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold font-sora text-white"
-                    style={{ background: NAVY }}>
+                    style={{ background: `linear-gradient(135deg, ${MADAR_DARK}, ${MADAR_BLUE})`, boxShadow: `0 2px 8px ${MADAR_BLUE}40` }}>
                     {step.num}
                   </div>
                 </div>
@@ -366,7 +369,7 @@ export const ClinicLanding = () => {
                   </h3>
                 </div>
                 <div className="px-3 py-1 rounded-full text-xs font-medium"
-                  style={{ background: `${NAVY}0F`, color: NAVY, border: `1px solid ${NAVY}20` }}>
+                  style={{ background: `${MADAR_BLUE}12`, color: MADAR_BLUE, border: `1px solid ${MADAR_BLUE}35` }}>
                   {t('في الإنتاج', 'Live')}
                 </div>
               </div>
@@ -435,7 +438,7 @@ export const ClinicLanding = () => {
             backgroundSize: '48px 48px',
           }} />
         <div className="absolute top-0 inset-x-0 h-px"
-          style={{ background: `linear-gradient(90deg, transparent, ${PT_MID}50, transparent)` }} />
+          style={{ background: `linear-gradient(90deg, transparent, ${MADAR_BLUE}70, transparent)` }} />
 
         <div className="relative max-w-2xl mx-auto px-4 text-center">
           <motion.div
@@ -445,22 +448,22 @@ export const ClinicLanding = () => {
           >
             <h2 className={`text-3xl sm:text-4xl font-bold text-white mb-4 ${isAr ? 'font-cairo' : 'font-sora'}`}>
               {t(
-                <>جاهز تشغّل عيادتك<br /><span style={{ background: `linear-gradient(135deg, ${PT_MID}, ${PT_LITE})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>بشكل احترافي؟</span></>,
-                <>Ready to Run Your Clinic<br /><span style={{ background: `linear-gradient(135deg, ${PT_MID}, ${PT_LITE})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Like a Pro?</span></>
+                <>جاهز تشغّل عيادتك<br /><span style={{ background: `linear-gradient(135deg, ${MADAR_BLUE}, #00D4FF)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>بشكل احترافي؟</span></>,
+                <>Ready to Run Your Clinic<br /><span style={{ background: `linear-gradient(135deg, ${MADAR_BLUE}, #00D4FF)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Like a Pro?</span></>
               )}
             </h2>
             <p className={`text-base mb-8 ${isAr ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.55)' }}>
               {t('تواصل معنا وتقدر تشوف Demo كامل للنظام والداشبورد خلال ٢٤ ساعة.', 'Contact us and see a full system and dashboard demo within 24 hours.')}
             </p>
             <motion.button
-              whileHover={{ scale: 1.02, boxShadow: `0 0 40px ${PT_LITE}30` }}
+              whileHover={{ scale: 1.02, boxShadow: `0 0 40px ${MADAR_BLUE}50` }}
               whileTap={{ scale: 0.97 }}
               onClick={() => openWhatsAppChat()}
               className={`inline-flex items-center gap-2.5 px-8 py-4 rounded-2xl font-semibold text-base cursor-pointer ${isAr ? 'font-cairo' : 'font-work'}`}
               style={{
-                background: `linear-gradient(135deg, ${PT_MID}, ${PT_LITE})`,
-                color: NAVY,
-                boxShadow: `0 4px 24px ${PT_MID}40`,
+                background: `linear-gradient(135deg, ${MADAR_BLUE}, #00D4FF)`,
+                color: MADAR_DARK,
+                boxShadow: `0 4px 24px ${MADAR_BLUE}50`,
               }}
             >
               <span>{t('احجز عرضاً توضيحياً', 'Book a Demo')}</span>
