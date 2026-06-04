@@ -4,10 +4,12 @@ import {
   Car, Stethoscope, LayoutGrid, Rocket, Bot,
   ArrowLeft, ArrowRight, Zap,
 } from 'lucide-react'
-import { Navbar }          from '../components/public/Navbar'
-import { ProductsSection } from '../components/public/ProductsSection'
-import { Footer }          from '../components/public/Footer'
-import { useLanguage }     from '../context/LanguageContext'
+import { Navbar }           from '../components/public/Navbar'
+import { ProductsSection }  from '../components/public/ProductsSection'
+import { StickyOutcomes }   from '../components/public/StickyOutcomes'
+import { Pricing }          from '../components/public/Pricing'
+import { Footer }           from '../components/public/Footer'
+import { useLanguage }      from '../context/LanguageContext'
 
 const EM = '#10B981'
 const CY = '#0099CC'
@@ -328,6 +330,16 @@ export const PlatformHome = () => {
           </div>
         </div>
       </section>
+
+      {/* ════════════════════════ STICKY OUTCOMES ════════════════════════ */}
+      <div className="relative z-10">
+        <StickyOutcomes />
+      </div>
+
+      {/* ════════════════════════ PRICING ════════════════════════ */}
+      <div className="relative z-10">
+        <Pricing />
+      </div>
 
       {/* Products */}
       <div className="relative z-10">
