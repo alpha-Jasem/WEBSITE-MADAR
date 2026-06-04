@@ -72,23 +72,20 @@ const features = [
 
 const plans = [
   {
-    name: 'Starter',
-    price: '299',
-    note: 'للمغسلة التي تريد ترتيب التشغيل الأساسي بسرعة.',
-    points: ['لوحة تشغيل السيارات', 'إضافة السيارات من الموظف', 'سجل العملاء الأساسي', 'مالية يومية مبسطة'],
-  },
-  {
     name: 'Pro',
-    price: '699',
-    badge: 'الأفضل لمعظم المغاسل',
-    note: 'للمغسلة التي تريد QR، شاشة عرض، وقرارات أوضح.',
-    points: ['كل مزايا Starter', 'QR للتسجيل الذاتي', 'شاشة عرض مباشرة', 'العملاء والولاء', 'VAT وإغلاق اليوم', 'مساعد مدار AI'],
+    launchPrice: '500',
+    regularPrice: '799',
+    badge: 'عرض إطلاق لأول 5 مغاسل',
+    note: 'للمغسلة التي تريد نظام تشغيل كامل بسرعة: QR، شاشة عرض، عملاء، مالية، تقارير، ومساعد مدار AI.',
+    points: ['QR للتسجيل الذاتي', 'لوحة تشغيل السيارات', 'شاشة عرض مباشرة', 'العملاء والولاء', 'VAT وإغلاق اليوم', 'مساعد مدار AI'],
   },
   {
-    name: 'Premium',
-    price: '1,499',
-    note: 'للمغاسل الجادة أو الفروع التي تحتاج تجهيزات خاصة.',
-    points: ['كل مزايا Pro', 'تحليل أداء الموظفين', 'تقارير متقدمة', 'دعم أولوية', 'إعداد وتشغيل مخصص'],
+    name: 'Platinum',
+    launchPrice: '1,000',
+    regularPrice: '1,999',
+    badge: 'للمغاسل الجادة',
+    note: 'للمغسلة التي تريد إعداد أعمق، أولوية دعم، وتقارير وتوسعة جاهزة للفروع والإضافات.',
+    points: ['كل مزايا Pro', 'تحليل أداء الموظفين', 'تقارير متقدمة', 'دعم أولوية', 'تجهيز توسعة الفروع', 'إعداد وتشغيل مخصص'],
   },
 ]
 
@@ -623,7 +620,7 @@ export const HomePage = () => {
               </p>
             </div>
 
-            <div className="mt-12 grid gap-5 lg:grid-cols-3">
+            <div className="mx-auto mt-12 grid max-w-5xl gap-5 lg:grid-cols-2">
               {plans.map((plan) => (
                 <div
                   key={plan.name}
@@ -638,9 +635,17 @@ export const HomePage = () => {
                   )}
                   <h3 className="text-2xl font-black font-cairo">{plan.name}</h3>
                   <p className="mt-3 min-h-[56px] leading-7 text-slate-600 font-tajawal">{plan.note}</p>
-                  <div className="mt-6 flex items-end gap-2">
-                    <span className="font-sora text-5xl font-black">{plan.price}</span>
-                    <span className="mb-2 text-sm font-bold text-slate-500 font-tajawal">ر.س / شهر</span>
+                  <div className="mt-6 rounded-3xl border border-sky-100 bg-white p-4">
+                    <div className="flex items-end gap-2">
+                      <span className="font-sora text-5xl font-black">{plan.launchPrice}</span>
+                      <span className="mb-2 text-sm font-bold text-slate-500 font-tajawal">ر.س / شهر</span>
+                    </div>
+                    <p className="mt-2 text-xs font-bold text-emerald-600 font-tajawal">
+                      سعر الإطلاق لأول 5 مغاسل
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500 font-tajawal">
+                      بعد أول 5 مغاسل: <span className="font-sora line-through">{plan.regularPrice}</span> ر.س / شهر
+                    </p>
                   </div>
                   <button
                     onClick={requestDemo}
