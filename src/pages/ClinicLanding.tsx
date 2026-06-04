@@ -13,19 +13,23 @@ import { useLanguage }      from '../context/LanguageContext'
 import { openWhatsAppChat } from '../lib/whatsapp'
 
 /* ── Design tokens ─────────────────────────────── */
-const BG  = '#04080C'
-const EM  = '#10B981'
-const EM2 = '#059669'
-const CY  = '#0099CC'
-const VI  = '#6366F1'
+const BG     = '#F8FAFC'
+const WHITE  = '#FFFFFF'
+const EM     = '#10B981'
+const EM2    = '#059669'
+const EM_LT  = '#F0FDF8'  // emerald-50 tint
+const CY     = '#0099CC'
+const DARK   = '#0F172A'
+const MID    = '#475569'
+const BORDER = '#E2E8F0'
+const EM_BORDER = '#A7F3D0'
 
 const fadeUp = (delay = 0) => ({
-  initial   : { opacity: 0, y: 32 },
-  animate   : { opacity: 1, y: 0  },
-  transition: { duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] as [number,number,number,number] },
+  initial   : { opacity: 0, y: 28 },
+  animate   : { opacity: 1, y: 0 },
+  transition: { duration: 0.65, delay, ease: [0.16, 1, 0.3, 1] as [number,number,number,number] },
 })
 
-/* ── Features ──────────────────────────────────── */
 const features = [
   {
     icon: Bot, accent: EM,
@@ -38,7 +42,7 @@ const features = [
     en: { title: 'Zero Double-Booking', desc: 'A unique index on (doctor, date, time) prevents conflicts automatically — regardless of how many channels.' },
   },
   {
-    icon: Shield, accent: VI,
+    icon: Shield, accent: '#8B5CF6',
     ar: { title: 'تكامل ذكي مع التقويم', desc: 'مصدر حقيقة واحد يدير جميع القنوات — الحجز ينجح تلقائياً ودائماً، بغض النظر عن أي خلل خارجي.' },
     en: { title: 'Smart Calendar Sync',   desc: 'A single source of truth manages all channels — booking succeeds reliably even if any external service fails.' },
   },
@@ -49,7 +53,6 @@ const features = [
   },
 ]
 
-/* ── Metrics (case study) ───────────────────────── */
 const metrics = [
   { icon: Clock,  before:{ ar:'٣+ ساعات',    en:'3+ Hours'    }, after:{ ar:'< دقيقة', en:'< 1 Min' }, label:{ ar:'وقت تأكيد الحجز', en:'Booking confirm' } },
   { icon: Users,  before:{ ar:'٤٠٪',          en:'40%'         }, after:{ ar:'٠٪',      en:'0%'      }, label:{ ar:'حجوزات ضائعة',   en:'Missed bookings' } },
@@ -73,8 +76,8 @@ export const ClinicLanding = () => {
 
   const stats = [
     { value: '٢٤/٧',  label: { ar: 'استقبال بلا توقف',  en: 'Always receiving'  }, color: EM    },
-    { value: '٧٨٪',   label: { ar: 'معدل التحويل',       en: 'Conversion rate'   }, color: 'white' },
-    { value: '٠',     label: { ar: 'حجوزات متعارضة',     en: 'Double bookings'   }, color: CY    },
+    { value: '٧٨٪',   label: { ar: 'معدل التحويل',       en: 'Conversion rate'   }, color: DARK  },
+    { value: '٠',     label: { ar: 'حجوزات متعارضة',     en: 'Double bookings'   }, color: CY   },
   ]
 
   const chips = [
@@ -85,25 +88,14 @@ export const ClinicLanding = () => {
   ]
 
   return (
-    <div style={{ background: BG, minHeight:'100vh', direction: isAr ? 'rtl' : 'ltr', position:'relative', overflowX:'hidden' }}>
+    <div style={{ background: BG, minHeight:'100vh', direction: isAr ? 'rtl' : 'ltr', overflowX:'hidden' }}>
 
-      {/* ══ AURORA ══ */}
-      <div aria-hidden className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
-        <div style={{ position:'absolute', top:'-15%', left:'-5%', right:'-5%', height:'80vh',
-          background:'radial-gradient(ellipse 92% 68% at 50% 0%, rgba(16,185,129,0.52) 0%, rgba(0,180,100,0.28) 35%, rgba(0,100,70,0.12) 62%, transparent 80%)',
-          filter:'blur(50px)', animation:'aur-a 20s ease-in-out infinite', willChange:'transform' }} />
-        <div style={{ position:'absolute', top:'-8%', left:'0%', width:660, height:720,
-          background:'radial-gradient(ellipse, rgba(16,185,129,0.42) 0%, transparent 60%)',
-          filter:'blur(52px)', animation:'aur-c 17s ease-in-out infinite', willChange:'transform' }} />
-        <div style={{ position:'absolute', top:'-5%', right:'0%', width:560, height:640,
-          background:'radial-gradient(ellipse, rgba(0,191,255,0.26) 0%, transparent 62%)',
-          filter:'blur(52px)', animation:'aur-b 26s ease-in-out infinite', willChange:'transform' }} />
-        <div style={{ position:'absolute', bottom:'5%', left:'30%', width:560, height:400,
-          background:'radial-gradient(ellipse, rgba(99,102,241,0.16) 0%, transparent 65%)',
-          filter:'blur(70px)', animation:'aur-a 22s ease-in-out infinite 4s', willChange:'transform' }} />
-        <div style={{ position:'absolute', inset:0,
-          backgroundImage:'linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px)',
-          backgroundSize:'64px 64px' }} />
+      {/* Subtle top accent */}
+      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
+        <div style={{
+          position: 'absolute', top: 0, left: '-10%', right: '-10%', height: '55vh',
+          background: 'radial-gradient(ellipse 80% 60% at 50% -5%, rgba(16,185,129,0.09) 0%, rgba(0,153,204,0.05) 50%, transparent 75%)',
+        }} />
       </div>
 
       <Navbar />
@@ -113,9 +105,9 @@ export const ClinicLanding = () => {
         style={{ paddingTop: '10rem', paddingBottom: '4rem' }}>
 
         {/* Badge */}
-        <motion.div {...fadeUp(0.1)} animate={heroInView ? { opacity:1, y:0 } : { opacity:0, y:32 }}
+        <motion.div {...fadeUp(0.1)} animate={heroInView ? { opacity:1, y:0 } : { opacity:0, y:28 }}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-7"
-          style={{ background:`${EM}12`, border:`1px solid ${EM}38` }}>
+          style={{ background: EM_LT, border: `1px solid ${EM_BORDER}` }}>
           <Zap size={11} style={{ color: EM }} />
           <span className={`text-xs font-semibold tracking-widest uppercase ${isAr ? 'font-cairo' : 'font-work'}`}
             style={{ color: EM }}>
@@ -125,9 +117,9 @@ export const ClinicLanding = () => {
 
         {/* H1 */}
         <motion.h1
-          {...fadeUp(0.18)} animate={heroInView ? { opacity:1, y:0 } : { opacity:0, y:32 }}
+          {...fadeUp(0.18)} animate={heroInView ? { opacity:1, y:0 } : { opacity:0, y:28 }}
           className={`text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.06] mb-6 max-w-4xl ${isAr ? 'font-cairo' : 'font-sora'}`}
-          style={{ color: 'white', letterSpacing: '-0.025em' }}
+          style={{ color: DARK, letterSpacing: '-0.025em' }}
         >
           {t(
             <>{`نظّم عيادتك.`}<br /><span style={{ background:`linear-gradient(135deg, ${EM} 30%, ${CY})`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>دع الذكاء يحجز.</span></>,
@@ -137,9 +129,9 @@ export const ClinicLanding = () => {
 
         {/* Subtitle */}
         <motion.p
-          {...fadeUp(0.26)} animate={heroInView ? { opacity:1, y:0 } : { opacity:0, y:32 }}
+          {...fadeUp(0.26)} animate={heroInView ? { opacity:1, y:0 } : { opacity:0, y:28 }}
           className={`text-lg sm:text-xl max-w-xl mb-8 leading-relaxed ${isAr ? 'font-tajawal' : 'font-work'}`}
-          style={{ color: 'rgba(255,255,255,0.45)' }}>
+          style={{ color: MID }}>
           {t(
             'مساعد استقبال بالذكاء الاصطناعي يعمل ٢٤/٧ — يحجز المواعيد بدون تعارض، ويدير المرضى من لوحة واحدة. بدون موظف إضافي.',
             'An AI receptionist running 24/7 — books appointments without conflicts and manages patients from one dashboard. No extra staff needed.'
@@ -148,14 +140,14 @@ export const ClinicLanding = () => {
 
         {/* Chips */}
         <motion.div
-          {...fadeUp(0.3)} animate={heroInView ? { opacity:1, y:0 } : { opacity:0, y:32 }}
+          {...fadeUp(0.3)} animate={heroInView ? { opacity:1, y:0 } : { opacity:0, y:28 }}
           className="flex flex-wrap justify-center gap-2 mb-9">
           {chips.map((c, i) => (
             <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-              style={{ background:`${EM}0F`, border:`1px solid ${EM}28` }}>
+              style={{ background: EM_LT, border: `1px solid ${EM_BORDER}` }}>
               <Check size={9} strokeWidth={3} style={{ color: EM }} />
               <span className={`text-xs font-medium ${isAr ? 'font-tajawal' : 'font-work'}`}
-                style={{ color:'rgba(255,255,255,0.65)' }}>
+                style={{ color: '#065F46' }}>
                 {isAr ? c.ar : c.en}
               </span>
             </div>
@@ -164,38 +156,38 @@ export const ClinicLanding = () => {
 
         {/* CTAs */}
         <motion.div
-          {...fadeUp(0.36)} animate={heroInView ? { opacity:1, y:0 } : { opacity:0, y:32 }}
+          {...fadeUp(0.36)} animate={heroInView ? { opacity:1, y:0 } : { opacity:0, y:28 }}
           className="flex flex-col sm:flex-row items-center gap-3 mb-14">
           <motion.button
-            whileHover={{ scale:1.03, boxShadow:`0 0 36px ${EM}50` }}
+            whileHover={{ scale:1.03, boxShadow:`0 8px 32px ${EM}40` }}
             whileTap={{ scale:0.97 }}
             onClick={() => openWhatsAppChat()}
             className={`inline-flex items-center gap-2 px-8 py-4 rounded-2xl text-white font-bold text-sm cursor-pointer ${isAr ? 'font-cairo' : 'font-work'}`}
-            style={{ background:`linear-gradient(135deg, ${EM2}, ${EM})`, boxShadow:`0 4px 24px ${EM}35` }}>
+            style={{ background:`linear-gradient(135deg, ${EM2}, ${EM})`, boxShadow:`0 4px 20px ${EM}35` }}>
             {t('احجز عرضاً توضيحياً', 'Book a Demo')}
             <ArrowIcon size={15} />
           </motion.button>
           <motion.button
-            whileHover={{ scale:1.02, borderColor:'rgba(255,255,255,0.28)', color:'white' }}
+            whileHover={{ scale:1.02, borderColor: EM, color: EM }}
             whileTap={{ scale:0.97 }}
             onClick={() => document.getElementById('features')?.scrollIntoView({ behavior:'smooth' })}
             className={`inline-flex items-center gap-2 px-7 py-4 rounded-2xl font-medium text-sm cursor-pointer transition-colors ${isAr ? 'font-cairo' : 'font-work'}`}
-            style={{ border:'1px solid rgba(255,255,255,0.14)', color:'rgba(255,255,255,0.6)', background:'transparent' }}>
+            style={{ border:`1px solid ${BORDER}`, color: MID, background:'transparent' }}>
             {t('اكتشف المزايا', 'Explore Features')}
           </motion.button>
         </motion.div>
 
-        {/* Stats — no cards, text with dividers */}
+        {/* Stats — no cards, dividers */}
         <motion.div
-          {...fadeUp(0.42)} animate={heroInView ? { opacity:1, y:0 } : { opacity:0, y:32 }}
+          {...fadeUp(0.42)} animate={heroInView ? { opacity:1, y:0 } : { opacity:0, y:28 }}
           className="flex flex-wrap items-center justify-center mb-16">
           {stats.map((s, i) => (
             <div key={i} className="text-center px-8 py-3"
-              style={{ borderInlineStart: i > 0 ? '1px solid rgba(255,255,255,0.09)' : 'none' }}>
+              style={{ borderInlineStart: i > 0 ? `1px solid ${BORDER}` : 'none' }}>
               <div className={`text-3xl font-black ${isAr ? 'font-cairo' : 'font-sora'}`}
                 style={{ color: s.color, letterSpacing: '-1px' }}>{s.value}</div>
               <div className={`text-xs mt-1 ${isAr ? 'font-tajawal' : 'font-work'}`}
-                style={{ color: 'rgba(255,255,255,0.28)' }}>
+                style={{ color: '#94A3B8' }}>
                 {isAr ? s.label.ar : s.label.en}
               </div>
             </div>
@@ -204,19 +196,22 @@ export const ClinicLanding = () => {
 
         {/* Dashboard mockup — full width browser frame */}
         <motion.div
-          {...fadeUp(0.52)} animate={heroInView ? { opacity:1, y:0 } : { opacity:0, y:32 }}
+          {...fadeUp(0.52)} animate={heroInView ? { opacity:1, y:0 } : { opacity:0, y:28 }}
           className="w-full max-w-5xl rounded-3xl overflow-hidden"
-          style={{ boxShadow:`0 40px 100px ${EM}15, 0 8px 24px rgba(0,0,0,0.4)`, border:`1px solid ${EM}22` }}>
+          style={{
+            boxShadow: `0 40px 80px rgba(15,23,42,0.12), 0 8px 24px rgba(15,23,42,0.06)`,
+            border: `1px solid ${BORDER}`,
+          }}>
           {/* Browser chrome */}
           <div className="flex items-center gap-2 px-4 py-3"
-            style={{ background:'rgba(255,255,255,0.04)', borderBottom:'1px solid rgba(255,255,255,0.07)' }}>
+            style={{ background: '#F1F5F9', borderBottom: `1px solid ${BORDER}` }}>
             <div className="flex gap-1.5">
-              {[0,1,2].map(i => (
-                <div key={i} className="w-3 h-3 rounded-full" style={{ background:'rgba(255,255,255,0.12)' }} />
+              {['#FCA5A5','#FCD34D','#6EE7B7'].map((c,i) => (
+                <div key={i} className="w-3 h-3 rounded-full" style={{ background: c }} />
               ))}
             </div>
             <div className="flex-1 mx-4 px-3 py-1 rounded-lg text-xs text-center"
-              style={{ background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.08)', color:'rgba(255,255,255,0.35)', fontFamily:'monospace' }}>
+              style={{ background: WHITE, border: `1px solid ${BORDER}`, color: '#94A3B8', fontFamily:'monospace' }}>
               app.madar.software/clinic
             </div>
           </div>
@@ -226,10 +221,9 @@ export const ClinicLanding = () => {
 
       {/* ════════════════════════ FEATURES ════════════════════════ */}
       <section id="features" ref={featuresRef} className="relative z-10 py-28"
-        style={{ borderTop:'1px solid rgba(255,255,255,0.06)' }}>
+        style={{ background: WHITE, borderTop:`1px solid ${BORDER}`, borderBottom:`1px solid ${BORDER}` }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 
-          {/* Header */}
           <motion.div
             initial={{ opacity:0, y:20 }} animate={featuresInView ? { opacity:1, y:0 } : {}}
             transition={{ duration:0.55 }}
@@ -238,18 +232,17 @@ export const ClinicLanding = () => {
               style={{ color: EM }}>
               {t('المزايا', 'Features')}
             </p>
-            <h2 className={`text-4xl sm:text-5xl font-black text-white ${isAr ? 'font-cairo' : 'font-sora'}`}
-              style={{ letterSpacing:'-0.025em' }}>
+            <h2 className={`text-4xl sm:text-5xl font-black mb-4 ${isAr ? 'font-cairo' : 'font-sora'}`}
+              style={{ color: DARK, letterSpacing:'-0.025em' }}>
               {t('نظام مبني خصيصاً للعيادات', 'Purpose-Built for Clinics')}
             </h2>
-            <p className={`text-base mt-4 max-w-md mx-auto ${isAr ? 'font-tajawal' : 'font-work'}`}
-              style={{ color:'rgba(255,255,255,0.32)' }}>
+            <p className={`text-base max-w-md mx-auto ${isAr ? 'font-tajawal' : 'font-work'}`}
+              style={{ color: MID }}>
               {t('ليس بوت عام — كل ميزة مصممة لاحتياجات العيادة الخليجية.', 'Not a generic bot — every feature designed for Gulf clinic needs.')}
             </p>
           </motion.div>
 
-          {/* Features — open 2-col layout, no card borders */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-14">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-12">
             {features.map((f, i) => {
               const Icon = f.icon
               const c = isAr ? f.ar : f.en
@@ -260,13 +253,18 @@ export const ClinicLanding = () => {
                   transition={{ duration:0.6, delay: i * 0.09, ease:[0.16,1,0.3,1] }}
                   className="flex gap-5 items-start">
                   <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 mt-0.5"
-                    style={{ background:`${f.accent}18`, border:`1px solid ${f.accent}30`, boxShadow:`0 4px 20px ${f.accent}15` }}>
+                    style={{
+                      background: `${f.accent}12`,
+                      border: `1px solid ${f.accent}28`,
+                      boxShadow: `0 4px 16px ${f.accent}10`,
+                    }}>
                     <Icon size={20} style={{ color: f.accent }} />
                   </div>
                   <div>
-                    <h3 className={`font-bold text-white mb-2 text-lg ${isAr ? 'font-cairo' : 'font-sora'}`}>{c.title}</h3>
+                    <h3 className={`font-bold mb-2 text-lg ${isAr ? 'font-cairo' : 'font-sora'}`}
+                      style={{ color: DARK }}>{c.title}</h3>
                     <p className={`text-sm leading-relaxed ${isAr ? 'font-tajawal' : 'font-work'}`}
-                      style={{ color:'rgba(255,255,255,0.42)' }}>{c.desc}</p>
+                      style={{ color: MID }}>{c.desc}</p>
                   </div>
                 </motion.div>
               )
@@ -277,32 +275,27 @@ export const ClinicLanding = () => {
 
       {/* ════════════════════════ HOW IT WORKS ════════════════════════ */}
       <section ref={stepsRef} className="relative z-10 py-28"
-        style={{ borderTop:'1px solid rgba(255,255,255,0.06)' }}>
+        style={{ background: EM_LT }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 
-          {/* Header */}
           <motion.div
             initial={{ opacity:0, y:20 }} animate={stepsInView ? { opacity:1, y:0 } : {}}
             transition={{ duration:0.55 }}
             className="text-center mb-20">
             <p className={`text-[11px] font-semibold tracking-[0.25em] uppercase mb-4 ${isAr ? 'font-cairo' : 'font-work'}`}
-              style={{ color: CY }}>
+              style={{ color: EM }}>
               {t('كيف يعمل', 'How It Works')}
             </p>
-            <h2 className={`text-4xl sm:text-5xl font-black text-white ${isAr ? 'font-cairo' : 'font-sora'}`}
-              style={{ letterSpacing:'-0.025em' }}>
+            <h2 className={`text-4xl sm:text-5xl font-black ${isAr ? 'font-cairo' : 'font-sora'}`}
+              style={{ color: DARK, letterSpacing:'-0.025em' }}>
               {t('٣ خطوات — وبعدها يشتغل لوحده', '3 Steps — Then It Runs Itself')}
             </h2>
           </motion.div>
 
-          {/* Steps — open layout, no card borders */}
           <div className="relative grid grid-cols-1 md:grid-cols-3">
-            {/* Horizontal connector line on desktop */}
+            {/* Connector line */}
             <div className="hidden md:block absolute top-12 pointer-events-none"
-              style={{
-                left:'20%', right:'20%', height:1,
-                background:'linear-gradient(90deg, transparent, rgba(255,255,255,0.10) 20%, rgba(255,255,255,0.10) 80%, transparent)',
-              }} />
+              style={{ left:'20%', right:'20%', height:1, background:`linear-gradient(90deg, transparent, ${EM}40 20%, ${EM}40 80%, transparent)` }} />
 
             {[
               { num:'01', numAr:'١', Icon: Phone,         accent: EM,
@@ -313,7 +306,7 @@ export const ClinicLanding = () => {
                 title:{ ar:'النظام يحجز له موعد',    en:'System Books the Appointment' },
                 desc :{ ar:'يفحص الجدول، يختار الدكتور، ويثبت الموعد فوراً.', en:'Checks the schedule, picks the doctor, confirms instantly.' },
               },
-              { num:'03', numAr:'٣', Icon: MessageSquare, accent: VI,
+              { num:'03', numAr:'٣', Icon: MessageSquare, accent: '#8B5CF6',
                 title:{ ar:'يوصله تأكيد فوري',       en:'Instant Confirmation Sent'    },
                 desc :{ ar:'رسالة واتساب تلقائية — الاسم، الدكتور، الوقت.', en:'Auto WhatsApp — name, doctor, time. All set.' },
               },
@@ -324,24 +317,22 @@ export const ClinicLanding = () => {
                 transition={{ duration:0.65, delay: i * 0.12, ease:[0.16,1,0.3,1] }}
                 className="flex flex-col items-center text-center gap-5 px-8 py-10"
               >
-                {/* Icon circle */}
                 <div className="relative">
                   <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
-                    style={{ background:`${step.accent}18`, border:`1px solid ${step.accent}35`, boxShadow:`0 0 30px ${step.accent}18` }}>
+                    style={{ background: WHITE, border:`1px solid ${BORDER}`, boxShadow:`0 8px 24px rgba(15,23,42,0.08)` }}>
                     <step.Icon size={22} style={{ color: step.accent }} />
                   </div>
-                  {/* Step badge */}
-                  <div className="absolute -top-2 -end-2 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black"
-                    style={{ background: step.accent, color: BG }}>
+                  <div className="absolute -top-2 -end-2 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white"
+                    style={{ background: step.accent }}>
                     {isAr ? step.numAr : i + 1}
                   </div>
                 </div>
-
-                <h3 className={`text-lg font-bold text-white ${isAr ? 'font-cairo' : 'font-sora'}`}>
+                <h3 className={`text-lg font-bold ${isAr ? 'font-cairo' : 'font-sora'}`}
+                  style={{ color: DARK }}>
                   {isAr ? step.title.ar : step.title.en}
                 </h3>
                 <p className={`text-sm leading-relaxed max-w-xs ${isAr ? 'font-tajawal' : 'font-work'}`}
-                  style={{ color:'rgba(255,255,255,0.4)' }}>
+                  style={{ color: MID }}>
                   {isAr ? step.desc.ar : step.desc.en}
                 </p>
               </motion.div>
@@ -352,10 +343,9 @@ export const ClinicLanding = () => {
 
       {/* ════════════════════════ CASE STUDY ════════════════════════ */}
       <section ref={caseRef} className="relative z-10 py-28"
-        style={{ borderTop:'1px solid rgba(255,255,255,0.06)' }}>
+        style={{ background: WHITE, borderTop:`1px solid ${BORDER}` }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
 
-          {/* Header */}
           <motion.div
             initial={{ opacity:0, y:20 }} animate={caseInView ? { opacity:1, y:0 } : {}}
             transition={{ duration:0.55 }}
@@ -364,43 +354,44 @@ export const ClinicLanding = () => {
               style={{ color: EM }}>
               {t('دراسة حالة', 'Case Study')}
             </p>
-            <h2 className={`text-4xl sm:text-5xl font-black text-white ${isAr ? 'font-cairo' : 'font-sora'}`}
-              style={{ letterSpacing:'-0.025em' }}>
+            <h2 className={`text-4xl sm:text-5xl font-black ${isAr ? 'font-cairo' : 'font-sora'}`}
+              style={{ color: DARK, letterSpacing:'-0.025em' }}>
               {t('عيادات نور للأسنان — جدة', 'Noor Dental Clinics — Jeddah')}
             </h2>
             <div className="flex items-center justify-center gap-2 mt-4">
               <div className="w-2 h-2 rounded-full" style={{ background:'#4ADE80', animation:'pulse-live 2s ease-in-out infinite' }} />
               <span className={`text-sm ${isAr ? 'font-tajawal' : 'font-work'}`}
-                style={{ color:'rgba(255,255,255,0.38)' }}>
+                style={{ color: MID }}>
                 {t('في الإنتاج الآن', 'Live in Production')}
               </span>
             </div>
           </motion.div>
 
-          {/* Metrics row — no card boxes, text with dividers */}
+          {/* Metrics row */}
           <motion.div
             initial={{ opacity:0, y:24 }} animate={caseInView ? { opacity:1, y:0 } : {}}
             transition={{ duration:0.6, delay:0.12 }}
-            className="flex flex-col sm:flex-row items-stretch justify-center mb-16">
+            className="flex flex-col sm:flex-row items-stretch justify-center mb-14"
+            style={{ background: WHITE, border:`1px solid ${BORDER}`, borderRadius: 20, overflow:'hidden', boxShadow:'0 8px 32px rgba(15,23,42,0.07)' }}>
             {metrics.map((m, i) => {
               const Icon = m.icon
               return (
                 <div key={i} className="flex-1 flex flex-col items-center text-center gap-3 px-8 py-8"
-                  style={{ borderInlineStart: i > 0 ? '1px solid rgba(255,255,255,0.07)' : 'none' }}>
+                  style={{ borderInlineStart: i > 0 ? `1px solid ${BORDER}` : 'none' }}>
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{ background:`${EM}18` }}>
+                    style={{ background: `${EM}12` }}>
                     <Icon size={16} style={{ color: EM }} />
                   </div>
                   <div className={`text-xs ${isAr ? 'font-tajawal' : 'font-work'}`}
-                    style={{ color:'rgba(255,255,255,0.28)' }}>
+                    style={{ color: '#94A3B8' }}>
                     {isAr ? m.label.ar : m.label.en}
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`text-sm line-through ${isAr ? 'font-cairo' : 'font-work'}`}
-                      style={{ color:'rgba(255,255,255,0.20)' }}>
+                      style={{ color: '#CBD5E1' }}>
                       {isAr ? m.before.ar : m.before.en}
                     </span>
-                    <ArrowRight size={10} style={{ color:'rgba(255,255,255,0.20)' }} />
+                    <ArrowRight size={10} style={{ color: '#CBD5E1' }} />
                     <span className={`text-2xl font-black ${isAr ? 'font-cairo' : 'font-sora'}`}
                       style={{ color: EM, letterSpacing:'-1px' }}>
                       {isAr ? m.after.ar : m.after.en}
@@ -411,22 +402,23 @@ export const ClinicLanding = () => {
             })}
           </motion.div>
 
-          {/* Testimonial — clean, borderless */}
+          {/* Testimonial */}
           <motion.div
             initial={{ opacity:0, y:20 }} animate={caseInView ? { opacity:1, y:0 } : {}}
             transition={{ duration:0.6, delay:0.24 }}
             className="text-center max-w-2xl mx-auto">
-            <p className={`text-lg leading-relaxed italic mb-5 ${isAr ? 'font-tajawal' : 'font-work'}`}
-              style={{ color:'rgba(255,255,255,0.55)' }}>
+            <div className="text-3xl mb-4" style={{ color: '#CBD5E1' }}>"</div>
+            <p className={`text-lg leading-relaxed mb-5 ${isAr ? 'font-tajawal' : 'font-work'}`}
+              style={{ color: MID, fontStyle:'italic' }}>
               {t(
-                '"المساعد الذكي يستقبل الحجوزات بالليل والعطل وأنا مرتاح. الداشبورد يعطيني كل شيء في مكان واحد — الأطباء، المرضى، التقارير."',
-                '"The AI assistant handles bookings at night and on weekends while I rest. The dashboard gives me everything in one place — doctors, patients, reports."'
+                'المساعد الذكي يستقبل الحجوزات بالليل والعطل وأنا مرتاح. الداشبورد يعطيني كل شيء في مكان واحد — الأطباء، المرضى، التقارير.',
+                'The AI assistant handles bookings at night and on weekends while I rest. The dashboard gives me everything in one place — doctors, patients, reports.'
               )}
             </p>
             <div className="flex items-center justify-center gap-2">
               <TrendingUp size={12} style={{ color: EM }} />
               <p className={`text-xs font-semibold ${isAr ? 'font-cairo' : 'font-work'}`}
-                style={{ color:'rgba(255,255,255,0.3)' }}>
+                style={{ color: '#94A3B8' }}>
                 {t('إدارة عيادات نور — جدة', 'Noor Clinics Management — Jeddah')}
               </p>
             </div>
@@ -435,26 +427,16 @@ export const ClinicLanding = () => {
       </section>
 
       {/* ════════════════════════ CTA ════════════════════════ */}
-      <section className="relative z-10 py-24">
+      <section className="relative z-10 py-24"
+        style={{ background: `linear-gradient(135deg, #ECFDF5 0%, #F0F9FF 100%)`, borderTop:`1px solid ${EM_BORDER}` }}>
         <div className="max-w-2xl mx-auto px-4 text-center">
           <motion.div
             initial={{ opacity:0, y:24 }} whileInView={{ opacity:1, y:0 }}
             viewport={{ once:true }}
-            transition={{ duration:0.6 }}
-            className="relative overflow-hidden rounded-3xl p-10 sm:p-14"
-            style={{
-              background:`linear-gradient(135deg, ${EM}18 0%, transparent 50%, ${CY}12 100%)`,
-              border:`1px solid ${EM}30`,
-              boxShadow:`0 40px 100px ${EM}20`,
-            }}
-          >
-            <div className="absolute top-0 inset-x-0 h-px"
-              style={{ background:`linear-gradient(90deg, transparent, ${EM}80, transparent)` }} />
-            <div className="absolute bottom-0 inset-x-0 h-px"
-              style={{ background:`linear-gradient(90deg, transparent, ${CY}50, transparent)` }} />
+            transition={{ duration:0.6 }}>
 
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-6"
-              style={{ background:`${EM}15`, border:`1px solid ${EM}30` }}>
+              style={{ background: EM_LT, border:`1px solid ${EM_BORDER}` }}>
               <Sparkles size={10} style={{ color: EM }} />
               <span className={`text-[10px] font-semibold tracking-widest uppercase ${isAr ? 'font-cairo' : 'font-work'}`}
                 style={{ color: EM }}>
@@ -462,23 +444,23 @@ export const ClinicLanding = () => {
               </span>
             </div>
 
-            <h2 className={`text-3xl sm:text-4xl font-black text-white mb-4 ${isAr ? 'font-cairo' : 'font-sora'}`}
-              style={{ letterSpacing:'-0.02em' }}>
+            <h2 className={`text-3xl sm:text-4xl font-black mb-4 ${isAr ? 'font-cairo' : 'font-sora'}`}
+              style={{ color: DARK, letterSpacing:'-0.02em' }}>
               {t(
                 <>جاهز تشغّل عيادتك<br /><span style={{ background:`linear-gradient(135deg, ${EM}, ${CY})`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>بشكل احترافي؟</span></>,
                 <>Ready to Run Your Clinic<br /><span style={{ background:`linear-gradient(135deg, ${EM}, ${CY})`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>Like a Pro?</span></>
               )}
             </h2>
             <p className={`text-base mb-8 ${isAr ? 'font-tajawal' : 'font-work'}`}
-              style={{ color:'rgba(255,255,255,0.45)' }}>
+              style={{ color: MID }}>
               {t('تواصل معنا وتقدر تشوف Demo كامل للنظام خلال ٢٤ ساعة.', 'Contact us and see a full system demo within 24 hours.')}
             </p>
             <motion.button
-              whileHover={{ scale:1.02, boxShadow:`0 0 50px ${EM}55` }}
+              whileHover={{ scale:1.02, boxShadow:`0 8px 40px ${EM}45` }}
               whileTap={{ scale:0.97 }}
               onClick={() => openWhatsAppChat()}
-              className={`inline-flex items-center gap-2.5 px-8 py-4 rounded-2xl font-bold text-base cursor-pointer ${isAr ? 'font-cairo' : 'font-work'}`}
-              style={{ background:`linear-gradient(135deg, ${EM2}, ${EM})`, color:'white', boxShadow:`0 4px 24px ${EM}40` }}
+              className={`inline-flex items-center gap-2.5 px-8 py-4 rounded-2xl font-bold text-base cursor-pointer text-white ${isAr ? 'font-cairo' : 'font-work'}`}
+              style={{ background:`linear-gradient(135deg, ${EM2}, ${EM})`, boxShadow:`0 4px 20px ${EM}35` }}
             >
               {t('احجز عرضاً توضيحياً', 'Book a Demo')}
               <ArrowIcon size={16} />

@@ -11,6 +11,7 @@ import { useActiveProfile } from '../context/ActiveProfileContext'
 
 const ClientOverview     = lazy(() => import('../components/dashboard/client/ClientOverview').then(m => ({ default: m.ClientOverview })))
 const CarWashOverview    = lazy(() => import('../components/dashboard/client/CarWashOverview').then(m => ({ default: m.CarWashOverview })))
+const ClinicOverview     = lazy(() => import('../components/dashboard/client/ClinicOverview').then(m => ({ default: m.ClinicOverview })))
 const CarWashLeads       = lazy(() => import('../components/dashboard/client/CarWashLeads').then(m => ({ default: m.CarWashLeads })))
 const CarWashReports     = lazy(() => import('../components/dashboard/client/CarWashReports').then(m => ({ default: m.CarWashReports })))
 const CarWashQueue       = lazy(() => import('../components/dashboard/client/CarWashQueue').then(m => ({ default: m.CarWashQueue })))
@@ -176,6 +177,7 @@ export const ClientPortal = () => {
   const { profile } = useActiveProfile()
   const template = getClientIndustryTemplate(company?.business_type, company?.industry)
   const isCarWash = template.type === 'car_wash'
+  const isClinic  = template.type === 'clinic'
 
   const allNavItems = buildNavItems(template)
   const flags = ((company?.cw_automations as any)?.feature_flags || {}) as Record<string, boolean>
@@ -254,7 +256,7 @@ export const ClientPortal = () => {
           <TrialExpiredGate />
         ) : (
           <Routes>
-            <Route index element={canAccess('/client') ? (isCarWash ? <CarWashOverview /> : <ClientOverview />) : fallback} />
+            <Route index element={canAccess('/client') ? (isCarWash ? <CarWashOverview /> : isClinic ? <ClinicOverview /> : <ClientOverview />) : fallback} />
             <Route path="queue" element={canAccess('/client/queue') ? <CarWashQueue /> : fallback} />
             <Route path="queue-display" element={canAccess('/client/queue') ? <CarWashQueueDisplay /> : fallback} />
             <Route path="workers" element={canAccess('/client/workers') ? <CarWashWorkers /> : fallback} />
@@ -269,7 +271,7 @@ export const ClientPortal = () => {
             <Route path="reports" element={canAccess('/client/reports') ? (isCarWash ? <CarWashReports /> : <ClientReports />) : fallback} />
             <Route path="upgrade" element={<PricingPage />} />
             <Route path="settings" element={canAccess('/client/settings') ? <ClientSettings /> : fallback} />
-            <Route path="*" element={canAccess('/client') ? (isCarWash ? <CarWashOverview /> : <ClientOverview />) : fallback} />
+            <Route path="*" element={canAccess('/client') ? (isCarWash ? <CarWashOverview /> : isClinic ? <ClinicOverview /> : <ClientOverview />) : fallback} />
           </Routes>
         )}
 
