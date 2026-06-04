@@ -7,6 +7,7 @@ import { StatusBadge, SourceBadge } from '../../../components/clinicOS/ui/Status
 import { ActivityFeed } from '../../../components/clinicOS/ui/ActivityFeed'
 import { UpgradeCard } from '../../../components/clinicOS/ui/UpgradeCard'
 import { AppointmentDrawer } from '../../../components/clinicOS/ui/AppointmentDrawer'
+import { StatCardSkeleton } from '../../../components/clinicOS/ui/LoadingSkeleton'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 import { useClinicTodayAppointments, useClinicStats, useClinicWeeklyChart, useClinicDoctors } from '../../../lib/clinicOSQueries'
 import type { Appointment } from '../../../types/clinicOS'
@@ -16,10 +17,12 @@ export const DashboardOverview = () => {
   const isAIPro = packageType === 'ai_pro'
   const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null)
 
-  const { data: todayAppts = [] } = useClinicTodayAppointments(companyId, isDemo)
-  const { data: stats } = useClinicStats(companyId, isDemo)
+  const { data: todayAppts = [], loading: loadingAppts } = useClinicTodayAppointments(companyId, isDemo)
+  const { data: stats, loading: loadingStats } = useClinicStats(companyId, isDemo)
   const { data: weeklyData = [] } = useClinicWeeklyChart(companyId, isDemo)
   const { data: doctors = [] } = useClinicDoctors(companyId, isDemo)
+
+  const isLoading = loadingAppts || loadingStats
 
   const needsReview = todayAppts.filter(a => a.status === 'needs_review')
 
@@ -58,11 +61,14 @@ export const DashboardOverview = () => {
       {/* KPI Grid */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
         style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
-        {kpis.map((k, i) => (
-          <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.05 }}>
-            <StatCard {...k} />
-          </motion.div>
-        ))}
+        {isLoading
+          ? Array.from({ length: 6 }).map((_, i) => <StatCardSkeleton key={i} />)
+          : kpis.map((k, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.05 }}>
+                <StatCard {...k} />
+              </motion.div>
+            ))
+        }
       </motion.div>
 
       {/* Priorities alert */}

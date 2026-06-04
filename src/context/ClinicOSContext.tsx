@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 import type { PackageType } from '../types/clinicOS'
 import { supabase, signOut } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
+import { ToastProvider } from '../components/clinicOS/ui/Toast'
 
 interface ClinicOSContextValue {
   packageType: PackageType
@@ -63,7 +64,9 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <ClinicOSContext.Provider value={{ packageType, setPackageType, clinicName, userName, companyId, isDemo, logout }}>
-      {children}
+      <ToastProvider>
+        {children}
+      </ToastProvider>
     </ClinicOSContext.Provider>
   )
 }

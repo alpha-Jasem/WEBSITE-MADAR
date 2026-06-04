@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { X, Search, User, Stethoscope, Clock, CheckCircle, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react'
 import { DEMO_PATIENTS, DEMO_DOCTORS, DEMO_SERVICES, getAvailableSlots } from '../../../lib/clinicOSDemoData'
-import type { Appointment } from '../../../types/clinicOS'
+import type { Appointment, Doctor, Service, Patient } from '../../../types/clinicOS'
+import { useClinicDoctors, useClinicServices, useClinicPatients, createAppointment } from '../../../lib/clinicOSQueries'
+import { useClinicOS } from '../../../context/ClinicOSContext'
 
 interface Props {
   onClose: () => void
@@ -12,19 +14,30 @@ interface Props {
 const TODAY = new Date().toISOString().split('T')[0]
 
 export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props) => {
+  const { companyId, isDemo } = useClinicOS()
+
+  const { data: doctorsData } = useClinicDoctors(companyId, isDemo)
+  const { data: servicesData } = useClinicServices(companyId, isDemo)
+  const { data: patientsData } = useClinicPatients(companyId, isDemo)
+
+  const doctors: Doctor[] = doctorsData ?? DEMO_DOCTORS
+  const services: Service[] = servicesData ?? DEMO_SERVICES
+  const patients: Patient[] = patientsData ?? DEMO_PATIENTS
+
   const [step, setStep] = useState(1)
   const [patientSearch, setPatientSearch] = useState('')
-  const [selectedPatient, setSelectedPatient] = useState<typeof DEMO_PATIENTS[0] | null>(null)
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
   const [newPatient, setNewPatient] = useState({ name: '', phone: '' })
-  const [selectedService, setSelectedService] = useState<typeof DEMO_SERVICES[0] | null>(null)
-  const [selectedDoctor, setSelectedDoctor] = useState<typeof DEMO_DOCTORS[0] | null>(null)
+  const [selectedService, setSelectedService] = useState<Service | null>(null)
+  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null)
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
   const [appointmentDate, setAppointmentDate] = useState(selectedDate || TODAY)
   const [sendWhatsApp, setSendWhatsApp] = useState(true)
   const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
 
   const filteredPatients = patientSearch.length > 1
-    ? DEMO_PATIENTS.filter(p => p.name.includes(patientSearch) || p.phone.includes(patientSearch))
+    ? patients.filter(p => p.name.includes(patientSearch) || p.phone.includes(patientSearch))
     : []
 
   const availableSlots = selectedDoctor && selectedService
@@ -40,11 +53,11 @@ export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props)
   const handleCreate = async () => {
     if (!selectedSlot || !selectedDoctor || !selectedService) return
     setCreating(true)
-    await new Promise(r => setTimeout(r, 700))
+    setCreateError(null)
+
     const patient = selectedPatient || { id: `pat-new-${Date.now()}`, name: newPatient.name, phone: newPatient.phone, patient_type: 'new' as const }
-    const appt: Appointment = {
-      id: `apt-new-${Date.now()}`,
-      clinic_id: 'demo-clinic-001',
+    const apptData: Partial<Appointment> = {
+      clinic_id: companyId ?? 'demo-clinic-001',
       patient_id: patient.id,
       patient_name: patient.name,
       patient_phone: patient.phone,
@@ -68,9 +81,22 @@ export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props)
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }
-    onCreated(appt)
-    setCreating(false)
-    onClose()
+
+    try {
+      if (isDemo) {
+        // In demo mode, create a local-only appointment without hitting Supabase
+        const localAppt: Appointment = { id: `apt-new-${Date.now()}`, ...apptData } as Appointment
+        onCreated(localAppt)
+      } else {
+        const created = await createAppointment(apptData)
+        onCreated(created)
+      }
+      onClose()
+    } catch (e: unknown) {
+      setCreateError(e instanceof Error ? e.message : 'حدث خطأ أثناء إنشاء الموعد')
+    } finally {
+      setCreating(false)
+    }
   }
 
   const STEP_LABEL = ['', 'المريض', 'الخدمة', 'الطبيب', 'الوقت', 'تأكيد']
@@ -150,7 +176,7 @@ export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props)
           {step === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <p style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: '0 0 4px 0' }}>اختر الخدمة المطلوبة</p>
-              {DEMO_SERVICES.filter(s => s.active).map(svc => (
+              {services.filter(s => s.active).map(svc => (
                 <div key={svc.id} onClick={() => setSelectedService(svc)} style={{ padding: '14px', borderRadius: 10, border: `2px solid ${selectedService?.id === svc.id ? '#4F46E5' : '#E2E8F0'}`, background: selectedService?.id === svc.id ? '#EEF2FF' : '#FFFFFF', cursor: 'pointer', transition: 'all 0.15s' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
@@ -171,7 +197,7 @@ export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props)
           {step === 3 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <p style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: '0 0 4px 0' }}>اختر الطبيب</p>
-              {DEMO_DOCTORS.filter(d => d.active && d.status !== 'off_today').map(doc => (
+              {doctors.filter(d => d.active && d.status !== 'off_today').map(doc => (
                 <div key={doc.id} onClick={() => setSelectedDoctor(doc)} style={{ padding: '14px', borderRadius: 10, border: `2px solid ${selectedDoctor?.id === doc.id ? '#4F46E5' : '#E2E8F0'}`, background: selectedDoctor?.id === doc.id ? '#EEF2FF' : '#FFFFFF', cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg, #4F46E580, #4F46E5)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <User size={16} style={{ color: 'white' }} />
@@ -252,7 +278,11 @@ export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props)
         </div>
 
         {/* Footer */}
-        <div style={{ padding: '16px 20px', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+        <div style={{ padding: '16px 20px', borderTop: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {createError && (
+            <span style={{ fontSize: 12, color: '#DC2626', fontFamily: 'Tajawal, sans-serif', textAlign: 'center' }}>{createError}</span>
+          )}
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
           {step > 1 ? (
             <button onClick={() => setStep(s => s - 1)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', borderRadius: 8, background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>
               <ChevronRight size={15} />
@@ -279,6 +309,7 @@ export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props)
               {!creating && <CheckCircle size={15} />}
             </button>
           )}
+        </div>
         </div>
       </div>
     </div>

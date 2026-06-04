@@ -3,6 +3,7 @@ import { Users, UserPlus, AlertTriangle, Star, Search, ChevronLeft } from 'lucid
 import { motion } from 'framer-motion'
 import { StatCard } from '../../../components/clinicOS/ui/StatCard'
 import { EmptyState } from '../../../components/clinicOS/ui/EmptyState'
+import { StatCardSkeleton, TableRowSkeleton } from '../../../components/clinicOS/ui/LoadingSkeleton'
 import { useClinicPatients, useClinicAppointments } from '../../../lib/clinicOSQueries'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 import type { Patient } from '../../../types/clinicOS'
@@ -21,7 +22,7 @@ const TAG_CFG: Record<string, { label: string; color: string; bg: string }> = {
 
 export const Patients = () => {
   const { companyId, isDemo } = useClinicOS()
-  const { data: allPatients = [] } = useClinicPatients(companyId, isDemo)
+  const { data: allPatients = [], loading: loadingPatients } = useClinicPatients(companyId, isDemo)
   const { data: allAppointments = [] } = useClinicAppointments(companyId, undefined, isDemo)
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
@@ -47,13 +48,16 @@ export const Patients = () => {
       </div>
 
       <div className="cos-stat-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}>
-        {[
-          { icon: Users, label: 'إجمالي المرضى', value: allPatients.length, color: '#4F46E5', bgColor: '#EEF2FF', borderColor: '#C7D2FE' },
-          { icon: UserPlus, label: 'مرضى جدد هذا الشهر', value: allPatients.filter(p => p.patient_type === 'new').length, color: '#059669', bgColor: '#ECFDF5', borderColor: '#A7F3D0' },
-          { icon: Users, label: 'مرضى مراجعون', value: allPatients.filter(p => p.patient_type === 'returning').length, color: '#7C3AED', bgColor: '#F5F3FF', borderColor: '#DDD6FE' },
-          { icon: AlertTriangle, label: 'غياب متكرر', value: allPatients.filter(p => p.no_show_count > 1).length, color: '#DC2626', bgColor: '#FEF2F2', borderColor: '#FECACA' },
-          { icon: Star, label: 'يحتاج متابعة', value: allPatients.filter(p => p.tags.includes('needs_followup')).length, color: '#C2410C', bgColor: '#FFF7ED', borderColor: '#FED7AA' },
-        ].map((s, i) => <StatCard key={i} {...s} />)}
+        {loadingPatients
+          ? Array.from({ length: 5 }).map((_, i) => <StatCardSkeleton key={i} />)
+          : [
+              { icon: Users, label: 'إجمالي المرضى', value: allPatients.length, color: '#4F46E5', bgColor: '#EEF2FF', borderColor: '#C7D2FE' },
+              { icon: UserPlus, label: 'مرضى جدد هذا الشهر', value: allPatients.filter(p => p.patient_type === 'new').length, color: '#059669', bgColor: '#ECFDF5', borderColor: '#A7F3D0' },
+              { icon: Users, label: 'مرضى مراجعون', value: allPatients.filter(p => p.patient_type === 'returning').length, color: '#7C3AED', bgColor: '#F5F3FF', borderColor: '#DDD6FE' },
+              { icon: AlertTriangle, label: 'غياب متكرر', value: allPatients.filter(p => p.no_show_count > 1).length, color: '#DC2626', bgColor: '#FEF2F2', borderColor: '#FECACA' },
+              { icon: Star, label: 'يحتاج متابعة', value: allPatients.filter(p => p.tags.includes('needs_followup')).length, color: '#C2410C', bgColor: '#FFF7ED', borderColor: '#FED7AA' },
+            ].map((s, i) => <StatCard key={i} {...s} />)
+        }
       </div>
 
       <div style={{ display: 'flex', gap: 10 }}>
@@ -71,7 +75,11 @@ export const Patients = () => {
 
       <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
         <div style={{ flex: 1, background: '#FFFFFF', borderRadius: 14, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
-          {filtered.length === 0 ? (
+          {loadingPatients ? (
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <tbody>{Array.from({ length: 6 }).map((_, i) => <TableRowSkeleton key={i} cols={7} />)}</tbody>
+            </table>
+          ) : filtered.length === 0 ? (
             <EmptyState icon={Users} title="لا توجد نتائج" body="لا يوجد مرضى يطابقون البحث." />
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>

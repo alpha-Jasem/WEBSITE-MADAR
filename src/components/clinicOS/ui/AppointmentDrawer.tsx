@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { X, Phone, Calendar, Clock, User, Stethoscope, MessageSquare, CheckCircle, AlertCircle, ChevronLeft } from 'lucide-react'
 import { StatusBadge, SourceBadge } from './StatusBadge'
-import type { Appointment } from '../../../types/clinicOS'
+import type { Appointment, AppointmentStatus } from '../../../types/clinicOS'
 import { DEMO_SERVICES } from '../../../lib/clinicOSDemoData'
+import { updateAppointmentStatus } from '../../../lib/clinicOSQueries'
+import { useToast } from '../../../lib/useToast'
 
 interface AppointmentDrawerProps {
   appointment: Appointment | null
@@ -31,10 +34,55 @@ const TIMELINE_EVENTS = [
 ]
 
 export const AppointmentDrawer = ({ appointment, onClose, onConfirm, onCancel }: AppointmentDrawerProps) => {
+  const { showToast } = useToast()
+  const [localStatus, setLocalStatus] = useState<AppointmentStatus | null>(null)
+  const [isConfirming, setIsConfirming] = useState(false)
+  const [isCancelling, setIsCancelling] = useState(false)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+
   if (!appointment) return null
 
+  const effectiveStatus = localStatus ?? appointment.status
   const service = DEMO_SERVICES.find(s => s.id === appointment.service_id)
   const price = service?.price ?? 0
+
+  const handleConfirm = async () => {
+    setIsConfirming(true)
+    const prev = localStatus ?? appointment.status
+    setLocalStatus('confirmed')
+    try {
+      await updateAppointmentStatus(appointment.id, 'confirmed')
+      onConfirm?.(appointment.id)
+      showToast('تم تأكيد الموعد بنجاح', 'success')
+    } catch {
+      setLocalStatus(prev)
+      showToast('تعذر تأكيد الموعد، حاول مرة أخرى', 'error')
+    } finally {
+      setIsConfirming(false)
+    }
+  }
+
+  const handleCancelConfirmed = async () => {
+    setShowCancelConfirm(false)
+    setIsCancelling(true)
+    const prev = localStatus ?? appointment.status
+    setLocalStatus('cancelled')
+    try {
+      await updateAppointmentStatus(appointment.id, 'cancelled')
+      onCancel?.(appointment.id)
+      showToast('تم إلغاء الموعد', 'warning')
+    } catch {
+      setLocalStatus(prev)
+      showToast('تعذر إلغاء الموعد، حاول مرة أخرى', 'error')
+    } finally {
+      setIsCancelling(false)
+    }
+  }
+
+  const handleWhatsApp = () => {
+    const clean = appointment.patient_phone.replace(/\D/g, '')
+    window.open('https://wa.me/' + clean, '_blank', 'noopener,noreferrer')
+  }
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', direction: 'rtl' }}>
@@ -48,7 +96,7 @@ export const AppointmentDrawer = ({ appointment, onClose, onConfirm, onCancel }:
           <div>
             <h2 style={{ fontSize: 16, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: '0 0 6px 0' }}>{appointment.patient_name}</h2>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              <StatusBadge status={appointment.status} />
+              <StatusBadge status={effectiveStatus} />
               <SourceBadge source={appointment.source} />
               {appointment.patient_type === 'new' && (
                 <span style={{ display: 'inline-flex', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, color: '#7C3AED', background: '#F5F3FF', border: '1px solid #DDD6FE' }}>مريض جديد</span>
@@ -82,7 +130,7 @@ export const AppointmentDrawer = ({ appointment, onClose, onConfirm, onCancel }:
           </div>
 
           {/* Needs review */}
-          {appointment.status === 'needs_review' && appointment.needs_review_reason && (
+          {effectiveStatus === 'needs_review' && appointment.needs_review_reason && (
             <div style={{ marginTop: 12, padding: '12px 14px', borderRadius: 10, background: '#FFF7ED', border: '1px solid #FED7AA' }}>
               <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                 <AlertCircle size={14} style={{ color: '#C2410C', flexShrink: 0, marginTop: 1 }} />
@@ -115,19 +163,41 @@ export const AppointmentDrawer = ({ appointment, onClose, onConfirm, onCancel }:
         </div>
 
         {/* Actions */}
-        <div style={{ padding: '16px 20px', borderTop: '1px solid #E2E8F0', display: 'flex', gap: 8, position: 'sticky', bottom: 0, background: '#FFFFFF' }}>
-          {appointment.status === 'pending' && (
-            <button onClick={() => onConfirm?.(appointment.id)} style={{ flex: 1, padding: '10px', borderRadius: 8, background: '#059669', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>
-              تأكيد الموعد
-            </button>
-          )}
-          <button style={{ flex: 1, padding: '10px', borderRadius: 8, background: '#F0FDF4', color: '#059669', border: '1px solid #A7F3D0', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>
-            واتساب
-          </button>
-          {!['completed', 'cancelled', 'no_show'].includes(appointment.status) && (
-            <button onClick={() => onCancel?.(appointment.id)} style={{ padding: '10px 14px', borderRadius: 8, background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>
-              إلغاء
-            </button>
+        <div style={{ padding: '16px 20px', borderTop: '1px solid #E2E8F0', position: 'sticky', bottom: 0, background: '#FFFFFF' }}>
+          {showCancelConfirm ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#DC2626', fontFamily: 'Cairo, sans-serif', textAlign: 'center' }}>هل أنت متأكد من إلغاء الموعد؟</p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={handleCancelConfirmed} disabled={isCancelling} style={{ flex: 1, padding: '10px', borderRadius: 8, background: '#DC2626', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: isCancelling ? 'not-allowed' : 'pointer', fontFamily: 'Cairo, sans-serif' }}>
+                  {isCancelling ? 'جاري الإلغاء...' : 'نعم، إلغاء'}
+                </button>
+                <button onClick={() => setShowCancelConfirm(false)} style={{ flex: 1, padding: '10px', borderRadius: 8, background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>
+                  لا، تراجع
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: 8 }}>
+              {effectiveStatus === 'pending' && (
+                <button onClick={handleConfirm} disabled={isConfirming} style={{ flex: 1, padding: '10px', borderRadius: 8, background: isConfirming ? '#94A3B8' : '#059669', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: isConfirming ? 'not-allowed' : 'pointer', fontFamily: 'Cairo, sans-serif' }}>
+                  {isConfirming ? 'جاري التأكيد...' : 'تأكيد الموعد'}
+                </button>
+              )}
+              {effectiveStatus === 'confirmed' && localStatus === 'confirmed' && (
+                <div style={{ flex: 1, padding: '10px', borderRadius: 8, background: '#ECFDF5', border: '1px solid #A7F3D0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                  <CheckCircle size={14} style={{ color: '#059669' }} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#059669', fontFamily: 'Cairo, sans-serif' }}>تم التأكيد</span>
+                </div>
+              )}
+              <button onClick={handleWhatsApp} style={{ flex: 1, padding: '10px', borderRadius: 8, background: '#F0FDF4', color: '#059669', border: '1px solid #A7F3D0', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>
+                واتساب
+              </button>
+              {!['completed', 'cancelled', 'no_show'].includes(effectiveStatus) && (
+                <button onClick={() => setShowCancelConfirm(true)} style={{ padding: '10px 14px', borderRadius: 8, background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>
+                  إلغاء
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>

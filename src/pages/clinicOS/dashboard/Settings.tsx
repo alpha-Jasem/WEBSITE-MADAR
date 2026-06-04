@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { Building, Calendar, MessageSquare, Bot, Users, Bell, CreditCard, Settings as SettingsIcon } from 'lucide-react'
+import { Building, Calendar, MessageSquare, Bot, Users, Bell, CreditCard, Settings as SettingsIcon, Loader2 } from 'lucide-react'
 import { UpgradeCard } from '../../../components/clinicOS/ui/UpgradeCard'
 import { useClinicOS } from '../../../context/ClinicOSContext'
+import { useToast } from '../../../lib/useToast'
+import { supabase } from '../../../lib/supabase'
 
 const SECTIONS = [
   { id: 'clinic', icon: Building, label: 'بيانات العيادة' },
@@ -23,8 +25,43 @@ const FIELD = ({ label, value, type = 'text' }: { label: string; value?: string;
 
 export const Settings = () => {
   const [activeSection, setActiveSection] = useState('clinic')
-  const { packageType } = useClinicOS()
+  const { packageType, companyId, clinicName: contextClinicName } = useClinicOS()
   const isAIPro = packageType === 'ai_pro'
+
+  // Clinic info form state
+  const [clinicName, setClinicName] = useState(contextClinicName || 'عيادات نور للأسنان')
+  const [clinicPhone, setClinicPhone] = useState('0112345678')
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+
+  const { showToast } = useToast()
+
+  const handleSaveClinicInfo = async () => {
+    if (!companyId) {
+      showToast('لا يمكن الحفظ: معرّف العيادة غير متاح', 'error')
+      return
+    }
+    setIsSaving(true)
+    setSaveError(null)
+    setSaveSuccess(false)
+    try {
+      const { error } = await supabase
+        .from('companies')
+        .update({ name: clinicName, phone: clinicPhone })
+        .eq('id', companyId)
+      if (error) throw error
+      setSaveSuccess(true)
+      showToast('تم حفظ بيانات العيادة بنجاح', 'success')
+      setTimeout(() => setSaveSuccess(false), 2000)
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'حدث خطأ أثناء الحفظ'
+      setSaveError(msg)
+      showToast(msg, 'error')
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, direction: 'rtl' }}>
@@ -53,13 +90,41 @@ export const Settings = () => {
             <div>
               <h2 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: '0 0 20px 0' }}>بيانات العيادة</h2>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                <FIELD label="اسم العيادة" value="عيادات نور للأسنان" />
-                <FIELD label="رقم الهاتف" value="0112345678" type="tel" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', fontFamily: 'Cairo, sans-serif' }}>اسم العيادة</label>
+                  <input
+                    type="text"
+                    value={clinicName}
+                    onChange={e => setClinicName(e.target.value)}
+                    style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', direction: 'rtl' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', fontFamily: 'Cairo, sans-serif' }}>رقم الهاتف</label>
+                  <input
+                    type="tel"
+                    value={clinicPhone}
+                    onChange={e => setClinicPhone(e.target.value)}
+                    style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', direction: 'rtl' }}
+                  />
+                </div>
                 <FIELD label="المدينة" value="جدة" />
                 <FIELD label="العنوان" value="حي الروضة، شارع الأمير سلطان" />
                 <FIELD label="البريد الإلكتروني" value="info@noor-dental.sa" type="email" />
               </div>
-              <button style={{ marginTop: 20, padding: '10px 24px', borderRadius: 8, background: '#4F46E5', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>حفظ التغييرات</button>
+              <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
+                <button
+                  onClick={handleSaveClinicInfo}
+                  disabled={isSaving}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 8, background: saveSuccess ? '#059669' : '#4F46E5', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: isSaving ? 'not-allowed' : 'pointer', fontFamily: 'Cairo, sans-serif', opacity: isSaving ? 0.7 : 1, transition: 'background 0.3s' }}
+                >
+                  {isSaving && <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />}
+                  {saveSuccess ? 'تم الحفظ ✓' : isSaving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+                </button>
+                {saveError && (
+                  <span style={{ fontSize: 12, color: '#DC2626', fontFamily: 'Tajawal, sans-serif' }}>{saveError}</span>
+                )}
+              </div>
             </div>
           )}
 
