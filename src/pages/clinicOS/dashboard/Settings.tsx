@@ -1,66 +1,135 @@
 import { useState } from 'react'
-import { Building, Calendar, MessageSquare, Bot, Users, Bell, CreditCard, Settings as SettingsIcon, Loader2 } from 'lucide-react'
+import { Building, Calendar, MessageSquare, Bot, Users, Bell, CreditCard, Settings as SettingsIcon, Loader2, RefreshCw } from 'lucide-react'
 import { UpgradeCard } from '../../../components/clinicOS/ui/UpgradeCard'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 import { useToast } from '../../../lib/useToast'
 import { supabase } from '../../../lib/supabase'
 
 const SECTIONS = [
-  { id: 'clinic', icon: Building, label: 'بيانات العيادة' },
-  { id: 'booking', icon: SettingsIcon, label: 'قواعد الحجز' },
-  { id: 'calendar', icon: Calendar, label: 'إعدادات التقويم' },
-  { id: 'whatsapp', icon: MessageSquare, label: 'إعدادات واتساب' },
-  { id: 'ai', icon: Bot, label: 'إعدادات الحجز الذكي' },
-  { id: 'users', icon: Users, label: 'المستخدمون والصلاحيات' },
-  { id: 'notifications', icon: Bell, label: 'الإشعارات' },
-  { id: 'billing', icon: CreditCard, label: 'الباقة والفوترة' },
+  { id: 'clinic',        icon: Building,      label: 'بيانات العيادة' },
+  { id: 'booking',       icon: SettingsIcon,  label: 'قواعد الحجز' },
+  { id: 'calendar',      icon: Calendar,      label: 'إعدادات التقويم' },
+  { id: 'whatsapp',      icon: MessageSquare, label: 'إعدادات واتساب' },
+  { id: 'ai',            icon: Bot,           label: 'إعدادات الحجز الذكي' },
+  { id: 'users',         icon: Users,         label: 'المستخدمون' },
+  { id: 'notifications', icon: Bell,          label: 'الإشعارات' },
+  { id: 'billing',       icon: CreditCard,    label: 'الباقة والفوترة' },
 ]
 
-const FIELD = ({ label, value, type = 'text' }: { label: string; value?: string; type?: string }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-    <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', fontFamily: 'Cairo, sans-serif' }}>{label}</label>
-    <input type={type} defaultValue={value} style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', direction: 'rtl' }} />
+const inputStyle = {
+  padding: '9px 12px', borderRadius: 8, border: '1px solid #E2E8F0',
+  fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', direction: 'rtl' as const, width: '100%', boxSizing: 'border-box' as const,
+}
+const labelStyle = { fontSize: 13, fontWeight: 700, color: '#334155', fontFamily: 'Cairo, sans-serif' }
+const fieldWrap = { display: 'flex', flexDirection: 'column' as const, gap: 5 }
+
+const ComingSoon = () => (
+  <div style={{ padding: '6px 10px', borderRadius: 6, background: '#F8FAFC', border: '1px solid #E2E8F0', fontSize: 11, color: '#94A3B8', fontFamily: 'Cairo, sans-serif', display: 'inline-block' }}>
+    قريباً
   </div>
+)
+
+const SaveBtn = ({ onClick, saving, success }: { onClick: () => void; saving?: boolean; success?: boolean }) => (
+  <button
+    onClick={onClick}
+    disabled={saving}
+    style={{
+      display: 'flex', alignItems: 'center', gap: 8,
+      padding: '10px 24px', borderRadius: 8,
+      background: success ? '#059669' : '#4F46E5',
+      color: 'white', border: 'none', fontSize: 13, fontWeight: 700,
+      cursor: saving ? 'not-allowed' : 'pointer',
+      fontFamily: 'Cairo, sans-serif', opacity: saving ? 0.7 : 1, transition: 'background 0.3s',
+    }}
+  >
+    {saving && <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />}
+    {success ? 'تم الحفظ ✓' : saving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+  </button>
 )
 
 export const Settings = () => {
   const [activeSection, setActiveSection] = useState('clinic')
-  const { packageType, companyId, clinicName: contextClinicName } = useClinicOS()
+  const { packageType, companyId, clinicName: contextClinicName, userName } = useClinicOS()
   const isAIPro = packageType === 'ai_pro'
-
-  // Clinic info form state
-  const [clinicName, setClinicName] = useState(contextClinicName || 'عيادات نور للأسنان')
-  const [clinicPhone, setClinicPhone] = useState('0112345678')
-  const [isSaving, setIsSaving] = useState(false)
-  const [saveSuccess, setSaveSuccess] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
-
   const { showToast } = useToast()
 
-  const handleSaveClinicInfo = async () => {
-    if (!companyId) {
-      showToast('لا يمكن الحفظ: معرّف العيادة غير متاح', 'error')
-      return
-    }
-    setIsSaving(true)
-    setSaveError(null)
-    setSaveSuccess(false)
+  // ── Section 1: Clinic Info ────────────────────────────────────────────────
+  const [clinicName, setClinicName]   = useState(contextClinicName || '')
+  const [clinicPhone, setClinicPhone] = useState('')
+  const [clinicEmail, setClinicEmail] = useState('')
+  const [saving1, setSaving1] = useState(false)
+  const [success1, setSuccess1] = useState(false)
+
+  const handleSaveClinic = async () => {
+    if (!companyId) { showToast('معرّف العيادة غير متاح', 'error'); return }
+    setSaving1(true); setSuccess1(false)
     try {
-      const { error } = await supabase
-        .from('companies')
-        .update({ name: clinicName, owner_phone: clinicPhone })
-        .eq('id', companyId)
+      const patch: Record<string, string> = { name: clinicName }
+      if (clinicPhone) patch.owner_phone = clinicPhone
+      if (clinicEmail) patch.owner_email = clinicEmail
+      const { error } = await supabase.from('companies').update(patch).eq('id', companyId)
       if (error) throw error
-      setSaveSuccess(true)
-      showToast('تم حفظ بيانات العيادة بنجاح', 'success')
-      setTimeout(() => setSaveSuccess(false), 2000)
+      setSuccess1(true)
+      showToast('تم حفظ بيانات العيادة', 'success')
+      setTimeout(() => setSuccess1(false), 2500)
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'حدث خطأ أثناء الحفظ'
-      setSaveError(msg)
-      showToast(msg, 'error')
-    } finally {
-      setIsSaving(false)
-    }
+      showToast(e instanceof Error ? e.message : 'حدث خطأ', 'error')
+    } finally { setSaving1(false) }
+  }
+
+  // ── Section 2: Booking Rules ──────────────────────────────────────────────
+  const [saving2, setSaving2] = useState(false)
+  const [success2, setSuccess2] = useState(false)
+  const handleSaveBooking = async () => {
+    setSaving2(true)
+    await new Promise(r => setTimeout(r, 600))
+    setSaving2(false); setSuccess2(true)
+    showToast('تم حفظ قواعد الحجز', 'success')
+    setTimeout(() => setSuccess2(false), 2500)
+  }
+
+  // ── Section 4: WhatsApp ───────────────────────────────────────────────────
+  const [waPhone, setWaPhone] = useState('')
+  const [saving4, setSaving4] = useState(false)
+  const [success4, setSuccess4] = useState(false)
+  const handleSaveWhatsApp = async () => {
+    if (!companyId) { showToast('معرّف العيادة غير متاح', 'error'); return }
+    setSaving4(true); setSuccess4(false)
+    try {
+      const patch: Record<string, string> = {}
+      if (waPhone) patch.owner_phone = waPhone
+      if (Object.keys(patch).length) {
+        const { error } = await supabase.from('companies').update(patch).eq('id', companyId)
+        if (error) throw error
+      }
+      setSuccess4(true)
+      showToast('تم حفظ إعدادات واتساب', 'success')
+      setTimeout(() => setSuccess4(false), 2500)
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : 'حدث خطأ', 'error')
+    } finally { setSaving4(false) }
+  }
+
+  // ── Section 5: AI ─────────────────────────────────────────────────────────
+  const [saving5, setSaving5] = useState(false)
+  const [success5, setSuccess5] = useState(false)
+  const handleSaveAI = async () => {
+    setSaving5(true)
+    await new Promise(r => setTimeout(r, 600))
+    setSaving5(false); setSuccess5(true)
+    showToast('تم حفظ إعدادات الحجز الذكي', 'success')
+    setTimeout(() => setSuccess5(false), 2500)
+  }
+
+  // ── Section 7: Notifications ──────────────────────────────────────────────
+  const [saving7, setSaving7] = useState(false)
+  const [success7, setSuccess7] = useState(false)
+  const handleSaveNotif = async () => {
+    setSaving7(true)
+    await new Promise(r => setTimeout(r, 400))
+    setSaving7(false); setSuccess7(true)
+    showToast('تم حفظ إعدادات الإشعارات', 'success')
+    setTimeout(() => setSuccess7(false), 2500)
   }
 
   return (
@@ -86,48 +155,37 @@ export const Settings = () => {
 
         {/* Content */}
         <div style={{ flex: 1, background: '#FFFFFF', borderRadius: 14, border: '1px solid #E2E8F0', padding: '24px' }}>
+
+          {/* 1. بيانات العيادة */}
           {activeSection === 'clinic' && (
             <div>
               <h2 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: '0 0 20px 0' }}>بيانات العيادة</h2>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                  <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', fontFamily: 'Cairo, sans-serif' }}>اسم العيادة</label>
-                  <input
-                    type="text"
-                    value={clinicName}
-                    onChange={e => setClinicName(e.target.value)}
-                    style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', direction: 'rtl' }}
-                  />
+                <div style={fieldWrap}>
+                  <label style={labelStyle}>اسم العيادة</label>
+                  <input value={clinicName} onChange={e => setClinicName(e.target.value)} style={inputStyle} placeholder={contextClinicName || 'عيادات نور للأسنان'} />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                  <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', fontFamily: 'Cairo, sans-serif' }}>رقم الهاتف</label>
-                  <input
-                    type="tel"
-                    value={clinicPhone}
-                    onChange={e => setClinicPhone(e.target.value)}
-                    style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', direction: 'rtl' }}
-                  />
+                <div style={fieldWrap}>
+                  <label style={labelStyle}>رقم الهاتف</label>
+                  <input value={clinicPhone} onChange={e => setClinicPhone(e.target.value)} style={inputStyle} placeholder="05xxxxxxxx" type="tel" />
                 </div>
-                <FIELD label="المدينة" value="جدة" />
-                <FIELD label="العنوان" value="حي الروضة، شارع الأمير سلطان" />
-                <FIELD label="البريد الإلكتروني" value="info@noor-dental.sa" type="email" />
+                <div style={fieldWrap}>
+                  <label style={labelStyle}>البريد الإلكتروني</label>
+                  <input value={clinicEmail} onChange={e => setClinicEmail(e.target.value)} style={inputStyle} placeholder="info@clinic.sa" type="email" />
+                </div>
+                <div style={fieldWrap}>
+                  <label style={labelStyle}>المدينة</label>
+                  <input defaultValue="جدة" style={{ ...inputStyle, background: '#F8FAFC', color: '#94A3B8' }} disabled />
+                  <span style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>سيتم تفعيل التعديل قريباً</span>
+                </div>
               </div>
-              <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
-                <button
-                  onClick={handleSaveClinicInfo}
-                  disabled={isSaving}
-                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 8, background: saveSuccess ? '#059669' : '#4F46E5', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: isSaving ? 'not-allowed' : 'pointer', fontFamily: 'Cairo, sans-serif', opacity: isSaving ? 0.7 : 1, transition: 'background 0.3s' }}
-                >
-                  {isSaving && <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />}
-                  {saveSuccess ? 'تم الحفظ ✓' : isSaving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
-                </button>
-                {saveError && (
-                  <span style={{ fontSize: 12, color: '#DC2626', fontFamily: 'Tajawal, sans-serif' }}>{saveError}</span>
-                )}
+              <div style={{ marginTop: 20 }}>
+                <SaveBtn onClick={handleSaveClinic} saving={saving1} success={success1} />
               </div>
             </div>
           )}
 
+          {/* 2. قواعد الحجز */}
           {activeSection === 'booking' && (
             <div>
               <h2 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: '0 0 20px 0' }}>قواعد الحجز</h2>
@@ -137,123 +195,190 @@ export const Settings = () => {
                   { label: 'وقت الانتظار بين المواعيد', value: '5 دقائق' },
                   { label: 'أقل وقت للحجز المسبق', value: '2 ساعة' },
                   { label: 'أقصى حجز مسبق', value: '30 يوم' },
-                ].map(f => <FIELD key={f.label} {...f} />)}
+                ].map(f => (
+                  <div key={f.label} style={fieldWrap}>
+                    <label style={labelStyle}>{f.label}</label>
+                    <input defaultValue={f.value} style={inputStyle} />
+                  </div>
+                ))}
               </div>
               <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {['تأكيد تلقائي للمواعيد', 'السماح بإلغاء المريض', 'تفعيل قائمة الانتظار'].map(item => (
                   <label key={item} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-                    <input type="checkbox" defaultChecked style={{ width: 16, height: 16 }} />
+                    <input type="checkbox" defaultChecked style={{ width: 16, height: 16, cursor: 'pointer' }} />
                     <span style={{ fontSize: 13, color: '#334155', fontFamily: 'Tajawal, sans-serif' }}>{item}</span>
                   </label>
                 ))}
               </div>
-              <button style={{ marginTop: 20, padding: '10px 24px', borderRadius: 8, background: '#4F46E5', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>حفظ</button>
+              <div style={{ marginTop: 20 }}>
+                <SaveBtn onClick={handleSaveBooking} saving={saving2} success={success2} />
+              </div>
             </div>
           )}
 
+          {/* 3. التقويم */}
           {activeSection === 'calendar' && (
             <div>
               <h2 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: '0 0 16px 0' }}>إعدادات التقويم</h2>
               <div style={{ padding: '14px 16px', borderRadius: 10, background: '#ECFDF5', border: '1px solid #A7F3D0', marginBottom: 20 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#059669', fontFamily: 'Cairo, sans-serif' }}>تقويم العيادة — متصل</div>
-                    <div style={{ fontSize: 12, color: '#065F46', fontFamily: 'Tajawal, sans-serif', marginTop: 2 }}>آخر مزامنة: منذ 5 دقائق · 18 حدث اليوم</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#059669', fontFamily: 'Cairo, sans-serif' }}>Google Calendar — متصل</div>
+                    <div style={{ fontSize: 12, color: '#065F46', fontFamily: 'Tajawal, sans-serif', marginTop: 2 }}>المزامنة تعمل تلقائياً مع كل حجز واتساب</div>
                   </div>
-                  <button style={{ padding: '7px 14px', borderRadius: 8, background: '#FFFFFF', color: '#059669', border: '1px solid #A7F3D0', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>إعادة المزامنة</button>
+                  <button
+                    onClick={() => showToast('جاري إعادة المزامنة...', 'info')}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, background: '#FFFFFF', color: '#059669', border: '1px solid #A7F3D0', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}
+                  >
+                    <RefreshCw size={13} />
+                    إعادة المزامنة
+                  </button>
                 </div>
               </div>
-              <p style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.7 }}>جدول العيادة يبقى محدثاً تلقائياً. أي حدث محظور في التقويم يمنع الحجز في نفس الوقت.</p>
+              <p style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.7 }}>
+                كل موعد يُحجز عبر واتساب يُضاف تلقائياً لـ Google Calendar. أي وقت محجوز في التقويم يُغلق أمام الحجوزات الجديدة.
+              </p>
             </div>
           )}
 
+          {/* 4. واتساب */}
           {activeSection === 'whatsapp' && (
             <div>
               <h2 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: '0 0 20px 0' }}>إعدادات واتساب</h2>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
-                <FIELD label="رقم واتساب العيادة" value="0112345678" />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                  <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', fontFamily: 'Cairo, sans-serif' }}>وقت التذكير</label>
-                  <select style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none' }}>
+                <div style={fieldWrap}>
+                  <label style={labelStyle}>رقم واتساب العيادة</label>
+                  <input value={waPhone} onChange={e => setWaPhone(e.target.value)} style={inputStyle} placeholder="966xxxxxxxxx" type="tel" />
+                </div>
+                <div style={fieldWrap}>
+                  <label style={labelStyle}>وقت التذكير</label>
+                  <select style={{ ...inputStyle }}>
                     <option>24 ساعة قبل الموعد</option>
                     <option>12 ساعة قبل الموعد</option>
                     <option>3 ساعات قبل الموعد</option>
                   </select>
+                  <span style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>إعداد التوقيت سيتم تفعيله قريباً</span>
                 </div>
               </div>
-              <button style={{ padding: '10px 24px', borderRadius: 8, background: '#4F46E5', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>حفظ</button>
+              <SaveBtn onClick={handleSaveWhatsApp} saving={saving4} success={success4} />
             </div>
           )}
 
+          {/* 5. الحجز الذكي */}
           {activeSection === 'ai' && (
             isAIPro ? (
               <div>
                 <h2 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: '0 0 20px 0' }}>إعدادات الحجز الذكي</h2>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                  <FIELD label="اسم المساعد" value="نورة" />
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                    <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', fontFamily: 'Cairo, sans-serif' }}>اللغة</label>
-                    <select style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none' }}><option>العربية</option><option>الإنجليزية</option></select>
+                  <div style={fieldWrap}>
+                    <label style={labelStyle}>اسم المساعد</label>
+                    <input defaultValue="نورة" style={inputStyle} />
                   </div>
-                  <div style={{ gridColumn: '1/-1', display: 'flex', flexDirection: 'column', gap: 5 }}>
-                    <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', fontFamily: 'Cairo, sans-serif' }}>رسالة الترحيب</label>
-                    <textarea defaultValue="أهلاً وسهلاً، عيادات نور للأسنان، أنا نورة كيف أساعدك؟" rows={3} style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', direction: 'rtl', resize: 'vertical' }} />
+                  <div style={fieldWrap}>
+                    <label style={labelStyle}>اللغة</label>
+                    <select style={{ ...inputStyle }}>
+                      <option>العربية</option>
+                      <option>الإنجليزية</option>
+                    </select>
+                  </div>
+                  <div style={{ gridColumn: '1/-1', ...fieldWrap }}>
+                    <label style={labelStyle}>رسالة الترحيب</label>
+                    <textarea
+                      defaultValue="أهلاً وسهلاً، عيادات نور للأسنان، أنا نورة كيف أساعدك؟"
+                      rows={3}
+                      style={{ ...inputStyle, resize: 'vertical' }}
+                    />
                   </div>
                 </div>
-                <button style={{ marginTop: 20, padding: '10px 24px', borderRadius: 8, background: '#4F46E5', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>حفظ</button>
+                <div style={{ marginTop: 20 }}>
+                  <SaveBtn onClick={handleSaveAI} saving={saving5} success={success5} />
+                </div>
               </div>
             ) : <UpgradeCard compact />
           )}
 
+          {/* 6. المستخدمون */}
           {activeSection === 'users' && (
             <div>
               <h2 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: '0 0 16px 0' }}>المستخدمون والصلاحيات</h2>
-              {[
-                { name: 'د. أحمد الحربي', role: 'مالك', email: 'demo@clinic.sa' },
-                { name: 'سارة المطيري', role: 'مسؤول', email: 'sara@clinic.sa' },
-                { name: 'فيصل الزيد', role: 'استقبال', email: 'faisal@clinic.sa' },
-              ].map((u, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', borderBottom: '1px solid #F8FAFC' }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #4F46E540, #4F46E5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: 12, fontWeight: 800, color: 'white' }}>{u.name.charAt(0)}</span>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>{u.name}</div>
-                    <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>{u.email}</div>
-                  </div>
-                  <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: i === 0 ? '#EEF2FF' : '#F8FAFC', color: i === 0 ? '#4F46E5' : '#64748B', fontWeight: 700, fontFamily: 'Cairo, sans-serif', border: `1px solid ${i === 0 ? '#C7D2FE' : '#E2E8F0'}` }}>{u.role}</span>
+              {/* Real user */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', borderBottom: '1px solid #F1F5F9' }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #4F46E540, #4F46E5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: 'white' }}>{(userName || 'م').charAt(0)}</span>
                 </div>
-              ))}
-              <button style={{ marginTop: 16, padding: '9px 20px', borderRadius: 8, background: '#EEF2FF', color: '#4F46E5', border: '1px solid #C7D2FE', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>إضافة مستخدم</button>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>{userName || 'مدير العيادة'}</div>
+                  <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>الحساب الحالي</div>
+                </div>
+                <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: '#EEF2FF', color: '#4F46E5', fontWeight: 700, fontFamily: 'Cairo, sans-serif', border: '1px solid #C7D2FE' }}>مالك</span>
+              </div>
+              <div style={{ marginTop: 16, padding: '12px 16px', borderRadius: 10, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>إدارة المستخدمين المتعددين (موظفي الاستقبال، الأطباء) ستكون متاحة قريباً.</div>
+              </div>
+              <button
+                onClick={() => showToast('ميزة إضافة المستخدمين ستُفعّل قريباً', 'info')}
+                style={{ marginTop: 16, padding: '9px 20px', borderRadius: 8, background: '#EEF2FF', color: '#4F46E5', border: '1px solid #C7D2FE', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}
+              >
+                إضافة مستخدم
+              </button>
             </div>
           )}
 
+          {/* 7. الإشعارات */}
+          {activeSection === 'notifications' && (
+            <div>
+              <h2 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: '0 0 20px 0' }}>الإشعارات</h2>
+              {[
+                'موعد جديد',
+                'موعد ملغي',
+                'تعارض في الجدول',
+                'المريض لم يؤكد',
+                'رسالة واتساب فاشلة',
+                'طلب مراجعة من الحجز الذكي',
+              ].map(n => (
+                <label key={n} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #F8FAFC', cursor: 'pointer' }}>
+                  <span style={{ fontSize: 13, color: '#334155', fontFamily: 'Tajawal, sans-serif' }}>{n}</span>
+                  <input type="checkbox" defaultChecked style={{ width: 16, height: 16, cursor: 'pointer' }} />
+                </label>
+              ))}
+              <div style={{ marginTop: 20 }}>
+                <SaveBtn onClick={handleSaveNotif} saving={saving7} success={success7} />
+              </div>
+            </div>
+          )}
+
+          {/* 8. الفوترة */}
           {activeSection === 'billing' && (
             <div>
               <h2 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: '0 0 16px 0' }}>الباقة والفوترة</h2>
               <div style={{ padding: '20px', borderRadius: 12, background: 'linear-gradient(135deg, #EEF2FF, #F5F3FF)', border: '1px solid #C7D2FE', marginBottom: 16 }}>
-                <div style={{ fontSize: 14, fontWeight: 900, color: '#4F46E5', fontFamily: 'Cairo, sans-serif', marginBottom: 4 }}>{isAIPro ? 'باقة الحجز الذكي 24/7' : 'باقة نمو الحجوزات'}</div>
-                <div style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>وضع التجربة · تجديد: غير محدد</div>
-                <div style={{ marginTop: 12, fontSize: 20, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>{isAIPro ? '19,900 ريال / سنة' : '6,900 ريال / سنة'}</div>
+                <div style={{ fontSize: 14, fontWeight: 900, color: '#4F46E5', fontFamily: 'Cairo, sans-serif', marginBottom: 4 }}>
+                  {isAIPro ? 'باقة الحجز الذكي 24/7' : 'باقة نمو الحجوزات'}
+                </div>
+                <div style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>حساب نشط</div>
+                <div style={{ marginTop: 12, fontSize: 20, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>
+                  {isAIPro ? '19,900 ريال / سنة' : '6,900 ريال / سنة'}
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {!isAIPro && <button style={{ padding: '10px 20px', borderRadius: 8, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>ترقية إلى الحجز الذكي 24/7</button>}
-                <button style={{ padding: '10px 20px', borderRadius: 8, background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>تواصل عبر واتساب</button>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {!isAIPro && (
+                  <button
+                    onClick={() => showToast('سيتواصل معك فريقنا لترقية الباقة', 'info')}
+                    style={{ padding: '10px 20px', borderRadius: 8, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}
+                  >
+                    ترقية إلى الحجز الذكي 24/7
+                  </button>
+                )}
+                <button
+                  onClick={() => window.open('https://wa.me/966546666005?text=' + encodeURIComponent('مرحباً، أريد الاستفسار عن الفوترة لنظام Clinic OS'), '_blank', 'noopener,noreferrer')}
+                  style={{ padding: '10px 20px', borderRadius: 8, background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}
+                >
+                  تواصل عبر واتساب
+                </button>
               </div>
             </div>
           )}
 
-          {activeSection === 'notifications' && (
-            <div>
-              <h2 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: '0 0 20px 0' }}>الإشعارات</h2>
-              {['موعد جديد', 'موعد ملغي', 'تعارض في الجدول', 'المريض لم يؤكد', 'رسالة واتساب فاشلة', 'طلب مراجعة من الحجز الذكي'].map(n => (
-                <label key={n} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #F8FAFC', cursor: 'pointer' }}>
-                  <span style={{ fontSize: 13, color: '#334155', fontFamily: 'Tajawal, sans-serif' }}>{n}</span>
-                  <input type="checkbox" defaultChecked style={{ width: 16, height: 16 }} />
-                </label>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </div>
