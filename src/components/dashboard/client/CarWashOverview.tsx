@@ -452,11 +452,12 @@ export function CarWashOverview() {
         .cw-stage-arrow { position:absolute; left:-15px; top:50%; color:#0D1B3E; font-size:22px; transform:translateY(-50%); }
         @media (max-width: 1280px) { .cw-board { grid-template-columns: 1fr; } }
         @media (max-width: 920px) { .cw-insight-grid { grid-template-columns:1fr; } .cw-stage-arrow { display:none; } }
-        @media (max-width: 640px) { .cw-card-pad { padding:14px; } .cw-board { gap:12px; } .cw-command-bar { flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; align-items:center; padding:8px; scrollbar-width:none; } .cw-command-bar::-webkit-scrollbar { display:none; } .cw-command-group { flex:0 0 auto; flex-wrap:nowrap; gap:8px; } .cw-main-action,.cw-secondary-action { height:38px; padding:0 12px; white-space:nowrap; } .cw-soft-button,.cw-soft-select { height:34px; padding:0 9px; white-space:nowrap; } }
+        @media (max-width: 640px) { .cw-card-pad { padding:14px; } .cw-board { gap:12px; } .cw-command-bar { display:grid; grid-template-columns:1fr; gap:8px; align-items:stretch; padding:10px; } .cw-command-group { width:100%; display:grid; gap:8px; flex-wrap:nowrap; } .cw-command-primary { grid-template-columns:repeat(3,minmax(0,1fr)); } .cw-command-tools { grid-template-columns:minmax(118px,1.15fr) minmax(82px,.85fr) minmax(58px,.55fr) minmax(58px,.55fr); } .cw-main-action,.cw-secondary-action,.cw-soft-button,.cw-soft-select { width:100%; min-width:0; } .cw-main-action,.cw-secondary-action { height:38px; padding:0 8px; white-space:nowrap; font-size:11px; } .cw-soft-button,.cw-soft-select { height:34px; padding:0 7px; white-space:nowrap; font-size:10px; justify-content:center; } }
+        @media (max-width: 420px) { .cw-command-primary { grid-template-columns:1fr; } .cw-command-tools { grid-template-columns:1fr 1fr; } }
       `}</style>
 
       <section className="cw-command-bar">
-        <div className="cw-command-group">
+        <div className="cw-command-group cw-command-primary">
           <Link to="/client/queue" className="cw-main-action">
             <Plus size={15} /> إضافة سيارة
           </Link>
@@ -468,7 +469,7 @@ export function CarWashOverview() {
           </Link>
         </div>
 
-        <div className="cw-command-group" style={{ justifyContent: 'flex-end' }}>
+        <div className="cw-command-group cw-command-tools" style={{ justifyContent: 'flex-end' }}>
           <button onClick={() => setShowCustom(v => !v)} className="cw-soft-button">
             <Calendar size={15} color="#0B63F6" /> {isCustomActive ? `${customFrom} - ${customTo}` : 'اليوم'}
           </button>
