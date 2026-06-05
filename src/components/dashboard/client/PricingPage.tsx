@@ -168,6 +168,14 @@ export const PricingPage = () => {
       )
       const data = await resp.json()
       if (data.payment_url) {
+        const ALLOWED_PAYMENT_DOMAINS = ['moyasar.com', 'api.moyasar.com', 'secure.moyasar.com']
+        let parsedUrl: URL | null = null
+        try { parsedUrl = new URL(data.payment_url) } catch { parsedUrl = null }
+        const domainAllowed = parsedUrl && ALLOWED_PAYMENT_DOMAINS.some(d => parsedUrl!.hostname === d || parsedUrl!.hostname.endsWith(`.${d}`))
+        if (!domainAllowed) {
+          setPayingPlan(null)
+          return
+        }
         window.location.href = data.payment_url
       } else {
         // Fallback to WhatsApp if payment gateway not configured

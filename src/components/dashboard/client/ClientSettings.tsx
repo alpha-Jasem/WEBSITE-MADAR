@@ -182,6 +182,9 @@ export const ClientSettings = () => {
     setTimeout(() => setSelfSaved(false), 2500)
   }
 
+  const escHtml = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+
   const printCheckinKit = () => {
     if (!checkinUrl || !company) return
     const printWindow = window.open('', '_blank', 'width=720,height=900')
@@ -208,14 +211,14 @@ export const ClientSettings = () => {
         </head>
         <body>
           <div class="sheet">
-            <img class="logo" src="${identityLogoUrl || `${window.location.origin}/logo-main.png`}" />
+            <img class="logo" src="${escHtml(identityLogoUrl || `${window.location.origin}/logo-main.png`)}" />
             <div class="hero">
               <span class="eyebrow">مدار OS للتسجيل الذاتي</span>
-              <h1>${identityName || company.name}</h1>
+              <h1>${escHtml(identityName || company.name)}</h1>
               <p>امسح الرمز وسجل سيارتك خلال أقل من دقيقة. سيظهر رقمك مباشرة على شاشة التشغيل.</p>
             </div>
-            <img class="qr" src="${checkinQrUrl}" />
-            <div class="url">${checkinUrl}</div>
+            <img class="qr" src="${escHtml(checkinQrUrl)}" />
+            <div class="url">${escHtml(checkinUrl)}</div>
             <div class="steps">
               <div class="step"><span class="num">1</span> امسح رمز QR من جوالك</div>
               <div class="step"><span class="num">2</span> اختر الخدمة واكتب بيانات السيارة</div>
