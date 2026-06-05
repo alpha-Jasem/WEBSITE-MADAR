@@ -48,7 +48,7 @@ export const Settings = () => {
     try {
       const { error } = await supabase
         .from('companies')
-        .update({ name: clinicName, phone: clinicPhone })
+        .update({ name: clinicName, owner_phone: clinicPhone })
         .eq('id', companyId)
       if (error) throw error
       setSaveSuccess(true)
