@@ -153,7 +153,7 @@ export const Messages = () => {
       )}
 
       {/* History = same as inbox for demo */}
-      {activeTab === 4 && activeTab === 4 && (
+      {activeTab === 4 && (
         <div style={{ background: '#FFFFFF', borderRadius: 14, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>

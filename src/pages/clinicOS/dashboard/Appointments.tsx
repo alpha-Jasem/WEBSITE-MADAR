@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Calendar, CheckCircle, Clock, X, AlertCircle, Download, Plus, Search, Filter } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Calendar, CheckCircle, Clock, X, AlertCircle, Download, Plus, Search } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { StatCard } from '../../../components/clinicOS/ui/StatCard'
 import { StatusBadge, SourceBadge } from '../../../components/clinicOS/ui/StatusBadge'
@@ -33,6 +34,7 @@ const TODAY = new Date().toISOString().split('T')[0]
 const TABS = ['قائمة', 'تقويم', 'حسب الطبيب', 'تحتاج مراجعة', 'قائمة الانتظار']
 
 export const Appointments = () => {
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState(0)
   const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null)
   const [showNewAppt, setShowNewAppt] = useState(false)
@@ -65,7 +67,7 @@ export const Appointments = () => {
   const [dateStart, dateEnd] = getDateRange()
 
   const filtered = useMemo(() => appointments.filter(a => {
-    if (search && !a.patient_name.includes(search) && !a.patient_phone.includes(search) && !a.doctor_name.includes(search)) return false
+    if (search && !(a.patient_name || '').includes(search) && !(a.patient_phone || '').includes(search) && !(a.doctor_name || '').includes(search)) return false
     if (statusFilter && a.status !== statusFilter) return false
     if (sourceFilter && a.source !== sourceFilter) return false
     if (dateStart && a.appointment_date < dateStart) return false
@@ -229,6 +231,24 @@ export const Appointments = () => {
             </motion.div>
           ))}
         </div>
+      )}
+
+      {activeTab === 1 && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          style={{ background: '#FFFFFF', borderRadius: 14, border: '1px solid #E2E8F0', padding: '48px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, textAlign: 'center' }}>
+          <div style={{ width: 64, height: 64, borderRadius: 18, background: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Calendar size={28} style={{ color: '#4F46E5' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', marginBottom: 6 }}>تقويم العيادة</div>
+            <div style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif', maxWidth: 320 }}>
+              اعرض الجدول الأسبوعي والشهري، وتنقل بين الأيام مباشرة من التقويم.
+            </div>
+          </div>
+          <button onClick={() => navigate('/clinic-os/dashboard/calendar')} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 24px', borderRadius: 9, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>
+            <Calendar size={14} /> فتح التقويم
+          </button>
+        </motion.div>
       )}
 
       {activeTab === 2 && (

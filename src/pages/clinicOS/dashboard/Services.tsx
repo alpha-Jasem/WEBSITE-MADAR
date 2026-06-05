@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Stethoscope, Plus, Clock, DollarSign, AlertCircle, CheckCircle, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { StatCard } from '../../../components/clinicOS/ui/StatCard'
-import { useClinicServices, createService } from '../../../lib/clinicOSQueries'
+import { useClinicServices, createService, updateService } from '../../../lib/clinicOSQueries'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 import { useToast } from '../../../lib/useToast'
 import type { Service } from '../../../types/clinicOS'
@@ -13,6 +13,8 @@ export const Services = () => {
   const { data: services = [], refetch } = useClinicServices(companyId, isDemo)
   const [selected, setSelected] = useState<Service | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editSvc, setEditSvc] = useState<Partial<Service>>({})
   const [newSvc, setNewSvc] = useState({ name: '', category: '', duration_minutes: 30, buffer_minutes: 5, price: 0, requires_approval: false, available_for_ai: true })
   const [saving, setSaving] = useState(false)
 
@@ -29,6 +31,19 @@ export const Services = () => {
       setNewSvc({ name: '', category: '', duration_minutes: 30, buffer_minutes: 5, price: 0, requires_approval: false, available_for_ai: true })
       refetch()
     } catch { showToast('حدث خطأ أثناء الإضافة', 'error') }
+    finally { setSaving(false) }
+  }
+
+  const handleEditService = async () => {
+    if (!selected) return
+    if (isDemo) { showToast('لا يمكن التعديل في وضع التجربة', 'info'); return }
+    setSaving(true)
+    try {
+      await updateService(selected.id, editSvc)
+      showToast('تم حفظ التغييرات بنجاح', 'success')
+      setShowEditModal(false)
+      refetch()
+    } catch { showToast('حدث خطأ أثناء الحفظ', 'error') }
     finally { setSaving(false) }
   }
 
@@ -113,10 +128,60 @@ export const Services = () => {
                 </div>
               ))}
             </div>
-            <button onClick={() => showToast('تعديل الخدمة — قريباً في التحديث القادم', 'info')} style={{ width: '100%', marginTop: 16, padding: '9px', borderRadius: 8, background: '#4F46E5', color: 'white', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>تعديل الخدمة</button>
+            <button onClick={() => { setEditSvc({ name: selected.name, category: selected.category, duration_minutes: selected.duration_minutes, buffer_minutes: selected.buffer_minutes, price: selected.price, requires_approval: selected.requires_approval, available_for_ai: selected.available_for_ai }); setShowEditModal(true) }} style={{ width: '100%', marginTop: 16, padding: '9px', borderRadius: 8, background: '#4F46E5', color: 'white', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>تعديل الخدمة</button>
           </motion.div>
         )}
       </div>
+
+      {/* Edit Service Modal */}
+      <AnimatePresence>
+        {showEditModal && selected && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', direction: 'rtl' }}>
+            <motion.div initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }}
+              style={{ background: '#FFFFFF', borderRadius: 16, padding: '28px', width: 460, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <h2 style={{ fontSize: 17, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>تعديل: {selected.name}</h2>
+                <button onClick={() => setShowEditModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  {[{ label: 'اسم الخدمة', key: 'name' }, { label: 'الفئة', key: 'category' }].map(f => (
+                    <div key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', fontFamily: 'Cairo, sans-serif' }}>{f.label}</label>
+                      <input value={(editSvc as Record<string, unknown>)[f.key] as string || ''} onChange={e => setEditSvc(p => ({ ...p, [f.key]: e.target.value }))}
+                        style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', direction: 'rtl' }} />
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                  {[{ label: 'المدة (دق)', key: 'duration_minutes' }, { label: 'Buffer (دق)', key: 'buffer_minutes' }, { label: 'السعر (ريال)', key: 'price' }].map(f => (
+                    <div key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', fontFamily: 'Cairo, sans-serif' }}>{f.label}</label>
+                      <input type="number" min={0} value={(editSvc as Record<string, unknown>)[f.key] as number || 0} onChange={e => setEditSvc(p => ({ ...p, [f.key]: Number(e.target.value) }))}
+                        style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', textAlign: 'center' }} />
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: 16 }}>
+                  {[{ label: 'يحتاج موافقة', key: 'requires_approval' }, { label: 'متاح للحجز الذكي', key: 'available_for_ai' }].map(f => (
+                    <label key={f.key} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13, fontFamily: 'Tajawal, sans-serif', color: '#334155' }}>
+                      <input type="checkbox" checked={(editSvc as Record<string, unknown>)[f.key] as boolean || false} onChange={e => setEditSvc(p => ({ ...p, [f.key]: e.target.checked }))} />
+                      {f.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+                <button onClick={handleEditService} disabled={saving} style={{ flex: 1, padding: '11px', borderRadius: 8, background: saving ? '#94A3B8' : '#4F46E5', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'Cairo, sans-serif' }}>
+                  {saving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+                </button>
+                <button onClick={() => setShowEditModal(false)} style={{ padding: '11px 18px', borderRadius: 8, background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>إلغاء</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Add Service Modal */}
       <AnimatePresence>
