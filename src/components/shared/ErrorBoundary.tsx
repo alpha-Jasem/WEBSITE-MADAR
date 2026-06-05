@@ -114,14 +114,14 @@ export class ErrorBoundary extends Component<Props, State> {
           تحديث الصفحة
         </button>
 
-        {import.meta.env.DEV && (
-          <details style={{ maxWidth: 480, textAlign: 'left' }}>
-            <summary style={{ fontSize: 11, color: '#94A3B8', cursor: 'pointer' }}>تفاصيل الخطأ (dev)</summary>
-            <pre style={{ fontSize: 10, color: '#EF4444', marginTop: 8, whiteSpace: 'pre-wrap' }}>
-              {this.state.error.message}
-            </pre>
-          </details>
-        )}
+        <details style={{ maxWidth: 480, textAlign: 'left' }} open>
+          <summary style={{ fontSize: 11, color: '#94A3B8', cursor: 'pointer' }}>تفاصيل الخطأ</summary>
+          <pre style={{ fontSize: 10, color: '#EF4444', marginTop: 8, whiteSpace: 'pre-wrap', direction: 'ltr' }}>
+            {this.state.error.message}
+            {'\n'}
+            {this.state.error.stack?.slice(0, 300)}
+          </pre>
+        </details>
       </div>
     )
   }
