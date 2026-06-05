@@ -121,7 +121,7 @@ export const DashboardOverview = () => {
                 >
                   <span style={{ fontSize: 12, fontWeight: 800, color: '#4F46E5', minWidth: 42, fontFamily: 'Cairo, sans-serif' }}>{appt.start_time}</span>
                   <div style={{ width: 32, height: 32, borderRadius: 10, background: 'linear-gradient(135deg, #4F46E580, #4F46E5)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <span style={{ fontSize: 12, fontWeight: 800, color: 'white' }}>{appt.patient_name.charAt(0)}</span>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: 'white' }}>{(appt.patient_name || '؟').charAt(0)}</span>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{appt.patient_name}</div>
@@ -191,7 +191,7 @@ export const DashboardOverview = () => {
               {doctors.map(doc => (
                 <div key={doc.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid #F8FAFC' }}>
                   <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, #4F46E580, #4F46E5)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <span style={{ fontSize: 11, fontWeight: 800, color: 'white' }}>{doc.name.split(' ')[1]?.charAt(0) || 'د'}</span>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: 'white' }}>{(doc.name || '').split(' ')[1]?.charAt(0) || 'د'}</span>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{doc.name}</div>
