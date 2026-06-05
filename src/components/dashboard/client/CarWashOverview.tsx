@@ -434,9 +434,15 @@ export function CarWashOverview() {
 
   return (<div dir="rtl" style={{ color: '#0D1B3E' }}>
       <style>{`
-        .cw-board { display: grid; grid-template-columns: minmax(255px, .8fr) minmax(520px, 1.65fr) minmax(285px, .92fr); gap: 16px; align-items: start; }
-        .cw-card { background:#fff; border:1px solid #E3EAF6; border-radius:16px; box-shadow:0 16px 42px rgba(13,27,62,.055); }
+        .cw-board { direction:ltr; display:grid; grid-template-columns:minmax(0, 1fr) minmax(285px, 320px); grid-template-areas:"main rail" "main ai"; gap:16px; align-items:start; }
+        .cw-main,.cw-rail { direction:rtl; display:grid; gap:14px; min-width:0; }
+        .cw-main { grid-area:main; }
+        .cw-rail-primary { grid-area:rail; }
+        .cw-rail-ai { grid-area:ai; }
+        .cw-card { background:rgba(255,255,255,.94); border:1px solid #E3EAF6; border-radius:16px; box-shadow:0 16px 42px rgba(13,27,62,.055); }
         .cw-card-pad { padding:16px; }
+        .cw-heading { display:flex; justify-content:space-between; gap:16px; align-items:start; flex-wrap:wrap; padding:4px 2px 0; }
+        .cw-stat-grid { display:grid; grid-template-columns:repeat(5,minmax(126px,1fr)); gap:12px; }
         .cw-title { margin:0; color:#0D1B3E; font-family:Cairo,sans-serif; font-weight:950; }
         .cw-muted { color:#64748B; font-family:Tajawal,sans-serif; }
         .cw-link { text-decoration:none; color:inherit; }
@@ -449,11 +455,14 @@ export function CarWashOverview() {
         .cw-soft-button { height:36px; border-radius:11px; border:1px solid #D7E1F0; background:#fff; padding:0 11px; display:inline-flex; align-items:center; gap:7px; color:#0D1B3E; font-weight:900; font-size:11px; font-family:Tajawal,sans-serif; cursor:pointer; }
         .cw-soft-select { height:36px; border-radius:11px; border:1px solid #D7E1F0; background:#fff; padding:0 10px; color:#0D1B3E; font-weight:900; font-size:11px; font-family:Tajawal,sans-serif; }
         .cw-insight-grid { display:grid; grid-template-columns:minmax(290px, 1.1fr) minmax(220px, .8fr) minmax(190px, .65fr); gap:14px; }
+        .cw-flow-grid { display:grid; grid-template-columns:repeat(4,minmax(118px,1fr)); gap:14px; align-items:center; }
         .cw-stage-arrow { position:absolute; left:-15px; top:50%; color:#0D1B3E; font-size:22px; transform:translateY(-50%); }
-        @media (max-width: 1280px) { .cw-board { grid-template-columns: 1fr; } }
-        @media (max-width: 920px) { .cw-insight-grid { grid-template-columns:1fr; } .cw-stage-arrow { display:none; } }
-        @media (max-width: 640px) { .cw-card-pad { padding:14px; } .cw-board { gap:12px; } .cw-command-bar { display:grid; grid-template-columns:1fr; gap:8px; align-items:stretch; padding:10px; } .cw-command-group { width:100%; display:grid; gap:8px; flex-wrap:nowrap; } .cw-command-primary { grid-template-columns:repeat(3,minmax(0,1fr)); } .cw-command-tools { grid-template-columns:minmax(118px,1.15fr) minmax(82px,.85fr) minmax(58px,.55fr) minmax(58px,.55fr); } .cw-main-action,.cw-secondary-action,.cw-soft-button,.cw-soft-select { width:100%; min-width:0; } .cw-main-action,.cw-secondary-action { height:38px; padding:0 8px; white-space:nowrap; font-size:11px; } .cw-soft-button,.cw-soft-select { height:34px; padding:0 7px; white-space:nowrap; font-size:10px; justify-content:center; } }
-        @media (max-width: 420px) { .cw-command-primary { grid-template-columns:1fr; } .cw-command-tools { grid-template-columns:1fr 1fr; } }
+        @media (max-width: 1500px) { .cw-stat-grid { grid-template-columns:repeat(3,minmax(150px,1fr)); } .cw-insight-grid { grid-template-columns:minmax(280px,1.1fr) minmax(210px,.75fr); } .cw-insight-grid section:last-child { grid-column:1 / -1; } }
+        @media (max-width: 1280px) { .cw-board { grid-template-columns:1fr; grid-template-areas:"main" "rail" "ai"; } .cw-rail-primary,.cw-rail-ai { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+        @media (max-width: 920px) { .cw-insight-grid { grid-template-columns:1fr; } .cw-insight-grid section:last-child { grid-column:auto; } .cw-flow-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .cw-stage-arrow { display:none; } .cw-rail-primary,.cw-rail-ai { grid-template-columns:1fr; } }
+        @media (max-width: 700px) { .cw-stat-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+        @media (max-width: 640px) { .cw-card-pad { padding:14px; } .cw-board,.cw-main,.cw-rail { gap:12px; } .cw-heading { padding:0; } .cw-command-bar { display:grid; grid-template-columns:1fr; gap:8px; align-items:stretch; padding:10px; } .cw-command-group { width:100%; display:grid; gap:8px; flex-wrap:nowrap; } .cw-command-primary { grid-template-columns:repeat(3,minmax(0,1fr)); } .cw-command-tools { grid-template-columns:minmax(118px,1.15fr) minmax(82px,.85fr) minmax(58px,.55fr) minmax(58px,.55fr); } .cw-main-action,.cw-secondary-action,.cw-soft-button,.cw-soft-select { width:100%; min-width:0; } .cw-main-action,.cw-secondary-action { height:38px; padding:0 8px; white-space:nowrap; font-size:11px; } .cw-soft-button,.cw-soft-select { height:34px; padding:0 7px; white-space:nowrap; font-size:10px; justify-content:center; } }
+        @media (max-width: 420px) { .cw-stat-grid,.cw-flow-grid,.cw-command-primary { grid-template-columns:1fr; } .cw-command-tools { grid-template-columns:1fr 1fr; } }
       `}</style>
 
       <section className="cw-command-bar">
@@ -493,7 +502,7 @@ export function CarWashOverview() {
       )}
 
       <div className="cw-board">
-        <aside style={{ display: 'grid', gap: 14 }}>
+        <aside className="cw-rail cw-rail-primary">
           <div className="cw-card cw-card-pad">
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
               <h3 className="cw-title" style={{ fontSize: 15 }}>التنبيهات العملية</h3>
@@ -535,13 +544,13 @@ export function CarWashOverview() {
           </div>
         </aside>
 
-        <main style={{ display: 'grid', gap: 14 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'start', flexWrap: 'wrap' }}>
+        <main className="cw-main">
+          <div className="cw-heading">
             <div><span className="cw-muted" style={{ fontSize: 13, fontWeight: 800 }}>مرحباً بك، {company?.owner_name || 'مدير المغسلة'}</span><h1 className="cw-title" style={{ fontSize: 'clamp(26px, 3vw, 34px)' }}>مركز تشغيل اليوم</h1></div>
             <div style={{ textAlign: 'left' }}><strong style={{ color: '#0D1B3E', fontFamily: 'Cairo,sans-serif' }}>{todayText}</strong><span className="cw-muted" style={{ display: 'block', fontSize: 12 }}>{company?.name || 'المغسلة'}</span></div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(155px, 1fr))', gap: 12 }}>
+          <div className="cw-stat-grid">
             <StatCard icon={DollarSign} label="إجمالي الإيرادات" value={formatSAR(stats.revenue)} sub="ر.س في الفترة" color="#10B981" trend="فعلي" />
             <StatCard icon={Car} label="سيارات اليوم" value={displayCars} sub={`${stats.queueStatusCounts.active} نشطة الآن`} color="#0B63F6" trend="اليوم" />
             <StatCard icon={CalendarClock} label="متوسط الفاتورة" value={stats.avgInvoice || 0} sub="ر.س" color="#7C3AED" trend="محسوب" />
@@ -551,7 +560,7 @@ export function CarWashOverview() {
 
           <div className="cw-card cw-card-pad">
             <h2 className="cw-title" style={{ fontSize: 18, marginBottom: 18 }}>حالة السيارات اليوم</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 14, alignItems: 'center' }}>
+            <div className="cw-flow-grid">
               {statusFlow.map((step, i) => {
                 const Icon = step.icon
                 return (
@@ -608,7 +617,7 @@ export function CarWashOverview() {
           </div>
         </main>
 
-        <aside style={{ display: 'grid', gap: 14 }}>
+        <aside className="cw-rail cw-rail-ai">
           <div className="cw-card cw-card-pad">
             <h3 className="cw-title" style={{ fontSize: 17, marginBottom: 14 }}><Sparkles size={18} color="#0B63F6" /> مساعد الذكاء الاصطناعي</h3>
             <Link to={aiCards[0].to} className="cw-link cw-clickable" style={{ width: '100%', minHeight: 40, border: 'none', borderRadius: 10, background: '#F3F7FF', color: '#0B63F6', fontWeight: 950, fontFamily: 'Tajawal,sans-serif', marginBottom: 12, display: 'grid', placeItems: 'center', textAlign: 'center', padding: '10px 12px' }}>{aiCards[0].title}</Link>
