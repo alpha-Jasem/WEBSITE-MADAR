@@ -180,7 +180,7 @@ export const Appointments = () => {
                       <td style={{ padding: '12px 16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, #4F46E540, #4F46E5)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <span style={{ fontSize: 10, fontWeight: 800, color: 'white' }}>{appt.patient_name.charAt(0)}</span>
+                            <span style={{ fontSize: 10, fontWeight: 800, color: 'white' }}>{(appt.patient_name || '؟').charAt(0)}</span>
                           </div>
                           <div>
                             <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>{appt.patient_name}</div>
@@ -213,7 +213,7 @@ export const Appointments = () => {
           {_waitlist.map((w, i) => (
             <motion.div key={w.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }} style={{ background: '#FFFFFF', borderRadius: 12, border: '1px solid #E2E8F0', padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
               <div style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg, #4F46E540, #4F46E5)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ fontSize: 14, fontWeight: 800, color: 'white' }}>{w.patient_name.charAt(0)}</span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: 'white' }}>{(w.patient_name || '؟').charAt(0)}</span>
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>{w.patient_name}</div>
@@ -239,7 +239,7 @@ export const Appointments = () => {
               <div key={doc.id} style={{ background: '#FFFFFF', borderRadius: 14, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
                 <div style={{ padding: '14px 16px', borderBottom: '1px solid #F1F5F9', display: 'flex', gap: 10, alignItems: 'center' }}>
                   <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #4F46E540, #4F46E5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: 12, fontWeight: 800, color: 'white' }}>{doc.name.split(' ')[1]?.charAt(0) || 'د'}</span>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: 'white' }}>{(doc.name || '').split(' ')[1]?.charAt(0) || 'د'}</span>
                   </div>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>{doc.name}</div>

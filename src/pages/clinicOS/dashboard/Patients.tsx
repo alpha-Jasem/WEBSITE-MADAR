@@ -103,7 +103,7 @@ export const Patients = () => {
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <div style={{ width: 32, height: 32, borderRadius: 10, background: 'linear-gradient(135deg, #4F46E540, #4F46E5)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <span style={{ fontSize: 11, fontWeight: 800, color: 'white' }}>{p.name.charAt(0)}</span>
+                          <span style={{ fontSize: 11, fontWeight: 800, color: 'white' }}>{(p.name || '؟').charAt(0)}</span>
                         </div>
                         <span style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>{p.name}</span>
                       </div>
@@ -114,7 +114,7 @@ export const Patients = () => {
                     <td style={{ padding: '12px 16px', fontSize: 13, color: p.no_show_count > 1 ? '#DC2626' : '#0F172A', fontWeight: 700, fontFamily: 'Cairo, sans-serif' }}>{p.no_show_count}</td>
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                        {p.tags.slice(0, 2).map(tag => {
+                        {(p.tags || []).slice(0, 2).map(tag => {
                           const cfg = TAG_CFG[tag]
                           return cfg ? <span key={tag} style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, color: cfg.color, background: cfg.bg, fontWeight: 700, fontFamily: 'Tajawal, sans-serif' }}>{cfg.label}</span> : null
                         })}
