@@ -34,6 +34,51 @@ function useFetch<T>(fetcher: () => Promise<T>, deps: unknown[]) {
   return { data, loading, error, refetch: run }
 }
 
+// ─── Realtime fetch hook (re-fetches on any DB change for the given table) ────
+
+function useFetchRealtime<T>(
+  fetcher: () => Promise<T>,
+  deps: unknown[],
+  realtimeTable: string,
+  companyId: string | null,
+  isDemo: boolean,
+) {
+  const [data, setData] = useState<T | undefined>(undefined)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const run = useCallback(async () => {
+    setLoading(true)
+    try {
+      const result = await fetcher()
+      setData(result)
+      setError(null)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'خطأ غير متوقع')
+    } finally {
+      setLoading(false)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps)
+
+  useEffect(() => { run() }, [run])
+
+  useEffect(() => {
+    if (isDemo || !companyId) return
+    const channel = supabase
+      .channel(`rt_${realtimeTable}_${companyId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: realtimeTable, filter: `company_id=eq.${companyId}` },
+        () => { run() },
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [realtimeTable, companyId, isDemo, run])
+
+  return { data, loading, error, refetch: run }
+}
+
 // ─── Doctors ───────────────────────────────────────────────────────────────────
 
 export function useClinicDoctors(companyId: string | null, isDemo = false) {
@@ -85,7 +130,7 @@ export function useClinicPatients(companyId: string | null, isDemo = false) {
 // ─── Appointments ─────────────────────────────────────────────────────────────
 
 export function useClinicAppointments(companyId: string | null, dateFilter?: string, isDemo = false) {
-  return useFetch<Appointment[]>(async () => {
+  return useFetchRealtime<Appointment[]>(async () => {
     if (isDemo) {
       if (!dateFilter) return DEMO_APPOINTMENTS
       return DEMO_APPOINTMENTS.filter(a => a.appointment_date === dateFilter)
@@ -103,7 +148,7 @@ export function useClinicAppointments(companyId: string | null, dateFilter?: str
     const { data, error } = await query
     if (error) throw error
     return (data ?? []) as Appointment[]
-  }, [companyId, dateFilter, isDemo])
+  }, [companyId, dateFilter, isDemo], 'clinic_os_appointments', companyId, isDemo)
 }
 
 export function useClinicTodayAppointments(companyId: string | null, isDemo = false) {
@@ -178,7 +223,7 @@ export function useClinicStats(companyId: string | null, isDemo = false) {
   const today = new Date().toISOString().split('T')[0]
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]
 
-  return useFetch<ClinicStats>(async () => {
+  return useFetchRealtime<ClinicStats>(async () => {
     if (isDemo) return {
       today_appointments: DEMO_STATS.today_appointments,
       confirmed: DEMO_STATS.confirmed,
@@ -230,7 +275,7 @@ export function useClinicStats(companyId: string | null, isDemo = false) {
       ai_bookings_today: aiCallRows.filter(c => c.result === 'booked').length,
       calls_handled: aiCallRows.length,
     }
-  }, [companyId, isDemo])
+  }, [companyId, isDemo], 'clinic_os_appointments', companyId, isDemo)
 }
 
 // ─── Weekly Chart Data ────────────────────────────────────────────────────────
