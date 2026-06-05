@@ -442,14 +442,20 @@ export function CarWashOverview() {
         .cw-link { text-decoration:none; color:inherit; }
         .cw-clickable { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
         .cw-clickable:hover { transform: translateY(-2px); box-shadow:0 18px 46px rgba(13,27,62,.08); border-color:#BFD3F1; }
+        .cw-command-bar { display:grid; grid-template-columns:minmax(230px, .9fr) minmax(260px, 1fr) minmax(260px, auto); gap:12px; align-items:center; margin-bottom:18px; padding:14px; background:rgba(255,255,255,.92); border:1px solid #DDE8F7; border-radius:18px; box-shadow:0 18px 48px rgba(13,27,62,.07); backdrop-filter:blur(14px); }
+        .cw-command-group { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+        .cw-main-action { height:40px; border-radius:12px; padding:0 15px; display:inline-flex; align-items:center; justify-content:center; gap:8px; background:#0B63F6; color:#fff; font-size:12px; font-weight:950; font-family:Cairo,sans-serif; box-shadow:0 14px 28px rgba(11,99,246,.18); text-decoration:none; }
+        .cw-secondary-action { height:40px; border-radius:12px; padding:0 13px; display:inline-flex; align-items:center; justify-content:center; gap:8px; background:#F8FBFF; color:#0D1B3E; border:1px solid #D7E1F0; font-size:12px; font-weight:900; font-family:Tajawal,sans-serif; text-decoration:none; }
+        .cw-soft-button { height:36px; border-radius:11px; border:1px solid #D7E1F0; background:#fff; padding:0 11px; display:inline-flex; align-items:center; gap:7px; color:#0D1B3E; font-weight:900; font-size:11px; font-family:Tajawal,sans-serif; cursor:pointer; }
+        .cw-soft-select { height:36px; border-radius:11px; border:1px solid #D7E1F0; background:#fff; padding:0 10px; color:#0D1B3E; font-weight:900; font-size:11px; font-family:Tajawal,sans-serif; }
         .cw-insight-grid { display:grid; grid-template-columns:minmax(290px, 1.1fr) minmax(220px, .8fr) minmax(190px, .65fr); gap:14px; }
         .cw-stage-arrow { position:absolute; left:-15px; top:50%; color:#0D1B3E; font-size:22px; transform:translateY(-50%); }
-        @media (max-width: 1280px) { .cw-board { grid-template-columns: 1fr; } }
+        @media (max-width: 1280px) { .cw-board { grid-template-columns: 1fr; } .cw-command-bar { grid-template-columns:1fr; } }
         @media (max-width: 920px) { .cw-insight-grid { grid-template-columns:1fr; } .cw-stage-arrow { display:none; } }
         @media (max-width: 640px) { .cw-card-pad { padding:14px; } .cw-board { gap:12px; } }
       `}</style>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'center', flexWrap: 'wrap', marginBottom: 18 }}>
+      <section className="cw-command-bar">
         <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
           <div style={{ width: 46, height: 46, borderRadius: 999, background: 'linear-gradient(135deg,#EAF3FF,#FFFFFF)', border: '1px solid #DDE8F7', display: 'grid', placeItems: 'center' }}>
             <Users size={21} color="#0D1B3E" />
@@ -468,21 +474,33 @@ export function CarWashOverview() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <button onClick={() => setShowCustom(v => !v)} style={{ height: 42, borderRadius: 12, border: '1px solid #D7E1F0', background: '#fff', padding: '0 16px', display: 'inline-flex', alignItems: 'center', gap: 9, fontWeight: 900, fontSize: 12, fontFamily: 'Tajawal,sans-serif', cursor: 'pointer' }}>
-            <Calendar size={16} color="#0B63F6" /> {isCustomActive ? `${customFrom} - ${customTo}` : 'اليوم'}
+        <div className="cw-command-group" style={{ justifyContent: 'center' }}>
+          <Link to="/client/queue" className="cw-main-action">
+            <Plus size={15} /> إضافة سيارة
+          </Link>
+          <Link to="/client/queue" className="cw-secondary-action">
+            <Car size={15} /> لوحة التشغيل
+          </Link>
+          <Link to="/client/reports" className="cw-secondary-action">
+            <TrendingUp size={15} /> التقارير
+          </Link>
+        </div>
+
+        <div className="cw-command-group" style={{ justifyContent: 'flex-end' }}>
+          <button onClick={() => setShowCustom(v => !v)} className="cw-soft-button">
+            <Calendar size={15} color="#0B63F6" /> {isCustomActive ? `${customFrom} - ${customTo}` : 'اليوم'}
           </button>
-          <select value={days} onChange={e => { setDays(Number(e.target.value)); setShowCustom(false) }} style={{ height: 42, borderRadius: 12, border: '1px solid #D7E1F0', background: '#fff', padding: '0 12px', fontWeight: 900, fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>
+          <select value={days} onChange={e => { setDays(Number(e.target.value)); setShowCustom(false) }} className="cw-soft-select">
             {DATE_FILTERS.map(f => <option key={f.days} value={f.days}>{f.label}</option>)}
           </select>
-          <button onClick={exportPDF} disabled={pdfLoading} style={{ height: 42, border: 'none', borderRadius: 12, background: '#0B63F6', color: '#fff', padding: '0 16px', display: 'inline-flex', alignItems: 'center', gap: 9, fontWeight: 900, fontSize: 12, fontFamily: 'Tajawal,sans-serif', cursor: 'pointer' }}>
-            {pdfLoading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} تصدير التقرير
+          <button onClick={exportPDF} disabled={pdfLoading} className="cw-soft-button" title="تصدير PDF">
+            {pdfLoading ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />} PDF
           </button>
-          <button onClick={exportSalesCSV} style={{ height: 42, borderRadius: 12, border: '1px solid #D7E1F0', background: '#fff', padding: '0 16px', display: 'inline-flex', alignItems: 'center', gap: 9, fontWeight: 900, fontSize: 12, fontFamily: 'Tajawal,sans-serif', cursor: 'pointer' }}>
-            <FileText size={16} color="#0D1B3E" /> CSV
+          <button onClick={exportSalesCSV} className="cw-soft-button" title="تصدير CSV">
+            <FileText size={15} color="#0D1B3E" /> CSV
           </button>
         </div>
-      </div>
+      </section>
 
       {showCustom && (
         <div className="cw-card cw-card-pad" style={{ marginBottom: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
