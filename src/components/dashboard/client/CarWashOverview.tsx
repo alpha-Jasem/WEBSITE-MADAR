@@ -452,7 +452,7 @@ export function CarWashOverview() {
         .cw-stage-arrow { position:absolute; left:-15px; top:50%; color:#0D1B3E; font-size:22px; transform:translateY(-50%); }
         @media (max-width: 1280px) { .cw-board { grid-template-columns: 1fr; } }
         @media (max-width: 920px) { .cw-insight-grid { grid-template-columns:1fr; } .cw-stage-arrow { display:none; } }
-        @media (max-width: 640px) { .cw-card-pad { padding:14px; } .cw-board { gap:12px; } .cw-command-bar { align-items:flex-start; } .cw-command-group { gap:8px; } .cw-main-action,.cw-secondary-action { height:38px; padding:0 12px; } .cw-soft-button,.cw-soft-select { height:34px; padding:0 9px; } }
+        @media (max-width: 640px) { .cw-card-pad { padding:14px; } .cw-board { gap:12px; } .cw-command-bar { flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; align-items:center; padding:8px; scrollbar-width:none; } .cw-command-bar::-webkit-scrollbar { display:none; } .cw-command-group { flex:0 0 auto; flex-wrap:nowrap; gap:8px; } .cw-main-action,.cw-secondary-action { height:38px; padding:0 12px; white-space:nowrap; } .cw-soft-button,.cw-soft-select { height:34px; padding:0 9px; white-space:nowrap; } }
       `}</style>
 
       <section className="cw-command-bar">

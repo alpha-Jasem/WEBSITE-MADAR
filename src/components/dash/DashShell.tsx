@@ -99,11 +99,9 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
     <>
       <button type="button" className="dash-topbar-icon" aria-label="الإشعارات">
         <Bell size={17} />
-        <em>0</em>
       </button>
       <button type="button" className="dash-topbar-icon" aria-label="الرسائل">
         <MessageSquare size={17} />
-        <em>0</em>
       </button>
       <div className="dash-topbar-profile-wrap" ref={topProfileRef}>
         <button
