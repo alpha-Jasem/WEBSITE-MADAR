@@ -35,12 +35,12 @@ function FadeUp({ children, delay = 0, className = '', style = {} }: {
   children: React.ReactNode; delay?: number; className?: string; style?: React.CSSProperties
 }) {
   const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '-50px' })
+  const inView = useInView(ref, { once: true, margin: '-30px' })
   return (
     <motion.div ref={ref} className={className} style={style}
-      initial={{ opacity: 0, y: 28 }}
+      initial={{ opacity: 0, y: 22 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}>
+      transition={{ duration: 0.6, delay, ease: [0.16, 1, 0.3, 1] }}>
       {children}
     </motion.div>
   )
@@ -348,16 +348,20 @@ export const PlatformHome = () => {
         .card-hover { transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease }
         .card-hover:hover { transform: translateY(-5px) !important; box-shadow: 0 20px 60px rgba(0,0,0,0.45) !important }
         @media (max-width: 768px) {
-          .hero-grid { flex-direction: column !important; gap: 40px !important }
+          .hero-grid { flex-direction: column !important; gap: 28px !important }
           .hero-text { max-width: 100% !important; text-align: center !important; align-items: center !important }
-          .mock-wrap { width: 100% !important; display: flex; justify-content: center }
-          .proof-grid { flex-wrap: wrap !important }
+          .mock-wrap { width: 100% !important; max-width: 360px !important; margin: 0 auto }
+          .proof-grid { flex-wrap: wrap !important; justify-content: center !important; gap: 12px 0 !important }
+          .proof-item { padding: 6px 16px !important }
           .prod-grid { flex-direction: column !important }
           .goals-grid { grid-template-columns: 1fr 1fr !important }
           .steps-grid { grid-template-columns: 1fr !important }
+          .step-connector { display: none !important }
+          .cta-grid { grid-template-columns: 1fr !important }
         }
         @media (max-width: 480px) {
-          .goals-grid { grid-template-columns: 1fr !important }
+          .goals-grid { grid-template-columns: 1fr 1fr !important }
+          .proof-item { padding: 6px 12px !important }
         }
       `}</style>
 
@@ -366,7 +370,7 @@ export const PlatformHome = () => {
       {/* ══════════════════════════ HERO ════════════════════════════════════════ */}
       <section ref={heroRef} style={{
         position: 'relative', zIndex: 10,
-        padding: 'clamp(7rem,12vw,11rem) clamp(1.5rem,5vw,4rem) clamp(4rem,7vw,7rem)',
+        padding: 'clamp(5rem,7vw,7rem) clamp(1.5rem,5vw,4rem) clamp(2.5rem,4vw,4rem)',
         maxWidth: 1280, margin: '0 auto',
       }}>
         <div className="hero-grid" style={{
@@ -388,7 +392,7 @@ export const PlatformHome = () => {
               transition={{ duration: 0.5, delay: 0.05 }}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 7,
-                padding: '5px 14px', borderRadius: 999, marginBottom: 28,
+                padding: '5px 14px', borderRadius: 999, marginBottom: 20,
                 background: 'rgba(212,168,83,0.07)', border: '1px solid rgba(212,168,83,0.2)',
               }}>
               <Sparkles size={10} color={GOLD} />
@@ -429,7 +433,7 @@ export const PlatformHome = () => {
             <motion.p
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.65, delay: 0.5 }}
-              style={{ fontSize: 16, color: MUTED, maxWidth: 480, lineHeight: 1.8, margin: '0 0 32px', fontFamily: 'Tajawal, sans-serif' }}>
+              style={{ fontSize: 15, color: MUTED, maxWidth: 480, lineHeight: 1.75, margin: '0 0 24px', fontFamily: 'Tajawal, sans-serif' }}>
               {t(
                 'مدار OS يدير مغسلتك أو عيادتك بالكامل — حجز، إشعارات، مالية، وعملاء — ٢٤/٧ بدون توقف.',
                 'Madar OS fully manages your car wash or clinic — bookings, notifications, finance, and customers — 24/7 without stopping.'
@@ -440,7 +444,7 @@ export const PlatformHome = () => {
             <motion.div
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.65, delay: 0.65 }}
-              style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 44 }}>
+              style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 32 }}>
               <motion.button
                 whileHover={{ scale: 1.03, boxShadow: `0 0 40px rgba(212,168,83,0.3)` }}
                 whileTap={{ scale: 0.96 }}
@@ -479,14 +483,14 @@ export const PlatformHome = () => {
               initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.85 }}
               className="proof-grid"
-              style={{ display: 'flex', alignItems: 'center', gap: 0, flexWrap: 'nowrap' }}>
+              style={{ display: 'flex', alignItems: 'center', gap: 0, flexWrap: 'wrap' }}>
               {proof.map((p, i) => (
-                <div key={i} style={{
-                  padding: '0 22px',
+                <div key={i} className="proof-item" style={{
+                  padding: '0 20px',
                   borderInlineEnd: i < proof.length - 1 ? '1px solid rgba(255,255,255,0.07)' : 'none',
                   textAlign: 'center',
                 }}>
-                  <div style={{ fontSize: 'clamp(20px,2.5vw,26px)', fontWeight: 900, fontFamily: 'Cairo, sans-serif', color: p.color, letterSpacing: '-0.5px', lineHeight: 1, display: 'flex', alignItems: 'baseline', gap: 2, justifyContent: 'center' }}>
+                  <div style={{ fontSize: 'clamp(18px,2.2vw,24px)', fontWeight: 900, fontFamily: 'Cairo, sans-serif', color: p.color, letterSpacing: '-0.5px', lineHeight: 1, display: 'flex', alignItems: 'baseline', gap: 2, justifyContent: 'center' }}>
                     <span data-count={p.value}>٠</span>
                     <span style={{ fontSize: '0.55em' }}>{p.suffix}</span>
                   </div>
@@ -504,12 +508,12 @@ export const PlatformHome = () => {
       </section>
 
       {/* ══════════════════════ PRODUCTS ════════════════════════════════════════ */}
-      <section id="products" style={{ position: 'relative', zIndex: 10, padding: 'clamp(4rem,8vw,7rem) clamp(1.5rem,5vw,4rem)' }}>
+      <section id="products" style={{ position: 'relative', zIndex: 10, padding: 'clamp(2rem,3.5vw,3.5rem) clamp(1.5rem,5vw,4rem)' }}>
         {/* Divider */}
-        <div style={{ width: '100%', maxWidth: 900, margin: '0 auto 56px', height: 1, background: 'linear-gradient(90deg, transparent, rgba(212,168,83,0.25), transparent)' }} />
+        <div style={{ width: '100%', maxWidth: 900, margin: '0 auto 28px', height: 1, background: 'linear-gradient(90deg, transparent, rgba(212,168,83,0.25), transparent)' }} />
 
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <FadeUp style={{ textAlign: 'center', marginBottom: 52 }}>
+          <FadeUp style={{ textAlign: 'center', marginBottom: 36 }}>
             <span style={{ fontSize: 10, fontWeight: 700, color: GOLD, letterSpacing: '0.18em', fontFamily: 'Cairo, sans-serif', display: 'block', marginBottom: 14, textTransform: 'uppercase' }}>
               {t('قطاعاتنا', 'Our Sectors')}
             </span>
@@ -633,10 +637,10 @@ export const PlatformHome = () => {
       </section>
 
       {/* ══════════════════════ GOALS ════════════════════════════════════════════ */}
-      <section style={{ position: 'relative', zIndex: 10, padding: 'clamp(4rem,8vw,7rem) clamp(1.5rem,5vw,4rem)' }}>
-        <div style={{ width: '100%', maxWidth: 900, margin: '0 auto 56px', height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)' }} />
+      <section style={{ position: 'relative', zIndex: 10, padding: 'clamp(2rem,3.5vw,3.5rem) clamp(1.5rem,5vw,4rem)' }}>
+        <div style={{ width: '100%', maxWidth: 900, margin: '0 auto 28px', height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)' }} />
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <FadeUp style={{ textAlign: 'center', marginBottom: 52 }}>
+          <FadeUp style={{ textAlign: 'center', marginBottom: 36 }}>
             <span style={{ fontSize: 10, fontWeight: 700, color: GOLD, letterSpacing: '0.18em', fontFamily: 'Cairo, sans-serif', display: 'block', marginBottom: 14, textTransform: 'uppercase' }}>
               {t('رسالتنا', 'Our Mission')}
             </span>
@@ -677,10 +681,10 @@ export const PlatformHome = () => {
       </section>
 
       {/* ══════════════════════ HOW IT WORKS ════════════════════════════════════ */}
-      <section style={{ position: 'relative', zIndex: 10, padding: 'clamp(4rem,8vw,7rem) clamp(1.5rem,5vw,4rem)' }}>
-        <div style={{ width: '100%', maxWidth: 900, margin: '0 auto 56px', height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)' }} />
+      <section style={{ position: 'relative', zIndex: 10, padding: 'clamp(2rem,3.5vw,3.5rem) clamp(1.5rem,5vw,4rem)' }}>
+        <div style={{ width: '100%', maxWidth: 900, margin: '0 auto 28px', height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)' }} />
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <FadeUp style={{ textAlign: 'center', marginBottom: 52 }}>
+          <FadeUp style={{ textAlign: 'center', marginBottom: 36 }}>
             <span style={{ fontSize: 10, fontWeight: 700, color: GOLD, letterSpacing: '0.18em', fontFamily: 'Cairo, sans-serif', display: 'block', marginBottom: 14, textTransform: 'uppercase' }}>
               {t('طريقة العمل', 'How It Works')}
             </span>
@@ -691,9 +695,10 @@ export const PlatformHome = () => {
 
           <div className="steps-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, position: 'relative' }}>
             {/* Connector line */}
-            <div aria-hidden style={{
-              position: 'absolute', top: 32, insetInlineStart: '16.5%', insetInlineEnd: '16.5%',
-              height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.07) 20%, rgba(255,255,255,0.07) 80%, transparent)',
+            <div aria-hidden className="step-connector" style={{
+              position: 'absolute', top: 28, insetInlineStart: '17%', insetInlineEnd: '17%',
+              height: 1,
+              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.12) 15%, rgba(255,255,255,0.12) 85%, transparent)',
               zIndex: 0, pointerEvents: 'none',
             }} />
 
@@ -721,12 +726,12 @@ export const PlatformHome = () => {
       </section>
 
       {/* ══════════════════════ CTA SECTION ═════════════════════════════════════ */}
-      <section style={{ position: 'relative', zIndex: 10, padding: 'clamp(4rem,8vw,7rem) clamp(1.5rem,5vw,4rem) clamp(5rem,10vw,9rem)' }}>
-        <div style={{ width: '100%', maxWidth: 900, margin: '0 auto 56px', height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)' }} />
+      <section style={{ position: 'relative', zIndex: 10, padding: 'clamp(2.5rem,4vw,4rem) clamp(1.5rem,5vw,4rem) clamp(4rem,6vw,6rem)' }}>
+        <div style={{ width: '100%', maxWidth: 900, margin: '0 auto 28px', height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)' }} />
 
         {/* Full-width CTA banner */}
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <FadeUp style={{ textAlign: 'center', marginBottom: 44 }}>
+          <FadeUp style={{ textAlign: 'center', marginBottom: 32 }}>
             <h2 style={{ fontSize: 'clamp(1.9rem,3.8vw,3rem)', fontWeight: 900, color: TEXT, fontFamily: 'Cairo, sans-serif', margin: '0 0 12px', lineHeight: 1.12 }}>
               {isAr
                 ? <>ابدأ الحجز الآن <span style={{ color: GOLD }}>بطريقتك</span></>
@@ -740,7 +745,7 @@ export const PlatformHome = () => {
             </p>
           </FadeUp>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 16 }}>
+          <div className="cta-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 16 }}>
 
             {/* WhatsApp */}
             <FadeUp delay={0.06}>
