@@ -508,9 +508,14 @@ export const PlatformHome = () => {
       </section>
 
       {/* ══════════════════════ PRODUCTS ════════════════════════════════════════ */}
-      <section id="products" style={{ position: 'relative', zIndex: 10, padding: 'clamp(2rem,3.5vw,3.5rem) clamp(1.5rem,5vw,4rem)' }}>
-        {/* Divider */}
-        <div style={{ width: '100%', maxWidth: 900, margin: '0 auto 28px', height: 1, background: 'linear-gradient(90deg, transparent, rgba(212,168,83,0.25), transparent)' }} />
+      <section id="products" style={{ position: 'relative', zIndex: 10, padding: 'clamp(2rem,3.5vw,3.5rem) clamp(1.5rem,5vw,4rem)', background: 'linear-gradient(180deg, #09090B 0%, #07101E 100%)', overflow: 'hidden' }}>
+        {/* Section glows */}
+        <div aria-hidden style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: '0%', left: '5%', width: 560, height: 480, background: 'radial-gradient(ellipse, rgba(56,189,248,0.08) 0%, transparent 65%)', filter: 'blur(70px)' }} />
+          <div style={{ position: 'absolute', top: '0%', right: '5%', width: 560, height: 480, background: 'radial-gradient(ellipse, rgba(52,211,153,0.08) 0%, transparent 65%)', filter: 'blur(70px)' }} />
+        </div>
+        {/* Divider — cyan + green */}
+        <div style={{ width: '100%', maxWidth: 900, margin: '0 auto 28px', height: 1, background: 'linear-gradient(90deg, transparent, rgba(56,189,248,0.4) 35%, rgba(52,211,153,0.4) 65%, transparent)' }} />
 
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <FadeUp style={{ textAlign: 'center', marginBottom: 36 }}>
@@ -637,8 +642,13 @@ export const PlatformHome = () => {
       </section>
 
       {/* ══════════════════════ GOALS ════════════════════════════════════════════ */}
-      <section style={{ position: 'relative', zIndex: 10, padding: 'clamp(2rem,3.5vw,3.5rem) clamp(1.5rem,5vw,4rem)' }}>
-        <div style={{ width: '100%', maxWidth: 900, margin: '0 auto 28px', height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)' }} />
+      <section style={{ position: 'relative', zIndex: 10, padding: 'clamp(2rem,3.5vw,3.5rem) clamp(1.5rem,5vw,4rem)', background: 'linear-gradient(180deg, #07101E 0%, #110D06 100%)', overflow: 'hidden' }}>
+        {/* Section glow — gold from center top */}
+        <div aria-hidden style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: '-10%', left: '50%', transform: 'translateX(-50%)', width: 800, height: 500, background: 'radial-gradient(ellipse, rgba(212,168,83,0.10) 0%, transparent 60%)', filter: 'blur(80px)' }} />
+        </div>
+        {/* Divider — gold */}
+        <div style={{ width: '100%', maxWidth: 900, margin: '0 auto 28px', height: 1, background: 'linear-gradient(90deg, transparent, rgba(212,168,83,0.5), transparent)' }} />
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <FadeUp style={{ textAlign: 'center', marginBottom: 36 }}>
             <span style={{ fontSize: 10, fontWeight: 700, color: GOLD, letterSpacing: '0.18em', fontFamily: 'Cairo, sans-serif', display: 'block', marginBottom: 14, textTransform: 'uppercase' }}>
@@ -681,8 +691,13 @@ export const PlatformHome = () => {
       </section>
 
       {/* ══════════════════════ HOW IT WORKS ════════════════════════════════════ */}
-      <section style={{ position: 'relative', zIndex: 10, padding: 'clamp(2rem,3.5vw,3.5rem) clamp(1.5rem,5vw,4rem)' }}>
-        <div style={{ width: '100%', maxWidth: 900, margin: '0 auto 28px', height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)' }} />
+      <section style={{ position: 'relative', zIndex: 10, padding: 'clamp(2rem,3.5vw,3.5rem) clamp(1.5rem,5vw,4rem)', background: 'linear-gradient(180deg, #110D06 0%, #060B11 100%)', overflow: 'hidden' }}>
+        {/* Section glow — cyan from top center */}
+        <div aria-hidden style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: '-5%', left: '50%', transform: 'translateX(-50%)', width: 700, height: 420, background: 'radial-gradient(ellipse, rgba(56,189,248,0.09) 0%, transparent 60%)', filter: 'blur(70px)' }} />
+        </div>
+        {/* Divider — cyan */}
+        <div style={{ width: '100%', maxWidth: 900, margin: '0 auto 28px', height: 1, background: 'linear-gradient(90deg, transparent, rgba(56,189,248,0.45), transparent)' }} />
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <FadeUp style={{ textAlign: 'center', marginBottom: 36 }}>
             <span style={{ fontSize: 10, fontWeight: 700, color: GOLD, letterSpacing: '0.18em', fontFamily: 'Cairo, sans-serif', display: 'block', marginBottom: 14, textTransform: 'uppercase' }}>
@@ -726,8 +741,14 @@ export const PlatformHome = () => {
       </section>
 
       {/* ══════════════════════ CTA SECTION ═════════════════════════════════════ */}
-      <section style={{ position: 'relative', zIndex: 10, padding: 'clamp(2.5rem,4vw,4rem) clamp(1.5rem,5vw,4rem) clamp(4rem,6vw,6rem)' }}>
-        <div style={{ width: '100%', maxWidth: 900, margin: '0 auto 28px', height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)' }} />
+      <section style={{ position: 'relative', zIndex: 10, padding: 'clamp(2.5rem,4vw,4rem) clamp(1.5rem,5vw,4rem) clamp(4rem,6vw,6rem)', background: 'linear-gradient(180deg, #060B11 0%, #0E0A05 50%, #09090B 100%)', overflow: 'hidden' }}>
+        {/* Section glow — twin gold + green behind cards */}
+        <div aria-hidden style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', bottom: '0%', left: '20%', width: 600, height: 400, background: 'radial-gradient(ellipse, rgba(212,168,83,0.11) 0%, transparent 60%)', filter: 'blur(80px)' }} />
+          <div style={{ position: 'absolute', bottom: '0%', right: '20%', width: 600, height: 400, background: 'radial-gradient(ellipse, rgba(52,211,153,0.09) 0%, transparent 60%)', filter: 'blur(80px)' }} />
+        </div>
+        {/* Divider — strong gold */}
+        <div style={{ width: '100%', maxWidth: 900, margin: '0 auto 28px', height: 2, background: 'linear-gradient(90deg, transparent, rgba(212,168,83,0.6), transparent)' }} />
 
         {/* Full-width CTA banner */}
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
