@@ -41,8 +41,8 @@ export const ClientAutomations = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white font-cairo">أتمتتي</h1>
-        <p className="text-sm text-slate-500 font-tajawal">{automations.length} أنظمة أتمتة</p>
+        <h1 className="text-2xl font-bold text-white font-cairo">واتساب</h1>
+        <p className="text-sm text-slate-500 font-tajawal">{automations.length} رسائل وتشغيل تلقائي</p>
       </div>
 
       {/* Message limit alert */}
@@ -50,7 +50,7 @@ export const ClientAutomations = () => {
 
       {automations.length === 0 ? (
         <div className="py-16 text-center">
-          <p className="text-slate-600 font-tajawal text-sm">لا توجد أتمتة مرتبطة بحسابك بعد</p>
+          <p className="text-slate-600 font-tajawal text-sm">لا توجد رسائل واتساب مرتبطة بحسابك بعد</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

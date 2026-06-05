@@ -4,11 +4,11 @@ import { signOut } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 
 const links = [
-  { to: '/client',                    icon: LayoutDashboard, label: 'نظرة عامة',          end: true },
+  { to: '/client',                    icon: LayoutDashboard, label: 'الرئيسية',            end: true },
   { to: '/client/setup',              icon: Wrench,          label: 'إعداد النظام',         end: false },
   { to: '/client/appointments',       icon: Calendar,        label: 'المواعيد',             end: false },
   { to: '/client/conversations',      icon: MessageSquare,   label: 'المحادثات الحية',      end: false },
-  { to: '/client/automations',        icon: Zap,             label: 'أتمتتي',               end: false },
+  { to: '/client/automations',        icon: Zap,             label: 'واتساب',               end: false },
   { to: '/client/leads',              icon: Users2,          label: 'العملاء المحتملون',     end: false },
   { to: '/client/reports',            icon: BarChart3,       label: 'التقارير',             end: false },
   { to: '/client/settings',           icon: Settings,        label: 'الإعدادات',            end: false },

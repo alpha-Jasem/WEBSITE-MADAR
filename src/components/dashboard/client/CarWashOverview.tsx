@@ -63,7 +63,7 @@ const formatSAR = (value: number) =>
 const isToday = (value?: string | null) =>
   Boolean(value && value.startsWith(new Date().toISOString().slice(0, 10)))
 
-function StatCard({ icon: Icon, label, value, sub, color, trend = '+12%' }: { icon: typeof Car; label: string; value: string | number; sub?: string; color: string; trend?: string }) {
+function StatCard({ icon: Icon, label, value, sub, color, trend = 'فعلي' }: { icon: typeof Car; label: string; value: string | number; sub?: string; color: string; trend?: string }) {
   return (
     <div style={{
       background: '#FFFFFF', border: '1px solid #E3EAF6',
@@ -457,14 +457,14 @@ export function CarWashOverview() {
             <Users size={21} color="#0D1B3E" />
           </div>
           <div>
-            <strong style={{ display: 'block', fontSize: 14, fontFamily: 'Cairo,sans-serif', color: '#0D1B3E' }}>{company?.owner_name || 'مدير النظام'}</strong>
+            <strong style={{ display: 'block', fontSize: 14, fontFamily: 'Cairo,sans-serif', color: '#0D1B3E' }}>{company?.owner_name || 'مدير المغسلة'}</strong>
             <span className="cw-muted" style={{ fontSize: 12 }}>{company?.name || 'المغسلة'}</span>
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
             {[Bell, MessageCircle].map((Icon, i) => (
               <span key={i} style={{ width: 38, height: 38, borderRadius: 12, background: '#FFFFFF', border: '1px solid #E3EAF6', display: 'grid', placeItems: 'center', position: 'relative' }}>
                 <Icon size={17} color="#0D1B3E" />
-                <em style={{ position: 'absolute', top: -7, left: -6, minWidth: 18, height: 18, borderRadius: 999, background: '#0B63F6', color: '#fff', fontSize: 10, fontStyle: 'normal', display: 'grid', placeItems: 'center', fontFamily: 'Sora,sans-serif' }}>{i ? 12 : 8}</em>
+                <em style={{ position: 'absolute', top: -7, left: -6, minWidth: 18, height: 18, borderRadius: 999, background: '#0B63F6', color: '#fff', fontSize: 10, fontStyle: 'normal', display: 'grid', placeItems: 'center', fontFamily: 'Sora,sans-serif' }}>{i ? stats.queueStatusCounts.ready : actionableNotifications.length}</em>
               </span>
             ))}
           </div>
@@ -547,7 +547,7 @@ export function CarWashOverview() {
 
         <main style={{ display: 'grid', gap: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'start', flexWrap: 'wrap' }}>
-            <div><span className="cw-muted" style={{ fontSize: 13, fontWeight: 800 }}>مرحباً بك، {company?.owner_name || 'مدير النظام'}</span><h1 className="cw-title" style={{ fontSize: 'clamp(26px, 3vw, 34px)' }}>مركز تشغيل اليوم</h1></div>
+            <div><span className="cw-muted" style={{ fontSize: 13, fontWeight: 800 }}>مرحباً بك، {company?.owner_name || 'مدير المغسلة'}</span><h1 className="cw-title" style={{ fontSize: 'clamp(26px, 3vw, 34px)' }}>مركز تشغيل اليوم</h1></div>
             <div style={{ textAlign: 'left' }}><strong style={{ color: '#0D1B3E', fontFamily: 'Cairo,sans-serif' }}>{todayText}</strong><span className="cw-muted" style={{ display: 'block', fontSize: 12 }}>{company?.name || 'المغسلة'}</span></div>
           </div>
 

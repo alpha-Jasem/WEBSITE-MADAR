@@ -73,7 +73,7 @@ function usePageTitle(navItems: NavItem[]) {
   const match = navItems.find((item) =>
     item.end ? location.pathname === item.to : location.pathname.startsWith(item.to)
   )
-  return match?.label ?? navItems[0]?.label ?? 'نظرة عامة'
+  return match?.label ?? navItems[0]?.label ?? 'الرئيسية'
 }
 
 function isTrialExpired(company: ReturnType<typeof useClientCompany>['company']) {

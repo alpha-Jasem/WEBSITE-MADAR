@@ -32,7 +32,7 @@ type CWCustomer = {
   loyalty_tier: string
 }
 
-function StatCard({ icon: Icon, label, value, sub, color, trend = '+12%' }: { icon: typeof Car; label: string; value: string | number; sub?: string; color: string; trend?: string }) {
+function StatCard({ icon: Icon, label, value, sub, color, trend = 'فعلي' }: { icon: typeof Car; label: string; value: string | number; sub?: string; color: string; trend?: string }) {
   return (
     <div style={{
       background: '#FFFFFF', border: '1px solid #E3EAF6',
@@ -438,12 +438,12 @@ export function CarWashReports() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(178px, 1fr))', gap: 12 }}>
-        <StatCard icon={DollarSign} label="إجمالي الإيرادات" value={stats.revenue > 0 ? stats.revenue.toLocaleString('ar-SA') : '0'} sub="عن الفترة السابقة" color="#10B981" trend="+18%" />
-        <StatCard icon={Car} label="عدد السيارات" value={stats.monthVisits} sub="عن الفترة السابقة" color="#0B63F6" trend="+24%" />
-        <StatCard icon={CalendarClock} label="متوسط الفاتورة" value={stats.avgInvoice || 0} sub="ر.س" color="#7C3AED" trend="+12%" />
-        <StatCard icon={Users} label="العملاء الجدد" value={Math.max(customers.length - stats.returningCustomers, 0)} sub="عن الفترة السابقة" color="#F97316" trend="+15%" />
-        <StatCard icon={RotateCcw} label="العملاء العائدون" value={stats.returningCustomers} sub="عن الفترة السابقة" color="#10B981" trend="+20%" />
-        <StatCard icon={Smile} label="رضا العملاء" value="4.7 / 5" sub="عن الفترة السابقة" color="#0B63F6" trend="+0.3" />
+        <StatCard icon={DollarSign} label="إجمالي الإيرادات" value={stats.revenue > 0 ? stats.revenue.toLocaleString('ar-SA') : '0'} sub="حسب الفترة المحددة" color="#10B981" trend="فعلي" />
+        <StatCard icon={Car} label="عدد السيارات" value={stats.monthVisits} sub="زيارة مسجلة" color="#0B63F6" trend="فعلي" />
+        <StatCard icon={CalendarClock} label="متوسط الفاتورة" value={stats.avgInvoice || 0} sub="ر.س" color="#7C3AED" trend="محسوب" />
+        <StatCard icon={Users} label="العملاء الجدد" value={Math.max(customers.length - stats.returningCustomers, 0)} sub="من سجل العملاء" color="#F97316" trend="فعلي" />
+        <StatCard icon={RotateCcw} label="العملاء العائدون" value={stats.returningCustomers} sub="زيارتان أو أكثر" color="#10B981" trend="ولاء" />
+        <StatCard icon={Smile} label="معدل العودة" value={`${stats.retentionRate}%`} sub="من إجمالي العملاء" color="#0B63F6" trend="محسوب" />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 330px), 1fr))', gap: 14 }}>
@@ -492,11 +492,11 @@ export function CarWashReports() {
 
         <SectionCard title="ملخص الأداء" icon={BarChart3}>
           {[
-            { icon: DollarSign, value: stats.revenue.toLocaleString('ar-SA'), trend: '+18%', color: '#10B981' },
-            { icon: Car, value: stats.monthVisits, trend: '+24%', color: '#0B63F6' },
-            { icon: Calendar, value: stats.avgInvoice || 0, trend: '+12%', color: '#7C3AED' },
-            { icon: Users, value: customers.length, trend: '+15%', color: '#F97316' },
-            { icon: RotateCcw, value: `${stats.retentionRate}%`, trend: '+20%', color: '#10B981' },
+            { icon: DollarSign, value: stats.revenue.toLocaleString('ar-SA'), trend: 'إيراد', color: '#10B981' },
+            { icon: Car, value: stats.monthVisits, trend: 'سيارات', color: '#0B63F6' },
+            { icon: Calendar, value: stats.avgInvoice || 0, trend: 'فاتورة', color: '#7C3AED' },
+            { icon: Users, value: customers.length, trend: 'عملاء', color: '#F97316' },
+            { icon: RotateCcw, value: `${stats.retentionRate}%`, trend: 'عودة', color: '#10B981' },
           ].map((row, i) => (
             (() => {
               const RowIcon = row.icon

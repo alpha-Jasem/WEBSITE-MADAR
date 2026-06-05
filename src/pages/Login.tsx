@@ -81,7 +81,7 @@ export const Login = () => {
 
   const portalOptions: { id: Portal; label: string; sub: string; icon: typeof User; accent: string }[] = [
     { id: 'client', label: 'بوابة العملاء', sub: 'تشغيل المغسلة والحسابات', icon: User, accent: clientAccent },
-    { id: 'admin', label: 'لوحة الإدارة', sub: 'إدارة ماضر والاشتراكات', icon: Shield, accent: adminAccent },
+    { id: 'admin', label: 'لوحة الإدارة', sub: 'إدارة مدار والاشتراكات', icon: Shield, accent: adminAccent },
   ]
 
   return (
@@ -109,7 +109,7 @@ export const Login = () => {
               ادخل إلى لوحة تشغيل واضحة لإدارة مغسلتك من أول سيارة إلى آخر تسليم.
             </h1>
             <p className="mt-5 font-tajawal text-base leading-8 text-sky-50/70">
-              دخول واحد لإدارة السيارات، العملاء، المالية، الأتمتة، رسائل واتساب، وبرامج الولاء من مكان واحد.
+              دخول واحد لإدارة السيارات، العملاء، المالية، رسائل واتساب، وبرامج الولاء من مكان واحد.
             </p>
           </div>
 
