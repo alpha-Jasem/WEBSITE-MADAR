@@ -46,6 +46,7 @@ function useFetchRealtime<T>(
   const [data, setData] = useState<T | undefined>(undefined)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const instanceId = useState(() => Math.random().toString(36).slice(2))[0]
 
   const run = useCallback(async () => {
     setLoading(true)
@@ -66,7 +67,7 @@ function useFetchRealtime<T>(
   useEffect(() => {
     if (isDemo || !companyId) return
     const channel = supabase
-      .channel(`rt_${realtimeTable}_${companyId}`)
+      .channel(`rt_${realtimeTable}_${companyId}_${instanceId}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: realtimeTable, filter: `company_id=eq.${companyId}` },
@@ -74,7 +75,7 @@ function useFetchRealtime<T>(
       )
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [realtimeTable, companyId, isDemo, run])
+  }, [realtimeTable, companyId, isDemo, run, instanceId])
 
   return { data, loading, error, refetch: run }
 }
