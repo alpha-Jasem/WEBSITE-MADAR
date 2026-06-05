@@ -5,8 +5,8 @@ import { useClinicOS } from '../../../context/ClinicOSContext'
 const WA_NUMBER = '966546666005'
 
 const WA_MESSAGES = {
-  growth: 'مرحباً، شاهدت ديمو نظام الحجز الذكي وأرغب بالاشتراك في باقة نمو الحجوزات.',
-  ai_pro: 'مرحباً، شاهدت ديمو نظام الحجز الذكي وأرغب بالاشتراك في باقة الحجز الذكي 24/7.',
+  whatsapp: 'مرحباً، شاهدت ديمو نظام الحجز الذكي وأرغب بالاشتراك في باقة واتساب للعيادات.',
+  ai_pro: 'مرحباً، شاهدت ديمو نظام الحجز الذكي وأرغب بالاشتراك في باقة AI Voice + واتساب.',
 }
 
 export const DemoModeBanner = () => {
@@ -14,7 +14,7 @@ export const DemoModeBanner = () => {
   const [dismissed, setDismissed] = useState(false)
 
   const handleWhatsApp = () => {
-    const msg = WA_MESSAGES[packageType as keyof typeof WA_MESSAGES] || WA_MESSAGES.growth
+    const msg = WA_MESSAGES[packageType as keyof typeof WA_MESSAGES] || WA_MESSAGES.whatsapp
     window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer')
   }
 

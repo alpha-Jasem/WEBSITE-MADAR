@@ -21,7 +21,7 @@ const PACKAGE_KEY = 'clinicos_package'
 export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate()
   const [packageType, setPackageTypeState] = useState<PackageType>(() =>
-    (localStorage.getItem(PACKAGE_KEY) as PackageType) || 'growth'
+    (localStorage.getItem(PACKAGE_KEY) as PackageType) || 'whatsapp'
   )
   const [clinicName, setClinicName] = useState('')
   const [userName, setUserName] = useState('')

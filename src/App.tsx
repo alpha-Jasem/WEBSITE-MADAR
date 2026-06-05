@@ -27,6 +27,8 @@ const SolarEngine = lazy(() => import('./pages/SolarEngine').then(m => ({ defaul
 
 // Clinic OS public pages
 const ClinicOSLanding = lazy(() => import('./pages/clinicOS/ClinicOSLanding').then(m => ({ default: m.ClinicOSLanding })))
+const ClinicOSSignup  = lazy(() => import('./pages/clinicOS/ClinicOSSignup').then(m => ({ default: m.ClinicOSSignup })))
+const ClinicOSLogin   = lazy(() => import('./pages/clinicOS/ClinicOSLogin').then(m => ({ default: m.ClinicOSLogin })))
 
 // Clinic OS dashboard
 const ClinicOSDashboardLayout = lazy(() => import('./components/clinicOS/layout/ClinicOSDashboardLayout').then(m => ({ default: m.ClinicOSDashboardLayout })))
@@ -88,6 +90,8 @@ function AppRoutes() {
           />
           {/* Clinic OS public */}
           <Route path="/clinic-os" element={<ClinicOSLanding />} />
+          <Route path="/clinic-os/signup" element={<ClinicOSSignup />} />
+          <Route path="/clinic-os/login"  element={<ClinicOSLogin />} />
 
           {/* Clinic OS dashboard — protected */}
           <Route

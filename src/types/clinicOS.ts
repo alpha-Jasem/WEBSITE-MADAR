@@ -1,4 +1,4 @@
-export type PackageType = 'growth' | 'ai_pro'
+export type PackageType = 'whatsapp' | 'ai_pro'
 
 export type AppointmentStatus =
   | 'confirmed'

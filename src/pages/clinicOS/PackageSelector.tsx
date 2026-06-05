@@ -6,8 +6,8 @@ import type { PackageType } from '../../types/clinicOS'
 
 const PACKAGES = [
   {
-    id: 'growth' as PackageType,
-    name: 'باقة نمو الحجوزات',
+    id: 'whatsapp' as PackageType,
+    name: 'باقة واتساب',
     subtitle: 'حجز واتساب تلقائي',
     price: '٦,٩٠٠ ريال / سنة',
     badge: 'عرض إطلاق',

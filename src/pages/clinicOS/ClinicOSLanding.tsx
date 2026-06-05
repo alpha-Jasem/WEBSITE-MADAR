@@ -38,8 +38,8 @@ const HOW_STEPS = [
 
 const PRICING = [
   {
-    id: 'growth',
-    name: 'باقة نمو الحجوزات',
+    id: 'whatsapp',
+    name: 'باقة واتساب',
     price: '٦,٩٠٠',
     period: 'سنة',
     badge: 'عرض إطلاق',
