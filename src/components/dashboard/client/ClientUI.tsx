@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import type { ElementType, ReactNode } from 'react'
 
 type Tone = 'blue' | 'green' | 'amber' | 'red' | 'slate'
@@ -143,17 +144,50 @@ export function ClientInsightPanel({
   title,
   description,
   items,
+  storageKey,
 }: {
   title: string
   description?: string
   items: Array<{ title: string; description: string; tone?: Tone; action?: ReactNode }>
+  storageKey?: string
 }) {
+  const key = `madar-client-insight-hidden:${storageKey || title}`
+  const [hidden, setHidden] = useState(false)
+
+  useEffect(() => {
+    setHidden(localStorage.getItem(key) === '1')
+  }, [key])
+
+  const hidePanel = () => {
+    localStorage.setItem(key, '1')
+    setHidden(true)
+  }
+
+  const showPanel = () => {
+    localStorage.removeItem(key)
+    setHidden(false)
+  }
+
+  if (hidden) {
+    return (
+      <button type="button" className="client-insight-restore" onClick={showPanel}>
+        <span>توصيات مدار مخفية</span>
+        <strong>إظهار التوصيات</strong>
+      </button>
+    )
+  }
+
   return (
     <section className="client-insight-panel">
       <div className="client-insight-head">
-        <span>توصيات مدار</span>
-        <h2>{title}</h2>
-        {description && <p>{description}</p>}
+        <div>
+          <span>توصيات مدار</span>
+          <h2>{title}</h2>
+          {description && <p>{description}</p>}
+        </div>
+        <button type="button" onClick={hidePanel} aria-label="إخفاء توصيات مدار">
+          إخفاء
+        </button>
       </div>
       <div className="client-insight-grid">
         {items.map((item) => {
