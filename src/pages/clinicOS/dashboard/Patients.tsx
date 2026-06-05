@@ -31,7 +31,7 @@ export const Patients = () => {
   const [showNewAppt, setShowNewAppt] = useState(false)
 
   const filtered = allPatients.filter(p => {
-    if (search && !p.name.includes(search) && !p.phone.includes(search)) return false
+    if (search && !(p.name || '').toLowerCase().includes(search.toLowerCase()) && !(p.phone || '').includes(search)) return false
     if (typeFilter === 'new' && p.patient_type !== 'new') return false
     if (typeFilter === 'returning' && p.patient_type !== 'returning') return false
     if (typeFilter === 'no_show' && p.no_show_count < 1) return false

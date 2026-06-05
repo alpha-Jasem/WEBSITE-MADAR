@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Eye, X, MessageCircle } from 'lucide-react'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 
-const WA_NUMBER = 'REPLACE_WITH_OWNER_WHATSAPP_NUMBER'
+const WA_NUMBER = '966546666005'
 
 const WA_MESSAGES = {
   growth: 'مرحباً، شاهدت ديمو نظام الحجز الذكي وأرغب بالاشتراك في باقة نمو الحجوزات.',

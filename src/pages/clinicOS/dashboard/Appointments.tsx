@@ -283,7 +283,7 @@ export const Appointments = () => {
       )}
 
       {selectedAppt && <AppointmentDrawer appointment={selectedAppt} onClose={() => setSelectedAppt(null)} onConfirm={handleConfirm} onCancel={handleCancel} />}
-      {showNewAppt && <NewAppointmentModal onClose={() => setShowNewAppt(false)} onCreated={() => {}} />}
+      {showNewAppt && <NewAppointmentModal onClose={() => setShowNewAppt(false)} onCreated={() => { setShowNewAppt(false); refetch() }} />}
     </div>
   )
 }

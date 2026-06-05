@@ -103,7 +103,7 @@ export const AppointmentDrawer = ({ appointment, onClose, onConfirm, onCancel }:
   }
 
   const handleWhatsApp = () => {
-    const clean = appointment.patient_phone.replace(/\D/g, '')
+    const clean = (appointment.patient_phone || '').replace(/\D/g, '')
     window.open('https://wa.me/' + clean, '_blank', 'noopener,noreferrer')
   }
 

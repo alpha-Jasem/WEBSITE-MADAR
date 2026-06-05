@@ -63,7 +63,7 @@ export const ClinicOSTopbar = ({ pageTitle, onMenuToggle, showMenuBtn }: Props) 
             <ChevronDown size={12} style={{ color: '#94A3B8' }} />
           </button>
           {showMenu && (
-            <div style={{ position: 'fixed', top: 56, left: 16, background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '6px', minWidth: 160, boxShadow: '0 8px 24px rgba(0,0,0,0.1)', zIndex: 100, direction: 'rtl' }}>
+            <div style={{ position: 'fixed', top: 56, right: 16, background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '6px', minWidth: 160, boxShadow: '0 8px 24px rgba(0,0,0,0.1)', zIndex: 100, direction: 'rtl' }}>
               <button onClick={logout} style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, color: '#DC2626', fontFamily: 'Tajawal, sans-serif' }}>
                 <LogOut size={14} />
                 تسجيل الخروج

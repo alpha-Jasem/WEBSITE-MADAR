@@ -1,6 +1,7 @@
 import { Lock, Zap } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
 import { useClinicOS } from '../../../context/ClinicOSContext'
+
+const WA_UPGRADE = 'https://wa.me/966546666005?text=' + encodeURIComponent('مرحباً، أرغب بالترقية إلى باقة الحجز الذكي 24/7.')
 
 interface UpgradeCardProps {
   title?: string
@@ -13,12 +14,11 @@ export const UpgradeCard = ({
   subtitle = 'استقبل حجوزات المرضى على مدار الساعة وقلل المكالمات الضائعة.',
   compact = false,
 }: UpgradeCardProps) => {
-  const navigate = useNavigate()
   const { setPackageType } = useClinicOS()
 
   const handleUpgrade = () => {
     setPackageType('ai_pro')
-    navigate('/clinic-os/demo/select')
+    window.open(WA_UPGRADE, '_blank', 'noopener,noreferrer')
   }
 
   if (compact) {

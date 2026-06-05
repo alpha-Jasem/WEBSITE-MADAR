@@ -157,7 +157,7 @@ export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props)
                   {filteredPatients.slice(0, 5).map(p => (
                     <div key={p.id} onClick={() => { setSelectedPatient(p); setPatientSearch(p.name) }} style={{ padding: '10px 14px', cursor: 'pointer', background: selectedPatient?.id === p.id ? '#EEF2FF' : '#FFFFFF', borderBottom: '1px solid #F8FAFC', display: 'flex', alignItems: 'center', gap: 10 }}>
                       <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg, #4F46E580, #4F46E5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ fontSize: 13, fontWeight: 800, color: 'white' }}>{p.name.charAt(0)}</span>
+                        <span style={{ fontSize: 13, fontWeight: 800, color: 'white' }}>{(p.name || '؟').charAt(0)}</span>
                       </div>
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>{p.name}</div>
