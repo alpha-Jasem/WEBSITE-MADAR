@@ -1,7 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
-import { Activity, AlertTriangle, Bell, Calendar, CalendarClock, Car, CheckCircle2, DollarSign, Download, FileText, Loader2, MessageCircle, Plus, QrCode, Sparkles, Star, TrendingUp, Users, Wrench } from 'lucide-react'
+import { Activity, AlertTriangle, Bell, Calendar, CalendarClock, Car, CheckCircle2, DollarSign, Download, FileText, Loader2, MessageCircle, Plus, Sparkles, Star, TrendingUp, Users, Wrench } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { downloadCSV, formatDateForCSV } from '../../../lib/exportUtils'
@@ -431,8 +431,6 @@ export function CarWashOverview() {
     : [{ name: 'لا توجد مدفوعات', value: 1 }]
   const expectedActiveRevenue = stats.activeQueue.reduce((sum, item) => sum + (item.total_amount || item.subtotal || item.price || stats.avgInvoice || 0), 0)
   const todayText = new Date().toLocaleDateString('ar-SA', { day: 'numeric', month: 'long', weekday: 'long' })
-  const checkinTarget = `${window.location.origin}/checkin/${(company as any)?.public_checkin_token || (company as any)?.webhook_token || companyId || 'demo'}`
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(checkinTarget)}`
 
   return (<div dir="rtl" style={{ color: '#0D1B3E' }}>
       <style>{`
@@ -495,15 +493,6 @@ export function CarWashOverview() {
 
       <div className="cw-board">
         <aside style={{ display: 'grid', gap: 14 }}>
-          <div className="cw-card" style={{ overflow: 'hidden', position: 'relative', minHeight: 252 }}>
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(140deg, rgba(13,27,62,.08), rgba(11,99,246,.05)), url(/og-image.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
-            <div style={{ position: 'absolute', right: 18, bottom: 18, width: 138, borderRadius: 16, padding: 12, background: '#0B63F6', color: '#fff', boxShadow: '0 18px 38px rgba(11,99,246,.35)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8, fontSize: 12, fontWeight: 900, fontFamily: 'Tajawal,sans-serif' }}><QrCode size={14} /> امسح للدخول</div>
-              <img src={qrUrl} alt="QR" style={{ width: '100%', borderRadius: 10, background: '#fff', padding: 6 }} />
-              <p style={{ margin: '9px 0 0', fontSize: 11, fontWeight: 800, fontFamily: 'Tajawal,sans-serif', textAlign: 'center' }}>دخول سريع وآمن</p>
-            </div>
-          </div>
-
           <div className="cw-card cw-card-pad">
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
               <h3 className="cw-title" style={{ fontSize: 15 }}>التنبيهات العملية</h3>
