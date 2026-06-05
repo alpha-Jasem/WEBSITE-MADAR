@@ -80,9 +80,22 @@ export const Settings = () => {
   // ── Section 2: Booking Rules ──────────────────────────────────────────────
   const [saving2, setSaving2] = useState(false)
   const [success2, setSuccess2] = useState(false)
+  const BR_KEY = 'clinicos_booking_rules'
+  const defaultBR = () => {
+    try { return JSON.parse(localStorage.getItem(BR_KEY) || '{}') } catch { return {} }
+  }
+  const [bApptDuration, setBApptDuration]     = useState<string>(() => defaultBR().apptDuration || '30 دقيقة')
+  const [bBufferTime, setBBufferTime]         = useState<string>(() => defaultBR().bufferTime || '5 دقائق')
+  const [bMinAdvance, setBMinAdvance]         = useState<string>(() => defaultBR().minAdvance || '2 ساعة')
+  const [bMaxAdvance, setBMaxAdvance]         = useState<string>(() => defaultBR().maxAdvance || '30 يوم')
+  const [bAutoConfirm, setBAutoConfirm]       = useState<boolean>(() => defaultBR().autoConfirm ?? true)
+  const [bAllowCancel, setBAllowCancel]       = useState<boolean>(() => defaultBR().allowCancel ?? true)
+  const [bWaitlist, setBWaitlist]             = useState<boolean>(() => defaultBR().waitlist ?? true)
   const handleSaveBooking = async () => {
     setSaving2(true)
-    await new Promise(r => setTimeout(r, 400))
+    const rules = { apptDuration: bApptDuration, bufferTime: bBufferTime, minAdvance: bMinAdvance, maxAdvance: bMaxAdvance, autoConfirm: bAutoConfirm, allowCancel: bAllowCancel, waitlist: bWaitlist }
+    localStorage.setItem(BR_KEY, JSON.stringify(rules))
+    await new Promise(r => setTimeout(r, 300))
     setSaving2(false); setSuccess2(true)
     showToast('تم حفظ قواعد الحجز', 'success')
     setTimeout(() => setSuccess2(false), 2500)
@@ -111,22 +124,37 @@ export const Settings = () => {
   }
 
   // ── Section 5: AI ─────────────────────────────────────────────────────────
+  const AI_KEY = 'clinicos_ai_settings'
+  const defaultAI = () => { try { return JSON.parse(localStorage.getItem(AI_KEY) || '{}') } catch { return {} } }
+  const [aiMaxCalls, setAiMaxCalls]       = useState<string>(() => defaultAI().maxCalls || '50')
+  const [aiLang, setAiLang]               = useState<string>(() => defaultAI().lang || 'العربية')
+  const [aiAutoBook, setAiAutoBook]       = useState<boolean>(() => defaultAI().autoBook ?? true)
+  const [aiSendConfirm, setAiSendConfirm] = useState<boolean>(() => defaultAI().sendConfirm ?? true)
   const [saving5, setSaving5] = useState(false)
   const [success5, setSuccess5] = useState(false)
   const handleSaveAI = async () => {
     setSaving5(true)
-    await new Promise(r => setTimeout(r, 600))
+    const s = { maxCalls: aiMaxCalls, lang: aiLang, autoBook: aiAutoBook, sendConfirm: aiSendConfirm }
+    localStorage.setItem(AI_KEY, JSON.stringify(s))
+    await new Promise(r => setTimeout(r, 300))
     setSaving5(false); setSuccess5(true)
     showToast('تم حفظ إعدادات الحجز الذكي', 'success')
     setTimeout(() => setSuccess5(false), 2500)
   }
 
   // ── Section 7: Notifications ──────────────────────────────────────────────
+  const NOTIF_KEY = 'clinicos_notif_settings'
+  const defaultNotif = () => { try { return JSON.parse(localStorage.getItem(NOTIF_KEY) || '{}') } catch { return {} } }
+  const [notifConfirm, setNotifConfirm]   = useState<boolean>(() => defaultNotif().confirm ?? true)
+  const [notif24h, setNotif24h]           = useState<boolean>(() => defaultNotif().h24 ?? true)
+  const [notif3h, setNotif3h]             = useState<boolean>(() => defaultNotif().h3 ?? true)
+  const [notifNoShow, setNotifNoShow]     = useState<boolean>(() => defaultNotif().noShow ?? false)
   const [saving7, setSaving7] = useState(false)
   const [success7, setSuccess7] = useState(false)
   const handleSaveNotif = async () => {
     setSaving7(true)
-    await new Promise(r => setTimeout(r, 400))
+    localStorage.setItem(NOTIF_KEY, JSON.stringify({ confirm: notifConfirm, h24: notif24h, h3: notif3h, noShow: notifNoShow }))
+    await new Promise(r => setTimeout(r, 300))
     setSaving7(false); setSuccess7(true)
     showToast('تم حفظ إعدادات الإشعارات', 'success')
     setTimeout(() => setSuccess7(false), 2500)
@@ -191,22 +219,26 @@ export const Settings = () => {
               <h2 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: '0 0 20px 0' }}>قواعد الحجز</h2>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 {[
-                  { label: 'مدة الموعد الافتراضية', value: '30 دقيقة' },
-                  { label: 'وقت الانتظار بين المواعيد', value: '5 دقائق' },
-                  { label: 'أقل وقت للحجز المسبق', value: '2 ساعة' },
-                  { label: 'أقصى حجز مسبق', value: '30 يوم' },
+                  { label: 'مدة الموعد الافتراضية', val: bApptDuration, set: setBApptDuration },
+                  { label: 'وقت الانتظار بين المواعيد', val: bBufferTime, set: setBBufferTime },
+                  { label: 'أقل وقت للحجز المسبق', val: bMinAdvance, set: setBMinAdvance },
+                  { label: 'أقصى حجز مسبق', val: bMaxAdvance, set: setBMaxAdvance },
                 ].map(f => (
                   <div key={f.label} style={fieldWrap}>
                     <label style={labelStyle}>{f.label}</label>
-                    <input defaultValue={f.value} style={inputStyle} />
+                    <input value={f.val} onChange={e => f.set(e.target.value)} style={inputStyle} />
                   </div>
                 ))}
               </div>
               <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {['تأكيد تلقائي للمواعيد', 'السماح بإلغاء المريض', 'تفعيل قائمة الانتظار'].map(item => (
-                  <label key={item} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-                    <input type="checkbox" defaultChecked style={{ width: 16, height: 16, cursor: 'pointer' }} />
-                    <span style={{ fontSize: 13, color: '#334155', fontFamily: 'Tajawal, sans-serif' }}>{item}</span>
+                {[
+                  { label: 'تأكيد تلقائي للمواعيد', val: bAutoConfirm, set: setBAutoConfirm },
+                  { label: 'السماح بإلغاء المريض', val: bAllowCancel, set: setBAllowCancel },
+                  { label: 'تفعيل قائمة الانتظار', val: bWaitlist, set: setBWaitlist },
+                ].map(item => (
+                  <label key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                    <input type="checkbox" checked={item.val} onChange={e => item.set(e.target.checked)} style={{ width: 16, height: 16, cursor: 'pointer' }} />
+                    <span style={{ fontSize: 13, color: '#334155', fontFamily: 'Tajawal, sans-serif' }}>{item.label}</span>
                   </label>
                 ))}
               </div>
@@ -271,23 +303,27 @@ export const Settings = () => {
                 <h2 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: '0 0 20px 0' }}>إعدادات الحجز الذكي</h2>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div style={fieldWrap}>
-                    <label style={labelStyle}>اسم المساعد</label>
-                    <input defaultValue="نورة" style={inputStyle} />
+                    <label style={labelStyle}>أقصى مكالمات/يوم</label>
+                    <input value={aiMaxCalls} onChange={e => setAiMaxCalls(e.target.value)} style={inputStyle} type="number" min={1} />
                   </div>
                   <div style={fieldWrap}>
-                    <label style={labelStyle}>اللغة</label>
-                    <select style={{ ...inputStyle }}>
+                    <label style={labelStyle}>لغة المساعد</label>
+                    <select value={aiLang} onChange={e => setAiLang(e.target.value)} style={{ ...inputStyle }}>
                       <option>العربية</option>
                       <option>الإنجليزية</option>
                     </select>
                   </div>
-                  <div style={{ gridColumn: '1/-1', ...fieldWrap }}>
-                    <label style={labelStyle}>رسالة الترحيب</label>
-                    <textarea
-                      defaultValue="أهلاً وسهلاً، عيادات نور للأسنان، أنا نورة كيف أساعدك؟"
-                      rows={3}
-                      style={{ ...inputStyle, resize: 'vertical' }}
-                    />
+                  <div style={fieldWrap}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', ...labelStyle }}>
+                      <input type="checkbox" checked={aiAutoBook} onChange={e => setAiAutoBook(e.target.checked)} style={{ width: 16, height: 16 }} />
+                      حجز تلقائي بدون تأكيد يدوي
+                    </label>
+                  </div>
+                  <div style={fieldWrap}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', ...labelStyle }}>
+                      <input type="checkbox" checked={aiSendConfirm} onChange={e => setAiSendConfirm(e.target.checked)} style={{ width: 16, height: 16 }} />
+                      إرسال تأكيد واتساب فور الحجز
+                    </label>
                   </div>
                 </div>
                 <div style={{ marginTop: 20 }}>
@@ -329,16 +365,14 @@ export const Settings = () => {
             <div>
               <h2 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: '0 0 20px 0' }}>الإشعارات</h2>
               {[
-                'موعد جديد',
-                'موعد ملغي',
-                'تعارض في الجدول',
-                'المريض لم يؤكد',
-                'رسالة واتساب فاشلة',
-                'طلب مراجعة من الحجز الذكي',
+                { label: 'إرسال تأكيد الحجز', val: notifConfirm, set: setNotifConfirm },
+                { label: 'تذكير 24 ساعة قبل الموعد', val: notif24h, set: setNotif24h },
+                { label: 'تذكير 3 ساعات قبل الموعد', val: notif3h, set: setNotif3h },
+                { label: 'إشعار عدم حضور المريض', val: notifNoShow, set: setNotifNoShow },
               ].map(n => (
-                <label key={n} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #F8FAFC', cursor: 'pointer' }}>
-                  <span style={{ fontSize: 13, color: '#334155', fontFamily: 'Tajawal, sans-serif' }}>{n}</span>
-                  <input type="checkbox" defaultChecked style={{ width: 16, height: 16, cursor: 'pointer' }} />
+                <label key={n.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #F8FAFC', cursor: 'pointer' }}>
+                  <span style={{ fontSize: 13, color: '#334155', fontFamily: 'Tajawal, sans-serif' }}>{n.label}</span>
+                  <input type="checkbox" checked={n.val} onChange={e => n.set(e.target.checked)} style={{ width: 16, height: 16, cursor: 'pointer' }} />
                 </label>
               ))}
               <div style={{ marginTop: 20 }}>

@@ -1,10 +1,10 @@
-import { useState } from 'react'
-import { MessageSquare, Send, Clock, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { MessageSquare, Clock, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { StatCard } from '../../../components/clinicOS/ui/StatCard'
 import { StatusBadge } from '../../../components/clinicOS/ui/StatusBadge'
 import { EmptyState } from '../../../components/clinicOS/ui/EmptyState'
-import { useClinicMessages } from '../../../lib/clinicOSQueries'
+import { useClinicMessages, useClinicAppointments } from '../../../lib/clinicOSQueries'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 import { useToast } from '../../../lib/useToast'
 import { retryWhatsAppMessage } from '../../../lib/clinicN8n'
@@ -21,17 +21,11 @@ const TEMPLATES = [
   { id: 't7', name: 'عرض قائمة انتظار', body: 'مرحباً، يوجد موعد متاح الساعة [الوقت]، هل ترغب بالحجز؟' },
 ]
 
-const SCHEDULED = [
-  { id: 's1', patient: 'عبدالعزيز الفهد', type: 'تذكير 24 ساعة', time: 'غداً 07:00', status: 'pending' as const },
-  { id: 's2', patient: 'رنا الشهري', type: 'تذكير 3 ساعات', time: 'اليوم 15:40', status: 'pending' as const },
-  { id: 's3', patient: 'سلمى البقمي', type: 'تذكير 24 ساعة', time: 'غداً 07:00', status: 'pending' as const },
-  { id: 's4', patient: 'يوسف العتيبي', type: 'متابعة', time: 'بعد غد 10:00', status: 'pending' as const },
-]
-
 export const Messages = () => {
   const { companyId, isDemo } = useClinicOS()
   const { showToast } = useToast()
   const { data: DEMO_MESSAGES = [] } = useClinicMessages(companyId, isDemo)
+  const { data: allAppointments = [] } = useClinicAppointments(companyId, undefined, isDemo)
   const [activeTab, setActiveTab] = useState(0)
 
   const handleRetry = (msgId: string) => {
@@ -42,11 +36,39 @@ export const Messages = () => {
   const handleEditTemplate = () => {
     showToast('تعديل القوالب — قريباً في التحديث القادم', 'info')
   }
+
+  // Derive scheduled messages from upcoming confirmed/pending appointments
+  const scheduled = useMemo(() => {
+    const today = new Date()
+    const todayStr = today.toISOString().split('T')[0]
+    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1)
+    const tomorrowStr = tomorrow.toISOString().split('T')[0]
+    const dayAfter = new Date(today); dayAfter.setDate(today.getDate() + 2)
+    const dayAfterStr = dayAfter.toISOString().split('T')[0]
+
+    return allAppointments
+      .filter(a => ['confirmed', 'pending'].includes(a.status) && [todayStr, tomorrowStr, dayAfterStr].includes(a.appointment_date))
+      .map(a => {
+        const isToday = a.appointment_date === todayStr
+        const isTomorrow = a.appointment_date === tomorrowStr
+        const dayLabel = isToday ? 'اليوم' : isTomorrow ? 'غداً' : 'بعد غد'
+        const reminderType = isTomorrow ? 'تذكير 24 ساعة' : isToday ? 'تذكير 3 ساعات' : 'تذكير مسبق'
+        return {
+          id: a.id,
+          patient: a.patient_name || '—',
+          type: reminderType,
+          time: `${dayLabel} ${a.start_time}`,
+          status: 'pending' as const,
+        }
+      })
+      .slice(0, 10)
+  }, [allAppointments])
+
   const failed = DEMO_MESSAGES.filter(m => m.status === 'failed')
 
   const stats = {
     sent: DEMO_MESSAGES.filter(m => m.status === 'sent' || m.status === 'delivered' || m.status === 'read').length,
-    scheduled: SCHEDULED.length,
+    scheduled: scheduled.length,
     pending: DEMO_MESSAGES.filter(m => m.status === 'pending').length,
     failed: failed.length,
   }
@@ -103,18 +125,22 @@ export const Messages = () => {
 
       {/* Scheduled */}
       {activeTab === 1 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {SCHEDULED.map((s, i) => (
-            <motion.div key={s.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }} style={{ background: '#FFFFFF', borderRadius: 10, border: '1px solid #E2E8F0', padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
-              <Clock size={16} style={{ color: '#4F46E5', flexShrink: 0 }} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>{s.patient}</div>
-                <div style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>{s.type} · {s.time}</div>
-              </div>
-              <StatusBadge status={s.status} size="sm" />
-            </motion.div>
-          ))}
-        </div>
+        scheduled.length === 0 ? (
+          <EmptyState icon={CheckCircle} title="لا رسائل مجدولة" body="لا توجد مواعيد قادمة تحتاج تذكيرات." />
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {scheduled.map((s, i) => (
+              <motion.div key={s.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }} style={{ background: '#FFFFFF', borderRadius: 10, border: '1px solid #E2E8F0', padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
+                <Clock size={16} style={{ color: '#4F46E5', flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>{s.patient}</div>
+                  <div style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>{s.type} · {s.time}</div>
+                </div>
+                <StatusBadge status={s.status} size="sm" />
+              </motion.div>
+            ))}
+          </div>
+        )
       )}
 
       {/* Templates */}

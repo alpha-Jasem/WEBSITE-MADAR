@@ -377,6 +377,17 @@ export async function createDoctor(data: Partial<Doctor>) {
   return result as Doctor
 }
 
+export async function updateDoctor(id: string, data: Partial<Doctor>) {
+  const { data: result, error } = await supabase
+    .from('clinic_os_doctors')
+    .update(data)
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return result as Doctor
+}
+
 export async function createService(data: Partial<Service>) {
   const { data: result, error } = await supabase
     .from('clinic_os_services')
