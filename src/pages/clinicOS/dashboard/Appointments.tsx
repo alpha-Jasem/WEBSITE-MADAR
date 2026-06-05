@@ -67,7 +67,9 @@ export const Appointments = () => {
   const [dateStart, dateEnd] = getDateRange()
 
   const filtered = useMemo(() => appointments.filter(a => {
-    if (search && !(a.patient_name || '').includes(search) && !(a.patient_phone || '').includes(search) && !(a.doctor_name || '').includes(search)) return false
+    const q = search.toLowerCase()
+    const phoneQ = search.replace(/\D/g, '')
+    if (search && !(a.patient_name || '').toLowerCase().includes(q) && !(a.doctor_name || '').toLowerCase().includes(q) && !(phoneQ && (a.patient_phone || '').replace(/\D/g,'').includes(phoneQ))) return false
     if (statusFilter && a.status !== statusFilter) return false
     if (sourceFilter && a.source !== sourceFilter) return false
     if (dateStart && a.appointment_date < dateStart) return false

@@ -14,7 +14,7 @@ export const DemoModeBanner = () => {
   const [dismissed, setDismissed] = useState(false)
 
   const handleWhatsApp = () => {
-    const msg = WA_MESSAGES[packageType]
+    const msg = WA_MESSAGES[packageType as keyof typeof WA_MESSAGES] || WA_MESSAGES.growth
     window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer')
   }
 

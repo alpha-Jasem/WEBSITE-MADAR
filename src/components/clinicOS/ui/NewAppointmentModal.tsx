@@ -38,7 +38,10 @@ export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props)
   const [createError, setCreateError] = useState<string | null>(null)
 
   const filteredPatients = patientSearch.length > 1
-    ? patients.filter(p => p.name.includes(patientSearch) || p.phone.includes(patientSearch))
+    ? patients.filter(p =>
+        (p.name || '').toLowerCase().includes(patientSearch.toLowerCase()) ||
+        (p.phone || '').replace(/\D/g,'').includes(patientSearch.replace(/\D/g,''))
+      )
     : []
 
   const availableSlots = selectedDoctor && selectedService

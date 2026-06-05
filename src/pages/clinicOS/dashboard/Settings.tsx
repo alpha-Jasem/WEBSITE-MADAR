@@ -82,7 +82,7 @@ export const Settings = () => {
   const [success2, setSuccess2] = useState(false)
   const handleSaveBooking = async () => {
     setSaving2(true)
-    await new Promise(r => setTimeout(r, 600))
+    await new Promise(r => setTimeout(r, 400))
     setSaving2(false); setSuccess2(true)
     showToast('تم حفظ قواعد الحجز', 'success')
     setTimeout(() => setSuccess2(false), 2500)

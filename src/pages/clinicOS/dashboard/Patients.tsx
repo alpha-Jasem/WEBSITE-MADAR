@@ -109,7 +109,7 @@ export const Patients = () => {
                       </div>
                     </td>
                     <td style={{ padding: '12px 16px', fontSize: 13, color: '#475569', fontFamily: 'Tajawal, sans-serif' }}>{p.phone}</td>
-                    <td style={{ padding: '12px 16px', fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>{p.last_visit_at?.split('T')[0] || '—'}</td>
+                    <td style={{ padding: '12px 16px', fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>{p.last_visit_at ? new Date(p.last_visit_at).toLocaleDateString('ar-SA', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'}</td>
                     <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>{p.total_visits}</td>
                     <td style={{ padding: '12px 16px', fontSize: 13, color: p.no_show_count > 1 ? '#DC2626' : '#0F172A', fontWeight: 700, fontFamily: 'Cairo, sans-serif' }}>{p.no_show_count}</td>
                     <td style={{ padding: '12px 16px' }}>
@@ -162,7 +162,11 @@ export const Patients = () => {
             )}
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => setShowNewAppt(true)} style={{ flex: 1, padding: '9px', borderRadius: 8, background: '#4F46E5', color: 'white', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>موعد جديد</button>
-              <button onClick={() => { const clean = selected!.phone.replace(/\D/g,''); window.open('https://wa.me/966' + clean.replace(/^0/,''), '_blank', 'noopener,noreferrer') }} style={{ flex: 1, padding: '9px', borderRadius: 8, background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>واتساب</button>
+              <button onClick={() => {
+                const clean = (selected!.phone || '').replace(/\D/g,'').replace(/^0/,'')
+                if (!clean) return
+                window.open('https://wa.me/966' + clean, '_blank', 'noopener,noreferrer')
+              }} style={{ flex: 1, padding: '9px', borderRadius: 8, background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>واتساب</button>
             </div>
           </motion.div>
         )}

@@ -17,9 +17,11 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 function getWeekDates(baseDate: Date) {
-  const day = baseDate.getDay()
+  const day = baseDate.getDay() // 0=Sun,6=Sat
+  // Week starts Saturday (day 6) for Saudi Arabia
+  const daysFromSat = (day + 1) % 7 // Sat=0, Sun=1, ..., Fri=6
   const start = new Date(baseDate)
-  start.setDate(baseDate.getDate() - day)
+  start.setDate(baseDate.getDate() - daysFromSat)
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(start); d.setDate(start.getDate() + i)
     return d

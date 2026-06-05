@@ -30,22 +30,30 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      try {
+        const { data: authData } = await supabase.auth.getUser()
+        const user = authData?.user
+        if (!user) return
 
-      const [{ data: company }, { data: userRow }] = await Promise.all([
-        supabase.from('companies').select('id, name, package_type, status').eq('auth_user_id', user.id).single(),
-        supabase.from('users').select('full_name').eq('id', user.id).single(),
-      ])
+        const [companyRes, userRes] = await Promise.allSettled([
+          supabase.from('companies').select('id, name, package_type, status').eq('auth_user_id', user.id).single(),
+          supabase.from('users').select('full_name').eq('id', user.id).single(),
+        ])
 
-      if (company?.id) setCompanyId(company.id)
-      if (company?.name) setClinicName(company.name)
-      setIsDemo(!company || company.status === 'trial')
-      if (userRow?.full_name) setUserName(userRow.full_name)
-      if (company?.package_type) {
-        const pkg = company.package_type as PackageType
-        setPackageTypeState(pkg)
-        localStorage.setItem(PACKAGE_KEY, pkg)
+        const company = companyRes.status === 'fulfilled' ? companyRes.value.data : null
+        const userRow = userRes.status === 'fulfilled' ? userRes.value.data : null
+
+        if (company?.id) setCompanyId(company.id)
+        if (company?.name) setClinicName(company.name)
+        setIsDemo(!company || company.status === 'trial')
+        if (userRow?.full_name) setUserName(userRow.full_name)
+        if (company?.package_type) {
+          const pkg = company.package_type as PackageType
+          setPackageTypeState(pkg)
+          localStorage.setItem(PACKAGE_KEY, pkg)
+        }
+      } catch {
+        // context loads with defaults, user can still use demo mode
       }
     }
     load()
