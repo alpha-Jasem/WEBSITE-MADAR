@@ -1,351 +1,832 @@
-import { useRef } from 'react'
-import { motion, useInView } from 'framer-motion'
+import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { motion, useInView, AnimatePresence } from 'framer-motion'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import {
-  Car, Stethoscope, LayoutGrid, Rocket, Bot,
-  ArrowLeft, ArrowRight, Zap,
+  Car, Stethoscope, Bot, Zap, Phone, MessageCircle,
+  ArrowLeft, CheckCircle2, TrendingUp, Clock,
+  X, Send, Sparkles, BarChart2, Users, ChevronLeft,
 } from 'lucide-react'
-import { Navbar }           from '../components/public/Navbar'
-import { ProductsSection }  from '../components/public/ProductsSection'
-import { StickyOutcomes }   from '../components/public/StickyOutcomes'
-import { Pricing }          from '../components/public/Pricing'
-import { Footer }           from '../components/public/Footer'
-import { useLanguage }      from '../context/LanguageContext'
+import { Navbar } from '../components/public/Navbar'
+import { Footer } from '../components/public/Footer'
+import { useLanguage } from '../context/LanguageContext'
+import { openWhatsAppChat } from '../lib/whatsapp'
 
-const EM = '#10B981'
-const CY = '#0099CC'
-const VI = '#7C3AED'
+gsap.registerPlugin(ScrollTrigger)
 
-const fadeUp = (delay = 0) => ({
-  initial   : { opacity: 0, y: 32 },
-  animate   : { opacity: 1, y: 0  },
-  transition: { duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] as [number,number,number,number] },
-})
+// ─── Design Tokens ─────────────────────────────────────────────────────────────
+const BG       = '#09090B'
+const GOLD     = '#D4A853'
+const GOLD_LT  = '#E8C47A'
+const CW       = '#38BDF8'
+const CL       = '#34D399'
+const TEXT     = '#FAFAFA'
+const MUTED    = 'rgba(250,250,250,0.42)'
+const FAINT    = 'rgba(250,250,250,0.08)'
+const BORDER   = 'rgba(255,255,255,0.08)'
+const CARD     = 'rgba(255,255,255,0.028)'
 
+const WA = '966546666005'
+function goTop() { window.scrollTo({ top: 0, behavior: 'instant' }) }
+
+// ─── FadeUp helper ──────────────────────────────────────────────────────────────
+function FadeUp({ children, delay = 0, className = '', style = {} }: {
+  children: React.ReactNode; delay?: number; className?: string; style?: React.CSSProperties
+}) {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true, margin: '-50px' })
+  return (
+    <motion.div ref={ref} className={className} style={style}
+      initial={{ opacity: 0, y: 28 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}>
+      {children}
+    </motion.div>
+  )
+}
+
+// ─── Dashboard Mockup ────────────────────────────────────────────────────────────
+function DashMockup() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 32 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.9, delay: 0.55, ease: [0.16, 1, 0.3, 1] }}
+      style={{ position: 'relative', width: '100%', maxWidth: 460 }}>
+
+      {/* Main card */}
+      <div style={{
+        background: 'rgba(255,255,255,0.03)',
+        border: '1px solid rgba(255,255,255,0.09)',
+        borderRadius: 20, padding: 22,
+        backdropFilter: 'blur(24px)',
+        boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
+      }}>
+        {/* Topbar */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+          <span style={{ color: MUTED, fontSize: 11, fontFamily: 'Cairo, sans-serif', letterSpacing: '0.05em' }}>مدار OS · لوحة التحكم</span>
+          <div style={{ display: 'flex', gap: 5 }}>
+            {['#EF4444', '#F59E0B', '#22C55E'].map((c, i) => (
+              <div key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: c, opacity: 0.7 }} />
+            ))}
+          </div>
+        </div>
+
+        {/* Stats row */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 18 }}>
+          {[
+            { label: 'اليوم', value: '٢٤', color: CW },
+            { label: 'الإيراد', value: '١٢٠٠', color: GOLD },
+            { label: 'أُنجزوا', value: '١٩', color: CL },
+          ].map((s, i) => (
+            <div key={i} style={{
+              background: 'rgba(255,255,255,0.035)', border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: 11, padding: '11px 8px', textAlign: 'center',
+            }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: s.color, fontFamily: 'Cairo, sans-serif', lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', fontFamily: 'Tajawal, sans-serif', marginTop: 3 }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Queue list */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+          {[
+            { car: 'تويوتا كامري', badge: 'يُغسل', time: '٨ دق', color: CW },
+            { car: 'لكسوس LX ٥٧٠', badge: 'جاهز', time: '٠ دق', color: CL },
+            { car: 'نيسان باترول', badge: 'انتظار', time: '١٢ دق', color: GOLD },
+          ].map((item, i) => (
+            <motion.div key={i}
+              initial={{ opacity: 0, x: 14 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.9 + i * 0.12 }}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '9px 0',
+                borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+              }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Car size={12} color="rgba(255,255,255,0.25)" />
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.65)', fontFamily: 'Tajawal, sans-serif' }}>{item.car}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', fontFamily: 'Cairo, sans-serif' }}>{item.time}</span>
+                <span style={{
+                  fontSize: 9, fontWeight: 700, color: item.color,
+                  background: `${item.color}14`, border: `1px solid ${item.color}25`,
+                  padding: '2px 7px', borderRadius: 999, fontFamily: 'Cairo, sans-serif',
+                }}>{item.badge}</span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {/* Floating WhatsApp notification */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.88, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: [0, -5, 0] }}
+        transition={{ opacity: { delay: 1.4, duration: 0.4 }, scale: { delay: 1.4, duration: 0.4 }, y: { repeat: Infinity, duration: 3.5, ease: 'easeInOut', delay: 2 } }}
+        style={{
+          position: 'absolute', bottom: -22, right: -16,
+          background: 'rgba(37,211,102,0.12)',
+          border: '1px solid rgba(37,211,102,0.28)',
+          borderRadius: 13, padding: '9px 13px',
+          backdropFilter: 'blur(20px)',
+          display: 'flex', alignItems: 'center', gap: 7,
+          boxShadow: '0 8px 30px rgba(0,0,0,0.35)',
+          zIndex: 10,
+        }}>
+        <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#25D366', boxShadow: '0 0 6px #25D366', flexShrink: 0 }} />
+        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', fontFamily: 'Tajawal, sans-serif', whiteSpace: 'nowrap' }}>
+          تم إشعار العميل عبر واتساب ✓
+        </span>
+      </motion.div>
+
+      {/* Floating AI card */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.88, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: [0, 6, 0] }}
+        transition={{ opacity: { delay: 1.7, duration: 0.4 }, scale: { delay: 1.7, duration: 0.4 }, y: { repeat: Infinity, duration: 4, ease: 'easeInOut', delay: 2.5 } }}
+        style={{
+          position: 'absolute', top: -22, left: -16,
+          background: `rgba(212,168,83,0.1)`,
+          border: `1px solid rgba(212,168,83,0.25)`,
+          borderRadius: 13, padding: '9px 13px',
+          backdropFilter: 'blur(20px)',
+          display: 'flex', alignItems: 'center', gap: 7,
+          boxShadow: '0 8px 30px rgba(0,0,0,0.35)',
+          zIndex: 10,
+        }}>
+        <Bot size={12} color={GOLD} />
+        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', fontFamily: 'Tajawal, sans-serif', whiteSpace: 'nowrap' }}>
+          AI حجز ٣ مواعيد تلقائياً
+        </span>
+      </motion.div>
+    </motion.div>
+  )
+}
+
+// ─── Floating chat widget ─────────────────────────────────────────────────────
+function ContactFloat() {
+  const [open, setOpen] = useState(false)
+  const [msg, setMsg] = useState('')
+
+  const sendWA = () => {
+    const text = msg.trim() || 'مرحباً، أريد معرفة المزيد عن مدار OS'
+    window.open(`https://wa.me/${WA}?text=${encodeURIComponent(text)}`, '_blank')
+    setOpen(false); setMsg('')
+  }
+
+  return (
+    <div style={{ position: 'fixed', bottom: 28, left: 24, zIndex: 1000 }} dir="rtl">
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 12, scale: 0.94 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.94 }}
+            transition={{ duration: 0.22 }}
+            style={{
+              position: 'absolute', bottom: 68, left: 0,
+              width: 296, borderRadius: 18,
+              background: '#141418', border: '1px solid rgba(255,255,255,0.1)',
+              boxShadow: '0 24px 60px rgba(0,0,0,0.7)',
+              overflow: 'hidden',
+            }}>
+            <div style={{ padding: '13px 15px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#25D366', boxShadow: '0 0 5px #25D366' }} />
+                <span style={{ color: TEXT, fontSize: 12, fontWeight: 700, fontFamily: 'Cairo, sans-serif' }}>تحدث مع فريقنا</span>
+              </div>
+              <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.3)', padding: 0 }}>
+                <X size={13} />
+              </button>
+            </div>
+            <div style={{ padding: 13 }}>
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, fontFamily: 'Tajawal, sans-serif', lineHeight: 1.7, marginBottom: 10 }}>
+                اكتب سؤالك وسيرد فريقنا عبر واتساب.
+              </p>
+              <textarea value={msg} onChange={e => setMsg(e.target.value)}
+                placeholder="اكتب رسالتك هنا..." rows={3}
+                style={{
+                  width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 10, padding: '9px 11px', color: TEXT, fontSize: 12,
+                  fontFamily: 'Tajawal, sans-serif', resize: 'none', outline: 'none', boxSizing: 'border-box',
+                }} />
+              <button onClick={sendWA} style={{
+                width: '100%', marginTop: 9, padding: '10px', borderRadius: 10,
+                background: '#25D366', border: 'none', cursor: 'pointer',
+                color: 'white', fontSize: 12, fontWeight: 700, fontFamily: 'Cairo, sans-serif',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+              }}>
+                <Send size={11} /> أرسل عبر واتساب
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <motion.button whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
+        onClick={() => setOpen(v => !v)}
+        style={{
+          width: 52, height: 52, borderRadius: '50%',
+          background: open ? '#141418' : '#25D366',
+          border: open ? '1px solid rgba(255,255,255,0.1)' : 'none',
+          cursor: 'pointer',
+          boxShadow: open ? 'none' : '0 4px 20px rgba(37,211,102,0.4)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'all 0.2s',
+        }}>
+        {open ? <X size={18} color={TEXT} /> : <MessageCircle size={20} color="white" />}
+      </motion.button>
+    </div>
+  )
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
 export const PlatformHome = () => {
   const { t, language } = useLanguage()
   const isAr = language === 'ar'
-  const ArrowIcon = isAr ? ArrowLeft : ArrowRight
 
-  const heroRef  = useRef(null)
-  const stepsRef = useRef(null)
-  const heroInView  = useInView(heroRef,  { once: true })
-  const stepsInView = useInView(stepsRef, { once: true, margin: '-80px' })
+  const heroRef    = useRef<HTMLElement>(null)
+  const numbersRef = useRef<HTMLDivElement>(null)
+  const counted    = useRef(false)
 
-  const stats = [
-    { value: '٢٤/٧', label: { ar: 'ذكاء لا ينام',      en: 'AI never sleeps'  }, color: EM  },
-    { value: '٢',    label: { ar: 'قطاعات في الإنتاج', en: 'Sectors live'     }, color: 'white' },
-    { value: '١١+',  label: { ar: 'تدفق أتمتة جاهز',    en: 'Automation flows' }, color: CY  },
-  ]
+  // GSAP stats counter
+  useEffect(() => {
+    if (!numbersRef.current) return
+    const targets = numbersRef.current.querySelectorAll<HTMLElement>('[data-count]')
+    const trigger = ScrollTrigger.create({
+      trigger: numbersRef.current, start: 'top 80%', once: true,
+      onEnter: () => {
+        if (counted.current) return
+        counted.current = true
+        targets.forEach(el => {
+          const end = Number(el.dataset.count)
+          gsap.fromTo(el, { textContent: 0 }, {
+            textContent: end, duration: 2, ease: 'power2.out',
+            snap: { textContent: 1 },
+            onUpdate() { el.textContent = Math.ceil(Number(el.textContent)).toLocaleString('ar-SA') },
+          })
+        })
+      },
+    })
+    return () => trigger.kill()
+  }, [])
 
-  const clients = [
-    { name: t('مغسلة نايف', 'Nayef Car Wash'), product: 'Car Wash OS', metric: t('+٤٠ دق/يوم', '+40 min/day'), accent: CY, Icon: Car         },
-    { name: t('عيادات نور',  'Noor Clinics'),   product: 'Clinic OS',   metric: t('٧٨٪ تحويل',  '78% rate'),   accent: EM, Icon: Stethoscope  },
+  // Hero words entrance
+  useEffect(() => {
+    if (!heroRef.current) return
+    const ctx = gsap.context(() => {
+      gsap.from('.hero-word', { y: 55, opacity: 0, duration: 0.85, stagger: 0.07, ease: 'power4.out', delay: 0.15 })
+    }, heroRef.current)
+    return () => ctx.revert()
+  }, [])
+
+  const goals = [
+    { icon: Zap,       title: 'تشغيل بدون توقف',     body: 'كل حجز، قائمة انتظار، وتذكير يتم تلقائياً — لا تدخل يدوي.',     color: GOLD },
+    { icon: Bot,       title: 'ذكاء اصطناعي حقيقي',   body: 'وكلاء AI يحجزون ويردون بالعربية بدون انتظار وبدون موظف إضافي.', color: CW },
+    { icon: TrendingUp, title: 'نمو قابل للقياس',     body: 'كل عميل وإيراد يُسجَّل ويُحلَّل. قرارك مبني على أرقام.',      color: CL },
+    { icon: Clock,     title: 'إعداد في ٤٨ ساعة',    body: 'فريقنا يجهز الحساب والأتمتة والاختبار. تبدأ خلال يومين.',        color: '#A78BFA' },
   ]
 
   const steps = [
-    { num: '01', numAr: '١', Icon: LayoutGrid, accent: CY,
-      title: { ar: 'اختار نظامك',         en: 'Pick Your System'      },
-      desc : { ar: 'مغسلة أو عيادة — نظام مبني خصيصاً لقطاعك.', en: 'Car wash or clinic — a system built exactly for your sector.' },
-    },
-    { num: '02', numAr: '٢', Icon: Rocket, accent: EM,
-      title: { ar: 'نجهّزه في ٤٨ ساعة',  en: 'Live in 48 Hours'      },
-      desc : { ar: 'فريقنا يجهّز كل شيء. ما تحتاج تعرف شيء تقني.', en: 'Our team handles everything. Zero tech knowledge required.' },
-    },
-    { num: '03', numAr: '٣', Icon: Bot, accent: VI,
-      title: { ar: 'يشتغل بدونك ٢٤/٧',  en: 'Runs 24/7 Without You' },
-      desc : { ar: 'الذكاء الاصطناعي يشتغل دائماً. أنت ترتاح.', en: 'AI runs always. You rest and collect revenue.' },
-    },
+    { num: '١', title: 'اختر نظامك',   body: 'مغسلة سيارات أو عيادة — نظام مبني خصيصاً لقطاعك ومتطلباته.', color: CW },
+    { num: '٢', title: 'نجهزه معك',    body: 'فريقنا يعدّ الحساب، يدخل بياناتك، ويجري اختبار تشغيل حقيقي.',  color: GOLD },
+    { num: '٣', title: 'يشتغل بدونك',  body: 'الذكاء الاصطناعي يعمل ٢٤/٧ — حجز وتأكيد وإشعارات وتقارير.',    color: CL },
+  ]
+
+  const proof = [
+    { value: 40, suffix: 'دق',  label: 'توفير يومي في المغاسل', color: CW   },
+    { value: 78, suffix: '٪',   label: 'نسبة تحويل مكالمات AI', color: CL   },
+    { value: 24, suffix: '/٧',  label: 'ذكاء لا ينام أبداً',    color: GOLD },
+    { value: 48, suffix: 'س',   label: 'إعداد وتشغيل كامل',     color: '#A78BFA' },
   ]
 
   return (
-    <div style={{ background: '#050810', minHeight: '100vh', direction: isAr ? 'rtl' : 'ltr', overflowX: 'hidden' }}>
+    <div dir={isAr ? 'rtl' : 'ltr'}
+      style={{ background: BG, minHeight: '100vh', overflowX: 'hidden', color: TEXT }}>
 
-      {/* ══ AURORA ══ */}
-      <div aria-hidden className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
-        <div style={{ position:'absolute', top:'-15%', left:'-5%', right:'-5%', height:'80vh',
-          background:'radial-gradient(ellipse 90% 65% at 50% 0%, rgba(0,210,110,0.48) 0%, rgba(0,191,255,0.22) 40%, rgba(0,120,80,0.12) 65%, transparent 80%)',
-          filter:'blur(52px)', animation:'aur-a 22s ease-in-out infinite', willChange:'transform' }} />
-        <div style={{ position:'absolute', top:'-8%', left:'0%', width:640, height:700,
-          background:'radial-gradient(ellipse, rgba(16,185,129,0.38) 0%, transparent 62%)',
-          filter:'blur(55px)', animation:'aur-c 19s ease-in-out infinite', willChange:'transform' }} />
-        <div style={{ position:'absolute', top:'-5%', right:'0%', width:580, height:640,
-          background:'radial-gradient(ellipse, rgba(0,191,255,0.30) 0%, transparent 62%)',
-          filter:'blur(55px)', animation:'aur-b 28s ease-in-out infinite', willChange:'transform' }} />
-        <div style={{ position:'absolute', bottom:'5%', left:'25%', width:600, height:400,
-          background:'radial-gradient(ellipse, rgba(124,58,237,0.18) 0%, transparent 65%)',
-          filter:'blur(70px)', animation:'aur-a 24s ease-in-out infinite 5s', willChange:'transform' }} />
-        <div style={{ position:'absolute', inset:0,
-          backgroundImage:'linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px)',
-          backgroundSize:'64px 64px' }} />
+      {/* ── Noise + grid overlay ──────────────────────────────────────────────── */}
+      <div aria-hidden style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
+        {/* Subtle grid */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px)',
+          backgroundSize: '64px 64px',
+        }} />
+        {/* Gold orb */}
+        <div style={{
+          position: 'absolute', top: '-10%', right: '20%', width: 640, height: 640,
+          background: 'radial-gradient(ellipse, rgba(212,168,83,0.11) 0%, transparent 62%)',
+          filter: 'blur(80px)', animation: 'orb-a 22s ease-in-out infinite',
+        }} />
+        {/* Blue orb */}
+        <div style={{
+          position: 'absolute', top: '35%', left: '-8%', width: 520, height: 520,
+          background: 'radial-gradient(ellipse, rgba(56,189,248,0.08) 0%, transparent 62%)',
+          filter: 'blur(90px)', animation: 'orb-b 28s ease-in-out infinite',
+        }} />
+        {/* Green orb */}
+        <div style={{
+          position: 'absolute', bottom: '5%', right: '8%', width: 480, height: 480,
+          background: 'radial-gradient(ellipse, rgba(52,211,153,0.07) 0%, transparent 62%)',
+          filter: 'blur(80px)', animation: 'orb-a 24s ease-in-out infinite 5s',
+        }} />
+        {/* Top gradient fade */}
+        <div style={{
+          position: 'absolute', top: 0, left: 0, right: 0, height: 1,
+          background: `linear-gradient(90deg, transparent, ${GOLD}40, transparent)`,
+        }} />
       </div>
+
+      <style>{`
+        @keyframes orb-a { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-30px)} }
+        @keyframes orb-b { 0%,100%{transform:translateY(0)} 50%{transform:translateY(24px)} }
+        .hero-word { display:inline-block }
+        .card-hover { transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease }
+        .card-hover:hover { transform: translateY(-5px) !important; box-shadow: 0 20px 60px rgba(0,0,0,0.45) !important }
+        @media (max-width: 768px) {
+          .hero-grid { flex-direction: column !important; gap: 40px !important }
+          .hero-text { max-width: 100% !important; text-align: center !important; align-items: center !important }
+          .mock-wrap { width: 100% !important; display: flex; justify-content: center }
+          .proof-grid { flex-wrap: wrap !important }
+          .prod-grid { flex-direction: column !important }
+          .goals-grid { grid-template-columns: 1fr 1fr !important }
+          .steps-grid { grid-template-columns: 1fr !important }
+        }
+        @media (max-width: 480px) {
+          .goals-grid { grid-template-columns: 1fr !important }
+        }
+      `}</style>
 
       <Navbar />
 
-      {/* ════════════════════════ HERO ════════════════════════ */}
-      <section ref={heroRef} className="relative z-10 flex flex-col items-center text-center px-4 sm:px-6 lg:px-8"
-        style={{ paddingTop: '10rem', paddingBottom: '5rem' }}>
+      {/* ══════════════════════════ HERO ════════════════════════════════════════ */}
+      <section ref={heroRef} style={{
+        position: 'relative', zIndex: 10,
+        padding: 'clamp(7rem,12vw,11rem) clamp(1.5rem,5vw,4rem) clamp(4rem,7vw,7rem)',
+        maxWidth: 1280, margin: '0 auto',
+      }}>
+        <div className="hero-grid" style={{
+          display: 'flex', alignItems: 'center',
+          gap: 'clamp(2rem,5vw,5rem)',
+          flexDirection: isAr ? 'row' : 'row-reverse',
+        }}>
 
-        {/* Badge */}
-        <motion.div {...fadeUp(0.1)} animate={heroInView ? { opacity:1, y:0 } : { opacity:0, y:32 }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-7"
-          style={{ background:'rgba(0,191,255,0.10)', border:'1px solid rgba(0,191,255,0.28)' }}>
-          <Zap size={11} style={{ color: CY }} />
-          <span className={`text-xs font-semibold tracking-widest uppercase ${isAr ? 'font-cairo' : 'font-work'}`}
-            style={{ color: CY }}>
-            AI Operating Systems
-          </span>
-        </motion.div>
+          {/* Text column */}
+          <div className="hero-text" style={{
+            flex: '1 1 500px', maxWidth: 600,
+            display: 'flex', flexDirection: 'column',
+            alignItems: isAr ? 'flex-start' : 'flex-start',
+          }}>
 
-        {/* H1 */}
-        <motion.h1
-          {...fadeUp(0.18)} animate={heroInView ? { opacity:1, y:0 } : { opacity:0, y:32 }}
-          className={`text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.06] mb-6 max-w-4xl ${isAr ? 'font-cairo' : 'font-sora'}`}
-          style={{ color: 'white', letterSpacing: '-0.025em' }}
-        >
-          {t(
-            <>{`نظّم عملك.`}<br /><span style={{ background:`linear-gradient(135deg, ${EM} 30%, ${CY})`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>دع الذكاء يشغّله.</span></>,
-            <>{`Run Your Business.`}<br /><span style={{ background:`linear-gradient(135deg, ${EM} 30%, ${CY})`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>Let AI Operate It.</span></>
-          )}
-        </motion.h1>
-
-        {/* Subtitle */}
-        <motion.p
-          {...fadeUp(0.26)} animate={heroInView ? { opacity:1, y:0 } : { opacity:0, y:32 }}
-          className={`text-lg sm:text-xl max-w-xl mb-10 leading-relaxed ${isAr ? 'font-tajawal' : 'font-work'}`}
-          style={{ color: 'rgba(255,255,255,0.45)' }}>
-          {t(
-            'أنظمة تشغيل مبنية لكل قطاع. جاهزة للتشغيل الفوري. بدون تعقيد.',
-            'Purpose-built operating systems for every sector. Ready to run. Zero complexity.'
-          )}
-        </motion.p>
-
-        {/* CTAs */}
-        <motion.div
-          {...fadeUp(0.33)} animate={heroInView ? { opacity:1, y:0 } : { opacity:0, y:32 }}
-          className="flex flex-col sm:flex-row items-center gap-3 mb-14">
-          <motion.button
-            whileHover={{ scale:1.03, boxShadow:`0 0 36px ${CY}50` }}
-            whileTap={{ scale:0.97 }}
-            onClick={() => document.getElementById('products')?.scrollIntoView({ behavior:'smooth' })}
-            className={`inline-flex items-center gap-2 px-8 py-4 rounded-2xl text-white font-bold text-sm cursor-pointer ${isAr ? 'font-cairo' : 'font-work'}`}
-            style={{ background:`linear-gradient(135deg, #0D1B3E, ${CY})`, boxShadow:`0 4px 24px ${CY}35` }}>
-            {t('استكشف المنتجات', 'Explore Products')}
-            <ArrowIcon size={15} />
-          </motion.button>
-          <motion.button
-            whileHover={{ scale:1.02, borderColor:'rgba(255,255,255,0.28)', color:'white' }}
-            whileTap={{ scale:0.97 }}
-            onClick={() => window.open('https://wa.me/966546666005', '_blank')}
-            className={`inline-flex items-center gap-2 px-7 py-4 rounded-2xl font-medium text-sm cursor-pointer transition-colors ${isAr ? 'font-cairo' : 'font-work'}`}
-            style={{ border:'1px solid rgba(255,255,255,0.14)', color:'rgba(255,255,255,0.6)', background:'transparent' }}>
-            {t('احجز جلسة مجانية', 'Book a Free Session')}
-          </motion.button>
-        </motion.div>
-
-        {/* Stats — no cards, just text with dividers */}
-        <motion.div
-          {...fadeUp(0.4)} animate={heroInView ? { opacity:1, y:0 } : { opacity:0, y:32 }}
-          className="flex flex-wrap items-center justify-center mb-16">
-          {stats.map((s, i) => (
-            <div key={i} className="text-center px-8 py-3"
-              style={{ borderInlineStart: i > 0 ? '1px solid rgba(255,255,255,0.09)' : 'none' }}>
-              <div className={`text-3xl font-black ${isAr ? 'font-cairo' : 'font-sora'}`}
-                style={{ color: s.color, letterSpacing: '-1px' }}>{s.value}</div>
-              <div className={`text-xs mt-1 ${isAr ? 'font-tajawal' : 'font-work'}`}
-                style={{ color: 'rgba(255,255,255,0.28)' }}>
-                {isAr ? s.label.ar : s.label.en}
-              </div>
-            </div>
-          ))}
-        </motion.div>
-
-        {/* Floating product cards — no border box, just cards floating */}
-        <motion.div
-          {...fadeUp(0.5)} animate={heroInView ? { opacity:1, y:0 } : { opacity:0, y:32 }}
-          className="w-full max-w-3xl flex flex-col sm:flex-row gap-4 justify-center">
-
-          {/* Car Wash OS card */}
-          <motion.div
-            animate={{ y: [-6, 6, -6] }} transition={{ repeat: Infinity, duration: 5, ease:'easeInOut' }}
-            className="flex-1 rounded-2xl p-5"
-            style={{ background:'rgba(5,8,18,0.60)', border:`1px solid ${CY}28`, backdropFilter:'blur(20px)', WebkitBackdropFilter:'blur(20px)', boxShadow:`0 24px 60px rgba(0,0,0,0.4), 0 0 40px ${CY}0F` }}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center"
-                  style={{ background:`linear-gradient(135deg, #0D1B3E, ${CY})` }}>
-                  <Car size={14} className="text-white" />
-                </div>
-                <span className={`text-sm font-bold text-white ${isAr ? 'font-cairo' : 'font-sora'}`}>Car Wash OS</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full" style={{ background:'#4ADE80', animation:'pulse-live 2s ease-in-out infinite' }} />
-                <span className={`text-[10px] ${isAr ? 'font-tajawal' : 'font-work'}`} style={{ color:'rgba(255,255,255,0.35)' }}>{t('نشط','Live')}</span>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { val:'١٢', lbl:{ ar:'في الطابور',    en:'In queue'    } },
-                { val:'+٤٠', lbl:{ ar:'دقيقة/يوم',    en:'Min saved'   } },
-                { val:'١١',  lbl:{ ar:'تدفق أتمتة',   en:'Workflows'   } },
-                { val:'٣',   lbl:{ ar:'يُشطَف الآن',  en:'Being washed'} },
-              ].map((m,i) => (
-                <div key={i} className="rounded-xl px-3 py-2" style={{ background:`${CY}0D` }}>
-                  <div className={`text-base font-black ${isAr ? 'font-cairo' : 'font-sora'}`} style={{ color: CY }}>{m.val}</div>
-                  <div className={`text-[10px] ${isAr ? 'font-tajawal' : 'font-work'}`} style={{ color:'rgba(255,255,255,0.32)' }}>
-                    {isAr ? m.lbl.ar : m.lbl.en}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Clinic OS card */}
-          <motion.div
-            animate={{ y: [6, -6, 6] }} transition={{ repeat: Infinity, duration: 5.5, ease:'easeInOut', delay: 1 }}
-            className="flex-1 rounded-2xl p-5"
-            style={{ background:'rgba(4,8,14,0.60)', border:`1px solid ${EM}28`, backdropFilter:'blur(20px)', WebkitBackdropFilter:'blur(20px)', boxShadow:`0 24px 60px rgba(0,0,0,0.4), 0 0 40px ${EM}0F` }}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center"
-                  style={{ background:`linear-gradient(135deg, #0D2B1E, ${EM})` }}>
-                  <Stethoscope size={14} className="text-white" />
-                </div>
-                <span className={`text-sm font-bold text-white ${isAr ? 'font-cairo' : 'font-sora'}`}>Clinic OS</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full" style={{ background:'#4ADE80', animation:'pulse-live 2s ease-in-out infinite' }} />
-                <span className={`text-[10px] ${isAr ? 'font-tajawal' : 'font-work'}`} style={{ color:'rgba(255,255,255,0.35)' }}>{t('نشط','Live')}</span>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { val:'١٨', lbl:{ ar:'موعد اليوم',   en:"Today's appts" } },
-                { val:'٧٨٪', lbl:{ ar:'تحويل',       en:'Conversion'   } },
-                { val:'٠',  lbl:{ ar:'تعارض',        en:'Conflicts'    } },
-                { val:'٢٤/٧', lbl:{ ar:'تغطية',      en:'Coverage'     } },
-              ].map((m,i) => (
-                <div key={i} className="rounded-xl px-3 py-2" style={{ background:`${EM}0D` }}>
-                  <div className={`text-base font-black ${isAr ? 'font-cairo' : 'font-sora'}`} style={{ color: EM }}>{m.val}</div>
-                  <div className={`text-[10px] ${isAr ? 'font-tajawal' : 'font-work'}`} style={{ color:'rgba(255,255,255,0.32)' }}>
-                    {isAr ? m.lbl.ar : m.lbl.en}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-        </motion.div>
-      </section>
-
-      {/* ════════════════════════ LIVE CLIENTS ════════════════════════ */}
-      <section className="relative z-10 py-10"
-        style={{ borderTop:'1px solid rgba(255,255,255,0.06)', borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
-        <div className="max-w-4xl mx-auto px-4 flex flex-col items-center gap-6">
-          <p className={`text-[11px] font-semibold tracking-[0.25em] uppercase ${isAr ? 'font-cairo' : 'font-work'}`}
-            style={{ color:'rgba(255,255,255,0.22)' }}>
-            {t('في الإنتاج الآن', 'Live in Production')}
-          </p>
-          <div className="flex flex-wrap justify-center gap-10">
-            {clients.map((c, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity:0, y:14 }} whileInView={{ opacity:1, y:0 }}
-                viewport={{ once:true }}
-                transition={{ duration:0.5, delay: i * 0.1 }}
-                className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ background:'#4ADE80', boxShadow:'0 0 8px #4ADE80', animation:'pulse-live 2s ease-in-out infinite' }} />
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0`}
-                  style={{ background:`${c.accent}18`, border:`1px solid ${c.accent}28` }}>
-                  <c.Icon size={14} style={{ color: c.accent }} />
-                </div>
-                <div>
-                  <span className={`text-sm font-bold text-white ${isAr ? 'font-cairo' : 'font-sora'}`}>{c.name}</span>
-                  <span className={`text-xs mx-2 ${isAr ? 'font-tajawal' : 'font-work'}`} style={{ color: c.accent }}>{c.product}</span>
-                  <span className={`text-xs ${isAr ? 'font-tajawal' : 'font-work'}`} style={{ color:'rgba(255,255,255,0.28)' }}>{c.metric}</span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ════════════════════════ HOW IT WORKS ════════════════════════ */}
-      <section ref={stepsRef} className="relative z-10 py-28">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-
-          {/* Header */}
-          <motion.div
-            initial={{ opacity:0, y:20 }} animate={stepsInView ? { opacity:1, y:0 } : {}}
-            transition={{ duration:0.55 }}
-            className="text-center mb-20">
-            <p className={`text-[11px] font-semibold tracking-[0.25em] uppercase mb-4 ${isAr ? 'font-cairo' : 'font-work'}`}
-              style={{ color: VI }}>
-              {t('كيف يعمل', 'How It Works')}
-            </p>
-            <h2 className={`text-4xl sm:text-5xl font-black text-white ${isAr ? 'font-cairo' : 'font-sora'}`}
-              style={{ letterSpacing:'-0.025em' }}>
-              {t('٣ خطوات — وبعدها يشتغل', '3 Steps — Then It Runs')}
-            </h2>
-          </motion.div>
-
-          {/* Steps — open layout, no card borders */}
-          <div className="relative grid grid-cols-1 md:grid-cols-3">
-            {/* Horizontal connector line on desktop */}
-            <div className="hidden md:block absolute top-12 pointer-events-none"
+            {/* Badge */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.05 }}
               style={{
-                left:'20%', right:'20%', height:1,
-                background:'linear-gradient(90deg, transparent, rgba(255,255,255,0.10) 20%, rgba(255,255,255,0.10) 80%, transparent)',
-              }} />
+                display: 'inline-flex', alignItems: 'center', gap: 7,
+                padding: '5px 14px', borderRadius: 999, marginBottom: 28,
+                background: 'rgba(212,168,83,0.07)', border: '1px solid rgba(212,168,83,0.2)',
+              }}>
+              <Sparkles size={10} color={GOLD} />
+              <span style={{ fontSize: 10, fontWeight: 700, color: GOLD, letterSpacing: '0.14em', fontFamily: 'Cairo, sans-serif', textTransform: 'uppercase' }}>
+                {t('نظم ذكاء اصطناعي للأعمال السعودية', 'AI Systems for Saudi Business')}
+              </span>
+            </motion.div>
 
-            {steps.map((step, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity:0, y:28 }} animate={stepsInView ? { opacity:1, y:0 } : {}}
-                transition={{ duration:0.65, delay: i * 0.12, ease:[0.16,1,0.3,1] }}
-                className="flex flex-col items-center text-center gap-5 px-8 py-10"
-              >
-                {/* Icon circle */}
-                <div className="relative">
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
-                    style={{ background:`${step.accent}18`, border:`1px solid ${step.accent}35`, boxShadow:`0 0 30px ${step.accent}18` }}>
-                    <step.Icon size={22} style={{ color: step.accent }} />
+            {/* Headline */}
+            <h1 style={{
+              fontSize: 'clamp(2.6rem,5.5vw,4.75rem)',
+              fontWeight: 900, lineHeight: 1.07,
+              fontFamily: 'Cairo, sans-serif', letterSpacing: '-0.02em',
+              margin: '0 0 20px',
+            }}>
+              {isAr ? (
+                <>
+                  <span className="hero-word" style={{ color: TEXT, display: 'block' }}>أتمتة أعمالك</span>
+                  <span className="hero-word" style={{
+                    display: 'block',
+                    background: `linear-gradient(125deg, ${GOLD_LT} 0%, ${GOLD} 55%, #B8860B 100%)`,
+                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                  }}>بذكاء حقيقي</span>
+                </>
+              ) : (
+                <>
+                  <span className="hero-word" style={{ color: TEXT, display: 'block' }}>Automate Your</span>
+                  <span className="hero-word" style={{
+                    display: 'block',
+                    background: `linear-gradient(125deg, ${GOLD_LT} 0%, ${GOLD} 55%, #B8860B 100%)`,
+                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                  }}>Business with AI</span>
+                </>
+              )}
+            </h1>
+
+            {/* Sub */}
+            <motion.p
+              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.65, delay: 0.5 }}
+              style={{ fontSize: 16, color: MUTED, maxWidth: 480, lineHeight: 1.8, margin: '0 0 32px', fontFamily: 'Tajawal, sans-serif' }}>
+              {t(
+                'مدار OS يدير مغسلتك أو عيادتك بالكامل — حجز، إشعارات، مالية، وعملاء — ٢٤/٧ بدون توقف.',
+                'Madar OS fully manages your car wash or clinic — bookings, notifications, finance, and customers — 24/7 without stopping.'
+              )}
+            </motion.p>
+
+            {/* CTAs */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.65, delay: 0.65 }}
+              style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 44 }}>
+              <motion.button
+                whileHover={{ scale: 1.03, boxShadow: `0 0 40px rgba(212,168,83,0.3)` }}
+                whileTap={{ scale: 0.96 }}
+                onClick={() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })}
+                style={{
+                  padding: '12px 26px', borderRadius: 12,
+                  background: `linear-gradient(135deg, ${GOLD} 0%, ${GOLD_LT} 100%)`,
+                  border: 'none', cursor: 'pointer',
+                  color: BG, fontSize: 13, fontWeight: 800, fontFamily: 'Cairo, sans-serif',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  boxShadow: `0 4px 20px rgba(212,168,83,0.2)`,
+                }}>
+                {t('اكتشف المنتجات', 'Explore Products')}
+                <ArrowLeft size={14} />
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02, borderColor: 'rgba(255,255,255,0.22)' }}
+                whileTap={{ scale: 0.96 }}
+                onClick={() => openWhatsAppChat(t('مرحباً، أريد تجربة مدار OS ومعرفة أفضل نظام لأعمالي.', 'Hi, I want to try Madar OS for my business.'))}
+                style={{
+                  padding: '12px 26px', borderRadius: 12,
+                  background: 'transparent', border: `1px solid rgba(255,255,255,0.11)`,
+                  cursor: 'pointer', color: 'rgba(255,255,255,0.55)',
+                  fontSize: 13, fontWeight: 600, fontFamily: 'Cairo, sans-serif',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  transition: 'border-color 0.2s',
+                }}>
+                <MessageCircle size={13} />
+                {t('جلسة مجانية', 'Free Session')}
+              </motion.button>
+            </motion.div>
+
+            {/* Proof strip */}
+            <motion.div
+              ref={numbersRef}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.85 }}
+              className="proof-grid"
+              style={{ display: 'flex', alignItems: 'center', gap: 0, flexWrap: 'nowrap' }}>
+              {proof.map((p, i) => (
+                <div key={i} style={{
+                  padding: '0 22px',
+                  borderInlineEnd: i < proof.length - 1 ? '1px solid rgba(255,255,255,0.07)' : 'none',
+                  textAlign: 'center',
+                }}>
+                  <div style={{ fontSize: 'clamp(20px,2.5vw,26px)', fontWeight: 900, fontFamily: 'Cairo, sans-serif', color: p.color, letterSpacing: '-0.5px', lineHeight: 1, display: 'flex', alignItems: 'baseline', gap: 2, justifyContent: 'center' }}>
+                    <span data-count={p.value}>٠</span>
+                    <span style={{ fontSize: '0.55em' }}>{p.suffix}</span>
                   </div>
-                  {/* Step number badge */}
-                  <div className="absolute -top-2 -end-2 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black"
-                    style={{ background: step.accent, color: '#050810' }}>
-                    {isAr ? step.numAr : i + 1}
-                  </div>
+                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', fontFamily: 'Tajawal, sans-serif', marginTop: 4, whiteSpace: 'nowrap' }}>{t(p.label, p.label)}</div>
                 </div>
+              ))}
+            </motion.div>
+          </div>
 
-                <h3 className={`text-lg font-bold text-white ${isAr ? 'font-cairo' : 'font-sora'}`}>
-                  {isAr ? step.title.ar : step.title.en}
+          {/* Visual column */}
+          <div className="mock-wrap" style={{ flex: '1 1 400px', maxWidth: 500, display: 'flex', justifyContent: 'center' }}>
+            <DashMockup />
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════ PRODUCTS ════════════════════════════════════════ */}
+      <section id="products" style={{ position: 'relative', zIndex: 10, padding: 'clamp(4rem,8vw,7rem) clamp(1.5rem,5vw,4rem)' }}>
+        {/* Divider */}
+        <div style={{ width: '100%', maxWidth: 900, margin: '0 auto 56px', height: 1, background: 'linear-gradient(90deg, transparent, rgba(212,168,83,0.25), transparent)' }} />
+
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <FadeUp style={{ textAlign: 'center', marginBottom: 52 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: GOLD, letterSpacing: '0.18em', fontFamily: 'Cairo, sans-serif', display: 'block', marginBottom: 14, textTransform: 'uppercase' }}>
+              {t('قطاعاتنا', 'Our Sectors')}
+            </span>
+            <h2 style={{ fontSize: 'clamp(1.9rem,3.8vw,3rem)', fontWeight: 900, color: TEXT, fontFamily: 'Cairo, sans-serif', margin: '0 0 12px', lineHeight: 1.12 }}>
+              {t('اختر نظامك المتخصص', 'Choose Your Specialized System')}
+            </h2>
+            <p style={{ color: MUTED, fontSize: 15, fontFamily: 'Tajawal, sans-serif', maxWidth: 440, margin: '0 auto' }}>
+              {t('نظام مبني لقطاعك تحديداً — لا حلول عامة، لا تكييف اضطراري', 'Built for your exact sector — no generic solutions, no forced adaptation')}
+            </p>
+          </FadeUp>
+
+          <div className="prod-grid" style={{ display: 'flex', gap: 20 }}>
+
+            {/* ── Car Wash ──────────────────────────────────────────── */}
+            <FadeUp delay={0.06} style={{ flex: 1 }}>
+              <div className="card-hover" style={{
+                background: CARD, border: `1px solid ${BORDER}`,
+                borderRadius: 22, padding: 30, position: 'relative', overflow: 'hidden',
+                boxShadow: '0 4px 30px rgba(0,0,0,0.25)',
+                height: '100%', boxSizing: 'border-box',
+              }}>
+                {/* Top accent */}
+                <div style={{ position: 'absolute', top: 0, insetInlineStart: 0, insetInlineEnd: 0, height: 2, background: `linear-gradient(90deg, transparent, ${CW}55, transparent)` }} />
+                {/* Icon */}
+                <div style={{ width: 50, height: 50, borderRadius: 15, background: `rgba(56,189,248,0.09)`, border: `1px solid rgba(56,189,248,0.18)`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
+                  <Car size={21} color={CW} />
+                </div>
+                <div style={{ fontSize: 9, fontWeight: 700, color: CW, letterSpacing: '0.15em', fontFamily: 'Cairo, sans-serif', marginBottom: 12, textTransform: 'uppercase' }}>
+                  Car Wash OS
+                </div>
+                <h3 style={{ fontSize: 20, fontWeight: 900, color: TEXT, fontFamily: 'Cairo, sans-serif', margin: '0 0 10px', lineHeight: 1.2 }}>
+                  {t('نظام تشغيل المغاسل', 'Car Wash Operating System')}
                 </h3>
-                <p className={`text-sm leading-relaxed max-w-xs ${isAr ? 'font-tajawal' : 'font-work'}`}
-                  style={{ color:'rgba(255,255,255,0.4)' }}>
-                  {isAr ? step.desc.ar : step.desc.en}
+                <p style={{ color: MUTED, fontSize: 13, fontFamily: 'Tajawal, sans-serif', lineHeight: 1.8, margin: '0 0 22px' }}>
+                  {t(
+                    'لوحة تشغيل كاملة: استقبال سيارات بـ QR، إدارة قائمة الانتظار، إشعارات واتساب، ولاء العملاء، ومالية يومية مع VAT.',
+                    'Complete dashboard: QR car intake, queue management, WhatsApp notifications, loyalty program, and daily finance with VAT.'
+                  )}
                 </p>
-              </motion.div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 26 }}>
+                  {[
+                    t('استقبال سيارات بـ QR الذاتي', 'QR self-check-in for cars'),
+                    t('شاشة عرض Live للعملاء', 'Live customer status screen'),
+                    t('إغلاق يومي + تقارير VAT', 'Daily close + VAT reports'),
+                    t('برنامج ولاء تلقائي', 'Automated loyalty program'),
+                    t('واتساب تلقائي للتسليم', 'Auto WhatsApp at handoff'),
+                  ].map((f, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                      <CheckCircle2 size={12} color={CW} />
+                      <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', fontFamily: 'Tajawal, sans-serif' }}>{f}</span>
+                    </div>
+                  ))}
+                </div>
+                <Link to="/" onClick={goTop} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                  padding: '10px 22px', borderRadius: 11, width: '100%',
+                  background: `rgba(56,189,248,0.09)`, border: `1px solid rgba(56,189,248,0.22)`,
+                  color: CW, fontSize: 12, fontWeight: 700, fontFamily: 'Cairo, sans-serif',
+                  textDecoration: 'none', transition: 'background 0.2s', boxSizing: 'border-box',
+                }}
+                  onMouseEnter={e => (e.currentTarget.style.background = `rgba(56,189,248,0.17)`)}
+                  onMouseLeave={e => (e.currentTarget.style.background = `rgba(56,189,248,0.09)`)}>
+                  {t('اعرف أكثر', 'Learn More')} <ChevronLeft size={13} />
+                </Link>
+              </div>
+            </FadeUp>
+
+            {/* ── Clinic ────────────────────────────────────────────── */}
+            <FadeUp delay={0.13} style={{ flex: 1 }}>
+              <div className="card-hover" style={{
+                background: CARD, border: `1px solid ${BORDER}`,
+                borderRadius: 22, padding: 30, position: 'relative', overflow: 'hidden',
+                boxShadow: '0 4px 30px rgba(0,0,0,0.25)',
+                height: '100%', boxSizing: 'border-box',
+              }}>
+                <div style={{ position: 'absolute', top: 0, insetInlineStart: 0, insetInlineEnd: 0, height: 2, background: `linear-gradient(90deg, transparent, ${CL}55, transparent)` }} />
+                <div style={{ width: 50, height: 50, borderRadius: 15, background: `rgba(52,211,153,0.09)`, border: `1px solid rgba(52,211,153,0.18)`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
+                  <Stethoscope size={21} color={CL} />
+                </div>
+                <div style={{ fontSize: 9, fontWeight: 700, color: CL, letterSpacing: '0.15em', fontFamily: 'Cairo, sans-serif', marginBottom: 12, textTransform: 'uppercase' }}>
+                  Clinic OS
+                </div>
+                <h3 style={{ fontSize: 20, fontWeight: 900, color: TEXT, fontFamily: 'Cairo, sans-serif', margin: '0 0 10px', lineHeight: 1.2 }}>
+                  {t('نظام تشغيل العيادات', 'Clinic Operating System')}
+                </h3>
+                <p style={{ color: MUTED, fontSize: 13, fontFamily: 'Tajawal, sans-serif', lineHeight: 1.8, margin: '0 0 22px' }}>
+                  {t(
+                    'إدارة مواعيد ذكية، مرضى، أطباء، وخدمات — مع مساعد AI يحجز ويرد على المرضى واتساب ٢٤/٧.',
+                    'Smart appointment management, patients, doctors, and services — with an AI assistant that books and responds on WhatsApp 24/7.'
+                  )}
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 26 }}>
+                  {[
+                    t('حجز مواعيد واتساب تلقائي', 'Automatic WhatsApp appointment booking'),
+                    t('إدارة المرضى والأطباء', 'Patient and doctor management'),
+                    t('وكيل AI يحجز ٢٤/٧', 'AI agent that books 24/7'),
+                    t('تذكيرات تلقائية للمرضى', 'Automatic patient reminders'),
+                    t('تقارير وإحصاءات الأداء', 'Performance reports and analytics'),
+                  ].map((f, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                      <CheckCircle2 size={12} color={CL} />
+                      <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', fontFamily: 'Tajawal, sans-serif' }}>{f}</span>
+                    </div>
+                  ))}
+                </div>
+                <Link to="/clinic-os" onClick={goTop} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                  padding: '10px 22px', borderRadius: 11, width: '100%',
+                  background: `rgba(52,211,153,0.09)`, border: `1px solid rgba(52,211,153,0.22)`,
+                  color: CL, fontSize: 12, fontWeight: 700, fontFamily: 'Cairo, sans-serif',
+                  textDecoration: 'none', transition: 'background 0.2s', boxSizing: 'border-box',
+                }}
+                  onMouseEnter={e => (e.currentTarget.style.background = `rgba(52,211,153,0.17)`)}
+                  onMouseLeave={e => (e.currentTarget.style.background = `rgba(52,211,153,0.09)`)}>
+                  {t('اعرف أكثر', 'Learn More')} <ChevronLeft size={13} />
+                </Link>
+              </div>
+            </FadeUp>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════ GOALS ════════════════════════════════════════════ */}
+      <section style={{ position: 'relative', zIndex: 10, padding: 'clamp(4rem,8vw,7rem) clamp(1.5rem,5vw,4rem)' }}>
+        <div style={{ width: '100%', maxWidth: 900, margin: '0 auto 56px', height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)' }} />
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <FadeUp style={{ textAlign: 'center', marginBottom: 52 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: GOLD, letterSpacing: '0.18em', fontFamily: 'Cairo, sans-serif', display: 'block', marginBottom: 14, textTransform: 'uppercase' }}>
+              {t('رسالتنا', 'Our Mission')}
+            </span>
+            <h2 style={{ fontSize: 'clamp(1.9rem,3.8vw,3rem)', fontWeight: 900, color: TEXT, fontFamily: 'Cairo, sans-serif', margin: '0 0 12px', lineHeight: 1.12 }}>
+              {t('لماذا بنينا مدار؟', 'Why We Built Madar?')}
+            </h2>
+            <p style={{ color: MUTED, fontSize: 15, fontFamily: 'Tajawal, sans-serif', maxWidth: 440, margin: '0 auto' }}>
+              {t(
+                'الأعمال السعودية الصغيرة تستحق نفس مستوى التقنية التي تملكها الشركات الكبرى.',
+                'Small Saudi businesses deserve the same level of technology that large companies have.'
+              )}
+            </p>
+          </FadeUp>
+
+          <div className="goals-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16 }}>
+            {goals.map((g, i) => {
+              const Icon = g.icon
+              return (
+                <FadeUp key={i} delay={i * 0.07}>
+                  <div className="card-hover" style={{
+                    background: CARD, border: `1px solid ${BORDER}`,
+                    borderRadius: 18, padding: 22,
+                    boxShadow: '0 2px 20px rgba(0,0,0,0.18)',
+                  }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = `${g.color}28` }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = BORDER }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 12, background: `${g.color}10`, border: `1px solid ${g.color}1E`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+                      <Icon size={17} color={g.color} />
+                    </div>
+                    <h4 style={{ fontSize: 14, fontWeight: 800, color: TEXT, fontFamily: 'Cairo, sans-serif', margin: '0 0 7px' }}>{t(g.title, g.title)}</h4>
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.38)', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.7, margin: 0 }}>{t(g.body, g.body)}</p>
+                  </div>
+                </FadeUp>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════ HOW IT WORKS ════════════════════════════════════ */}
+      <section style={{ position: 'relative', zIndex: 10, padding: 'clamp(4rem,8vw,7rem) clamp(1.5rem,5vw,4rem)' }}>
+        <div style={{ width: '100%', maxWidth: 900, margin: '0 auto 56px', height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)' }} />
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <FadeUp style={{ textAlign: 'center', marginBottom: 52 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: GOLD, letterSpacing: '0.18em', fontFamily: 'Cairo, sans-serif', display: 'block', marginBottom: 14, textTransform: 'uppercase' }}>
+              {t('طريقة العمل', 'How It Works')}
+            </span>
+            <h2 style={{ fontSize: 'clamp(1.9rem,3.8vw,3rem)', fontWeight: 900, color: TEXT, fontFamily: 'Cairo, sans-serif', margin: 0, lineHeight: 1.12 }}>
+              {t('ثلاث خطوات للتشغيل', 'Three Steps to Go Live')}
+            </h2>
+          </FadeUp>
+
+          <div className="steps-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, position: 'relative' }}>
+            {/* Connector line */}
+            <div aria-hidden style={{
+              position: 'absolute', top: 32, insetInlineStart: '16.5%', insetInlineEnd: '16.5%',
+              height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.07) 20%, rgba(255,255,255,0.07) 80%, transparent)',
+              zIndex: 0, pointerEvents: 'none',
+            }} />
+
+            {steps.map((s, i) => (
+              <FadeUp key={i} delay={i * 0.1}>
+                <div className="card-hover" style={{
+                  textAlign: 'center', padding: '28px 20px',
+                  background: CARD, border: `1px solid ${BORDER}`,
+                  borderRadius: 18, position: 'relative', zIndex: 1,
+                  boxShadow: '0 2px 20px rgba(0,0,0,0.18)',
+                }}>
+                  <div style={{
+                    width: 56, height: 56, borderRadius: '50%', margin: '0 auto 18px',
+                    background: `${s.color}0E`, border: `1px solid ${s.color}22`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 20, fontWeight: 900, color: s.color, fontFamily: 'Cairo, sans-serif',
+                  }}>{s.num}</div>
+                  <h3 style={{ fontSize: 15, fontWeight: 800, color: TEXT, fontFamily: 'Cairo, sans-serif', margin: '0 0 8px' }}>{t(s.title, s.title)}</h3>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.36)', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.75, margin: 0 }}>{t(s.body, s.body)}</p>
+                </div>
+              </FadeUp>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ════════════════════════ STICKY OUTCOMES ════════════════════════ */}
-      <div className="relative z-10">
-        <StickyOutcomes />
-      </div>
+      {/* ══════════════════════ CTA SECTION ═════════════════════════════════════ */}
+      <section style={{ position: 'relative', zIndex: 10, padding: 'clamp(4rem,8vw,7rem) clamp(1.5rem,5vw,4rem) clamp(5rem,10vw,9rem)' }}>
+        <div style={{ width: '100%', maxWidth: 900, margin: '0 auto 56px', height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)' }} />
 
-      {/* ════════════════════════ PRICING ════════════════════════ */}
-      <div className="relative z-10">
-        <Pricing />
-      </div>
+        {/* Full-width CTA banner */}
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <FadeUp style={{ textAlign: 'center', marginBottom: 44 }}>
+            <h2 style={{ fontSize: 'clamp(1.9rem,3.8vw,3rem)', fontWeight: 900, color: TEXT, fontFamily: 'Cairo, sans-serif', margin: '0 0 12px', lineHeight: 1.12 }}>
+              {isAr
+                ? <>ابدأ الحجز الآن <span style={{ color: GOLD }}>بطريقتك</span></>
+                : <>Book Now <span style={{ color: GOLD }}>Your Way</span></>}
+            </h2>
+            <p style={{ color: MUTED, fontSize: 15, fontFamily: 'Tajawal, sans-serif' }}>
+              {t(
+                'تحدث معنا مباشرة عبر واتساب أو اتصل بوكيل الذكاء الاصطناعي لحجز تجربتك فوراً',
+                'Talk to us directly on WhatsApp or call our AI agent to book your demo right now'
+              )}
+            </p>
+          </FadeUp>
 
-      {/* Products */}
-      <div className="relative z-10">
-        <ProductsSection />
-      </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 16 }}>
 
+            {/* WhatsApp */}
+            <FadeUp delay={0.06}>
+              <div className="card-hover" style={{
+                background: 'rgba(37,211,102,0.04)', border: '1px solid rgba(37,211,102,0.15)',
+                borderRadius: 20, padding: '30px 24px', textAlign: 'center',
+                position: 'relative', overflow: 'hidden',
+                boxShadow: '0 4px 30px rgba(0,0,0,0.2)',
+              }}>
+                <div style={{ position: 'absolute', top: 0, insetInlineStart: 0, insetInlineEnd: 0, height: 2, background: 'linear-gradient(90deg, transparent, rgba(37,211,102,0.4), transparent)' }} />
+                <div style={{ width: 50, height: 50, borderRadius: '50%', background: 'rgba(37,211,102,0.09)', border: '1px solid rgba(37,211,102,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                  <MessageCircle size={22} color="#25D366" />
+                </div>
+                <h3 style={{ fontSize: 16, fontWeight: 800, color: TEXT, fontFamily: 'Cairo, sans-serif', margin: '0 0 7px' }}>
+                  {t('واتساب مباشر', 'Direct WhatsApp')}
+                </h3>
+                <p style={{ fontSize: 12, color: MUTED, fontFamily: 'Tajawal, sans-serif', lineHeight: 1.75, margin: '0 0 20px' }}>
+                  {t(
+                    'تحدث مع فريق مدار مباشرة. نرد خلال دقائق ونجاوب على كل أسئلتك.',
+                    'Talk directly with the Madar team. We reply within minutes and answer all your questions.'
+                  )}
+                </p>
+                <motion.button
+                  whileHover={{ scale: 1.03, boxShadow: '0 0 28px rgba(37,211,102,0.25)' }}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => openWhatsAppChat(t('مرحباً، أريد تجربة مدار OS ومعرفة أفضل نظام لأعمالي.', 'Hi, I want to try Madar OS for my business.'))}
+                  style={{
+                    width: '100%', padding: '11px', borderRadius: 11,
+                    background: '#25D366', border: 'none', cursor: 'pointer',
+                    color: 'white', fontSize: 12, fontWeight: 700, fontFamily: 'Cairo, sans-serif',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  }}>
+                  <MessageCircle size={13} />
+                  {t('ابدأ المحادثة', 'Start Chat')}
+                </motion.button>
+              </div>
+            </FadeUp>
+
+            {/* AI Agent */}
+            <FadeUp delay={0.13}>
+              <div className="card-hover" style={{
+                background: `rgba(212,168,83,0.04)`, border: `1px solid rgba(212,168,83,0.15)`,
+                borderRadius: 20, padding: '30px 24px', textAlign: 'center',
+                position: 'relative', overflow: 'hidden',
+                boxShadow: '0 4px 30px rgba(0,0,0,0.2)',
+              }}>
+                <div style={{ position: 'absolute', top: 0, insetInlineStart: 0, insetInlineEnd: 0, height: 2, background: `linear-gradient(90deg, transparent, ${GOLD}55, transparent)` }} />
+                <div style={{ width: 50, height: 50, borderRadius: '50%', background: `rgba(212,168,83,0.09)`, border: `1px solid rgba(212,168,83,0.2)`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                  <Bot size={22} color={GOLD} />
+                </div>
+                <h3 style={{ fontSize: 16, fontWeight: 800, color: TEXT, fontFamily: 'Cairo, sans-serif', margin: '0 0 7px' }}>
+                  {t('وكيل الحجز الذكي', 'AI Booking Agent')}
+                </h3>
+                <p style={{ fontSize: 12, color: MUTED, fontFamily: 'Tajawal, sans-serif', lineHeight: 1.75, margin: '0 0 20px' }}>
+                  {t(
+                    'تحدث مع وكيل الذكاء الاصطناعي مباشرة. يجيب ويحجز تجربتك فورياً بالعربية.',
+                    'Talk directly with our AI agent. It answers your questions and books your demo instantly in Arabic.'
+                  )}
+                </p>
+                <motion.button
+                  whileHover={{ scale: 1.03, boxShadow: `0 0 28px rgba(212,168,83,0.2)` }}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => window.open(`tel:+${WA}`, '_self')}
+                  style={{
+                    width: '100%', padding: '11px', borderRadius: 11,
+                    background: `linear-gradient(135deg, ${GOLD} 0%, ${GOLD_LT} 100%)`,
+                    border: 'none', cursor: 'pointer',
+                    color: BG, fontSize: 12, fontWeight: 800, fontFamily: 'Cairo, sans-serif',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  }}>
+                  <Phone size={13} />
+                  {t('اتصل بالوكيل الذكي', 'Call AI Agent')}
+                </motion.button>
+              </div>
+            </FadeUp>
+          </div>
+
+          <FadeUp delay={0.22} style={{ textAlign: 'center', marginTop: 28 }}>
+            <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: 11, fontFamily: 'Tajawal, sans-serif' }}>
+              {t('✦ تجربة مجانية ٣ أيام — لا بطاقة ائتمانية مطلوبة', '✦ 3-day free trial — no credit card required')}
+            </p>
+          </FadeUp>
+        </div>
+      </section>
+
+      <ContactFloat />
       <Footer />
     </div>
   )

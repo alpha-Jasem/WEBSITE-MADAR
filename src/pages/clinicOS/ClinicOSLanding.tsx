@@ -353,10 +353,10 @@ export const ClinicOSLanding = () => {
           </blockquote>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center' }}>
             <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: 16, fontWeight: 900, color: 'white' }}>ن</span>
+              <span style={{ fontSize: 16, fontWeight: 900, color: 'white' }}>س</span>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 14, fontWeight: 800, color: '#0F172A' }}>د. نورة القحطاني</div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: '#0F172A' }}>د. سارة الحربي</div>
               <div style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>عيادات نور للأسنان — جدة</div>
             </div>
             <div style={{ display: 'flex', gap: 2, marginRight: 8 }}>

@@ -203,7 +203,7 @@ export const AIBooking = () => {
         <div style={{ background: '#FFFFFF', borderRadius: 14, border: '1px solid #E2E8F0', padding: '24px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
             {[
-              { label: 'اسم المساعد', type: 'text', value: 'نورة' },
+              { label: 'اسم المساعد', type: 'text', value: 'المساعد الذكي' },
               { label: 'رسالة الترحيب', type: 'text', value: 'أهلاً وسهلاً، عيادات نور للأسنان، كيف أساعدك؟' },
               { label: 'اللغة', type: 'select', options: ['العربية', 'الإنجليزية'] },
               { label: 'نبرة المساعد', type: 'select', options: ['احترافي', 'ودود', 'رسمي'] },
