@@ -50,7 +50,10 @@ export const Login = () => {
         .eq('auth_user_id', profile.id)
         .maybeSingle()
 
-      if (company?.business_type === 'clinic') {
+      // Check DB first, then localStorage backup (set during signup)
+      const bt = company?.business_type || localStorage.getItem('madar_signup_business_type')
+      if (bt === 'clinic') {
+        localStorage.removeItem('madar_signup_business_type')
         navigate(redirectTo || '/clinic-os/dashboard', { replace: true })
         return
       }
@@ -80,7 +83,7 @@ export const Login = () => {
   }
 
   const portalOptions: { id: Portal; label: string; sub: string; icon: typeof User; accent: string }[] = [
-    { id: 'client', label: 'بوابة العملاء', sub: 'تشغيل المغسلة والحسابات', icon: User, accent: clientAccent },
+    { id: 'client', label: 'بوابة العملاء', sub: 'مغاسل وعيادات', icon: User, accent: clientAccent },
     { id: 'admin', label: 'لوحة الإدارة', sub: 'إدارة مدار والاشتراكات', icon: Shield, accent: adminAccent },
   ]
 
@@ -103,18 +106,18 @@ export const Login = () => {
           <div className="relative max-w-md">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-sky-300/20 bg-sky-300/10 px-3 py-1.5 text-xs font-tajawal text-sky-100">
               <Building2 size={14} />
-              مدار OS للمغاسل ومراكز العناية بالسيارات
+              مدار OS — مغاسل وعيادات
             </div>
             <h1 className="font-cairo text-4xl font-bold leading-[1.25] text-white">
-              ادخل إلى لوحة تشغيل واضحة لإدارة مغسلتك من أول سيارة إلى آخر تسليم.
+              ادخل إلى لوحة تشغيل مخصصة لمنشأتك.
             </h1>
             <p className="mt-5 font-tajawal text-base leading-8 text-sky-50/70">
-              دخول واحد لإدارة السيارات، العملاء، المالية، رسائل واتساب، وبرامج الولاء من مكان واحد.
+              سواء كانت مغسلة سيارات أو عيادة أسنان — دخول واحد يوديك مباشرة للوحة التشغيل المناسبة لك.
             </p>
           </div>
 
           <div className="relative grid gap-3">
-            {['مسار سريع لاستقبال وتسليم السيارات', 'حسابات وتقارير مالية مع VAT', 'واتساب وولاء العملاء تلقائياً'].map(item => (
+            {['مغاسل: استقبال وتسليم بـ QR + مالية + واتساب', 'عيادات: حجز مواعيد + إدارة مرضى + مساعد ذكي', 'بيانات حقيقية، تقارير يومية، نتائج فورية'].map(item => (
               <div key={item} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/10 px-4 py-3">
                 <CheckCircle2 size={17} className="text-sky-300" />
                 <span className="font-tajawal text-sm text-white/80">{item}</span>
