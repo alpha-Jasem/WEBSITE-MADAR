@@ -3861,6 +3861,92 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   border: 1px solid var(--d-border);
 }
 
+.dash-topbar-icon {
+  position: relative;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid #D7E1F0;
+  border-radius: 14px;
+  background: #FFFFFF;
+  color: #0D1B3E;
+  box-shadow: 0 8px 18px rgba(13,27,62,0.06);
+  cursor: pointer;
+}
+
+.dash-topbar-icon em {
+  position: absolute;
+  top: -6px;
+  left: -5px;
+  min-width: 17px;
+  height: 17px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #0B63F6;
+  color: #FFFFFF;
+  font: 800 10px 'Sora', sans-serif;
+  font-style: normal;
+}
+
+.dash-topbar-profile-wrap {
+  position: relative;
+}
+
+.dash-topbar-profile {
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 4px 9px 4px 12px;
+  border: 1px solid #D7E1F0;
+  border-radius: 16px;
+  background: #FFFFFF;
+  color: #0D1B3E;
+  box-shadow: 0 10px 22px rgba(13,27,62,0.07);
+  cursor: pointer;
+}
+
+.dash-topbar-avatar {
+  width: 30px !important;
+  height: 30px !important;
+  font-size: 12px !important;
+}
+
+.dash-topbar-profile-copy {
+  display: grid;
+  gap: 1px;
+  text-align: right;
+  min-width: 70px;
+}
+
+.dash-topbar-profile-copy strong {
+  max-width: 100px;
+  overflow: hidden;
+  color: #0D1B3E;
+  font: 900 12px 'Cairo', sans-serif;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dash-topbar-profile-copy small {
+  color: #64748B;
+  font: 800 10px 'Tajawal', sans-serif;
+  line-height: 1.1;
+}
+
+.dash-topbar-switcher {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 90;
+  width: min(310px, calc(100vw - 24px));
+  margin: 0;
+  text-align: right;
+}
+
 .dash-content {
   flex: 1;
   width: 100%;
@@ -8823,8 +8909,44 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(0,191,255,0.20) !important;
   box-shadow: 0 4px 24px rgba(13,27,62,0.08) !important;
+  overflow: visible;
 }
 .dash-shell-client .dash-topbar-title { color: #0D1B3E !important; }
+
+.dash-shell-client .dash-topbar-right {
+  gap: 7px;
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 460px) {
+  .dash-shell-client .dash-topbar {
+    padding: 0 10px;
+  }
+
+  .dash-shell-client .dash-topbar-title {
+    font-size: 14px;
+  }
+
+  .dash-topbar-profile-copy small {
+    display: none;
+  }
+
+  .dash-topbar-profile-copy strong {
+    max-width: 70px;
+  }
+
+  .dash-topbar-icon {
+    width: 35px;
+    height: 35px;
+    border-radius: 12px;
+  }
+
+  .dash-topbar-profile {
+    height: 36px;
+    gap: 6px;
+    padding: 3px 7px 3px 9px;
+  }
+}
 
 /* 13 ── ألوان الحالة (status badges) تبقى ملونة */
 .dash-shell-client .dash-content [style*="#10B981"] { color: #059669 !important; }

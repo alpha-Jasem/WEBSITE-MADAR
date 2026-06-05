@@ -1,7 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
-import { Activity, AlertTriangle, Bell, Calendar, CalendarClock, Car, CheckCircle2, DollarSign, Download, FileText, Loader2, MessageCircle, Plus, Sparkles, Star, TrendingUp, Users, Wrench } from 'lucide-react'
+import { Activity, AlertTriangle, Calendar, CalendarClock, Car, CheckCircle2, DollarSign, Download, FileText, Loader2, Plus, Sparkles, Star, TrendingUp, Users, Wrench } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { downloadCSV, formatDateForCSV } from '../../../lib/exportUtils'
@@ -442,7 +442,7 @@ export function CarWashOverview() {
         .cw-link { text-decoration:none; color:inherit; }
         .cw-clickable { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
         .cw-clickable:hover { transform: translateY(-2px); box-shadow:0 18px 46px rgba(13,27,62,.08); border-color:#BFD3F1; }
-        .cw-command-bar { display:grid; grid-template-columns:minmax(230px, .9fr) minmax(260px, 1fr) minmax(260px, auto); gap:12px; align-items:center; margin-bottom:18px; padding:14px; background:rgba(255,255,255,.92); border:1px solid #DDE8F7; border-radius:18px; box-shadow:0 18px 48px rgba(13,27,62,.07); backdrop-filter:blur(14px); }
+        .cw-command-bar { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:16px; padding:10px; background:rgba(255,255,255,.86); border:1px solid #DDE8F7; border-radius:16px; box-shadow:0 14px 34px rgba(13,27,62,.055); backdrop-filter:blur(14px); }
         .cw-command-group { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
         .cw-main-action { height:40px; border-radius:12px; padding:0 15px; display:inline-flex; align-items:center; justify-content:center; gap:8px; background:#0B63F6; color:#fff; font-size:12px; font-weight:950; font-family:Cairo,sans-serif; box-shadow:0 14px 28px rgba(11,99,246,.18); text-decoration:none; }
         .cw-secondary-action { height:40px; border-radius:12px; padding:0 13px; display:inline-flex; align-items:center; justify-content:center; gap:8px; background:#F8FBFF; color:#0D1B3E; border:1px solid #D7E1F0; font-size:12px; font-weight:900; font-family:Tajawal,sans-serif; text-decoration:none; }
@@ -450,31 +450,13 @@ export function CarWashOverview() {
         .cw-soft-select { height:36px; border-radius:11px; border:1px solid #D7E1F0; background:#fff; padding:0 10px; color:#0D1B3E; font-weight:900; font-size:11px; font-family:Tajawal,sans-serif; }
         .cw-insight-grid { display:grid; grid-template-columns:minmax(290px, 1.1fr) minmax(220px, .8fr) minmax(190px, .65fr); gap:14px; }
         .cw-stage-arrow { position:absolute; left:-15px; top:50%; color:#0D1B3E; font-size:22px; transform:translateY(-50%); }
-        @media (max-width: 1280px) { .cw-board { grid-template-columns: 1fr; } .cw-command-bar { grid-template-columns:1fr; } }
+        @media (max-width: 1280px) { .cw-board { grid-template-columns: 1fr; } }
         @media (max-width: 920px) { .cw-insight-grid { grid-template-columns:1fr; } .cw-stage-arrow { display:none; } }
-        @media (max-width: 640px) { .cw-card-pad { padding:14px; } .cw-board { gap:12px; } }
+        @media (max-width: 640px) { .cw-card-pad { padding:14px; } .cw-board { gap:12px; } .cw-command-bar { align-items:flex-start; } .cw-command-group { gap:8px; } .cw-main-action,.cw-secondary-action { height:38px; padding:0 12px; } .cw-soft-button,.cw-soft-select { height:34px; padding:0 9px; } }
       `}</style>
 
       <section className="cw-command-bar">
-        <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-          <div style={{ width: 46, height: 46, borderRadius: 999, background: 'linear-gradient(135deg,#EAF3FF,#FFFFFF)', border: '1px solid #DDE8F7', display: 'grid', placeItems: 'center' }}>
-            <Users size={21} color="#0D1B3E" />
-          </div>
-          <div>
-            <strong style={{ display: 'block', fontSize: 14, fontFamily: 'Cairo,sans-serif', color: '#0D1B3E' }}>{company?.owner_name || 'مدير المغسلة'}</strong>
-            <span className="cw-muted" style={{ fontSize: 12 }}>{company?.name || 'المغسلة'}</span>
-          </div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            {[Bell, MessageCircle].map((Icon, i) => (
-              <span key={i} style={{ width: 38, height: 38, borderRadius: 12, background: '#FFFFFF', border: '1px solid #E3EAF6', display: 'grid', placeItems: 'center', position: 'relative' }}>
-                <Icon size={17} color="#0D1B3E" />
-                <em style={{ position: 'absolute', top: -7, left: -6, minWidth: 18, height: 18, borderRadius: 999, background: '#0B63F6', color: '#fff', fontSize: 10, fontStyle: 'normal', display: 'grid', placeItems: 'center', fontFamily: 'Sora,sans-serif' }}>{i ? stats.queueStatusCounts.ready : actionableNotifications.length}</em>
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div className="cw-command-group" style={{ justifyContent: 'center' }}>
+        <div className="cw-command-group">
           <Link to="/client/queue" className="cw-main-action">
             <Plus size={15} /> إضافة سيارة
           </Link>
