@@ -13,6 +13,8 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
   rescheduled: { label: 'تم التأجيل',  color: '#0369A1', bg: '#EFF9FF', border: '#BAE6FD' },
   needs_review:{ label: 'تحتاج مراجعة',color: '#C2410C', bg: '#FFF7ED', border: '#FED7AA' },
   // Message
+  not_sent:    { label: 'لم يُرسل',    color: '#94A3B8', bg: '#F8FAFC', border: '#E2E8F0' },
+  pending:     { label: 'قيد الانتظار', color: '#B45309', bg: '#FFFBEB', border: '#FDE68A' },
   sent:        { label: 'مرسل',        color: '#0369A1', bg: '#EFF9FF', border: '#BAE6FD' },
   delivered:   { label: 'تم التسليم',  color: '#059669', bg: '#ECFDF5', border: '#A7F3D0' },
   read:        { label: 'تمت القراءة', color: '#7C3AED', bg: '#F5F3FF', border: '#DDD6FE' },

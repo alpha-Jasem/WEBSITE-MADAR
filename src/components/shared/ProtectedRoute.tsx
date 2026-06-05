@@ -77,8 +77,8 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
     return <Navigate to={`/login?redirect=${redirect}${portal}`} replace />
   }
 
-  if (requiredRole && userRole !== requiredRole) {
-    return <Navigate to={userRole === 'admin' ? '/admin' : '/client'} replace />
+  if (requiredRole && userRole !== requiredRole && userRole !== 'admin') {
+    return <Navigate to="/client" replace />
   }
 
   return <>{children}</>
