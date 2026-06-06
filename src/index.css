@@ -9375,6 +9375,44 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   }
 }
 
+/* Client portal scroll must belong to the content pane, not the whole browser window. */
+html:has(.dash-shell-client),
+body:has(.dash-shell-client),
+#root:has(.dash-shell-client) {
+  height: 100%;
+  overflow: hidden !important;
+}
+
+.dash-shell-client {
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  overflow: hidden !important;
+}
+
+.dash-shell-client .dash-main {
+  height: 100dvh !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: clip !important;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+}
+
+.dash-shell-client .dash-content {
+  min-height: auto !important;
+  padding-bottom: 88px !important;
+}
+
+@media (max-width: 768px) {
+  .dash-shell-client .dash-main {
+    height: 100dvh !important;
+  }
+
+  .dash-shell-client .dash-content {
+    padding-bottom: 112px !important;
+  }
+}
+
 .dash-shell-admin {
   --d-accent: #00BFFF;
   --d-accent2: #1565C0;
