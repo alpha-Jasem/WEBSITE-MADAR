@@ -167,15 +167,22 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
   const toggleStatus = async () => {
     const next: CompanyStatus = company.status === 'active' ? 'suspended' : 'active'
     setSaving(true)
-    const { error } = await supabase.from('companies').update({ status: next }).eq('id', company.id)
+    const updatePayload: Record<string, unknown> = { status: next }
+    // When activating a clinic, also lock in the selected package
+    if (next === 'active' && company.industry === 'clinic') {
+      updatePayload.package_type = activePackageType
+    }
+    const { error } = await supabase.from('companies').update(updatePayload).eq('id', company.id)
     setSaving(false)
     if (!error) {
       logAudit(company.id, 'company_status_updated', {
         entityType: 'company_status',
         entityId: company.id,
         oldValue: { status: company.status },
-        newValue: { status: next },
+        newValue: { status: next, ...(next === 'active' && company.industry === 'clinic' ? { package_type: activePackageType } : {}) },
       })
+      if (next === 'active') setFeedback('✅ تم تفعيل الحساب!')
+      setTimeout(() => setFeedback(''), 3000)
       onUpdated()
     }
   }
@@ -345,32 +352,62 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
               </section>
             )}
 
-            <div className="grid grid-cols-2 gap-3">
+            {/* Activate CTA — prominent for trial clinic accounts */}
+            {company.status === 'trial' && (
               <button
                 type="button"
                 onClick={toggleStatus}
                 disabled={saving}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold font-cairo"
-                style={{
-                  background: company.status === 'active' ? '#FEF2F2' : '#ECFDF5',
-                  color: company.status === 'active' ? '#DC2626' : '#059669',
-                  border: `1px solid ${company.status === 'active' ? '#FECACA' : '#A7F3D0'}`,
-                }}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-4 text-base font-black font-cairo text-white"
+                style={{ background: 'linear-gradient(135deg, #059669, #10B981)', boxShadow: '0 4px 20px rgba(16,185,129,0.35)' }}
               >
-                {company.status === 'active' ? <ShieldOff size={15} /> : <ShieldCheck size={15} />}
-                {company.status === 'active' ? 'تعليق الحساب' : 'تفعيل الحساب'}
+                {saving ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
+                {saving ? 'جارٍ التفعيل...' : `فعّل الحساب وافتحه ← ${company.industry === 'clinic' ? (activePackageType === 'ai_pro' ? 'AI Voice + واتساب' : 'باقة واتساب') : ''}`}
               </button>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              {company.status !== 'trial' && (
+                <button
+                  type="button"
+                  onClick={toggleStatus}
+                  disabled={saving}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold font-cairo"
+                  style={{
+                    background: company.status === 'active' ? '#FEF2F2' : '#ECFDF5',
+                    color: company.status === 'active' ? '#DC2626' : '#059669',
+                    border: `1px solid ${company.status === 'active' ? '#FECACA' : '#A7F3D0'}`,
+                  }}
+                >
+                  {company.status === 'active' ? <ShieldOff size={15} /> : <ShieldCheck size={15} />}
+                  {company.status === 'active' ? 'تعليق الحساب' : 'إعادة التفعيل'}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={save}
                 disabled={saving || !changed}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold text-white font-cairo disabled:opacity-50"
+                className={`inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold text-white font-cairo disabled:opacity-50 ${company.status !== 'trial' ? '' : 'col-span-2'}`}
                 style={{ background: 'linear-gradient(135deg, #0EA5E9, #4F6EF7)' }}
               >
                 {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
                 حفظ التغييرات
               </button>
             </div>
+
+            {/* WhatsApp notify button — shown after activation */}
+            {company.owner_phone && (
+              <a
+                href={`https://wa.me/966${company.owner_phone.replace(/^0/, '')}?text=${encodeURIComponent(`مرحباً ${company.owner_name} 👋\nتم تفعيل حسابك في نظام مدار بنجاح!\n\nيمكنك الدخول الآن على:\nhttps://madar.ai/clinic-os/login\n\nللدعم والمساعدة تواصل معنا في أي وقت.`)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold font-cairo"
+                style={{ background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', textDecoration: 'none' }}
+              >
+                <MessageSquare size={15} />
+                أبلغ العميل عبر واتساب
+              </a>
+            )}
 
             {feedback && (
               <div className="rounded-2xl bg-emerald-50 p-3 text-center text-sm font-bold text-emerald-700 font-tajawal">
