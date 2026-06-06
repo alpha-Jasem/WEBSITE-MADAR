@@ -227,9 +227,13 @@ export const Appointments = () => {
                 {w.priority === 'high' ? 'أولوية' : w.priority === 'normal' ? 'عادي' : 'منخفض'}
               </span>
               {w.offered_slot && <span style={{ fontSize: 11, color: '#7C3AED', fontFamily: 'Tajawal, sans-serif' }}>تم عرض وقت</span>}
-              <button style={{ padding: '7px 14px', borderRadius: 8, background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif', whiteSpace: 'nowrap' }}>
+              <a
+                href={`https://wa.me/966${(w.patient_phone || '').replace(/^0/, '').replace(/\D/g, '')}?text=${encodeURIComponent(`مرحباً ${w.patient_name} 👋\nيوجد موعد متاح لـ${w.service_name || 'الخدمة المطلوبة'} في ${w.preferred_time_range || 'وقت قريب'}.\nهل ترغب بالحجز؟`)}`}
+                target="_blank" rel="noreferrer"
+                style={{ padding: '7px 14px', borderRadius: 8, background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif', whiteSpace: 'nowrap', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 5 }}
+              >
                 عرض موعد عبر واتساب
-              </button>
+              </a>
             </motion.div>
           ))}
         </div>

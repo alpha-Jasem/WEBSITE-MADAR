@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { MessageSquare, Clock, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react'
+import { MessageSquare, Clock, CheckCircle, AlertCircle, RefreshCw, X, Save } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { StatCard } from '../../../components/clinicOS/ui/StatCard'
 import { StatusBadge } from '../../../components/clinicOS/ui/StatusBadge'
@@ -21,20 +21,38 @@ const TEMPLATES = [
   { id: 't7', name: 'عرض قائمة انتظار', body: 'مرحباً، يوجد موعد متاح الساعة [الوقت]، هل ترغب بالحجز؟' },
 ]
 
+const TEMPLATES_KEY = 'clinicos_templates'
+const loadTemplates = () => {
+  try { return JSON.parse(localStorage.getItem(TEMPLATES_KEY) || '{}') } catch { return {} }
+}
+
 export const Messages = () => {
   const { companyId, isDemo } = useClinicOS()
   const { showToast } = useToast()
   const { data: DEMO_MESSAGES = [] } = useClinicMessages(companyId, isDemo)
   const { data: allAppointments = [] } = useClinicAppointments(companyId, undefined, isDemo)
   const [activeTab, setActiveTab] = useState(0)
+  const [editingTemplate, setEditingTemplate] = useState<typeof TEMPLATES[0] | null>(null)
+  const [editText, setEditText] = useState('')
+  const [savedBodies, setSavedBodies] = useState<Record<string, string>>(loadTemplates)
 
   const handleRetry = (msgId: string) => {
     retryWhatsAppMessage(msgId, companyId || '')
     showToast('تم إرسال طلب إعادة الإرسال', 'info')
   }
 
-  const handleEditTemplate = () => {
-    showToast('تعديل القوالب — قريباً في التحديث القادم', 'info')
+  const handleEditTemplate = (t: typeof TEMPLATES[0]) => {
+    setEditingTemplate(t)
+    setEditText(savedBodies[t.id] || t.body)
+  }
+
+  const handleSaveTemplate = () => {
+    if (!editingTemplate) return
+    const next = { ...savedBodies, [editingTemplate.id]: editText }
+    setSavedBodies(next)
+    localStorage.setItem(TEMPLATES_KEY, JSON.stringify(next))
+    setEditingTemplate(null)
+    showToast('تم حفظ القالب', 'success')
   }
 
   // Derive scheduled messages from upcoming confirmed/pending appointments
@@ -149,8 +167,8 @@ export const Messages = () => {
           {TEMPLATES.map((t, i) => (
             <motion.div key={t.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} style={{ background: '#FFFFFF', borderRadius: 12, border: '1px solid #E2E8F0', padding: '16px' }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', marginBottom: 8 }}>{t.name}</div>
-              <p style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.7, margin: '0 0 12px 0', minHeight: 52 }}>{t.body}</p>
-              <button onClick={handleEditTemplate} style={{ padding: '6px 14px', borderRadius: 7, background: '#EEF2FF', color: '#4F46E5', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>تعديل</button>
+              <p style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.7, margin: '0 0 12px 0', minHeight: 52 }}>{savedBodies[t.id] || t.body}</p>
+              <button onClick={() => handleEditTemplate(t)} style={{ padding: '6px 14px', borderRadius: 7, background: '#EEF2FF', color: '#4F46E5', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>تعديل</button>
             </motion.div>
           ))}
         </div>
@@ -200,6 +218,35 @@ export const Messages = () => {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Edit Template Modal */}
+      {editingTemplate && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, direction: 'rtl' }} onClick={e => { if (e.target === e.currentTarget) setEditingTemplate(null) }}>
+          <div style={{ background: '#FFFFFF', borderRadius: 20, padding: 28, width: '100%', maxWidth: 480, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>تعديل: {editingTemplate.name}</h3>
+              <button onClick={() => setEditingTemplate(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #E2E8F0', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={14} style={{ color: '#64748B' }} /></button>
+            </div>
+            <p style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', marginBottom: 10, lineHeight: 1.6 }}>
+              استخدم [اسم العيادة] و [التاريخ] و [الوقت] كمتغيرات تُملأ تلقائياً.
+            </p>
+            <textarea
+              value={editText}
+              onChange={e => setEditText(e.target.value)}
+              rows={5}
+              style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1px solid #C7D2FE', fontSize: 13, fontFamily: 'Tajawal, sans-serif', direction: 'rtl', resize: 'vertical', outline: 'none', boxSizing: 'border-box', lineHeight: 1.7, color: '#0F172A' }}
+              onFocus={e => (e.currentTarget.style.borderColor = '#4F46E5')}
+              onBlur={e => (e.currentTarget.style.borderColor = '#C7D2FE')}
+            />
+            <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+              <button onClick={handleSaveTemplate} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '11px', borderRadius: 10, background: '#4F46E5', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>
+                <Save size={14} /> حفظ القالب
+              </button>
+              <button onClick={() => setEditingTemplate(null)} style={{ padding: '11px 18px', borderRadius: 10, background: '#F8FAFC', color: '#64748B', border: '1px solid #E2E8F0', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>إلغاء</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
