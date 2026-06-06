@@ -275,9 +275,15 @@ export function CarWashMemberships() {
               هذه الخريطة توضح ماذا يرى العميل وماذا يحدث داخل لوحة التشغيل. الدفع النهائي ينتظر ربط Moyasar/Apple Pay.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <div className="grid h-16 w-16 place-items-center rounded-2xl bg-[#0D1B3E] text-white">
-              <strong className="font-sora text-xl font-black">{journeyScore}%</strong>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="min-w-[190px] rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs font-bold text-emerald-700 font-tajawal">جاهزية الرحلة</span>
+                <strong className="font-sora text-lg font-black text-emerald-700">{journeyScore}%</strong>
+              </div>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-white">
+                <span className="block h-full rounded-full bg-emerald-500" style={{ width: `${journeyScore}%` }} />
+              </div>
             </div>
             {previewUrl && (
               <a href={previewUrl} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-100 bg-sky-50 px-4 py-2 text-sm font-bold text-sky-700 font-cairo">

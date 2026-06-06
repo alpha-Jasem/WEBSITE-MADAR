@@ -205,7 +205,7 @@ export function CarWashReports() {
     const retentionRate = customers.length ? Math.round((returningCustomers / customers.length) * 100) : 0
     const avgInvoice = monthVisits ? Math.round(revenue / monthVisits) : 0
 
-    const weekdayNames = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة']
+    const weekdayNames = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
     const heatmap = weekdayNames.map((day, dayIndex) => {
       const buckets = [9, 11, 13, 15, 17, 19, 21].map(hour => {
         const count = visits.filter(v => {
@@ -367,6 +367,29 @@ export function CarWashReports() {
       currentPlan={planLabel}
     >
     <div dir="rtl" style={{ display: 'flex', flexDirection: 'column', gap: 18, color: '#0D1B3E' }}>
+      <style>{`
+        .cw-report-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+        .cw-report-card-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(178px, 1fr)); gap:12px; }
+        .cw-report-chart-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 330px), 1fr)); gap:14px; }
+        .cw-heatmap-wrap { overflow-x:auto; padding-bottom:4px; scrollbar-width:thin; }
+        .cw-heatmap { min-width:560px; display:grid; grid-template-columns:82px repeat(7, minmax(54px, 1fr)); gap:7px; align-items:center; }
+        .cw-heat-hour,.cw-heat-day { color:#64748B; font:900 11px 'Tajawal', sans-serif; }
+        .cw-heat-hour { text-align:center; font-family:'Sora', sans-serif; font-weight:800; }
+        .cw-heat-day { color:#0D1B3E; }
+        .cw-heat-cell { height:34px; border-radius:10px; border:1px solid rgba(11,99,246,.09); display:grid; place-items:center; color:#0D1B3E; font:900 11px 'Sora', sans-serif; transition:transform .16s ease, box-shadow .16s ease; }
+        .cw-heat-cell:hover { transform:translateY(-1px); box-shadow:0 8px 18px rgba(11,99,246,.12); }
+        .cw-heat-legend { margin-top:14px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; color:#64748B; font:800 11px 'Tajawal', sans-serif; }
+        .cw-heat-scale { display:flex; align-items:center; gap:5px; }
+        .cw-heat-scale span { width:28px; height:9px; border-radius:999px; border:1px solid rgba(11,99,246,.08); }
+        @media (max-width: 720px) {
+          .cw-report-actions > * { flex:1 1 140px; }
+          .cw-report-card-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+          .cw-heatmap { min-width:620px; }
+        }
+        @media (max-width: 420px) {
+          .cw-report-card-grid { grid-template-columns:1fr; }
+        }
+      `}</style>
       <div style={{ background: '#FFFFFF', border: '1px solid #E3EAF6', borderRadius: 18, padding: 22, boxShadow: '0 18px 50px rgba(13,27,62,0.06)' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
           <div>
@@ -378,7 +401,7 @@ export function CarWashReports() {
             <p style={{ margin: '8px 0 0', color: '#64748B', fontSize: 14, fontWeight: 600, fontFamily: 'Tajawal, sans-serif' }}>تحليلات شاملة لأداء {company?.name || 'مغسلتك'} خلال الفترة المحددة.</p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <div className="cw-report-actions">
             <button
               onClick={() => setShowCustom(v => !v)}
               style={{ minHeight: 42, display: 'inline-flex', alignItems: 'center', gap: 9, padding: '0 15px', borderRadius: 11, border: '1px solid #D7E1F0', background: '#FFFFFF', color: '#0D1B3E', fontWeight: 800, fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer' }}
@@ -437,7 +460,7 @@ export function CarWashReports() {
 
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(178px, 1fr))', gap: 12 }}>
+      <div className="cw-report-card-grid">
         <StatCard icon={DollarSign} label="إجمالي الإيرادات" value={stats.revenue > 0 ? stats.revenue.toLocaleString('ar-SA') : '0'} sub="حسب الفترة المحددة" color="#10B981" trend="فعلي" />
         <StatCard icon={Car} label="عدد السيارات" value={stats.monthVisits} sub="زيارة مسجلة" color="#0B63F6" trend="فعلي" />
         <StatCard icon={CalendarClock} label="متوسط الفاتورة" value={stats.avgInvoice || 0} sub="ر.س" color="#7C3AED" trend="محسوب" />
@@ -446,7 +469,7 @@ export function CarWashReports() {
         <StatCard icon={Smile} label="معدل العودة" value={`${stats.retentionRate}%`} sub="من إجمالي العملاء" color="#0B63F6" trend="محسوب" />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 330px), 1fr))', gap: 14 }}>
+      <div className="cw-report-chart-grid">
         <SectionCard title="الإيرادات حسب الفترة" icon={TrendingUp}>
           <ResponsiveContainer width="100%" height={250}>
             <AreaChart data={stats.dailyChart}>
@@ -513,17 +536,43 @@ export function CarWashReports() {
         </SectionCard>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: 14 }}>
+      <div className="cw-report-chart-grid">
         <SectionCard title="أوقات الزروة" icon={Clock} action={<span style={{ color: '#64748B', fontSize: 12, fontWeight: 700, fontFamily: 'Tajawal, sans-serif' }}>حسب عدد السيارات</span>}>
-          <div style={{ display: 'grid', gridTemplateColumns: '64px repeat(7, 1fr)', gap: 4, alignItems: 'center' }}>
-            <span />
-            {stats.heatmap[0]?.buckets.map(bucket => <span key={bucket.hour} style={{ color: '#64748B', fontSize: 10, fontFamily: 'Sora, sans-serif', textAlign: 'center' }}>{bucket.hour}</span>)}
-            {stats.heatmap.map(row => [
-              <span key={`${row.day}-label`} style={{ color: '#334155', fontSize: 11, fontWeight: 800, fontFamily: 'Tajawal, sans-serif' }}>{row.day}</span>,
-              ...row.buckets.map(bucket => (
-                <span key={`${row.day}-${bucket.hour}`} title={`${row.day} ${bucket.hour}: ${bucket.value}`} style={{ height: 22, borderRadius: 4, background: `rgba(11,99,246,${0.12 + (bucket.value / maxHeat) * 0.72})`, border: '1px solid rgba(11,99,246,0.08)' }} />
-              ))
-            ])}
+          <div className="cw-heatmap-wrap">
+            <div className="cw-heatmap">
+              <span />
+              {stats.heatmap[0]?.buckets.map(bucket => <span key={bucket.hour} className="cw-heat-hour">{bucket.hour}</span>)}
+              {stats.heatmap.map(row => [
+                <span key={`${row.day}-label`} className="cw-heat-day">{row.day}</span>,
+                ...row.buckets.map(bucket => {
+                  const intensity = bucket.value / maxHeat
+                  const alpha = 0.08 + intensity * 0.78
+                  return (
+                    <span
+                      key={`${row.day}-${bucket.hour}`}
+                      className="cw-heat-cell"
+                      title={`${row.day} ${bucket.hour}: ${bucket.value} سيارة`}
+                      style={{
+                        background: bucket.value ? `rgba(11,99,246,${alpha})` : '#F8FBFF',
+                        color: intensity > 0.55 ? '#FFFFFF' : '#0D1B3E',
+                      }}
+                    >
+                      {bucket.value || '—'}
+                    </span>
+                  )
+                })
+              ])}
+            </div>
+            <div className="cw-heat-legend">
+              <span>الأرقام داخل الخلايا = عدد السيارات في تلك الفترة</span>
+              <div className="cw-heat-scale" aria-label="مفتاح كثافة أوقات الزروة">
+                <span style={{ background: 'rgba(11,99,246,.10)' }} />
+                <span style={{ background: 'rgba(11,99,246,.28)' }} />
+                <span style={{ background: 'rgba(11,99,246,.48)' }} />
+                <span style={{ background: 'rgba(11,99,246,.72)' }} />
+                <strong>أعلى ضغط</strong>
+              </div>
+            </div>
           </div>
         </SectionCard>
 
