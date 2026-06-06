@@ -354,7 +354,7 @@ export function CarWashMemberships() {
               <Input label="اسم الباقة" value={planForm.name} onChange={value => setPlanForm(current => ({ ...current, name: value }))} />
               <Input label="السعر" value={planForm.price} onChange={value => setPlanForm(current => ({ ...current, price: value }))} dir="ltr" />
               <Input label="الغسلات/شهر" value={planForm.washes} onChange={value => setPlanForm(current => ({ ...current, washes: value }))} dir="ltr" />
-              <button disabled={saving} onClick={createPlan} className="mt-auto inline-flex h-[43px] items-center justify-center gap-2 rounded-xl bg-[#0D1B3E] px-4 text-sm font-bold text-white font-cairo disabled:opacity-50">
+              <button disabled={saving} onClick={createPlan} className="mt-auto inline-flex h-[43px] items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-[#0B63F6] to-[#00BFFF] px-4 text-sm font-bold text-white shadow-[0_12px_26px_rgba(11,99,246,0.22)] transition hover:translate-y-[-1px] disabled:opacity-50 font-cairo">
                 <Plus size={15} />
                 إضافة
               </button>
