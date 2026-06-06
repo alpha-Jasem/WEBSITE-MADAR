@@ -56,6 +56,9 @@ type CWCustomer = {
   loyalty_tier: string
 }
 
+type RevenueRange = 'daily' | 'weekly' | 'monthly' | 'yearly'
+type SalesBreakdownTab = 'period' | 'services' | 'workers'
+
 const STATUS_LABELS: Record<QueueStatus, string> = {
   received: 'استلام',
   washing: 'قيد الخدمة',
@@ -165,6 +168,8 @@ export function CarWashOverview() {
   const [showCustom, setShowCustom] = useState(false)
   const [workers, setWorkers] = useState<CWWorker[]>([])
   const [expenses, setExpenses] = useState<CWExpenseLite[]>([])
+  const [revenueRange, setRevenueRange] = useState<RevenueRange>('daily')
+  const [salesBreakdownTab, setSalesBreakdownTab] = useState<SalesBreakdownTab>('period')
 
   const DATE_FILTERS = [
     { label: 'اليوم', days: 1 },
@@ -172,6 +177,12 @@ export function CarWashOverview() {
     { label: '30 يوم', days: 30 },
     { label: '3 أشهر', days: 90 },
     { label: 'سنة', days: 365 },
+  ]
+  const REVENUE_RANGES: Array<{ key: RevenueRange; label: string; days: number }> = [
+    { key: 'daily', label: 'يومي', days: 7 },
+    { key: 'weekly', label: 'أسبوعي', days: 60 },
+    { key: 'monthly', label: 'شهري', days: 365 },
+    { key: 'yearly', label: 'سنوي', days: 365 },
   ]
 
   const isCustomActive = showCustom && customFrom && customTo
@@ -493,6 +504,65 @@ export function CarWashOverview() {
   const maxPaymentRevenue = Math.max(1, ...paymentRows.map(([, value]) => value))
   const maxWorkerRevenue = Math.max(1, ...topWorkerRevenue.map(item => item.revenue))
   const todayText = new Date().toLocaleDateString('ar-SA', { day: 'numeric', month: 'long', weekday: 'long' })
+  const setRevenuePeriod = (range: RevenueRange) => {
+    const option = REVENUE_RANGES.find(item => item.key === range)
+    setRevenueRange(range)
+    if (option) {
+      setDays(option.days)
+      setShowCustom(false)
+    }
+  }
+  const revenueChartData = (() => {
+    const now = new Date()
+    const makeRevenue = (items: CWVisit[]) => items.reduce((sum, v) => sum + (v.subtotal ?? v.price ?? 0), 0)
+    if (revenueRange === 'yearly') {
+      const years = Array.from({ length: 3 }, (_, i) => now.getFullYear() - (2 - i))
+      return years.map(year => {
+        const items = visits.filter(v => new Date(v.created_at).getFullYear() === year)
+        return { date: String(year), visits: items.length, revenue: makeRevenue(items) }
+      })
+    }
+    if (revenueRange === 'monthly') {
+      return Array.from({ length: 12 }, (_, i) => {
+        const d = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1)
+        const year = d.getFullYear()
+        const month = d.getMonth()
+        const items = visits.filter(v => {
+          const created = new Date(v.created_at)
+          return created.getFullYear() === year && created.getMonth() === month
+        })
+        return { date: d.toLocaleDateString('ar-SA', { month: 'short' }), visits: items.length, revenue: makeRevenue(items) }
+      })
+    }
+    if (revenueRange === 'weekly') {
+      return Array.from({ length: 8 }, (_, i) => {
+        const start = new Date(now)
+        start.setHours(0, 0, 0, 0)
+        start.setDate(start.getDate() - ((7 * (7 - i)) + 6))
+        const end = new Date(start)
+        end.setDate(start.getDate() + 6)
+        end.setHours(23, 59, 59, 999)
+        const items = visits.filter(v => {
+          const created = new Date(v.created_at)
+          return created >= start && created <= end
+        })
+        return { date: `${start.toLocaleDateString('ar-SA', { day: 'numeric', month: 'short' })}`, visits: items.length, revenue: makeRevenue(items) }
+      })
+    }
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(now)
+      d.setDate(d.getDate() - (6 - i))
+      const key = d.toISOString().slice(0, 10)
+      const items = visits.filter(v => v.created_at.startsWith(key))
+      return { date: d.toLocaleDateString('ar-SA', { weekday: 'short' }), visits: items.length, revenue: makeRevenue(items) }
+    })
+  })()
+  const salesPeriodRows = revenueChartData
+    .slice()
+    .reverse()
+    .slice(0, 5)
+    .map(item => ({ ...item, label: item.date, value: item.revenue, hint: `${item.visits} زيارة` }))
+  const maxPeriodRevenue = Math.max(1, ...salesPeriodRows.map(item => item.value))
 
   return (<div dir="rtl" style={{ color: '#0D1B3E' }}>
       <style>{`
@@ -518,14 +588,19 @@ export function CarWashOverview() {
         .cw-soft-button { height:36px; border-radius:11px; border:1px solid #D7E1F0; background:#fff; padding:0 11px; display:inline-flex; align-items:center; gap:7px; color:#0D1B3E; font-weight:900; font-size:11px; font-family:Tajawal,sans-serif; cursor:pointer; }
         .cw-soft-select { height:36px; border-radius:11px; border:1px solid #D7E1F0; background:#fff; padding:0 10px; color:#0D1B3E; font-weight:900; font-size:11px; font-family:Tajawal,sans-serif; }
         .cw-insight-grid { display:grid; grid-template-columns:minmax(290px, 1.1fr) minmax(220px, .8fr) minmax(190px, .65fr); gap:14px; }
-        .cw-sales-breakdown-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+        .cw-segmented { display:inline-flex; align-items:center; gap:4px; padding:4px; border:1px solid #DDE8F7; border-radius:12px; background:#F8FBFF; flex-wrap:wrap; }
+        .cw-segmented button { min-height:28px; border:0; border-radius:9px; padding:0 10px; background:transparent; color:#64748B; cursor:pointer; font-family:Tajawal,sans-serif; font-size:11px; font-weight:900; }
+        .cw-segmented button.active { background:#0B63F6; color:#FFFFFF; box-shadow:0 8px 18px rgba(11,99,246,.16); }
+        .cw-sales-tabs { display:flex; align-items:center; gap:6px; padding:5px; border:1px solid #DDE8F7; border-radius:13px; background:#F8FBFF; margin-bottom:16px; flex-wrap:wrap; }
+        .cw-sales-tabs button { min-height:34px; border:0; border-radius:10px; padding:0 13px; background:transparent; color:#64748B; cursor:pointer; font-family:Cairo,sans-serif; font-size:12px; font-weight:900; }
+        .cw-sales-tabs button.active { background:#FFFFFF; color:#0B63F6; box-shadow:0 10px 22px rgba(13,27,62,.07); }
         .cw-flow-grid { display:grid; grid-template-columns:repeat(4,minmax(118px,1fr)); gap:14px; align-items:center; }
         .cw-revenue-chart { min-width:0; }
         .cw-stage-arrow { position:absolute; left:-15px; top:50%; color:#0D1B3E; font-size:22px; transform:translateY(-50%); }
         @media (max-width: 1500px) { .cw-stat-grid { grid-template-columns:repeat(3,minmax(150px,1fr)); } .cw-insight-grid { grid-template-columns:minmax(280px,1.1fr) minmax(210px,.75fr); } .cw-insight-grid section:last-child { grid-column:1 / -1; } }
         .cw-rail-primary,.cw-rail-ai { grid-template-columns:repeat(2,minmax(0,1fr)); }
         @media (max-width: 1280px) { .cw-heading { grid-template-columns:1fr; } .cw-heading-actions { max-width:none; justify-content:flex-start; } }
-        @media (max-width: 920px) { .cw-insight-grid,.cw-sales-breakdown-grid { grid-template-columns:1fr; } .cw-insight-grid section:last-child { grid-column:auto; } .cw-flow-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .cw-stage-arrow { display:none; } .cw-rail-primary,.cw-rail-ai { grid-template-columns:1fr; } }
+        @media (max-width: 920px) { .cw-insight-grid { grid-template-columns:1fr; } .cw-insight-grid section:last-child { grid-column:auto; } .cw-flow-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .cw-stage-arrow { display:none; } .cw-rail-primary,.cw-rail-ai { grid-template-columns:1fr; } }
         @media (max-width: 700px) { .cw-stat-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
         @media (max-width: 640px) { .cw-card-pad { padding:14px; } .cw-board,.cw-main,.cw-rail { gap:12px; } .cw-heading { padding:0; } .cw-command-bar { display:grid; grid-template-columns:1fr; gap:8px; align-items:stretch; padding:10px; } .cw-command-group { width:100%; display:grid; gap:8px; flex-wrap:nowrap; } .cw-command-primary { grid-template-columns:repeat(3,minmax(0,1fr)); } .cw-command-tools { grid-template-columns:minmax(118px,1.15fr) minmax(82px,.85fr) minmax(58px,.55fr) minmax(58px,.55fr); } .cw-main-action,.cw-secondary-action,.cw-soft-button,.cw-soft-select { width:100%; min-width:0; } .cw-main-action,.cw-secondary-action { height:38px; padding:0 8px; white-space:nowrap; font-size:11px; } .cw-soft-button,.cw-soft-select { height:34px; padding:0 7px; white-space:nowrap; font-size:10px; justify-content:center; } .cw-revenue-chart .recharts-xAxis .recharts-cartesian-axis-tick:nth-child(even) { display:none; } }
         @media (max-width: 420px) { .cw-stat-grid,.cw-flow-grid,.cw-command-primary { grid-template-columns:1fr; } .cw-command-tools { grid-template-columns:1fr 1fr; } }
@@ -620,38 +695,69 @@ export function CarWashOverview() {
           </div>
 
           <SectionCard
-            title="تفصيل المبيعات"
-            icon={Activity}
-            action={<Link to="/client/reports" style={{ color: '#0B63F6', fontSize: 12, fontWeight: 900, fontFamily: 'Tajawal,sans-serif', textDecoration: 'none' }}>عرض التقارير</Link>}
+            title="أداء الإيرادات"
+            icon={TrendingUp}
+            action={(
+              <div className="cw-segmented" aria-label="فترة أداء الإيرادات">
+                {REVENUE_RANGES.map(option => (
+                  <button
+                    key={option.key}
+                    type="button"
+                    className={revenueRange === option.key ? 'active' : ''}
+                    onClick={() => setRevenuePeriod(option.key)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
           >
-            <div className="cw-sales-breakdown-grid">
-              <div style={{ display: 'grid', gap: 13 }}>
-                <div>
-                  <strong style={{ color: '#0D1B3E', fontSize: 13, fontFamily: 'Cairo,sans-serif' }}>حسب الخدمات</strong>
-                  <p className="cw-muted" style={{ margin: '3px 0 0', fontSize: 11 }}>أكثر الخدمات تحقيقاً للإيراد</p>
-                </div>
-                {topServiceRevenue.length ? topServiceRevenue.map((item, i) => (
+            <div className="cw-revenue-chart">
+              <ResponsiveContainer width="100%" height={220}>
+                <AreaChart data={revenueChartData}>
+                  <defs><linearGradient id="reportRevenueGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#0B63F6" stopOpacity={0.30} /><stop offset="100%" stopColor="#0B63F6" stopOpacity={0.03} /></linearGradient></defs>
+                  <XAxis dataKey="date" tick={{ fill: '#64748B', fontSize: 10, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: '#64748B', fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <Tooltip content={<ChartTooltip />} />
+                  <Area type="monotone" dataKey="revenue" name="revenue" stroke="#0B63F6" strokeWidth={3} fill="url(#reportRevenueGrad)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="cw-sales-tabs" aria-label="تفصيل المبيعات">
+              {[
+                { key: 'period' as const, label: 'الفترة' },
+                { key: 'services' as const, label: 'الخدمات' },
+                { key: 'workers' as const, label: 'الموظفون' },
+              ].map(tab => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  className={salesBreakdownTab === tab.key ? 'active' : ''}
+                  onClick={() => setSalesBreakdownTab(tab.key)}
+                >
+                  {tab.label}
+                </button>
+              ))}
+              <Link to="/client/reports" style={{ marginInlineStart: 'auto', color: '#0B63F6', fontSize: 12, fontWeight: 900, fontFamily: 'Tajawal,sans-serif', textDecoration: 'none' }}>عرض التقارير</Link>
+            </div>
+
+            <div style={{ display: 'grid', gap: 13 }}>
+              {salesBreakdownTab === 'period' && (
+                salesPeriodRows.length ? salesPeriodRows.map((item, i) => (
+                  <BreakdownRow key={`${item.label}-${i}`} label={item.label} value={item.value} hint={item.hint} color={serviceColors[i % serviceColors.length]} max={maxPeriodRevenue} />
+                )) : <span className="cw-muted" style={{ fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>لا توجد مبيعات في الفترة.</span>
+              )}
+              {salesBreakdownTab === 'services' && (
+                topServiceRevenue.length ? topServiceRevenue.map((item, i) => (
                   <BreakdownRow key={item.name} label={item.name} value={item.value} hint={`${item.count} سيارة`} color={serviceColors[i % serviceColors.length]} max={maxServiceRevenue} />
-                )) : <span className="cw-muted" style={{ fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>لا توجد مبيعات خدمات في الفترة.</span>}
-              </div>
-              <div style={{ display: 'grid', gap: 13 }}>
-                <div>
-                  <strong style={{ color: '#0D1B3E', fontSize: 13, fontFamily: 'Cairo,sans-serif' }}>حسب طرق الدفع</strong>
-                  <p className="cw-muted" style={{ margin: '3px 0 0', fontSize: 11 }}>الكاش، مدى، التحويل وباقي القنوات</p>
-                </div>
-                {paymentRows.length ? paymentRows.map(([name, value], i) => (
-                  <BreakdownRow key={name} label={paymentLabels[name] || name} value={value} hint="محصل في الفترة" color={serviceColors[(i + 1) % serviceColors.length]} max={maxPaymentRevenue} />
-                )) : <span className="cw-muted" style={{ fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>لا توجد مدفوعات في الفترة.</span>}
-              </div>
-              <div style={{ display: 'grid', gap: 13 }}>
-                <div>
-                  <strong style={{ color: '#0D1B3E', fontSize: 13, fontFamily: 'Cairo,sans-serif' }}>حسب الموظفين</strong>
-                  <p className="cw-muted" style={{ margin: '3px 0 0', fontSize: 11 }}>أداء الفريق المرتبط بالزيارات</p>
-                </div>
-                {topWorkerRevenue.length ? topWorkerRevenue.map((item, i) => (
+                )) : <span className="cw-muted" style={{ fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>لا توجد مبيعات خدمات في الفترة.</span>
+              )}
+              {salesBreakdownTab === 'workers' && (
+                topWorkerRevenue.length ? topWorkerRevenue.map((item, i) => (
                   <BreakdownRow key={item.id} label={item.name} value={item.revenue} hint={`${item.count} سيارة`} color={serviceColors[(i + 2) % serviceColors.length]} max={maxWorkerRevenue} />
-                )) : <Link to="/client/workers" className="cw-link" style={{ display: 'block', border: '1px dashed #D7E1F0', borderRadius: 14, padding: 14, textAlign: 'center', color: '#64748B', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>عيّن الموظف للسيارات حتى يظهر تفصيل المبيعات حسب الفريق.</Link>}
-              </div>
+                )) : <Link to="/client/workers" className="cw-link" style={{ display: 'block', border: '1px dashed #D7E1F0', borderRadius: 14, padding: 14, textAlign: 'center', color: '#64748B', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>عيّن الموظف للسيارات حتى يظهر تفصيل المبيعات حسب الفريق.</Link>
+              )}
             </div>
           </SectionCard>
 
@@ -678,20 +784,6 @@ export function CarWashOverview() {
           </div>
 
           <div className="cw-insight-grid">
-            <SectionCard title="أداء الإيرادات" icon={TrendingUp}>
-              <div className="cw-revenue-chart">
-                <ResponsiveContainer width="100%" height={190}>
-                  <AreaChart data={stats.dailyChart}>
-                    <defs><linearGradient id="reportRevenueGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#0B63F6" stopOpacity={0.30} /><stop offset="100%" stopColor="#0B63F6" stopOpacity={0.03} /></linearGradient></defs>
-                    <XAxis dataKey="date" tick={{ fill: '#64748B', fontSize: 10, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fill: '#64748B', fontSize: 10 }} axisLine={false} tickLine={false} />
-                    <Tooltip content={<ChartTooltip />} />
-                    <Area type="monotone" dataKey="revenue" name="revenue" stroke="#0B63F6" strokeWidth={3} fill="url(#reportRevenueGrad)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </SectionCard>
-
             <SectionCard title="أفضل الخدمات اليوم" icon={Car}>
               {stats.services.length ? stats.services.slice(0, 4).map(([name, data], i) => (
                 <div key={`${name}-${i}`} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, padding: '9px 0', borderBottom: i < 3 ? '1px solid #EEF3FA' : 'none' }}>
