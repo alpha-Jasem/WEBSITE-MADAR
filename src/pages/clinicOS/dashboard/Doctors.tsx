@@ -58,7 +58,7 @@ export const Doctors = () => {
     if (isDemo) { showToast('لا يمكن الإضافة في وضع التجربة', 'info'); return }
     setSaving(true)
     try {
-      await createDoctor({ ...newDoc, company_id: companyId!, status: 'available' as const })
+      await createDoctor({ ...newDoc, clinic_id: companyId!, status: 'available' as const })
       showToast('تم إضافة الطبيب بنجاح', 'success')
       setShowAddModal(false)
       setNewDoc({ name: '', specialty: '', max_appointments_per_day: 12, emergency_slots_per_day: 2 })

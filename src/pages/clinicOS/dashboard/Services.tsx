@@ -25,7 +25,7 @@ export const Services = () => {
     if (isDemo) { showToast('لا يمكن الإضافة في وضع التجربة', 'info'); return }
     setSaving(true)
     try {
-      await createService({ ...newSvc, active: true, available_for_whatsapp: true, company_id: companyId! })
+      await createService({ ...newSvc, active: true, available_for_whatsapp: true, clinic_id: companyId! })
       showToast('تم إضافة الخدمة بنجاح', 'success')
       setShowAddModal(false)
       setNewSvc({ name: '', category: '', duration_minutes: 30, buffer_minutes: 5, price: 0, requires_approval: false, available_for_ai: true })

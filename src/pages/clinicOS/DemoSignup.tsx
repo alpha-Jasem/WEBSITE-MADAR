@@ -2,11 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Bot, ArrowLeft, CheckCircle, Phone, Building2 } from 'lucide-react'
-import { useClinicOS } from '../../context/ClinicOSContext'
-
 export const DemoSignup = () => {
   const navigate = useNavigate()
-  const { signup } = useClinicOS()
   const [form, setForm] = useState({ name: '', clinicName: '', phone: '', email: '', city: '' })
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -28,7 +25,7 @@ export const DemoSignup = () => {
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
     setLoading(true)
-    await signup({ name: form.name, clinicName: form.clinicName, email: form.email, city: form.city })
+    await new Promise(r => setTimeout(r, 800))
     navigate('/clinic-os/demo-confirm')
   }
 
