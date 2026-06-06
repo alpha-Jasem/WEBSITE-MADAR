@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { CheckCircle2, CreditCard, ExternalLink, Loader2, Lock, Plus, QrCode, RefreshCw, Save, Smartphone, Users, WalletCards } from 'lucide-react'
+﻿import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { CheckCircle2, CreditCard, ExternalLink, Loader2, Lock, Plus, QrCode, RefreshCw, Save, Users, WalletCards } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
@@ -65,9 +65,6 @@ function addDays(days: number) {
 export function CarWashMemberships() {
   const { companyId, company, loading: authLoading } = useClientCompany()
   const { can } = usePlanGate()
-  const featureEnabled = can.memberships || can.wallet || can.onlinePayments
-
-  const [loading, setLoading] = useState(true)
   const [plans, setPlans] = useState<MembershipPlan[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
   const [memberships, setMemberships] = useState<CustomerMembership[]>([])
@@ -75,7 +72,7 @@ export function CarWashMemberships() {
   const [saving, setSaving] = useState(false)
   const [feedback, setFeedback] = useState('')
 
-  const [planForm, setPlanForm] = useState({ name: 'اشتراك 4 غسلات', price: '99', washes: '4' })
+  const [planForm, setPlanForm] = useState({ name: 'ط§ط´طھط±ط§ظƒ 4 ط؛ط³ظ„ط§طھ', price: '99', washes: '4' })
   const [membershipForm, setMembershipForm] = useState({ customerId: '', planId: '' })
   const [walletForm, setWalletForm] = useState({ customerId: '', amount: '', note: '' })
 
@@ -126,33 +123,25 @@ export function CarWashMemberships() {
   const checkinUrl = getSelfCheckinUrl(company as any)
   const previewUrl = checkinUrl ? `${checkinUrl}?preview=memberships` : ''
   const journey = [
-    { label: 'الأدمن فعّل الميزة', done: featureEnabled, icon: CheckCircle2 },
-    { label: 'باقات شهرية جاهزة', done: activePlans.length > 0, icon: WalletCards },
-    { label: 'QR يعرض الباقات للعميل', done: can.memberships && Boolean(checkinUrl) && activePlans.length > 0, icon: QrCode },
-    { label: 'خصم من الاشتراك عند التسليم', done: can.memberships, icon: Save },
-    { label: 'المحفظة متاحة كطريقة دفع', done: can.wallet, icon: CreditCard },
-    { label: 'الدفع الإلكتروني', done: false, optional: true, icon: Smartphone },
+    { label: 'ط§ظ„ط£ط¯ظ…ظ† ظپط¹ظ‘ظ„ ط§ظ„ظ…ظٹط²ط©', done: featureEnabled, icon: CheckCircle2 },
+    { label: 'ط¨ط§ظ‚ط§طھ ط´ظ‡ط±ظٹط© ط¬ط§ظ‡ط²ط©', done: activePlans.length > 0, icon: WalletCards },
+    { label: 'QR ظٹط¹ط±ط¶ ط§ظ„ط¨ط§ظ‚ط§طھ ظ„ظ„ط¹ظ…ظٹظ„', done: can.memberships && Boolean(checkinUrl) && activePlans.length > 0, icon: QrCode },
+    { label: 'ط®طµظ… ظ…ظ† ط§ظ„ط§ط´طھط±ط§ظƒ ط¹ظ†ط¯ ط§ظ„طھط³ظ„ظٹظ…', done: can.memberships, icon: Save },
+    { label: 'ط§ظ„ظ…ط­ظپط¸ط© ظ…طھط§ط­ط© ظƒط·ط±ظٹظ‚ط© ط¯ظپط¹', done: can.wallet, icon: CreditCard },
   ]
-  const displayJourney = journey.map(item =>
-    item.icon === Smartphone
-      ? { ...item, label: 'الدفع الإلكتروني', done: false, optional: true }
-      : item
-  )
+  const displayJourney = journey
   const coreJourney = displayJourney.filter(item => !item.optional)
   const journeyScore = Math.round((coreJourney.filter(item => item.done).length / coreJourney.length) * 100)
   const membershipInsights = [
     activePlans.length > 0
-      ? { title: 'الباقات جاهزة للبيع', description: `${activePlans.length} باقة فعالة. الأفضل عرضها في QR بعد تسجيل الخدمة مباشرة.`, tone: 'green' as const }
-      : { title: 'أنشئ أول باقة شهرية', description: 'ابدأ بباقة 4 غسلات وباقة 8 غسلات لتجربة تسعير بسيطة وسهلة البيع.', tone: 'amber' as const },
+      ? { title: 'ط§ظ„ط¨ط§ظ‚ط§طھ ط¬ط§ظ‡ط²ط© ظ„ظ„ط¨ظٹط¹', description: `${activePlans.length} ط¨ط§ظ‚ط© ظپط¹ط§ظ„ط©. ط§ظ„ط£ظپط¶ظ„ ط¹ط±ط¶ظ‡ط§ ظپظٹ QR ط¨ط¹ط¯ طھط³ط¬ظٹظ„ ط§ظ„ط®ط¯ظ…ط© ظ…ط¨ط§ط´ط±ط©.`, tone: 'green' as const }
+      : { title: 'ط£ظ†ط´ط¦ ط£ظˆظ„ ط¨ط§ظ‚ط© ط´ظ‡ط±ظٹط©', description: 'ط§ط¨ط¯ط£ ط¨ط¨ط§ظ‚ط© 4 ط؛ط³ظ„ط§طھ ظˆط¨ط§ظ‚ط© 8 ط؛ط³ظ„ط§طھ ظ„طھط¬ط±ط¨ط© طھط³ط¹ظٹط± ط¨ط³ظٹط·ط© ظˆط³ظ‡ظ„ط© ط§ظ„ط¨ظٹط¹.', tone: 'amber' as const },
     activeMemberships.length > 0
-      ? { title: 'إيراد متكرر بدأ', description: `${activeMemberships.length} مشترك نشط بإيراد شهري متوقع ${money(recurringRevenue)} ر.س.`, tone: 'blue' as const }
-      : { title: 'حوّل العملاء المتكررين', description: 'أفضل عميل للبيع هو من زار أكثر من مرتين. اعرض عليه اشتراك شهري عند التسليم.', tone: 'blue' as const },
+      ? { title: 'ط¥ظٹط±ط§ط¯ ظ…طھظƒط±ط± ط¨ط¯ط£', description: `${activeMemberships.length} ظ…ط´طھط±ظƒ ظ†ط´ط· ط¨ط¥ظٹط±ط§ط¯ ط´ظ‡ط±ظٹ ظ…طھظˆظ‚ط¹ ${money(recurringRevenue)} ط±.ط³.`, tone: 'blue' as const }
+      : { title: 'ط­ظˆظ‘ظ„ ط§ظ„ط¹ظ…ظ„ط§ط، ط§ظ„ظ…طھظƒط±ط±ظٹظ†', description: 'ط£ظپط¶ظ„ ط¹ظ…ظٹظ„ ظ„ظ„ط¨ظٹط¹ ظ‡ظˆ ظ…ظ† ط²ط§ط± ط£ظƒط«ط± ظ…ظ† ظ…ط±طھظٹظ†. ط§ط¹ط±ط¶ ط¹ظ„ظٹظ‡ ط§ط´طھط±ط§ظƒ ط´ظ‡ط±ظٹ ط¹ظ†ط¯ ط§ظ„طھط³ظ„ظٹظ….', tone: 'blue' as const },
     can.wallet
-      ? { title: 'المحفظة مفعلة', description: `إجمالي أرصدة المحافظ ${money(walletBalance)} ر.س. راقبها كالتزام مالي على المغسلة.`, tone: 'green' as const }
-      : { title: 'المحفظة اختيارية من الأدمن', description: 'إذا لا تريدها لبعض المغاسل، اتركها مقفلة واجعل الدفع كاش/POS فقط.', tone: 'slate' as const },
-    can.onlinePayments
-      ? { title: 'الدفع الإلكتروني تحت التجهيز', description: 'الميزة مفعلة إدارياً، لكن البيع الإلكتروني من جوال العميل يبدأ بعد ربط Moyasar/Apple Pay فعلياً.', tone: 'amber' as const }
-      : { title: 'الدفع الإلكتروني ينتظر الربط', description: 'إلى أن يكتمل Moyasar/Apple Pay، خليه خيار مدفوع يتم تفعيله من الأدمن.', tone: 'amber' as const },
+      ? { title: 'ط§ظ„ظ…ط­ظپط¸ط© ظ…ظپط¹ظ„ط©', description: `ط¥ط¬ظ…ط§ظ„ظٹ ط£ط±طµط¯ط© ط§ظ„ظ…ط­ط§ظپط¸ ${money(walletBalance)} ط±.ط³. ط±ط§ظ‚ط¨ظ‡ط§ ظƒط§ظ„طھط²ط§ظ… ظ…ط§ظ„ظٹ ط¹ظ„ظ‰ ط§ظ„ظ…ط؛ط³ظ„ط©.`, tone: 'green' as const }
+      : { title: 'ط§ظ„ظ…ط­ظپط¸ط© ط§ط®طھظٹط§ط±ظٹط© ظ…ظ† ط§ظ„ط£ط¯ظ…ظ†', description: 'ط¥ط°ط§ ظ„ط§ طھط±ظٹط¯ظ‡ط§ ظ„ط¨ط¹ط¶ ط§ظ„ظ…ط؛ط§ط³ظ„طŒ ط§طھط±ظƒظ‡ط§ ظ…ظ‚ظپظ„ط© ظˆط§ط¬ط¹ظ„ ط§ظ„ط¯ظپط¹ ظƒط§ط´/POS ظپظ‚ط·.', tone: 'slate' as const },
   ]
 
   const createPlan = async () => {
@@ -163,7 +152,7 @@ export function CarWashMemberships() {
       && Number(plan.washes_per_month) === Number(planForm.washes || 0)
     )
     if (duplicate) {
-      setFeedback('هذه الباقة موجودة مسبقاً بنفس السعر وعدد الغسلات.')
+      setFeedback('ظ‡ط°ظ‡ ط§ظ„ط¨ط§ظ‚ط© ظ…ظˆط¬ظˆط¯ط© ظ…ط³ط¨ظ‚ط§ظ‹ ط¨ظ†ظپط³ ط§ظ„ط³ط¹ط± ظˆط¹ط¯ط¯ ط§ظ„ط؛ط³ظ„ط§طھ.')
       return
     }
     setSaving(true)
@@ -177,7 +166,7 @@ export function CarWashMemberships() {
       active: true,
     })
     setSaving(false)
-    setFeedback(error ? 'تعذر إنشاء الباقة' : 'تم إنشاء باقة الاشتراك')
+    setFeedback(error ? 'طھط¹ط°ط± ط¥ظ†ط´ط§ط، ط§ظ„ط¨ط§ظ‚ط©' : 'طھظ… ط¥ظ†ط´ط§ط، ط¨ط§ظ‚ط© ط§ظ„ط§ط´طھط±ط§ظƒ')
     if (!error) load()
   }
 
@@ -185,7 +174,7 @@ export function CarWashMemberships() {
     if (!companyId || !membershipForm.customerId || !membershipForm.planId) return
     const alreadyActive = activeMemberships.some(item => item.customer_id === membershipForm.customerId)
     if (alreadyActive) {
-      setFeedback('هذا العميل لديه اشتراك نشط حالياً. لا يمكن تفعيل اشتراك ثاني حتى لا يتم احتسابه مرتين.')
+      setFeedback('ظ‡ط°ط§ ط§ظ„ط¹ظ…ظٹظ„ ظ„ط¯ظٹظ‡ ط§ط´طھط±ط§ظƒ ظ†ط´ط· ط­ط§ظ„ظٹط§ظ‹. ظ„ط§ ظٹظ…ظƒظ† طھظپط¹ظٹظ„ ط§ط´طھط±ط§ظƒ ط«ط§ظ†ظٹ ط­طھظ‰ ظ„ط§ ظٹطھظ… ط§ط­طھط³ط§ط¨ظ‡ ظ…ط±طھظٹظ†.')
       return
     }
     const plan = planMap.get(membershipForm.planId)
@@ -212,7 +201,7 @@ export function CarWashMemberships() {
     }
 
     setSaving(false)
-    setFeedback(error ? 'تعذر تفعيل الاشتراك' : 'تم تفعيل اشتراك العميل')
+    setFeedback(error ? 'طھط¹ط°ط± طھظپط¹ظٹظ„ ط§ظ„ط§ط´طھط±ط§ظƒ' : 'طھظ… طھظپط¹ظٹظ„ ط§ط´طھط±ط§ظƒ ط§ظ„ط¹ظ…ظٹظ„')
     if (!error) load()
   }
 
@@ -239,7 +228,7 @@ export function CarWashMemberships() {
     }
 
     setSaving(false)
-    setFeedback(error ? 'تعذر تحديث المحفظة' : 'تم تحديث رصيد المحفظة')
+    setFeedback(error ? 'طھط¹ط°ط± طھط­ط¯ظٹط« ط§ظ„ظ…ط­ظپط¸ط©' : 'طھظ… طھط­ط¯ظٹط« ط±طµظٹط¯ ط§ظ„ظ…ط­ظپط¸ط©')
     if (!error) {
       setWalletForm({ customerId: walletForm.customerId, amount: '', note: '' })
       load()
@@ -250,7 +239,7 @@ export function CarWashMemberships() {
     return (
       <div className="madar-center-state">
         <Loader2 size={20} className="animate-spin" />
-        <span>جاري تحميل الاشتراكات...</span>
+        <span>ط¬ط§ط±ظٹ طھط­ظ…ظٹظ„ ط§ظ„ط§ط´طھط±ط§ظƒط§طھ...</span>
       </div>
     )
   }
@@ -262,10 +251,10 @@ export function CarWashMemberships() {
           <div className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-2xl bg-slate-50 text-slate-500">
             <Lock size={27} />
           </div>
-          <p className="text-sm font-bold text-slate-500 font-tajawal">ميزة اختيارية غير مفعلة</p>
-          <h1 className="mt-2 text-2xl font-black text-slate-950 font-cairo">الاشتراكات والمحفظة تحت تحكم الإدارة</h1>
+          <p className="text-sm font-bold text-slate-500 font-tajawal">ظ…ظٹط²ط© ط§ط®طھظٹط§ط±ظٹط© ط؛ظٹط± ظ…ظپط¹ظ„ط©</p>
+          <h1 className="mt-2 text-2xl font-black text-slate-950 font-cairo">ط§ظ„ط§ط´طھط±ط§ظƒط§طھ ظˆط§ظ„ظ…ط­ظپط¸ط© طھط­طھ طھط­ظƒظ… ط§ظ„ط¥ط¯ط§ط±ط©</h1>
           <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-slate-500 font-tajawal">
-            هذه الصفحة تظهر فقط للمغاسل التي فعل لها الأدمن ميزات الاشتراكات الشهرية أو المحفظة الرقمية أو الدفع الإلكتروني.
+            ظ‡ط°ظ‡ ط§ظ„طµظپط­ط© طھط¸ظ‡ط± ظپظ‚ط· ظ„ظ„ظ…ط؛ط§ط³ظ„ ط§ظ„طھظٹ ظپط¹ظ„ ظ„ظ‡ط§ ط§ظ„ط£ط¯ظ…ظ† ظ…ظٹط²ط§طھ ط§ظ„ط§ط´طھط±ط§ظƒط§طھ ط§ظ„ط´ظ‡ط±ظٹط© ط£ظˆ ط§ظ„ظ…ط­ظپط¸ط© ط§ظ„ط±ظ‚ظ…ظٹط© ط£ظˆ ط§ظ„ط¯ظپط¹ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ.
           </p>
         </section>
       </div>
@@ -277,45 +266,45 @@ export function CarWashMemberships() {
       <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)]">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <span className="text-xs font-bold text-sky-600 font-tajawal">مركز الدخل المتكرر</span>
-            <h1 className="mt-1 text-2xl font-black text-slate-950 font-cairo">اشتراكات ومحافظ العملاء</h1>
+            <span className="text-xs font-bold text-sky-600 font-tajawal">ظ…ط±ظƒط² ط§ظ„ط¯ط®ظ„ ط§ظ„ظ…طھظƒط±ط±</span>
+            <h1 className="mt-1 text-2xl font-black text-slate-950 font-cairo">ط§ط´طھط±ط§ظƒط§طھ ظˆظ…ط­ط§ظپط¸ ط§ظ„ط¹ظ…ظ„ط§ط،</h1>
             <p className="mt-1 text-sm leading-6 text-slate-500 font-tajawal">
-              فعل باقات غسيل شهرية أو اشحن محفظة العميل. الميزة اختيارية وتتحكم فيها الإدارة لكل مغسلة.
+              ظپط¹ظ„ ط¨ط§ظ‚ط§طھ ط؛ط³ظٹظ„ ط´ظ‡ط±ظٹط© ط£ظˆ ط§ط´ط­ظ† ظ…ط­ظپط¸ط© ط§ظ„ط¹ظ…ظٹظ„. ط§ظ„ظ…ظٹط²ط© ط§ط®طھظٹط§ط±ظٹط© ظˆطھطھط­ظƒظ… ظپظٹظ‡ط§ ط§ظ„ط¥ط¯ط§ط±ط© ظ„ظƒظ„ ظ…ط؛ط³ظ„ط©.
             </p>
           </div>
           <button onClick={load} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 font-tajawal">
             <RefreshCw size={15} />
-            تحديث
+            طھط­ط¯ظٹط«
           </button>
         </div>
       </section>
 
       <section className="grid grid-cols-1 gap-3 md:grid-cols-4">
-        <Stat icon={Users} label="مشتركون نشطون" value={activeMemberships.length.toLocaleString('en-US')} color="#4F6EF7" />
-        <Stat icon={CreditCard} label="دخل شهري متوقع" value={`${money(recurringRevenue)} ر.س`} color="#10B981" />
-        <Stat icon={WalletCards} label="أرصدة المحافظ" value={`${money(walletBalance)} ر.س`} color="#F59E0B" />
-        <Stat icon={CheckCircle2} label="باقات فعالة" value={activePlans.length.toLocaleString('en-US')} color="#0EA5E9" />
+        <Stat icon={Users} label="ظ…ط´طھط±ظƒظˆظ† ظ†ط´ط·ظˆظ†" value={activeMemberships.length.toLocaleString('en-US')} color="#4F6EF7" />
+        <Stat icon={CreditCard} label="ط¯ط®ظ„ ط´ظ‡ط±ظٹ ظ…طھظˆظ‚ط¹" value={`${money(recurringRevenue)} ط±.ط³`} color="#10B981" />
+        <Stat icon={WalletCards} label="ط£ط±طµط¯ط© ط§ظ„ظ…ط­ط§ظپط¸" value={`${money(walletBalance)} ط±.ط³`} color="#F59E0B" />
+        <Stat icon={CheckCircle2} label="ط¨ط§ظ‚ط§طھ ظپط¹ط§ظ„ط©" value={activePlans.length.toLocaleString('en-US')} color="#0EA5E9" />
       </section>
 
       <ClientInsightPanel
-        title="فرص الاشتراك والمحفظة"
-        description="الهدف هنا أن تكون الميزة قابلة للبيع كإضافة اختيارية للمغسلة، وليست عبئاً على كل عميل."
+        title="ظپط±طµ ط§ظ„ط§ط´طھط±ط§ظƒ ظˆط§ظ„ظ…ط­ظپط¸ط©"
+        description="ط§ظ„ظ‡ط¯ظپ ظ‡ظ†ط§ ط£ظ† طھظƒظˆظ† ط§ظ„ظ…ظٹط²ط© ظ‚ط§ط¨ظ„ط© ظ„ظ„ط¨ظٹط¹ ظƒط¥ط¶ط§ظپط© ط§ط®طھظٹط§ط±ظٹط© ظ„ظ„ظ…ط؛ط³ظ„ط©طŒ ظˆظ„ظٹط³طھ ط¹ط¨ط¦ط§ظ‹ ط¹ظ„ظ‰ ظƒظ„ ط¹ظ…ظٹظ„."
         items={membershipInsights}
       />
 
       <section className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-sm">
         <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <span className="text-xs font-bold text-emerald-600 font-tajawal">رحلة العميل من الجوال</span>
-            <h2 className="mt-1 text-lg font-black text-slate-950 font-cairo">جاهزية بيع الاشتراك من QR</h2>
+            <span className="text-xs font-bold text-emerald-600 font-tajawal">ط±ط­ظ„ط© ط§ظ„ط¹ظ…ظٹظ„ ظ…ظ† ط§ظ„ط¬ظˆط§ظ„</span>
+            <h2 className="mt-1 text-lg font-black text-slate-950 font-cairo">ط¬ط§ظ‡ط²ظٹط© ط¨ظٹط¹ ط§ظ„ط§ط´طھط±ط§ظƒ ظ…ظ† QR</h2>
             <p className="mt-1 text-xs leading-6 text-slate-500 font-tajawal">
-              هذه الخريطة توضح ماذا يرى العميل وماذا يحدث داخل لوحة التشغيل. الدفع النهائي ينتظر ربط Moyasar/Apple Pay.
+              ظ‡ط°ظ‡ ط§ظ„ط®ط±ظٹط·ط© طھظˆط¶ط­ ظ…ط§ط°ط§ ظٹط±ظ‰ ط§ظ„ط¹ظ…ظٹظ„ ظˆظ…ط§ط°ط§ ظٹط­ط¯ط« ط¯ط§ط®ظ„ ظ„ظˆط­ط© ط§ظ„طھط´ط؛ظٹظ„. ط§ظ„ط¯ظپط¹ ط§ظ„ظ†ظ‡ط§ط¦ظٹ ظٹظ†طھط¸ط± ط±ط¨ط· Moyasar/Apple Pay.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <div className="min-w-[190px] rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3">
               <div className="flex items-center justify-between gap-3">
-                <span className="text-xs font-bold text-emerald-700 font-tajawal">جاهزية التشغيل</span>
+                <span className="text-xs font-bold text-emerald-700 font-tajawal">ط¬ط§ظ‡ط²ظٹط© ط§ظ„طھط´ط؛ظٹظ„</span>
                 <strong className="font-sora text-lg font-black text-emerald-700">{journeyScore}%</strong>
               </div>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-white">
@@ -325,7 +314,7 @@ export function CarWashMemberships() {
             {previewUrl && (
               <a href={previewUrl} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-100 bg-sky-50 px-4 py-2 text-sm font-bold text-sky-700 font-cairo">
                 <ExternalLink size={15} />
-                معاينة العميل
+                ظ…ط¹ط§ظٹظ†ط© ط§ظ„ط¹ظ…ظٹظ„
               </a>
             )}
           </div>
@@ -338,7 +327,7 @@ export function CarWashMemberships() {
               </div>
               <strong className="block text-sm leading-6 text-slate-950 font-cairo">{item.label}</strong>
               <span className={`mt-2 inline-flex rounded-full px-2 py-1 text-[11px] font-bold font-tajawal ${item.done ? 'bg-emerald-100 text-emerald-700' : 'bg-white text-slate-500'}`}>
-                {item.done ? 'جاهز' : item.optional ? 'لاحقاً' : 'ينتظر'}
+                {item.done ? 'ط¬ط§ظ‡ط²' : item.optional ? 'ظ„ط§ط­ظ‚ط§ظ‹' : 'ظٹظ†طھط¸ط±'}
               </span>
             </article>
           ))}
@@ -349,24 +338,24 @@ export function CarWashMemberships() {
 
       <section className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_1fr]">
         {can.memberships && (
-          <Panel title="باقات الاشتراك الشهرية" desc="أنشئ باقات مثل 4 غسلات أو 8 غسلات شهريا.">
+          <Panel title="ط¨ط§ظ‚ط§طھ ط§ظ„ط§ط´طھط±ط§ظƒ ط§ظ„ط´ظ‡ط±ظٹط©" desc="ط£ظ†ط´ط¦ ط¨ط§ظ‚ط§طھ ظ…ط«ظ„ 4 ط؛ط³ظ„ط§طھ ط£ظˆ 8 ط؛ط³ظ„ط§طھ ط´ظ‡ط±ظٹط§.">
             <div className="grid gap-3 md:grid-cols-[1.2fr_0.7fr_0.7fr_auto]">
-              <Input label="اسم الباقة" value={planForm.name} onChange={value => setPlanForm(current => ({ ...current, name: value }))} />
-              <Input label="السعر" value={planForm.price} onChange={value => setPlanForm(current => ({ ...current, price: value }))} dir="ltr" />
-              <Input label="الغسلات/شهر" value={planForm.washes} onChange={value => setPlanForm(current => ({ ...current, washes: value }))} dir="ltr" />
+              <Input label="ط§ط³ظ… ط§ظ„ط¨ط§ظ‚ط©" value={planForm.name} onChange={value => setPlanForm(current => ({ ...current, name: value }))} />
+              <Input label="ط§ظ„ط³ط¹ط±" value={planForm.price} onChange={value => setPlanForm(current => ({ ...current, price: value }))} dir="ltr" />
+              <Input label="ط§ظ„ط؛ط³ظ„ط§طھ/ط´ظ‡ط±" value={planForm.washes} onChange={value => setPlanForm(current => ({ ...current, washes: value }))} dir="ltr" />
               <button disabled={saving} onClick={createPlan} className="mt-auto inline-flex h-[43px] items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-[#0B63F6] to-[#00BFFF] px-4 text-sm font-bold !text-white shadow-[0_12px_26px_rgba(11,99,246,0.22)] transition hover:translate-y-[-1px] disabled:opacity-50 font-cairo [&_svg]:text-white">
                 <Plus size={15} />
-                إضافة
+                ط¥ط¶ط§ظپط©
               </button>
             </div>
             <div className="mt-5 space-y-2">
-              {uniquePlans.length === 0 ? <Empty text="لا توجد باقات بعد" /> : uniquePlans.map(plan => (
+              {uniquePlans.length === 0 ? <Empty text="ظ„ط§ طھظˆط¬ط¯ ط¨ط§ظ‚ط§طھ ط¨ط¹ط¯" /> : uniquePlans.map(plan => (
                 <div key={plan.id} className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 p-4">
                   <div>
                     <strong className="text-sm text-slate-950 font-cairo">{plan.name}</strong>
-                    <p className="text-xs text-slate-500 font-tajawal">{plan.washes_per_month} غسلات / شهر</p>
+                    <p className="text-xs text-slate-500 font-tajawal">{plan.washes_per_month} ط؛ط³ظ„ط§طھ / ط´ظ‡ط±</p>
                   </div>
-                  <span className="font-sora text-lg font-black text-slate-950">{money(Number(plan.price))} <small className="text-xs text-slate-400">ر.س</small></span>
+                  <span className="font-sora text-lg font-black text-slate-950">{money(Number(plan.price))} <small className="text-xs text-slate-400">ط±.ط³</small></span>
                 </div>
               ))}
             </div>
@@ -374,51 +363,51 @@ export function CarWashMemberships() {
         )}
 
         {can.memberships && (
-          <Panel title="تفعيل اشتراك لعميل" desc="اربط العميل بخطة شهرية يدوياً الآن. الدفع الإلكتروني من جوال العميل يبدأ بعد ربط مزود الدفع.">
-            <Select label="العميل" value={membershipForm.customerId} onChange={value => setMembershipForm(current => ({ ...current, customerId: value }))}>
-              <option value="">اختر العميل</option>
+          <Panel title="طھظپط¹ظٹظ„ ط§ط´طھط±ط§ظƒ ظ„ط¹ظ…ظٹظ„" desc="ط§ط±ط¨ط· ط§ظ„ط¹ظ…ظٹظ„ ط¨ط®ط·ط© ط´ظ‡ط±ظٹط© ظٹط¯ظˆظٹط§ظ‹ ط§ظ„ط¢ظ†. ط§ظ„ط¯ظپط¹ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ ظ…ظ† ط¬ظˆط§ظ„ ط§ظ„ط¹ظ…ظٹظ„ ظٹط¨ط¯ط£ ط¨ط¹ط¯ ط±ط¨ط· ظ…ط²ظˆط¯ ط§ظ„ط¯ظپط¹.">
+            <Select label="ط§ظ„ط¹ظ…ظٹظ„" value={membershipForm.customerId} onChange={value => setMembershipForm(current => ({ ...current, customerId: value }))}>
+              <option value="">ط§ط®طھط± ط§ظ„ط¹ظ…ظٹظ„</option>
               {customers.map(customer => <option key={customer.id} value={customer.id}>{customer.name || phoneLabel(customer.phone)} - {phoneLabel(customer.phone)}</option>)}
             </Select>
-            <Select label="الباقة" value={membershipForm.planId} onChange={value => setMembershipForm(current => ({ ...current, planId: value }))}>
-              <option value="">اختر الباقة</option>
-              {activePlans.map(plan => <option key={plan.id} value={plan.id}>{plan.name} - {money(Number(plan.price))} ر.س</option>)}
+            <Select label="ط§ظ„ط¨ط§ظ‚ط©" value={membershipForm.planId} onChange={value => setMembershipForm(current => ({ ...current, planId: value }))}>
+              <option value="">ط§ط®طھط± ط§ظ„ط¨ط§ظ‚ط©</option>
+              {activePlans.map(plan => <option key={plan.id} value={plan.id}>{plan.name} - {money(Number(plan.price))} ط±.ط³</option>)}
             </Select>
             <button disabled={saving || !membershipForm.customerId || !membershipForm.planId} onClick={activateMembership} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#1565C0] px-4 py-3 text-sm font-bold text-white font-cairo disabled:opacity-50">
               <Save size={15} />
-              تفعيل الاشتراك
+              طھظپط¹ظٹظ„ ط§ظ„ط§ط´طھط±ط§ظƒ
             </button>
           </Panel>
         )}
 
         {can.wallet && (
-          <Panel title="المحفظة الرقمية" desc="اشحن رصيد العميل أو اخصم منه يدويا الآن. الدفع الآلي لاحقا عبر Moyasar.">
-            <Select label="العميل" value={walletForm.customerId} onChange={value => setWalletForm(current => ({ ...current, customerId: value }))}>
-              <option value="">اختر العميل</option>
-              {customers.map(customer => <option key={customer.id} value={customer.id}>{customer.name || phoneLabel(customer.phone)} - رصيد {money(Number(customer.wallet_balance || 0))} ر.س</option>)}
+          <Panel title="ط§ظ„ظ…ط­ظپط¸ط© ط§ظ„ط±ظ‚ظ…ظٹط©" desc="ط§ط´ط­ظ† ط±طµظٹط¯ ط§ظ„ط¹ظ…ظٹظ„ ط£ظˆ ط§ط®طµظ… ظ…ظ†ظ‡ ظٹط¯ظˆظٹط§ ط§ظ„ط¢ظ†. ط§ظ„ط¯ظپط¹ ط§ظ„ط¢ظ„ظٹ ظ„ط§ط­ظ‚ط§ ط¹ط¨ط± Moyasar.">
+            <Select label="ط§ظ„ط¹ظ…ظٹظ„" value={walletForm.customerId} onChange={value => setWalletForm(current => ({ ...current, customerId: value }))}>
+              <option value="">ط§ط®طھط± ط§ظ„ط¹ظ…ظٹظ„</option>
+              {customers.map(customer => <option key={customer.id} value={customer.id}>{customer.name || phoneLabel(customer.phone)} - ط±طµظٹط¯ {money(Number(customer.wallet_balance || 0))} ط±.ط³</option>)}
             </Select>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <Input label="المبلغ" value={walletForm.amount} onChange={value => setWalletForm(current => ({ ...current, amount: value }))} dir="ltr" />
-              <Input label="ملاحظة" value={walletForm.note} onChange={value => setWalletForm(current => ({ ...current, note: value }))} />
+              <Input label="ط§ظ„ظ…ط¨ظ„ط؛" value={walletForm.amount} onChange={value => setWalletForm(current => ({ ...current, amount: value }))} dir="ltr" />
+              <Input label="ظ…ظ„ط§ط­ط¸ط©" value={walletForm.note} onChange={value => setWalletForm(current => ({ ...current, note: value }))} />
             </div>
             <button disabled={saving || !walletForm.customerId || !walletForm.amount} onClick={chargeWallet} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white font-cairo disabled:opacity-50">
               <WalletCards size={15} />
-              تحديث الرصيد
+              طھط­ط¯ظٹط« ط§ظ„ط±طµظٹط¯
             </button>
           </Panel>
         )}
 
-        <Panel title="المشتركون الحاليون" desc="متابعة الاشتراكات النشطة وعدد الغسلات المتبقية.">
+        <Panel title="ط§ظ„ظ…ط´طھط±ظƒظˆظ† ط§ظ„ط­ط§ظ„ظٹظˆظ†" desc="ظ…طھط§ط¨ط¹ط© ط§ظ„ط§ط´طھط±ط§ظƒط§طھ ط§ظ„ظ†ط´ط·ط© ظˆط¹ط¯ط¯ ط§ظ„ط؛ط³ظ„ط§طھ ط§ظ„ظ…طھط¨ظ‚ظٹط©.">
           <div className="space-y-2">
-            {activeMemberships.length === 0 ? <Empty text="لا توجد اشتراكات مفعلة بعد" /> : activeMemberships.slice(0, 8).map(item => {
+            {activeMemberships.length === 0 ? <Empty text="ظ„ط§ طھظˆط¬ط¯ ط§ط´طھط±ط§ظƒط§طھ ظ…ظپط¹ظ„ط© ط¨ط¹ط¯" /> : activeMemberships.slice(0, 8).map(item => {
               const customer = customerMap.get(item.customer_id)
               const plan = planMap.get(item.plan_id || '')
               return (
                 <div key={item.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <strong className="text-sm text-slate-950 font-cairo">{customer?.name || phoneLabel(customer?.phone || '')}</strong>
-                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 font-tajawal">نشط</span>
+                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 font-tajawal">ظ†ط´ط·</span>
                   </div>
-                  <p className="mt-1 text-xs text-slate-500 font-tajawal">{plan?.name || 'باقة محذوفة'} - متبقي {item.remaining_washes} غسلات</p>
+                  <p className="mt-1 text-xs text-slate-500 font-tajawal">{plan?.name || 'ط¨ط§ظ‚ط© ظ…ط­ط°ظˆظپط©'} - ظ…طھط¨ظ‚ظٹ {item.remaining_washes} ط؛ط³ظ„ط§طھ</p>
                 </div>
               )
             })}
@@ -426,9 +415,9 @@ export function CarWashMemberships() {
         </Panel>
 
         {can.wallet && (
-          <Panel title="آخر حركات المحفظة" desc="شحن، خصم، أو تعديل رصيد.">
+          <Panel title="ط¢ط®ط± ط­ط±ظƒط§طھ ط§ظ„ظ…ط­ظپط¸ط©" desc="ط´ط­ظ†طŒ ط®طµظ…طŒ ط£ظˆ طھط¹ط¯ظٹظ„ ط±طµظٹط¯.">
             <div className="space-y-2">
-              {transactions.length === 0 ? <Empty text="لا توجد حركات محفظة" /> : transactions.slice(0, 8).map(tx => {
+              {transactions.length === 0 ? <Empty text="ظ„ط§ طھظˆط¬ط¯ ط­ط±ظƒط§طھ ظ…ط­ظپط¸ط©" /> : transactions.slice(0, 8).map(tx => {
                 const customer = customerMap.get(tx.customer_id)
                 return (
                   <div key={tx.id} className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 p-4">
@@ -436,7 +425,7 @@ export function CarWashMemberships() {
                       <strong className="text-sm text-slate-950 font-cairo">{customer?.name || phoneLabel(customer?.phone || '')}</strong>
                       <p className="text-xs text-slate-500 font-tajawal">{tx.note || tx.type}</p>
                     </div>
-                    <span className={`font-sora text-sm font-black ${Number(tx.amount) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{money(Number(tx.amount))} ر.س</span>
+                    <span className={`font-sora text-sm font-black ${Number(tx.amount) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{money(Number(tx.amount))} ط±.ط³</span>
                   </div>
                 )
               })}
@@ -445,14 +434,6 @@ export function CarWashMemberships() {
         )}
       </section>
 
-      {can.onlinePayments && (
-        <section className="rounded-[24px] border border-blue-100 bg-blue-50 p-5">
-          <p className="text-sm font-bold text-blue-800 font-cairo">الدفع الإلكتروني تحت التجهيز</p>
-          <p className="mt-1 text-xs leading-6 text-blue-700/80 font-tajawal">
-            المرحلة الحالية تجهز الاشتراكات والمحفظة داخل لوحة المغسلة. لا يظهر الدفع الإلكتروني للعميل كخيار نهائي إلا بعد ربط Moyasar وApple Pay / Google Pay.
-          </p>
-        </section>
-      )}
     </div>
   )
 }

@@ -4,7 +4,7 @@ import { ArrowLeft, Building2, CheckCircle2, Eye, EyeOff, Loader2, Lock, Mail, M
 import { supabase } from '../lib/supabase'
 import { sanitizeDigits, sanitizeNameText } from '../lib/formSanitizers'
 
-type BusinessType = 'carwash' | 'clinic'
+type BusinessType = 'car_wash' | 'clinic'
 type Step = 'type' | 'details' | 'email'
 
 const FIELD_CLASS = 'w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 pr-11 text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-[#00BFFF] focus:ring-4 focus:ring-sky-400/15 font-tajawal'
@@ -29,7 +29,7 @@ function errorText(code: string) {
 
 const BUSINESS_OPTIONS: { id: BusinessType; icon: typeof Car; label: string; sub: string; color: string; bg: string; border: string; features: string[] }[] = [
   {
-    id: 'carwash',
+    id: 'car_wash',
     icon: Car,
     label: 'مغسلة سيارات',
     sub: 'غسيل، عناية، بولش، تلميع',
@@ -122,7 +122,7 @@ export function TrialSignup() {
       })
 
       // Save business_type locally as backup for post-confirmation routing
-      localStorage.setItem('madar_signup_business_type', businessType || 'carwash')
+      localStorage.setItem('madar_signup_business_type', businessType || 'car_wash')
 
       // Try to update business_type directly (works if RLS allows anon update)
       await supabase
@@ -184,19 +184,19 @@ export function TrialSignup() {
           <div className="relative max-w-md">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-sky-300/20 bg-sky-300/10 px-3 py-1.5 text-xs font-tajawal text-sky-100">
               <Sparkles size={14} />
-              {businessType === 'clinic' ? 'داشبورد عيادة كامل' : businessType === 'carwash' ? 'تجربة مجانية 3 أيام' : 'ابدأ تجربتك مجاناً'}
+              {businessType === 'clinic' ? 'داشبورد عيادة كامل' : businessType === 'car_wash' ? 'تجربة مجانية 3 أيام' : 'ابدأ تجربتك مجاناً'}
             </div>
             <h1 className="font-cairo text-4xl font-bold leading-[1.25] text-white">
               {businessType === 'clinic'
                 ? 'حوّل عيادتك إلى نظام حجز ذكي يعمل 24/7.'
-                : businessType === 'carwash'
+                : businessType === 'car_wash'
                   ? 'ابدأ تشغيل مغسلتك اليوم بدون إعدادات معقدة.'
                   : 'اختر منشأتك وابدأ التشغيل فوراً.'}
             </h1>
             <p className="mt-5 font-tajawal text-base leading-8 text-sky-50/70">
               {businessType === 'clinic'
                 ? 'نظام حجز المواعيد عبر واتساب، إدارة المرضى والأطباء، ومساعد ذكي يستقبل المكالمات ويحجز مباشرة.'
-                : businessType === 'carwash'
+                  : businessType === 'car_wash'
                   ? 'الحساب يبدأ على باقة Pro التجريبية: QR تسجيل ذاتي، شاشة تشغيل، خدمات جاهزة، مالية، وتقارير.'
                   : 'أنشئ حساب مغسلة أو عيادة كامل، ثم أكد بريدك الإلكتروني للدخول للوحة التشغيل.'}
             </p>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import { Car, CheckCircle2, Clock, Droplets, Loader2, Radio, Sparkles } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
@@ -18,12 +18,12 @@ type DisplayCar = {
 }
 
 const DISPLAY_STATUS: Record<QueueStatus, { label: string; short: string }> = {
-  received: { label: 'في الانتظار', short: 'انتظار' },
-  washing: { label: 'قيد الغسيل', short: 'غسيل' },
-  drying: { label: 'قيد التجفيف', short: 'تجفيف' },
-  ready: { label: 'جاهزة للاستلام', short: 'جاهزة' },
-  delivered: { label: 'تم التسليم', short: 'سلمت' },
-  cancelled: { label: 'ملغية', short: 'ملغية' },
+  received: { label: 'ظپظٹ ط§ظ„ط§ظ†طھط¸ط§ط±', short: 'ط§ظ†طھط¸ط§ط±' },
+  washing: { label: 'ظ‚ظٹط¯ ط§ظ„ط؛ط³ظٹظ„', short: 'ط؛ط³ظٹظ„' },
+  drying: { label: 'ظ‚ظٹط¯ ط§ظ„طھط¬ظپظٹظپ', short: 'طھط¬ظپظٹظپ' },
+  ready: { label: 'ط¬ط§ظ‡ط²ط© ظ„ظ„ط§ط³طھظ„ط§ظ…', short: 'ط¬ط§ظ‡ط²ط©' },
+  delivered: { label: 'طھظ… ط§ظ„طھط³ظ„ظٹظ…', short: 'ط³ظ„ظ…طھ' },
+  cancelled: { label: 'ظ…ظ„ط؛ظٹط©', short: 'ظ…ظ„ط؛ظٹط©' },
 }
 
 function plateCode(items: DisplayCar[], item: DisplayCar) {
@@ -35,11 +35,11 @@ function plateCode(items: DisplayCar[], item: DisplayCar) {
 
 function minutesSince(value: string) {
   const mins = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 60000))
-  if (mins < 1) return 'الآن'
-  if (mins < 60) return `${mins.toLocaleString('ar-SA')} د`
+  if (mins < 1) return 'ط§ظ„ط¢ظ†'
+  if (mins < 60) return `${mins.toLocaleString('ar-SA')} ط¯`
   const hours = Math.floor(mins / 60)
   const rest = mins % 60
-  return `${hours.toLocaleString('ar-SA')} س ${rest.toLocaleString('ar-SA')} د`
+  return `${hours.toLocaleString('ar-SA')} ط³ ${rest.toLocaleString('ar-SA')} ط¯`
 }
 
 function currentTime() {
@@ -106,7 +106,7 @@ export function CarWashQueueDisplay() {
     return (
       <div className="cw-display-loading" dir="rtl">
         <Loader2 className="animate-spin" size={34} />
-        <span>جاري تجهيز شاشة التشغيل...</span>
+        <span>ط¬ط§ط±ظٹ طھط¬ظ‡ظٹط² ط´ط§ط´ط© ط§ظ„طھط´ط؛ظٹظ„...</span>
       </div>
     )
   }
@@ -115,27 +115,25 @@ export function CarWashQueueDisplay() {
     <main className="cw-display" dir="rtl">
       <header className="cw-display-header">
         <div className="cw-display-brand">
-          <img src={(company as any)?.logo_url || '/logo-main.png'} alt={company?.name || 'Madar'} />
           <div>
-            <span>مدار OS</span>
-            <strong>{company?.name || 'شاشة تشغيل المغسلة'}</strong>
+            <strong>{company?.name || 'ط´ط§ط´ط© طھط´ط؛ظٹظ„ ط§ظ„ظ…ط؛ط³ظ„ط©'}</strong>
           </div>
         </div>
 
         <div className="cw-display-live">
           <Radio size={18} />
-          <span>مباشر</span>
+          <span>ظ…ط¨ط§ط´ط±</span>
           <strong>{now}</strong>
         </div>
       </header>
 
       <section className="cw-display-hero">
         <div>
-          <span>شاشة السيارات</span>
-          <h1>تابع حالة سيارتك</h1>
+          <span>ط´ط§ط´ط© ط§ظ„ط³ظٹط§ط±ط§طھ</span>
+          <h1>طھط§ط¨ط¹ ط­ط§ظ„ط© ط³ظٹط§ط±طھظƒ</h1>
         </div>
         <div className="cw-display-counter">
-          <small>جاهزة الآن</small>
+          <small>ط¬ط§ظ‡ط²ط© ط§ظ„ط¢ظ†</small>
           <strong>{groups.ready.length.toLocaleString('ar-SA')}</strong>
         </div>
       </section>
@@ -144,8 +142,8 @@ export function CarWashQueueDisplay() {
         <DisplayColumn
           tone="waiting"
           icon={Clock}
-          title="في الانتظار"
-          subtitle="تم الاستلام"
+          title="ظپظٹ ط§ظ„ط§ظ†طھط¸ط§ط±"
+          subtitle="طھظ… ط§ظ„ط§ط³طھظ„ط§ظ…"
           items={groups.waiting}
           allItems={items}
           limit={6}
@@ -153,8 +151,8 @@ export function CarWashQueueDisplay() {
         <DisplayColumn
           tone="working"
           icon={Droplets}
-          title="قيد الخدمة"
-          subtitle="غسيل وتجفيف"
+          title="ظ‚ظٹط¯ ط§ظ„ط®ط¯ظ…ط©"
+          subtitle="ط؛ط³ظٹظ„ ظˆطھط¬ظپظٹظپ"
           items={groups.working}
           allItems={items}
           limit={6}
@@ -162,8 +160,8 @@ export function CarWashQueueDisplay() {
         <DisplayColumn
           tone="ready"
           icon={CheckCircle2}
-          title="جاهزة للاستلام"
-          subtitle="توجه للاستلام"
+          title="ط¬ط§ظ‡ط²ط© ظ„ظ„ط§ط³طھظ„ط§ظ…"
+          subtitle="طھظˆط¬ظ‡ ظ„ظ„ط§ط³طھظ„ط§ظ…"
           items={groups.ready}
           allItems={items}
           limit={8}
@@ -174,11 +172,11 @@ export function CarWashQueueDisplay() {
       <footer className="cw-display-footer">
         <div className="cw-display-footer-title">
           <Sparkles size={18} />
-          <span>آخر السيارات المسلمة</span>
+          <span>ط¢ط®ط± ط§ظ„ط³ظٹط§ط±ط§طھ ط§ظ„ظ…ط³ظ„ظ…ط©</span>
         </div>
         <div className="cw-display-ticker">
           {groups.delivered.length === 0 ? (
-            <span className="cw-display-muted">لا توجد سيارات مسلمة حتى الآن</span>
+            <span className="cw-display-muted">ظ„ط§ طھظˆط¬ط¯ ط³ظٹط§ط±ط§طھ ظ…ط³ظ„ظ…ط© ط­طھظ‰ ط§ظ„ط¢ظ†</span>
           ) : (
             groups.delivered.map(item => (
               <span key={item.id}>{plateCode(items, item)}</span>
@@ -234,7 +232,7 @@ function DisplayColumn({ tone, icon: Icon, title, subtitle, items, allItems, lim
         {visible.length === 0 ? (
           <div className="cw-display-empty">
             <Car size={34} />
-            <span>لا توجد سيارات</span>
+            <span>ظ„ط§ طھظˆط¬ط¯ ط³ظٹط§ط±ط§طھ</span>
           </div>
         ) : (
           visible.map(item => (
@@ -242,7 +240,7 @@ function DisplayColumn({ tone, icon: Icon, title, subtitle, items, allItems, lim
               <div className="cw-display-plate">{getDailyTicketCode(allItems, item.id)}</div>
               <div className="cw-display-car-meta">
                 <strong>{DISPLAY_STATUS[item.status].label}</strong>
-                <span>{item.plate ? `${item.plate} • ` : ''}{item.service_name || item.car_type || 'خدمة مغسلة'}{item.worker?.name ? ` • ${item.worker.name}` : ''}</span>
+                <span>{item.plate ? `${item.plate} â€¢ ` : ''}{item.service_name || item.car_type || 'ط®ط¯ظ…ط© ظ…ط؛ط³ظ„ط©'}{item.worker?.name ? ` â€¢ ${item.worker.name}` : ''}</span>
               </div>
               <small>{minutesSince(item.status === 'delivered' ? (item.delivered_at || item.created_at) : item.created_at)}</small>
             </article>

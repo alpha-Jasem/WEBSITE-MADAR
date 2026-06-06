@@ -28,7 +28,7 @@ const DAYS = [
 ]
 
 const DEFAULT_HOURS: DayHours = Object.fromEntries(
-  DAYS.map(d => [d.key, { open: '08:00', close: '22:00', closed: d.key === 'friday' }])
+  DAYS.map(d => [d.key, { open: '00:00', close: '23:59', closed: false }])
 )
 
 
@@ -190,7 +190,6 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
 
   const ALL_TABS: { key: SetupTab; label: string; icon: LucideIcon }[] = [
     { key: 'services', label: 'الخدمات',     icon: Car     },
-    { key: 'hours',    label: 'أوقات العمل', icon: Clock   },
     { key: 'loyalty',  label: 'الولاء',       icon: Star    },
     { key: 'vat',      label: 'الضريبة',      icon: Receipt },
     { key: 'qr',       label: 'رمز QR',       icon: QrCode  },
@@ -380,29 +379,6 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
             <input value={reviewUrl} onChange={e => setReviewUrl(e.target.value)}
               placeholder="https://maps.app.goo.gl/..." dir="ltr"
               style={{ width: '100%', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 12, padding: '10px 14px', color: '#1E293B', fontSize: 13, fontFamily: 'monospace', outline: 'none', boxSizing: 'border-box' }} />
-          </div>
-          <div style={SECTION_STYLE}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-              <span style={{ fontSize: 15 }}>🎯</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>هدف الإيراد الشهري</span>
-            </div>
-            <p style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginBottom: 14 }}>
-              حدّد الهدف الشهري لإيرادات المغسلة — سيظهر شريط التقدم في لوحة التشغيل.
-            </p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                min={0}
-                value={monthlyTarget}
-                onChange={e => setMonthlyTarget(Math.round(toSafeNumber(sanitizeDecimalInput(e.target.value), 0, 0, 1000000)))}
-                placeholder="5000"
-                dir="ltr"
-                style={{ width: 140, background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: 10, padding: '10px 14px', color: '#0F172A', fontSize: 18, fontFamily: 'Sora, sans-serif', fontWeight: 700, outline: 'none', textAlign: 'center' }}
-              />
-              <span style={{ fontSize: 13, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>ريال سعودي / الشهر</span>
-            </div>
           </div>
           <button onClick={saveLoyalty} disabled={savingLoyalty}
             style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '11px 22px', borderRadius: 12, border: 'none', cursor: 'pointer', background: loyaltySaved ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.12)', color: loyaltySaved ? '#10B981' : '#F59E0B', fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: 700 }}>

@@ -124,6 +124,22 @@ export const ClientSettings = () => {
     }
 
     setUploadingLogo(true)
+    const saveInlineLogo = async () => {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(String(reader.result || ''))
+        reader.onerror = () => reject(reader.error)
+        reader.readAsDataURL(file)
+      })
+      setIdentityLogoUrl(dataUrl)
+      await supabase.from('companies').update({
+        name: identityName.trim() || company?.name,
+        logo_url: dataUrl,
+      } as any).eq('id', companyId)
+      setUploadingLogo(false)
+      setIdentitySaved(true)
+      setTimeout(() => setIdentitySaved(false), 2500)
+    }
     const extension = file.name.split('.').pop()?.toLowerCase() || 'png'
     const path = `${companyId}/logo-${Date.now()}.${extension}`
     const { error } = await supabase.storage.from('company-assets').upload(path, file, {
@@ -132,8 +148,13 @@ export const ClientSettings = () => {
     })
 
     if (error) {
-      setLogoError('تعذر رفع الشعار. حاول مرة ثانية.')
-      setUploadingLogo(false)
+      try {
+        await saveInlineLogo()
+        setLogoError('')
+      } catch {
+        setLogoError('تعذر رفع الشعار. حاول مرة ثانية.')
+        setUploadingLogo(false)
+      }
       return
     }
 
@@ -438,7 +459,6 @@ export const ClientSettings = () => {
           </div>
           {[
             { label: 'الشركة', value: company.name },
-            { label: 'القطاع', value: company.industry === 'car_wash' || company.business_type === 'car_wash' ? 'مغسلة سيارات' : company.industry },
             { label: 'الباقة', value: `${PLAN_LABELS[company.plan] ?? company.plan} — ${(company.message_limit || 2000).toLocaleString()} رسالة/شهر` },
             { label: 'الحالة', value: company.status === 'active' ? 'نشط' : company.status },
             { label: 'الرسائل المستخدمة', value: `${(company.messages_used || 0).toLocaleString()} / ${(company.message_limit || 2000).toLocaleString()}` },
@@ -501,7 +521,7 @@ export const ClientSettings = () => {
         )}
         <div className="p-3 rounded-xl text-xs text-slate-500 font-tajawal space-y-1" style={{ background: '#FAFAFA' }}>
           <p className="font-semibold text-slate-400">مثال على الاستخدام (POST):</p>
-          <pre className="text-[10px] text-slate-600 font-mono" dir="ltr">{`{ "company_name": "شركة X", "phone": "05XXXXXXXX", "sector": "صحة", "source": "موقع" }`}</pre>
+          <pre className="text-[10px] text-slate-600 font-mono" dir="ltr">{`{ "company_name": "شركة X", "phone": "05XXXXXXXX", "source": "موقع" }`}</pre>
         </div>
       </div>}
 
@@ -642,7 +662,7 @@ export const ClientSettings = () => {
       )}
 
       {/* Notifications */}
-      <div className="p-5 rounded-2xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+      {false && <div className="p-5 rounded-2xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
         <div className="flex items-center gap-2.5 mb-1">
           <Bell size={16} className="text-purple-400" />
           <h3 className="text-sm font-bold text-slate-900 font-cairo">الإشعارات</h3>
@@ -658,7 +678,7 @@ export const ClientSettings = () => {
             </button>
           )}
         </div>
-      </div>
+      </div>}
 
       {/* Security */}
       <div className="p-5 rounded-2xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
@@ -680,10 +700,6 @@ export const ClientSettings = () => {
                 className="text-xs text-primary-400 hover:text-primary-300 font-tajawal cursor-pointer">
                 إرسال رابط التغيير
               </button>
-            </div>
-            <div className="flex items-center justify-between py-2">
-              <span className="text-sm text-slate-400 font-tajawal">المصادقة الثنائية</span>
-              <span className="text-xs text-slate-600 font-tajawal">قريباً</span>
             </div>
         </div>
       </div>

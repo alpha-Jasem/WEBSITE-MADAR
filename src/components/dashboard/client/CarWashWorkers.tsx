@@ -34,6 +34,7 @@ export const CarWashWorkers = () => {
   const [editing, setEditing] = useState<CWWorker | null>(null)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
+  const [formError, setFormError] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [unassignedDelivered, setUnassignedDelivered] = useState(0)
 
@@ -82,9 +83,10 @@ export const CarWashWorkers = () => {
     if (!authLoading && companyId) loadData()
   }, [authLoading, companyId])
 
-  const openAdd = () => { setEditing(null); setForm(EMPTY_FORM); setShowForm(true) }
+  const openAdd = () => { setEditing(null); setForm(EMPTY_FORM); setFormError(''); setShowForm(true) }
   const openEdit = (w: CWWorker) => {
     setEditing(w)
+    setFormError('')
     setForm({
       name: w.name,
       phone: w.phone || '',
@@ -99,6 +101,7 @@ export const CarWashWorkers = () => {
   const save = async () => {
     if (!companyId || !form.name.trim()) return
     setSaving(true)
+    setFormError('')
     const payload = {
       name: form.name.trim(),
       phone: form.phone || null,
@@ -107,12 +110,36 @@ export const CarWashWorkers = () => {
       commission_type: form.commission_type,
       commission_value: Number(form.commission_value),
     }
+    const basicPayload = {
+      name: payload.name,
+      phone: payload.phone,
+      commission_type: payload.commission_type,
+      commission_value: payload.commission_value,
+    }
+
+    let result
     if (editing) {
-      await supabase.from('cw_workers').update(payload).eq('id', editing.id)
+      result = await supabase.from('cw_workers').update(payload).eq('id', editing.id).select().single()
+      if (result.error && /salary_type|fixed_salary|schema cache|column/i.test(result.error.message)) {
+        result = await supabase.from('cw_workers').update(basicPayload).eq('id', editing.id).select().single()
+      }
+      if (result.error) {
+        setFormError(result.error.message || 'تعذر حفظ الموظف. حاول مرة ثانية.')
+        setSaving(false)
+        return
+      }
       logAudit(companyId, 'worker_updated', { entityType: 'cw_workers', entityId: editing.id, newValue: payload })
     } else {
-      const { data: inserted } = await supabase.from('cw_workers').insert({ ...payload, company_id: companyId }).select().single()
-      if (inserted) logAudit(companyId, 'worker_updated', { entityType: 'cw_workers', entityId: inserted.id, newValue: payload })
+      result = await supabase.from('cw_workers').insert({ ...payload, company_id: companyId }).select().single()
+      if (result.error && /salary_type|fixed_salary|schema cache|column/i.test(result.error.message)) {
+        result = await supabase.from('cw_workers').insert({ ...basicPayload, company_id: companyId }).select().single()
+      }
+      if (result.error) {
+        setFormError(result.error.message || 'تعذر إضافة الموظف. حاول مرة ثانية.')
+        setSaving(false)
+        return
+      }
+      if (result.data) logAudit(companyId, 'worker_updated', { entityType: 'cw_workers', entityId: result.data.id, newValue: payload })
     }
     setShowForm(false)
     setSaving(false)
@@ -296,6 +323,11 @@ export const CarWashWorkers = () => {
             </div>
 
             <div className="space-y-4">
+              {formError && (
+                <div className="rounded-xl px-3 py-2 text-xs font-bold font-tajawal" style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#B91C1C' }}>
+                  {formError}
+                </div>
+              )}
               <div>
                 <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">الاسم *</label>
                 <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="اسم الموظف" className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-slate-900 placeholder-slate-400 outline-none focus:border-sky-400" style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }} />

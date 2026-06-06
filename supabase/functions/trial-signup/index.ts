@@ -118,6 +118,22 @@ function defaultFeatureFlags() {
   }
 }
 
+function resolveBusinessType(value: unknown) {
+  const raw = String(value || '').trim().toLowerCase()
+  if (raw === 'clinic' || raw === 'medical' || raw === 'dental') {
+    return { businessType: 'clinic', industry: 'clinic', messageLimit: 10000, monthlyTarget: 0 }
+  }
+  return { businessType: 'car_wash', industry: 'car_wash', messageLimit: 10000, monthlyTarget: 20000 }
+}
+
+function defaultCarWashServices(companyId: string) {
+  return [
+    { company_id: companyId, name: 'غسيل خارجي سريع', price: 25, duration_minutes: 15, active: true },
+    { company_id: companyId, name: 'غسيل داخلي وخارجي', price: 45, duration_minutes: 25, active: true },
+    { company_id: companyId, name: 'غسيل بخار كامل', price: 85, duration_minutes: 45, active: true },
+  ]
+}
+
 async function findExistingCompany(supabase: ReturnType<typeof createClient>, email: string, phone: string) {
   const [{ data: byEmail }, { data: byPhone }] = await Promise.all([
     supabase.from('companies').select('id').eq('owner_email', email).limit(1).maybeSingle(),
@@ -156,6 +172,7 @@ Deno.serve(async (req) => {
     const ownerName = String(payload.owner_name || '').trim()
     const city = String(payload.city || '').trim()
     const password = String(payload.password || '')
+    const signupType = resolveBusinessType(payload.business_type)
 
     if (!email.includes('@') || !companyName || !ownerName || password.length < 8) {
       return json({ error: 'missing_required_fields' }, 400)
@@ -204,15 +221,15 @@ Deno.serve(async (req) => {
       .from('companies')
       .insert({
         name: companyName,
-        industry: 'car_wash',
-        business_type: 'car_wash',
+        industry: signupType.industry,
+        business_type: signupType.businessType,
         plan: 'growth',
         status: 'trial',
         owner_name: ownerName,
         owner_email: email,
         owner_phone: phone,
         auth_user_id: authUserId,
-        message_limit: 10000,
+        message_limit: signupType.messageLimit,
         messages_used: 0,
         plan_reset_at: trialEndsAt(),
         public_checkin_token: generateToken(),
@@ -221,7 +238,7 @@ Deno.serve(async (req) => {
         price_includes_vat: true,
         cw_loyalty_threshold: 5,
         cw_automations: automations,
-        cw_monthly_target: 20000,
+        cw_monthly_target: signupType.monthlyTarget,
       })
       .select('*')
       .single()
@@ -238,11 +255,9 @@ Deno.serve(async (req) => {
         full_name: ownerName,
         role: 'client',
       }),
-      supabase.from('cw_services').insert([
-        { company_id: company.id, name: 'غسيل خارجي سريع', price: 25, duration_minutes: 15, active: true },
-        { company_id: company.id, name: 'غسيل داخلي وخارجي', price: 45, duration_minutes: 25, active: true },
-        { company_id: company.id, name: 'غسيل بخار كامل', price: 85, duration_minutes: 45, active: true },
-      ]),
+      signupType.businessType === 'car_wash'
+        ? supabase.from('cw_services').insert(defaultCarWashServices(company.id))
+        : Promise.resolve({ data: null, error: null }),
       supabase.from('logs').insert({
         company_id: company.id,
         level: 'success',
@@ -298,6 +313,7 @@ Deno.serve(async (req) => {
     }
     if (code.length < 4) return json({ error: 'invalid_otp' }, 400)
 
+    const signupType = resolveBusinessType(payload.business_type)
     const verified = await verifyOtpViaTwilio(phone, code)
     if (!verified.ok) return json({ error: verified.error || 'otp_failed', details: verified }, 401)
 
@@ -339,15 +355,15 @@ Deno.serve(async (req) => {
       .from('companies')
       .insert({
         name: companyName,
-        industry: 'car_wash',
-        business_type: 'car_wash',
+        industry: signupType.industry,
+        business_type: signupType.businessType,
         plan: 'growth',
         status: 'trial',
         owner_name: ownerName,
         owner_email: email,
         owner_phone: phone,
         auth_user_id: authUserId,
-        message_limit: 10000,
+        message_limit: signupType.messageLimit,
         messages_used: 0,
         plan_reset_at: trialEndsAt(),
         public_checkin_token: generateToken(),
@@ -356,7 +372,7 @@ Deno.serve(async (req) => {
         price_includes_vat: true,
         cw_loyalty_threshold: 5,
         cw_automations: automations,
-        cw_monthly_target: 20000,
+        cw_monthly_target: signupType.monthlyTarget,
       })
       .select('*')
       .single()
@@ -373,11 +389,9 @@ Deno.serve(async (req) => {
         full_name: ownerName,
         role: 'client',
       }),
-      supabase.from('cw_services').insert([
-        { company_id: company.id, name: 'غسيل خارجي سريع', price: 25, duration_minutes: 15, active: true },
-        { company_id: company.id, name: 'غسيل داخلي وخارجي', price: 45, duration_minutes: 25, active: true },
-        { company_id: company.id, name: 'غسيل بخار كامل', price: 85, duration_minutes: 45, active: true },
-      ]),
+      signupType.businessType === 'car_wash'
+        ? supabase.from('cw_services').insert(defaultCarWashServices(company.id))
+        : Promise.resolve({ data: null, error: null }),
       supabase.from('logs').insert({
         company_id: company.id,
         level: 'success',
