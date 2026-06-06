@@ -403,12 +403,12 @@ export function CarWashLeads() {
       </div>
 
       {/* Table */}
-      <div style={{
+      <div className="cw-leads-table" style={{
         background: '#FAFAFA', border: '1px solid #E2E8F0',
         borderRadius: 18, overflow: 'hidden',
       }}>
         {/* Column headers */}
-        <div style={{
+        <div className="cw-leads-table-head" style={{
           display: 'grid', gridTemplateColumns: '36px 1fr 140px 130px 110px 100px 90px 72px',
           padding: '10px 20px', borderBottom: '1px solid #E2E8F0',
           fontSize: 11, color: '#475569', fontFamily: 'Tajawal, sans-serif',
@@ -436,7 +436,7 @@ export function CarWashLeads() {
           const isMilestone = c.total_visits > 0 && c.total_visits % threshold === 0
           const isNear = c.total_visits % threshold === threshold - 1
           return (
-            <div key={c.id} style={{
+            <div key={c.id} className="cw-leads-table-row" style={{
               display: 'grid', gridTemplateColumns: '36px 1fr 140px 130px 110px 100px 90px 72px',
               padding: '13px 20px', alignItems: 'center',
               borderBottom: i < filtered.length - 1 ? '1px solid #E2E8F0' : 'none',
@@ -516,6 +516,62 @@ export function CarWashLeads() {
                 </button>
               </div>
             </div>
+          )
+        })}
+      </div>
+
+      <div className="cw-leads-mobile-list">
+        {filtered.length === 0 ? (
+          <div className="cw-leads-mobile-empty">
+            {customers.length === 0 ? 'لا يوجد عملاء مسجلون حتى الآن' : 'لا توجد نتائج'}
+          </div>
+        ) : filtered.map(c => {
+          const isInactive = c.last_visit_at && (Date.now() - new Date(c.last_visit_at).getTime()) > 30 * 86400000
+          const isMilestone = c.total_visits > 0 && c.total_visits % threshold === 0
+          const isNear = c.total_visits % threshold === threshold - 1
+          return (
+            <article key={`mobile-${c.id}`} className={`cw-leads-mobile-card${selected.has(c.id) ? ' selected' : ''}`}>
+              <div className="cw-leads-mobile-top">
+                <input
+                  type="checkbox"
+                  checked={selected.has(c.id)}
+                  onChange={() => toggleSelect(c.id)}
+                  aria-label="تحديد العميل"
+                />
+                <div className="cw-leads-mobile-avatar">
+                  {isMilestone ? <Trophy size={15} /> : (c.name || c.phone).slice(0, 1)}
+                </div>
+                <div className="cw-leads-mobile-name">
+                  <strong>{c.name || 'عميل بدون اسم'}</strong>
+                  <span><Phone size={11} /> {formatPhone(c.phone)}</span>
+                </div>
+                <div className="cw-leads-mobile-visits">
+                  <strong>{c.total_visits}</strong>
+                  <span>زيارة</span>
+                </div>
+              </div>
+
+              <div className="cw-leads-mobile-meta">
+                <span style={{ color: TIER_COLORS[c.loyalty_tier] || '#CD7F32', background: `${TIER_COLORS[c.loyalty_tier]}15`, borderColor: `${TIER_COLORS[c.loyalty_tier]}30` }}>
+                  <Star size={10} /> {TIER_LABELS[c.loyalty_tier] || 'برونزي'}
+                </span>
+                {isMilestone && <span className="gold"><Gift size={10} /> يستحق مكافأة</span>}
+                {isNear && !isMilestone && <span className="cyan"><Car size={10} /> قريب من المكافأة</span>}
+                {isInactive && <span className="red"><Clock size={10} /> غير نشط</span>}
+                <span><Clock size={10} /> {timeAgo(c.last_visit_at)}</span>
+              </div>
+
+              <div className="cw-leads-mobile-loyalty">
+                <span>تقدم الولاء</span>
+                <LoyaltyDots visits={c.total_visits} threshold={company?.cw_loyalty_threshold || 5} />
+              </div>
+
+              <div className="cw-leads-mobile-actions">
+                <button type="button" onClick={() => openHistory(c)}><Clock size={12} /> السجل</button>
+                <button type="button" onClick={() => openEdit(c)}><Pencil size={12} /> تعديل</button>
+                <button type="button" className="danger" onClick={() => setDeleteTarget(c)}><Trash2 size={12} /> حذف</button>
+              </div>
+            </article>
           )
         })}
       </div>
