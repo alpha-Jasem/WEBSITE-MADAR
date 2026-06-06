@@ -29,6 +29,7 @@ export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props)
   const [patientSearch, setPatientSearch] = useState('')
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
   const [newPatient, setNewPatient] = useState({ name: '', phone: '' })
+  const [step1Error, setStep1Error] = useState<string | null>(null)
   const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null)
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
@@ -148,17 +149,26 @@ export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props)
           {/* Step 1: Patient */}
           {step === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+              {/* Search existing */}
               <div>
                 <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', fontFamily: 'Cairo, sans-serif', display: 'block', marginBottom: 6 }}>ابحث عن مريض موجود</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '9px 12px' }}>
                   <Search size={14} style={{ color: '#94A3B8' }} />
-                  <input value={patientSearch} onChange={e => setPatientSearch(e.target.value)} placeholder="اسم المريض أو رقم الجوال..." style={{ border: 'none', background: 'transparent', fontSize: 13, color: '#334155', fontFamily: 'Tajawal, sans-serif', outline: 'none', width: '100%', direction: 'rtl' }} />
+                  <input
+                    value={patientSearch}
+                    onChange={e => { setPatientSearch(e.target.value); setSelectedPatient(null); setStep1Error(null) }}
+                    placeholder="اسم المريض أو رقم الجوال..."
+                    style={{ border: 'none', background: 'transparent', fontSize: 13, color: '#334155', fontFamily: 'Tajawal, sans-serif', outline: 'none', width: '100%', direction: 'rtl' }}
+                  />
                 </div>
               </div>
+
+              {/* Search results dropdown */}
               {filteredPatients.length > 0 && (
-                <div style={{ border: '1px solid #E2E8F0', borderRadius: 8, overflow: 'hidden' }}>
+                <div style={{ border: '1px solid #E2E8F0', borderRadius: 8, overflow: 'hidden', marginTop: -8 }}>
                   {filteredPatients.slice(0, 5).map(p => (
-                    <div key={p.id} onClick={() => { setSelectedPatient(p); setPatientSearch(p.name) }} style={{ padding: '10px 14px', cursor: 'pointer', background: selectedPatient?.id === p.id ? '#EEF2FF' : '#FFFFFF', borderBottom: '1px solid #F8FAFC', display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div key={p.id} onClick={() => { setSelectedPatient(p); setPatientSearch(p.name); setStep1Error(null) }} style={{ padding: '10px 14px', cursor: 'pointer', background: selectedPatient?.id === p.id ? '#EEF2FF' : '#FFFFFF', borderBottom: '1px solid #F8FAFC', display: 'flex', alignItems: 'center', gap: 10 }}>
                       <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg, #4F46E580, #4F46E5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <span style={{ fontSize: 13, fontWeight: 800, color: 'white' }}>{(p.name || '؟').charAt(0)}</span>
                       </div>
@@ -171,19 +181,75 @@ export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props)
                   ))}
                 </div>
               )}
+
+              {/* Selected patient badge */}
               {selectedPatient && (
-                <div style={{ padding: '12px 14px', borderRadius: 8, background: '#EEF2FF', border: '1px solid #C7D2FE', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <CheckCircle size={15} style={{ color: '#4F46E5' }} />
-                  <span style={{ fontSize: 13, color: '#4F46E5', fontWeight: 700, fontFamily: 'Cairo, sans-serif' }}>مريض موجود: {selectedPatient.name}</span>
+                <div style={{ padding: '12px 14px', borderRadius: 8, background: '#EEF2FF', border: '1px solid #C7D2FE', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <CheckCircle size={15} style={{ color: '#4F46E5' }} />
+                    <span style={{ fontSize: 13, color: '#4F46E5', fontWeight: 700, fontFamily: 'Cairo, sans-serif' }}>مريض موجود: {selectedPatient.name}</span>
+                  </div>
+                  <button onClick={() => { setSelectedPatient(null); setPatientSearch('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', display: 'flex', alignItems: 'center', padding: 2 }}>
+                    <X size={14} />
+                  </button>
                 </div>
               )}
-              {!selectedPatient && patientSearch.length === 0 && (
+
+              {/* New patient form — always shown when no existing patient selected */}
+              {!selectedPatient && (
                 <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: 14 }}>
-                  <p style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', marginBottom: 10 }}>أو أضف مريض جديد</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <input value={newPatient.name} onChange={e => setNewPatient(p => ({...p, name: e.target.value}))} placeholder="الاسم الكامل" style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', direction: 'rtl' }} />
-                    <input value={newPatient.phone} onChange={e => setNewPatient(p => ({...p, phone: e.target.value}))} placeholder="رقم الجوال" style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', direction: 'rtl' }} />
+                  <p style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif', marginBottom: 10, fontWeight: 600 }}>
+                    {patientSearch.length > 1 && filteredPatients.length === 0 ? 'المريض غير موجود — أدخل بياناته:' : 'أو أضف مريض جديد'}
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {/* Name — required */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <label style={{ fontSize: 12, fontWeight: 700, color: '#374151', fontFamily: 'Cairo, sans-serif' }}>
+                        الاسم الكامل <span style={{ color: '#EF4444' }}>*</span>
+                      </label>
+                      <input
+                        value={newPatient.name}
+                        onChange={e => { setNewPatient(p => ({...p, name: e.target.value})); setStep1Error(null) }}
+                        placeholder="مثال: محمد العتيبي"
+                        style={{
+                          padding: '10px 12px', borderRadius: 8,
+                          border: `1.5px solid ${step1Error && !newPatient.name.trim() ? '#EF4444' : '#E2E8F0'}`,
+                          fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', direction: 'rtl',
+                          background: step1Error && !newPatient.name.trim() ? '#FEF2F2' : '#FFFFFF',
+                        }}
+                      />
+                      {step1Error && !newPatient.name.trim() && (
+                        <span style={{ fontSize: 11, color: '#EF4444', fontFamily: 'Tajawal, sans-serif' }}>يجب إدخال اسم المريض</span>
+                      )}
+                    </div>
+                    {/* Phone — required */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <label style={{ fontSize: 12, fontWeight: 700, color: '#374151', fontFamily: 'Cairo, sans-serif' }}>
+                        رقم الجوال <span style={{ color: '#EF4444' }}>*</span>
+                      </label>
+                      <input
+                        value={newPatient.phone}
+                        onChange={e => { setNewPatient(p => ({...p, phone: e.target.value})); setStep1Error(null) }}
+                        placeholder="05xxxxxxxx"
+                        style={{
+                          padding: '10px 12px', borderRadius: 8,
+                          border: `1.5px solid ${step1Error && !newPatient.phone.trim() ? '#EF4444' : '#E2E8F0'}`,
+                          fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', direction: 'ltr',
+                          background: step1Error && !newPatient.phone.trim() ? '#FEF2F2' : '#FFFFFF',
+                        }}
+                      />
+                      {step1Error && !newPatient.phone.trim() && (
+                        <span style={{ fontSize: 11, color: '#EF4444', fontFamily: 'Tajawal, sans-serif' }}>يجب إدخال رقم الجوال</span>
+                      )}
+                    </div>
                   </div>
+                </div>
+              )}
+
+              {/* General error */}
+              {step1Error && selectedPatient === null && newPatient.name.trim() && newPatient.phone.trim() && (
+                <div style={{ padding: '10px 14px', borderRadius: 8, background: '#FEF2F2', border: '1px solid #FECACA' }}>
+                  <span style={{ fontSize: 12, color: '#DC2626', fontFamily: 'Tajawal, sans-serif' }}>{step1Error}</span>
                 </div>
               )}
             </div>
@@ -308,14 +374,31 @@ export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props)
           ) : <div />}
           {step < 5 ? (
             <button
-              onClick={() => setStep(s => s + 1)}
+              onClick={() => {
+                if (step === 1) {
+                  if (!selectedPatient) {
+                    if (!newPatient.name.trim() && !newPatient.phone.trim()) {
+                      setStep1Error('يجب إدخال اسم المريض ورقم الجوال')
+                      return
+                    }
+                    if (!newPatient.name.trim()) {
+                      setStep1Error('يجب إدخال اسم المريض')
+                      return
+                    }
+                    if (!newPatient.phone.trim()) {
+                      setStep1Error('يجب إدخال رقم الجوال')
+                      return
+                    }
+                  }
+                }
+                setStep(s => s + 1)
+              }}
               disabled={
-                (step === 1 && !selectedPatient && (!newPatient.name || !newPatient.phone)) ||
                 (step === 2 && !selectedService) ||
                 (step === 3 && !selectedDoctor) ||
                 (step === 4 && !selectedSlot)
               }
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 8, background: '#4F46E5', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif', opacity: ((step === 1 && !selectedPatient && (!newPatient.name || !newPatient.phone)) || (step === 2 && !selectedService) || (step === 3 && !selectedDoctor) || (step === 4 && !selectedSlot)) ? 0.4 : 1 }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 8, background: '#4F46E5', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif', opacity: ((step === 2 && !selectedService) || (step === 3 && !selectedDoctor) || (step === 4 && !selectedSlot)) ? 0.4 : 1 }}
             >
               التالي
               <ChevronLeft size={15} />
