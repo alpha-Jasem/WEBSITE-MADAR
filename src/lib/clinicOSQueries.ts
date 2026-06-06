@@ -347,6 +347,14 @@ export async function updateAppointmentStatus(id: string, status: AppointmentSta
   if (error) throw error
 }
 
+export async function updateAppointmentPatient(id: string, patient_name: string, patient_phone: string) {
+  const { error } = await supabase
+    .from('clinic_os_appointments')
+    .update({ patient_name, patient_phone })
+    .eq('id', id)
+  if (error) throw error
+}
+
 export async function createAppointment(data: Partial<Appointment>) {
   const { data: result, error } = await supabase
     .from('clinic_os_appointments')
