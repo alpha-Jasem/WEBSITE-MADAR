@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Stethoscope, Eye, EyeOff, CheckCircle2, ArrowLeft, Loader2, Phone, Mail, Lock, User, Building2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
@@ -36,6 +36,8 @@ const FEATURES = [
 
 export const ClinicOSSignup = () => {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const pkgParam = searchParams.get('pkg') === 'ai_pro' ? 'ai_pro' : 'whatsapp'
   const [form, setForm] = useState<FormData>({ clinic_name: '', owner_name: '', phone: '', email: '', password: '' })
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -77,7 +79,7 @@ export const ClinicOSSignup = () => {
           name: form.clinic_name.trim(),
           industry: 'clinic',
           plan: 'starter',
-          package_type: 'whatsapp',
+          package_type: pkgParam,
           status: 'active',
           owner_name: form.owner_name.trim(),
           owner_email: form.email.trim().toLowerCase(),
@@ -141,8 +143,8 @@ export const ClinicOSSignup = () => {
             </div>
 
             <h1 style={{ fontSize: 'clamp(1.8rem,3.5vw,2.8rem)', fontWeight: 900, color: TEXT, fontFamily: 'Cairo, sans-serif', margin: '0 0 14px', lineHeight: 1.15 }}>
-              باقة واتساب<br />
-              <span style={{ background: 'linear-gradient(125deg, #34D399, #10B981)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              {pkgParam === 'ai_pro' ? 'باقة AI Voice + واتساب' : 'باقة واتساب'}<br />
+              <span style={{ background: pkgParam === 'ai_pro' ? 'linear-gradient(125deg, #A78BFA, #7C3AED)' : 'linear-gradient(125deg, #34D399, #10B981)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                 للعيادات
               </span>
             </h1>

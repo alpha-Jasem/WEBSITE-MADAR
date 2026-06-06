@@ -57,12 +57,12 @@ const PRICING = [
       'دعم إعداد كامل',
     ],
     locked: ['وكيل AI للمكالمات الصوتية', 'تحليلات AI المتقدمة'],
-    cta: 'جرب مجاناً — باقة النمو',
+    cta: 'اشترك في باقة واتساب',
     ctaBg: '#4F46E5',
   },
   {
     id: 'ai_pro',
-    name: 'باقة الحجز الذكي ٢٤/٧',
+    name: 'باقة AI Voice + واتساب',
     price: '١٩,٩٠٠',
     period: 'سنة',
     badge: 'الأكثر طلباً',
@@ -71,7 +71,7 @@ const PRICING = [
     color: '#7C3AED',
     recommended: true,
     features: [
-      'كل مزايا باقة النمو',
+      'كل مزايا باقة واتساب',
       'وكيل AI للمكالمات الصوتية',
       'تحويل المكالمات لحجوزات تلقائياً',
       'تحليلات AI وتقارير ذكية',
@@ -81,7 +81,7 @@ const PRICING = [
       'مدير حساب مخصص',
     ],
     locked: [],
-    cta: 'جرب مجاناً — الحجز الذكي',
+    cta: 'اشترك في باقة AI Voice',
     ctaBg: 'linear-gradient(135deg, #7C3AED, #4F46E5)',
   },
 ]
@@ -100,8 +100,8 @@ export const ClinicOSLanding = () => {
 
   const openWa = (pkg: string) => {
     const msg = pkg === 'ai_pro'
-      ? 'مرحباً، شاهدت ديمو نظام الحجز الذكي وأرغب بالاشتراك في باقة الحجز الذكي 24/7.'
-      : 'مرحباً، شاهدت ديمو نظام الحجز الذكي وأرغب بالاشتراك في باقة نمو الحجوزات.'
+      ? 'مرحباً، شاهدت ديمو نظام الحجز الذكي وأرغب بالاشتراك في باقة AI Voice + واتساب.'
+      : 'مرحباً، شاهدت ديمو نظام الحجز الذكي وأرغب بالاشتراك في باقة واتساب للعيادات.'
     window.open(`https://wa.me/${PHONE}?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
@@ -122,10 +122,10 @@ export const ClinicOSLanding = () => {
           <a href="#pricing" style={{ fontSize: 13, color: '#475569', textDecoration: 'none', fontWeight: 600 }}>الأسعار</a>
           <a href="#how" style={{ fontSize: 13, color: '#475569', textDecoration: 'none', fontWeight: 600 }}>كيف يعمل</a>
           <a href="#faq" style={{ fontSize: 13, color: '#475569', textDecoration: 'none', fontWeight: 600 }}>الأسئلة الشائعة</a>
-          <button onClick={() => navigate('/login')} style={{ padding: '8px 18px', borderRadius: 8, background: '#EEF2FF', color: '#4F46E5', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+          <button onClick={() => navigate('/clinic-os/login')} style={{ padding: '8px 18px', borderRadius: 8, background: '#EEF2FF', color: '#4F46E5', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
             تسجيل الدخول
           </button>
-          <button onClick={() => navigate('/trial')} style={{ padding: '8px 18px', borderRadius: 8, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+          <button onClick={() => navigate('/clinic-os/demo')} style={{ padding: '8px 18px', borderRadius: 8, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
             جرب مجاناً
           </button>
         </div>
@@ -154,7 +154,7 @@ export const ClinicOSLanding = () => {
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <motion.button
               whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-              onClick={() => navigate('/trial')}
+              onClick={() => navigate('/clinic-os/demo')}
               style={{ padding: '14px 32px', borderRadius: 10, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', border: 'none', fontSize: 15, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
             >
               جرب الداشبورد مجاناً <ArrowLeft size={16} />
@@ -327,7 +327,7 @@ export const ClinicOSLanding = () => {
                   ))}
                 </div>
                 <button
-                  onClick={() => navigate('/trial')}
+                  onClick={() => navigate(`/clinic-os/signup?pkg=${pkg.id}`)}
                   style={{ width: '100%', padding: '13px', borderRadius: 10, background: pkg.ctaBg, color: 'white', border: 'none', fontSize: 14, fontWeight: 800, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}
                 >
                   {pkg.cta}
@@ -404,7 +404,7 @@ export const ClinicOSLanding = () => {
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <motion.button
               whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-              onClick={() => navigate('/trial')}
+              onClick={() => navigate('/clinic-os/demo')}
               style={{ padding: '14px 36px', borderRadius: 10, background: 'white', color: '#4F46E5', border: 'none', fontSize: 15, fontWeight: 800, cursor: 'pointer' }}
             >
               جرب الداشبورد مجاناً

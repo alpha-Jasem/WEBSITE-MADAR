@@ -93,6 +93,26 @@ function AppRoutes() {
           <Route path="/clinic-os/signup" element={<ClinicOSSignup />} />
           <Route path="/clinic-os/login"  element={<ClinicOSLogin />} />
 
+          {/* Clinic OS demo — no auth required, isDemo=true */}
+          <Route
+            path="/clinic-os/demo"
+            element={
+              <ClinicOSProvider>
+                <ClinicOSDashboardLayout />
+              </ClinicOSProvider>
+            }
+          >
+            <Route index element={<DashboardOverview />} />
+            <Route path="appointments" element={<Appointments />} />
+            <Route path="ai-booking"   element={<AIBooking />} />
+            <Route path="patients"     element={<Patients />} />
+            <Route path="doctors"      element={<Doctors />} />
+            <Route path="services"     element={<Services />} />
+            <Route path="calendar"     element={<CalendarPage />} />
+            <Route path="messages"     element={<Messages />} />
+            <Route path="settings"     element={<Settings />} />
+          </Route>
+
           {/* Clinic OS dashboard — protected */}
           <Route
             path="/clinic-os/dashboard"
