@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Plus, X, Loader2, TrendingUp, TrendingDown, Wallet, Users, DollarSign, ClipboardCheck, FileDown, Pencil } from 'lucide-react'
+import { Plus, X, Loader2, TrendingUp, TrendingDown, Wallet, Users, DollarSign, ClipboardCheck, FileDown, Pencil, Search, Receipt, Copy } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
@@ -26,6 +26,14 @@ const CATEGORIES: { value: ExpenseCategory; label: string }[] = [
 ]
 
 const EMPTY_FORM = { amount: '', category: 'other' as ExpenseCategory, description: '' }
+const PAYMENT_LABELS: Record<string, string> = {
+  cash: 'كاش',
+  mada: 'مدى',
+  visa: 'فيزا',
+  bank_transfer: 'تحويل',
+  stc_pay: 'STC Pay',
+  other: 'أخرى',
+}
 
 export const CarWashFinance = () => {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -47,6 +55,9 @@ export const CarWashFinance = () => {
   const [deleting, setDeleting] = useState<string | null>(null)
   const [days, setDays] = useState(1)
   const [visitsData, setVisitsData] = useState<any[]>([])
+  const [customerMap, setCustomerMap] = useState<Record<string, { name: string | null; phone: string }>>({})
+  const [invoiceSearch, setInvoiceSearch] = useState('')
+  const [invoicePaymentFilter, setInvoicePaymentFilter] = useState('all')
 
   const today = new Date().toISOString().slice(0, 10)
 
@@ -76,15 +87,16 @@ export const CarWashFinance = () => {
 
     const expFrom = selectedDays === 1 ? today : rangeStart.toISOString().slice(0, 10)
 
-    const [{ data: visits }, { data: queue }, { data: workers }, { data: exps }] = await Promise.all([
+    const [{ data: visits }, { data: queue }, { data: workers }, { data: exps }, { data: customers }] = await Promise.all([
       supabase.from('cw_visits')
-        .select('price, subtotal, vat_amount, total_amount, payment_method, is_free_wash, discount_amount, payment_status, created_at, service_name')
+        .select('id, customer_id, price, subtotal, vat_amount, total_amount, payment_method, is_free_wash, discount_amount, payment_status, created_at, service_name')
         .eq('company_id', companyId)
         .gte('created_at', rangeStart.toISOString())
         .not('payment_status', 'in', '("refunded","cancelled")'),
       supabase.from('cw_queue').select('price, subtotal, worker_id, status').eq('company_id', companyId).eq('status', 'delivered').gte('delivered_at', rangeStart.toISOString()),
       supabase.from('cw_workers').select('id, commission_type, commission_value, salary_type, fixed_salary').eq('company_id', companyId),
       supabase.from('cw_expenses').select('*').eq('company_id', companyId).gte('expense_date', expFrom).order('created_at', { ascending: false }),
+      supabase.from('cw_customers').select('id, name, phone').eq('company_id', companyId),
     ])
 
     const visitTotal = (v: any) => v.is_free_wash ? 0 : Number(v.total_amount ?? ((v.subtotal ?? v.price ?? 0) + (v.vat_amount ?? 0)))
@@ -118,6 +130,7 @@ export const CarWashFinance = () => {
     }, 0)
     setWorkerCost(totalWorkerCost)
     setExpenses((exps || []) as CWExpense[])
+    setCustomerMap(Object.fromEntries((customers || []).map((customer: any) => [customer.id, { name: customer.name, phone: customer.phone }])))
     setLoading(false)
   }
 
@@ -136,6 +149,59 @@ export const CarWashFinance = () => {
       'غسلة مجانية': v.is_free_wash ? 'نعم' : 'لا',
     }))
     downloadCSV(rows, `madar-finance-${today}.csv`)
+  }
+
+  const visitTotal = (v: any) => v.is_free_wash ? 0 : Number(v.total_amount ?? ((v.subtotal ?? v.price ?? 0) + (v.vat_amount ?? 0)))
+  const invoiceRows = visitsData
+    .map((visit: any, index: number) => {
+      const customer = visit.customer_id ? customerMap[visit.customer_id] : null
+      const total = visitTotal(visit)
+      const invoiceNo = `INV-${new Date(visit.created_at).toISOString().slice(0, 10).replaceAll('-', '')}-${String(index + 1).padStart(3, '0')}`
+      return {
+        ...visit,
+        invoiceNo,
+        customerName: customer?.name || customer?.phone || 'عميل غير مسجل',
+        customerPhone: customer?.phone || '',
+        total,
+        vat: Number(visit.vat_amount || 0),
+        subtotalValue: Number(visit.subtotal ?? visit.price ?? 0),
+        paymentLabel: PAYMENT_LABELS[visit.payment_method || 'cash'] || visit.payment_method || 'كاش',
+        statusLabel: visit.payment_status === 'paid' ? 'مدفوعة' : visit.is_free_wash ? 'مجانية' : 'مسجلة',
+      }
+    })
+    .filter((invoice: any) => {
+      const q = invoiceSearch.trim().toLowerCase()
+      const matchesSearch = !q || [invoice.invoiceNo, invoice.customerName, invoice.customerPhone, invoice.service_name, invoice.paymentLabel]
+        .some(value => String(value || '').toLowerCase().includes(q))
+      const matchesPayment = invoicePaymentFilter === 'all' || (invoice.payment_method || 'cash') === invoicePaymentFilter
+      return matchesSearch && matchesPayment
+    })
+  const invoicePaymentOptions = Array.from(new Set(visitsData.map((visit: any) => visit.payment_method || 'cash')))
+  const exportInvoicesCSV = () => {
+    const rows = invoiceRows.map((invoice: any) => ({
+      'رقم الفاتورة': invoice.invoiceNo,
+      'العميل': invoice.customerName,
+      'الجوال': invoice.customerPhone,
+      'الخدمة': invoice.service_name || '',
+      'طريقة الدفع': invoice.paymentLabel,
+      'قبل الضريبة': invoice.subtotalValue.toFixed(2),
+      'VAT': invoice.vat.toFixed(2),
+      'قيمة الفاتورة': invoice.total.toFixed(2),
+      'الحالة': invoice.statusLabel,
+      'التاريخ': formatDateForCSV(invoice.created_at),
+    }))
+    downloadCSV(rows, `madar-sales-invoices-${today}.csv`)
+  }
+  const copyInvoice = async (invoice: any) => {
+    const text = [
+      `فاتورة ${invoice.invoiceNo}`,
+      `العميل: ${invoice.customerName}`,
+      `الخدمة: ${invoice.service_name || 'خدمة مغسلة'}`,
+      `طريقة الدفع: ${invoice.paymentLabel}`,
+      `الإجمالي: ${invoice.total.toFixed(2)} ر.س`,
+      `التاريخ: ${formatDateForCSV(invoice.created_at)}`,
+    ].join('\n')
+    await navigator.clipboard?.writeText(text)
   }
 
   const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0)
@@ -300,6 +366,90 @@ export const CarWashFinance = () => {
         </div>
         {otherRevenue > 0 && (
           <p className="mt-3 text-xs text-slate-500 font-tajawal">يوجد {otherRevenue.toFixed(0)} ر.س في طرق دفع أخرى. راجعها قبل الإغلاق إذا كانت غير واضحة.</p>
+        )}
+      </ClientPanel>
+
+      <ClientPanel title="فواتير المبيعات" description="سجل قابل للتدقيق لكل زيارة مسجلة: العميل، الخدمة، طريقة الدفع، قيمة الفاتورة، والضريبة.">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_auto] gap-3 mb-4">
+          <label className="relative block">
+            <Search size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              value={invoiceSearch}
+              onChange={e => setInvoiceSearch(e.target.value)}
+              placeholder="البحث برقم الفاتورة أو العميل أو الجوال"
+              className="w-full rounded-2xl bg-white py-3 pr-10 pl-4 text-sm text-slate-900 outline-none font-tajawal"
+              style={{ border: '1px solid #DDE8F7' }}
+            />
+          </label>
+          <select
+            value={invoicePaymentFilter}
+            onChange={e => setInvoicePaymentFilter(e.target.value)}
+            className="rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 outline-none font-tajawal"
+            style={{ border: '1px solid #DDE8F7', minWidth: 150 }}
+          >
+            <option value="all">كل طرق الدفع</option>
+            {invoicePaymentOptions.map(method => (
+              <option key={method} value={method}>{PAYMENT_LABELS[method] || method}</option>
+            ))}
+          </select>
+          <ClientButton tone="secondary" onClick={exportInvoicesCSV}>
+            <FileDown size={15} /> تصدير الفواتير
+          </ClientButton>
+        </div>
+
+        {invoiceRows.length === 0 ? (
+          <ClientEmptyState icon={Receipt} title="لا توجد فواتير مطابقة" description="جرّب تغيير البحث أو الفترة المحددة من أعلى الصفحة." />
+        ) : (
+          <div className="overflow-x-auto rounded-2xl" style={{ border: '1px solid #E2E8F0' }}>
+            <table className="min-w-[980px] w-full text-right">
+              <thead style={{ background: '#F8FBFF' }}>
+                <tr>
+                  {['رقم الفاتورة', 'العميل', 'الخدمة', 'طريقة الدفع', 'قيمة الفاتورة', 'VAT', 'المدفوع', 'التاريخ', ''].map(header => (
+                    <th key={header} className="px-4 py-3 text-xs font-black text-slate-500 font-cairo">{header}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="bg-white">
+                {invoiceRows.slice(0, 12).map((invoice: any) => (
+                  <tr key={invoice.id || invoice.invoiceNo} className="border-t border-slate-100">
+                    <td className="px-4 py-3 text-xs font-black text-slate-900 font-sora">{invoice.invoiceNo}</td>
+                    <td className="px-4 py-3">
+                      <strong className="block text-sm text-slate-900 font-tajawal">{invoice.customerName}</strong>
+                      {invoice.customerPhone && <span className="block text-xs text-slate-400 font-sora" dir="ltr">{invoice.customerPhone}</span>}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-700 font-tajawal">{invoice.service_name || 'خدمة مغسلة'}</td>
+                    <td className="px-4 py-3">
+                      <span className="rounded-full px-2.5 py-1 text-xs font-bold font-tajawal" style={{ background: 'rgba(11,99,246,0.08)', color: '#0B63F6' }}>
+                        {invoice.paymentLabel}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm font-black text-slate-900 font-sora">{invoice.total.toFixed(0)} ر.س</td>
+                    <td className="px-4 py-3 text-sm text-slate-500 font-sora">{invoice.vat.toFixed(0)} ر.س</td>
+                    <td className="px-4 py-3 text-sm font-black text-emerald-600 font-sora">{invoice.total.toFixed(0)} ر.س</td>
+                    <td className="px-4 py-3 text-xs text-slate-500 font-tajawal">{formatDateForCSV(invoice.created_at)}</td>
+                    <td className="px-4 py-3">
+                      <button
+                        type="button"
+                        onClick={() => copyInvoice(invoice)}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 hover:text-sky-600"
+                        style={{ border: '1px solid #E2E8F0', background: '#FFFFFF' }}
+                        title="نسخ الفاتورة"
+                        aria-label="نسخ الفاتورة"
+                      >
+                        <Copy size={15} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {invoiceRows.length > 0 && (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 font-tajawal">
+            <span>عدد النتائج: {invoiceRows.length.toLocaleString('ar-SA')}</span>
+            <span>عرض {Math.min(invoiceRows.length, 12).toLocaleString('ar-SA')} من {invoiceRows.length.toLocaleString('ar-SA')}</span>
+          </div>
         )}
       </ClientPanel>
 
