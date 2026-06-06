@@ -434,14 +434,15 @@ export function CarWashOverview() {
 
   return (<div dir="rtl" style={{ color: '#0D1B3E' }}>
       <style>{`
-        .cw-board { direction:ltr; display:grid; grid-template-columns:minmax(0, 1fr) minmax(285px, 320px); grid-template-areas:"main rail" "main ai"; gap:16px; align-items:start; }
+        .cw-board { direction:rtl; display:grid; grid-template-columns:1fr; grid-template-areas:"main" "rail" "ai"; gap:16px; align-items:start; }
         .cw-main,.cw-rail { direction:rtl; display:grid; gap:14px; min-width:0; }
         .cw-main { grid-area:main; }
         .cw-rail-primary { grid-area:rail; }
         .cw-rail-ai { grid-area:ai; }
         .cw-card { background:rgba(255,255,255,.94); border:1px solid #E3EAF6; border-radius:16px; box-shadow:0 16px 42px rgba(13,27,62,.055); }
         .cw-card-pad { padding:16px; }
-        .cw-heading { display:flex; justify-content:space-between; gap:16px; align-items:start; flex-wrap:wrap; padding:4px 2px 0; }
+        .cw-heading { display:grid; grid-template-columns:minmax(260px,1fr) auto; gap:18px; align-items:start; padding:18px; background:linear-gradient(135deg,#FFFFFF 0%,#F4F9FF 100%); border:1px solid #DDE8F7; border-radius:20px; box-shadow:0 18px 48px rgba(13,27,62,.06); }
+        .cw-heading-actions { display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:wrap; max-width:560px; }
         .cw-stat-grid { display:grid; grid-template-columns:repeat(5,minmax(126px,1fr)); gap:12px; }
         .cw-title { margin:0; color:#0D1B3E; font-family:Cairo,sans-serif; font-weight:950; }
         .cw-muted { color:#64748B; font-family:Tajawal,sans-serif; }
@@ -459,48 +460,13 @@ export function CarWashOverview() {
         .cw-revenue-chart { min-width:0; }
         .cw-stage-arrow { position:absolute; left:-15px; top:50%; color:#0D1B3E; font-size:22px; transform:translateY(-50%); }
         @media (max-width: 1500px) { .cw-stat-grid { grid-template-columns:repeat(3,minmax(150px,1fr)); } .cw-insight-grid { grid-template-columns:minmax(280px,1.1fr) minmax(210px,.75fr); } .cw-insight-grid section:last-child { grid-column:1 / -1; } }
-        @media (max-width: 1280px) { .cw-board { grid-template-columns:1fr; grid-template-areas:"main" "rail" "ai"; } .cw-rail-primary,.cw-rail-ai { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+        .cw-rail-primary,.cw-rail-ai { grid-template-columns:repeat(2,minmax(0,1fr)); }
+        @media (max-width: 1280px) { .cw-heading { grid-template-columns:1fr; } .cw-heading-actions { max-width:none; justify-content:flex-start; } }
         @media (max-width: 920px) { .cw-insight-grid { grid-template-columns:1fr; } .cw-insight-grid section:last-child { grid-column:auto; } .cw-flow-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .cw-stage-arrow { display:none; } .cw-rail-primary,.cw-rail-ai { grid-template-columns:1fr; } }
         @media (max-width: 700px) { .cw-stat-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
         @media (max-width: 640px) { .cw-card-pad { padding:14px; } .cw-board,.cw-main,.cw-rail { gap:12px; } .cw-heading { padding:0; } .cw-command-bar { display:grid; grid-template-columns:1fr; gap:8px; align-items:stretch; padding:10px; } .cw-command-group { width:100%; display:grid; gap:8px; flex-wrap:nowrap; } .cw-command-primary { grid-template-columns:repeat(3,minmax(0,1fr)); } .cw-command-tools { grid-template-columns:minmax(118px,1.15fr) minmax(82px,.85fr) minmax(58px,.55fr) minmax(58px,.55fr); } .cw-main-action,.cw-secondary-action,.cw-soft-button,.cw-soft-select { width:100%; min-width:0; } .cw-main-action,.cw-secondary-action { height:38px; padding:0 8px; white-space:nowrap; font-size:11px; } .cw-soft-button,.cw-soft-select { height:34px; padding:0 7px; white-space:nowrap; font-size:10px; justify-content:center; } .cw-revenue-chart .recharts-xAxis .recharts-cartesian-axis-tick:nth-child(even) { display:none; } }
         @media (max-width: 420px) { .cw-stat-grid,.cw-flow-grid,.cw-command-primary { grid-template-columns:1fr; } .cw-command-tools { grid-template-columns:1fr 1fr; } }
       `}</style>
-
-      <section className="cw-command-bar">
-        <div className="cw-command-group cw-command-primary">
-          <Link to="/client/queue" className="cw-main-action">
-            <Plus size={15} /> إضافة سيارة
-          </Link>
-          <Link to="/client/queue" className="cw-secondary-action">
-            <Car size={15} /> لوحة التشغيل
-          </Link>
-          <Link to="/client/reports" className="cw-secondary-action">
-            <TrendingUp size={15} /> التقارير
-          </Link>
-        </div>
-
-        <div className="cw-command-group cw-command-tools" style={{ justifyContent: 'flex-end' }}>
-          <button onClick={() => setShowCustom(v => !v)} className="cw-soft-button">
-            <Calendar size={15} color="#0B63F6" /> {isCustomActive ? `${customFrom} - ${customTo}` : 'اليوم'}
-          </button>
-          <select value={days} onChange={e => { setDays(Number(e.target.value)); setShowCustom(false) }} className="cw-soft-select">
-            {DATE_FILTERS.map(f => <option key={f.days} value={f.days}>{f.label}</option>)}
-          </select>
-          <button onClick={exportPDF} disabled={pdfLoading} className="cw-soft-button" title="تصدير PDF">
-            {pdfLoading ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />} PDF
-          </button>
-          <button onClick={exportSalesCSV} className="cw-soft-button" title="تصدير CSV">
-            <FileText size={15} color="#0D1B3E" /> CSV
-          </button>
-        </div>
-      </section>
-
-      {showCustom && (
-        <div className="cw-card cw-card-pad" style={{ marginBottom: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} style={{ padding: '9px 12px', borderRadius: 10, border: '1px solid #D7E1F0', background: '#F8FBFF', color: '#0D1B3E', fontSize: 12, fontFamily: 'Sora,sans-serif' }} />
-          <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)} style={{ padding: '9px 12px', borderRadius: 10, border: '1px solid #D7E1F0', background: '#F8FBFF', color: '#0D1B3E', fontSize: 12, fontFamily: 'Sora,sans-serif' }} />
-        </div>
-      )}
 
       <div className="cw-board">
         <aside className="cw-rail cw-rail-primary">
@@ -547,9 +513,39 @@ export function CarWashOverview() {
 
         <main className="cw-main">
           <div className="cw-heading">
-            <div><span className="cw-muted" style={{ fontSize: 13, fontWeight: 800 }}>مرحباً بك، {company?.owner_name || 'مدير المغسلة'}</span><h1 className="cw-title" style={{ fontSize: 'clamp(26px, 3vw, 34px)' }}>مركز تشغيل اليوم</h1></div>
-            <div style={{ textAlign: 'left' }}><strong style={{ color: '#0D1B3E', fontFamily: 'Cairo,sans-serif' }}>{todayText}</strong><span className="cw-muted" style={{ display: 'block', fontSize: 12 }}>{company?.name || 'المغسلة'}</span></div>
+            <div>
+              <span className="cw-muted" style={{ fontSize: 13, fontWeight: 800 }}>مرحباً بك، {company?.owner_name || 'مدير المغسلة'}</span>
+              <h1 className="cw-title" style={{ fontSize: 'clamp(26px, 3vw, 34px)' }}>مركز تشغيل اليوم</h1>
+              <p className="cw-muted" style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.8, maxWidth: 560 }}>
+                تابع الاستقبال، السيارات النشطة، الإيراد، العملاء والولاء من شاشة واحدة مرتبة لقرار سريع داخل المغسلة.
+              </p>
+              <div style={{ marginTop: 10 }}>
+                <strong style={{ color: '#0D1B3E', fontFamily: 'Cairo,sans-serif' }}>{todayText}</strong>
+                <span className="cw-muted" style={{ marginInlineStart: 8, fontSize: 12 }}>{company?.name || 'المغسلة'}</span>
+              </div>
+            </div>
+            <div className="cw-heading-actions">
+              <Link to="/client/queue" className="cw-main-action">
+                <Plus size={15} /> إضافة سيارة
+              </Link>
+              <Link to="/client/queue" className="cw-secondary-action">
+                <Car size={15} /> لوحة التشغيل
+              </Link>
+              <button onClick={() => setShowCustom(v => !v)} className="cw-soft-button">
+                <Calendar size={15} color="#0B63F6" /> {isCustomActive ? `${customFrom} - ${customTo}` : 'اليوم'}
+              </button>
+              <select value={days} onChange={e => { setDays(Number(e.target.value)); setShowCustom(false) }} className="cw-soft-select">
+                {DATE_FILTERS.map(f => <option key={f.days} value={f.days}>{f.label}</option>)}
+              </select>
+            </div>
           </div>
+
+          {showCustom && (
+            <div className="cw-card cw-card-pad" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} style={{ padding: '9px 12px', borderRadius: 10, border: '1px solid #D7E1F0', background: '#F8FBFF', color: '#0D1B3E', fontSize: 12, fontFamily: 'Sora,sans-serif' }} />
+              <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)} style={{ padding: '9px 12px', borderRadius: 10, border: '1px solid #D7E1F0', background: '#F8FBFF', color: '#0D1B3E', fontSize: 12, fontFamily: 'Sora,sans-serif' }} />
+            </div>
+          )}
 
           <div className="cw-stat-grid">
             <StatCard icon={DollarSign} label="إجمالي الإيرادات" value={formatSAR(stats.revenue)} sub="ر.س في الفترة" color="#10B981" trend="فعلي" />
