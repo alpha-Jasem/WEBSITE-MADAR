@@ -473,7 +473,7 @@ export const ClinicLanding = () => {
               <div className="flex items-baseline gap-1 mb-8">
                 <span className={`text-4xl font-black ${isAr ? 'font-cairo' : 'font-sora'}`}
                   style={{ color: EM, letterSpacing:'-1px' }}>
-                  {t('٦,٩٠٠', '6,900')}
+                  {t('٩,٩٩٩', '9,999')}
                 </span>
                 <span className={`text-base ${isAr ? 'font-tajawal' : 'font-work'}`}
                   style={{ color: MID }}>
@@ -534,7 +534,7 @@ export const ClinicLanding = () => {
               <div className="flex items-baseline gap-1 mb-8">
                 <span className={`text-4xl font-black ${isAr ? 'font-cairo' : 'font-sora'}`}
                   style={{ color: EM, letterSpacing:'-1px' }}>
-                  {t('١٩,٩٠٠', '19,900')}
+                  {t('١٦,٩٩٩', '16,999')}
                 </span>
                 <span className={`text-base ${isAr ? 'font-tajawal' : 'font-work'}`}
                   style={{ color:'rgba(255,255,255,0.5)' }}>

@@ -168,10 +168,14 @@ export const ClinicOSSignup = () => {
           <div style={{ padding: '18px 20px', borderRadius: 16, background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)' }}>
             <div style={{ fontSize: 11, color: GREEN, fontWeight: 700, fontFamily: 'Cairo, sans-serif', letterSpacing: '0.1em', marginBottom: 6 }}>السعر السنوي</div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-              <span style={{ fontSize: 32, fontWeight: 900, color: TEXT, fontFamily: 'Cairo, sans-serif' }}>٦,٩٠٠</span>
+              <span style={{ fontSize: 32, fontWeight: 900, color: TEXT, fontFamily: 'Cairo, sans-serif' }}>
+                {pkgParam === 'ai_pro' ? '١٦,٩٩٩' : '٩,٩٩٩'}
+              </span>
               <span style={{ fontSize: 14, color: MUTED, fontFamily: 'Tajawal, sans-serif' }}>ريال / سنة</span>
             </div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontFamily: 'Tajawal, sans-serif', marginTop: 4 }}>= ٥٧٥ ريال شهرياً</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontFamily: 'Tajawal, sans-serif', marginTop: 4 }}>
+              = {pkgParam === 'ai_pro' ? '١,٤١٦' : '٨٣٣'} ريال شهرياً
+            </div>
           </div>
 
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', fontFamily: 'Tajawal, sans-serif' }}>

@@ -245,8 +245,8 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { id: 'whatsapp', label: 'باقة واتساب',          color: '#10B981', price: '٦,٩٠٠ / سنة' },
-                    { id: 'ai_pro',   label: 'AI Voice + واتساب',     color: '#7C3AED', price: '١٩,٩٠٠ / سنة' },
+                    { id: 'whatsapp', label: 'باقة واتساب',       color: '#10B981', price: '٩,٩٩٩ / سنة' },
+                    { id: 'ai_pro',   label: 'AI Voice + واتساب', color: '#7C3AED', price: '١٦,٩٩٩ / سنة' },
                   ].map(pkg => (
                     <button key={pkg.id} type="button" onClick={() => setActivePackageType(pkg.id)}
                       className="rounded-2xl p-3 text-center transition-all"

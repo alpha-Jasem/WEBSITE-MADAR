@@ -40,7 +40,7 @@ const PRICING = [
   {
     id: 'whatsapp',
     name: 'باقة واتساب',
-    price: '٦,٩٠٠',
+    price: '٩,٩٩٩',
     period: 'سنة',
     badge: 'عرض إطلاق',
     badgeColor: '#059669',
@@ -63,7 +63,7 @@ const PRICING = [
   {
     id: 'ai_pro',
     name: 'باقة AI Voice + واتساب',
-    price: '١٩,٩٠٠',
+    price: '١٦,٩٩٩',
     period: 'سنة',
     badge: 'الأكثر طلباً',
     badgeColor: '#7C3AED',

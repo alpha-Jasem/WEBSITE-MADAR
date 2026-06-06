@@ -391,7 +391,7 @@ export const Settings = () => {
                 </div>
                 <div style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>حساب نشط</div>
                 <div style={{ marginTop: 12, fontSize: 20, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>
-                  {isAIPro ? '19,900 ريال / سنة' : '6,900 ريال / سنة'}
+                  {isAIPro ? '١٦,٩٩٩ ريال / سنة' : '٩,٩٩٩ ريال / سنة'}
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
