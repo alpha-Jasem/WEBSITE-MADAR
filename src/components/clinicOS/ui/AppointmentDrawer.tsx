@@ -27,13 +27,18 @@ const INFO_ROW = ({ icon: Icon, label, value }: { icon: React.ElementType; label
   </div>
 )
 
-const TIMELINE_EVENTS = [
-  { label: 'تم إنشاء الموعد', done: true },
-  { label: 'تم حجز الجدول', done: true },
-  { label: 'تم إرسال التأكيد عبر واتساب', done: true },
-  { label: 'المريض أكد الحضور', done: true },
-  { label: 'تم تحديد تذكير قبل الموعد', done: true },
-]
+function buildTimeline(appt: Appointment) {
+  const msgSent = ['sent', 'delivered', 'read'].includes(appt.message_status)
+  const patientConfirmed = ['confirmed', 'checked_in', 'completed'].includes(appt.status)
+  const reminderSet = patientConfirmed
+  return [
+    { label: 'تم إنشاء الموعد', done: true },
+    { label: 'تم حجز الجدول', done: true },
+    { label: 'تم إرسال التأكيد عبر واتساب', done: msgSent },
+    { label: 'المريض أكد الحضور', done: patientConfirmed },
+    { label: 'تم تحديد تذكير قبل الموعد', done: reminderSet },
+  ]
+}
 
 export const AppointmentDrawer = ({ appointment, onClose, onConfirm, onCancel }: AppointmentDrawerProps) => {
   const { showToast } = useToast()
@@ -176,7 +181,7 @@ export const AppointmentDrawer = ({ appointment, onClose, onConfirm, onCancel }:
           {/* Timeline */}
           <div style={{ marginTop: 20 }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: '#64748B', fontFamily: 'Cairo, sans-serif', marginBottom: 12 }}>سجل النشاط</div>
-            {TIMELINE_EVENTS.map((ev, i) => (
+            {buildTimeline(appointment).map((ev, i) => (
               <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 8 }}>
                 <CheckCircle size={14} style={{ color: ev.done ? '#059669' : '#CBD5E1', flexShrink: 0 }} />
                 <span style={{ fontSize: 12, color: ev.done ? '#334155' : '#CBD5E1', fontFamily: 'Tajawal, sans-serif' }}>{ev.label}</span>
