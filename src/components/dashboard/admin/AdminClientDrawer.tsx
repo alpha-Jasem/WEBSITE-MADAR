@@ -100,6 +100,7 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
   const [saving, setSaving] = useState(false)
   const [feedback, setFeedback] = useState('')
   const [activePlan, setActivePlan] = useState<Plan>(company.plan)
+  const [activePackageType, setActivePackageType] = useState<string>(company.package_type || 'whatsapp')
   const [flags, setFlags] = useState<Record<string, boolean>>(() => {
     const stored = ((company.cw_automations as any)?.feature_flags || {}) as Record<string, boolean>
     return {
@@ -121,7 +122,8 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
   const changed = useMemo(() => {
     const stored = ((company.cw_automations as any)?.feature_flags || {}) as Record<string, boolean>
     const flagsChanged = FEATURE_FLAGS.some(item => (stored[item.key] ?? (item.key === 'cash_pos')) !== flags[item.key])
-    return activePlan !== company.plan || flagsChanged
+    const packageChanged = activePackageType !== (company.package_type || 'whatsapp')
+    return activePlan !== company.plan || flagsChanged || packageChanged
   }, [activePlan, company, flags])
 
   const save = async () => {
@@ -136,6 +138,7 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
         plan: activePlan,
         message_limit: PLAN_CONFIG[activePlan].limit,
         cw_automations: nextAutomations,
+        ...(company.industry === 'clinic' ? { package_type: activePackageType } : {}),
       } as any)
       .eq('id', company.id)
 
@@ -234,29 +237,50 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
               {company.owner_phone && <ContactRow icon={Phone} label="الجوال" value={company.owner_phone} />}
             </section>
 
-            <section className="rounded-3xl bg-white p-5" style={{ border: '1px solid #E2E8F0' }}>
-              <div className="mb-4 flex items-center gap-2">
-                <CreditCard size={16} className="text-blue-600" />
-                <h3 className="text-sm font-bold text-slate-900 font-cairo">الباقة</h3>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {(Object.entries(PLAN_CONFIG) as [Plan, typeof PLAN_CONFIG[Plan]][]).map(([id, item]) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setActivePlan(id)}
-                    className="rounded-2xl p-3 text-center transition-all"
-                    style={{
-                      border: `1px solid ${activePlan === id ? item.color : '#E2E8F0'}`,
-                      background: activePlan === id ? `${item.color}12` : '#FFFFFF',
-                    }}
-                  >
-                    <strong className="block text-sm font-black font-sora" style={{ color: item.color }}>{item.label}</strong>
-                    <span className="mt-1 block text-[11px] text-slate-500 font-tajawal">{item.price} ر.س</span>
-                  </button>
-                ))}
-              </div>
-            </section>
+            {company.industry === 'clinic' ? (
+              <section className="rounded-3xl bg-white p-5" style={{ border: '1px solid #E2E8F0' }}>
+                <div className="mb-4 flex items-center gap-2">
+                  <CreditCard size={16} className="text-blue-600" />
+                  <h3 className="text-sm font-bold text-slate-900 font-cairo">باقة العيادة</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: 'whatsapp', label: 'باقة واتساب',          color: '#10B981', price: '٦,٩٠٠ / سنة' },
+                    { id: 'ai_pro',   label: 'AI Voice + واتساب',     color: '#7C3AED', price: '١٩,٩٠٠ / سنة' },
+                  ].map(pkg => (
+                    <button key={pkg.id} type="button" onClick={() => setActivePackageType(pkg.id)}
+                      className="rounded-2xl p-3 text-center transition-all"
+                      style={{
+                        border: `1px solid ${activePackageType === pkg.id ? pkg.color : '#E2E8F0'}`,
+                        background: activePackageType === pkg.id ? `${pkg.color}12` : '#FFFFFF',
+                      }}>
+                      <strong className="block text-sm font-black font-cairo" style={{ color: pkg.color }}>{pkg.label}</strong>
+                      <span className="mt-1 block text-[11px] text-slate-500 font-tajawal">{pkg.price}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            ) : (
+              <section className="rounded-3xl bg-white p-5" style={{ border: '1px solid #E2E8F0' }}>
+                <div className="mb-4 flex items-center gap-2">
+                  <CreditCard size={16} className="text-blue-600" />
+                  <h3 className="text-sm font-bold text-slate-900 font-cairo">الباقة</h3>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {(Object.entries(PLAN_CONFIG) as [Plan, typeof PLAN_CONFIG[Plan]][]).map(([id, item]) => (
+                    <button key={id} type="button" onClick={() => setActivePlan(id)}
+                      className="rounded-2xl p-3 text-center transition-all"
+                      style={{
+                        border: `1px solid ${activePlan === id ? item.color : '#E2E8F0'}`,
+                        background: activePlan === id ? `${item.color}12` : '#FFFFFF',
+                      }}>
+                      <strong className="block text-sm font-black font-sora" style={{ color: item.color }}>{item.label}</strong>
+                      <span className="mt-1 block text-[11px] text-slate-500 font-tajawal">{item.price} ر.س</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
 
             <section className="rounded-3xl bg-white p-5" style={{ border: '1px solid #E2E8F0' }}>
               <div className="mb-4 flex items-center justify-between gap-3">
