@@ -80,7 +80,7 @@ export const ClinicOSSignup = () => {
           industry: 'clinic',
           plan: 'starter',
           package_type: pkgParam,
-          status: 'active',
+          status: 'trial',
           owner_name: form.owner_name.trim(),
           owner_email: form.email.trim().toLowerCase(),
           owner_phone: form.phone.trim(),
@@ -101,7 +101,7 @@ export const ClinicOSSignup = () => {
       })
 
       setDone(true)
-      // Auto-redirect after 2s
+      // Auto-redirect to dashboard — status=trial so isDemo=true until admin activates
       setTimeout(() => navigate('/clinic-os/dashboard'), 2000)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'حدث خطأ، حاول مرة أخرى'
