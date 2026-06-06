@@ -132,6 +132,24 @@ function Sparkline({ data, color = '#0B63F6' }: { data: Array<{ date: string; vi
   )
 }
 
+function BreakdownRow({ label, value, hint, color, max }: { label: string; value: number; hint: string; color: string; max: number }) {
+  const width = max > 0 ? Math.max(7, Math.min(100, (value / max) * 100)) : 0
+  return (
+    <div style={{ display: 'grid', gap: 7 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+        <span style={{ minWidth: 0 }}>
+          <strong style={{ display: 'block', color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</strong>
+          <em className="cw-muted" style={{ display: 'block', fontSize: 10, fontStyle: 'normal' }}>{hint}</em>
+        </span>
+        <strong style={{ color: '#0D1B3E', fontSize: 13, fontFamily: 'Sora,sans-serif', whiteSpace: 'nowrap' }}>{Math.round(value).toLocaleString('ar-SA')} ر.س</strong>
+      </div>
+      <div style={{ height: 6, borderRadius: 999, background: '#EAF1FA', overflow: 'hidden' }}>
+        <span style={{ display: 'block', width: `${width}%`, height: '100%', borderRadius: 999, background: color }} />
+      </div>
+    </div>
+  )
+}
+
 export function CarWashOverview() {
   const { companyId, company, loading: authLoading } = useClientCompany()
   const threshold = (company as any)?.cw_loyalty_threshold || 5
@@ -457,10 +475,23 @@ export function CarWashOverview() {
   const paymentRows = Object.entries(stats.paymentBreakdown)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 4)
+  const paymentLabels: Record<string, string> = {
+    cash: 'كاش',
+    mada: 'مدى',
+    visa: 'فيزا',
+    bank_transfer: 'تحويل',
+    stc_pay: 'STC Pay',
+    other: 'أخرى',
+  }
   const paymentPie = paymentRows.length
     ? paymentRows.map(([name, value]) => ({ name, value }))
     : [{ name: 'لا توجد مدفوعات', value: 1 }]
   const expectedActiveRevenue = stats.activeQueue.reduce((sum, item) => sum + (item.total_amount || item.subtotal || item.price || stats.avgInvoice || 0), 0)
+  const topServiceRevenue = stats.revenueServices.slice(0, 4)
+  const topWorkerRevenue = stats.workerStats.slice(0, 4)
+  const maxServiceRevenue = Math.max(1, ...topServiceRevenue.map(item => item.value))
+  const maxPaymentRevenue = Math.max(1, ...paymentRows.map(([, value]) => value))
+  const maxWorkerRevenue = Math.max(1, ...topWorkerRevenue.map(item => item.revenue))
   const todayText = new Date().toLocaleDateString('ar-SA', { day: 'numeric', month: 'long', weekday: 'long' })
 
   return (<div dir="rtl" style={{ color: '#0D1B3E' }}>
@@ -487,13 +518,14 @@ export function CarWashOverview() {
         .cw-soft-button { height:36px; border-radius:11px; border:1px solid #D7E1F0; background:#fff; padding:0 11px; display:inline-flex; align-items:center; gap:7px; color:#0D1B3E; font-weight:900; font-size:11px; font-family:Tajawal,sans-serif; cursor:pointer; }
         .cw-soft-select { height:36px; border-radius:11px; border:1px solid #D7E1F0; background:#fff; padding:0 10px; color:#0D1B3E; font-weight:900; font-size:11px; font-family:Tajawal,sans-serif; }
         .cw-insight-grid { display:grid; grid-template-columns:minmax(290px, 1.1fr) minmax(220px, .8fr) minmax(190px, .65fr); gap:14px; }
+        .cw-sales-breakdown-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
         .cw-flow-grid { display:grid; grid-template-columns:repeat(4,minmax(118px,1fr)); gap:14px; align-items:center; }
         .cw-revenue-chart { min-width:0; }
         .cw-stage-arrow { position:absolute; left:-15px; top:50%; color:#0D1B3E; font-size:22px; transform:translateY(-50%); }
         @media (max-width: 1500px) { .cw-stat-grid { grid-template-columns:repeat(3,minmax(150px,1fr)); } .cw-insight-grid { grid-template-columns:minmax(280px,1.1fr) minmax(210px,.75fr); } .cw-insight-grid section:last-child { grid-column:1 / -1; } }
         .cw-rail-primary,.cw-rail-ai { grid-template-columns:repeat(2,minmax(0,1fr)); }
         @media (max-width: 1280px) { .cw-heading { grid-template-columns:1fr; } .cw-heading-actions { max-width:none; justify-content:flex-start; } }
-        @media (max-width: 920px) { .cw-insight-grid { grid-template-columns:1fr; } .cw-insight-grid section:last-child { grid-column:auto; } .cw-flow-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .cw-stage-arrow { display:none; } .cw-rail-primary,.cw-rail-ai { grid-template-columns:1fr; } }
+        @media (max-width: 920px) { .cw-insight-grid,.cw-sales-breakdown-grid { grid-template-columns:1fr; } .cw-insight-grid section:last-child { grid-column:auto; } .cw-flow-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .cw-stage-arrow { display:none; } .cw-rail-primary,.cw-rail-ai { grid-template-columns:1fr; } }
         @media (max-width: 700px) { .cw-stat-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
         @media (max-width: 640px) { .cw-card-pad { padding:14px; } .cw-board,.cw-main,.cw-rail { gap:12px; } .cw-heading { padding:0; } .cw-command-bar { display:grid; grid-template-columns:1fr; gap:8px; align-items:stretch; padding:10px; } .cw-command-group { width:100%; display:grid; gap:8px; flex-wrap:nowrap; } .cw-command-primary { grid-template-columns:repeat(3,minmax(0,1fr)); } .cw-command-tools { grid-template-columns:minmax(118px,1.15fr) minmax(82px,.85fr) minmax(58px,.55fr) minmax(58px,.55fr); } .cw-main-action,.cw-secondary-action,.cw-soft-button,.cw-soft-select { width:100%; min-width:0; } .cw-main-action,.cw-secondary-action { height:38px; padding:0 8px; white-space:nowrap; font-size:11px; } .cw-soft-button,.cw-soft-select { height:34px; padding:0 7px; white-space:nowrap; font-size:10px; justify-content:center; } .cw-revenue-chart .recharts-xAxis .recharts-cartesian-axis-tick:nth-child(even) { display:none; } }
         @media (max-width: 420px) { .cw-stat-grid,.cw-flow-grid,.cw-command-primary { grid-template-columns:1fr; } .cw-command-tools { grid-template-columns:1fr 1fr; } }
@@ -586,6 +618,42 @@ export function CarWashOverview() {
             <StatCard icon={Users} label="العملاء المسجلون" value={customers.length} sub={`${stats.returningCustomers} عائدون`} color="#F97316" trend="CRM" />
             <StatCard icon={Star} label="مكافآت الولاء" value={Math.max(stats.milestones, 0)} sub={`هدف ${threshold} زيارات`} color="#38BDF8" trend="ولاء" />
           </div>
+
+          <SectionCard
+            title="تفصيل المبيعات"
+            icon={Activity}
+            action={<Link to="/client/reports" style={{ color: '#0B63F6', fontSize: 12, fontWeight: 900, fontFamily: 'Tajawal,sans-serif', textDecoration: 'none' }}>عرض التقارير</Link>}
+          >
+            <div className="cw-sales-breakdown-grid">
+              <div style={{ display: 'grid', gap: 13 }}>
+                <div>
+                  <strong style={{ color: '#0D1B3E', fontSize: 13, fontFamily: 'Cairo,sans-serif' }}>حسب الخدمات</strong>
+                  <p className="cw-muted" style={{ margin: '3px 0 0', fontSize: 11 }}>أكثر الخدمات تحقيقاً للإيراد</p>
+                </div>
+                {topServiceRevenue.length ? topServiceRevenue.map((item, i) => (
+                  <BreakdownRow key={item.name} label={item.name} value={item.value} hint={`${item.count} سيارة`} color={serviceColors[i % serviceColors.length]} max={maxServiceRevenue} />
+                )) : <span className="cw-muted" style={{ fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>لا توجد مبيعات خدمات في الفترة.</span>}
+              </div>
+              <div style={{ display: 'grid', gap: 13 }}>
+                <div>
+                  <strong style={{ color: '#0D1B3E', fontSize: 13, fontFamily: 'Cairo,sans-serif' }}>حسب طرق الدفع</strong>
+                  <p className="cw-muted" style={{ margin: '3px 0 0', fontSize: 11 }}>الكاش، مدى، التحويل وباقي القنوات</p>
+                </div>
+                {paymentRows.length ? paymentRows.map(([name, value], i) => (
+                  <BreakdownRow key={name} label={paymentLabels[name] || name} value={value} hint="محصل في الفترة" color={serviceColors[(i + 1) % serviceColors.length]} max={maxPaymentRevenue} />
+                )) : <span className="cw-muted" style={{ fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>لا توجد مدفوعات في الفترة.</span>}
+              </div>
+              <div style={{ display: 'grid', gap: 13 }}>
+                <div>
+                  <strong style={{ color: '#0D1B3E', fontSize: 13, fontFamily: 'Cairo,sans-serif' }}>حسب الموظفين</strong>
+                  <p className="cw-muted" style={{ margin: '3px 0 0', fontSize: 11 }}>أداء الفريق المرتبط بالزيارات</p>
+                </div>
+                {topWorkerRevenue.length ? topWorkerRevenue.map((item, i) => (
+                  <BreakdownRow key={item.id} label={item.name} value={item.revenue} hint={`${item.count} سيارة`} color={serviceColors[(i + 2) % serviceColors.length]} max={maxWorkerRevenue} />
+                )) : <Link to="/client/workers" className="cw-link" style={{ display: 'block', border: '1px dashed #D7E1F0', borderRadius: 14, padding: 14, textAlign: 'center', color: '#64748B', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>عيّن الموظف للسيارات حتى يظهر تفصيل المبيعات حسب الفريق.</Link>}
+              </div>
+            </div>
+          </SectionCard>
 
           <div className="cw-card cw-card-pad">
             <h2 className="cw-title" style={{ fontSize: 18, marginBottom: 18 }}>حالة السيارات اليوم</h2>
