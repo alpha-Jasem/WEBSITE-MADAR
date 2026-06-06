@@ -5513,23 +5513,40 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 }
 
 .dash-shell-client .dash-sidebar-client .dash-nav-link {
-  color: var(--d-text2);
+  color: #334155;
+  font-family: 'Tajawal', 'Sora', sans-serif;
+  font-weight: 800;
+  letter-spacing: 0;
+  border-color: rgba(148,163,184,0.12);
 }
 
 .dash-shell-client .dash-sidebar-client .dash-nav-link:hover {
-  background: rgba(99,102,241,0.07);
-  color: var(--d-accent);
+  background: rgba(0,143,232,0.08);
+  color: #0B63F6;
+  border-color: rgba(0,143,232,0.16);
 }
 
 .dash-shell-client .dash-sidebar-client .dash-nav-link.active {
-  background: rgba(99,102,241,0.1) !important;
-  border-color: rgba(99,102,241,0.22);
-  color: #4338CA;
-  box-shadow: 0 1px 6px rgba(99,102,241,0.14);
+  background: linear-gradient(135deg, #0B63F6 0%, #008FE8 100%) !important;
+  border-color: rgba(11,99,246,0.34);
+  color: #FFFFFF;
+  box-shadow: 0 12px 26px rgba(11,99,246,0.22);
+  font-weight: 900;
+}
+
+.dash-shell-client .dash-sidebar-client .dash-nav-link.active::before {
+  content: "";
+  position: absolute;
+  inset-block: 10px;
+  inset-inline-start: 8px;
+  width: 4px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.85);
 }
 
 .dash-shell-client .dash-sidebar-client .dash-nav-link.active .dash-nav-icon {
-  color: #4338CA;
+  background: rgba(255,255,255,0.18);
+  color: #FFFFFF;
   filter: none;
 }
 
