@@ -1,7 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
-import { Activity, AlertTriangle, Calendar, CalendarClock, Car, CheckCircle2, DollarSign, Download, FileText, Loader2, Plus, Sparkles, Star, TrendingUp, Users, Wrench } from 'lucide-react'
+import { Activity, AlertTriangle, Calendar, CalendarClock, Car, CheckCircle2, DollarSign, Download, FileText, Loader2, Plus, Sparkles, Star, TrendingDown, TrendingUp, Users, Wrench } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { downloadCSV, formatDateForCSV } from '../../../lib/exportUtils'
@@ -21,8 +21,16 @@ type CWVisit = {
   worker_id: string | null
 }
 
-type CWWorker = { id: string; name: string }
+type CWWorker = {
+  id: string
+  name: string
+  commission_type?: 'fixed' | 'percentage' | null
+  commission_value?: number | null
+  salary_type?: 'fixed' | 'commission' | null
+  fixed_salary?: number | null
+}
 type CWServiceLite = { id: string; name: string; active: boolean }
+type CWExpenseLite = { amount: number; expense_date: string }
 type CWQueueOverviewItem = {
   id: string
   created_at: string
@@ -138,6 +146,7 @@ export function CarWashOverview() {
   const [customTo, setCustomTo] = useState('')
   const [showCustom, setShowCustom] = useState(false)
   const [workers, setWorkers] = useState<CWWorker[]>([])
+  const [expenses, setExpenses] = useState<CWExpenseLite[]>([])
 
   const DATE_FILTERS = [
     { label: 'اليوم', days: 1 },
@@ -164,7 +173,9 @@ export function CarWashOverview() {
       }
       const todayStart = new Date()
       todayStart.setHours(0, 0, 0, 0)
-      const [{ data: v }, { data: c }, { data: w }, { data: q }, { data: s }] = await Promise.all([
+      const expenseFrom = since.toISOString().slice(0, 10)
+      const expenseTo = until.toISOString().slice(0, 10)
+      const [{ data: v }, { data: c }, { data: w }, { data: q }, { data: s }, { data: exps }] = await Promise.all([
         supabase.from('cw_visits').select('id, created_at, price, subtotal, vat_amount, payment_method, is_free_wash, discount_amount, service_name, customer_id, worker_id')
           .eq('company_id', companyId)
           .gte('created_at', since.toISOString())
@@ -174,18 +185,20 @@ export function CarWashOverview() {
           .eq('company_id', companyId)
           .order('total_visits', { ascending: false })
           .limit(50),
-        supabase.from('cw_workers').select('id, name').eq('company_id', companyId),
+        supabase.from('cw_workers').select('id, name, commission_type, commission_value, salary_type, fixed_salary').eq('company_id', companyId),
         supabase.from('cw_queue').select('id, created_at, started_at, delivered_at, customer_name, phone, service_name, price, subtotal, total_amount, worker_id, status, payment_status, notes')
           .eq('company_id', companyId)
           .gte('created_at', todayStart.toISOString())
           .order('created_at', { ascending: true }),
         supabase.from('cw_services').select('id, name, active').eq('company_id', companyId).order('created_at', { ascending: true }),
+        supabase.from('cw_expenses').select('amount, expense_date').eq('company_id', companyId).gte('expense_date', expenseFrom).lte('expense_date', expenseTo),
       ])
       setVisits((v as CWVisit[]) || [])
       setCustomers((c as CWCustomer[]) || [])
       setWorkers((w as CWWorker[]) || [])
       setQueueItems((q as CWQueueOverviewItem[]) || [])
       setServices((s as CWServiceLite[]) || [])
+      setExpenses((exps as CWExpenseLite[]) || [])
       setLoading(false)
     }
     load()
@@ -195,6 +208,9 @@ export function CarWashOverview() {
     const now = new Date()
     const todayStr = now.toISOString().slice(0, 10)
     const thisMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const selectedDaysCount = isCustomActive && customFrom && customTo
+      ? Math.max(1, Math.ceil((new Date(customTo + 'T23:59:59').getTime() - new Date(customFrom + 'T00:00:00').getTime()) / 86400000))
+      : days
 
     const todayVisits = visits.filter(v => v.created_at.startsWith(todayStr)).length
     const todayQueueItems = queueItems.filter(item => isToday(item.created_at) || isToday(item.delivered_at))
@@ -212,6 +228,21 @@ export function CarWashOverview() {
     }
     const monthVisits = visits.filter(v => v.created_at.startsWith(thisMonthStr)).length
     const revenue = visits.reduce((sum, v) => sum + (v.subtotal ?? v.price ?? 0), 0)
+    const totalExpenses = expenses.reduce((sum, item) => sum + Number(item.amount || 0), 0)
+    const workersMap = Object.fromEntries(workers.map(worker => [worker.id, worker]))
+    const workerCost = visits.reduce((sum, visit) => {
+      const worker = visit.worker_id ? workersMap[visit.worker_id] : null
+      if (!worker) return sum
+      const visitRevenue = visit.subtotal ?? visit.price ?? 0
+      if (worker.salary_type === 'fixed') return sum
+      if (worker.commission_type === 'fixed') return sum + Number(worker.commission_value || 0)
+      return sum + (visitRevenue * Number(worker.commission_value || 0)) / 100
+    }, 0) + workers.reduce((sum, worker) => {
+      if (worker.salary_type !== 'fixed') return sum
+      return sum + (Number(worker.fixed_salary || 0) / 30) * Math.min(selectedDaysCount, 30)
+    }, 0)
+    const netProfit = revenue - totalExpenses - workerCost
+    const netMargin = revenue > 0 ? Math.round((netProfit / revenue) * 100) : 0
     const milestones = customers.filter(c => c.total_visits > 0 && c.total_visits % threshold === 0).length
     const freeWashCount = visits.filter(v => v.is_free_wash).length
     const freeWashDiscount = visits.filter(v => v.is_free_wash).reduce((s, v) => s + (v.discount_amount || 0), 0)
@@ -277,8 +308,8 @@ export function CarWashOverview() {
       return { id: w.id, name: w.name, count: wVisits.length, revenue }
     }).filter(w => w.count > 0).sort((a, b) => b.count - a.count)
 
-    return { todayVisits, monthVisits, revenue, milestones, dailyChart, services, revenueServices, freeWashCount, freeWashDiscount, paymentBreakdown, workerStats, returningCustomers, retentionRate, avgInvoice, heatmap, queueStatusCounts, activeQueue, readyQueue, deliveredQueue, todayQueueItems }
-  }, [visits, customers, workers, queueItems, days])
+    return { todayVisits, monthVisits, revenue, totalExpenses, workerCost, netProfit, netMargin, milestones, dailyChart, services, revenueServices, freeWashCount, freeWashDiscount, paymentBreakdown, workerStats, returningCustomers, retentionRate, avgInvoice, heatmap, queueStatusCounts, activeQueue, readyQueue, deliveredQueue, todayQueueItems }
+  }, [visits, customers, workers, expenses, queueItems, days, isCustomActive, customFrom, customTo])
 
   const topCustomers = customers.slice(0, 8)
 
@@ -443,7 +474,7 @@ export function CarWashOverview() {
         .cw-card-pad { padding:16px; }
         .cw-heading { display:grid; grid-template-columns:minmax(260px,1fr) auto; gap:18px; align-items:start; padding:18px; background:linear-gradient(135deg,#FFFFFF 0%,#F4F9FF 100%); border:1px solid #DDE8F7; border-radius:20px; box-shadow:0 18px 48px rgba(13,27,62,.06); }
         .cw-heading-actions { display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:wrap; max-width:560px; }
-        .cw-stat-grid { display:grid; grid-template-columns:repeat(5,minmax(126px,1fr)); gap:12px; }
+        .cw-stat-grid { display:grid; grid-template-columns:repeat(6,minmax(126px,1fr)); gap:12px; }
         .cw-title { margin:0; color:#0D1B3E; font-family:Cairo,sans-serif; font-weight:950; }
         .cw-muted { color:#64748B; font-family:Tajawal,sans-serif; }
         .cw-link { text-decoration:none; color:inherit; }
@@ -549,6 +580,7 @@ export function CarWashOverview() {
 
           <div className="cw-stat-grid">
             <StatCard icon={DollarSign} label="إجمالي الإيرادات" value={formatSAR(stats.revenue)} sub="ر.س في الفترة" color="#10B981" trend="فعلي" />
+            <StatCard icon={TrendingDown} label="صافي الربح" value={Math.round(stats.netProfit).toLocaleString('ar-SA')} sub={`${stats.netMargin}% هامش`} color={stats.netProfit >= 0 ? '#0B63F6' : '#EF4444'} trend={stats.netProfit >= 0 ? 'بعد التكاليف' : 'راجع المصاريف'} />
             <StatCard icon={Car} label="سيارات اليوم" value={displayCars} sub={`${stats.queueStatusCounts.active} نشطة الآن`} color="#0B63F6" trend="اليوم" />
             <StatCard icon={CalendarClock} label="متوسط الفاتورة" value={stats.avgInvoice || 0} sub="ر.س" color="#7C3AED" trend="محسوب" />
             <StatCard icon={Users} label="العملاء المسجلون" value={customers.length} sub={`${stats.returningCustomers} عائدون`} color="#F97316" trend="CRM" />

@@ -5,6 +5,7 @@ import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
 import { CarWashDailyClosing } from './CarWashDailyClosing'
+import { CarWashSetup } from './CarWashSetup'
 import { FeatureLock } from '../../dash/FeatureLock'
 import { logAudit } from '../../../lib/auditLog'
 import { downloadCSV, formatDateForCSV } from '../../../lib/exportUtils'
@@ -28,7 +29,7 @@ const EMPTY_FORM = { amount: '', category: 'other' as ExpenseCategory, descripti
 
 export const CarWashFinance = () => {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [tab, setTab] = useState<'finance' | 'closing'>('finance')
+  const [tab, setTab] = useState<'finance' | 'closing' | 'services'>('finance')
   const { companyId, company, loading: authLoading } = useClientCompany()
   const { can, planLabel } = usePlanGate()
   const [loading, setLoading] = useState(true)
@@ -50,12 +51,13 @@ export const CarWashFinance = () => {
   const today = new Date().toISOString().slice(0, 10)
 
   useEffect(() => {
-    setTab(searchParams.get('tab') === 'closing' ? 'closing' : 'finance')
+    const requestedTab = searchParams.get('tab')
+    setTab(requestedTab === 'closing' ? 'closing' : requestedTab === 'services' ? 'services' : 'finance')
   }, [searchParams])
 
-  const selectTab = (nextTab: 'finance' | 'closing') => {
+  const selectTab = (nextTab: 'finance' | 'closing' | 'services') => {
     setTab(nextTab)
-    setSearchParams(nextTab === 'closing' ? { tab: 'closing' } : {}, { replace: true })
+    setSearchParams(nextTab === 'finance' ? {} : { tab: nextTab }, { replace: true })
   }
 
   const getDateRange = (d: number) => {
@@ -210,6 +212,7 @@ export const CarWashFinance = () => {
         {[
           { key: 'finance', label: 'المالية',     icon: Wallet },
           { key: 'closing', label: 'إغلاق اليوم', icon: ClipboardCheck },
+          { key: 'services', label: 'الخدمات والضريبة', icon: DollarSign },
         ].map(({ key, label, icon: Icon }) => (
           <button key={key} onClick={() => selectTab(key as typeof tab)}
             style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', fontSize: 13, fontFamily: 'Cairo, sans-serif', fontWeight: 700, cursor: 'pointer', border: 'none', background: 'transparent', borderBottom: tab === key ? '2px solid #22D3EE' : '2px solid transparent', color: tab === key ? '#22D3EE' : '#475569', transition: 'all 0.15s', marginBottom: -1 }}>
@@ -219,7 +222,13 @@ export const CarWashFinance = () => {
         ))}
       </div>
 
-      {tab === 'closing' ? <CarWashDailyClosing /> : <>
+      {tab === 'closing' ? <CarWashDailyClosing /> : tab === 'services' ? (
+        <CarWashSetup
+          title="الخدمات والضريبة"
+          description="عدّل أسعار الخدمات النهائية التي يدفعها العميل، وتأكد أن VAT محسوبة بنفس طريقة المالية."
+          visibleTabs={['services', 'vat']}
+        />
+      ) : <>
       <ClientPageHeader
         eyebrow="مركز الماليات"
         title="المالية"
@@ -254,8 +263,10 @@ export const CarWashFinance = () => {
       />
 
       {/* Revenue cards — always visible */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <ClientStatCard icon={TrendingUp} label="الإيرادات" value={`${revenue.toFixed(0)} ر.س`} tone="green" sub={`${visitCount} زيارة — ${DATE_PRESETS.find(p => p.days === days)?.label || ''}`} />
+        <ClientStatCard icon={TrendingDown} label="المصاريف" value={`${totalExpenses.toFixed(0)} ر.س`} tone="red" sub={`${expenses.length} بند`} />
+        <ClientStatCard icon={DollarSign} label="صافي الربح" value={`${netProfit.toFixed(0)} ر.س`} tone={netProfit >= 0 ? 'blue' : 'red'} sub={netProfit >= 0 ? `${marginPercent}% هامش` : 'راجع المصاريف'} />
         <ClientStatCard icon={DollarSign} label="متوسط الزيارة" value={`${visitCount > 0 ? (revenue / visitCount).toFixed(0) : 0} ر.س`} tone="blue" sub="لكل سيارة" />
       </div>
 

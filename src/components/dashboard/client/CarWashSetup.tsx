@@ -1,11 +1,18 @@
 ﻿import { useEffect, useState } from 'react'
-import { Car, Clock, Star, Plus, Trash2, Check, Loader2, MapPin, Save, Receipt, QrCode, Copy, ExternalLink } from 'lucide-react'
+import { Car, Clock, Star, Plus, Trash2, Check, Loader2, MapPin, Save, Receipt, QrCode, Copy, ExternalLink, type LucideIcon } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { logAudit } from '../../../lib/auditLog'
 import { getSelfCheckinUrl } from '../../../lib/selfCheckin'
 import { sanitizeDecimalInput, sanitizeNameText, toSafeNumber } from '../../../lib/formSanitizers'
 import type { CWService } from '../../../types'
+
+type SetupTab = 'services' | 'hours' | 'loyalty' | 'vat' | 'qr'
+type CarWashSetupProps = {
+  title?: string
+  description?: string
+  visibleTabs?: SetupTab[]
+}
 
 type WorkingHours = { open: string; close: string; closed: boolean }
 type DayHours = Record<string, WorkingHours>
@@ -32,11 +39,11 @@ const SECTION_STYLE = {
   padding: '22px 24px',
 }
 
-export function CarWashSetup() {
+export function CarWashSetup({ title = 'إعداد المغسلة', description = 'الخدمات، أوقات العمل، الولاء، والضريبة', visibleTabs }: CarWashSetupProps = {}) {
   const { companyId, company, loading: authLoading } = useClientCompany()
   const SAUDI_VAT_RATE = 15
 
-  const [tab, setTab] = useState<'services' | 'hours' | 'loyalty' | 'vat' | 'qr'>('services')
+  const [tab, setTab] = useState<SetupTab>(visibleTabs?.[0] ?? 'services')
   const [copiedUrl, setCopiedUrl] = useState(false)
 
   // Services (table-based)
@@ -177,13 +184,18 @@ export function CarWashSetup() {
     setTimeout(() => setVatSaved(false), 3000)
   }
 
-  const TABS = [
+  useEffect(() => {
+    if (visibleTabs?.length && !visibleTabs.includes(tab)) setTab(visibleTabs[0])
+  }, [visibleTabs, tab])
+
+  const ALL_TABS: { key: SetupTab; label: string; icon: LucideIcon }[] = [
     { key: 'services', label: 'الخدمات',     icon: Car     },
     { key: 'hours',    label: 'أوقات العمل', icon: Clock   },
     { key: 'loyalty',  label: 'الولاء',       icon: Star    },
     { key: 'vat',      label: 'الضريبة',      icon: Receipt },
     { key: 'qr',       label: 'رمز QR',       icon: QrCode  },
-  ] as const
+  ]
+  const TABS = visibleTabs?.length ? ALL_TABS.filter(t => visibleTabs.includes(t.key)) : ALL_TABS
 
   if (authLoading || loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, gap: 10 }}>
@@ -195,8 +207,8 @@ export function CarWashSetup() {
   return (
     <div dir="rtl" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
       <div>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>إعداد المغسلة</h1>
-        <p style={{ fontSize: 13, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginTop: 4 }}>الخدمات، أوقات العمل، الولاء، والضريبة</p>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>{title}</h1>
+        <p style={{ fontSize: 13, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginTop: 4 }}>{description}</p>
       </div>
 
       {/* Tabs */}
