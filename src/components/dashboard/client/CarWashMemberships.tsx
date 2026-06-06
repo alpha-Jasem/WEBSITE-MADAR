@@ -315,7 +315,7 @@ export function CarWashMemberships() {
           <div className="flex flex-wrap items-center gap-3">
             <div className="min-w-[190px] rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3">
               <div className="flex items-center justify-between gap-3">
-                <span className="text-xs font-bold text-emerald-700 font-tajawal">جاهزية الرحلة</span>
+                <span className="text-xs font-bold text-emerald-700 font-tajawal">جاهزية التشغيل</span>
                 <strong className="font-sora text-lg font-black text-emerald-700">{journeyScore}%</strong>
               </div>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-white">
