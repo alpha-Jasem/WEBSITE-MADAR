@@ -102,10 +102,27 @@ export function CarWashMemberships() {
 
   const customerMap = useMemo(() => new Map(customers.map(customer => [customer.id, customer])), [customers])
   const planMap = useMemo(() => new Map(plans.map(plan => [plan.id, plan])), [plans])
-  const activeMemberships = memberships.filter(item => item.status === 'active')
+  const uniquePlans = useMemo(() => {
+    const seen = new Set<string>()
+    return plans.filter(plan => {
+      const key = `${plan.name.trim()}-${Number(plan.price)}-${Number(plan.washes_per_month)}-${plan.active}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  }, [plans])
+  const activeMemberships = useMemo(() => {
+    const seen = new Set<string>()
+    return memberships.filter(item => {
+      if (item.status !== 'active') return false
+      if (seen.has(item.customer_id)) return false
+      seen.add(item.customer_id)
+      return true
+    })
+  }, [memberships])
   const walletBalance = customers.reduce((sum, customer) => sum + Number(customer.wallet_balance || 0), 0)
   const recurringRevenue = activeMemberships.reduce((sum, item) => sum + Number(planMap.get(item.plan_id || '')?.price || 0), 0)
-  const activePlans = plans.filter(plan => plan.active)
+  const activePlans = uniquePlans.filter(plan => plan.active)
   const checkinUrl = getSelfCheckinUrl(company as any)
   const previewUrl = checkinUrl ? `${checkinUrl}?preview=memberships` : ''
   const journey = [
@@ -114,9 +131,15 @@ export function CarWashMemberships() {
     { label: 'QR يعرض الباقات للعميل', done: can.memberships && Boolean(checkinUrl) && activePlans.length > 0, icon: QrCode },
     { label: 'خصم من الاشتراك عند التسليم', done: can.memberships, icon: Save },
     { label: 'المحفظة متاحة كطريقة دفع', done: can.wallet, icon: CreditCard },
-    { label: 'الدفع الإلكتروني النهائي', done: can.onlinePayments, icon: Smartphone },
+    { label: 'الدفع الإلكتروني', done: false, optional: true, icon: Smartphone },
   ]
-  const journeyScore = Math.round((journey.filter(item => item.done).length / journey.length) * 100)
+  const displayJourney = journey.map(item =>
+    item.icon === Smartphone
+      ? { ...item, label: 'الدفع الإلكتروني', done: false, optional: true }
+      : item
+  )
+  const coreJourney = displayJourney.filter(item => !item.optional)
+  const journeyScore = Math.round((coreJourney.filter(item => item.done).length / coreJourney.length) * 100)
   const membershipInsights = [
     activePlans.length > 0
       ? { title: 'الباقات جاهزة للبيع', description: `${activePlans.length} باقة فعالة. الأفضل عرضها في QR بعد تسجيل الخدمة مباشرة.`, tone: 'green' as const }
@@ -128,12 +151,21 @@ export function CarWashMemberships() {
       ? { title: 'المحفظة مفعلة', description: `إجمالي أرصدة المحافظ ${money(walletBalance)} ر.س. راقبها كالتزام مالي على المغسلة.`, tone: 'green' as const }
       : { title: 'المحفظة اختيارية من الأدمن', description: 'إذا لا تريدها لبعض المغاسل، اتركها مقفلة واجعل الدفع كاش/POS فقط.', tone: 'slate' as const },
     can.onlinePayments
-      ? { title: 'الدفع الإلكتروني جاهز للتسويق', description: 'بعد ربط مزود الدفع، اجعل الاشتراك من جوال العميل بدون موظف.', tone: 'green' as const }
+      ? { title: 'الدفع الإلكتروني تحت التجهيز', description: 'الميزة مفعلة إدارياً، لكن البيع الإلكتروني من جوال العميل يبدأ بعد ربط Moyasar/Apple Pay فعلياً.', tone: 'amber' as const }
       : { title: 'الدفع الإلكتروني ينتظر الربط', description: 'إلى أن يكتمل Moyasar/Apple Pay، خليه خيار مدفوع يتم تفعيله من الأدمن.', tone: 'amber' as const },
   ]
 
   const createPlan = async () => {
     if (!companyId || !planForm.name.trim()) return
+    const duplicate = activePlans.some(plan =>
+      plan.name.trim() === planForm.name.trim()
+      && Number(plan.price) === Number(planForm.price || 0)
+      && Number(plan.washes_per_month) === Number(planForm.washes || 0)
+    )
+    if (duplicate) {
+      setFeedback('هذه الباقة موجودة مسبقاً بنفس السعر وعدد الغسلات.')
+      return
+    }
     setSaving(true)
     setFeedback('')
     const { error } = await supabase.from('cw_membership_plans').insert({
@@ -151,6 +183,11 @@ export function CarWashMemberships() {
 
   const activateMembership = async () => {
     if (!companyId || !membershipForm.customerId || !membershipForm.planId) return
+    const alreadyActive = activeMemberships.some(item => item.customer_id === membershipForm.customerId)
+    if (alreadyActive) {
+      setFeedback('هذا العميل لديه اشتراك نشط حالياً. لا يمكن تفعيل اشتراك ثاني حتى لا يتم احتسابه مرتين.')
+      return
+    }
     const plan = planMap.get(membershipForm.planId)
     if (!plan) return
     setSaving(true)
@@ -294,14 +331,14 @@ export function CarWashMemberships() {
           </div>
         </div>
         <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
-          {journey.map(item => (
+          {displayJourney.map(item => (
             <article key={item.label} className={`rounded-2xl border p-4 ${item.done ? 'border-emerald-100 bg-emerald-50/60' : 'border-slate-200 bg-slate-50'}`}>
               <div className={`mb-3 grid h-10 w-10 place-items-center rounded-xl ${item.done ? 'bg-emerald-100 text-emerald-700' : 'bg-white text-slate-500'}`}>
                 <item.icon size={18} />
               </div>
               <strong className="block text-sm leading-6 text-slate-950 font-cairo">{item.label}</strong>
               <span className={`mt-2 inline-flex rounded-full px-2 py-1 text-[11px] font-bold font-tajawal ${item.done ? 'bg-emerald-100 text-emerald-700' : 'bg-white text-slate-500'}`}>
-                {item.done ? 'جاهز' : 'ينتظر'}
+                {item.done ? 'جاهز' : item.optional ? 'لاحقاً' : 'ينتظر'}
               </span>
             </article>
           ))}
@@ -323,7 +360,7 @@ export function CarWashMemberships() {
               </button>
             </div>
             <div className="mt-5 space-y-2">
-              {plans.length === 0 ? <Empty text="لا توجد باقات بعد" /> : plans.map(plan => (
+              {uniquePlans.length === 0 ? <Empty text="لا توجد باقات بعد" /> : uniquePlans.map(plan => (
                 <div key={plan.id} className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 p-4">
                   <div>
                     <strong className="text-sm text-slate-950 font-cairo">{plan.name}</strong>
@@ -337,14 +374,14 @@ export function CarWashMemberships() {
         )}
 
         {can.memberships && (
-          <Panel title="تفعيل اشتراك لعميل" desc="اربط العميل بخطة شهرية. الدفع الإلكتروني يبقى حسب تفعيلك من الأدمن.">
+          <Panel title="تفعيل اشتراك لعميل" desc="اربط العميل بخطة شهرية يدوياً الآن. الدفع الإلكتروني من جوال العميل يبدأ بعد ربط مزود الدفع.">
             <Select label="العميل" value={membershipForm.customerId} onChange={value => setMembershipForm(current => ({ ...current, customerId: value }))}>
               <option value="">اختر العميل</option>
               {customers.map(customer => <option key={customer.id} value={customer.id}>{customer.name || phoneLabel(customer.phone)} - {phoneLabel(customer.phone)}</option>)}
             </Select>
             <Select label="الباقة" value={membershipForm.planId} onChange={value => setMembershipForm(current => ({ ...current, planId: value }))}>
               <option value="">اختر الباقة</option>
-              {plans.filter(plan => plan.active).map(plan => <option key={plan.id} value={plan.id}>{plan.name} - {money(Number(plan.price))} ر.س</option>)}
+              {activePlans.map(plan => <option key={plan.id} value={plan.id}>{plan.name} - {money(Number(plan.price))} ر.س</option>)}
             </Select>
             <button disabled={saving || !membershipForm.customerId || !membershipForm.planId} onClick={activateMembership} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#1565C0] px-4 py-3 text-sm font-bold text-white font-cairo disabled:opacity-50">
               <Save size={15} />
@@ -372,14 +409,14 @@ export function CarWashMemberships() {
 
         <Panel title="المشتركون الحاليون" desc="متابعة الاشتراكات النشطة وعدد الغسلات المتبقية.">
           <div className="space-y-2">
-            {memberships.length === 0 ? <Empty text="لا توجد اشتراكات مفعلة بعد" /> : memberships.slice(0, 8).map(item => {
+            {activeMemberships.length === 0 ? <Empty text="لا توجد اشتراكات مفعلة بعد" /> : activeMemberships.slice(0, 8).map(item => {
               const customer = customerMap.get(item.customer_id)
               const plan = planMap.get(item.plan_id || '')
               return (
                 <div key={item.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <strong className="text-sm text-slate-950 font-cairo">{customer?.name || phoneLabel(customer?.phone || '')}</strong>
-                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 font-tajawal">{item.status}</span>
+                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 font-tajawal">نشط</span>
                   </div>
                   <p className="mt-1 text-xs text-slate-500 font-tajawal">{plan?.name || 'باقة محذوفة'} - متبقي {item.remaining_washes} غسلات</p>
                 </div>
@@ -410,9 +447,9 @@ export function CarWashMemberships() {
 
       {can.onlinePayments && (
         <section className="rounded-[24px] border border-blue-100 bg-blue-50 p-5">
-          <p className="text-sm font-bold text-blue-800 font-cairo">الدفع الإلكتروني مفعل من الإدارة</p>
+          <p className="text-sm font-bold text-blue-800 font-cairo">الدفع الإلكتروني تحت التجهيز</p>
           <p className="mt-1 text-xs leading-6 text-blue-700/80 font-tajawal">
-            المرحلة الحالية تجهز الاشتراكات والمحفظة داخل لوحة المغسلة. الربط الآلي مع Apple Pay / Google Pay يتم عبر Moyasar في خطوة الدفع النهائية.
+            المرحلة الحالية تجهز الاشتراكات والمحفظة داخل لوحة المغسلة. لا يظهر الدفع الإلكتروني للعميل كخيار نهائي إلا بعد ربط Moyasar وApple Pay / Google Pay.
           </p>
         </section>
       )}
