@@ -2,13 +2,12 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Bot, Eye, EyeOff, ArrowLeft } from 'lucide-react'
-import { useClinicOS } from '../../context/ClinicOSContext'
+import { supabase } from '../../lib/supabase'
 
 export const ClinicOSLogin = () => {
   const navigate = useNavigate()
-  const { login } = useClinicOS()
-  const [email, setEmail] = useState('demo@clinic.sa')
-  const [password, setPassword] = useState('demo1234')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -19,10 +18,11 @@ export const ClinicOSLogin = () => {
     setLoading(true)
     setError('')
     try {
-      await login(email, password)
-      navigate('/clinic-os/demo/select')
+      const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+      if (authError) throw authError
+      navigate('/clinic-os/dashboard')
     } catch {
-      setError('بيانات الدخول غير صحيحة. استخدم: demo@clinic.sa / demo1234')
+      setError('بيانات الدخول غير صحيحة. تأكد من البريد الإلكتروني وكلمة المرور.')
     } finally {
       setLoading(false)
     }
@@ -74,14 +74,6 @@ export const ClinicOSLogin = () => {
           <p style={{ fontSize: 14, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: '0 0 32px' }}>
             ادخل بياناتك للوصول إلى لوحة تحكم العيادة
           </p>
-
-          {/* Demo hint */}
-          <div style={{ background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: 10, padding: '12px 16px', marginBottom: 24 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#4F46E5', fontFamily: 'Cairo, sans-serif', marginBottom: 4 }}>بيانات التجربة</div>
-            <div style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif' }}>
-              البريد: <strong>demo@clinic.sa</strong> · كلمة المرور: <strong>demo1234</strong>
-            </div>
-          </div>
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -145,8 +137,8 @@ export const ClinicOSLogin = () => {
 
           <div style={{ textAlign: 'center', marginTop: 20 }}>
             <span style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>ليس لديك حساب؟ </span>
-            <button onClick={() => navigate('/clinic-os/demo-signup')} style={{ fontSize: 13, color: '#4F46E5', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Cairo, sans-serif', fontWeight: 700 }}>
-              جرب مجاناً
+            <button onClick={() => navigate('/clinic-os/signup')} style={{ fontSize: 13, color: '#4F46E5', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Cairo, sans-serif', fontWeight: 700 }}>
+              سجّل الآن
             </button>
           </div>
         </motion.div>
