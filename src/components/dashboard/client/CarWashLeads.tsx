@@ -493,21 +493,21 @@ export function CarWashLeads() {
 
               {/* Row actions */}
               <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                <button onClick={() => openHistory(c)} title="سجل الزيارات" style={{
+                <button onClick={() => openHistory(c)} title="سجل الزيارات" aria-label={`سجل زيارات ${c.name || c.phone}`} style={{
                   width: 28, height: 28, borderRadius: 7, border: '1px solid rgba(99,102,241,0.2)',
                   background: 'rgba(99,102,241,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   cursor: 'pointer', color: '#6366F1',
                 }}>
                   <Clock size={12} />
                 </button>
-                <button onClick={() => openEdit(c)} title="تعديل" style={{
+                <button onClick={() => openEdit(c)} title="تعديل" aria-label={`تعديل ${c.name || c.phone}`} style={{
                   width: 28, height: 28, borderRadius: 7, border: '1px solid #E2E8F0',
                   background: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   cursor: 'pointer', color: '#64748B',
                 }}>
                   <Pencil size={12} />
                 </button>
-                <button onClick={() => setDeleteTarget(c)} title="حذف" style={{
+                <button onClick={() => setDeleteTarget(c)} title="حذف" aria-label={`حذف ${c.name || c.phone}`} style={{
                   width: 28, height: 28, borderRadius: 7, border: '1px solid rgba(239,68,68,0.15)',
                   background: 'rgba(239,68,68,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   cursor: 'pointer', color: '#EF4444',

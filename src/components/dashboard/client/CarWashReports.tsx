@@ -429,13 +429,16 @@ export function CarWashReports() {
             <div style={{ position: 'relative' }}>
               <button
                 onClick={() => setShowExportMenu(v => !v)}
+                aria-haspopup="menu"
+                aria-expanded={showExportMenu}
+                aria-label="خيارات تصدير التقرير"
                 style={{ minHeight: 42, display: 'inline-flex', alignItems: 'center', gap: 9, padding: '0 15px', borderRadius: 11, border: '1px solid #D7E1F0', background: '#FFFFFF', color: '#0D1B3E', fontWeight: 800, fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer' }}
               >
                 <CalendarClock size={16} color="#0D1B3E" />
-                جدولة تقرير
+                خيارات التصدير
               </button>
               {showExportMenu && (
-                <div style={{ position: 'absolute', top: '112%', left: 0, background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 12, overflow: 'hidden', zIndex: 50, minWidth: 190, boxShadow: '0 18px 38px rgba(13,27,62,0.13)' }}>
+                <div role="menu" style={{ position: 'absolute', top: '112%', left: 0, background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 12, overflow: 'hidden', zIndex: 50, minWidth: 190, boxShadow: '0 18px 38px rgba(13,27,62,0.13)' }}>
                   <button onClick={() => { exportSalesCSV(); setShowExportMenu(false) }} style={{ display: 'block', width: '100%', textAlign: 'right', padding: '12px 16px', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 700, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer' }}>تصدير المبيعات CSV</button>
                   <button onClick={() => { exportPDF(); setShowExportMenu(false) }} style={{ display: 'block', width: '100%', textAlign: 'right', padding: '12px 16px', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 700, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer' }}>تصدير PDF</button>
                 </div>

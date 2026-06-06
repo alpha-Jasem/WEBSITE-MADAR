@@ -8,6 +8,7 @@ interface Props {
 interface State { error: Error | null }
 
 const CHUNK_RELOAD_PREFIX = 'madar_chunk_reload'
+const RUNTIME_RECOVERY_PREFIX = 'madar_runtime_recovery'
 
 export function isChunkLoadError(error: Error | string) {
   const message = typeof error === 'string' ? error : error.message
@@ -25,6 +26,20 @@ export function reloadForFreshAssets(reason = 'chunk') {
   window.location.replace(url.toString())
 }
 
+function recoverFromRuntimeError(error: Error) {
+  if (typeof window === 'undefined') return false
+  const signature = `${error.name}:${error.message}`.slice(0, 120)
+  const key = `${RUNTIME_RECOVERY_PREFIX}:${window.location.pathname}:${signature}`
+  const lastReload = Number(sessionStorage.getItem(key) || 0)
+  if (Date.now() - lastReload < 30000) return false
+
+  sessionStorage.setItem(key, String(Date.now()))
+  const url = new URL(window.location.href)
+  url.searchParams.set('fresh', String(Date.now()))
+  window.location.replace(url.toString())
+  return true
+}
+
 export class ErrorBoundary extends Component<Props, State> {
   state: State = { error: null }
 
@@ -39,6 +54,8 @@ export class ErrorBoundary extends Component<Props, State> {
       reloadForFreshAssets('boundary')
       return
     }
+
+    recoverFromRuntimeError(error)
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -86,42 +103,44 @@ export class ErrorBoundary extends Component<Props, State> {
       >
         <div style={{
           width: 64, height: 64, borderRadius: 18,
-          background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)',
+          background: 'rgba(11,99,246,0.1)', border: '1px solid rgba(11,99,246,0.18)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <RefreshCw size={28} color="#EF4444" />
+          <RefreshCw size={28} color="#0B63F6" />
         </div>
 
         <div>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#0F172A' }}>
-            تعذر فتح هذه الصفحة
+            نعيد تجهيز الصفحة
           </h2>
           <p style={{ margin: '8px 0 0', fontSize: 14, color: '#64748B', maxWidth: 320 }}>
-            رجع للقائمة واختر صفحة ثانية، أو اضغط تحديث إذا استمرت المشكلة.
+            حدث انقطاع مؤقت في تحميل الواجهة. اضغط تحديث أو ارجع للرئيسية وسيكمل النظام بشكل طبيعي.
           </p>
         </div>
 
-        <button
-          onClick={() => window.location.reload()}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            padding: '12px 24px', borderRadius: 12, border: 'none',
-            background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
-            color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer',
-          }}
-        >
-          <RefreshCw size={16} />
-          تحديث الصفحة
-        </button>
-
-        <details style={{ maxWidth: 480, textAlign: 'left' }} open>
-          <summary style={{ fontSize: 11, color: '#94A3B8', cursor: 'pointer' }}>تفاصيل الخطأ</summary>
-          <pre style={{ fontSize: 10, color: '#EF4444', marginTop: 8, whiteSpace: 'pre-wrap', direction: 'ltr' }}>
-            {this.state.error.message}
-            {'\n'}
-            {this.state.error.stack?.slice(0, 300)}
-          </pre>
-        </details>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '12px 24px', borderRadius: 12, border: 'none',
+              background: 'linear-gradient(135deg, #0B63F6, #00BFFF)',
+              color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+            }}
+          >
+            <RefreshCw size={16} />
+            تحديث الصفحة
+          </button>
+          <button
+            onClick={() => { window.location.href = window.location.pathname.startsWith('/admin') ? '/admin' : '/client' }}
+            style={{
+              padding: '12px 24px', borderRadius: 12, border: '1px solid #D7E1F0',
+              background: '#fff', color: '#0D1B3E', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+            }}
+          >
+            الرجوع للرئيسية
+          </button>
+        </div>
       </div>
     )
   }

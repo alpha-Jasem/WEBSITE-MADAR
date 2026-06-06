@@ -206,10 +206,10 @@ export const CarWashWorkers = () => {
                     {w.phone && <p className="text-slate-500 text-xs font-tajawal mt-0.5">{w.phone}</p>}
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => openEdit(w)} className="p-1.5 rounded-lg hover:bg-sky-50 text-slate-400 hover:text-sky-600 transition-colors">
+                    <button onClick={() => openEdit(w)} title="تعديل الموظف" aria-label={`تعديل ${w.name}`} className="p-1.5 rounded-lg hover:bg-sky-50 text-slate-400 hover:text-sky-600 transition-colors">
                       <Pencil size={14} />
                     </button>
-                    <button onClick={() => deactivate(w.id)} disabled={deletingId === w.id} className="p-1.5 rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors">
+                    <button onClick={() => deactivate(w.id)} title="إلغاء تفعيل الموظف" aria-label={`إلغاء تفعيل ${w.name}`} disabled={deletingId === w.id} className="p-1.5 rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors">
                       {deletingId === w.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                     </button>
                   </div>
