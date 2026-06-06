@@ -471,7 +471,7 @@ export function CarWashReports() {
         <StatCard icon={Smile} label="معدل العودة" value={`${stats.retentionRate}%`} sub="من إجمالي العملاء" color="#0B63F6" trend="محسوب" />
       </div>
 
-      <div className="cw-report-chart-grid cw-report-detail-grid">
+      <div className="cw-report-chart-grid">
         <SectionCard title="الإيرادات حسب الفترة" icon={TrendingUp}>
           <ResponsiveContainer width="100%" height={250}>
             <AreaChart data={stats.dailyChart}>
@@ -538,7 +538,7 @@ export function CarWashReports() {
         </SectionCard>
       </div>
 
-      <div className="cw-report-chart-grid">
+      <div className="cw-report-chart-grid cw-report-detail-grid">
         <SectionCard title="أوقات الزروة" icon={Clock} action={<span style={{ color: '#64748B', fontSize: 12, fontWeight: 700, fontFamily: 'Tajawal, sans-serif' }}>حسب عدد السيارات</span>}>
           <div className="cw-heatmap-wrap">
             <div className="cw-heatmap">
