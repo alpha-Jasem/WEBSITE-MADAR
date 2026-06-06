@@ -101,8 +101,7 @@ export const ClinicOSSignup = () => {
       })
 
       setDone(true)
-      // Auto-redirect to dashboard — status=trial so isDemo=true until admin activates
-      setTimeout(() => navigate('/clinic-os/dashboard'), 2000)
+      setTimeout(() => navigate('/clinic-os/dashboard?welcome=1'), 1500)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'حدث خطأ، حاول مرة أخرى'
       if (msg.includes('already registered') || msg.includes('already been registered')) {

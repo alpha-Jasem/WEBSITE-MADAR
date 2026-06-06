@@ -4,6 +4,7 @@ import { ClinicOSSidebar } from './ClinicOSSidebar'
 import { ClinicOSTopbar } from './ClinicOSTopbar'
 import { DemoModeBanner } from '../ui/DemoModeBanner'
 import { NewAppointmentModal } from '../ui/NewAppointmentModal'
+import { WelcomeModal } from '../ui/WelcomeModal'
 import { useIsMobile } from '../../../lib/useBreakpoint'
 import type { Appointment } from '../../../types/clinicOS'
 
@@ -79,6 +80,8 @@ export const ClinicOSDashboardLayout = () => {
           onCreated={handleCreated}
         />
       )}
+
+      <WelcomeModal />
     </div>
   )
 }
