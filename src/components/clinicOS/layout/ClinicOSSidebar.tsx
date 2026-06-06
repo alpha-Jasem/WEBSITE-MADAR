@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Calendar, Bot, Users, UserCheck,
   Stethoscope, CalendarDays, MessageSquare, Settings, Lock, Plus, X
@@ -6,7 +6,7 @@ import {
 import { useClinicOS } from '../../../context/ClinicOSContext'
 
 interface NavItem {
-  to: string
+  path: string
   icon: React.ElementType
   label: string
   locked?: boolean
@@ -19,18 +19,23 @@ interface Props {
 
 export const ClinicOSSidebar = ({ onNewAppointment, onClose }: Props) => {
   const { packageType, isDemo, clinicName } = useClinicOS()
+  const location = useLocation()
   const isAIPro = packageType === 'ai_pro'
 
+  // Use demo prefix when in /clinic-os/demo, dashboard prefix otherwise
+  const inDemo = location.pathname.startsWith('/clinic-os/demo')
+  const base = inDemo ? '/clinic-os/demo' : '/clinic-os/dashboard'
+
   const navItems: NavItem[] = [
-    { to: '/clinic-os/dashboard',              icon: LayoutDashboard, label: 'الرئيسية' },
-    { to: '/clinic-os/dashboard/appointments', icon: Calendar,        label: 'المواعيد' },
-    { to: '/clinic-os/dashboard/ai-booking',   icon: Bot,             label: 'الحجز الذكي', locked: !isAIPro },
-    { to: '/clinic-os/dashboard/patients',     icon: Users,           label: 'المرضى' },
-    { to: '/clinic-os/dashboard/doctors',      icon: UserCheck,       label: 'الأطباء' },
-    { to: '/clinic-os/dashboard/services',     icon: Stethoscope,     label: 'الخدمات' },
-    { to: '/clinic-os/dashboard/calendar',     icon: CalendarDays,    label: 'التقويم' },
-    { to: '/clinic-os/dashboard/messages',     icon: MessageSquare,   label: 'الرسائل' },
-    { to: '/clinic-os/dashboard/settings',     icon: Settings,        label: 'الإعدادات' },
+    { path: '',                icon: LayoutDashboard, label: 'الرئيسية' },
+    { path: '/appointments',   icon: Calendar,        label: 'المواعيد' },
+    { path: '/ai-booking',     icon: Bot,             label: 'الحجز الذكي', locked: !isAIPro },
+    { path: '/patients',       icon: Users,           label: 'العملاء' },
+    { path: '/doctors',        icon: UserCheck,       label: 'الأطباء' },
+    { path: '/services',       icon: Stethoscope,     label: 'الخدمات' },
+    { path: '/calendar',       icon: CalendarDays,    label: 'التقويم' },
+    { path: '/messages',       icon: MessageSquare,   label: 'الرسائل' },
+    { path: '/settings',       icon: Settings,        label: 'الإعدادات' },
   ]
 
   return (
@@ -79,11 +84,12 @@ export const ClinicOSSidebar = ({ onNewAppointment, onClose }: Props) => {
       <nav style={{ flex: 1, overflowY: 'auto', padding: '6px 8px' }}>
         {navItems.map(item => {
           const Icon = item.icon
+          const to = base + item.path
           return (
             <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === '/clinic-os/dashboard'}
+              key={to}
+              to={to}
+              end={item.path === ''}
               onClick={onClose}
               style={({ isActive }) => ({
                 display: 'flex', alignItems: 'center', gap: 10,

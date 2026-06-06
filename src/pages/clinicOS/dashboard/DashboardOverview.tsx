@@ -41,7 +41,7 @@ export const DashboardOverview = () => {
     { icon: Calendar, label: 'مواعيد اليوم', value: stats?.today_appointments ?? 0, color: '#4F46E5', bgColor: '#EEF2FF', borderColor: '#C7D2FE', trend: { value: '+12%', direction: 'up' as const } },
     { icon: CheckCircle, label: 'مؤكدة', value: stats?.confirmed ?? 0, color: '#059669', bgColor: '#ECFDF5', borderColor: '#A7F3D0' },
     { icon: Clock, label: 'قيد الانتظار', value: stats?.pending ?? 0, color: '#B45309', bgColor: '#FFFBEB', borderColor: '#FDE68A' },
-    { icon: Users, label: 'مرضى جدد هذا الشهر', value: stats?.new_patients_month ?? 0, color: '#7C3AED', bgColor: '#F5F3FF', borderColor: '#DDD6FE' },
+    { icon: Users, label: 'عملاء جدد هذا الشهر', value: stats?.new_patients_month ?? 0, color: '#7C3AED', bgColor: '#F5F3FF', borderColor: '#DDD6FE' },
     { icon: MessageSquare, label: 'رسائل واتساب', value: stats?.whatsapp_messages ?? 0, color: '#0369A1', bgColor: '#EFF9FF', borderColor: '#BAE6FD' },
     { icon: AlertTriangle, label: 'تحتاج مراجعة', value: stats?.needs_review ?? 0, color: '#C2410C', bgColor: '#FFF7ED', borderColor: '#FED7AA' },
     ...(isAIPro ? [

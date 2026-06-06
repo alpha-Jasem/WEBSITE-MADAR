@@ -127,7 +127,7 @@ export const AppointmentDrawer = ({ appointment, onClose, onConfirm, onCancel }:
               <StatusBadge status={effectiveStatus} />
               <SourceBadge source={appointment.source} />
               {appointment.patient_type === 'new' && (
-                <span style={{ display: 'inline-flex', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, color: '#7C3AED', background: '#F5F3FF', border: '1px solid #DDD6FE' }}>مريض جديد</span>
+                <span style={{ display: 'inline-flex', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, color: '#7C3AED', background: '#F5F3FF', border: '1px solid #DDD6FE' }}>عميل جديد</span>
               )}
             </div>
           </div>

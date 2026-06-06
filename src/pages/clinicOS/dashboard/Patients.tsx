@@ -12,7 +12,7 @@ import type { Patient } from '../../../types/clinicOS'
 const TODAY = new Date().toISOString().split('T')[0]
 
 const TAG_CFG: Record<string, { label: string; color: string; bg: string }> = {
-  new_patient:    { label: 'جديد',      color: '#7C3AED', bg: '#F5F3FF' },
+  new_patient:    { label: 'عميل جديد', color: '#7C3AED', bg: '#F5F3FF' },
   returning:      { label: 'مراجع',     color: '#0369A1', bg: '#EFF9FF' },
   vip:            { label: 'VIP',       color: '#B45309', bg: '#FFFBEB' },
   high_no_show:   { label: 'غياب متكرر',color: '#DC2626', bg: '#FEF2F2' },
@@ -45,17 +45,17 @@ export const Patients = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, direction: 'rtl' }}>
       <div>
-        <h1 style={{ fontSize: 20, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: '0 0 4px 0' }}>المرضى</h1>
-        <p style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>إدارة سجلات المرضى، الزيارات، والتواصل</p>
+        <h1 style={{ fontSize: 20, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: '0 0 4px 0' }}>العملاء</h1>
+        <p style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>إدارة سجلات العملاء، الزيارات، والتواصل</p>
       </div>
 
       <div className="cos-stat-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}>
         {loadingPatients
           ? Array.from({ length: 5 }).map((_, i) => <StatCardSkeleton key={i} />)
           : [
-              { icon: Users, label: 'إجمالي المرضى', value: allPatients.length, color: '#4F46E5', bgColor: '#EEF2FF', borderColor: '#C7D2FE' },
-              { icon: UserPlus, label: 'مرضى جدد هذا الشهر', value: allPatients.filter(p => p.patient_type === 'new').length, color: '#059669', bgColor: '#ECFDF5', borderColor: '#A7F3D0' },
-              { icon: Users, label: 'مرضى مراجعون', value: allPatients.filter(p => p.patient_type === 'returning').length, color: '#7C3AED', bgColor: '#F5F3FF', borderColor: '#DDD6FE' },
+              { icon: Users, label: 'إجمالي العملاء', value: allPatients.length, color: '#4F46E5', bgColor: '#EEF2FF', borderColor: '#C7D2FE' },
+              { icon: UserPlus, label: 'عملاء جدد هذا الشهر', value: allPatients.filter(p => p.patient_type === 'new').length, color: '#059669', bgColor: '#ECFDF5', borderColor: '#A7F3D0' },
+              { icon: Users, label: 'عملاء مراجعون', value: allPatients.filter(p => p.patient_type === 'returning').length, color: '#7C3AED', bgColor: '#F5F3FF', borderColor: '#DDD6FE' },
               { icon: AlertTriangle, label: 'غياب متكرر', value: allPatients.filter(p => p.no_show_count > 1).length, color: '#DC2626', bgColor: '#FEF2F2', borderColor: '#FECACA' },
               { icon: Star, label: 'يحتاج متابعة', value: allPatients.filter(p => p.tags.includes('needs_followup')).length, color: '#C2410C', bgColor: '#FFF7ED', borderColor: '#FED7AA' },
             ].map((s, i) => <StatCard key={i} {...s} />)
@@ -68,9 +68,9 @@ export const Patients = () => {
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="ابحث بالاسم أو الجوال..." style={{ border: 'none', background: 'transparent', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', width: '100%', direction: 'rtl' }} />
         </div>
         <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none' }}>
-          <option value="">كل المرضى</option>
-          <option value="new">مرضى جدد</option>
-          <option value="returning">مرضى مراجعون</option>
+          <option value="">كل العملاء</option>
+          <option value="new">عملاء جدد</option>
+          <option value="returning">عملاء مراجعون</option>
           <option value="no_show">غياب متكرر</option>
         </select>
       </div>
@@ -82,12 +82,12 @@ export const Patients = () => {
               <tbody>{Array.from({ length: 6 }).map((_, i) => <TableRowSkeleton key={i} cols={7} />)}</tbody>
             </table>
           ) : filtered.length === 0 ? (
-            <EmptyState icon={Users} title="لا توجد نتائج" body="لا يوجد مرضى يطابقون البحث." />
+            <EmptyState icon={Users} title="لا توجد نتائج" body="لا يوجد عملاء يطابقون البحث." />
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-                  {['المريض', 'الجوال', 'آخر زيارة', 'إجمالي الزيارات', 'الغياب', 'التصنيف', ''].map(h => (
+                  {['العميل', 'الجوال', 'آخر زيارة', 'إجمالي الزيارات', 'الغياب', 'التصنيف', ''].map(h => (
                     <th key={h} style={{ padding: '12px 16px', textAlign: 'right', fontSize: 12, fontWeight: 700, color: '#64748B', fontFamily: 'Cairo, sans-serif' }}>{h}</th>
                   ))}
                 </tr>

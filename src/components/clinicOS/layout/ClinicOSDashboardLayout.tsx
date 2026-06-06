@@ -12,7 +12,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/clinic-os/dashboard': 'لوحة التحكم',
   '/clinic-os/dashboard/appointments': 'المواعيد',
   '/clinic-os/dashboard/ai-booking': 'الحجز الذكي',
-  '/clinic-os/dashboard/patients': 'المرضى',
+  '/clinic-os/dashboard/patients': 'العملاء',
   '/clinic-os/dashboard/doctors': 'الأطباء',
   '/clinic-os/dashboard/services': 'الخدمات',
   '/clinic-os/dashboard/calendar': 'التقويم',
