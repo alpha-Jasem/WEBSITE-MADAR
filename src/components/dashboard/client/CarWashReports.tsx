@@ -369,10 +369,11 @@ export function CarWashReports() {
     <div dir="rtl" style={{ display: 'flex', flexDirection: 'column', gap: 18, color: '#0D1B3E' }}>
       <style>{`
         .cw-report-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-        .cw-report-card-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(178px, 1fr)); gap:12px; }
+        .cw-report-card-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(145px, 1fr)); gap:12px; }
         .cw-report-chart-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 330px), 1fr)); gap:14px; }
+        .cw-report-detail-grid > section:first-child { grid-column:span 2; }
         .cw-heatmap-wrap { overflow-x:auto; padding-bottom:4px; scrollbar-width:thin; }
-        .cw-heatmap { min-width:560px; display:grid; grid-template-columns:82px repeat(7, minmax(54px, 1fr)); gap:7px; align-items:center; }
+        .cw-heatmap { min-width:0; display:grid; grid-template-columns:82px repeat(7, minmax(48px, 1fr)); gap:7px; align-items:center; }
         .cw-heat-hour,.cw-heat-day { color:#64748B; font:900 11px 'Tajawal', sans-serif; }
         .cw-heat-hour { text-align:center; font-family:'Sora', sans-serif; font-weight:800; }
         .cw-heat-day { color:#0D1B3E; }
@@ -384,6 +385,7 @@ export function CarWashReports() {
         @media (max-width: 720px) {
           .cw-report-actions > * { flex:1 1 140px; }
           .cw-report-card-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+          .cw-report-detail-grid > section:first-child { grid-column:auto; }
           .cw-heatmap { min-width:620px; }
         }
         @media (max-width: 420px) {
@@ -469,7 +471,7 @@ export function CarWashReports() {
         <StatCard icon={Smile} label="معدل العودة" value={`${stats.retentionRate}%`} sub="من إجمالي العملاء" color="#0B63F6" trend="محسوب" />
       </div>
 
-      <div className="cw-report-chart-grid">
+      <div className="cw-report-chart-grid cw-report-detail-grid">
         <SectionCard title="الإيرادات حسب الفترة" icon={TrendingUp}>
           <ResponsiveContainer width="100%" height={250}>
             <AreaChart data={stats.dailyChart}>
