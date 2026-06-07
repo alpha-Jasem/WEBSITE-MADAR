@@ -181,14 +181,10 @@ Deno.serve(async (req) => {
     const existingCompany = await findExistingCompany(supabase, email, phone)
     if (existingCompany) return json({ error: 'company_already_exists' }, 409)
 
-    const { data: existingAuth } = await supabase.auth.admin.listUsers()
-    const alreadyRegistered = existingAuth?.users?.some(user => user.email?.toLowerCase() === email)
-    if (alreadyRegistered) return json({ error: 'email_already_registered' }, 409)
-
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
-      email_confirm: false,
+      email_confirm: true,
       user_metadata: {
         full_name: ownerName,
         company_name: companyName,
@@ -198,7 +194,11 @@ Deno.serve(async (req) => {
     })
 
     if (authError || !authData.user) {
-      return json({ error: 'auth_user_create_failed', message: authError?.message }, 400)
+      const message = authError?.message || ''
+      if (message.toLowerCase().includes('already')) {
+        return json({ error: 'email_already_registered', message }, 409)
+      }
+      return json({ error: 'auth_user_create_failed', message }, 400)
     }
 
     const authUserId = authData.user.id
@@ -270,7 +270,8 @@ Deno.serve(async (req) => {
       company_id: company.id,
       trial_days: TRIAL_DAYS,
       plan: 'growth',
-      requires_email_confirmation: true,
+      requires_email_confirmation: false,
+      requires_email_otp: true,
       redirect_to: '/login?portal=client',
     })
   }
@@ -281,10 +282,6 @@ Deno.serve(async (req) => {
     const existingCompany = await findExistingCompany(supabase, email, phone)
 
     if (existingCompany) return json({ error: 'company_already_exists' }, 409)
-
-    const { data: existingAuth } = await supabase.auth.admin.listUsers()
-    const alreadyRegistered = existingAuth?.users?.some(user => user.email?.toLowerCase() === email)
-    if (alreadyRegistered) return json({ error: 'email_already_registered' }, 409)
 
     const sent = await sendOtpViaTwilio(phone)
     if (!sent.ok) return json({ error: sent.error || 'otp_send_failed', details: sent }, 502)
@@ -331,7 +328,11 @@ Deno.serve(async (req) => {
     })
 
     if (authError || !authData.user) {
-      return json({ error: 'auth_user_create_failed', message: authError?.message }, 400)
+      const message = authError?.message || ''
+      if (message.toLowerCase().includes('already')) {
+        return json({ error: 'email_already_registered', message }, 409)
+      }
+      return json({ error: 'auth_user_create_failed', message }, 400)
     }
 
     const authUserId = authData.user.id

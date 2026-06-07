@@ -20,6 +20,8 @@ function errorText(code: string) {
     company_already_exists: 'يوجد حساب مسجل مسبقاً بنفس البريد أو رقم الجوال.',
     email_already_registered: 'هذا البريد مسجل مسبقاً. استخدم تسجيل الدخول.',
     email_confirmation_send_failed: 'تم إنشاء الحساب، لكن تعذر إرسال بريد التأكيد. اضغط إعادة إرسال أو تواصل معنا.',
+    email_otp_send_failed: 'تم إنشاء الحساب، لكن تعذر إرسال كود الدخول. اضغط إعادة إرسال الكود بعد قليل.',
+    email_otp_rate_limit: 'تم إنشاء الحساب، لكن طلبت الكود أكثر من مرة. انتظر دقيقة ثم اضغط إعادة إرسال الكود.',
     auth_user_create_failed: 'تعذر إنشاء حساب الدخول. ربما البريد مستخدم مسبقاً.',
     company_create_failed: 'تعذر إنشاء المنشأة. تواصل معنا لإكمالها يدوياً.',
     missing_required_fields: 'أكمل البيانات المطلوبة.',
@@ -56,8 +58,10 @@ export function TrialSignup() {
   const [businessType, setBusinessType] = useState<BusinessType | null>(null)
   const [loading, setLoading] = useState(false)
   const [resending, setResending] = useState(false)
+  const [verifyingOtp, setVerifyingOtp] = useState(false)
   const [showPass, setShowPass] = useState(false)
   const [error, setError] = useState('')
+  const [otpInput, setOtpInput] = useState('')
   const [form, setForm] = useState({
     company_name: '',
     owner_name: '',
@@ -93,14 +97,43 @@ export function TrialSignup() {
     return data
   }
 
-  const resendConfirmationEmail = async () => {
+  const sendLoginOtp = async () => {
     const email = form.email.trim().toLowerCase()
-    const { error: resendError } = await supabase.auth.resend({
-      type: 'signup',
+    const { error: otpError } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      options: {
+        shouldCreateUser: false,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
     })
-    if (resendError) throw new Error('email_confirmation_send_failed')
+    if (otpError) {
+      const msg = otpError.message || ''
+      if (msg.toLowerCase().includes('rate')) throw new Error('email_otp_rate_limit')
+      throw new Error('email_otp_send_failed')
+    }
+  }
+
+  const verifyEmailOtp = async () => {
+    const token = otpInput.replace(/\D/g, '').slice(0, 6)
+    if (token.length !== 6) {
+      setError('أدخل كود التحقق المكون من 6 أرقام.')
+      return
+    }
+    setVerifyingOtp(true)
+    setError('')
+    try {
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        email: form.email.trim().toLowerCase(),
+        token,
+        type: 'email',
+      })
+      if (verifyError) throw verifyError
+      navigate(businessType === 'clinic' ? '/clinic-os/dashboard' : '/client', { replace: true })
+    } catch {
+      setError('الكود غير صحيح أو انتهت صلاحيته. اطلب كود جديد.')
+    } finally {
+      setVerifyingOtp(false)
+    }
   }
 
   const submitSignup = async (event: React.FormEvent) => {
@@ -131,6 +164,7 @@ export function TrialSignup() {
         .eq('owner_email', form.email.trim().toLowerCase())
         .then(() => {}) // ignore error — edge function may have already set it
 
+      await sendLoginOtp()
       setStep('email')
     } catch (err: any) {
       setError(errorText(err.message))
@@ -143,7 +177,7 @@ export function TrialSignup() {
     setResending(true)
     setError('')
     try {
-      await resendConfirmationEmail()
+      await sendLoginOtp()
     } catch (err: any) {
       setError(errorText(err.message))
     } finally {
@@ -334,23 +368,37 @@ export function TrialSignup() {
                     </div>
                   </div>
 
-                  <Submit loading={loading} text="إرسال رابط التأكيد عبر البريد" loadingText="جاري تجهيز الحساب..." color={selectedOption?.color} />
+                  <Submit loading={loading} text="إنشاء الحساب وإرسال كود الدخول" loadingText="جاري تجهيز الحساب..." color={selectedOption?.color} />
                 </form>
               )}
 
-              {/* Step 2: Email confirmation */}
+              {/* Step 2: Email OTP */}
               {step === 'email' && (
                 <div className="space-y-5">
                   <div className="rounded-2xl border border-sky-100 bg-sky-50 p-4">
                     <div className="flex items-start gap-3">
                       <Mail size={20} className="mt-0.5 text-sky-600" />
                       <div>
-                        <p className="text-sm font-bold text-slate-900 font-cairo">أرسلنا رابط التأكيد إلى بريدك الإلكتروني</p>
+                        <p className="text-sm font-bold text-slate-900 font-cairo">أرسلنا كود الدخول إلى بريدك</p>
                         <p className="mt-1 text-xs leading-5 text-slate-500 font-tajawal">
-                          افتح الرسالة على {form.email.trim().toLowerCase()} واضغط رابط التأكيد. بعدها سجل دخولك بنفس البريد وكلمة المرور.
+                          افتح البريد واكتب الكود المكون من 6 أرقام. بعد التحقق سندخلك مباشرة للداشبورد.
                         </p>
+                        <p className="mt-2 text-xs font-bold text-slate-700 font-sora" dir="ltr">{form.email.trim().toLowerCase()}</p>
                       </div>
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-bold text-slate-700 font-tajawal">كود التحقق</label>
+                    <input
+                      value={otpInput}
+                      onChange={event => { setError(''); setOtpInput(event.target.value.replace(/\D/g, '').slice(0, 6)) }}
+                      placeholder="١٢٣٤٥٦"
+                      inputMode="numeric"
+                      dir="ltr"
+                      maxLength={6}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-4 text-center text-2xl font-black tracking-[0.55em] text-slate-950 outline-none transition-all placeholder:text-slate-300 focus:border-[#00BFFF] focus:ring-4 focus:ring-sky-400/15 font-sora"
+                    />
                   </div>
 
                   <div className="flex gap-3">
@@ -359,20 +407,22 @@ export function TrialSignup() {
                     </button>
                     <button type="button" onClick={handleResend} disabled={resending} className="inline-flex items-center gap-2 rounded-xl border border-sky-100 px-5 py-3 text-sm font-bold text-sky-700 font-tajawal hover:bg-sky-50 disabled:opacity-60">
                       {resending && <Loader2 size={15} className="animate-spin" />}
-                      إعادة إرسال الرابط
+                      إعادة إرسال الكود
                     </button>
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => navigate('/login?portal=client', { replace: true })}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold text-white transition-all font-cairo"
+                    onClick={verifyEmailOtp}
+                    disabled={verifyingOtp || otpInput.length !== 6}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold text-white transition-all disabled:opacity-60 font-cairo"
                     style={{
                       background: `linear-gradient(135deg, ${selectedOption?.color || '#00BFFF'}, #1565C0)`,
                       boxShadow: '0 16px 34px rgba(0,191,255,0.24)',
                     }}
                   >
-                    فتح صفحة الدخول
+                    {verifyingOtp && <Loader2 size={17} className="animate-spin" />}
+                    {verifyingOtp ? 'جاري التحقق...' : 'تحقق وادخل الداشبورد'}
                   </button>
                 </div>
               )}
