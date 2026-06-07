@@ -6,7 +6,7 @@ import {
   ArrowLeft, Phone, Shield, TrendingUp, Zap, ChevronDown, ChevronUp
 } from 'lucide-react'
 
-const PHONE = 'REPLACE_WITH_OWNER_WHATSAPP_NUMBER'
+const PHONE = '966546666005'
 
 const OUTCOMES = [
   { icon: Clock, value: '٧٨٪', label: 'تقليل المواعيد الفائتة', sub: 'بفضل التذكيرات التلقائية عبر واتساب' },
