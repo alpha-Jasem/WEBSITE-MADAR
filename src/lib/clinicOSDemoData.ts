@@ -35,7 +35,7 @@ export const DEMO_DOCTORS: Doctor[] = [
   {
     id: 'doc-001', clinic_id: 'demo-clinic-001',
     name: 'د. سارة الحربي', specialty: 'طب الأسنان العام',
-    active: true, max_appointments_per_day: 14, emergency_slots_per_day: 2,
+    active: true, is_available: true, max_appointments_per_day: 14, emergency_slots_per_day: 2,
     working_hours: {
       sun: { open: true, start: '09:00', end: '17:00' },
       mon: { open: true, start: '09:00', end: '17:00' },
@@ -49,7 +49,7 @@ export const DEMO_DOCTORS: Doctor[] = [
   {
     id: 'doc-002', clinic_id: 'demo-clinic-001',
     name: 'د. أحمد الزهراني', specialty: 'طب الأسنان العام',
-    active: true, max_appointments_per_day: 12, emergency_slots_per_day: 1,
+    active: true, is_available: true, max_appointments_per_day: 12, emergency_slots_per_day: 1,
     working_hours: {
       sun: { open: true, start: '16:00', end: '21:00' },
       mon: { open: true, start: '16:00', end: '21:00' },
@@ -63,7 +63,7 @@ export const DEMO_DOCTORS: Doctor[] = [
   {
     id: 'doc-003', clinic_id: 'demo-clinic-001',
     name: 'د. نورة القحطاني', specialty: 'تقويم الأسنان',
-    active: true, max_appointments_per_day: 10, emergency_slots_per_day: 0,
+    active: true, is_available: true, max_appointments_per_day: 10, emergency_slots_per_day: 0,
     working_hours: {
       sun: { open: true, start: '09:00', end: '14:00' },
       tue: { open: true, start: '09:00', end: '14:00' },
@@ -75,7 +75,7 @@ export const DEMO_DOCTORS: Doctor[] = [
   {
     id: 'doc-004', clinic_id: 'demo-clinic-001',
     name: 'د. خالد العمري', specialty: 'جراحة الفم',
-    active: true, max_appointments_per_day: 8, emergency_slots_per_day: 2,
+    active: true, is_available: true, max_appointments_per_day: 8, emergency_slots_per_day: 2,
     working_hours: {
       mon: { open: true, start: '10:00', end: '18:00' },
       wed: { open: true, start: '10:00', end: '18:00' },

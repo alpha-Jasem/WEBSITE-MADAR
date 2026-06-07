@@ -396,6 +396,20 @@ export async function updateDoctor(id: string, data: Partial<Doctor>) {
   return result as Doctor
 }
 
+export async function toggleDoctorAvailability(id: string, isAvailable: boolean, reason?: string) {
+  const { data: result, error } = await supabase
+    .from('clinic_os_doctors')
+    .update({
+      is_available: isAvailable,
+      unavailable_reason: isAvailable ? null : (reason ?? 'غائب اليوم'),
+    })
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return result as Doctor
+}
+
 export async function createService(data: Partial<Service>) {
   const { data: result, error } = await supabase
     .from('clinic_os_services')

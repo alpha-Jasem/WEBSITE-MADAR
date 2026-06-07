@@ -101,6 +101,8 @@ export interface Doctor {
   phone?: string
   email?: string
   active: boolean
+  is_available: boolean
+  unavailable_reason?: string
   avatar?: string
   working_hours: WorkingHours
   break_times?: string[]
