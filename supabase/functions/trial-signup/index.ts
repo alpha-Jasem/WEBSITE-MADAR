@@ -134,14 +134,12 @@ function defaultCarWashServices(companyId: string) {
   ]
 }
 
-async function findExistingCompanyByEmail(supabase: ReturnType<typeof createClient>, email: string) {
-  const { data } = await supabase
-    .from('companies')
-    .select('id')
-    .eq('owner_email', email)
-    .limit(1)
-    .maybeSingle()
-  return data || null
+async function findExistingCompany(supabase: ReturnType<typeof createClient>, email: string, phone: string) {
+  const [{ data: byEmail }, { data: byPhone }] = await Promise.all([
+    supabase.from('companies').select('id').eq('owner_email', email).limit(1).maybeSingle(),
+    supabase.from('companies').select('id').eq('owner_phone', phone).limit(1).maybeSingle(),
+  ])
+  return byEmail || byPhone || null
 }
 
 Deno.serve(async (req) => {
@@ -180,7 +178,7 @@ Deno.serve(async (req) => {
       return json({ error: 'missing_required_fields' }, 400)
     }
 
-    const existingCompany = await findExistingCompanyByEmail(supabase, email)
+    const existingCompany = await findExistingCompany(supabase, email, phone)
     if (existingCompany) return json({ error: 'company_already_exists' }, 409)
 
     const { data: existingAuth } = await supabase.auth.admin.listUsers()
@@ -280,7 +278,7 @@ Deno.serve(async (req) => {
   if (action === 'send_otp') {
     if (!email.includes('@')) return json({ error: 'invalid_email' }, 400)
 
-    const existingCompany = await findExistingCompanyByEmail(supabase, email)
+    const existingCompany = await findExistingCompany(supabase, email, phone)
 
     if (existingCompany) return json({ error: 'company_already_exists' }, 409)
 
@@ -317,7 +315,7 @@ Deno.serve(async (req) => {
     const verified = await verifyOtpViaTwilio(phone, code)
     if (!verified.ok) return json({ error: verified.error || 'otp_failed', details: verified }, 401)
 
-    const existingCompany = await findExistingCompanyByEmail(supabase, email)
+    const existingCompany = await findExistingCompany(supabase, email, phone)
 
     if (existingCompany) return json({ error: 'company_already_exists' }, 409)
 
