@@ -1,36 +1,79 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Bot, Eye, EyeOff, ArrowLeft } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Bot, ArrowLeft, Mail, CheckCircle2, RefreshCw } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+
+type Step = 'email' | 'otp' | 'done'
 
 export const ClinicOSLogin = () => {
   const navigate = useNavigate()
+  const [step, setStep] = useState<Step>('email')
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPass, setShowPass] = useState(false)
+  const [otp, setOtp] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [resendCooldown, setResendCooldown] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!email || !password) { setError('يرجى إدخال البريد الإلكتروني وكلمة المرور'); return }
+    if (!email.trim()) { setError('يرجى إدخال البريد الإلكتروني'); return }
     setLoading(true)
     setError('')
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
-      if (authError) throw authError
-      navigate('/clinic-os/dashboard')
-    } catch {
-      setError('بيانات الدخول غير صحيحة. تأكد من البريد الإلكتروني وكلمة المرور.')
+      const { error: otpErr } = await supabase.auth.signInWithOtp({
+        email: email.trim().toLowerCase(),
+        options: { shouldCreateUser: false },
+      })
+      if (otpErr) throw otpErr
+      setStep('otp')
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : ''
+      if (msg.includes('not found') || msg.includes('Invalid login')) {
+        setError('لا يوجد حساب بهذا البريد الإلكتروني. هل تريد إنشاء حساب جديد؟')
+      } else {
+        setError('حدث خطأ، يرجى المحاولة مجدداً.')
+      }
     } finally {
       setLoading(false)
     }
   }
 
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!otp.trim() || otp.trim().length < 6) { setError('يرجى إدخال الكود المكون من 6 أرقام'); return }
+    setLoading(true)
+    setError('')
+    try {
+      const { error: verifyErr } = await supabase.auth.verifyOtp({
+        email: email.trim().toLowerCase(),
+        token: otp.trim(),
+        type: 'email',
+      })
+      if (verifyErr) throw verifyErr
+      setStep('done')
+      setTimeout(() => navigate('/clinic-os/dashboard'), 1200)
+    } catch {
+      setError('الكود غير صحيح أو انتهت صلاحيته. تأكد من الكود أو اطلب كوداً جديداً.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const resendOtp = async () => {
+    if (resendCooldown) return
+    setResendCooldown(true)
+    setError('')
+    await supabase.auth.signInWithOtp({
+      email: email.trim().toLowerCase(),
+      options: { shouldCreateUser: false },
+    })
+    setTimeout(() => setResendCooldown(false), 30000)
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #EEF2FF, #F8FAFC)', display: 'flex', direction: 'rtl' }}>
-      {/* Left panel (hidden below 768px ideally) */}
+      {/* Left branding panel */}
       <div style={{ flex: 1, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', padding: '60px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 48 }}>
           <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -64,84 +107,166 @@ export const ClinicOSLogin = () => {
         </div>
       </div>
 
-      {/* Right panel */}
+      {/* Right form panel */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
-        <motion.div
-          initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
-          style={{ width: '100%', maxWidth: 400 }}
-        >
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#0F172A', margin: '0 0 8px', fontFamily: 'Cairo, sans-serif' }}>مرحباً بك</h1>
-          <p style={{ fontSize: 14, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: '0 0 32px' }}>
-            ادخل بياناتك للوصول إلى لوحة تحكم العيادة
-          </p>
+        <div style={{ width: '100%', maxWidth: 400 }}>
+          <AnimatePresence mode="wait">
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 13, fontWeight: 700, color: '#374151', fontFamily: 'Cairo, sans-serif' }}>البريد الإلكتروني</label>
-              <input
-                type="email"
-                value={email}
-                onChange={e => { setEmail(e.target.value); setError('') }}
-                placeholder="email@clinic.sa"
-                style={{ padding: '12px 14px', borderRadius: 9, border: '1px solid #E2E8F0', fontSize: 14, fontFamily: 'Tajawal, sans-serif', direction: 'ltr', outline: 'none', background: '#FFFFFF', color: '#0F172A' }}
-                onFocus={e => (e.currentTarget.style.borderColor = '#4F46E5')}
-                onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
-              />
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <label style={{ fontSize: 13, fontWeight: 700, color: '#374151', fontFamily: 'Cairo, sans-serif' }}>كلمة المرور</label>
-                <button type="button" onClick={() => navigate('/forgot-password')} style={{ fontSize: 12, color: '#4F46E5', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>
-                  نسيت كلمة المرور؟
-                </button>
-              </div>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type={showPass ? 'text' : 'password'}
-                  value={password}
-                  onChange={e => { setPassword(e.target.value); setError('') }}
-                  placeholder="••••••••"
-                  style={{ width: '100%', padding: '12px 44px 12px 14px', borderRadius: 9, border: '1px solid #E2E8F0', fontSize: 14, fontFamily: 'Tajawal, sans-serif', direction: 'ltr', outline: 'none', background: '#FFFFFF', color: '#0F172A', boxSizing: 'border-box' }}
-                  onFocus={e => (e.currentTarget.style.borderColor = '#4F46E5')}
-                  onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPass(!showPass)}
-                  style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', display: 'flex', alignItems: 'center' }}
-                >
-                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </div>
-
-            {error && (
+            {/* Step 1: Email */}
+            {step === 'email' && (
               <motion.div
-                initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
-                style={{ padding: '10px 14px', borderRadius: 8, background: '#FEF2F2', border: '1px solid #FECACA', fontSize: 13, color: '#DC2626', fontFamily: 'Tajawal, sans-serif' }}
+                key="email"
+                initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
               >
-                {error}
+                <h1 style={{ fontSize: 26, fontWeight: 900, color: '#0F172A', margin: '0 0 8px', fontFamily: 'Cairo, sans-serif' }}>مرحباً بك</h1>
+                <p style={{ fontSize: 14, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: '0 0 32px', lineHeight: 1.6 }}>
+                  أدخل بريدك الإلكتروني وسنرسل لك كود الدخول
+                </p>
+
+                <form onSubmit={handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 13, fontWeight: 700, color: '#374151', fontFamily: 'Cairo, sans-serif' }}>البريد الإلكتروني</label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={e => { setEmail(e.target.value); setError('') }}
+                      placeholder="email@clinic.sa"
+                      autoFocus
+                      style={{ padding: '12px 14px', borderRadius: 9, border: '1px solid #E2E8F0', fontSize: 14, fontFamily: 'Tajawal, sans-serif', direction: 'ltr', outline: 'none', background: '#FFFFFF', color: '#0F172A' }}
+                      onFocus={e => (e.currentTarget.style.borderColor = '#4F46E5')}
+                      onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
+                    />
+                  </div>
+
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+                      style={{ padding: '10px 14px', borderRadius: 8, background: '#FEF2F2', border: '1px solid #FECACA', fontSize: 13, color: '#DC2626', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.5 }}
+                    >
+                      {error}
+                      {error.includes('إنشاء حساب') && (
+                        <button
+                          type="button"
+                          onClick={() => navigate('/clinic-os/signup')}
+                          style={{ display: 'block', marginTop: 6, fontSize: 12, color: '#4F46E5', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Cairo, sans-serif', fontWeight: 700, padding: 0 }}
+                        >
+                          سجّل الآن ←
+                        </button>
+                      )}
+                    </motion.div>
+                  )}
+
+                  <motion.button
+                    type="submit"
+                    whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    disabled={loading}
+                    style={{ marginTop: 4, padding: '13px', borderRadius: 10, background: loading ? '#C7D2FE' : 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', border: 'none', fontSize: 15, fontWeight: 800, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'Cairo, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                  >
+                    {loading ? 'جاري الإرسال...' : <><Mail size={15} /> أرسل كود الدخول</>}
+                  </motion.button>
+                </form>
+
+                <div style={{ textAlign: 'center', marginTop: 20 }}>
+                  <span style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>ليس لديك حساب؟ </span>
+                  <button onClick={() => navigate('/clinic-os/signup')} style={{ fontSize: 13, color: '#4F46E5', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Cairo, sans-serif', fontWeight: 700 }}>
+                    سجّل الآن
+                  </button>
+                </div>
               </motion.div>
             )}
 
-            <motion.button
-              type="submit"
-              whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-              disabled={loading}
-              style={{ marginTop: 4, padding: '13px', borderRadius: 10, background: loading ? '#C7D2FE' : 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', border: 'none', fontSize: 15, fontWeight: 800, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'Cairo, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-            >
-              {loading ? 'جاري الدخول...' : <>دخول <ArrowLeft size={16} /></>}
-            </motion.button>
-          </form>
+            {/* Step 2: OTP */}
+            {step === 'otp' && (
+              <motion.div
+                key="otp"
+                initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+              >
+                <div style={{ width: 52, height: 52, borderRadius: 16, background: '#EEF2FF', border: '1px solid #C7D2FE', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+                  <Mail size={22} style={{ color: '#4F46E5' }} />
+                </div>
 
-          <div style={{ textAlign: 'center', marginTop: 20 }}>
-            <span style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>ليس لديك حساب؟ </span>
-            <button onClick={() => navigate('/clinic-os/signup')} style={{ fontSize: 13, color: '#4F46E5', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Cairo, sans-serif', fontWeight: 700 }}>
-              سجّل الآن
-            </button>
-          </div>
-        </motion.div>
+                <h1 style={{ fontSize: 24, fontWeight: 900, color: '#0F172A', margin: '0 0 8px', fontFamily: 'Cairo, sans-serif' }}>تحقق من بريدك</h1>
+                <p style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: '0 0 28px', lineHeight: 1.6 }}>
+                  أرسلنا كود الدخول إلى<br />
+                  <strong style={{ color: '#374151', direction: 'ltr', display: 'inline-block' }}>{email}</strong>
+                </p>
+
+                <form onSubmit={handleVerifyOtp} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 13, fontWeight: 700, color: '#374151', fontFamily: 'Cairo, sans-serif' }}>كود التحقق</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      value={otp}
+                      onChange={e => { setOtp(e.target.value.replace(/\D/g, '')); setError('') }}
+                      placeholder="000000"
+                      autoFocus
+                      style={{ padding: '16px 14px', borderRadius: 9, border: '1px solid #E2E8F0', fontSize: 28, fontFamily: 'monospace', direction: 'ltr', textAlign: 'center', letterSpacing: '0.3em', outline: 'none', background: '#FFFFFF', color: '#0F172A', fontWeight: 700 }}
+                      onFocus={e => (e.currentTarget.style.borderColor = '#4F46E5')}
+                      onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
+                    />
+                  </div>
+
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+                      style={{ padding: '10px 14px', borderRadius: 8, background: '#FEF2F2', border: '1px solid #FECACA', fontSize: 13, color: '#DC2626', fontFamily: 'Tajawal, sans-serif' }}
+                    >
+                      {error}
+                    </motion.div>
+                  )}
+
+                  <motion.button
+                    type="submit"
+                    whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    disabled={loading || otp.length < 6}
+                    style={{ padding: '13px', borderRadius: 10, background: (loading || otp.length < 6) ? '#C7D2FE' : 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', border: 'none', fontSize: 15, fontWeight: 800, cursor: (loading || otp.length < 6) ? 'not-allowed' : 'pointer', fontFamily: 'Cairo, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                  >
+                    {loading ? 'جاري التحقق...' : <>دخول <ArrowLeft size={15} /></>}
+                  </motion.button>
+                </form>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
+                  <button
+                    onClick={() => { setStep('email'); setOtp(''); setError('') }}
+                    style={{ fontSize: 12, color: '#94A3B8', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}
+                  >
+                    ← تغيير الإيميل
+                  </button>
+                  <button
+                    onClick={resendOtp}
+                    disabled={resendCooldown}
+                    style={{ fontSize: 12, color: resendCooldown ? '#CBD5E1' : '#4F46E5', background: 'none', border: 'none', cursor: resendCooldown ? 'not-allowed' : 'pointer', fontFamily: 'Cairo, sans-serif', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}
+                  >
+                    <RefreshCw size={11} />
+                    {resendCooldown ? 'أعد الإرسال بعد 30 ث' : 'أعد إرسال الكود'}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 3: Done */}
+            {step === 'done' && (
+              <motion.div
+                key="done"
+                initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                style={{ textAlign: 'center', padding: '40px 0' }}
+              >
+                <motion.div
+                  initial={{ scale: 0 }} animate={{ scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
+                  style={{ display: 'inline-flex', marginBottom: 20 }}
+                >
+                  <CheckCircle2 size={64} style={{ color: '#10B981' }} />
+                </motion.div>
+                <h2 style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', margin: '0 0 8px', fontFamily: 'Cairo, sans-serif' }}>تم الدخول بنجاح!</h2>
+                <p style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.6 }}>جاري الانتقال إلى لوحة التحكم...</p>
+              </motion.div>
+            )}
+
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   )
