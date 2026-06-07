@@ -41,6 +41,7 @@ const Services = lazy(() => import('./pages/clinicOS/dashboard/Services').then(m
 const CalendarPage = lazy(() => import('./pages/clinicOS/dashboard/CalendarPage').then(m => ({ default: m.CalendarPage })))
 const Messages = lazy(() => import('./pages/clinicOS/dashboard/Messages').then(m => ({ default: m.Messages })))
 const Settings = lazy(() => import('./pages/clinicOS/dashboard/Settings').then(m => ({ default: m.Settings })))
+const Reports  = lazy(() => import('./pages/clinicOS/dashboard/Reports').then(m => ({ default: m.Reports })))
 
 function AppRoutes() {
   const location = useLocation()
@@ -110,6 +111,7 @@ function AppRoutes() {
             <Route path="services"     element={<Services />} />
             <Route path="calendar"     element={<CalendarPage />} />
             <Route path="messages"     element={<Messages />} />
+            <Route path="reports"      element={<Reports />} />
             <Route path="settings"     element={<Settings />} />
           </Route>
 
@@ -132,6 +134,7 @@ function AppRoutes() {
             <Route path="services" element={<Services />} />
             <Route path="calendar" element={<CalendarPage />} />
             <Route path="messages" element={<Messages />} />
+            <Route path="reports"  element={<Reports />} />
             <Route path="settings" element={<Settings />} />
           </Route>
 

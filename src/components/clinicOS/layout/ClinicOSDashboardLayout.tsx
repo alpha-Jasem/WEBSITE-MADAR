@@ -17,7 +17,18 @@ const PAGE_TITLES: Record<string, string> = {
   '/clinic-os/dashboard/services': 'الخدمات',
   '/clinic-os/dashboard/calendar': 'التقويم',
   '/clinic-os/dashboard/messages': 'الرسائل',
+  '/clinic-os/dashboard/reports': 'التقارير',
   '/clinic-os/dashboard/settings': 'الإعدادات',
+  '/clinic-os/demo': 'لوحة التحكم',
+  '/clinic-os/demo/appointments': 'المواعيد',
+  '/clinic-os/demo/ai-booking': 'الحجز الذكي',
+  '/clinic-os/demo/patients': 'العملاء',
+  '/clinic-os/demo/doctors': 'الأطباء',
+  '/clinic-os/demo/services': 'الخدمات',
+  '/clinic-os/demo/calendar': 'التقويم',
+  '/clinic-os/demo/messages': 'الرسائل',
+  '/clinic-os/demo/reports': 'التقارير',
+  '/clinic-os/demo/settings': 'الإعدادات',
 }
 
 export const ClinicOSDashboardLayout = () => {

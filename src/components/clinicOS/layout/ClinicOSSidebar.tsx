@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Calendar, Bot, Users, UserCheck,
-  Stethoscope, CalendarDays, MessageSquare, Settings, Lock, Plus, X
+  Stethoscope, CalendarDays, MessageSquare, Settings, Lock, Plus, X, TrendingUp,
 } from 'lucide-react'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 
@@ -35,6 +35,7 @@ export const ClinicOSSidebar = ({ onNewAppointment, onClose }: Props) => {
     { path: '/services',       icon: Stethoscope,     label: 'الخدمات' },
     { path: '/calendar',       icon: CalendarDays,    label: 'التقويم' },
     { path: '/messages',       icon: MessageSquare,   label: 'الرسائل' },
+    { path: '/reports',        icon: TrendingUp,      label: 'التقارير' },
     { path: '/settings',       icon: Settings,        label: 'الإعدادات' },
   ]
 
