@@ -91,13 +91,12 @@ export const ClinicOSSignup = () => {
         .single()
       if (companyErr) throw companyErr
 
-      // 3. Create users row
+      // 3. Create users row (no company_id column in users table)
       await supabase.from('users').upsert({
         id: userId,
         email: form.email.trim().toLowerCase(),
         full_name: form.owner_name.trim(),
         role: 'client',
-        company_id: company.id,
       })
 
       setDone(true)
@@ -209,7 +208,7 @@ export const ClinicOSSignup = () => {
                 </h2>
                 <p style={{ fontSize: 12, color: MUTED, fontFamily: 'Tajawal, sans-serif', margin: '0 0 24px' }}>
                   لديك حساب؟{' '}
-                  <Link to="/login" style={{ color: GREEN, textDecoration: 'none', fontWeight: 700 }}>سجّل الدخول</Link>
+                  <Link to="/clinic-os/login" style={{ color: GREEN, textDecoration: 'none', fontWeight: 700 }}>سجّل الدخول</Link>
                 </p>
 
                 {FIELD_CONFIG.map(({ key, label, placeholder, icon: Icon, type }) => (
