@@ -18,7 +18,7 @@ interface ToastContextValue {
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-const TOAST_CONFIG: Record<ToastType, { color: string; bg: string; border: string; Icon: React.FC<{ size?: number; style?: React.CSSProperties }> }> = {
+const TOAST_CONFIG: Record<ToastType, { color: string; bg: string; border: string; Icon: React.ElementType }> = {
   success: { color: '#059669', bg: '#ECFDF5', border: '#A7F3D0', Icon: CheckCircle },
   error:   { color: '#DC2626', bg: '#FEF2F2', border: '#FECACA', Icon: AlertCircle },
   info:    { color: '#4F46E5', bg: '#EEF2FF', border: '#C7D2FE', Icon: Info },

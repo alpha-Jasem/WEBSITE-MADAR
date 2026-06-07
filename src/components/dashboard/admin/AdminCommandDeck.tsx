@@ -1,28 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import {
-  Activity,
-  AlertTriangle,
-  ArrowLeft,
-  Building2,
-  CalendarClock,
-  Car,
-  CheckCircle2,
-  CreditCard,
-  ExternalLink,
-  Gauge,
-  MessageSquare,
-  QrCode,
-  Receipt,
-  Search,
-  Settings,
-  ShieldCheck,
-  SlidersHorizontal,
-  TrendingUp,
-  WalletCards,
-  Workflow,
-  Zap,
-} from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import type { Company } from '../../../types'
 import { PLAN_LABELS, PLAN_PRICES } from '../../../lib/constants'
@@ -88,6 +65,16 @@ function getMessageUsage(company: Company) {
   const limit = company.message_limit || 0
   if (!limit) return 0
   return Math.round(((company.messages_used || 0) / limit) * 100)
+}
+
+function timeAgo(d: string): string {
+  const diff = Date.now() - new Date(d).getTime()
+  const m = Math.floor(diff / 60000)
+  if (m < 1) return 'الآن'
+  if (m < 60) return `منذ ${m} دقيقة`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `منذ ${h} ساعة`
+  return `منذ ${Math.floor(h / 24)} يوم`
 }
 
 export const AdminCommandDeck = () => {
@@ -242,38 +229,10 @@ export const AdminCommandDeck = () => {
   }, [companies])
 
   const integrationHealth = [
-    {
-      name: 'Supabase',
-      desc: 'قاعدة البيانات والمصادقة',
-      status: companies.length >= 0 ? 'متصل' : 'غير معروف',
-      ok: true,
-      externalPending: false,
-      icon: ShieldCheck,
-    },
-    {
-      name: 'n8n Cloud',
-      desc: 'تدفقات الأتمتة والويب هوك',
-      status: automations.some(item => item.status === 'active') ? 'نشط' : 'يحتاج مراجعة',
-      ok: automations.some(item => item.status === 'active'),
-      externalPending: false,
-      icon: Workflow,
-    },
-    {
-      name: 'WhatsApp API',
-      desc: 'رسائل العملاء والولاء',
-      status: automations.some(item => item.type === 'whatsapp' && item.status === 'active') ? 'نشط' : 'بانتظار توثيق Meta',
-      ok: true,
-      externalPending: !automations.some(item => item.type === 'whatsapp' && item.status === 'active'),
-      icon: MessageSquare,
-    },
-    {
-      name: 'Moyasar',
-      desc: 'المدفوعات والترقيات',
-      status: companies.some(company => featureEnabled(company, 'online_payments')) ? 'مفعل لعملاء' : 'بانتظار تفعيل مزود الدفع',
-      ok: true,
-      externalPending: !companies.some(company => featureEnabled(company, 'online_payments')),
-      icon: CreditCard,
-    },
+    { name: 'Supabase', desc: 'قاعدة البيانات والمصادقة', status: companies.length >= 0 ? 'متصل' : 'غير معروف', ok: true, pending: false },
+    { name: 'n8n Cloud', desc: 'تدفقات الأتمتة والويب هوك', status: automations.some(i => i.status === 'active') ? 'نشط' : 'يحتاج مراجعة', ok: automations.some(i => i.status === 'active'), pending: false },
+    { name: 'WhatsApp API', desc: 'رسائل العملاء والولاء', status: automations.some(i => i.type === 'whatsapp' && i.status === 'active') ? 'نشط' : 'بانتظار توثيق Meta', ok: true, pending: !automations.some(i => i.type === 'whatsapp' && i.status === 'active') },
+    { name: 'Moyasar', desc: 'المدفوعات والترقيات', status: companies.some(c => featureEnabled(c, 'online_payments')) ? 'مفعل لعملاء' : 'بانتظار تفعيل', ok: true, pending: !companies.some(c => featureEnabled(c, 'online_payments')) },
   ]
 
   const filteredIssues = health
@@ -282,323 +241,223 @@ export const AdminCommandDeck = () => {
     .slice(0, 7)
 
   const commandAlerts = useMemo(() => {
-    const alerts: Array<{ id: string; tone: string; title: string; desc: string; to: string; action: string }> = []
-    if (nearLimit > 0) {
-      alerts.push({
-        id: 'message-limit',
-        tone: '#EF4444',
-        title: 'شركات قريبة من حد رسائل واتساب',
-        desc: `${nearLimit} شركة وصلت 80% أو أكثر. هذه أفضل لحظة لبيع ترقية أو زيادة حد الرسائل.`,
-        to: '/admin/settings',
-        action: 'فتح التحكم',
-      })
-    }
-    const missingQr = carWashCompanies.filter(company => !(company.public_checkin_token || company.webhook_token))
-    if (missingQr.length > 0) {
-      alerts.push({
-        id: 'missing-qr',
-        tone: '#F59E0B',
-        title: 'QR التسجيل الذاتي غير جاهز',
-        desc: `${missingQr.length} مغسلة تحتاج رابط QR قبل تسليم النظام للعميل.`,
-        to: '/admin/settings',
-        action: 'تجهيز QR',
-      })
-    }
+    const alerts: Array<{ id: string; tone: string; badgeClass: string; title: string; desc: string; to: string; action: string }> = []
+    if (nearLimit > 0) alerts.push({ id: 'message-limit', tone: 'var(--red)', badgeClass: 'red', title: 'شركات قريبة من حد الرسائل', desc: `${nearLimit} شركة وصلت 80% أو أكثر. هذه أفضل لحظة لبيع ترقية.`, to: '/admin/settings', action: 'فتح التحكم' })
+    const missingQr = carWashCompanies.filter(c => !(c.public_checkin_token || c.webhook_token))
+    if (missingQr.length > 0) alerts.push({ id: 'missing-qr', tone: 'var(--amber)', badgeClass: 'amber', title: 'QR التسجيل الذاتي غير جاهز', desc: `${missingQr.length} مغسلة تحتاج رابط QR قبل تسليم النظام.`, to: '/admin/settings', action: 'تجهيز QR' })
     const unhealthy = health.filter(row => row.score < 70)
-    if (unhealthy.length > 0) {
-      alerts.push({
-        id: 'unhealthy-tenants',
-        tone: '#7C3AED',
-        title: 'حسابات تحتاج إنقاذ قبل العرض',
-        desc: `${unhealthy.length} حساب ناقص خدمات أو موظفين أو نشاط. ابدأ بالأقل جاهزية.`,
-        to: '/admin/companies',
-        action: 'مراجعة الشركات',
-      })
-    }
-    if (!automations.some(item => item.type === 'whatsapp' && item.status === 'active')) {
-      alerts.push({
-        id: 'whatsapp-external-pending',
-        tone: '#0EA5E9',
-        title: 'واتساب خارج تقييم جاهزية المنتج',
-        desc: 'التشغيل الداخلي جاهز، وواتساب ينتظر توثيق Meta أو موافقة مزود الرسائل. لا تعتبره خللاً في الداشبورد.',
-        to: '/admin/n8n',
-        action: 'متابعة التكامل',
-      })
-    }
-    if (alerts.length === 0) {
-      alerts.push({
-        id: 'all-clear',
-        tone: '#10B981',
-        title: 'النظام جاهز للعرض',
-        desc: 'لا توجد مشاكل حرجة حسب بيانات الشركات والتشغيل الحالية.',
-        to: '/admin/companies',
-        action: 'عرض الشركات',
-      })
-    }
+    if (unhealthy.length > 0) alerts.push({ id: 'unhealthy-tenants', tone: 'var(--primary)', badgeClass: 'violet', title: 'حسابات تحتاج إنقاذ', desc: `${unhealthy.length} حساب ناقص خدمات أو موظفين أو نشاط.`, to: '/admin/companies', action: 'مراجعة الشركات' })
+    if (!automations.some(i => i.type === 'whatsapp' && i.status === 'active')) alerts.push({ id: 'whatsapp-pending', tone: 'oklch(0.60 0.27 258)', badgeClass: 'blue', title: 'واتساب ينتظر توثيق Meta', desc: 'التشغيل الداخلي جاهز، واتساب خارج نطاق التقييم.', to: '/admin/n8n', action: 'متابعة التكامل' })
+    if (alerts.length === 0) alerts.push({ id: 'all-clear', tone: 'var(--green)', badgeClass: 'green', title: 'النظام جاهز للعرض', desc: 'لا توجد مشاكل حرجة حسب بيانات الشركات والتشغيل الحالية.', to: '/admin/companies', action: 'عرض الشركات' })
     return alerts
   }, [automations, carWashCompanies, health, nearLimit])
 
-  const recentEvents = [
-    ...activities.map(item => ({
-      id: `activity-${item.id}`,
-      title: item.customer_name || 'عميل مغسلة',
-      meta: `${item.company_name || 'شركة'} · ${item.service_name || 'خدمة'} · ${item.status || 'received'}`,
-      icon: Car,
-      color: '#1565C0',
-    })),
-    ...health.filter(row => row.score < 70).slice(0, 3).map(row => ({
-      id: `issue-${row.id}`,
-      title: row.name,
-      meta: row.issues.slice(0, 2).join(' · '),
-      icon: AlertTriangle,
-      color: '#F59E0B',
-    })),
-  ].slice(0, 8)
-
-  if (loading) {
-    return (
-      <div className="admin-command-loading">
-        <div className="admin-command-loading-status">
-          <span />
-          <p>جاري تجهيز اللوحة...</p>
-        </div>
-        <section className="admin-command-loading-hero">
-          <div>
-            <i />
-            <b />
-            <em />
-          </div>
-          <div className="admin-command-loading-grid">
-            {Array.from({ length: 4 }).map((_, index) => <span key={index} />)}
-          </div>
-        </section>
-        <section className="admin-command-loading-panels">
-          <span />
-          <span />
-        </section>
-      </div>
-    )
-  }
+  if (loading) return (
+    <div className="page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '55vh', color: 'var(--ink-3)' }}>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite', marginInlineEnd: 8 }}><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
+      جاري تجهيز اللوحة…
+    </div>
+  )
 
   return (
-    <div className="admin-command">
-      <section className="admin-command-hero">
+    <div className="page fade-in">
+      {/* Header */}
+      <div className="sec-head" style={{ marginBottom: 24 }}>
         <div>
-          <span>مركز إدارة مدار OS</span>
-          <h1>تحكم يومي كامل في عملاء SaaS للمغاسل</h1>
-          <p>
-            الصفحة الرئيسية الآن تعطيك صورة تنفيذية: من يحتاج تدخل، أين توجد فرصة ترقية،
-            هل التكاملات سليمة، وكم قيمة الاشتراكات الشهرية المتوقعة.
-          </p>
+          <div className="sec-title">نظرة عامة</div>
+          <div className="sec-sub">مركز إدارة مدار OS — تحكم يومي كامل في عملاء SaaS للمغاسل</div>
         </div>
-        <div className="admin-command-hero-grid">
-          {[
-            ['الشركات', companies.length],
-            ['النشطة', activeCompanies],
-            ['QR جاهز', `${qrReady}/${carWashCompanies.length || 0}`],
-            ['إضافات مدفوعة', paidAddons],
-          ].map(([label, value]) => (
-            <article key={String(label)}>
-              <strong>{value}</strong>
-              <small>{label}</small>
-            </article>
-          ))}
-        </div>
-      </section>
+        <button className="btn btn-ghost" onClick={load}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 4v6h-6" /><path d="M1 20v-6h6" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></svg>
+          تحديث
+        </button>
+      </div>
 
-      <section className="admin-quick-actions">
+      {/* KPI Stats */}
+      <div className="stat-grid" style={{ marginBottom: 24 }}>
         {[
-          { to: '/admin/control', icon: SlidersHorizontal, label: 'مركز التحكم', desc: 'الصحة، المزايا، الفوترة، والتنبيهات.' },
-          { to: '/admin/companies', icon: Building2, label: 'إضافة / إدارة شركة', desc: 'افتح حساب عميل أو عدل بياناته.' },
-          { to: '/admin/settings', icon: Settings, label: 'تفعيل ميزات مدفوعة', desc: 'محفظة، اشتراكات، دفع إلكتروني.' },
-          { to: '/admin/automations', icon: Zap, label: 'مراجعة الأتمتة', desc: 'أوقف أو شغل تدفقات العميل.' },
-          { to: '/admin/n8n', icon: ExternalLink, label: 'فتح n8n', desc: 'راجع الويب هوك والتشغيل.' },
-        ].map(item => {
-          const Icon = item.icon
-          return (
-            <Link key={item.label} to={item.to}>
-              <Icon size={19} />
-              <span>
-                <strong>{item.label}</strong>
-                <small>{item.desc}</small>
-              </span>
-              <ArrowLeft size={15} />
-            </Link>
-          )
-        })}
-      </section>
-
-      <section className="admin-metric-strip">
-        {[
-          { label: 'إيراد مغاسل هذا الشهر', value: formatSar(revenueMonth), color: '#10B981', icon: TrendingUp },
-          { label: 'سيارات اليوم', value: carsToday.toLocaleString('en-US'), color: '#1565C0', icon: Car },
-          { label: 'تحتاج تدخل', value: health.filter(row => row.score < 80).length, color: '#F59E0B', icon: AlertTriangle },
-          { label: 'قريبة من حد الرسائل', value: nearLimit, color: '#EF4444', icon: MessageSquare },
-        ].map(item => {
-          const Icon = item.icon
-          return (
-            <article key={item.label}>
-              <span style={{ background: item.color }} />
-              <Icon size={18} style={{ color: item.color, marginBottom: 10 }} />
-              <strong>{item.value}</strong>
-              <small>{item.label}</small>
-            </article>
-          )
-        })}
-      </section>
-
-      <section className="admin-command-alerts">
-        {commandAlerts.slice(0, 4).map(alert => (
-          <Link key={alert.id} to={alert.to} style={{ borderColor: `${alert.tone}33` }}>
-            <span style={{ background: alert.tone }} />
-            <div>
-              <strong>{alert.title}</strong>
-              <small>{alert.desc}</small>
-            </div>
-            <em style={{ color: alert.tone }}>{alert.action}</em>
-          </Link>
-        ))}
-      </section>
-
-      <section className="admin-command-grid">
-        <article className="admin-command-panel admin-issues-panel">
-          <header>
-            <div>
-              <h2>مركز المشاكل</h2>
-              <p>قائمة قابلة للتنفيذ بدل أرقام عامة.</p>
-            </div>
-            <div className="admin-search compact">
-              <Search size={14} />
-              <input value={search} onChange={event => setSearch(event.target.value)} placeholder="بحث..." />
-            </div>
-          </header>
-
-          <div className="admin-issue-list">
-            {filteredIssues.length === 0 ? (
-              <div className="admin-empty-state">
-                <CheckCircle2 size={30} />
-                كل الشركات سليمة حسب الفحوصات الحالية.
-              </div>
-            ) : filteredIssues.map(row => {
-              const color = row.score >= 80 ? '#10B981' : row.score >= 55 ? '#F59E0B' : '#EF4444'
-              return (
-                <div key={row.id} className="admin-issue-row">
-                  <div className="admin-score-ring" style={{ borderColor: `${color}55`, color }}>
-                    {row.score}
-                  </div>
-                  <div>
-                    <strong>{row.name}</strong>
-                    <small>{PLAN_LABELS[row.plan] ?? row.plan} · {row.issues.slice(0, 3).join(' · ') || 'جاهزة'}</small>
-                  </div>
-                  <Link to={row.actionTo}>{row.action}<ArrowLeft size={13} /></Link>
-                </div>
-              )
-            })}
+          { label: 'إيراد الشهر', value: formatSar(revenueMonth) },
+          { label: 'سيارات اليوم', value: carsToday.toLocaleString() },
+          { label: 'شركات نشطة', value: `${activeCompanies} / ${companies.length}` },
+          { label: 'قريبة من الحد', value: nearLimit, warn: nearLimit > 0 },
+        ].map((s, i) => (
+          <div key={i} className="stat">
+            <div className="stat-top"><div className="stat-label">{s.label}</div></div>
+            <div className="stat-value num" style={s.warn ? { color: 'var(--red)' } : {}}>{s.value}</div>
           </div>
-        </article>
+        ))}
+      </div>
 
-        <aside className="admin-command-panel">
-          <header>
-            <div>
-              <h2>ملخص الفوترة</h2>
-              <p>قراءة سريعة لقيمة الاشتراكات وفرص الترقية.</p>
-            </div>
-            <Receipt size={20} />
-          </header>
+      {/* Secondary Stats */}
+      <div className="stat-grid" style={{ marginBottom: 24, gridTemplateColumns: 'repeat(4, 1fr)' }}>
+        {[
+          { label: 'QR جاهز', value: `${qrReady} / ${carWashCompanies.length}` },
+          { label: 'إضافات مدفوعة', value: paidAddons },
+          { label: 'MRR المتوقع', value: formatSar(billing.mrr) },
+          { label: 'فرص ترقية', value: billing.upgradeCandidates.length },
+        ].map((s, i) => (
+          <div key={i} className="stat">
+            <div className="stat-top"><div className="stat-label">{s.label}</div></div>
+            <div className="stat-value num" style={{ fontSize: 18 }}>{s.value}</div>
+          </div>
+        ))}
+      </div>
 
-          <div className="admin-billing-stack">
-            <div className="admin-billing-main">
-              <small>MRR المتوقع</small>
-              <strong>{formatSar(billing.mrr)}</strong>
-              <span>النشط فعليًا: {formatSar(billing.activeMrr)}</span>
+      {/* Alerts */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
+        {commandAlerts.slice(0, 4).map(alert => (
+          <div key={alert.id} className="card" style={{ padding: '14px 18px', borderInlineStart: `3px solid ${alert.tone}`, display: 'flex', alignItems: 'center', gap: 14 }}>
+            <span className={`badge ${alert.badgeClass}`} style={{ flexShrink: 0 }}>{alert.badgeClass === 'green' ? '✓' : '!'}</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, fontSize: 13 }}>{alert.title}</div>
+              <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>{alert.desc}</div>
             </div>
-            <div className="admin-billing-grid">
-              <span><strong>{billing.upgradeCandidates.length}</strong><small>فرصة ترقية</small></span>
-              <span><strong>{billing.renewals.length}</strong><small>تجديد قريب</small></span>
+            <Link to={alert.to} style={{ fontSize: 12, color: alert.tone, textDecoration: 'none', flexShrink: 0, fontWeight: 600 }}>{alert.action} ←</Link>
+          </div>
+        ))}
+      </div>
+
+      {/* Main Grid: Issues + Billing */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20, marginBottom: 20 }}>
+        {/* Issues Panel */}
+        <div className="card card-pad">
+          <div className="row gap-2" style={{ marginBottom: 16, flexWrap: 'wrap' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: 15 }}>مركز المشاكل</div>
+              <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>قائمة قابلة للتنفيذ بدل أرقام عامة</div>
             </div>
-            <div className="admin-renewal-list">
-              {billing.renewals.length === 0 ? (
-                <p>لا توجد تواريخ تجديد مسجلة.</p>
-              ) : billing.renewals.map(company => (
-                <div key={company.id}>
-                  <span>{company.name}</span>
-                  <small>{new Date(company.plan_reset_at).toLocaleDateString('ar-SA')}</small>
+            <div className="card row gap-2" style={{ padding: '7px 12px' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--ink-3)' }}><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="بحث..." style={{ background: 'none', border: 'none', outline: 'none', fontSize: 12.5, color: 'var(--ink)', width: 120 }} />
+            </div>
+          </div>
+          {filteredIssues.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--green)', fontSize: 13 }}>✓ كل الشركات سليمة حسب الفحوصات الحالية</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {filteredIssues.map(row => {
+                const color = row.score >= 80 ? 'var(--green)' : row.score >= 55 ? 'var(--amber)' : 'var(--red)'
+                return (
+                  <div key={row.id} className="row gap-3" style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div style={{ width: 40, height: 40, borderRadius: '50%', border: `2px solid ${color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 12, color, flexShrink: 0 }}>{row.score}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: 13 }}>{row.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 2 }}>{PLAN_LABELS[row.plan] ?? row.plan} · {row.issues.slice(0, 3).join(' · ') || 'جاهزة'}</div>
+                    </div>
+                    <Link to={row.actionTo} style={{ fontSize: 11.5, color: 'var(--primary)', textDecoration: 'none', flexShrink: 0 }}>{row.action} ←</Link>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Billing Panel */}
+        <div className="card card-pad">
+          <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>ملخص الفوترة</div>
+          <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 20 }}>قراءة سريعة لقيمة الاشتراكات وفرص الترقية</div>
+          <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: '14px 16px', marginBottom: 14 }}>
+            <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>MRR المتوقع</div>
+            <div className="num" style={{ fontSize: 22, fontWeight: 800, color: 'var(--primary)', margin: '4px 0' }}>{formatSar(billing.mrr)}</div>
+            <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>النشط فعليًا: {formatSar(billing.activeMrr)}</div>
+          </div>
+          <div className="row gap-2" style={{ marginBottom: 16 }}>
+            <div style={{ flex: 1, background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
+              <div className="num" style={{ fontWeight: 700, fontSize: 18, color: 'var(--amber)' }}>{billing.upgradeCandidates.length}</div>
+              <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>فرصة ترقية</div>
+            </div>
+            <div style={{ flex: 1, background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
+              <div className="num" style={{ fontWeight: 700, fontSize: 18, color: 'var(--green)' }}>{billing.renewals.length}</div>
+              <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>تجديد قريب</div>
+            </div>
+          </div>
+          {billing.renewals.length === 0 ? (
+            <div style={{ fontSize: 12, color: 'var(--ink-3)', textAlign: 'center' }}>لا توجد تواريخ تجديد مسجلة</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {billing.renewals.map(c => (
+                <div key={c.id} className="row gap-2" style={{ fontSize: 12 }}>
+                  <span style={{ flex: 1 }}>{c.name}</span>
+                  <span style={{ color: 'var(--ink-3)', fontFamily: 'var(--mono)' }}>{new Date(c.plan_reset_at).toLocaleDateString('ar-SA')}</span>
                 </div>
               ))}
             </div>
-          </div>
-        </aside>
-      </section>
+          )}
+        </div>
+      </div>
 
-      <section className="admin-command-grid lower">
-        <article className="admin-command-panel">
-          <header>
-            <div>
-              <h2>صحة التكاملات</h2>
-              <p>مؤشرات سريعة للتكاملات الأساسية.</p>
-            </div>
-            <Activity size={20} />
-          </header>
-          <div className="admin-integration-grid">
-            {integrationHealth.map(item => {
-              const Icon = item.icon
-              return (
-                <div key={item.name} className={item.externalPending ? 'pending' : item.ok ? 'ok' : 'warn'}>
-                  <Icon size={18} />
-                  <span>
-                    <strong>{item.name}</strong>
-                    <small>{item.desc}</small>
-                  </span>
-                  <em>{item.status}</em>
+      {/* Lower Grid: Integrations + Activity */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+        {/* Integration Health */}
+        <div className="card card-pad">
+          <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>صحة التكاملات</div>
+          <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 18 }}>مؤشرات سريعة للتكاملات الأساسية</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {integrationHealth.map(item => (
+              <div key={item.name} className="card" style={{ padding: '12px 14px', borderColor: item.pending ? 'rgba(245,158,11,0.3)' : item.ok ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.3)' }}>
+                <div className="row gap-2" style={{ marginBottom: 4 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: item.pending ? 'var(--amber)' : item.ok ? 'var(--green)' : 'var(--red)', flexShrink: 0, marginTop: 3 }} />
+                  <span style={{ fontWeight: 600, fontSize: 12 }}>{item.name}</span>
                 </div>
-              )
-            })}
+                <div style={{ fontSize: 11, color: 'var(--ink-3)', marginBottom: 6 }}>{item.desc}</div>
+                <span className={`badge ${item.pending ? 'amber' : item.ok ? 'green' : 'red'}`} style={{ fontSize: 10 }}>{item.status}</span>
+              </div>
+            ))}
           </div>
-        </article>
+        </div>
 
-        <article className="admin-command-panel">
-          <header>
-            <div>
-              <h2>آخر النشاط</h2>
-              <p>آخر حركة تشغيل أو مشكلة تحتاج انتباه.</p>
-            </div>
-            <CalendarClock size={20} />
-          </header>
-          <div className="admin-event-feed">
-            {recentEvents.length === 0 ? (
-              <div className="admin-empty-state">لا توجد حركة حديثة.</div>
-            ) : recentEvents.map(event => {
-              const Icon = event.icon
-              return (
-                <div key={event.id}>
-                  <span style={{ color: event.color, background: `${event.color}14` }}><Icon size={16} /></span>
-                  <div>
-                    <strong>{event.title}</strong>
-                    <small>{event.meta}</small>
+        {/* Activity Feed */}
+        <div className="card card-pad">
+          <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>آخر النشاط</div>
+          <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 18 }}>آخر حركة تشغيل أو مشكلة تحتاج انتباه</div>
+          {activities.length === 0 && health.filter(r => r.score < 70).length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--ink-3)', fontSize: 13 }}>لا توجد حركة حديثة</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {activities.slice(0, 5).map(item => (
+                <div key={`act-${item.id}`} className="row gap-3">
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(21,101,192,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="oklch(0.60 0.27 258)" strokeWidth="2"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3" /><rect x="9" y="11" width="14" height="10" rx="2" /><circle cx="12" cy="16" r="1" /></svg>
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 500, fontSize: 12 }}>{item.customer_name || 'عميل مغسلة'}</div>
+                    <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 1 }}>{item.company_name || 'شركة'} · {item.service_name || 'خدمة'} · {timeAgo(item.created_at)}</div>
                   </div>
                 </div>
-              )
-            })}
-          </div>
-        </article>
-      </section>
+              ))}
+              {health.filter(r => r.score < 70).slice(0, 3).map(row => (
+                <div key={`issue-${row.id}`} className="row gap-3">
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(245,158,11,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" strokeWidth="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 500, fontSize: 12 }}>{row.name}</div>
+                    <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 1 }}>{row.issues.slice(0, 2).join(' · ')}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
-      <section className="admin-command-cards">
+      {/* Quick Links */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginTop: 20 }}>
         {[
-          { icon: QrCode, title: 'QR التسجيل الذاتي', text: 'راقب جاهزية روابط التسجيل الذاتي لكل مغسلة، ثم فعلها من الإعدادات عند بيع الميزة.' },
-          { icon: WalletCards, title: 'المحفظة والاشتراكات', text: 'اعرف أي عميل يستحق تفعيل Wallet أو Memberships كإضافة مدفوعة.' },
-          { icon: Gauge, title: 'تشغيل قابل للبيع', text: 'لوحة الإدارة صارت تساعدك تعرف هل العميل جاهز للتشغيل قبل تسليمه النظام.' },
-        ].map(item => {
-          const Icon = item.icon
-          return (
-            <article key={item.title}>
-              <Icon size={22} />
-              <h3>{item.title}</h3>
-              <p>{item.text}</p>
-            </article>
-          )
-        })}
-      </section>
+          { to: '/admin/companies', title: 'إضافة / إدارة شركة', desc: 'افتح حساب عميل أو عدل بياناته.' },
+          { to: '/admin/settings', title: 'تفعيل ميزات مدفوعة', desc: 'محفظة، اشتراكات، دفع إلكتروني.' },
+          { to: '/admin/n8n', title: 'مراجعة الأتمتة', desc: 'أوقف أو شغل تدفقات العميل من n8n.' },
+        ].map(item => (
+          <Link key={item.to} to={item.to} style={{ textDecoration: 'none' }}>
+            <div className="card card-pad" style={{ cursor: 'pointer', transition: 'border-color 0.2s' }}
+              onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.18)'}
+              onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.borderColor = ''}>
+              <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>{item.title}</div>
+              <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>{item.desc}</div>
+            </div>
+          </Link>
+        ))}
+      </div>
     </div>
   )
 }

@@ -1,12 +1,25 @@
 import { useEffect, useState } from 'react'
-import { Search, Users2, Phone, Mail } from 'lucide-react'
-import { motion } from 'framer-motion'
-import { StatusBadge } from '../shared/StatusBadge'
 import { fetchAllLeads, updateLeadStatus } from '../../../lib/supabase'
 import { mockLeads } from '../../../lib/mockData'
 import type { Lead, LeadStatus } from '../../../types'
 
 const statuses: LeadStatus[] = ['new', 'contacted', 'qualified', 'converted', 'lost']
+
+const statusBadge: Record<LeadStatus, string> = {
+  new: 'violet',
+  contacted: 'blue',
+  qualified: 'green',
+  converted: 'green',
+  lost: 'red',
+}
+
+const statusLabel: Record<LeadStatus, string> = {
+  new: 'جديد',
+  contacted: 'تم التواصل',
+  qualified: 'مؤهل',
+  converted: 'محوّل',
+  lost: 'خسارة',
+}
 
 export const AdminLeads = () => {
   const [leads, setLeads] = useState<Lead[]>(mockLeads)
@@ -28,95 +41,79 @@ export const AdminLeads = () => {
     return matchSearch && matchStatus
   })
 
+  function avatarColor(name: string) {
+    const colors = ['#3078FF', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899']
+    return colors[name.charCodeAt(0) % colors.length]
+  }
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white font-cairo">العملاء المحتملون</h1>
-        <p className="text-sm text-slate-500 font-tajawal">{leads.length} عميل محتمل من جميع الشركات</p>
+    <div className="page fade-in">
+      <div className="sec-head" style={{ marginBottom: 24 }}>
+        <div>
+          <div className="sec-title">العملاء المحتملون</div>
+          <div className="sec-sub">{leads.length} عميل محتمل من جميع الشركات</div>
+        </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" />
-          <input value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="ابحث باسم أو رقم..."
-            className="w-full bg-white/[0.03] border border-white/[0.07] rounded-xl px-4 py-2.5 pr-9 text-sm text-white placeholder-slate-600 outline-none focus:border-primary-400/40 font-tajawal"
-            dir="rtl" />
+      <div className="row gap-3" style={{ marginBottom: 16, flexWrap: 'wrap' }}>
+        <div className="card row gap-2" style={{ padding: '9px 14px', flex: 1, minWidth: 220 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--ink-3)', flexShrink: 0 }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="ابحث باسم أو رقم..."
+            style={{ background: 'none', border: 'none', outline: 'none', fontSize: 13, color: 'var(--ink)', flex: 1 }} />
         </div>
-        <div className="flex gap-1.5 flex-wrap">
-          <button onClick={() => setStatusFilter('all')}
-            className={`px-3 py-2 rounded-lg text-xs font-tajawal cursor-pointer transition-all ${statusFilter === 'all' ? 'bg-primary-400/20 text-primary-300' : 'text-slate-500 hover:text-white bg-white/[0.03]'}`}>
-            الكل
+        <div className="pills">
+          <button className={`pill ${statusFilter === 'all' ? 'active' : ''}`} onClick={() => setStatusFilter('all')}>
+            الكل <span className="cnt">{leads.length}</span>
           </button>
           {statuses.map(s => (
-            <button key={s} onClick={() => setStatusFilter(s)}
-              className={`px-3 py-2 rounded-lg cursor-pointer transition-all ${statusFilter === s ? 'bg-white/10' : 'bg-white/[0.03] hover:bg-white/[0.05]'}`}>
-              <StatusBadge status={s} />
+            <button key={s} className={`pill ${statusFilter === s ? 'active' : ''}`} onClick={() => setStatusFilter(s)}>
+              {statusLabel[s]}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
-        <table className="w-full">
+      <div className="card" style={{ overflow: 'hidden' }}>
+        <table className="tbl">
           <thead>
-            <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-              {['العميل', 'المصدر', 'القيمة', 'الحالة', 'آخر تواصل', 'إجراء'].map(h => (
-                <th key={h} className="px-4 py-3 text-right text-xs text-slate-500 font-tajawal font-medium">{h}</th>
-              ))}
+            <tr>
+              <th>العميل</th>
+              <th>المصدر</th>
+              <th>القيمة</th>
+              <th>الحالة</th>
+              <th>آخر تواصل</th>
+              <th>تغيير الحالة</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map((l, i) => (
-              <motion.tr key={l.id}
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
-                className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                      style={{ background: 'linear-gradient(135deg, #10B981, #06B6D4)' }}>
-                      {l.name[0]}
-                    </div>
+            {filtered.map(l => (
+              <tr key={l.id}>
+                <td>
+                  <div className="row gap-3">
+                    <div className="av av-sm" style={{ background: avatarColor(l.name) }}>{l.name[0]}</div>
                     <div>
-                      <p className="text-sm text-white font-tajawal">{l.name}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="flex items-center gap-1 text-[10px] text-slate-600">
-                          <Phone size={9} /><span dir="ltr">{l.phone}</span>
-                        </span>
-                        {l.email && <span className="flex items-center gap-1 text-[10px] text-slate-600">
-                          <Mail size={9} />{l.email}
-                        </span>}
-                      </div>
+                      <div style={{ fontWeight: 500, fontSize: 13 }}>{l.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 1 }} dir="ltr">{l.phone}</div>
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-xs text-slate-400 font-tajawal">{l.source}</td>
-                <td className="px-4 py-3 text-xs text-slate-300 font-sora">
-                  {l.value ? `${l.value.toLocaleString()} ر.س` : '—'}
-                </td>
-                <td className="px-4 py-3"><StatusBadge status={l.status} /></td>
-                <td className="px-4 py-3 text-xs text-slate-600 font-tajawal">
-                  {new Date(l.last_contact).toLocaleDateString('ar-SA')}
-                </td>
-                <td className="px-4 py-3">
-                  <select
-                    value={l.status}
-                    onChange={e => handleStatus(l.id, e.target.value as LeadStatus)}
-                    className="bg-white/[0.04] border border-white/[0.07] rounded-lg px-2 py-1 text-xs text-slate-300 font-tajawal cursor-pointer outline-none"
-                    dir="rtl">
-                    {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+                <td style={{ fontSize: 12, color: 'var(--ink-2)' }}>{l.source}</td>
+                <td style={{ fontFamily: 'var(--mono)', fontSize: 12 }}>{l.value ? `${l.value.toLocaleString()} ر.س` : '—'}</td>
+                <td><span className={`badge ${statusBadge[l.status] || 'gray'}`}>{statusLabel[l.status]}</span></td>
+                <td style={{ fontSize: 12, color: 'var(--ink-3)' }}>{new Date(l.last_contact).toLocaleDateString('ar-SA')}</td>
+                <td>
+                  <select value={l.status} onChange={e => handleStatus(l.id, e.target.value as LeadStatus)}
+                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: 8, padding: '5px 10px', fontSize: 12, color: 'var(--ink)', cursor: 'pointer', outline: 'none' }}>
+                    {statuses.map(s => <option key={s} value={s}>{statusLabel[s]}</option>)}
                   </select>
                 </td>
-              </motion.tr>
+              </tr>
             ))}
+            {filtered.length === 0 && (
+              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: 'var(--ink-3)' }}>لا توجد نتائج</td></tr>
+            )}
           </tbody>
         </table>
-        {filtered.length === 0 && (
-          <div className="py-12 text-center">
-            <Users2 size={32} className="text-slate-700 mx-auto mb-2" />
-            <p className="text-slate-600 font-tajawal text-sm">لا توجد نتائج</p>
-          </div>
-        )}
       </div>
     </div>
   )

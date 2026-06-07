@@ -44,6 +44,9 @@ export interface Company {
   tax_enabled?: boolean
   vat_rate?: number
   price_includes_vat?: boolean
+  // Clinic OS
+  package_type?: string
+  city?: string
   // Car wash config (JSONB columns kept for legacy compat)
   cw_services?: unknown
   cw_hours?: unknown

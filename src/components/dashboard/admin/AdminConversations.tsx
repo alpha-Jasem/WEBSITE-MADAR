@@ -1,6 +1,4 @@
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
-import { MessageSquare, Clock, Phone, Loader2, RefreshCw, User, Building2 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 
 interface ConvRow {
@@ -16,22 +14,22 @@ interface ConvRow {
   company_name?: string | null
 }
 
-const STATE_CONFIG: Record<string, { label: string; color: string }> = {
-  idle:                     { label: 'خامل',                  color: '#64748b' },
-  greeting:                 { label: 'ترحيب',                 color: '#06B6D4' },
-  selecting_service:        { label: 'يختار الخدمة',          color: '#4F6EF7' },
-  selecting_resource:       { label: 'يختار الموظف',          color: '#8B5CF6' },
-  selecting_date:           { label: 'يختار التاريخ',         color: '#F59E0B' },
-  selecting_time:           { label: 'يختار الوقت',           color: '#F59E0B' },
-  confirming:               { label: 'ينتظر التأكيد',         color: '#EC4899' },
-  booked:                   { label: 'تم الحجز ✅',           color: '#10B981' },
-  rescheduling_select_date: { label: 'يعيد الجدولة',          color: '#F59E0B' },
-  rescheduling_select_time: { label: 'يعيد الجدولة',          color: '#F59E0B' },
-  rescheduling_confirm:     { label: 'تأكيد إعادة جدولة',    color: '#EC4899' },
-  cancelling_confirm:       { label: 'ينتظر تأكيد الإلغاء',  color: '#EF4444' },
-  cancelled:                { label: 'ملغى ❌',               color: '#EF4444' },
-  abandoned:                { label: 'لم يكمل',               color: '#64748b' },
-  faq:                      { label: 'سؤال',                  color: '#06B6D4' },
+const STATE_CONFIG: Record<string, { label: string; badgeClass: string }> = {
+  idle:                     { label: 'خامل',                 badgeClass: 'gray' },
+  greeting:                 { label: 'ترحيب',                badgeClass: 'blue' },
+  selecting_service:        { label: 'يختار الخدمة',         badgeClass: 'blue' },
+  selecting_resource:       { label: 'يختار الموظف',         badgeClass: 'violet' },
+  selecting_date:           { label: 'يختار التاريخ',        badgeClass: 'amber' },
+  selecting_time:           { label: 'يختار الوقت',          badgeClass: 'amber' },
+  confirming:               { label: 'ينتظر التأكيد',        badgeClass: 'amber' },
+  booked:                   { label: 'تم الحجز',             badgeClass: 'green' },
+  rescheduling_select_date: { label: 'يعيد الجدولة',         badgeClass: 'amber' },
+  rescheduling_select_time: { label: 'يعيد الجدولة',         badgeClass: 'amber' },
+  rescheduling_confirm:     { label: 'تأكيد إعادة جدولة',   badgeClass: 'amber' },
+  cancelling_confirm:       { label: 'ينتظر تأكيد الإلغاء', badgeClass: 'red' },
+  cancelled:                { label: 'ملغى',                 badgeClass: 'red' },
+  abandoned:                { label: 'لم يكمل',              badgeClass: 'gray' },
+  faq:                      { label: 'سؤال',                 badgeClass: 'blue' },
 }
 
 const ACTIVE_STATES = ['greeting', 'selecting_service', 'selecting_resource', 'selecting_date', 'selecting_time', 'confirming', 'rescheduling_select_date', 'rescheduling_select_time', 'rescheduling_confirm', 'cancelling_confirm', 'faq']
@@ -55,27 +53,17 @@ export const AdminConversations = () => {
 
   const load = async () => {
     setLoading(true)
-
-    const { data: convs } = await supabase
-      .from('conversation_state')
-      .select('*')
-      .order('updated_at', { ascending: false })
-      .limit(500)
-
+    const { data: convs } = await supabase.from('conversation_state').select('*').order('updated_at', { ascending: false }).limit(500)
     const { data: branches } = await supabase.from('branches').select('id, company_id')
     const { data: comps } = await supabase.from('companies').select('id, name')
-
     const compMap: Record<string, string> = {}
     for (const c of comps ?? []) compMap[c.id] = c.name
-
     const branchToCompany: Record<string, string> = {}
     for (const b of branches ?? []) branchToCompany[b.id] = b.company_id
-
     const rows: ConvRow[] = (convs ?? []).map((c: ConvRow) => ({
       ...c,
       company_name: branchToCompany[c.branch_id] ? (compMap[branchToCompany[c.branch_id]] ?? null) : null,
     }))
-
     setConversations(rows)
     setCompanies(comps ?? [])
     setLoading(false)
@@ -106,143 +94,97 @@ export const AdminConversations = () => {
   const abandonedCount = conversations.filter(c => c.state === 'abandoned').length
 
   if (loading) return (
-    <div className="flex items-center justify-center h-64 gap-3">
-      <Loader2 size={20} className="animate-spin text-indigo-400" />
-      <p className="text-slate-500 font-tajawal text-sm">جاري التحميل...</p>
+    <div className="page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '55vh', gap: 10, color: 'var(--ink-3)' }}>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+      جاري التحميل…
     </div>
   )
 
   return (
-    <div className="space-y-6" dir="rtl">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="page fade-in">
+      <div className="sec-head" style={{ marginBottom: 24 }}>
         <div>
-          <h1 className="text-2xl font-bold text-white font-cairo">جميع المحادثات</h1>
-          <p className="text-sm text-slate-500 font-tajawal">
-            {activeCount > 0 ? (
-              <span className="text-emerald-400">{activeCount} محادثة نشطة الآن</span>
-            ) : 'لا توجد محادثات نشطة الآن'}
-          </p>
+          <div className="sec-title">المحادثات</div>
+          <div className="sec-sub">
+            {activeCount > 0 ? <span style={{ color: 'var(--green)' }}>{activeCount} محادثة نشطة الآن</span> : 'لا توجد محادثات نشطة الآن'}
+          </div>
         </div>
-        <button onClick={load}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs text-slate-400 hover:text-white cursor-pointer transition-all"
-          style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
-          <RefreshCw size={13} />
+        <button className="btn btn-ghost" onClick={load}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
           تحديث
         </button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="stat-grid" style={{ marginBottom: 24 }}>
         {[
-          { label: 'إجمالي',   value: conversations.length, color: '#64748b' },
-          { label: 'نشط',      value: activeCount,           color: '#4F6EF7' },
-          { label: 'تم الحجز', value: bookedCount,           color: '#10B981' },
-          { label: 'لم يكمل', value: abandonedCount,         color: '#EF4444' },
-        ].map(s => (
-          <div key={s.label} className="p-3 rounded-xl text-center"
-            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-            <p className="text-xl font-black font-work" style={{ color: s.color }}>{s.value}</p>
-            <p className="text-xs text-slate-600 font-tajawal mt-0.5">{s.label}</p>
+          { label: 'إجمالي', value: conversations.length },
+          { label: 'نشط', value: activeCount },
+          { label: 'تم الحجز', value: bookedCount },
+          { label: 'لم يكمل', value: abandonedCount },
+        ].map((s, i) => (
+          <div key={i} className="stat">
+            <div className="stat-top"><div className="stat-label">{s.label}</div></div>
+            <div className="stat-value num">{s.value}</div>
           </div>
         ))}
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <div className="flex gap-2">
-          {[
-            { key: 'all',      label: 'الكل' },
-            { key: 'active',   label: '🟢 نشط' },
-            { key: 'booked',   label: '✅ محجوز' },
-            { key: 'abandoned',label: '⚠️ مهجور' },
-          ].map(f => (
-            <button key={f.key} onClick={() => setFilter(f.key as typeof filter)}
-              className={`px-3 py-2 rounded-lg text-xs font-tajawal cursor-pointer transition-all ${filter === f.key ? 'bg-white/10 text-white' : 'text-slate-500 hover:text-slate-300'}`}>
-              {f.label}
-            </button>
+      <div className="row gap-3" style={{ marginBottom: 20, flexWrap: 'wrap' }}>
+        <div className="pills">
+          {([{ key: 'all', label: 'الكل' }, { key: 'active', label: 'نشط' }, { key: 'booked', label: 'محجوز' }, { key: 'abandoned', label: 'مهجور' }] as const).map(f => (
+            <button key={f.key} className={`pill ${filter === f.key ? 'active' : ''}`} onClick={() => setFilter(f.key)}>{f.label}</button>
           ))}
         </div>
-
         <select value={companyFilter} onChange={e => setCompanyFilter(e.target.value)}
-          className="bg-white/[0.03] border border-white/[0.07] rounded-xl px-3 py-2 text-xs text-slate-300 outline-none font-tajawal cursor-pointer">
+          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', borderRadius: 10, padding: '7px 12px', fontSize: 12.5, color: 'var(--ink)', outline: 'none', cursor: 'pointer' }}>
           <option value="all">كل العملاء</option>
           {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
       </div>
 
-      {/* Conversations */}
-      <div className="space-y-2">
-        {filtered.length === 0 ? (
-          <div className="py-16 text-center">
-            <MessageSquare size={36} className="text-slate-700 mx-auto mb-3" />
-            <p className="text-slate-600 font-tajawal text-sm">لا توجد محادثات في هذا التصنيف</p>
-          </div>
-        ) : filtered.map((conv, i) => {
-          const cfg = STATE_CONFIG[conv.state] ?? { label: conv.state, color: '#64748b' }
-          const isActive = ACTIVE_STATES.includes(conv.state)
-          const sd = conv.state_data as Record<string, string>
-
-          return (
-            <motion.div key={conv.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.02 }}
-              className="flex items-center gap-4 p-4 rounded-xl transition-colors hover:bg-white/[0.02]"
-              style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${isActive ? cfg.color + '25' : 'rgba(255,255,255,0.06)'}` }}>
-
-              <div className="flex-shrink-0 relative">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-                  style={{ background: cfg.color + '15' }}>
-                  <User size={15} style={{ color: cfg.color }} />
-                </div>
-                {isActive && (
-                  <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 animate-pulse"
-                    style={{ background: cfg.color, borderColor: '#0C0D14' }} />
-                )}
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                  <p className="text-sm font-bold text-white font-tajawal">
-                    {conv.customer_name ?? conv.phone_number}
-                  </p>
-                  {conv.customer_name && (
-                    <span className="flex items-center gap-1 text-xs text-slate-600 font-work">
-                      <Phone size={9} /> {conv.phone_number}
-                    </span>
-                  )}
-                  {conv.company_name && (
-                    <span className="flex items-center gap-1 text-xs text-slate-500 font-tajawal">
-                      <Building2 size={9} /> {conv.company_name}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-xs font-tajawal font-medium" style={{ color: cfg.color }}>
-                    {cfg.label}
-                  </span>
-                  {sd?.selected_service_name && (
-                    <span className="text-xs text-slate-500 font-tajawal">الخدمة: {sd.selected_service_name}</span>
-                  )}
-                  {sd?.selected_date && (
-                    <span className="text-xs text-slate-500 font-tajawal">التاريخ: {sd.selected_date}</span>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1.5 text-xs text-slate-600 font-tajawal flex-shrink-0">
-                <Clock size={11} />
-                {timeAgo(conv.updated_at)}
-              </div>
-
-              {conv.reminder_sent && (
-                <span className="text-xs px-2 py-0.5 rounded-full font-tajawal"
-                  style={{ background: 'rgba(245,158,11,0.12)', color: '#F59E0B' }}>
-                  أُرسل تذكير
-                </span>
-              )}
-            </motion.div>
-          )
-        })}
+      <div className="card" style={{ overflow: 'hidden' }}>
+        <table className="tbl">
+          <thead>
+            <tr>
+              <th>العميل</th>
+              <th>الشركة</th>
+              <th>الحالة</th>
+              <th>الخدمة</th>
+              <th>آخر تحديث</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.length === 0 ? (
+              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '40px', color: 'var(--ink-3)' }}>لا توجد محادثات في هذا التصنيف</td></tr>
+            ) : filtered.map(conv => {
+              const cfg = STATE_CONFIG[conv.state] ?? { label: conv.state, badgeClass: 'gray' }
+              const isActive = ACTIVE_STATES.includes(conv.state)
+              const sd = conv.state_data as Record<string, string>
+              return (
+                <tr key={conv.id}>
+                  <td>
+                    <div className="row gap-2">
+                      <div style={{ position: 'relative', flexShrink: 0 }}>
+                        <div className="av av-sm" style={{ background: isActive ? 'rgba(48,120,255,0.25)' : 'rgba(255,255,255,0.08)', color: 'var(--ink)' }}>
+                          {(conv.customer_name ?? conv.phone_number)[0]}
+                        </div>
+                        {isActive && <div style={{ position: 'absolute', top: -2, insetInlineEnd: -2, width: 8, height: 8, borderRadius: '50%', background: 'var(--green)', border: '1.5px solid #050a18' }} />}
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 500, fontSize: 13 }}>{conv.customer_name ?? '—'}</div>
+                        <div style={{ fontSize: 11, color: 'var(--ink-3)', direction: 'ltr', textAlign: 'start' }}>{conv.phone_number}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ fontSize: 12, color: 'var(--ink-2)' }}>{conv.company_name ?? '—'}</td>
+                  <td><span className={`badge ${cfg.badgeClass}`}>{cfg.label}</span></td>
+                  <td style={{ fontSize: 12, color: 'var(--ink-3)' }}>{sd?.service_name ?? sd?.selected_service ?? '—'}</td>
+                  <td style={{ fontSize: 12, color: 'var(--ink-3)' }}>{timeAgo(conv.updated_at)}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   )
