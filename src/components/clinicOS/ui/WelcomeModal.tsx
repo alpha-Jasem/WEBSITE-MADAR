@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle2, MessageCircle, Stethoscope, Bot, Calendar, Bell, BarChart3, ArrowLeft } from 'lucide-react'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 
-const WHATSAPP_NUMBER = '966537733636'
+const WHATSAPP_NUMBER = '966546666005'
 
 const PACKAGE_INFO = {
   whatsapp: {

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Building, Calendar, MessageSquare, Bot, Users, Bell, CreditCard, Settings as SettingsIcon, Loader2, RefreshCw, X, Send } from 'lucide-react'
+import { Building, Calendar, MessageSquare, Bot, Users, Bell, CreditCard, Settings as SettingsIcon, Loader2, RefreshCw, X, Send, CheckCircle2, Star, Zap } from 'lucide-react'
 import { UpgradeCard } from '../../../components/clinicOS/ui/UpgradeCard'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 import { useToast } from '../../../lib/useToast'
@@ -450,32 +450,147 @@ export const Settings = () => {
           {/* 8. الفوترة */}
           {activeSection === 'billing' && (
             <div>
-              <h2 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: '0 0 16px 0' }}>الباقة والفوترة</h2>
-              <div style={{ padding: '20px', borderRadius: 12, background: 'linear-gradient(135deg, #EEF2FF, #F5F3FF)', border: '1px solid #C7D2FE', marginBottom: 16 }}>
-                <div style={{ fontSize: 14, fontWeight: 900, color: '#4F46E5', fontFamily: 'Cairo, sans-serif', marginBottom: 4 }}>
-                  {isAIPro ? 'باقة الحجز الذكي 24/7' : 'باقة نمو الحجوزات'}
+              <h2 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: '0 0 4px 0' }}>الباقة والفوترة</h2>
+              <p style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: '0 0 24px 0' }}>باقتك الحالية واستكشاف خيارات الترقية</p>
+
+              {/* Current Package Banner */}
+              <div style={{
+                padding: '14px 18px', borderRadius: 10, marginBottom: 24,
+                background: isAIPro ? 'linear-gradient(135deg, #F5F3FF, #EDE9FE)' : 'linear-gradient(135deg, #ECFDF5, #D1FAE5)',
+                border: isAIPro ? '1px solid #C4B5FD' : '1px solid #A7F3D0',
+                display: 'flex', alignItems: 'center', gap: 10,
+              }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: isAIPro ? '#8B5CF620' : '#10B98120', border: isAIPro ? '1px solid #8B5CF640' : '1px solid #10B98140', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  {isAIPro ? <Zap size={16} style={{ color: '#8B5CF6' }} /> : <MessageSquare size={16} style={{ color: '#10B981' }} />}
                 </div>
-                <div style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>حساب نشط</div>
-                <div style={{ marginTop: 12, fontSize: 20, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>
-                  {isAIPro ? '١٦,٩٩٩ ريال / سنة' : '٩,٩٩٩ ريال / سنة'}
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: isAIPro ? '#6D28D9' : '#065F46', fontFamily: 'Cairo, sans-serif' }}>
+                    باقتك الحالية: {isAIPro ? 'AI Voice + واتساب' : 'باقة واتساب'}
+                  </div>
+                  <div style={{ fontSize: 12, color: isAIPro ? '#7C3AED' : '#059669', fontFamily: 'Tajawal, sans-serif', marginTop: 1 }}>الحساب نشط</div>
+                </div>
+                <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, fontWeight: 800, fontFamily: 'Cairo, sans-serif', background: isAIPro ? '#8B5CF620' : '#10B98120', color: isAIPro ? '#7C3AED' : '#059669', border: isAIPro ? '1px solid #8B5CF640' : '1px solid #10B98140' }}>نشط</span>
+              </div>
+
+              {/* Package Cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+
+                {/* WhatsApp Package */}
+                <div style={{
+                  borderRadius: 14, border: !isAIPro ? '2px solid #10B981' : '1px solid #E2E8F0',
+                  background: !isAIPro ? '#FAFFFE' : '#FAFAFA',
+                  overflow: 'hidden', position: 'relative',
+                }}>
+                  {!isAIPro && (
+                    <div style={{ position: 'absolute', top: 12, left: 12 }}>
+                      <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: '#10B981', color: 'white', fontWeight: 800, fontFamily: 'Cairo, sans-serif' }}>باقتك الحالية</span>
+                    </div>
+                  )}
+                  <div style={{ padding: '20px 18px 16px', background: !isAIPro ? 'rgba(16,185,129,0.06)' : 'transparent', borderBottom: '1px solid #F1F5F9' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: 9, background: '#10B98115', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <MessageSquare size={15} style={{ color: '#10B981' }} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>باقة واتساب</div>
+                        <div style={{ fontSize: 11, color: '#10B981', fontWeight: 700, fontFamily: 'Cairo, sans-serif' }}>WhatsApp Booking</div>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>
+                      ٩٩٩ <span style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>ريال / شهر</span>
+                    </div>
+                  </div>
+                  <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {[
+                      'حجز مواعيد تلقائي عبر واتساب ٢٤/٧',
+                      'تأكيدات وتذكيرات للمرضى',
+                      'داشبورد إدارة كامل',
+                      'تقارير أسبوعية للحجوزات',
+                      'دعم عبر واتساب',
+                    ].map((f, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 7 }}>
+                        <CheckCircle2 size={13} style={{ color: '#10B981', flexShrink: 0, marginTop: 1 }} />
+                        <span style={{ fontSize: 12, color: '#334155', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.5 }}>{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* AI Pro Package */}
+                <div style={{
+                  borderRadius: 14, border: isAIPro ? '2px solid #8B5CF6' : '1px solid #E2E8F0',
+                  background: isAIPro ? '#FDFCFF' : '#FAFAFA',
+                  overflow: 'hidden', position: 'relative',
+                }}>
+                  {isAIPro && (
+                    <div style={{ position: 'absolute', top: 12, left: 12 }}>
+                      <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: '#8B5CF6', color: 'white', fontWeight: 800, fontFamily: 'Cairo, sans-serif' }}>باقتك الحالية</span>
+                    </div>
+                  )}
+                  {!isAIPro && (
+                    <div style={{ position: 'absolute', top: 12, left: 12 }}>
+                      <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', fontWeight: 800, fontFamily: 'Cairo, sans-serif', display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <Star size={8} /> الأفضل
+                      </span>
+                    </div>
+                  )}
+                  <div style={{ padding: '20px 18px 16px', background: isAIPro ? 'rgba(139,92,246,0.06)' : 'rgba(139,92,246,0.03)', borderBottom: '1px solid #F1F5F9' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: 9, background: '#8B5CF615', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Zap size={15} style={{ color: '#8B5CF6' }} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>AI Voice + واتساب</div>
+                        <div style={{ fontSize: 11, color: '#8B5CF6', fontWeight: 700, fontFamily: 'Cairo, sans-serif' }}>AI Pro Package</div>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>
+                      ١٩٩٩ <span style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>ريال / شهر</span>
+                    </div>
+                  </div>
+                  <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {[
+                      'وكيل AI يستقبل المكالمات ويحجز',
+                      'حجز واتساب تلقائي ٢٤/٧',
+                      'تحليلات AI متقدمة وتقارير ذكية',
+                      'داشبورد AI مع سجل المكالمات',
+                      'أولوية في الدعم التقني',
+                    ].map((f, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 7 }}>
+                        <CheckCircle2 size={13} style={{ color: '#8B5CF6', flexShrink: 0, marginTop: 1 }} />
+                        <span style={{ fontSize: 12, color: '#334155', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.5 }}>{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {!isAIPro && (
+                    <div style={{ padding: '0 18px 18px' }}>
+                      <a
+                        href={`https://wa.me/966546666005?text=${encodeURIComponent('مرحباً 👋\nأريد الترقية من باقة واتساب إلى باقة AI Voice + واتساب.\nيرجى إرسال تفاصيل الترقية.')}`}
+                        target="_blank" rel="noreferrer"
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '10px', borderRadius: 9, background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)', color: 'white', fontSize: 12, fontWeight: 800, cursor: 'pointer', fontFamily: 'Cairo, sans-serif', textDecoration: 'none' }}
+                      >
+                        <Zap size={13} />
+                        ترقّ الآن
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {!isAIPro && (
-                  <a
-                    href={`https://wa.me/966500000000?text=${encodeURIComponent('مرحباً، أرغب في الترقية من باقة واتساب إلى باقة AI Voice + واتساب.')}`}
-                    target="_blank" rel="noreferrer"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '10px 20px', borderRadius: 8, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif', textDecoration: 'none' }}
-                  >
-                    ترقية إلى الحجز الذكي 24/7
-                  </a>
-                )}
-                <button
-                  onClick={() => window.open('https://wa.me/966546666005?text=' + encodeURIComponent('مرحباً، أريد الاستفسار عن الفوترة لنظام Clinic OS'), '_blank', 'noopener,noreferrer')}
-                  style={{ padding: '10px 20px', borderRadius: 8, background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}
+
+              {/* Contact Support */}
+              <div style={{ padding: '14px 18px', borderRadius: 10, background: '#F8FAFC', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>استفسار عن الفوترة أو تجديد الاشتراك؟</div>
+                  <div style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif', marginTop: 2 }}>فريقنا متاح على واتساب من الأحد إلى الخميس</div>
+                </div>
+                <a
+                  href={`https://wa.me/966546666005?text=${encodeURIComponent('مرحباً، أريد الاستفسار عن الفوترة لنظام Clinic OS')}`}
+                  target="_blank" rel="noreferrer"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 8, background: '#25D36615', color: '#128C7E', border: '1px solid #25D36630', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif', textDecoration: 'none', whiteSpace: 'nowrap' }}
                 >
-                  تواصل عبر واتساب
-                </button>
+                  <MessageSquare size={13} />
+                  تواصل معنا
+                </a>
               </div>
             </div>
           )}

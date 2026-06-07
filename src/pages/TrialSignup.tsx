@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { sanitizeDigits, sanitizeNameText } from '../lib/formSanitizers'
 
 type BusinessType = 'car_wash' | 'clinic'
-type Step = 'type' | 'details' | 'email'
+type Step = 'type' | 'details'
 
 const FIELD_CLASS = 'w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 pr-11 text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-[#00BFFF] focus:ring-4 focus:ring-sky-400/15 font-tajawal'
 
@@ -57,11 +57,8 @@ export function TrialSignup() {
   const [step, setStep] = useState<Step>('type')
   const [businessType, setBusinessType] = useState<BusinessType | null>(null)
   const [loading, setLoading] = useState(false)
-  const [resending, setResending] = useState(false)
-  const [verifyingOtp, setVerifyingOtp] = useState(false)
   const [showPass, setShowPass] = useState(false)
   const [error, setError] = useState('')
-  const [otpInput, setOtpInput] = useState('')
   const [form, setForm] = useState({
     company_name: '',
     owner_name: '',
@@ -97,44 +94,6 @@ export function TrialSignup() {
     return data
   }
 
-  const sendLoginOtp = async () => {
-    const email = form.email.trim().toLowerCase()
-    const { error: otpError } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: false,
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
-    if (otpError) {
-      const msg = otpError.message || ''
-      if (msg.toLowerCase().includes('rate')) throw new Error('email_otp_rate_limit')
-      throw new Error('email_otp_send_failed')
-    }
-  }
-
-  const verifyEmailOtp = async () => {
-    const token = otpInput.replace(/\D/g, '').slice(0, 6)
-    if (token.length !== 6) {
-      setError('أدخل كود التحقق المكون من 6 أرقام.')
-      return
-    }
-    setVerifyingOtp(true)
-    setError('')
-    try {
-      const { error: verifyError } = await supabase.auth.verifyOtp({
-        email: form.email.trim().toLowerCase(),
-        token,
-        type: 'email',
-      })
-      if (verifyError) throw verifyError
-      navigate(businessType === 'clinic' ? '/clinic-os/dashboard' : '/client', { replace: true })
-    } catch {
-      setError('الكود غير صحيح أو انتهت صلاحيته. اطلب كود جديد.')
-    } finally {
-      setVerifyingOtp(false)
-    }
-  }
 
   const submitSignup = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -154,34 +113,25 @@ export function TrialSignup() {
         business_type: businessType,
       })
 
-      // Save business_type locally as backup for post-confirmation routing
-      localStorage.setItem('madar_signup_business_type', businessType || 'car_wash')
+      // Sign in immediately with the password — no OTP email needed
+      const { error: signInErr } = await supabase.auth.signInWithPassword({
+        email: form.email.trim().toLowerCase(),
+        password: form.password,
+      })
 
-      // Try to update business_type directly (works if RLS allows anon update)
-      await supabase
-        .from('companies')
-        .update({ business_type: businessType })
-        .eq('owner_email', form.email.trim().toLowerCase())
-        .then(() => {}) // ignore error — edge function may have already set it
+      if (signInErr) {
+        // Account created but can't auto-login — redirect to login page
+        localStorage.setItem('madar_signup_business_type', businessType || 'car_wash')
+        navigate('/login', { replace: true })
+        return
+      }
 
-      await sendLoginOtp()
-      setStep('email')
+      // Redirect based on business type
+      navigate(businessType === 'clinic' ? '/clinic-os/dashboard?welcome=1' : '/client', { replace: true })
     } catch (err: any) {
       setError(errorText(err.message))
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleResend = async () => {
-    setResending(true)
-    setError('')
-    try {
-      await sendLoginOtp()
-    } catch (err: any) {
-      setError(errorText(err.message))
-    } finally {
-      setResending(false)
     }
   }
 
@@ -190,7 +140,6 @@ export function TrialSignup() {
   const STEPS = [
     { key: 'type',    label: 'نوع المنشأة' },
     { key: 'details', label: 'البيانات' },
-    { key: 'email',   label: 'تأكيد البريد' },
   ]
   const stepIndex = STEPS.findIndex(s => s.key === step)
 
@@ -372,60 +321,6 @@ export function TrialSignup() {
                 </form>
               )}
 
-              {/* Step 2: Email OTP */}
-              {step === 'email' && (
-                <div className="space-y-5">
-                  <div className="rounded-2xl border border-sky-100 bg-sky-50 p-4">
-                    <div className="flex items-start gap-3">
-                      <Mail size={20} className="mt-0.5 text-sky-600" />
-                      <div>
-                        <p className="text-sm font-bold text-slate-900 font-cairo">أرسلنا كود الدخول إلى بريدك</p>
-                        <p className="mt-1 text-xs leading-5 text-slate-500 font-tajawal">
-                          افتح البريد واكتب الكود المكون من 6 أرقام. بعد التحقق سندخلك مباشرة للداشبورد.
-                        </p>
-                        <p className="mt-2 text-xs font-bold text-slate-700 font-sora" dir="ltr">{form.email.trim().toLowerCase()}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-bold text-slate-700 font-tajawal">كود التحقق</label>
-                    <input
-                      value={otpInput}
-                      onChange={event => { setError(''); setOtpInput(event.target.value.replace(/\D/g, '').slice(0, 6)) }}
-                      placeholder="١٢٣٤٥٦"
-                      inputMode="numeric"
-                      dir="ltr"
-                      maxLength={6}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-4 text-center text-2xl font-black tracking-[0.55em] text-slate-950 outline-none transition-all placeholder:text-slate-300 focus:border-[#00BFFF] focus:ring-4 focus:ring-sky-400/15 font-sora"
-                    />
-                  </div>
-
-                  <div className="flex gap-3">
-                    <button type="button" onClick={() => setStep('details')} className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-500 font-tajawal hover:text-slate-900">
-                      تعديل البيانات
-                    </button>
-                    <button type="button" onClick={handleResend} disabled={resending} className="inline-flex items-center gap-2 rounded-xl border border-sky-100 px-5 py-3 text-sm font-bold text-sky-700 font-tajawal hover:bg-sky-50 disabled:opacity-60">
-                      {resending && <Loader2 size={15} className="animate-spin" />}
-                      إعادة إرسال الكود
-                    </button>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={verifyEmailOtp}
-                    disabled={verifyingOtp || otpInput.length !== 6}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold text-white transition-all disabled:opacity-60 font-cairo"
-                    style={{
-                      background: `linear-gradient(135deg, ${selectedOption?.color || '#00BFFF'}, #1565C0)`,
-                      boxShadow: '0 16px 34px rgba(0,191,255,0.24)',
-                    }}
-                  >
-                    {verifyingOtp && <Loader2 size={17} className="animate-spin" />}
-                    {verifyingOtp ? 'جاري التحقق...' : 'تحقق وادخل الداشبورد'}
-                  </button>
-                </div>
-              )}
 
               {error && (
                 <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 font-tajawal">
