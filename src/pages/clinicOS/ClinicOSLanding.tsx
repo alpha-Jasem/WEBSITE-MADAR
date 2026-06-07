@@ -5,6 +5,7 @@ import {
   Bot, Calendar, MessageSquare, Users, Clock, CheckCircle, Star,
   ArrowLeft, Phone, Shield, TrendingUp, Zap, ChevronDown, ChevronUp
 } from 'lucide-react'
+import { ClinicDashMockup } from '../../components/public/ClinicDashMockup'
 
 const PHONE = '966546666005'
 
@@ -132,64 +133,75 @@ export const ClinicOSLanding = () => {
       </nav>
 
       {/* Hero */}
-      <section style={{ background: 'linear-gradient(135deg, #EEF2FF 0%, #F5F3FF 50%, #F8FAFC 100%)', padding: '80px 40px', textAlign: 'center' }}>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 20, background: '#EEF2FF', border: '1px solid #C7D2FE', marginBottom: 24 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981', animation: 'pulse 2s infinite' }} />
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#4F46E5' }}>وكيل الحجز الذكي — جاهز للعيادات السعودية</span>
-          </div>
+      <section style={{ background: 'linear-gradient(135deg, #EEF2FF 0%, #F5F3FF 40%, #F8FAFC 100%)', padding: '72px 40px 60px', overflow: 'hidden' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center' }}>
 
-          <h1 style={{ fontSize: 48, fontWeight: 900, color: '#0F172A', lineHeight: 1.3, margin: '0 0 20px', maxWidth: 700, marginLeft: 'auto', marginRight: 'auto' }}>
-            عيادتك تحجز مواعيد
-            <br />
-            <span style={{ background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              وهي نائمة
-            </span>
-          </h1>
-
-          <p style={{ fontSize: 18, color: '#475569', lineHeight: 1.7, maxWidth: 560, margin: '0 auto 36px', fontFamily: 'Tajawal, sans-serif' }}>
-            نظام ذكي يستقبل طلبات الحجز، يرد على المرضى، ويرتب المواعيد تلقائياً عبر واتساب — بدون موظف استقبال يعمل ليلاً.
-          </p>
-
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <motion.button
-              whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-              onClick={() => navigate('/clinic-os/demo')}
-              style={{ padding: '14px 32px', borderRadius: 10, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', border: 'none', fontSize: 15, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
-            >
-              جرب الداشبورد مجاناً <ArrowLeft size={16} />
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-              onClick={() => openWa('general')}
-              style={{ padding: '14px 32px', borderRadius: 10, background: '#FFFFFF', color: '#0F172A', border: '1px solid #E2E8F0', fontSize: 15, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
-            >
-              <Phone size={16} /> تحدث مع فريقنا
-            </motion.button>
-          </div>
-
-          <p style={{ marginTop: 16, fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>
-            لا يلزم بطاقة ائتمان • إعداد في أقل من ٣ أيام • ضمان استرداد ٣٠ يوماً
-          </p>
-        </motion.div>
-
-        {/* Stats */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.6 }}
-          style={{ display: 'flex', gap: 40, justifyContent: 'center', marginTop: 60, flexWrap: 'wrap' }}
-        >
-          {[
-            { v: '+٢٠٠', l: 'عيادة نشطة' },
-            { v: '٩٧٪', l: 'نسبة التسليم' },
-            { v: '< دقيقة', l: 'متوسط رد الوكيل' },
-            { v: '٢٤/٧', l: 'بدون توقف' },
-          ].map((s, i) => (
-            <div key={i} style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 28, fontWeight: 900, color: '#4F46E5' }}>{s.v}</div>
-              <div style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif', marginTop: 4 }}>{s.l}</div>
+          {/* Right — text */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 20, background: '#EEF2FF', border: '1px solid #C7D2FE', marginBottom: 24 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981' }} />
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#4F46E5' }}>وكيل الحجز الذكي — جاهز للعيادات السعودية</span>
             </div>
-          ))}
-        </motion.div>
+
+            <h1 style={{ fontSize: 42, fontWeight: 900, color: '#0F172A', lineHeight: 1.25, margin: '0 0 18px' }}>
+              عيادتك تحجز مواعيد
+              <br />
+              <span style={{ background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                وهي نائمة
+              </span>
+            </h1>
+
+            <p style={{ fontSize: 16, color: '#475569', lineHeight: 1.8, margin: '0 0 32px', fontFamily: 'Tajawal, sans-serif' }}>
+              نظام ذكي يستقبل طلبات الحجز، يرد على المرضى، ويرتب المواعيد تلقائياً عبر واتساب — بدون موظف استقبال يعمل ليلاً.
+            </p>
+
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 24 }}>
+              <motion.button
+                whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                onClick={() => navigate('/clinic-os/signup')}
+                style={{ padding: '13px 28px', borderRadius: 10, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', border: 'none', fontSize: 14, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 20px rgba(79,70,229,0.35)' }}
+              >
+                ابدأ تجربتك المجانية <ArrowLeft size={15} />
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                onClick={() => openWa('general')}
+                style={{ padding: '13px 28px', borderRadius: 10, background: '#FFFFFF', color: '#0F172A', border: '1px solid #E2E8F0', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+              >
+                <Phone size={15} /> تحدث مع فريقنا
+              </motion.button>
+            </div>
+
+            <p style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', marginBottom: 32 }}>
+              لا يلزم بطاقة ائتمان • إعداد في أقل من ٣ أيام • ضمان استرداد ٣٠ يوماً
+            </p>
+
+            {/* Stats */}
+            <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
+              {[
+                { v: '+٢٠٠', l: 'عيادة نشطة' },
+                { v: '٩٧٪', l: 'نسبة التسليم' },
+                { v: '٢٤/٧', l: 'بدون توقف' },
+              ].map((s, i) => (
+                <div key={i}>
+                  <div style={{ fontSize: 24, fontWeight: 900, color: '#4F46E5' }}>{s.v}</div>
+                  <div style={{ fontSize: 11, color: '#64748B', fontFamily: 'Tajawal, sans-serif', marginTop: 2 }}>{s.l}</div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Left — Dashboard Mockup */}
+          <motion.div
+            initial={{ opacity: 0, x: -40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            style={{ borderRadius: 20, overflow: 'hidden', boxShadow: '0 24px 80px rgba(79,70,229,0.18)', border: '1px solid #E2E8F0' }}
+          >
+            <ClinicDashMockup />
+          </motion.div>
+
+        </div>
       </section>
 
       {/* Outcomes */}
