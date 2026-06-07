@@ -1,5 +1,9 @@
-import { useRef } from 'react'
+import { useRef, useEffect } from 'react'
 import { motion, useInView } from 'framer-motion'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
 import {
   Stethoscope, Calendar, Bot, Shield, BarChart3,
   ArrowLeft, ArrowRight, Check, Clock, Users, Phone, MessageSquare,
@@ -66,13 +70,65 @@ export const ClinicLanding = () => {
 
   const heroRef     = useRef(null)
   const featuresRef = useRef(null)
-  const stepsRef    = useRef(null)
-  const caseRef     = useRef(null)
+  const stepsRef    = useRef<HTMLElement>(null)
+  const caseRef     = useRef<HTMLElement>(null)
+  const mockupRef   = useRef<HTMLDivElement>(null)
+  const metricsRef  = useRef<HTMLDivElement>(null)
 
   const heroInView     = useInView(heroRef,     { once: true })
   const featuresInView = useInView(featuresRef, { once: true, margin: '-60px' })
   const stepsInView    = useInView(stepsRef,    { once: true, margin: '-60px' })
   const caseInView     = useInView(caseRef,     { once: true, margin: '-60px' })
+
+  // Mockup float animation
+  useEffect(() => {
+    if (!mockupRef.current) return
+    const tl = gsap.to(mockupRef.current, {
+      y: -10, duration: 3, ease: 'power1.inOut', yoyo: true, repeat: -1,
+    })
+    return () => { tl.kill() }
+  }, [])
+
+  // Steps connector line draw
+  useEffect(() => {
+    if (!stepsRef.current) return
+    const ctx = gsap.context(() => {
+      gsap.fromTo('.clinic-step-connector',
+        { scaleX: 0, transformOrigin: isAr ? 'right center' : 'left center' },
+        { scaleX: 1, duration: 1.3, ease: 'power2.inOut',
+          scrollTrigger: { trigger: '.clinic-step-connector', start: 'top 80%', once: true } },
+      )
+      stepsRef.current!.querySelectorAll<HTMLElement>('.clinic-step-icon').forEach((el, i) => {
+        gsap.from(el, {
+          rotation: -12, scale: 0.8, opacity: 0, duration: 0.5, delay: i * 0.15,
+          ease: 'back.out(1.5)',
+          scrollTrigger: { trigger: el, start: 'top 85%', once: true },
+        })
+      })
+    }, stepsRef.current)
+    return () => ctx.revert()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Case study metrics count-up
+  useEffect(() => {
+    if (!metricsRef.current) return
+    const ctx = gsap.context(() => {
+      metricsRef.current!.querySelectorAll<HTMLElement>('[data-clinic-after]').forEach(el => {
+        const target = el.dataset.clinicAfter ?? ''
+        ScrollTrigger.create({
+          trigger: el, start: 'top 85%', once: true,
+          onEnter: () => {
+            el.style.opacity = '0'
+            gsap.to(el, { opacity: 1, duration: 0.4, delay: 0.1 })
+            gsap.from(el, { y: 14, duration: 0.5, ease: 'power2.out' })
+            setTimeout(() => { el.textContent = target }, 50)
+          },
+        })
+      })
+    }, metricsRef.current)
+    return () => ctx.revert()
+  }, [])
 
   const stats = [
     { value: '٢٤/٧',  label: { ar: 'استقبال بلا توقف',  en: 'Always receiving'  }, color: EM    },
@@ -197,6 +253,7 @@ export const ClinicLanding = () => {
         {/* Dashboard mockup — full width browser frame */}
         <motion.div
           {...fadeUp(0.52)} animate={heroInView ? { opacity:1, y:0 } : { opacity:0, y:28 }}
+          ref={mockupRef}
           className="w-full max-w-5xl rounded-3xl overflow-hidden"
           style={{
             boxShadow: `0 40px 80px rgba(15,23,42,0.12), 0 8px 24px rgba(15,23,42,0.06)`,
@@ -274,7 +331,7 @@ export const ClinicLanding = () => {
       </section>
 
       {/* ════════════════════════ HOW IT WORKS ════════════════════════ */}
-      <section ref={stepsRef} className="relative z-10 py-28"
+      <section ref={stepsRef as React.RefObject<HTMLElement>} className="relative z-10 py-28"
         style={{ background: EM_LT }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -294,7 +351,7 @@ export const ClinicLanding = () => {
 
           <div className="relative grid grid-cols-1 md:grid-cols-3">
             {/* Connector line */}
-            <div className="hidden md:block absolute top-12 pointer-events-none"
+            <div className="clinic-step-connector hidden md:block absolute top-12 pointer-events-none"
               style={{ left:'20%', right:'20%', height:1, background:`linear-gradient(90deg, transparent, ${EM}40 20%, ${EM}40 80%, transparent)` }} />
 
             {[
@@ -318,7 +375,7 @@ export const ClinicLanding = () => {
                 className="flex flex-col items-center text-center gap-5 px-8 py-10"
               >
                 <div className="relative">
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                  <div className="clinic-step-icon w-14 h-14 rounded-2xl flex items-center justify-center"
                     style={{ background: WHITE, border:`1px solid ${BORDER}`, boxShadow:`0 8px 24px rgba(15,23,42,0.08)` }}>
                     <step.Icon size={22} style={{ color: step.accent }} />
                   </div>
@@ -342,7 +399,7 @@ export const ClinicLanding = () => {
       </section>
 
       {/* ════════════════════════ CASE STUDY ════════════════════════ */}
-      <section ref={caseRef} className="relative z-10 py-28"
+      <section ref={caseRef as React.RefObject<HTMLElement>} className="relative z-10 py-28"
         style={{ background: WHITE, borderTop:`1px solid ${BORDER}` }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -369,6 +426,7 @@ export const ClinicLanding = () => {
 
           {/* Metrics row */}
           <motion.div
+            ref={metricsRef}
             initial={{ opacity:0, y:24 }} animate={caseInView ? { opacity:1, y:0 } : {}}
             transition={{ duration:0.6, delay:0.12 }}
             className="flex flex-col sm:flex-row items-stretch justify-center mb-14"
@@ -392,7 +450,9 @@ export const ClinicLanding = () => {
                       {isAr ? m.before.ar : m.before.en}
                     </span>
                     <ArrowRight size={10} style={{ color: '#CBD5E1' }} />
-                    <span className={`text-2xl font-black ${isAr ? 'font-cairo' : 'font-sora'}`}
+                    <span
+                      data-clinic-after={isAr ? m.after.ar : m.after.en}
+                      className={`text-2xl font-black ${isAr ? 'font-cairo' : 'font-sora'}`}
                       style={{ color: EM, letterSpacing:'-1px' }}>
                       {isAr ? m.after.ar : m.after.en}
                     </span>

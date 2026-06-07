@@ -251,6 +251,7 @@ export const PlatformHome = () => {
 
   const heroRef    = useRef<HTMLElement>(null)
   const numbersRef = useRef<HTMLDivElement>(null)
+  const stepsSecRef = useRef<HTMLDivElement>(null)
   const counted    = useRef(false)
 
   // GSAP stats counter
@@ -282,6 +283,34 @@ export const PlatformHome = () => {
       gsap.from('.hero-word', { y: 55, opacity: 0, duration: 0.85, stagger: 0.07, ease: 'power4.out', delay: 0.15 })
     }, heroRef.current)
     return () => ctx.revert()
+  }, [])
+
+  // Steps section: connector line draws + cards sequentially glow
+  useEffect(() => {
+    if (!stepsSecRef.current) return
+    const ctx = gsap.context(() => {
+      gsap.fromTo('.step-connector',
+        { scaleX: 0, transformOrigin: isAr ? 'right center' : 'left center' },
+        {
+          scaleX: 1, duration: 1.4, ease: 'power2.inOut',
+          scrollTrigger: { trigger: '.step-connector', start: 'top 78%', once: true },
+        },
+      )
+      stepsSecRef.current!.querySelectorAll<HTMLElement>('.step-card-inner').forEach((card, i) => {
+        const color = steps[i]?.color ?? CW
+        gsap.fromTo(card,
+          { borderColor: BORDER, boxShadow: '0 2px 20px rgba(0,0,0,0.18)' },
+          {
+            borderColor: color + '55',
+            boxShadow: `0 8px 40px ${color}18`,
+            duration: 0.55, delay: i * 0.18,
+            scrollTrigger: { trigger: card, start: 'top 82%', once: true },
+          },
+        )
+      })
+    }, stepsSecRef.current)
+    return () => ctx.revert()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const goals = [
@@ -708,7 +737,7 @@ export const PlatformHome = () => {
             </h2>
           </FadeUp>
 
-          <div className="steps-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, position: 'relative' }}>
+          <div ref={stepsSecRef} className="steps-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, position: 'relative' }}>
             {/* Connector line */}
             <div aria-hidden className="step-connector" style={{
               position: 'absolute', top: 28, insetInlineStart: '17%', insetInlineEnd: '17%',
@@ -719,7 +748,7 @@ export const PlatformHome = () => {
 
             {steps.map((s, i) => (
               <FadeUp key={i} delay={i * 0.1}>
-                <div className="card-hover" style={{
+                <div className="card-hover step-card-inner" style={{
                   textAlign: 'center', padding: '28px 20px',
                   background: CARD, border: `1px solid ${BORDER}`,
                   borderRadius: 18, position: 'relative', zIndex: 1,
