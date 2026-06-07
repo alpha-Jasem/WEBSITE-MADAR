@@ -539,7 +539,7 @@ export const Settings = () => {
                       </div>
                     </div>
                     <div style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>
-                      ٩٩٩ <span style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>ريال / شهر</span>
+                      ٩,٩٩٩ <span style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>ريال / سنة</span>
                     </div>
                   </div>
                   <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -587,7 +587,7 @@ export const Settings = () => {
                       </div>
                     </div>
                     <div style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>
-                      ١٩٩٩ <span style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>ريال / شهر</span>
+                      ١٦,٩٩٩ <span style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>ريال / سنة</span>
                     </div>
                   </div>
                   <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -697,10 +697,10 @@ export const Settings = () => {
                     <span style={{ fontSize: 16, fontWeight: 900, color: '#FAFAFA', fontFamily: 'Cairo, sans-serif' }}>باقة واتساب</span>
                     {!isAIPro && <span style={{ fontSize: 10, padding: '2px 9px', borderRadius: 20, background: 'rgba(16,185,129,0.15)', color: '#10B981', fontWeight: 800, fontFamily: 'Cairo, sans-serif', border: '1px solid rgba(16,185,129,0.3)' }}>باقتك الحالية</span>}
                   </div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'Tajawal, sans-serif', marginBottom: 16 }}>فوترة شهرية</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'Tajawal, sans-serif', marginBottom: 16 }}>فوترة سنوية</div>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-                    <span style={{ fontSize: 32, fontWeight: 900, color: '#FAFAFA', fontFamily: 'Cairo, sans-serif' }}>٩٩٩</span>
-                    <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', fontFamily: 'Tajawal, sans-serif' }}>ريال / شهر</span>
+                    <span style={{ fontSize: 32, fontWeight: 900, color: '#FAFAFA', fontFamily: 'Cairo, sans-serif' }}>٩,٩٩٩</span>
+                    <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', fontFamily: 'Tajawal, sans-serif' }}>ريال / سنة</span>
                   </div>
                   <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontFamily: 'Tajawal, sans-serif', marginTop: 6 }}>مثالي للعيادات الصغيرة</div>
                 </div>
@@ -755,10 +755,10 @@ export const Settings = () => {
                     <span style={{ fontSize: 16, fontWeight: 900, color: '#FAFAFA', fontFamily: 'Cairo, sans-serif' }}>AI Voice + واتساب</span>
                     {isAIPro && <span style={{ fontSize: 10, padding: '2px 9px', borderRadius: 20, background: 'rgba(139,92,246,0.2)', color: '#A78BFA', fontWeight: 800, fontFamily: 'Cairo, sans-serif', border: '1px solid rgba(139,92,246,0.4)' }}>باقتك الحالية</span>}
                   </div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'Tajawal, sans-serif', marginBottom: 16 }}>فوترة شهرية</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'Tajawal, sans-serif', marginBottom: 16 }}>فوترة سنوية</div>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-                    <span style={{ fontSize: 32, fontWeight: 900, color: '#FAFAFA', fontFamily: 'Cairo, sans-serif' }}>١٩٩٩</span>
-                    <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', fontFamily: 'Tajawal, sans-serif' }}>ريال / شهر</span>
+                    <span style={{ fontSize: 32, fontWeight: 900, color: '#FAFAFA', fontFamily: 'Cairo, sans-serif' }}>١٦,٩٩٩</span>
+                    <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', fontFamily: 'Tajawal, sans-serif' }}>ريال / سنة</span>
                   </div>
                   <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontFamily: 'Tajawal, sans-serif', marginTop: 6 }}>للعيادات اللي تبي يكون كل شي تلقائي</div>
                 </div>
@@ -795,7 +795,7 @@ export const Settings = () => {
                     }}
                   >
                     <Sparkles size={14} />
-                    ثبّت الاشتراك الآن — ١٩٩٩ ر.س/شهر
+                    ثبّت الاشتراك الآن — ١٦,٩٩٩ ر.س/سنة
                   </a>
                 )}
               </div>
