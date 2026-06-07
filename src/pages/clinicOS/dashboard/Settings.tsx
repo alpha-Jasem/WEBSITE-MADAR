@@ -179,6 +179,9 @@ export const Settings = () => {
   const [notifNoShow, setNotifNoShow]     = useState<boolean>(() => defaultNotif().noShow ?? false)
   const [saving7, setSaving7] = useState(false)
   const [success7, setSuccess7] = useState(false)
+
+  // ── Upgrade Modal ─────────────────────────────────────────────────────────
+  const [showUpgrade, setShowUpgrade] = useState(false)
   const handleSaveNotif = async () => {
     setSaving7(true)
     localStorage.setItem(NOTIF_KEY, JSON.stringify({ confirm: notifConfirm, h24: notif24h, h3: notif3h, noShow: notifNoShow }))
@@ -197,16 +200,55 @@ export const Settings = () => {
 
       <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
         {/* Sidebar */}
-        <div style={{ width: 220, background: '#FFFFFF', borderRadius: 14, border: '1px solid #E2E8F0', padding: '8px', flexShrink: 0 }}>
-          {SECTIONS.map(s => {
-            const Icon = s.icon
-            return (
-              <button key={s.id} onClick={() => setActiveSection(s.id)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 9, marginBottom: 2, border: 'none', background: activeSection === s.id ? '#EEF2FF' : 'transparent', color: activeSection === s.id ? '#4F46E5' : '#475569', fontSize: 13, fontWeight: activeSection === s.id ? 700 : 500, cursor: 'pointer', fontFamily: 'Tajawal, Cairo, sans-serif', textAlign: 'right' }}>
-                <Icon size={15} />
-                {s.label}
-              </button>
-            )
-          })}
+        <div style={{ width: 220, background: '#FFFFFF', borderRadius: 14, border: '1px solid #E2E8F0', padding: '8px', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ flex: 1 }}>
+            {SECTIONS.map(s => {
+              const Icon = s.icon
+              return (
+                <button key={s.id} onClick={() => setActiveSection(s.id)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 9, marginBottom: 2, border: 'none', background: activeSection === s.id ? '#EEF2FF' : 'transparent', color: activeSection === s.id ? '#4F46E5' : '#475569', fontSize: 13, fontWeight: activeSection === s.id ? 700 : 500, cursor: 'pointer', fontFamily: 'Tajawal, Cairo, sans-serif', textAlign: 'right' }}>
+                  <Icon size={15} />
+                  {s.label}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Upgrade Button */}
+          {!isAIPro && (
+            <div style={{ padding: '8px 4px 4px' }}>
+              <div style={{ position: 'relative', padding: 3 }}>
+                {/* Corner brackets */}
+                {[['0','0'],['0','auto'],['auto','0'],['auto','auto']].map(([t,b], i) => (
+                  <div key={i} style={{
+                    position: 'absolute',
+                    top: t === '0' ? 0 : 'auto', bottom: b === '0' ? 0 : 'auto',
+                    right: i % 2 === 0 ? 0 : 'auto', left: i % 2 !== 0 ? 0 : 'auto',
+                    width: 8, height: 8,
+                    borderTop: (t === '0') ? '2px solid #8B5CF6' : 'none',
+                    borderBottom: (t !== '0') ? '2px solid #8B5CF6' : 'none',
+                    borderRight: (i % 2 === 0) ? '2px solid #8B5CF6' : 'none',
+                    borderLeft: (i % 2 !== 0) ? '2px solid #8B5CF6' : 'none',
+                  }} />
+                ))}
+                <button
+                  onClick={() => setShowUpgrade(true)}
+                  style={{
+                    width: '100%', padding: '10px 12px', borderRadius: 9,
+                    background: 'linear-gradient(135deg, rgba(139,92,246,0.1), rgba(79,70,229,0.08))',
+                    border: '1px solid rgba(139,92,246,0.25)',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    boxShadow: '0 0 16px rgba(139,92,246,0.15)',
+                  }}
+                >
+                  <Zap size={13} style={{ color: '#8B5CF6' }} />
+                  <span style={{ fontSize: 12, fontWeight: 800, fontFamily: 'Cairo, sans-serif', background: 'linear-gradient(135deg, #8B5CF6, #4F46E5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                    Upgrade
+                  </span>
+                  <Star size={10} style={{ color: '#F59E0B' }} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Content */}
@@ -597,6 +639,170 @@ export const Settings = () => {
 
         </div>
       </div>
+
+      {/* ── Upgrade Modal ───────────────────────────────────────────────────── */}
+      {showUpgrade && (
+        <div
+          onClick={e => { if (e.target === e.currentTarget) setShowUpgrade(false) }}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(5,6,10,0.88)', backdropFilter: 'blur(14px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 24, direction: 'rtl',
+          }}
+        >
+          <div style={{
+            width: '100%', maxWidth: 820,
+            background: '#0D0F14',
+            border: '1px solid rgba(255,255,255,0.07)',
+            borderRadius: 24,
+            padding: '48px 40px 40px',
+            boxShadow: '0 40px 120px rgba(0,0,0,0.7)',
+            position: 'relative',
+          }}>
+            {/* Close */}
+            <button onClick={() => setShowUpgrade(false)} style={{ position: 'absolute', top: 18, left: 18, width: 32, height: 32, borderRadius: 9, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <X size={14} />
+            </button>
+
+            {/* Header */}
+            <div style={{ textAlign: 'center', marginBottom: 36 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 14px', borderRadius: 20, background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.25)', marginBottom: 16 }}>
+                <Zap size={12} style={{ color: '#8B5CF6' }} />
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#A78BFA', fontFamily: 'Cairo, sans-serif', letterSpacing: '0.06em' }}>اختر باقتك</span>
+              </div>
+              <h2 style={{ fontSize: 28, fontWeight: 900, color: '#FAFAFA', fontFamily: 'Cairo, sans-serif', margin: '0 0 8px' }}>
+                طوّر عيادتك مع الباقة المناسبة
+              </h2>
+              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>
+                اختر الباقة اللي تناسب احتياجاتك وابدأ فوراً
+              </p>
+            </div>
+
+            {/* Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+
+              {/* WhatsApp Card */}
+              <div style={{
+                borderRadius: 16,
+                background: 'rgba(255,255,255,0.03)',
+                border: !isAIPro ? '1.5px solid #10B981' : '1px solid rgba(255,255,255,0.08)',
+                padding: 24, position: 'relative', overflow: 'hidden',
+              }}>
+                {!isAIPro && (
+                  <div style={{ position: 'absolute', top: 0, right: 0, left: 0, height: 2, background: 'linear-gradient(90deg, #10B981, transparent)' }} />
+                )}
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ fontSize: 16, fontWeight: 900, color: '#FAFAFA', fontFamily: 'Cairo, sans-serif' }}>باقة واتساب</span>
+                    {!isAIPro && <span style={{ fontSize: 10, padding: '2px 9px', borderRadius: 20, background: 'rgba(16,185,129,0.15)', color: '#10B981', fontWeight: 800, fontFamily: 'Cairo, sans-serif', border: '1px solid rgba(16,185,129,0.3)' }}>باقتك الحالية</span>}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'Tajawal, sans-serif', marginBottom: 16 }}>فوترة شهرية</div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                    <span style={{ fontSize: 32, fontWeight: 900, color: '#FAFAFA', fontFamily: 'Cairo, sans-serif' }}>٩٩٩</span>
+                    <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', fontFamily: 'Tajawal, sans-serif' }}>ريال / شهر</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontFamily: 'Tajawal, sans-serif', marginTop: 6 }}>مثالي للعيادات الصغيرة</div>
+                </div>
+
+                <div style={{ width: '100%', height: 1, background: 'rgba(255,255,255,0.06)', marginBottom: 20 }} />
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
+                  {['حجز مواعيد تلقائي عبر واتساب ٢٤/٧','تأكيدات وتذكيرات للمرضى','داشبورد إدارة كامل','تقارير أسبوعية للحجوزات','دعم عبر واتساب'].map((f, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                      <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <CheckCircle2 size={10} style={{ color: '#10B981' }} />
+                      </div>
+                      <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', fontFamily: 'Tajawal, sans-serif' }}>{f}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  disabled={!isAIPro}
+                  style={{
+                    width: '100%', padding: '12px', borderRadius: 10, border: 'none',
+                    background: !isAIPro ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.06)',
+                    color: !isAIPro ? '#10B981' : 'rgba(255,255,255,0.3)',
+                    fontSize: 13, fontWeight: 800, cursor: !isAIPro ? 'default' : 'not-allowed',
+                    fontFamily: 'Cairo, sans-serif',
+                    border: !isAIPro ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(255,255,255,0.06)',
+                  }}
+                >
+                  {!isAIPro ? '✓ باقتك الحالية' : 'الباقة الأساسية'}
+                </button>
+              </div>
+
+              {/* AI Pro Card — highlighted */}
+              <div style={{
+                borderRadius: 16,
+                background: 'rgba(139,92,246,0.06)',
+                border: isAIPro ? '1.5px solid #8B5CF6' : '1.5px solid rgba(139,92,246,0.5)',
+                padding: 24, position: 'relative', overflow: 'hidden',
+                boxShadow: '0 0 40px rgba(139,92,246,0.12)',
+              }}>
+                {/* Glow blob */}
+                <div style={{ position: 'absolute', top: -40, right: -40, width: 140, height: 140, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.25) 0%, transparent 70%)', pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', top: 0, right: 0, left: 0, height: 2, background: 'linear-gradient(90deg, transparent, #8B5CF6, #4F46E5, transparent)' }} />
+
+                {/* Badge */}
+                <div style={{ position: 'absolute', top: 18, left: 18 }}>
+                  <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 20, background: 'linear-gradient(135deg,#8B5CF6,#4F46E5)', color: 'white', fontWeight: 800, fontFamily: 'Cairo, sans-serif' }}>الأكثر طلباً</span>
+                </div>
+
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ fontSize: 16, fontWeight: 900, color: '#FAFAFA', fontFamily: 'Cairo, sans-serif' }}>AI Voice + واتساب</span>
+                    {isAIPro && <span style={{ fontSize: 10, padding: '2px 9px', borderRadius: 20, background: 'rgba(139,92,246,0.2)', color: '#A78BFA', fontWeight: 800, fontFamily: 'Cairo, sans-serif', border: '1px solid rgba(139,92,246,0.4)' }}>باقتك الحالية</span>}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'Tajawal, sans-serif', marginBottom: 16 }}>فوترة شهرية</div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                    <span style={{ fontSize: 32, fontWeight: 900, color: '#FAFAFA', fontFamily: 'Cairo, sans-serif' }}>١٩٩٩</span>
+                    <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', fontFamily: 'Tajawal, sans-serif' }}>ريال / شهر</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontFamily: 'Tajawal, sans-serif', marginTop: 6 }}>للعيادات اللي تبي يكون كل شي تلقائي</div>
+                </div>
+
+                <div style={{ width: '100%', height: 1, background: 'rgba(255,255,255,0.06)', marginBottom: 20 }} />
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
+                  {['وكيل AI يستقبل المكالمات ويحجز','حجز واتساب تلقائي ٢٤/٧','تحليلات AI متقدمة وتقارير ذكية','سجل مكالمات كامل مع ملخص AI','أولوية في الدعم التقني'].map((f, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                      <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(139,92,246,0.18)', border: '1px solid rgba(139,92,246,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <CheckCircle2 size={10} style={{ color: '#A78BFA' }} />
+                      </div>
+                      <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', fontFamily: 'Tajawal, sans-serif' }}>{f}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {isAIPro ? (
+                  <button disabled style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1px solid rgba(139,92,246,0.3)', background: 'rgba(139,92,246,0.12)', color: '#A78BFA', fontSize: 13, fontWeight: 800, cursor: 'default', fontFamily: 'Cairo, sans-serif' }}>
+                    ✓ باقتك الحالية
+                  </button>
+                ) : (
+                  <a
+                    href={`https://wa.me/966546666005?text=${encodeURIComponent('مرحباً 👋\nأريد الترقية إلى باقة AI Voice + واتساب.\nيرجى إرسال تفاصيل الترقية.')}`}
+                    target="_blank" rel="noreferrer"
+                    onClick={() => setShowUpgrade(false)}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                      width: '100%', padding: '12px', borderRadius: 10,
+                      background: 'linear-gradient(135deg, #8B5CF6, #4F46E5)',
+                      color: 'white', fontSize: 13, fontWeight: 800,
+                      fontFamily: 'Cairo, sans-serif', textDecoration: 'none',
+                      boxShadow: '0 4px 20px rgba(139,92,246,0.4)',
+                    }}
+                  >
+                    <Zap size={14} />
+                    ابدأ الترقية الآن
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
