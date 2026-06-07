@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Building, Calendar, MessageSquare, Bot, Users, Bell, CreditCard, Settings as SettingsIcon, Loader2, RefreshCw, X, Send, CheckCircle2, Star, Zap } from 'lucide-react'
+import { Building, Calendar, MessageSquare, Bot, Users, Bell, CreditCard, Settings as SettingsIcon, Loader2, RefreshCw, X, Send, CheckCircle2, Star, Zap, Sparkles } from 'lucide-react'
 import { UpgradeCard } from '../../../components/clinicOS/ui/UpgradeCard'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 import { useToast } from '../../../lib/useToast'
@@ -794,8 +794,8 @@ export const Settings = () => {
                       boxShadow: '0 4px 20px rgba(139,92,246,0.4)',
                     }}
                   >
-                    <Zap size={14} />
-                    ابدأ الترقية الآن
+                    <Sparkles size={14} />
+                    ثبّت الاشتراك الآن — ١٩٩٩ ر.س/شهر
                   </a>
                 )}
               </div>
