@@ -131,7 +131,6 @@ export function TrialSignup() {
         .eq('owner_email', form.email.trim().toLowerCase())
         .then(() => {}) // ignore error — edge function may have already set it
 
-      await resendConfirmationEmail()
       setStep('email')
     } catch (err: any) {
       setError(errorText(err.message))
