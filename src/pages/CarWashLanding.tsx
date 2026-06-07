@@ -14,8 +14,8 @@ import {
   WalletCards,
   Zap,
 } from 'lucide-react'
-import { Navbar } from '../components/public/Navbar'
 import { Footer } from '../components/public/Footer'
+import { useNavigate } from 'react-router-dom'
 import { CarWashDashMockup } from '../components/public/CarWashDashMockup'
 import { MadarAgentWidget } from '../components/dash/MadarAgentWidget'
 import { useLanguage } from '../context/LanguageContext'
@@ -61,10 +61,74 @@ const metrics = [
 ]
 
 const packages = [
-  { name: 'Starter', price: '٢٩٩ ر.س/شهر', ar: 'تشغيل أساسي للمغسلة الصغيرة', en: 'Core operations for small car washes' },
-  { name: 'Growth', price: '٧٩٩ ر.س/شهر', ar: 'واتساب، ولاء، وتقارير للمغسلة النشطة', en: 'WhatsApp, loyalty, and reports for growing operators' },
-  { name: 'Enterprise', price: 'مخصص', ar: 'فروع متعددة وتكاملات حسب الحاجة', en: 'Multi-branch and custom integrations' },
+  {
+    name: 'Pro',
+    launchPrice: '٥٠٠ ر.س/شهر',
+    regularPrice: '٧٩٩ ر.س/شهر',
+    ar: 'تشغيل كامل للمغسلة: QR، لوحة تشغيل، عملاء، مالية، تقارير، وواتساب تشغيلي.',
+    en: 'Complete car wash operations: QR, live queue, customers, finance, reports, and operational WhatsApp.',
+  },
+  {
+    name: 'Platinum',
+    launchPrice: '١,٠٠٠ ر.س/شهر',
+    regularPrice: '١,٩٩٩ ر.س/شهر',
+    ar: 'للمغاسل الجادة: كل مزايا Pro مع إعداد أعمق، أولوية دعم، وتوسعة جاهزة للفروع والإضافات.',
+    en: 'For serious operators: everything in Pro, deeper setup, priority support, and expansion-ready features.',
+  },
 ]
+
+const CwNavbar = () => {
+  const { t, language } = useLanguage()
+  const navigate = useNavigate()
+  const navLinks = [
+    { ar: 'طريقة QR', en: 'QR Flow', href: '#car-wash-dashboard' },
+    { ar: 'الدليل',   en: 'Guide',    href: '#how' },
+    { ar: 'الباقات',  en: 'Packages', href: '#packages' },
+    { ar: 'الأسئلة',  en: 'FAQ',      href: '#faq' },
+    { ar: 'واتساب',   en: 'WhatsApp', href: '#', onClick: openWhatsAppChat },
+  ]
+  return (
+    <nav style={{
+      position: 'fixed', top: 0, right: 0, left: 0, zIndex: 100, height: 64,
+      background: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(12px)',
+      borderBottom: '1px solid rgba(7,23,57,0.08)',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '0 32px', direction: 'rtl',
+    }}>
+      {/* Logo */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #071739, #0B74FF)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Car size={18} color="white" />
+        </div>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 900, color: '#071739', fontFamily: 'Cairo, sans-serif', lineHeight: 1 }}>Madar OS</div>
+          <div style={{ fontSize: 10, color: '#6B7A99', fontFamily: 'Tajawal, sans-serif' }}>نظام تشغيل للمغاسل</div>
+        </div>
+      </div>
+
+      {/* Links */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
+        {navLinks.map(l => (
+          <a key={l.ar} href={l.href}
+            onClick={e => { if (l.onClick) { e.preventDefault(); l.onClick() } }}
+            style={{ fontSize: 13, fontWeight: 600, color: '#3B4F6F', textDecoration: 'none', fontFamily: 'Cairo, sans-serif', cursor: 'pointer' }}>
+            {language === 'ar' ? l.ar : l.en}
+          </a>
+        ))}
+      </div>
+
+      {/* Buttons */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <button onClick={() => navigate('/login')} style={{ padding: '7px 16px', borderRadius: 8, background: 'transparent', color: '#3B4F6F', border: '1px solid rgba(7,23,57,0.15)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>
+          {t('تسجيل الدخول', 'Sign In')}
+        </button>
+        <button onClick={() => navigate('/trial')} style={{ padding: '7px 18px', borderRadius: 8, background: 'linear-gradient(135deg, #071739, #0B74FF)', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif', display: 'flex', alignItems: 'center', gap: 6 }}>
+          {t('ابدأ تجربتك', 'Start Trial')} <ArrowLeft size={13} />
+        </button>
+      </div>
+    </nav>
+  )
+}
 
 export const CarWashLanding = () => {
   const { t, language } = useLanguage()
@@ -78,7 +142,7 @@ export const CarWashLanding = () => {
 
   return (
     <div className="min-h-screen overflow-hidden" style={{ background: '#F6FAFF' }}>
-      <Navbar />
+      <CwNavbar />
 
       <section ref={heroRef} className="relative flex min-h-screen items-center overflow-hidden" style={{ paddingTop: 88 }}>
         <div className="absolute inset-0 pointer-events-none">
@@ -287,16 +351,26 @@ export const CarWashLanding = () => {
                 </div>
                 <Sparkles size={24} style={{ color: ACCENT }} />
               </div>
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {packages.map((plan, index) => (
-                  <div key={plan.name} className="flex items-center justify-between rounded-2xl p-4" style={{ background: index === 1 ? 'rgba(11,116,255,0.08)' : '#F6FAFF', border: index === 1 ? '1px solid rgba(11,116,255,0.22)' : '1px solid rgba(7,23,57,0.06)' }}>
+                  <div key={plan.name} className="rounded-2xl p-4" style={{ background: index === 0 ? 'rgba(11,116,255,0.08)' : '#F6FAFF', border: index === 0 ? '1px solid rgba(11,116,255,0.22)' : '1px solid rgba(7,23,57,0.08)' }}>
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <p className="text-lg font-black" style={{ color: NAVY }}>{plan.name}</p>
+                      <span className={`rounded-full px-2.5 py-1 text-[10px] font-black ${language === 'ar' ? 'font-cairo' : 'font-work'}`} style={{ background: 'rgba(16,185,129,0.12)', color: '#059669' }}>
+                        {t('أول 5 مغاسل', 'First 5 car washes')}
+                      </span>
+                    </div>
+                    <div className="mb-3">
+                      <p className="text-2xl font-black" style={{ color: index === 0 ? ACCENT : NAVY, fontFamily: 'Sora, Cairo, sans-serif' }}>{plan.launchPrice}</p>
+                      <p className={`mt-1 text-[11px] ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: '#7A8AA6' }}>
+                        {t('بعد أول 5 مغاسل:', 'After the first 5:')} <span className="line-through">{plan.regularPrice}</span>
+                      </p>
+                    </div>
                     <div>
-                      <p className="font-black" style={{ color: NAVY }}>{plan.name}</p>
-                      <p className={`mt-1 text-xs ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: '#6B7A99' }}>
+                      <p className={`text-xs leading-relaxed ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: '#6B7A99' }}>
                         {language === 'ar' ? plan.ar : plan.en}
                       </p>
                     </div>
-                    <p className="text-sm font-black" style={{ color: index === 1 ? ACCENT : NAVY }}>{plan.price}</p>
                   </div>
                 ))}
               </div>

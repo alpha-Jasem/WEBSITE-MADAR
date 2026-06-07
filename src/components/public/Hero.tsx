@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useLayoutEffect } from 'react'
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion'
-import { ArrowRight, Play, Sparkles, Zap, Shield, TrendingUp, Building2, Stethoscope } from 'lucide-react'
+import { ArrowRight, Play, Sparkles, Zap, Shield, TrendingUp, Car, Stethoscope } from 'lucide-react'
 import { useLanguage } from '../../context/LanguageContext'
 import { openWhatsAppChat } from '../../lib/whatsapp'
 import { useTextScramble } from '../../hooks/useTextScramble'
@@ -11,18 +11,18 @@ type Msg = { from: 'user' | 'ai'; text: string; delay: number }
 
 const industries = [
   {
-    id: 'real-estate',
-    icon: Building2,
-    labelAr: 'العقارات',
-    labelEn: 'Real Estate',
+    id: 'car-wash',
+    icon: Car,
+    labelAr: 'المغسلة',
+    labelEn: 'Car Wash',
     color: '#00BFFF',
     msgs: [
-      { from: 'user', text: 'السلام عليكم، أبغى أشوف شقق للإيجار في الرياض', delay: 0.2 },
-      { from: 'ai',   text: 'وعليكم السلام! أهلاً بك 🏠\nكم عدد الغرف المطلوبة؟', delay: 0.9 },
-      { from: 'user', text: '3 غرف وصالة', delay: 1.6 },
-      { from: 'ai',   text: 'ممتاز! لدينا وحدات رائعة في حي النرجس والملقا.\nهل تفضل دور أرضي أم علوي؟', delay: 2.3 },
-      { from: 'user', text: 'علوي مع مصعد', delay: 3.0 },
-      { from: 'ai',   text: 'تم! سأرسل لك 3 خيارات مناسبة الآن مع الصور 📸\nهل تريد تحديد موعد جولة؟', delay: 3.7 },
+      { from: 'user', text: 'الغسيل خلص؟', delay: 0.2 },
+      { from: 'ai',   text: 'نعم! سيارتك جاهزة 🚗✨\nتم إرسال فاتورتك على واتساب.', delay: 0.9 },
+      { from: 'user', text: 'وصلتني الفاتورة، شكراً', delay: 1.6 },
+      { from: 'ai',   text: 'الشكر لك! 🙏\nهل تودّ تقييمنا على قوقل؟ يساعدنا كثيراً ⭐', delay: 2.3 },
+      { from: 'user', text: 'طبعاً', delay: 3.0 },
+      { from: 'ai',   text: 'جزاك الله خيراً! تفضل رابط التقييم 🔗\nmadar.software/review', delay: 3.7 },
     ] as Msg[],
   },
   {

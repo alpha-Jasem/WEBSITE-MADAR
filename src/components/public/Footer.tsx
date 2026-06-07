@@ -150,18 +150,12 @@ export const Footer = () => {
         {/* Regulatory Logos */}
         <div className="py-6 flex flex-wrap items-center justify-center gap-4" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
           <a href="https://www.cst.gov.sa" target="_blank" rel="noopener noreferrer"
-            className="flex items-center justify-center px-6 py-3 rounded-full transition-all duration-200"
-            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+            className="flex items-center justify-center px-5 py-3 rounded-xl transition-all duration-200"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', textDecoration: 'none' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.09)' }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)' }}
           >
-            <div style={{ width: 145, height: 56, overflow: 'hidden', position: 'relative' }}>
-              <img
-                src="https://www.cst.gov.sa/-/jssmedia/cst-website-app/data/media/Global/Logos/Latest-logo.ashx?mw=640"
-                alt="هيئة الاتصالات والفضاء والتقنية"
-                style={{ height: 56, width: 'auto', position: 'absolute', right: 0 }}
-              />
-            </div>
+            <img src="/cst-logo.svg" alt="هيئة الاتصالات والفضاء والتقنية" style={{ height: 48, width: 'auto', filter: 'brightness(0) invert(1)', opacity: 0.75 }} />
           </a>
           <a href="https://www.monshaat.gov.sa" target="_blank" rel="noopener noreferrer"
             className="flex items-center justify-center px-6 py-3 rounded-full transition-all duration-200"

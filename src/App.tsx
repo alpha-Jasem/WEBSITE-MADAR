@@ -7,7 +7,13 @@ import { ProtectedRoute } from './components/shared/ProtectedRoute'
 import { LoadingScreen } from './components/shared/LoadingScreen'
 import { ErrorBoundary } from './components/shared/ErrorBoundary'
 import { HomePage } from './pages/HomePage'
+import { CarWashLanding } from './pages/CarWashLanding'
+import { ClinicLanding } from './pages/ClinicLanding'
+import { ClinicOSLanding } from './pages/ClinicOSLanding'
 import { Login } from './pages/Login'
+import { ForgotPassword } from './pages/ForgotPassword'
+import { ResetPassword } from './pages/ResetPassword'
+import { TrialSignup } from './pages/TrialSignup'
 import { AuthCallback } from './pages/AuthCallback'
 import { Privacy } from './pages/Privacy'
 import { Terms } from './pages/Terms'
@@ -26,7 +32,14 @@ function App() {
         <Suspense fallback={<LoadingScreen />}>
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/car-wash" element={<CarWashLanding />} />
+            <Route path="/clinic" element={<ClinicLanding />} />
+            <Route path="/clinic-os" element={<ClinicOSLanding />} />
+            <Route path="/real-estate" element={<Navigate to="/#products" replace />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/trial" element={<TrialSignup />} />
             <Route path="/checkin/:token" element={<SelfCheckIn />} />
             <Route path="/status/:token/:queueId" element={<CarWashStatus />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
