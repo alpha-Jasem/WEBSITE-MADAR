@@ -601,7 +601,7 @@ export const PlatformHome = () => {
                     </div>
                   ))}
                 </div>
-                <Link to="/" onClick={goTop} style={{
+                <Link to="/car-wash" style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
                   padding: '10px 22px', borderRadius: 11, width: '100%',
                   background: `rgba(56,189,248,0.09)`, border: `1px solid rgba(56,189,248,0.22)`,
