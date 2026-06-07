@@ -9,6 +9,7 @@ interface StaffUser {
   full_name: string
   pin: string | null
   permissions: string[]
+  ownerReturn?: boolean
 }
 
 interface Props {
@@ -52,7 +53,9 @@ export function StaffSwitchModal({ onClose }: Props) {
 
   const attemptSwitch = (user: StaffUser, enteredPin: string) => {
     const perms = Array.isArray(user.permissions) ? user.permissions : []
-    const ok = switchToProfile(user.id, user.full_name, perms, enteredPin, user.pin)
+    const ok = user.ownerReturn
+      ? returnToOwner(company?.owner_name || 'المالك', enteredPin, user.pin)
+      : switchToProfile(user.id, user.full_name, perms, enteredPin, user.pin)
     if (ok) {
       onClose()
     } else {
@@ -62,6 +65,19 @@ export function StaffSwitchModal({ onClose }: Props) {
   }
 
   const handleReturnToOwner = () => {
+    const ownerPin = String(((company as any)?.cw_automations || {})?.owner_pin || '')
+    if (ownerPin) {
+      setSelected({
+        id: 'owner',
+        full_name: company?.owner_name || 'المالك',
+        pin: ownerPin,
+        permissions: [],
+        ownerReturn: true,
+      })
+      setPin('')
+      setError('')
+      return
+    }
     returnToOwner(company?.owner_name || 'المالك')
     onClose()
   }

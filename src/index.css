@@ -9464,6 +9464,7 @@ body:has(.dash-shell-client),
 
 .cw-display {
   min-height: 100vh;
+  width: 100vw;
   padding: 28px;
   color: #EAF7FF;
   background:
@@ -9534,6 +9535,8 @@ body:has(.dash-shell-client),
 .cw-display-live {
   min-width: 250px;
   justify-content: center;
+  direction: rtl;
+  white-space: nowrap;
   padding: 14px 18px;
   border: 1px solid rgba(125, 220, 255, 0.28);
   border-radius: 18px;
@@ -9550,6 +9553,8 @@ body:has(.dash-shell-client),
   color: #BEEBFF;
   font-size: 15px;
   font-weight: 800;
+  min-width: 52px;
+  text-align: center;
 }
 
 .cw-display-live strong {

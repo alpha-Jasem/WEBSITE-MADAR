@@ -281,6 +281,8 @@ export const ClientSettings = () => {
   const [showPin, setShowPin] = useState(false)
   const [savingTeam, setSavingTeam] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [ownerPin, setOwnerPin] = useState('')
+  const [savingOwnerPin, setSavingOwnerPin] = useState(false)
 
   const loadTeam = async () => {
     if (!companyId) return
@@ -295,7 +297,16 @@ export const ClientSettings = () => {
 
   useEffect(() => {
     if (tab === 'team' && !teamLoaded) loadTeam()
+    if (tab === 'team') setOwnerPin(String(((company as any)?.cw_automations || {})?.owner_pin || ''))
   }, [tab])
+
+  const saveOwnerPin = async () => {
+    if (!companyId || ownerPin.length !== 4) return
+    setSavingOwnerPin(true)
+    const nextAutomations = { ...(((company as any)?.cw_automations || {}) as Record<string, any>), owner_pin: ownerPin }
+    await supabase.from('companies').update({ cw_automations: nextAutomations } as any).eq('id', companyId)
+    setSavingOwnerPin(false)
+  }
 
   const togglePerm = (path: string) =>
     setNewPerms(prev => prev.includes(path) ? prev.filter(p => p !== path) : [...prev, path])
@@ -708,6 +719,35 @@ export const ClientSettings = () => {
       {/* Team Management Tab */}
       {isCarWash && tab === 'team' && (
         <div dir="rtl" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+          <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 18, padding: '20px 22px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+              <Shield size={15} color="#0B63F6" />
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>PIN المالك</span>
+            </div>
+            <p style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif', marginBottom: 14 }}>
+              عند تبديل الحساب إلى موظف، الرجوع لحساب المالك يطلب هذا الرقم السري.
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <input
+                type={showPin ? 'text' : 'password'}
+                value={ownerPin}
+                onChange={e => setOwnerPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                placeholder="• • • •"
+                dir="ltr"
+                maxLength={4}
+                inputMode="numeric"
+                style={{ width: 160, padding: '10px 40px 10px 14px', borderRadius: 10, fontSize: 20, letterSpacing: 8, background: '#FFFFFF', border: `1px solid ${ownerPin.length === 4 ? 'rgba(11,99,246,0.35)' : '#E2E8F0'}`, color: '#0F172A', outline: 'none', fontFamily: 'Sora, sans-serif', boxSizing: 'border-box', textAlign: 'center' }}
+              />
+              <button onClick={() => setShowPin(v => !v)} style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid #E2E8F0', background: '#FFFFFF', color: '#475569', cursor: 'pointer' }}>
+                {showPin ? <EyeOff size={14} /> : <Eye size={14} />}
+              </button>
+              <button onClick={saveOwnerPin} disabled={ownerPin.length !== 4 || savingOwnerPin} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', borderRadius: 12, border: 'none', cursor: ownerPin.length === 4 ? 'pointer' : 'not-allowed', background: ownerPin.length === 4 ? 'rgba(11,99,246,0.12)' : '#FFFFFF', color: ownerPin.length === 4 ? '#0B63F6' : '#94A3B8', fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: 700 }}>
+                {savingOwnerPin ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                حفظ PIN المالك
+              </button>
+            </div>
+          </div>
 
           {/* Add member form */}
           <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 18, padding: '20px 22px' }}>
