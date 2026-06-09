@@ -91,19 +91,26 @@ export function TrialSignup() {
     setLoading(true)
     setError('')
     try {
-      const { error: otpErr } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: true,
-        },
-      })
+      const sendOtpRequest = async (createUser: boolean) =>
+        supabase.auth.signInWithOtp({
+          email,
+          options: { shouldCreateUser: createUser },
+        })
+
+      let { error: otpErr } = await sendOtpRequest(true)
+      if (otpErr && /(already|duplicate|exists)/i.test(otpErr.message || '')) {
+        const retry = await sendOtpRequest(false)
+        otpErr = retry.error
+      }
+
       if (otpErr) throw otpErr
       setStep('otp')
     } catch (err: any) {
       console.error('TrialSignup sendOtp error', err)
-      const msg = err?.message?.toLowerCase() || ''
+      const msg = (err?.message || '').toLowerCase()
       if (msg.includes('invalid email')) setError('أدخل بريدًا إلكترونيًا صالحًا.')
       else if (msg.includes('rate limit')) setError('حاول لاحقًا؛ تم تجاوز حدود إرسال الرموز.')
+      else if (msg.includes('already') || msg.includes('duplicate')) setError('هذا البريد مسجّل مسبقاً. حاول تسجيل الدخول.')
       else if (msg.includes('not allowed') || msg.includes('disabled')) setError('تم تعطيل إرسال البريد في الإعدادات. راجع إعدادات Supabase.')
       else setError(err?.message || 'تعذر إرسال الرمز. تأكد من البريد الإلكتروني وأعد المحاولة.')
     } finally {
@@ -175,14 +182,15 @@ export function TrialSignup() {
       const { error: otpErr } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          shouldCreateUser: true,
+          shouldCreateUser: false,
         },
       })
       if (otpErr) throw otpErr
     } catch (err: any) {
       console.error('TrialSignup resendOtp error', err)
-      const msg = err?.message?.toLowerCase() || ''
+      const msg = (err?.message || '').toLowerCase()
       if (msg.includes('rate limit')) setError('حاول لاحقًا؛ تم تجاوز حدود إرسال الرموز.')
+      else if (msg.includes('not found') || msg.includes('not registered')) setError('لم يتم العثور على هذا البريد. اعد تعبئة البيانات من جديد.')
       else setError(err?.message || 'تعذر إعادة إرسال الرمز. حاول بعد دقيقة.')
     } finally {
       setLoading(false)
