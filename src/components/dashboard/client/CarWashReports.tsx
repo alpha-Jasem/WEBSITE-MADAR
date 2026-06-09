@@ -130,8 +130,9 @@ export function CarWashReports() {
   const DATE_FILTERS = [
     { label: 'اليوم', days: 1 },
     { label: '7 أيام', days: 7 },
-    { label: '30 يوم', days: 30 },
+    { label: 'شهر', days: 30 },
     { label: '3 أشهر', days: 90 },
+    { label: '6 أشهر', days: 180 },
     { label: 'سنة', days: 365 },
   ]
 
@@ -177,7 +178,8 @@ export function CarWashReports() {
 
     const todayVisits = visits.filter(v => v.created_at.startsWith(todayStr)).length
     const monthVisits = visits.filter(v => v.created_at.startsWith(thisMonthStr)).length
-    const revenue = visits.reduce((sum, v) => sum + (v.subtotal ?? v.price ?? 0), 0)
+    const visitAmt = (v: CWVisit) => v.is_free_wash ? 0 : Number((v as any).total_amount ?? ((v.subtotal ?? v.price ?? 0) + (v.vat_amount ?? 0)))
+    const revenue = visits.reduce((sum, v) => sum + visitAmt(v), 0)
     const milestones = customers.filter(c => c.total_visits > 0 && c.total_visits % threshold === 0).length
     const freeWashCount = visits.filter(v => v.is_free_wash).length
     const freeWashDiscount = visits.filter(v => v.is_free_wash).reduce((s, v) => s + (v.discount_amount || 0), 0)
@@ -186,7 +188,7 @@ export function CarWashReports() {
     const paymentBreakdown: Record<string, number> = {}
     for (const v of visits.filter(v => v.created_at.startsWith(thisMonthStr))) {
       const pm = v.payment_method || 'cash'
-      paymentBreakdown[pm] = (paymentBreakdown[pm] || 0) + (v.subtotal ?? v.price ?? 0)
+      paymentBreakdown[pm] = (paymentBreakdown[pm] || 0) + visitAmt(v)
     }
 
     // Daily chart — up to 30 points regardless of selected range
@@ -199,7 +201,7 @@ export function CarWashReports() {
       return {
         date: d.toLocaleDateString('ar-SA', { weekday: 'short', day: 'numeric' }),
         visits: dayVisits.length,
-        revenue: dayVisits.reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0),
+        revenue: dayVisits.reduce((s, v) => s + visitAmt(v), 0),
       }
     })
 
@@ -209,7 +211,7 @@ export function CarWashReports() {
       const s = v.service_name || 'غير محدد'
       serviceMap[s] = serviceMap[s] || { count: 0, revenue: 0 }
       serviceMap[s].count += 1
-      serviceMap[s].revenue += (v.subtotal ?? v.price ?? 0)
+      serviceMap[s].revenue += visitAmt(v)
     })
     const services = Object.entries(serviceMap)
       .sort((a, b) => b[1].count - a[1].count)
@@ -239,7 +241,7 @@ export function CarWashReports() {
     // Worker performance
     const workerStats = workers.map(w => {
       const wVisits = visits.filter(v => v.worker_id === w.id)
-      const revenue = wVisits.reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0)
+      const revenue = wVisits.reduce((s, v) => s + visitAmt(v), 0)
       return { id: w.id, name: w.name, count: wVisits.length, revenue }
     }).filter(w => w.count > 0).sort((a, b) => b.count - a.count)
 
@@ -259,7 +261,7 @@ export function CarWashReports() {
       'الخدمة': v.service_name || '',
       'قبل الضريبة': (v.subtotal ?? v.price ?? 0).toFixed(2),
       'الضريبة': (v.vat_amount ?? 0).toFixed(2),
-      'الإجمالي': (v.is_free_wash ? 0 : (v.subtotal ?? v.price ?? 0)).toFixed(2),
+      'الإجمالي': (v.is_free_wash ? 0 : Number((v as any).total_amount ?? ((v.subtotal ?? v.price ?? 0) + (v.vat_amount ?? 0)))).toFixed(2),
       'طريقة الدفع': v.payment_method || 'cash',
       'غسلة مجانية': v.is_free_wash ? 'نعم' : 'لا',
       'خصم الولاء': (v.discount_amount ?? 0).toFixed(2),

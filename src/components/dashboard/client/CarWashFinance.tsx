@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Plus, X, Loader2, TrendingUp, TrendingDown, Wallet, Users, DollarSign, ClipboardCheck, FileDown, Pencil, Search, Receipt, Copy, Save, ShoppingCart } from 'lucide-react'
+import { Plus, X, Loader2, TrendingUp, TrendingDown, Wallet, Users, DollarSign, ClipboardCheck, FileDown, Pencil, Save, ShoppingCart } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
@@ -9,7 +9,7 @@ import { CarWashSetup } from './CarWashSetup'
 import { FeatureLock } from '../../dash/FeatureLock'
 import { logAudit } from '../../../lib/auditLog'
 import { downloadCSV, formatDateForCSV } from '../../../lib/exportUtils'
-import type { CWExpense, ExpenseCategory, PaymentMethod } from '../../../types'
+import type { CWExpense, ExpenseCategory } from '../../../types'
 import { ClientButton, ClientEmptyState, ClientPageHeader, ClientPanel, ClientStatCard } from './ClientUI'
 import { CarWashPOS } from './CarWashPOS'
 
@@ -36,9 +36,174 @@ const PAYMENT_LABELS: Record<string, string> = {
   other: 'أخرى',
 }
 
+function ExpensesTab({ companyId, company, can, planLabel }: { companyId: string | null; company: any; can: any; planLabel: string }) {
+  const [expenses, setExpenses] = useState<CWExpense[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [editingExpense, setEditingExpense] = useState<CWExpense | null>(null)
+  const [form, setForm] = useState(EMPTY_FORM)
+  const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState<string | null>(null)
+  const today = new Date().toISOString().slice(0, 10)
+
+  const loadExpenses = async () => {
+    if (!companyId) return
+    setLoading(true)
+    const { data } = await supabase.from('cw_expenses').select('*').eq('company_id', companyId).order('created_at', { ascending: false })
+    setExpenses((data || []) as CWExpense[])
+    setLoading(false)
+  }
+
+  useEffect(() => { if (companyId) loadExpenses() }, [companyId])
+
+  const closeForm = () => { setShowForm(false); setEditingExpense(null); setForm(EMPTY_FORM) }
+
+  const saveExpense = async () => {
+    if (!companyId || !form.amount || Number(form.amount) <= 0) return
+    setSaving(true)
+    if (editingExpense) {
+      await supabase.from('cw_expenses').update({ amount: Number(form.amount), category: form.category, description: form.description || null }).eq('id', editingExpense.id)
+      logAudit(companyId, 'expense_updated', { entityType: 'cw_expenses', entityId: editingExpense.id, newValue: { amount: Number(form.amount), category: form.category } })
+    } else {
+      const { data: inserted } = await supabase.from('cw_expenses').insert({ company_id: companyId, amount: Number(form.amount), category: form.category, description: form.description || null, expense_date: today }).select().single()
+      if (inserted) logAudit(companyId, 'expense_added', { entityType: 'cw_expenses', entityId: inserted.id, newValue: { amount: inserted.amount, category: inserted.category } })
+    }
+    closeForm()
+    setSaving(false)
+    loadExpenses()
+  }
+
+  const deleteExpense = async (id: string) => {
+    setDeleting(id)
+    const expense = expenses.find(e => e.id === id)
+    await supabase.from('cw_expenses').delete().eq('id', id)
+    if (companyId && expense) logAudit(companyId, 'expense_deleted', { entityType: 'cw_expenses', entityId: id, oldValue: { amount: expense.amount, category: expense.category } })
+    setDeleting(null)
+    loadExpenses()
+  }
+
+  const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0)
+  const byCategory = CATEGORIES.map(c => ({ ...c, total: expenses.filter(e => e.category === c.value).reduce((s, e) => s + e.amount, 0) })).filter(c => c.total > 0)
+
+  return (
+    <FeatureLock locked={!can.financeExpenses} requiredPlan="pro" featureName="تتبع المصاريف" benefit="راقب مصاريف التشغيل اليومية بدقة" companyName={company?.name} currentPlan={planLabel}>
+      <div className="space-y-4">
+        <ClientPageHeader
+          eyebrow="السجل المالي"
+          title="المصاريف"
+          description="جميع مصاريف التشغيل مرتبة بوضوح — أدوات، إيجار، كهرباء، وغيرها."
+          actions={<ClientButton onClick={() => { setEditingExpense(null); setForm(EMPTY_FORM); setShowForm(true) }}><Plus size={15} /> إضافة مصروف</ClientButton>}
+        />
+
+        {/* Summary cards */}
+        {byCategory.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {byCategory.map(c => (
+              <div key={c.value} className="rounded-2xl p-4" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                <p className="text-xs text-slate-500 font-tajawal mb-1">{c.label}</p>
+                <p className="text-lg font-black font-sora" style={{ color: '#EF4444' }}>{c.total.toFixed(0)} <span className="text-xs font-normal">ر.س</span></p>
+              </div>
+            ))}
+            <div className="rounded-2xl p-4 col-span-2 sm:col-span-4" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)' }}>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold font-cairo" style={{ color: '#EF4444' }}>إجمالي المصاريف</span>
+                <span className="text-xl font-black font-sora" style={{ color: '#EF4444' }}>{totalExpenses.toFixed(0)} ر.س</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Expense table */}
+        {loading ? (
+          <div className="flex justify-center py-10"><Loader2 size={24} className="animate-spin text-slate-400" /></div>
+        ) : expenses.length === 0 ? (
+          <ClientEmptyState icon={TrendingDown} title="لا توجد مصاريف مسجلة" description="أضف أول مصروف للبدء في تتبع تكاليف التشغيل." />
+        ) : (
+          <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm" style={{ borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
+                    {['التاريخ', 'الفئة', 'الوصف', 'المبلغ', ''].map(h => (
+                      <th key={h} className="px-4 py-3 text-right text-xs font-bold text-slate-500 font-tajawal">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {expenses.map((e, i) => (
+                    <tr key={e.id} style={{ background: i % 2 === 0 ? '#FFFFFF' : '#FAFAFA', borderBottom: '1px solid #F1F5F9' }}>
+                      <td className="px-4 py-3 text-slate-600 font-tajawal text-xs">{e.expense_date || today}</td>
+                      <td className="px-4 py-3">
+                        <span className="px-2 py-1 rounded-lg text-xs font-bold font-tajawal" style={{ background: '#F1F5F9', color: '#475569' }}>
+                          {CATEGORIES.find(c => c.value === e.category)?.label || e.category}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-slate-700 font-tajawal">{e.description || '—'}</td>
+                      <td className="px-4 py-3 font-black font-sora" style={{ color: '#EF4444' }}>{e.amount.toFixed(0)} ر.س</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2 justify-end">
+                          <button onClick={() => { setEditingExpense(e); setForm({ amount: String(e.amount), category: e.category, description: e.description || '' }); setShowForm(true) }} className="p-1.5 rounded-lg hover:bg-indigo-50 text-slate-400 hover:text-indigo-500 transition-colors">
+                            <Pencil size={13} />
+                          </button>
+                          <button onClick={() => deleteExpense(e.id)} disabled={deleting === e.id} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-400 transition-colors">
+                            {deleting === e.id ? <Loader2 size={13} className="animate-spin" /> : <X size={13} />}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Add/Edit modal */}
+        {showForm && (
+          <div className="fixed inset-0 flex items-center justify-center p-4" style={{ background: 'rgba(15,23,42,0.55)', zIndex: 9999 }}>
+            <div role="dialog" aria-modal="true" className="w-full max-w-sm p-6 rounded-2xl" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 20px 60px rgba(15,23,42,0.15)' }}>
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-lg font-bold font-cairo" style={{ color: '#0F172A' }}>{editingExpense ? 'تعديل مصروف' : 'إضافة مصروف'}</h2>
+                <button aria-label="Close dialog" onClick={closeForm} className="text-slate-400 hover:text-slate-700"><X size={18} /></button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">المبلغ (ر.س) *</label>
+                  <input type="number" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} placeholder="0" min={0} className="w-full px-4 py-2.5 rounded-xl text-sm font-sora text-slate-900 placeholder-slate-400 outline-none" style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }} dir="ltr" />
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">الفئة</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {CATEGORIES.map(c => (
+                      <button key={c.value} onClick={() => setForm(f => ({ ...f, category: c.value }))} className="py-2 rounded-xl text-xs font-tajawal transition-all" style={{ background: form.category === c.value ? 'rgba(99,102,241,0.12)' : '#FFFFFF', border: `1px solid ${form.category === c.value ? '#6366F1' : '#E2E8F0'}`, color: form.category === c.value ? '#6366F1' : '#94A3B8', fontWeight: form.category === c.value ? 700 : 400 }}>
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">وصف (اختياري)</label>
+                  <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="تفاصيل المصروف..." className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-slate-900 placeholder-slate-400 outline-none" style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }} />
+                </div>
+              </div>
+              <div className="flex gap-3 mt-5">
+                <ClientButton tone="secondary" onClick={closeForm} className="flex-1">إلغاء</ClientButton>
+                <ClientButton onClick={saveExpense} disabled={saving || !form.amount || Number(form.amount) <= 0} className="flex-1">
+                  {saving ? <Loader2 size={14} className="animate-spin" /> : editingExpense ? <Pencil size={14} /> : <Plus size={14} />}
+                  {saving ? 'جاري الحفظ...' : editingExpense ? 'حفظ التعديل' : 'إضافة'}
+                </ClientButton>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </FeatureLock>
+  )
+}
+
 export const CarWashFinance = () => {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [tab, setTab] = useState<'pos' | 'finance' | 'closing' | 'services'>('pos')
+  const [tab, setTab] = useState<'pos' | 'finance' | 'closing' | 'services' | 'expenses'>('pos')
   const { companyId, company, loading: authLoading } = useClientCompany()
   const { can, planLabel } = usePlanGate()
   const [loading, setLoading] = useState(true)
@@ -50,7 +215,6 @@ export const CarWashFinance = () => {
   const [freeWashCount, setFreeWashCount] = useState(0)
   const [freeWashDiscount, setFreeWashDiscount] = useState(0)
   const [showForm, setShowForm] = useState(false)
-  const [formMode, setFormMode] = useState<'expense' | 'cash'>('expense')
   const [editingExpense, setEditingExpense] = useState<CWExpense | null>(null)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
@@ -62,16 +226,14 @@ export const CarWashFinance = () => {
   const [invoicePaymentFilter, setInvoicePaymentFilter] = useState('all')
   const [targetValue, setTargetValue] = useState('')
   const [savingTarget, setSavingTarget] = useState(false)
-  const [showExpenseDetails, setShowExpenseDetails] = useState(false)
-
   const today = new Date().toISOString().slice(0, 10)
 
   useEffect(() => {
     const requestedTab = searchParams.get('tab')
-    setTab(requestedTab === 'pos' ? 'pos' : requestedTab === 'closing' ? 'closing' : requestedTab === 'services' ? 'services' : requestedTab === 'finance' ? 'finance' : 'pos')
+    setTab(requestedTab === 'pos' ? 'pos' : requestedTab === 'closing' ? 'closing' : requestedTab === 'services' ? 'services' : requestedTab === 'finance' ? 'finance' : requestedTab === 'expenses' ? 'expenses' : 'pos')
   }, [searchParams])
 
-  const selectTab = (nextTab: 'pos' | 'finance' | 'closing' | 'services') => {
+  const selectTab = (nextTab: 'pos' | 'finance' | 'closing' | 'services' | 'expenses') => {
     setTab(nextTab)
     setSearchParams(nextTab === 'pos' ? {} : { tab: nextTab }, { replace: true })
   }
@@ -215,10 +377,6 @@ export const CarWashFinance = () => {
 
   const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0)
   const netProfit = revenue - totalExpenses - workerCost
-  const cashRevenue = paymentBreakdown.cash || 0
-  const posRevenue = ['mada', 'visa', 'stc_pay'].reduce((sum, key) => sum + (paymentBreakdown[key] || 0), 0)
-  const transferRevenue = paymentBreakdown.bank_transfer || 0
-  const otherRevenue = Math.max(0, revenue - cashRevenue - posRevenue - transferRevenue)
   const marginPercent = revenue > 0 ? Math.round((netProfit / revenue) * 100) : 0
   const monthlyTarget = Number((company as any)?.cw_monthly_target || 0)
   const targetProgress = monthlyTarget > 0 ? Math.min(100, Math.round((revenue / monthlyTarget) * 100)) : 0
@@ -231,38 +389,11 @@ export const CarWashFinance = () => {
     setSavingTarget(false)
     window.location.reload()
   }
-  const closingChecks = [
-    { label: 'طابق الكاش الموجود بالصندوق', value: `${cashRevenue.toFixed(0)} ر.س`, tone: '#059669' },
-    { label: 'راجع عمليات مدى والبطاقات', value: `${posRevenue.toFixed(0)} ر.س`, tone: '#2563EB' },
-    { label: 'تأكد من المصاريف قبل الإغلاق', value: `${totalExpenses.toFixed(0)} ر.س`, tone: totalExpenses > revenue * 0.35 && revenue > 0 ? '#DC2626' : '#D97706' },
-  ]
   const closeForm = () => { setShowForm(false); setEditingExpense(null); setForm(EMPTY_FORM) }
 
   const addExpense = async () => {
     if (!companyId || !form.amount || Number(form.amount) <= 0) return
     setSaving(true)
-    if (formMode === 'cash') {
-      const amount = Number(form.amount)
-      const vatRate = company?.tax_enabled === false ? 0 : Number(company?.vat_rate ?? 15) / 100
-      const subtotal = vatRate > 0 ? amount / (1 + vatRate) : amount
-      const vatAmount = amount - subtotal
-      const { data: inserted } = await supabase.from('cw_visits').insert({
-        company_id: companyId,
-        service_name: form.description || 'إضافة كاش',
-        price: amount,
-        subtotal,
-        vat_amount: vatAmount,
-        total_amount: amount,
-        payment_method: 'cash',
-        payment_status: 'paid',
-        is_free_wash: false,
-      }).select().single()
-      if (inserted) logAudit(companyId, 'cash_revenue_added', { entityType: 'cw_visits', entityId: inserted.id, newValue: { amount, service_name: form.description || 'إضافة كاش' } })
-      closeForm()
-      setSaving(false)
-      loadData()
-      return
-    }
     if (editingExpense) {
       await supabase.from('cw_expenses').update({
         amount: Number(form.amount),
@@ -302,6 +433,7 @@ export const CarWashFinance = () => {
         {[
           { key: 'pos',      label: 'شاشة البيع',        icon: ShoppingCart },
           { key: 'finance',  label: 'تحليل مالي',          icon: Wallet },
+          { key: 'expenses', label: 'المصاريف',           icon: TrendingDown },
           { key: 'closing',  label: 'إغلاق اليوم',       icon: ClipboardCheck },
           { key: 'services', label: 'الخدمات والضريبة',  icon: DollarSign },
         ].map(({ key, label, icon: Icon }) => (
@@ -313,7 +445,7 @@ export const CarWashFinance = () => {
         ))}
       </div>
 
-      {tab === 'pos' ? <CarWashPOS /> : tab === 'closing' ? <CarWashDailyClosing /> : tab === 'services' ? (
+      {tab === 'pos' ? <CarWashPOS /> : tab === 'closing' ? <CarWashDailyClosing /> : tab === 'expenses' ? <ExpensesTab companyId={companyId} company={company} can={can} planLabel={planLabel} /> : tab === 'services' ? (
         <CarWashSetup
           title="الخدمات والضريبة"
           description="عدّل أسعار الخدمات النهائية التي يدفعها العميل، وتأكد أن VAT محسوبة بنفس طريقة المالية."
@@ -344,14 +476,6 @@ export const CarWashFinance = () => {
                 </button>
               ))}
             </div>
-            <ClientButton tone="secondary" onClick={() => { setFormMode('cash'); setEditingExpense(null); setForm(EMPTY_FORM); setShowForm(true) }}>
-              <Plus size={16} /> إضافة كاش
-            </ClientButton>
-          {can.financeExpenses && (
-            <ClientButton onClick={() => { setFormMode('expense'); setShowForm(true) }}>
-              <Plus size={16} /> إضافة مصروف
-            </ClientButton>
-          )}
           </>
         )}
       />
@@ -391,32 +515,6 @@ export const CarWashFinance = () => {
         </div>
       </ClientPanel>
 
-      <ClientPanel title="مركز تحصيل اليوم" description="ملخص تنفيذي قبل إغلاق الكاشير: النقد، الشبكة، التحويل، والهامش المتوقع.">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          {[
-            { label: 'نقد متوقع', value: `${cashRevenue.toFixed(0)} ر.س`, color: '#059669' },
-            { label: 'مدى وبطاقات', value: `${posRevenue.toFixed(0)} ر.س`, color: '#2563EB' },
-            { label: 'تحويلات', value: `${transferRevenue.toFixed(0)} ر.س`, color: '#7C3AED' },
-            { label: 'هامش صافي', value: revenue > 0 ? `${marginPercent}%` : '—', color: marginPercent >= 25 ? '#059669' : marginPercent >= 0 ? '#D97706' : '#DC2626' },
-          ].map(item => (
-            <div key={item.label} className="rounded-2xl p-4" style={{ background: `${item.color}10`, border: `1px solid ${item.color}22` }}>
-              <p className="text-xs text-slate-500 font-tajawal">{item.label}</p>
-              <p className="mt-2 text-xl font-black font-sora" style={{ color: item.color }}>{item.value}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-          {closingChecks.map(item => (
-            <div key={item.label} className="flex items-center justify-between gap-3 rounded-2xl bg-white p-3" style={{ border: '1px solid #E2E8F0' }}>
-              <span className="text-sm font-bold text-slate-700 font-tajawal">{item.label}</span>
-              <strong className="text-sm font-sora" style={{ color: item.tone }}>{item.value}</strong>
-            </div>
-          ))}
-        </div>
-        {otherRevenue > 0 && (
-          <p className="mt-3 text-xs text-slate-500 font-tajawal">يوجد {otherRevenue.toFixed(0)} ر.س في طرق دفع أخرى. راجعها قبل الإغلاق إذا كانت غير واضحة.</p>
-        )}
-      </ClientPanel>
 
       {/* Expenses, profit bar, workers cost — Pro feature */}
       <FeatureLock
@@ -477,114 +575,8 @@ export const CarWashFinance = () => {
             </div>
           )}
 
-          {/* Expenses list — collapsible */}
-          <div className="rounded-2xl overflow-hidden" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-            <button
-              className="w-full flex items-center justify-between px-5 py-4"
-              style={{ background: '#FAFAFA', borderBottom: showExpenseDetails ? '1px solid #E2E8F0' : 'none', cursor: 'pointer', border: 'none' }}
-              onClick={() => setShowExpenseDetails(v => !v)}
-            >
-              <div className="flex items-center gap-2">
-                <TrendingDown size={15} className="text-red-400" />
-                <span className="text-sm font-bold text-slate-900 font-cairo">مصاريف اليوم</span>
-                <span className="text-xs text-slate-500 font-tajawal">
-                  ({expenses.length} بند — {totalExpenses.toFixed(0)} ر.س)
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                {!showExpenseDetails && can.financeExpenses && (
-                  <button
-                    onClick={e => { e.stopPropagation(); setFormMode('expense'); setEditingExpense(null); setForm(EMPTY_FORM); setShowForm(true) }}
-                    className="flex items-center gap-1 text-xs font-cairo font-bold px-3 py-1.5 rounded-lg"
-                    style={{ background: '#0EA5A5', color: '#fff', border: 'none', cursor: 'pointer' }}
-                  >
-                    <Plus size={12} /> إضافة
-                  </button>
-                )}
-                <span className="text-slate-400 text-xs font-tajawal">{showExpenseDetails ? '▲ إخفاء' : '▼ عرض التفاصيل'}</span>
-              </div>
-            </button>
-            {showExpenseDetails && (
-              <div className="p-4 space-y-2">
-                {can.financeExpenses && (
-                  <button
-                    onClick={() => { setFormMode('expense'); setEditingExpense(null); setForm(EMPTY_FORM); setShowForm(true) }}
-                    className="flex items-center gap-1.5 text-xs font-cairo font-bold px-3 py-2 rounded-lg mb-3"
-                    style={{ background: 'rgba(14,165,165,0.1)', color: '#0EA5A5', border: '1px solid rgba(14,165,165,0.2)', cursor: 'pointer' }}
-                  >
-                    <Plus size={12} /> إضافة مصروف
-                  </button>
-                )}
-                {expenses.length === 0 ? (
-                  <ClientEmptyState icon={TrendingDown} title="لا توجد مصاريف مسجلة" description="أضف مصروفًا عند شراء مواد أو تسجيل تكلفة تشغيل." />
-                ) : (
-                  expenses.map(e => (
-                    <div key={e.id} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                      <div className="flex-1">
-                        <p className="text-sm font-tajawal" style={{ color: '#1E293B' }}>{e.description || CATEGORIES.find(c => c.value === e.category)?.label}</p>
-                        <p className="text-xs text-slate-500 font-tajawal">{CATEGORIES.find(c => c.value === e.category)?.label}</p>
-                      </div>
-                      <p className="text-sm font-sora font-bold" style={{ color: '#EF4444' }}>{e.amount.toFixed(0)} ر.س</p>
-                      <button
-                        onClick={() => { setFormMode('expense'); setEditingExpense(e); setForm({ amount: String(e.amount), category: e.category, description: e.description || '' }); setShowForm(true) }}
-                        className="text-slate-400 hover:text-indigo-500 transition-colors"
-                      >
-                        <Pencil size={13} />
-                      </button>
-                      <button onClick={() => deleteExpense(e.id)} disabled={deleting === e.id} className="text-slate-400 hover:text-red-400 transition-colors">
-                        {deleting === e.id ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />}
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
         </div>
       </FeatureLock>
-
-      {/* Add expense modal */}
-      {showForm && (
-        <div className="fixed inset-0 flex items-center justify-center p-4" style={{ background: 'rgba(15,23,42,0.5)', zIndex: 9999 }}>
-          <div role="dialog" aria-modal="true" className="w-full max-w-sm p-6 rounded-2xl" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 20px 60px rgba(15,23,42,0.15)' }}>
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold font-cairo" style={{ color: '#0F172A' }}>{formMode === 'cash' ? 'إضافة كاش' : editingExpense ? 'تعديل مصروف' : 'إضافة مصروف'}</h2>
-              <button aria-label="Close dialog" onClick={closeForm} className="text-slate-400 hover:text-slate-700"><X size={18} /></button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">المبلغ (ر.س) *</label>
-                <input type="number" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} placeholder="0" min={0} className="w-full px-4 py-2.5 rounded-xl text-sm font-sora text-slate-900 placeholder-slate-400 outline-none focus:border-sky-400" style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }} dir="ltr" />
-              </div>
-              {formMode !== 'cash' && (
-              <div>
-                <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">الفئة</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {CATEGORIES.map(c => (
-                    <button key={c.value} onClick={() => setForm(f => ({ ...f, category: c.value }))} className="py-2 rounded-xl text-xs font-tajawal transition-all" style={{ background: form.category === c.value ? 'rgba(99,102,241,0.3)' : '#FFFFFF', border: `1px solid ${form.category === c.value ? '#6366F1' : '#E2E8F0'}`, color: form.category === c.value ? '#A5B4FC' : '#94A3B8' }}>
-                      {c.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              )}
-              <div>
-                <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">وصف (اختياري)</label>
-                <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder={formMode === 'cash' ? 'مثال: غسيل خارجي، إيراد إضافي...' : 'تفاصيل المصروف...'} className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-slate-900 placeholder-slate-400 outline-none focus:border-sky-400" style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }} />
-              </div>
-            </div>
-
-            <div className="flex gap-3 mt-5">
-              <ClientButton tone="secondary" onClick={closeForm} className="flex-1">إلغاء</ClientButton>
-              <ClientButton onClick={addExpense} disabled={saving || !form.amount || Number(form.amount) <= 0} className="flex-1">
-                {saving ? <Loader2 size={14} className="animate-spin" /> : editingExpense ? <Pencil size={14} /> : <Plus size={14} />}
-                {saving ? 'جاري الحفظ...' : editingExpense ? 'حفظ التعديل' : 'إضافة'}
-              </ClientButton>
-            </div>
-          </div>
-        </div>
-      )}
       </>}
     </div>
   )

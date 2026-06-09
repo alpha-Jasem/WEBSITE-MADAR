@@ -3,22 +3,24 @@ import { LayoutDashboard, Zap, Users2, BarChart3, Settings, LogOut, ChevronRight
 import { signOut } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 
-const links = [
-  { to: '/client',                    icon: LayoutDashboard, label: 'الرئيسية',            end: true },
-  { to: '/client/setup',              icon: Wrench,          label: 'إعداد النظام',         end: false },
-  { to: '/client/appointments',       icon: Calendar,        label: 'المواعيد',             end: false },
-  { to: '/client/conversations',      icon: MessageSquare,   label: 'المحادثات الحية',      end: false },
-  { to: '/client/automations',        icon: Zap,             label: 'واتساب',               end: false },
-  { to: '/client/leads',              icon: Users2,          label: 'العملاء المحتملون',     end: false },
-  { to: '/client/reports',            icon: BarChart3,       label: 'التقارير',             end: false },
-  { to: '/client/settings',           icon: Settings,        label: 'الإعدادات',            end: false },
-]
-
 export const ClientSidebarNew = () => {
   const navigate = useNavigate()
   const { company } = useClientCompany()
 
   const isCarWash = company?.business_type === 'car_wash' || company?.industry === 'car_wash'
+  const flags = ((company as any)?.cw_automations?.feature_flags || {}) as Record<string, boolean>
+  const whatsappEnabled = !isCarWash || Boolean(flags.whatsapp || flags.wa_enabled)
+
+  const links = [
+    { to: '/client',               icon: LayoutDashboard, label: 'الرئيسية',            end: true,  show: true },
+    { to: '/client/setup',         icon: Wrench,          label: 'إعداد النظام',         end: false, show: true },
+    { to: '/client/appointments',  icon: Calendar,        label: 'المواعيد',             end: false, show: !isCarWash },
+    { to: '/client/conversations', icon: MessageSquare,   label: 'المحادثات الحية',      end: false, show: whatsappEnabled },
+    { to: '/client/automations',   icon: Zap,             label: 'واتساب',               end: false, show: whatsappEnabled },
+    { to: '/client/leads',         icon: Users2,          label: 'العملاء المحتملون',     end: false, show: !isCarWash },
+    { to: '/client/reports',       icon: BarChart3,       label: 'التقارير',             end: false, show: true },
+    { to: '/client/settings',      icon: Settings,        label: 'الإعدادات',            end: false, show: true },
+  ].filter(l => l.show)
   const accent    = isCarWash ? '#00BFFF' : '#10B981'
   const ProductIcon = isCarWash ? Car : Stethoscope
   const productName = isCarWash ? 'Car Wash OS' : 'Clinic OS'

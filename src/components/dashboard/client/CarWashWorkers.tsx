@@ -98,10 +98,27 @@ export const CarWashWorkers = () => {
     setShowForm(true)
   }
 
+  const validatePhone = (phone: string): string | null => {
+    if (!phone.trim()) return null
+    const p = phone.trim().replace(/\s/g, '')
+    if (/^05\d{8}$/.test(p)) return p
+    if (/^9665\d{8}$/.test(p)) return p
+    if (/^\+9665\d{8}$/.test(p)) return p.slice(1)
+    return 'invalid'
+  }
+
   const save = async () => {
     if (!companyId || !form.name.trim()) return
     setSaving(true)
     setFormError('')
+    if (form.phone.trim()) {
+      const phoneResult = validatePhone(form.phone)
+      if (phoneResult === 'invalid') {
+        setFormError('رقم الجوال غير صحيح. أدخل رقماً سعودياً مثل: 0501234567')
+        setSaving(false)
+        return
+      }
+    }
     const payload = {
       name: form.name.trim(),
       phone: form.phone || null,
@@ -187,11 +204,6 @@ export const CarWashWorkers = () => {
         </div>
       )}
 
-      <ClientInsightPanel
-        title="تحسين أداء الفريق"
-        description="هذه التوصيات تساعد المالك يعرف من يعمل جيداً وأين تضيع دقة الحسابات."
-        items={workerInsights}
-      />
 
       {/* Workers grid */}
       {workers.length === 0 ? (
@@ -333,8 +345,11 @@ export const CarWashWorkers = () => {
                 <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="اسم الموظف" className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-slate-900 placeholder-slate-400 outline-none focus:border-sky-400" style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }} />
               </div>
               <div>
-                <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">رقم الجوال</label>
-                <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="05xxxxxxxx" className="w-full px-4 py-2.5 rounded-xl text-sm font-sora text-slate-900 placeholder-slate-400 outline-none focus:border-sky-400" style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }} dir="ltr" />
+                <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">رقم الجوال <span className="text-slate-400">(05XXXXXXXX)</span></label>
+                <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="0501234567" className="w-full px-4 py-2.5 rounded-xl text-sm font-sora text-slate-900 placeholder-slate-400 outline-none focus:border-sky-400" style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }} dir="ltr" maxLength={13} />
+                {form.phone.trim() && validatePhone(form.phone) === 'invalid' && (
+                  <p className="mt-1 text-xs text-red-500 font-tajawal">رقم غير صحيح — مثال: 0501234567</p>
+                )}
               </div>
 
               {/* Salary type */}
