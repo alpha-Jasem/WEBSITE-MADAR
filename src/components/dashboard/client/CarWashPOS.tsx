@@ -347,16 +347,29 @@ export function CarWashPOS() {
 
             {/* Totals summary */}
             <div style={{ padding: '12px 16px 8px', borderBottom: '1px solid #F3F4F6' }}>
-              {[
-                { label: company?.tax_enabled ? 'السعر قبل الضريبة' : 'المجموع', val: net.toFixed(2) },
-                { label: 'الخصم',       val: disc > 0 ? `-${disc.toFixed(2)}` : '0.00', red: disc > 0 },
-                { label: 'ضريبة 15%',   val: vat.toFixed(2), hidden: !company?.tax_enabled },
-              ].filter(r => !r.hidden).map(r => (
-                <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 12.5, fontFamily: 'Tajawal, sans-serif' }}>
-                  <span style={{ fontFamily: 'monospace', color: r.red ? '#EF4444' : '#374151', fontSize: 12.5 }}>{r.val}</span>
-                  <span style={{ color: '#6B7280' }}>{r.label}</span>
+              <p style={{ margin: '0 0 6px', fontSize: 11, fontWeight: 800, color: '#9CA3AF', fontFamily: 'Tajawal,sans-serif' }}>ملخص الفاتورة</p>
+              {cart.map(item => {
+                const lineGross = item.price * item.qty
+                const lineSub = company?.tax_enabled ? lineGross / 1.15 : lineGross
+                return (
+                  <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', fontSize: 12.5, fontFamily: 'Tajawal, sans-serif' }}>
+                    <span style={{ fontFamily: 'monospace', color: '#374151', fontSize: 12.5 }}>{lineSub.toFixed(2)} ر.س</span>
+                    <span style={{ color: '#374151', fontWeight: 700 }}>{item.qty > 1 ? `${item.name} ×${item.qty}` : item.name}</span>
+                  </div>
+                )
+              })}
+              {disc > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', fontSize: 12.5, fontFamily: 'Tajawal, sans-serif' }}>
+                  <span style={{ fontFamily: 'monospace', color: '#EF4444', fontSize: 12.5 }}>-{disc.toFixed(2)} ر.س</span>
+                  <span style={{ color: '#6B7280' }}>خصم</span>
                 </div>
-              ))}
+              )}
+              {company?.tax_enabled && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', fontSize: 12.5, fontFamily: 'Tajawal, sans-serif' }}>
+                  <span style={{ fontFamily: 'monospace', color: '#374151', fontSize: 12.5 }}>{vat.toFixed(2)} ر.س</span>
+                  <span style={{ color: '#6B7280' }}>ضريبة القيمة المضافة (15%)</span>
+                </div>
+              )}
             </div>
 
             {/* Cart items */}

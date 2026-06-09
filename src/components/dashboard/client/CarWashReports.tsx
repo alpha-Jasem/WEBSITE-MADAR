@@ -126,6 +126,7 @@ export function CarWashReports() {
   const [customTo, setCustomTo] = useState('')
   const [showCustom, setShowCustom] = useState(false)
   const [workers, setWorkers] = useState<CWWorker[]>([])
+  const reportRef = useRef<HTMLDivElement>(null)
 
   const DATE_FILTERS = [
     { label: 'اليوم', days: 1 },
@@ -271,97 +272,36 @@ export function CarWashReports() {
   }
 
   const exportPDF = async () => {
+    if (!reportRef.current) return
     setPdfLoading(true)
     try {
-      const { jsPDF } = await import('jspdf')
+      const [{ jsPDF }, html2canvas] = await Promise.all([
+        import('jspdf'),
+        import('html2canvas'),
+      ])
+      const canvas = await html2canvas.default(reportRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      })
+      const imgData = canvas.toDataURL('image/png')
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-      const companyName = company?.name || 'المغسلة'
-      const dateStr = new Date().toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' })
-
-      // Header
-      doc.setFillColor(8, 12, 20)
-      doc.rect(0, 0, 210, 40, 'F')
-      doc.setTextColor(241, 245, 249)
-      doc.setFontSize(20)
-      doc.text('Madar OS - ' + companyName, 105, 18, { align: 'center' })
-      doc.setFontSize(11)
-      doc.setTextColor(148, 163, 184)
-      doc.text(`${dateStr}`, 105, 28, { align: 'center' })
-
-      // Stats section
-      doc.setTextColor(30, 30, 30)
-      doc.setFontSize(14)
-      doc.text('ملخص الفترة المحددة', 196, 52, { align: 'right' })
-
-      const rows = [
-        ['زيارات اليوم', String(stats.todayVisits)],
-        ['زيارات هذا الشهر', String(stats.monthVisits)],
-        ['الإيرادات (ر.س)', stats.revenue > 0 ? stats.revenue.toLocaleString('ar-SA') : '—'],
-        ['مكافآت الولاء', String(stats.milestones)],
-        ['إجمالي العملاء', String(customers.length)],
-      ]
-
-      let y = 60
-      doc.setFontSize(11)
-      for (const [label, value] of rows) {
-        doc.setTextColor(100, 100, 100)
-        doc.text(label, 196, y, { align: 'right' })
-        doc.setTextColor(30, 30, 30)
-        doc.text(value, 40, y, { align: 'right' })
-        doc.setDrawColor(220, 220, 220)
-        doc.line(14, y + 2, 196, y + 2)
-        y += 10
+      const pageW = 210
+      const pageH = 297
+      const imgW = pageW
+      const imgH = (canvas.height * imgW) / canvas.width
+      let y = 0
+      while (y < imgH) {
+        if (y > 0) doc.addPage()
+        doc.addImage(imgData, 'PNG', 0, -y, imgW, imgH)
+        y += pageH
       }
-
-      // Top services
-      if (stats.services.length > 0) {
-        y += 6
-        doc.setFontSize(14)
-        doc.setTextColor(30, 30, 30)
-        doc.text('أبرز الخدمات', 196, y, { align: 'right' })
-        y += 8
-        doc.setFontSize(11)
-        for (const [name, data] of stats.services) {
-          doc.setTextColor(100, 100, 100)
-          doc.text(name, 196, y, { align: 'right' })
-          doc.setTextColor(30, 30, 30)
-          doc.text(`${data.count} سيارة`, 40, y, { align: 'right' })
-          doc.setDrawColor(220, 220, 220)
-          doc.line(14, y + 2, 196, y + 2)
-          y += 9
-        }
-      }
-
-      // Top customers
-      if (topCustomers.length > 0) {
-        y += 6
-        doc.setFontSize(14)
-        doc.setTextColor(30, 30, 30)
-        doc.text('أوفى العملاء', 196, y, { align: 'right' })
-        y += 8
-        doc.setFontSize(10)
-        for (const c of topCustomers.slice(0, 8)) {
-          doc.setTextColor(100, 100, 100)
-          doc.text(c.name || c.phone, 196, y, { align: 'right' })
-          doc.setTextColor(30, 30, 30)
-          doc.text(`${c.total_visits} زيارة`, 40, y, { align: 'right' })
-          doc.setDrawColor(220, 220, 220)
-          doc.line(14, y + 2, 196, y + 2)
-          y += 8
-          if (y > 270) break
-        }
-      }
-
-      // Footer
-      doc.setFontSize(9)
-      doc.setTextColor(150, 150, 150)
-      doc.text('صادر من نظام Madar OS', 105, 287, { align: 'center' })
-
       doc.save(`madar-report-${new Date().toISOString().slice(0, 10)}.pdf`)
       showToast('تم تصدير التقرير PDF ✓')
     } catch (err) {
       console.error('PDF error:', err)
-      exportSalesCSV()
+      showToast('فشل التصدير — جرب CSV بدلاً منه')
     }
     setPdfLoading(false)
   }
@@ -389,7 +329,7 @@ export function CarWashReports() {
       companyName={company?.name}
       currentPlan={planLabel}
     >
-    <div dir="rtl" style={{ display: 'flex', flexDirection: 'column', gap: 18, color: '#0D1B3E' }}>
+    <div ref={reportRef} dir="rtl" style={{ display: 'flex', flexDirection: 'column', gap: 18, color: '#0D1B3E' }}>
       <style>{`
         .cw-report-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
         .cw-report-card-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(145px, 1fr)); gap:12px; }
