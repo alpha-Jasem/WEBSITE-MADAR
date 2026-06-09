@@ -29,7 +29,7 @@ export const DemoSignup = () => {
     navigate('/clinic-os/demo-confirm')
   }
 
-  const Field = ({ name, label, type = 'text', placeholder }: { name: keyof typeof form, label: string, type?: string, placeholder?: string }) => (
+  const Field = ({ name, label, type = 'text', placeholder, maxLength }: { name: keyof typeof form, label: string, type?: string, placeholder?: string, maxLength?: number }) => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <label style={{ fontSize: 13, fontWeight: 700, color: '#374151', fontFamily: 'Cairo, sans-serif' }}>{label}</label>
       <input
@@ -37,6 +37,7 @@ export const DemoSignup = () => {
         value={form[name]}
         onChange={e => { setForm(p => ({ ...p, [name]: e.target.value })); setErrors(p => ({ ...p, [name]: '' })) }}
         placeholder={placeholder}
+        maxLength={maxLength}
         style={{
           padding: '11px 14px', borderRadius: 9, border: `1px solid ${errors[name] ? '#EF4444' : '#E2E8F0'}`,
           fontSize: 14, fontFamily: 'Tajawal, sans-serif', direction: 'rtl', outline: 'none',
@@ -112,7 +113,7 @@ export const DemoSignup = () => {
             </div>
           </div>
 
-          <Field name="email" label="البريد الإلكتروني" type="email" placeholder="email@example.com" />
+          <Field name="email" label="البريد الإلكتروني" type="email" placeholder="email@example.com" maxLength={8} />
 
           <motion.button
             type="submit"

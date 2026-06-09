@@ -102,7 +102,7 @@ export function TrialSignup() {
 
   const verifyAndCreate = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (otp.length < 6) { setError('أدخل الرمز المكوّن من 6 أرقام.'); return }
+    if (otp.length < 8) { setError('أدخل الرمز المكوّن من 8 أرقام.'); return }
     setLoading(true)
     setError('')
     try {
@@ -388,7 +388,7 @@ export function TrialSignup() {
                         <div>
                           <p className="text-sm font-bold text-slate-900 font-cairo">تحقق من بريدك الإلكتروني</p>
                           <p className="mt-1 text-xs leading-5 text-slate-500 font-tajawal">
-                            أرسلنا رمزاً مكوّناً من 6 أرقام إلى{' '}
+                            أرسلنا رمزاً مكوّناً من 8 أرقام إلى{' '}
                             <span className="font-bold text-slate-700 break-all">{form.email}</span>.
                             <br />
                             تحقق من صندوق الوارد أو مجلد Spam.
@@ -401,8 +401,8 @@ export function TrialSignup() {
                       <label className="mb-2 block text-sm font-bold text-slate-700 font-tajawal">رمز التحقق</label>
                       <input
                         value={otp}
-                        onChange={e => { setError(''); setOtp(e.target.value.replace(/\D/g, '').slice(0, 6)) }}
-                        placeholder="• • • • • •"
+                        onChange={e => { setError(''); setOtp(e.target.value.replace(/\D/g, '').slice(0, 8)) }}
+                        placeholder="• • • • • • • •"
                         required
                         dir="ltr"
                         inputMode="numeric"
@@ -415,7 +415,7 @@ export function TrialSignup() {
 
                     <button
                       type="submit"
-                      disabled={loading || otp.length < 6}
+                      disabled={loading || otp.length < 8}
                       className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold text-white transition-all disabled:opacity-50 font-cairo"
                       style={{ background: `linear-gradient(135deg, ${accentColor}, ${accentDark})`, boxShadow: `0 16px 34px ${accentColor}40` }}
                     >
@@ -462,6 +462,7 @@ function Field({
   dir?: 'rtl' | 'ltr'
   type?: string
   inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode']
+  maxLength?: number
 }) {
   return (
     <div>
