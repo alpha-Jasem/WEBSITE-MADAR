@@ -95,7 +95,6 @@ export function TrialSignup() {
         email,
         options: {
           shouldCreateUser: true,
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       })
       if (otpErr) throw otpErr
@@ -177,7 +176,6 @@ export function TrialSignup() {
         email,
         options: {
           shouldCreateUser: true,
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       })
       if (otpErr) throw otpErr
