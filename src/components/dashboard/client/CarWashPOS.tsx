@@ -341,10 +341,10 @@ export function CarWashPOS() {
             {/* Totals summary */}
             <div style={{ padding: '12px 16px 8px', borderBottom: '1px solid #F3F4F6' }}>
               {[
-                { label: 'المجموع (غير شامل الضريبة)', val: net.toFixed(2) },
-                { label: 'مبلغ الخصم',                  val: disc > 0 ? `-${disc.toFixed(2)}` : '0.00', red: disc > 0 },
-                { label: 'الضريبة (15%)',                val: vat.toFixed(2) },
-              ].map(r => (
+                { label: company?.tax_enabled ? 'السعر قبل الضريبة' : 'المجموع', val: net.toFixed(2) },
+                { label: 'الخصم',       val: disc > 0 ? `-${disc.toFixed(2)}` : '0.00', red: disc > 0 },
+                { label: 'ضريبة 15%',   val: vat.toFixed(2), hidden: !company?.tax_enabled },
+              ].filter(r => !r.hidden).map(r => (
                 <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 12.5, fontFamily: 'Tajawal, sans-serif' }}>
                   <span style={{ fontFamily: 'monospace', color: r.red ? '#EF4444' : '#374151', fontSize: 12.5 }}>{r.val}</span>
                   <span style={{ color: '#6B7280' }}>{r.label}</span>
@@ -484,8 +484,7 @@ export function CarWashPOS() {
                           </div>
                         )}
                         <p style={{ margin: '0 0 7px', fontSize: 13, fontWeight: 700, color: '#111827', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.4 }}>{s.name}</p>
-                        <p style={{ margin: 0, fontSize: 15, fontWeight: 900, color: inCart ? '#0EA5A5' : '#10B981', fontFamily: 'monospace' }}>{s.price.toFixed(2)}</p>
-                        {s.duration_minutes > 0 && <p style={{ margin: '3px 0 0', fontSize: 10, color: '#9CA3AF', fontFamily: 'Tajawal, sans-serif' }}>{s.duration_minutes} دقيقة</p>}
+                        <p style={{ margin: 0, fontSize: 15, fontWeight: 900, color: inCart ? '#0EA5A5' : '#10B981', fontFamily: 'monospace' }}>{s.price.toFixed(2)} <span style={{ fontSize: 10, fontWeight: 400, color: '#9CA3AF', fontFamily: 'Tajawal, sans-serif' }}>ر.س</span></p>
                       </button>
                     )
                   })}

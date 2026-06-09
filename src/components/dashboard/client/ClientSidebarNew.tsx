@@ -5,7 +5,27 @@ import { useClientCompany } from '../../../hooks/useClientCompany'
 
 export const ClientSidebarNew = () => {
   const navigate = useNavigate()
-  const { company } = useClientCompany()
+  const { company, loading } = useClientCompany()
+
+  if (loading) return (
+    <aside className="w-64 flex-shrink-0 hidden md:flex flex-col h-screen sticky top-0"
+      style={{ background: 'rgba(5,6,10,0.98)', borderLeft: '1px solid #E2E8F0' }}>
+      <div className="p-5 border-b" style={{ borderColor: '#0D1B3E' }}>
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-slate-800" />
+          <div className="space-y-1.5">
+            <div className="h-3 w-20 rounded bg-slate-700" />
+            <div className="h-2 w-14 rounded bg-slate-800" />
+          </div>
+        </div>
+      </div>
+      <nav className="flex-1 p-3 space-y-1.5">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-10 rounded-xl bg-slate-800/60" style={{ opacity: 1 - i * 0.1 }} />
+        ))}
+      </nav>
+    </aside>
+  )
 
   const isCarWash = company?.business_type === 'car_wash' || company?.industry === 'car_wash'
   const flags = ((company as any)?.cw_automations?.feature_flags || {}) as Record<string, boolean>

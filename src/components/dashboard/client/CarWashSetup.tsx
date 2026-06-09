@@ -117,8 +117,8 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
       duration_minutes: Math.round(toSafeNumber(service.duration_minutes, 20, 1, 600)),
     }))
 
-    if (normalizedServices.some(service => !service.name || service.price < 0 || service.duration_minutes < 1)) {
-      alert('تأكد أن اسم الخدمة نص صحيح، والسعر والمدة أرقام فقط.')
+    if (normalizedServices.some(service => !service.name || service.price < 0)) {
+      alert('تأكد أن اسم الخدمة نص صحيح والسعر رقم صحيح.')
       setSavingServices(false)
       return
     }
@@ -248,25 +248,24 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
             <p style={{ textAlign: 'center', color: '#475569', fontFamily: 'Tajawal, sans-serif', fontSize: 13, padding: '20px 0' }}>لا توجد خدمات — أضف خدمتك الأولى</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 60px 32px', gap: 10, padding: '0 4px' }}>
-                {['اسم الخدمة', 'السعر النهائي شامل VAT', 'الوقت (دقيقة)', 'مفعّل', ''].map(h => (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 130px 60px 32px', gap: 10, padding: '0 4px' }}>
+                {['اسم الخدمة', 'السعر شامل الضريبة', 'مفعّل', ''].map(h => (
                   <span key={h} style={{ fontSize: 11, color: '#475569', fontFamily: 'Tajawal, sans-serif', fontWeight: 600 }}>{h}</span>
                 ))}
               </div>
               {services.map((s, i) => (
-                <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 60px 32px', gap: 10, alignItems: 'center' }}>
+                <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 130px 60px 32px', gap: 10, alignItems: 'center' }}>
                   <input value={s.name} onChange={e => updateService(i, 'name', sanitizeNameText(e.target.value))}
                     placeholder="اسم الخدمة"
                     type="text"
                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '8px 12px', color: '#1E293B', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
-                  <input type="text" inputMode="decimal" pattern="[0-9]*[.]?[0-9]*" value={String(s.price ?? '')} onChange={e => updateService(i, 'price', toSafeNumber(sanitizeDecimalInput(e.target.value)))}
-                    placeholder="0"
-                    dir="ltr"
-                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '8px 12px', color: '#1E293B', fontSize: 13, fontFamily: 'Sora, sans-serif', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
-                  <input type="text" inputMode="numeric" pattern="[0-9]*" value={String(s.duration_minutes ?? '')} onChange={e => updateService(i, 'duration_minutes', Math.round(toSafeNumber(sanitizeDecimalInput(e.target.value), 20, 1, 600)))}
-                    placeholder="20"
-                    dir="ltr"
-                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '8px 12px', color: '#1E293B', fontSize: 13, fontFamily: 'Sora, sans-serif', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+                  <div style={{ position: 'relative' }}>
+                    <input type="text" inputMode="decimal" pattern="[0-9]*[.]?[0-9]*" value={String(s.price ?? '')} onChange={e => updateService(i, 'price', toSafeNumber(sanitizeDecimalInput(e.target.value)))}
+                      placeholder="0"
+                      dir="ltr"
+                      style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '8px 12px 8px 36px', color: '#1E293B', fontSize: 13, fontFamily: 'Sora, sans-serif', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+                    <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', pointerEvents: 'none' }}>ر.س</span>
+                  </div>
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <button onClick={() => updateService(i, 'active', !s.active)}
                       style={{ width: 28, height: 28, borderRadius: 8, border: 'none', cursor: 'pointer', background: s.active ? 'rgba(16,185,129,0.15)' : '#FFFFFF', color: s.active ? '#10B981' : '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
