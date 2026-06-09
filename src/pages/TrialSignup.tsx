@@ -93,7 +93,10 @@ export function TrialSignup() {
     try {
       const { error: otpErr } = await supabase.auth.signInWithOtp({
         email,
-        options: { shouldCreateUser: true },
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
       })
       if (otpErr) throw otpErr
       setStep('otp')
@@ -102,7 +105,8 @@ export function TrialSignup() {
       const msg = err?.message?.toLowerCase() || ''
       if (msg.includes('invalid email')) setError('أدخل بريدًا إلكترونيًا صالحًا.')
       else if (msg.includes('rate limit')) setError('حاول لاحقًا؛ تم تجاوز حدود إرسال الرموز.')
-      else setError('تعذر إرسال الرمز. تأكد من البريد الإلكتروني وأعد المحاولة.')
+      else if (msg.includes('not allowed') || msg.includes('disabled')) setError('تم تعطيل إرسال البريد في الإعدادات. راجع إعدادات Supabase.')
+      else setError(err?.message || 'تعذر إرسال الرمز. تأكد من البريد الإلكتروني وأعد المحاولة.')
     } finally {
       setLoading(false)
     }
@@ -110,7 +114,7 @@ export function TrialSignup() {
 
   const verifyAndCreate = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (otp.length < 8) { setError('أدخل الرمز المكوّن من 8 أرقام.'); return }
+    if (otp.length < 6) { setError('أدخل الرمز المكوّن من 6 أرقام.'); return }
     setLoading(true)
     setError('')
     try {
@@ -171,12 +175,17 @@ export function TrialSignup() {
     try {
       const { error: otpErr } = await supabase.auth.signInWithOtp({
         email,
-        options: { shouldCreateUser: true },
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
       })
       if (otpErr) throw otpErr
     } catch (err: any) {
       console.error('TrialSignup resendOtp error', err)
-      setError('تعذر إعادة إرسال الرمز. حاول بعد دقيقة.')
+      const msg = err?.message?.toLowerCase() || ''
+      if (msg.includes('rate limit')) setError('حاول لاحقًا؛ تم تجاوز حدود إرسال الرموز.')
+      else setError(err?.message || 'تعذر إعادة إرسال الرمز. حاول بعد دقيقة.')
     } finally {
       setLoading(false)
     }
@@ -402,7 +411,7 @@ export function TrialSignup() {
                         <div>
                           <p className="text-sm font-bold text-slate-900 font-cairo">تحقق من بريدك الإلكتروني</p>
                           <p className="mt-1 text-xs leading-5 text-slate-500 font-tajawal">
-                            أرسلنا رمزاً مكوّناً من 8 أرقام إلى{' '}
+                            أرسلنا رمزاً مكوّناً من 6 أرقام إلى{' '}
                             <span className="font-bold text-slate-700 break-all">{form.email}</span>.
                             <br />
                             تحقق من صندوق الوارد أو مجلد Spam.
@@ -415,8 +424,8 @@ export function TrialSignup() {
                       <label className="mb-2 block text-sm font-bold text-slate-700 font-tajawal">رمز التحقق</label>
                       <input
                         value={otp}
-                        onChange={e => { setError(''); setOtp(e.target.value.replace(/\D/g, '').slice(0, 8)) }}
-                        placeholder="• • • • • • • •"
+                        onChange={e => { setError(''); setOtp(e.target.value.replace(/\D/g, '').slice(0, 6)) }}
+                        placeholder="• • • • • •"
                         required
                         dir="ltr"
                         inputMode="numeric"
@@ -429,7 +438,7 @@ export function TrialSignup() {
 
                     <button
                       type="submit"
-                      disabled={loading || otp.length < 8}
+                      disabled={loading || otp.length < 6}
                       className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold text-white transition-all disabled:opacity-50 font-cairo"
                       style={{ background: `linear-gradient(135deg, ${accentColor}, ${accentDark})`, boxShadow: `0 16px 34px ${accentColor}40` }}
                     >
