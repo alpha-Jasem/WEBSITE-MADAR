@@ -1,9 +1,19 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+const ALLOWED_ORIGINS = [
+  'https://madar.software',
+  'https://www.madar.software',
+  'https://madar-os.netlify.app',
+]
+
+function corsHeaders(origin: string | null) {
+  const allowed = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]
+  return {
+    'Access-Control-Allow-Origin': allowed,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Vary': 'Origin',
+  }
 }
 
 type Company = {
@@ -71,8 +81,152 @@ async function sendWhatsAppDirect(
   }).catch(() => undefined)
 }
 
+function addMinutes(minutes: number) {
+  return new Date(Date.now() + minutes * 60 * 1000).toISOString()
+}
+
+function generateOtp() {
+  return String(crypto.getRandomValues(new Uint32Array(1))[0] % 10000).padStart(4, '0')
+}
+
+function generateToken() {
+  const bytes = crypto.getRandomValues(new Uint8Array(24))
+  return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('')
+}
+
+async function sha256(value: string) {
+  const data = new TextEncoder().encode(value)
+  const digest = await crypto.subtle.digest('SHA-256', data)
+  return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('')
+}
+
+async function otpHash(companyId: string, phone: string, code: string) {
+  const secret = Deno.env.get('OTP_SECRET') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || 'madar-otp'
+  return sha256(`${companyId}:${phone}:${code}:${secret}`)
+}
+
+function twilioConfig() {
+  const apiKeySid = Deno.env.get('TWILIO_API_KEY_SID') || Deno.env.get('TWILIO_ACCOUNT_SID') || ''
+  const apiKeySecret = Deno.env.get('TWILIO_API_KEY_SECRET') || Deno.env.get('TWILIO_AUTH_TOKEN') || ''
+  const serviceSid = Deno.env.get('TWILIO_VERIFY_SERVICE_SID') || ''
+  const channel = (Deno.env.get('TWILIO_VERIFY_CHANNEL') || 'sms').toLowerCase()
+
+  if (!apiKeySid || !apiKeySecret || !serviceSid) return null
+
+  return {
+    apiKeySid,
+    apiKeySecret,
+    serviceSid,
+    channel: channel === 'whatsapp' ? 'whatsapp' : 'sms',
+  }
+}
+
+function twilioAuthHeader(apiKeySid: string, apiKeySecret: string) {
+  return `Basic ${btoa(`${apiKeySid}:${apiKeySecret}`)}`
+}
+
+async function sendOtpViaTwilio(phone: string) {
+  const config = twilioConfig()
+  if (!config) return null
+
+  const response = await fetch(`${TWILIO_VERIFY_BASE_URL}/Services/${config.serviceSid}/Verifications`, {
+    method: 'POST',
+    headers: {
+      'Authorization': twilioAuthHeader(config.apiKeySid, config.apiKeySecret),
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      To: `+${phone}`,
+      Channel: config.channel,
+    }),
+  })
+
+  const body = await response.json().catch(() => ({}))
+  if (response.ok) return { ok: true, provider: `twilio_${config.channel}`, sid: body.sid as string | undefined }
+  return { ok: false, provider: `twilio_${config.channel}`, status: response.status, body }
+}
+
+async function verifyOtpViaTwilio(phone: string, code: string) {
+  const config = twilioConfig()
+  if (!config) return null
+
+  const response = await fetch(`${TWILIO_VERIFY_BASE_URL}/Services/${config.serviceSid}/VerificationCheck`, {
+    method: 'POST',
+    headers: {
+      'Authorization': twilioAuthHeader(config.apiKeySid, config.apiKeySecret),
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      To: `+${phone}`,
+      Code: code,
+    }),
+  })
+
+  const body = await response.json().catch(() => ({}))
+  if (response.ok && body.status === 'approved') return { ok: true, provider: 'twilio_verify' }
+  if (response.ok) return { ok: false, provider: 'twilio_verify', status: body.status || 'pending', body }
+  return { ok: false, provider: 'twilio_verify', status: response.status, body }
+}
+
+async function sendOtpViaWhatsApp(phone: string, code: string, company: Company) {
+  const n8nUrl = Deno.env.get('N8N_OTP_WEBHOOK_URL') || DEFAULT_OTP_WEBHOOK
+  const metaToken = Deno.env.get('WHATSAPP_ACCESS_TOKEN') || Deno.env.get('META_WHATSAPP_ACCESS_TOKEN')
+  const phoneNumberId = Deno.env.get('WHATSAPP_PHONE_NUMBER_ID') || Deno.env.get('META_WHATSAPP_PHONE_NUMBER_ID')
+  const message = `\u0631\u0645\u0632 \u0627\u0644\u062a\u062d\u0642\u0642 \u0644\u0645\u0646\u0635\u0629 \u0645\u062f\u0627\u0631: ${code}\n\u0635\u0627\u0644\u062d \u0644\u0645\u062f\u0629 ${OTP_TTL_MINUTES} \u062f\u0642\u0627\u0626\u0642.\n${company.name}`
+
+  if (metaToken && phoneNumberId) {
+    const response = await fetch(`https://graph.facebook.com/v18.0/${phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${metaToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: phone,
+        type: 'text',
+        text: { preview_url: false, body: message },
+      }),
+    })
+    if (response.ok) return { ok: true, provider: 'meta' }
+    return { ok: false, provider: 'meta', status: response.status, body: await response.text().catch(() => '') }
+  }
+
+  const response = await fetch(n8nUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      phone,
+      otp: code,
+      message,
+      company_id: company.id,
+      company_name: company.name,
+      expires_in_minutes: OTP_TTL_MINUTES,
+    }),
+  })
+  if (response.ok) return { ok: true, provider: 'n8n' }
+  return { ok: false, provider: 'n8n', status: response.status, body: await response.text().catch(() => '') }
+}
+
+async function hasVerifiedOtp(supabase: ReturnType<typeof createClient>, companyId: string, phone: string, token: string) {
+  if (!token) return false
+  const { data } = await supabase
+    .from('cw_phone_otps')
+    .select('id')
+    .eq('company_id', companyId)
+    .eq('phone', phone)
+    .eq('verification_token', token)
+    .not('verified_at', 'is', null)
+    .gt('verification_expires_at', new Date().toISOString())
+    .order('verified_at', { ascending: false })
+    .limit(1)
+  return Boolean(data?.length)
+}
+
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+  const origin = req.headers.get('origin')
+  const json = makeReply(origin)
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders(origin) })
   if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405)
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')

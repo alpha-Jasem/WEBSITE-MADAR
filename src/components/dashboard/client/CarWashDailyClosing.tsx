@@ -5,6 +5,7 @@ import { useClientCompany } from '../../../hooks/useClientCompany'
 import { logAudit } from '../../../lib/auditLog'
 import { downloadCSV, formatDateForCSV } from '../../../lib/exportUtils'
 import type { CWDailyClosing } from '../../../types'
+import { ClientButton, ClientPageHeader, ClientPanel, ClientStatusPill } from './ClientUI'
 
 function SummaryRow({ label, value, highlight, color }: { label: string; value: string; highlight?: boolean; color?: string }) {
   return (
@@ -321,24 +322,20 @@ export const CarWashDailyClosing = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white font-cairo">إغلاق اليوم</h1>
-          <p className="text-sm text-slate-500 font-tajawal">
-            {new Date().toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </p>
-        </div>
-        {pastClosings.length > 0 && (
+      <ClientPageHeader
+        eyebrow="نهاية الوردية"
+        title="إغلاق اليوم"
+        description={new Date().toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        actions={pastClosings.length > 0 ? (
           <div className="relative">
-            <button
+            <ClientButton
+              tone="secondary"
               onClick={() => setShowExport(v => !v)}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-tajawal text-slate-400 transition-all hover:text-white"
-              style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
             >
               <FileDown size={14} /> تصدير <ChevronDown size={12} />
             </button>
             {showExport && (
-              <div className="absolute left-0 top-full mt-1 rounded-xl overflow-hidden z-50" style={{ background: '#0D1422', border: '1px solid #CBD5E1', minWidth: 180 }}>
+              <div className="absolute left-0 top-full mt-1 rounded-xl overflow-hidden z-50 shadow-xl" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', minWidth: 180 }}>
                 {[
                   { label: 'تصدير CSV', action: () => { exportClosingsCSV(); setShowExport(false) } },
                   { label: 'طباعة آخر إغلاق', action: () => { if (todayClosing) printClosing(todayClosing); setShowExport(false) } },
@@ -351,8 +348,8 @@ export const CarWashDailyClosing = () => {
               </div>
             )}
           </div>
-        )}
-      </div>
+        ) : undefined}
+      />
 
       {/* Already closed banner */}
       {todayClosing && (
@@ -422,13 +419,7 @@ export const CarWashDailyClosing = () => {
 
       {/* Summary card */}
       {displayData && (
-        <div className="rounded-2xl overflow-hidden" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-          <div className="px-5 py-4" style={{ borderBottom: '1px solid #E2E8F0', background: '#FAFAFA' }}>
-            <div className="flex items-center gap-2">
-              <ClipboardCheck size={16} className="text-primary-400" />
-              <p className="text-sm font-bold text-slate-900 font-cairo">ملخص اليوم</p>
-            </div>
-          </div>
+        <ClientPanel icon={ClipboardCheck} title="ملخص اليوم" description="الأرقام النهائية قبل اعتماد إغلاق الوردية.">
           <div className="p-5 space-y-0">
             <SummaryRow label="عدد السيارات" value={`${displayData.total_cars} سيارة`} />
             <SummaryRow label="قبل الضريبة" value={`${displayData.subtotal_sales.toFixed(2)} ر.س`} />
@@ -455,7 +446,7 @@ export const CarWashDailyClosing = () => {
               </span>
             </div>
           </div>
-        </div>
+        </ClientPanel>
       )}
 
       {/* Notes + close button */}
@@ -478,28 +469,24 @@ export const CarWashDailyClosing = () => {
           >
             {closing ? <Loader2 size={18} className="animate-spin" /> : <ClipboardCheck size={18} />}
             {closing ? 'جاري الإغلاق...' : 'إغلاق اليوم'}
-          </button>
+          </ClientButton>
         </div>
       )}
 
       {/* Past closings */}
       {pastClosings.length > 0 && (
-        <div className="rounded-2xl overflow-hidden" style={{ background: '#FAFAFA', border: '1px solid #E2E8F0' }}>
-          <div className="px-5 py-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
-            <p className="text-sm font-bold text-white font-cairo">الإغلاقات السابقة</p>
-          </div>
-          <div className="divide-y divide-white/5">
+        <ClientPanel title="الإغلاقات السابقة" description="آخر 30 يوم إغلاق مع طباعة سريعة لكل يوم.">
+          <div className="divide-y divide-slate-100">
             {pastClosings.map(c => (
               <div key={c.id} className="px-5 py-3 flex items-center gap-4">
                 <div className="flex-1">
-                  <p className="text-sm text-white font-tajawal">{c.closing_date}</p>
+                  <p className="text-sm text-slate-900 font-tajawal">{c.closing_date}</p>
                   <p className="text-xs text-slate-500 font-tajawal">{c.total_cars} سيارة</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-bold font-sora" style={{ color: c.net_profit >= 0 ? '#818CF8' : '#F87171' }}>
-                    {c.net_profit.toFixed(0)} ر.س
-                  </p>
-                  <p className="text-xs text-slate-600 font-tajawal">صافي الربح</p>
+                  <ClientStatusPill tone={c.net_profit >= 0 ? 'green' : 'red'}>
+                    {c.net_profit.toFixed(0)} ر.س صافي الربح
+                  </ClientStatusPill>
                 </div>
                 <button onClick={() => printClosing(c)}
                   className="p-2 rounded-lg text-slate-600 hover:text-white transition-colors"
@@ -509,7 +496,7 @@ export const CarWashDailyClosing = () => {
               </div>
             ))}
           </div>
-        </div>
+        </ClientPanel>
       )}
 
       {/* ── Cash Movement Modal ── */}

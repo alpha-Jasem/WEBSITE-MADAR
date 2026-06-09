@@ -26,11 +26,8 @@ const DISPLAY_STATUS: Record<QueueStatus, { label: string; short: string }> = {
   cancelled: { label: 'ملغية', short: 'ملغية' },
 }
 
-function plateCode(items: DisplayCar[], item: DisplayCar) {
-  const ticket = getDailyTicketCode(items, item.id)
-  const plate = item.plate?.replace(/\s+/g, ' ').trim()
-  if (plate) return `${ticket}`
-  return ticket
+function displayCode(items: DisplayCar[], item: DisplayCar) {
+  return getDailyTicketCode(items, item.id)
 }
 
 function minutesSince(value: string) {
@@ -115,9 +112,7 @@ export function CarWashQueueDisplay() {
     <main className="cw-display" dir="rtl">
       <header className="cw-display-header">
         <div className="cw-display-brand">
-          <img src="/logo-main.png" alt="Madar" />
           <div>
-            <span>مدار OS</span>
             <strong>{company?.name || 'شاشة تشغيل المغسلة'}</strong>
           </div>
         </div>
@@ -181,7 +176,7 @@ export function CarWashQueueDisplay() {
             <span className="cw-display-muted">لا توجد سيارات مسلمة حتى الآن</span>
           ) : (
             groups.delivered.map(item => (
-              <span key={item.id}>{plateCode(items, item)}</span>
+              <span key={item.id}>{displayCode(items, item)}</span>
             ))
           )}
         </div>
@@ -242,7 +237,7 @@ function DisplayColumn({ tone, icon: Icon, title, subtitle, items, allItems, lim
               <div className="cw-display-plate">{getDailyTicketCode(allItems, item.id)}</div>
               <div className="cw-display-car-meta">
                 <strong>{DISPLAY_STATUS[item.status].label}</strong>
-                <span>{item.plate ? `${item.plate} • ` : ''}{item.service_name || item.car_type || 'خدمة مغسلة'}{item.worker?.name ? ` • ${item.worker.name}` : ''}</span>
+                <span>{item.plate ? `${item.plate} - ` : ''}{item.service_name || item.car_type || 'خدمة مغسلة'}{item.worker?.name ? ` - ${item.worker.name}` : ''}</span>
               </div>
               <small>{minutesSince(item.status === 'delivered' ? (item.delivered_at || item.created_at) : item.created_at)}</small>
             </article>

@@ -172,6 +172,100 @@ function TrialExpiredGate() {
   )
 }
 
+function isTrialExpired(company: ReturnType<typeof useClientCompany>['company']) {
+  return company?.status === 'trial' && company.plan_reset_at && new Date(company.plan_reset_at).getTime() < Date.now()
+}
+
+function TrialExpiredGate() {
+  const assurances = [
+    'بيانات المغسلة محفوظة',
+    'رابط QR يرجع للعمل مباشرة',
+    'لا تحتاج إعداد جديد',
+  ]
+
+  return (
+    <div dir="rtl" className="mx-auto flex min-h-[62vh] max-w-5xl items-center justify-center px-2">
+      <section className="relative w-full overflow-hidden rounded-[32px] border border-[#DDEBFF] bg-white p-6 text-right shadow-[0_28px_90px_rgba(15,23,42,0.10)] sm:p-8">
+        <div className="pointer-events-none absolute -left-20 -top-24 h-64 w-64 rounded-full bg-[#0B63F6]/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-28 right-10 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl" />
+
+        <div className="relative grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 font-tajawal">
+              <AlertTriangle size={14} />
+              انتهت التجربة المجانية
+            </div>
+
+            <h1 className="mt-4 text-2xl font-black leading-tight text-[#071739] font-cairo sm:text-3xl">
+              فعّل اشتراكك لتستمر لوحة مدار بدون انقطاع
+            </h1>
+
+            <p className="mt-3 max-w-2xl text-sm leading-8 text-slate-600 font-tajawal sm:text-base">
+              كل بيانات مغسلتك محفوظة: السيارات، العملاء، الخدمات، التقارير ورابط QR. اختر الباقة المناسبة وسيعود الحساب للعمل مباشرة بنفس الإعدادات.
+            </p>
+
+            <div className="mt-5 grid gap-2 sm:grid-cols-3">
+              {assurances.map((item) => (
+                <div key={item} className="flex items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 px-3 py-3 text-sm font-bold text-slate-700 font-tajawal">
+                  <CheckCircle2 size={17} className="shrink-0 text-emerald-500" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <a href="/client/upgrade" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#0B63F6] px-6 py-3.5 text-sm font-black !text-white shadow-[0_18px_34px_rgba(11,99,246,0.24)] transition hover:bg-[#0956D8] hover:shadow-[0_20px_40px_rgba(11,99,246,0.30)] font-cairo">
+                <CreditCard size={17} />
+                اختيار الباقة المناسبة
+              </a>
+              <a href="https://wa.me/966546666005?text=%D8%A3%D8%A8%D8%BA%D9%89%20%D9%85%D8%B3%D8%A7%D8%B9%D8%AF%D8%A9%20%D9%81%D9%8A%20%D8%AA%D9%81%D8%B9%D9%8A%D9%84%20%D8%A7%D8%B4%D8%AA%D8%B1%D8%A7%D9%83%20%D9%85%D8%AF%D8%A7%D8%B1%20OS" target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-2xl border border-[#C8D8F5] bg-white px-6 py-3.5 text-sm font-bold text-[#0D1B3E] transition hover:border-[#0B63F6] hover:text-[#0B63F6] font-cairo">
+                تواصل مع الدعم
+              </a>
+            </div>
+          </div>
+
+          <div className="rounded-[26px] border border-[#DDEBFF] bg-gradient-to-br from-[#F8FBFF] to-[#EEF6FF] p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold text-[#0B63F6] font-tajawal">حالة الحساب</p>
+                <h2 className="mt-1 text-lg font-black text-[#071739] font-cairo">جاهز للتفعيل</h2>
+              </div>
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white text-[#0B63F6] shadow-[0_12px_24px_rgba(11,99,246,0.12)]">
+                <ShieldCheck size={23} />
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-3">
+              <div className="rounded-2xl bg-white p-4 shadow-[0_10px_26px_rgba(15,23,42,0.05)]">
+                <div className="flex items-center justify-between text-sm font-bold text-slate-700 font-tajawal">
+                  <span>الخدمات والعملاء</span>
+                  <span className="text-emerald-600">محفوظة</span>
+                </div>
+              </div>
+              <div className="rounded-2xl bg-white p-4 shadow-[0_10px_26px_rgba(15,23,42,0.05)]">
+                <div className="flex items-center justify-between text-sm font-bold text-slate-700 font-tajawal">
+                  <span>لوحة التشغيل وQR</span>
+                  <span className="text-[#0B63F6]">تعمل بعد التفعيل</span>
+                </div>
+              </div>
+              <div className="rounded-2xl bg-white p-4 shadow-[0_10px_26px_rgba(15,23,42,0.05)]">
+                <div className="flex items-center justify-between text-sm font-bold text-slate-700 font-tajawal">
+                  <span>الدعم والمتابعة</span>
+                  <span className="text-[#0B63F6]">مشمول</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-center gap-2 rounded-2xl border border-blue-100 bg-white/70 px-4 py-3 text-xs font-bold leading-6 text-slate-600 font-tajawal">
+              <Sparkles size={16} className="shrink-0 text-[#0B63F6]" />
+              التفعيل يحافظ على نفس الحساب والبيانات بدون إعادة تسجيل.
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
 export const ClientPortal = () => {
   const { company, companyId, loading } = useClientCompany()
   const navigate = useNavigate()

@@ -10,7 +10,7 @@ interface ActiveProfile {
 interface ActiveProfileContextValue {
   profile: ActiveProfile
   switchToProfile: (userId: string, name: string, permissions: string[], enteredPin: string, storedPin: string | null) => boolean
-  returnToOwner: (ownerName: string) => void
+  returnToOwner: (ownerName: string, enteredPin?: string, storedPin?: string | null) => boolean
 }
 
 const DEFAULT_PROFILE: ActiveProfile = {
@@ -25,7 +25,7 @@ const SESSION_KEY = 'madar_active_profile'
 const ActiveProfileContext = createContext<ActiveProfileContextValue>({
   profile: DEFAULT_PROFILE,
   switchToProfile: () => false,
-  returnToOwner: () => {},
+  returnToOwner: () => false,
 })
 
 export function ActiveProfileProvider({ children }: { children: ReactNode }) {
@@ -60,8 +60,10 @@ export function ActiveProfileProvider({ children }: { children: ReactNode }) {
     return true
   }
 
-  const returnToOwner = (ownerName: string) => {
+  const returnToOwner = (ownerName: string, enteredPin = '', storedPin: string | null = null) => {
+    if (storedPin && enteredPin !== storedPin) return false
     setProfile({ name: ownerName, userId: null, isOwner: true, permissions: [] })
+    return true
   }
 
   return (

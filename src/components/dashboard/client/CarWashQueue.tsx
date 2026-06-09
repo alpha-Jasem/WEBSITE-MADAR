@@ -54,6 +54,11 @@ const QUEUE_PAYMENT_BUTTONS: { value: PaymentMethod; label: string }[] = [
   { value: 'visa', label: 'فيزا' },
 ]
 
+const OPTIONAL_PAYMENT_BUTTONS: { value: PaymentMethod; label: string; flag: 'wallet' | 'memberships' }[] = [
+  { value: 'wallet', label: 'محفظة', flag: 'wallet' },
+  { value: 'membership', label: 'اشتراك', flag: 'memberships' },
+]
+
 function elapsed(created_at: string) {
   const mins = Math.floor((Date.now() - new Date(created_at).getTime()) / 60000)
   if (mins < 60) return `${mins}د`
@@ -84,6 +89,7 @@ interface LoyaltyInfo {
 
 export const CarWashQueue = () => {
   const { companyId, company, loading: authLoading } = useClientCompany()
+  const featureFlags = ((company?.cw_automations as any)?.feature_flags || {}) as Record<string, boolean>
   const [searchParams, setSearchParams] = useSearchParams()
   const [items, setItems] = useState<CWQueueItem[]>([])
   const [workers, setWorkers] = useState<CWWorker[]>([])
@@ -600,6 +606,10 @@ export const CarWashQueue = () => {
         plate: item.plate || null,
       })
     }
+
+    setItems(prev => prev.map(row => row.id === item.id ? deliveredItem : row))
+    showQueueNotice('تم تسليم السيارة ونقلها إلى تم التسليم.')
+    void loadItems(companyId)
 
     setDelivering(false)
     setDeliverModal(null)

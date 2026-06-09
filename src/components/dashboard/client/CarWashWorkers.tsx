@@ -187,6 +187,12 @@ export const CarWashWorkers = () => {
         </div>
       )}
 
+      <ClientInsightPanel
+        title="تحسين أداء الفريق"
+        description="هذه التوصيات تساعد المالك يعرف من يعمل جيداً وأين تضيع دقة الحسابات."
+        items={workerInsights}
+      />
+
       {/* Workers grid */}
       {workers.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '40px 20px', background: '#FFFFFF', border: '2px dashed #E2E8F0', borderRadius: 20 }}>

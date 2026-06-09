@@ -11,12 +11,21 @@ export const notifyAdminNewLead = (leadData: {
   email: string
 }) => {
   const adminPhone = import.meta.env.VITE_ADMIN_WHATSAPP || '966546666005'
-  const message = `🔔 *عميل جديد!*\n\n👤 الاسم: ${leadData.name}\n📧 البريد: ${leadData.email}\n📱 الجوال: ${leadData.phone}\n💼 الخدمة: ${leadData.service}\n\n_تم الاستلام من الموقع الإلكتروني_`
+  const message = [
+    'عميل جديد من الموقع',
+    '',
+    `الاسم: ${leadData.name}`,
+    `البريد: ${leadData.email || 'غير محدد'}`,
+    `الجوال: ${leadData.phone}`,
+    `الخدمة: ${leadData.service}`,
+    '',
+    'تم الاستلام من الموقع الإلكتروني.',
+  ].join('\n')
   sendWhatsAppMessage(adminPhone, message)
 }
 
 export const openWhatsAppChat = (message?: string) => {
   const adminPhone = import.meta.env.VITE_ADMIN_WHATSAPP || '966546666005'
-  const defaultMessage = message || 'مرحباً، أرغب بالاستفسار عن خدماتكم'
+  const defaultMessage = message || 'مرحباً، أريد الاستفسار عن مدار OS للمغاسل.'
   sendWhatsAppMessage(adminPhone, defaultMessage)
 }

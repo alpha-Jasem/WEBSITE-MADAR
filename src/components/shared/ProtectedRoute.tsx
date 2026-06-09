@@ -71,13 +71,21 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
   if (isLoading) return null
 
   if (!isAuthed) {
+    // Clinic OS dashboard → go to clinic login
+    if (location.pathname.startsWith('/clinic-os/dashboard')) {
+      return <Navigate to="/clinic-os/login" replace />
+    }
     const redirect = encodeURIComponent(`${location.pathname}${location.search}`)
     const portal = requiredRole ? `&portal=${requiredRole}` : ''
     return <Navigate to={`/login?redirect=${redirect}${portal}`} replace />
   }
 
-  if (requiredRole && userRole !== requiredRole) {
-    return <Navigate to={userRole === 'admin' ? '/admin' : '/client'} replace />
+  if (requiredRole && userRole !== requiredRole && userRole !== 'admin') {
+    // Clinic users trying to access wrong portal → redirect to clinic dashboard
+    if (location.pathname.startsWith('/clinic-os/')) {
+      return <Navigate to="/clinic-os/login" replace />
+    }
+    return <Navigate to="/client" replace />
   }
 
   return <>{children}</>

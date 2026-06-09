@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { Car, CheckCircle2, Clock, Droplets, Loader2, ShieldCheck, Sparkles } from 'lucide-react'
+import { useParams } from 'react-router-dom'
+import { CheckCircle2, Clock, Droplets, Loader2, ShieldCheck, Sparkles } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { getDailyTicketCode } from '../lib/carWashTickets'
 import { isSelfCheckinPending } from '../lib/selfCheckin'
+import { MadarAgentWidget } from '../components/dash/MadarAgentWidget'
 import type { QueueStatus } from '../types'
 
 type StatusCompany = {
   id: string
   name: string
+  logo_url?: string | null
   webhook_token: string | null
 }
 
@@ -24,6 +26,8 @@ type StatusQueueItem = {
   created_at: string
   delivered_at: string | null
 }
+
+type DayQueueItem = Pick<StatusQueueItem, 'id' | 'created_at' | 'status'>
 
 const STATUS_STEPS: { key: string; label: string; sub: string; icon: React.ElementType }[] = [
   { key: 'waiting', label: 'بانتظار الدور', sub: 'سيارتك مسجلة في المسار', icon: Clock },
@@ -59,7 +63,7 @@ export function CarWashStatus() {
   const { token = '', queueId = '' } = useParams()
   const [company, setCompany] = useState<StatusCompany | null>(null)
   const [item, setItem] = useState<StatusQueueItem | null>(null)
-  const [dayItems, setDayItems] = useState<{ id: string; created_at: string }[]>([])
+  const [dayItems, setDayItems] = useState<DayQueueItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -72,7 +76,7 @@ export function CarWashStatus() {
     } else {
       const direct = await supabase
         .from('companies')
-        .select('id, name, webhook_token')
+        .select('id, name, logo_url, webhook_token')
         .eq('webhook_token', token)
         .maybeSingle()
       co = direct.data
@@ -81,7 +85,7 @@ export function CarWashStatus() {
     if (!co) {
       const fallback = await supabase
         .from('companies')
-        .select('id, name, webhook_token')
+        .select('id, name, logo_url, webhook_token')
         .eq('public_checkin_token', token)
         .maybeSingle()
       co = fallback.data
@@ -110,7 +114,7 @@ export function CarWashStatus() {
     todayStart.setHours(0, 0, 0, 0)
     const { data: sameDay } = await supabase
       .from('cw_queue')
-      .select('id, created_at')
+      .select('id, created_at, status')
       .eq('company_id', co.id)
       .gte('created_at', todayStart.toISOString())
       .neq('status', 'cancelled')
@@ -118,7 +122,7 @@ export function CarWashStatus() {
 
     setCompany(co as StatusCompany)
     setItem(queueItem as StatusQueueItem)
-    setDayItems((sameDay || []) as { id: string; created_at: string }[])
+    setDayItems((sameDay || []) as DayQueueItem[])
     setLoading(false)
   }
 
@@ -138,6 +142,16 @@ export function CarWashStatus() {
 
   const ticket = useMemo(() => item ? getDailyTicketCode(dayItems, item.id) : '', [dayItems, item])
   const progress = item ? statusLevel(item) : 1
+  const position = useMemo(() => {
+    if (!item) return { ahead: 0, estimate: 0 }
+    const currentTime = new Date(item.created_at).getTime()
+    const ahead = dayItems.filter(row =>
+      row.id !== item.id &&
+      row.status !== 'delivered' &&
+      new Date(row.created_at).getTime() < currentTime
+    ).length
+    return { ahead, estimate: ahead > 0 ? ahead * 12 : 0 }
+  }, [dayItems, item])
 
   if (loading) {
     return (
@@ -165,7 +179,7 @@ export function CarWashStatus() {
   return (
     <main className="self-checkin-page" dir="rtl">
       <section className="status-page-card">
-        <img src="/logo-main.png" alt="Madar" />
+        <img src={company.logo_url || '/logo-main.png'} alt={company.name} />
         <span>{company.name}</span>
         <h1>{statusTitle(item)}</h1>
         <p className="status-live-copy">{statusHint(item)}</p>
@@ -186,6 +200,19 @@ export function CarWashStatus() {
           </div>
         </div>
 
+        {item.status !== 'delivered' && (
+          <div className="status-queue-position">
+            <div>
+              <small>ترتيبك الآن</small>
+              <strong>{position.ahead > 0 ? `قبلك ${position.ahead} سيارة` : 'أنت التالي تقريباً'}</strong>
+            </div>
+            <div>
+              <small>تقدير الانتظار</small>
+              <strong>{position.estimate > 0 ? `${position.estimate} دقيقة تقريباً` : 'قريب جداً'}</strong>
+            </div>
+          </div>
+        )}
+
         <div className="status-timeline simple">
           {STATUS_STEPS.map((step, index) => {
             const done = progress >= index + 1
@@ -201,17 +228,8 @@ export function CarWashStatus() {
           })}
         </div>
 
-        {item.status === 'delivered' && (
-          <button className="status-rating-button" type="button">
-            قيّم التجربة لاحقاً
-          </button>
-        )}
-
-        <Link to={`/checkin/${token}`} className="self-checkin-status-link">
-          <Car size={16} />
-          تسجيل سيارة أخرى
-        </Link>
       </section>
+      <MadarAgentWidget agentType="end_customer" publicToken={token} queueId={queueId} pageTitle={company.name} compact />
     </main>
   )
 }

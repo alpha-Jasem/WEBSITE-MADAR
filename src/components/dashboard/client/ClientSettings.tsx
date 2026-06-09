@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from 'react'
-import { User, Bell, Shield, Link2, Copy, Check, Mail, Loader2, MapPin, ClipboardList, Save, Users, Plus, Trash2, Eye, EyeOff, QrCode, ExternalLink } from 'lucide-react'
+import { User, Bell, Shield, Link2, Copy, Check, Mail, Loader2, MapPin, ClipboardList, Save, Users, Plus, Trash2, Eye, EyeOff, QrCode, ExternalLink, Image as ImageIcon, Building2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
@@ -9,6 +9,8 @@ import { PLAN_LABELS } from '../../../lib/constants'
 import { getSelfCheckinSettings, getSelfCheckinUrl } from '../../../lib/selfCheckin'
 import { usePlanGate } from '../../../hooks/usePlanGate'
 import { FeatureLock } from '../../dash/FeatureLock'
+import { CarWashLaunchChecklist } from './CarWashLaunchChecklist'
+import { ClientPageHeader } from './ClientUI'
 
 const PLAN_LIMITS: Record<string, string> = {
   starter: '2,000 رسالة/شهر',
@@ -37,6 +39,12 @@ export const ClientSettings = () => {
   const [selfSaved, setSelfSaved] = useState(false)
   const [serviceCount, setServiceCount] = useState(0)
   const [workerCount, setWorkerCount] = useState(0)
+  const [identityName, setIdentityName] = useState('')
+  const [identityLogoUrl, setIdentityLogoUrl] = useState('')
+  const [savingIdentity, setSavingIdentity] = useState(false)
+  const [identitySaved, setIdentitySaved] = useState(false)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [logoError, setLogoError] = useState('')
 
   const template = getClientIndustryTemplate(company?.business_type, company?.industry)
   const isCarWash = template.type === 'car_wash'
@@ -46,6 +54,8 @@ export const ClientSettings = () => {
     if (company && (company as any).google_maps_url) {
       setMapsUrl((company as any).google_maps_url)
     }
+    setIdentityName(company?.name || '')
+    setIdentityLogoUrl((company as any)?.logo_url || '')
     const settings = getSelfCheckinSettings(company as any)
     setSelfEnabled(settings.enabled)
     setSelfApproval(settings.approvalRequired)
@@ -88,6 +98,86 @@ export const ClientSettings = () => {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const saveIdentity = async () => {
+    if (!companyId || !identityName.trim()) return
+    setSavingIdentity(true)
+    await supabase.from('companies').update({
+      name: identityName.trim(),
+      logo_url: identityLogoUrl || null,
+    } as any).eq('id', companyId)
+    setSavingIdentity(false)
+    setIdentitySaved(true)
+    setTimeout(() => setIdentitySaved(false), 2500)
+  }
+
+  const uploadLogo = async (file: File | null) => {
+    if (!companyId || !file) return
+    setLogoError('')
+    const allowed = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']
+    if (!allowed.includes(file.type)) {
+      setLogoError('ارفع شعار بصيغة PNG أو JPG أو WEBP أو SVG.')
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setLogoError('حجم الشعار لازم يكون أقل من 2MB.')
+      return
+    }
+
+    setUploadingLogo(true)
+    const saveInlineLogo = async () => {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(String(reader.result || ''))
+        reader.onerror = () => reject(reader.error)
+        reader.readAsDataURL(file)
+      })
+      setIdentityLogoUrl(dataUrl)
+      await supabase.from('companies').update({
+        name: identityName.trim() || company?.name,
+        logo_url: dataUrl,
+      } as any).eq('id', companyId)
+      setUploadingLogo(false)
+      setIdentitySaved(true)
+      setTimeout(() => setIdentitySaved(false), 2500)
+    }
+    const extension = file.name.split('.').pop()?.toLowerCase() || 'png'
+    const path = `${companyId}/logo-${Date.now()}.${extension}`
+    const { error } = await supabase.storage.from('company-assets').upload(path, file, {
+      cacheControl: '3600',
+      upsert: false,
+    })
+
+    if (error) {
+      try {
+        await saveInlineLogo()
+        setLogoError('')
+      } catch {
+        setLogoError('تعذر رفع الشعار. حاول مرة ثانية.')
+        setUploadingLogo(false)
+      }
+      return
+    }
+
+    const { data } = supabase.storage.from('company-assets').getPublicUrl(path)
+    const publicUrl = data.publicUrl
+    setIdentityLogoUrl(publicUrl)
+    await supabase.from('companies').update({
+      name: identityName.trim() || company?.name,
+      logo_url: publicUrl,
+    } as any).eq('id', companyId)
+    setUploadingLogo(false)
+    setIdentitySaved(true)
+    setTimeout(() => setIdentitySaved(false), 2500)
+  }
+
+  const removeLogo = async () => {
+    if (!companyId) return
+    setIdentityLogoUrl('')
+    await supabase.from('companies').update({ logo_url: null } as any).eq('id', companyId)
+    setIdentitySaved(true)
+    setTimeout(() => setIdentitySaved(false), 2500)
+  }
+
   const copyCheckin = () => {
     if (!checkinUrl) return
     navigator.clipboard.writeText(checkinUrl)
@@ -113,6 +203,9 @@ export const ClientSettings = () => {
     setTimeout(() => setSelfSaved(false), 2500)
   }
 
+  const escHtml = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+
   const printCheckinKit = () => {
     if (!checkinUrl || !company) return
     const printWindow = window.open('', '_blank', 'width=720,height=900')
@@ -120,7 +213,7 @@ export const ClientSettings = () => {
     printWindow.document.write(`
       <html dir="rtl">
         <head>
-          <title>QR التسجيل الذاتي - ${company.name}</title>
+          <title>QR التسجيل الذاتي - ${identityName || company.name}</title>
           <style>
             body{margin:0;background:#eef6ff;font-family:Cairo,Tajawal,Arial,sans-serif;color:#0D1B3E}
             .sheet{width:794px;min-height:1123px;margin:0 auto;padding:54px;box-sizing:border-box;background:linear-gradient(160deg,#fff,#eef8ff)}
@@ -139,14 +232,14 @@ export const ClientSettings = () => {
         </head>
         <body>
           <div class="sheet">
-            <img class="logo" src="${window.location.origin}/logo-main.png" />
+            <img class="logo" src="${escHtml(identityLogoUrl || `${window.location.origin}/logo-main.png`)}" />
             <div class="hero">
               <span class="eyebrow">مدار OS للتسجيل الذاتي</span>
-              <h1>${company.name}</h1>
+              <h1>${escHtml(identityName || company.name)}</h1>
               <p>امسح الرمز وسجل سيارتك خلال أقل من دقيقة. سيظهر رقمك مباشرة على شاشة التشغيل.</p>
             </div>
-            <img class="qr" src="${checkinQrUrl}" />
-            <div class="url">${checkinUrl}</div>
+            <img class="qr" src="${escHtml(checkinQrUrl)}" />
+            <div class="url">${escHtml(checkinUrl)}</div>
             <div class="steps">
               <div class="step"><span class="num">1</span> امسح رمز QR من جوالك</div>
               <div class="step"><span class="num">2</span> اختر الخدمة واكتب بيانات السيارة</div>
@@ -168,14 +261,14 @@ export const ClientSettings = () => {
 
   // Team management
   const CW_PAGES = [
-    { path: '/client',            label: 'لوحة المغسلة'  },
+    { path: '/client',            label: 'الرئيسية'  },
     { path: '/client/queue',      label: 'لوحة التشغيل'  },
     { path: '/client/queue-display', label: 'شاشة العرض' },
     { path: '/client/leads',      label: 'العملاء' },
     { path: '/client/finance',    label: 'المالية'        },
     { path: '/client/reports',    label: 'التقارير'      },
     { path: '/client/workers',    label: 'الموظفون'      },
-    { path: '/client/automations',label: 'الأتمتة'       },
+    { path: '/client/automations',label: 'واتساب'       },
     { path: '/client/settings',   label: 'الإعدادات'     },
   ]
 
@@ -188,6 +281,8 @@ export const ClientSettings = () => {
   const [showPin, setShowPin] = useState(false)
   const [savingTeam, setSavingTeam] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [ownerPin, setOwnerPin] = useState('')
+  const [savingOwnerPin, setSavingOwnerPin] = useState(false)
 
   const loadTeam = async () => {
     if (!companyId) return
@@ -202,7 +297,16 @@ export const ClientSettings = () => {
 
   useEffect(() => {
     if (tab === 'team' && !teamLoaded) loadTeam()
+    if (tab === 'team') setOwnerPin(String(((company as any)?.cw_automations || {})?.owner_pin || ''))
   }, [tab])
+
+  const saveOwnerPin = async () => {
+    if (!companyId || ownerPin.length !== 4) return
+    setSavingOwnerPin(true)
+    const nextAutomations = { ...(((company as any)?.cw_automations || {}) as Record<string, any>), owner_pin: ownerPin }
+    await supabase.from('companies').update({ cw_automations: nextAutomations } as any).eq('id', companyId)
+    setSavingOwnerPin(false)
+  }
 
   const togglePerm = (path: string) =>
     setNewPerms(prev => prev.includes(path) ? prev.filter(p => p !== path) : [...prev, path])
@@ -264,10 +368,11 @@ export const ClientSettings = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white font-cairo">الإعدادات</h1>
-        <p className="text-sm text-slate-500 font-tajawal">إعدادات الحساب والتكاملات</p>
-      </div>
+      <ClientPageHeader
+        eyebrow="مركز التحكم"
+        title="الإعدادات"
+        description="إعدادات الحساب، QR، الفريق، التقييمات، والصلاحيات التشغيلية."
+      />
 
       {/* Tabs — car wash only */}
       {isCarWash && (
@@ -289,23 +394,89 @@ export const ClientSettings = () => {
       {isCarWash && tab === 'setup' ? <CarWashSetup /> : null}
       {(!isCarWash || tab === 'account') && <>
 
+      {isCarWash && <CarWashLaunchChecklist compact />}
+
       {/* Company info */}
+      {company && (
+        <div className="p-5 rounded-2xl space-y-4" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-2.5">
+              <Building2 size={16} className="text-cyan-400" />
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 font-cairo">هوية المغسلة</h3>
+                <p className="text-xs text-slate-500 font-tajawal">تظهر في صفحة التسجيل الذاتي، QR، شاشة العرض، وصفحة متابعة العميل.</p>
+              </div>
+            </div>
+            <div className="grid h-14 w-14 place-items-center overflow-hidden rounded-2xl bg-white" style={{ border: '1px solid #E2E8F0' }}>
+              {identityLogoUrl ? (
+                <img src={identityLogoUrl} alt={identityName || 'شعار المغسلة'} className="h-full w-full object-contain p-1.5" />
+              ) : (
+                <ImageIcon size={22} className="text-slate-400" />
+              )}
+            </div>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-[1fr_1.4fr]">
+            <label className="space-y-2">
+              <span className="text-xs font-bold text-slate-500 font-tajawal">اسم المغسلة الظاهر للعميل</span>
+              <input
+                value={identityName}
+                onChange={e => setIdentityName(e.target.value)}
+                placeholder="مثال: مغسلة النخبة"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition-all focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/10 font-tajawal"
+              />
+            </label>
+            <div className="space-y-2">
+              <span className="text-xs font-bold text-slate-500 font-tajawal">شعار المغسلة</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm font-bold text-cyan-700 transition-colors hover:bg-cyan-100 font-cairo">
+                  {uploadingLogo ? <Loader2 size={15} className="animate-spin" /> : <ImageIcon size={15} />}
+                  {uploadingLogo ? 'جاري رفع الشعار...' : 'رفع شعار من الجهاز'}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                    className="hidden"
+                    onChange={e => uploadLogo(e.target.files?.[0] || null)}
+                    disabled={uploadingLogo}
+                  />
+                </label>
+                {identityLogoUrl && (
+                  <button onClick={removeLogo}
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 font-cairo">
+                    <Trash2 size={15} />
+                    حذف الشعار
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-slate-500 font-tajawal">سيظهر الشعار في رابط QR وصفحة متابعة العميل وشاشة العرض. الحد الأقصى 2MB.</p>
+              {logoError && <p className="text-xs font-bold text-red-600 font-tajawal">{logoError}</p>}
+            </div>
+          </div>
+
+          <button onClick={saveIdentity} disabled={savingIdentity || !identityName.trim()}
+            className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold font-cairo disabled:opacity-50"
+            style={{ background: identitySaved ? 'rgba(16,185,129,0.12)' : 'rgba(0,191,255,0.12)', color: identitySaved ? '#059669' : '#0099CC', border: `1px solid ${identitySaved ? 'rgba(16,185,129,0.25)' : 'rgba(0,191,255,0.25)'}` }}>
+            {savingIdentity ? <Loader2 size={14} className="animate-spin" /> : identitySaved ? <Check size={14} /> : <Save size={14} />}
+            {identitySaved ? 'تم حفظ الهوية' : 'حفظ هوية المغسلة'}
+          </button>
+        </div>
+      )}
+
       {company && (
         <div className="p-5 rounded-2xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
           <div className="flex items-center gap-2.5 mb-4">
             <User size={16} className="text-primary-400" />
-            <h3 className="text-sm font-bold text-white font-cairo">معلومات الشركة</h3>
+            <h3 className="text-sm font-bold text-slate-900 font-cairo">معلومات الشركة</h3>
           </div>
           {[
             { label: 'الشركة', value: company.name },
-            { label: 'القطاع', value: company.industry === 'car_wash' || company.business_type === 'car_wash' ? 'مغسلة سيارات' : company.industry },
             { label: 'الباقة', value: `${PLAN_LABELS[company.plan] ?? company.plan} — ${(company.message_limit || 2000).toLocaleString()} رسالة/شهر` },
             { label: 'الحالة', value: company.status === 'active' ? 'نشط' : company.status },
             { label: 'الرسائل المستخدمة', value: `${(company.messages_used || 0).toLocaleString()} / ${(company.message_limit || 2000).toLocaleString()}` },
           ].map(({ label, value }) => (
-            <div key={label} className="flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0">
+            <div key={label} className="flex items-center justify-between py-2 border-b border-slate-200 last:border-0">
               <span className="text-sm text-slate-400 font-tajawal">{label}</span>
-              <span className="text-sm text-white font-tajawal">{value}</span>
+              <span className="text-sm text-slate-900 font-tajawal">{value}</span>
             </div>
           ))}
         </div>
@@ -315,7 +486,7 @@ export const ClientSettings = () => {
         <div className="p-5 rounded-2xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
           <div className="flex items-center gap-2.5 mb-2">
             <ClipboardList size={16} className="text-cyan-400" />
-            <h3 className="text-sm font-bold text-white font-cairo">قائمة جاهزية المغسلة</h3>
+            <h3 className="text-sm font-bold text-slate-900 font-cairo">قائمة جاهزية المغسلة</h3>
           </div>
           <div className="grid gap-2 md:grid-cols-2">
             {[
@@ -342,12 +513,12 @@ export const ClientSettings = () => {
       {!isCarWash && <div className="p-5 rounded-2xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
         <div className="flex items-center gap-2.5 mb-1">
           <Link2 size={16} className="text-cyan-400" />
-          <h3 className="text-sm font-bold text-white font-cairo">رابط Webhook الخاص بك</h3>
+          <h3 className="text-sm font-bold text-slate-900 font-cairo">رابط Webhook الخاص بك</h3>
         </div>
         <p className="text-xs text-slate-500 font-tajawal">أرسل بيانات العملاء من أي نموذج خارجي إلى هذا الرابط وسيدخل CRM تلقائياً.</p>
         {webhookUrl ? (
           <div className="flex items-center gap-2">
-            <code className="flex-1 text-[10px] text-cyan-400 bg-white/[0.03] px-3 py-2 rounded-lg font-mono break-all" dir="ltr">
+            <code className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[10px] text-[#1565C0] font-mono break-all" dir="ltr">
               {webhookUrl}
             </code>
             <button onClick={copyWebhook}
@@ -361,7 +532,7 @@ export const ClientSettings = () => {
         )}
         <div className="p-3 rounded-xl text-xs text-slate-500 font-tajawal space-y-1" style={{ background: '#FAFAFA' }}>
           <p className="font-semibold text-slate-400">مثال على الاستخدام (POST):</p>
-          <pre className="text-[10px] text-slate-600 font-mono" dir="ltr">{`{ "company_name": "شركة X", "phone": "05XXXXXXXX", "sector": "صحة", "source": "موقع" }`}</pre>
+          <pre className="text-[10px] text-slate-600 font-mono" dir="ltr">{`{ "company_name": "شركة X", "phone": "05XXXXXXXX", "source": "موقع" }`}</pre>
         </div>
       </div>}
 
@@ -378,7 +549,7 @@ export const ClientSettings = () => {
             <div className="flex items-center gap-2.5">
               <QrCode size={16} className="text-cyan-400" />
               <div>
-                <h3 className="text-sm font-bold text-white font-cairo">رابط التسجيل الذاتي QR</h3>
+                <h3 className="text-sm font-bold text-slate-900 font-cairo">رابط التسجيل الذاتي QR</h3>
                 <p className="text-xs text-slate-500 font-tajawal">اطبع هذا الرمز عند مدخل المغسلة ليُسجل العميل سيارته بنفسه.</p>
               </div>
             </div>
@@ -448,19 +619,19 @@ export const ClientSettings = () => {
       {!isCarWash && <div className="p-5 rounded-2xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
         <div className="flex items-center gap-2.5 mb-1">
           <Mail size={16} className="text-yellow-400" />
-          <h3 className="text-sm font-bold text-white font-cairo">إرسال إيميل</h3>
+          <h3 className="text-sm font-bold text-slate-900 font-cairo">إرسال إيميل</h3>
         </div>
         <input value={emailTo} onChange={e => setEmailTo(e.target.value)}
           placeholder="البريد الإلكتروني للمستلم"
-          className="w-full bg-white/[0.03] border border-white/[0.07] rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 outline-none font-tajawal"
+          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none font-tajawal"
           dir="rtl" />
         <input value={emailSubject} onChange={e => setEmailSubject(e.target.value)}
           placeholder="الموضوع"
-          className="w-full bg-white/[0.03] border border-white/[0.07] rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 outline-none font-tajawal"
+          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none font-tajawal"
           dir="rtl" />
         <textarea value={emailBody} onChange={e => setEmailBody(e.target.value)}
           placeholder="نص الرسالة..." rows={4} dir="rtl"
-          className="w-full bg-white/[0.03] border border-white/[0.07] rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 outline-none font-tajawal resize-none" />
+          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none font-tajawal resize-none" />
         <button onClick={sendEmail} disabled={sendingEmail || !emailTo || !emailSubject}
           className="w-full py-2.5 rounded-xl text-sm font-bold font-tajawal text-white cursor-pointer disabled:opacity-40 transition-all"
           style={{ background: emailSent ? '#10B981' : 'linear-gradient(135deg, #F59E0B, #EF4444)' }}>
@@ -473,7 +644,7 @@ export const ClientSettings = () => {
         <div className="p-5 rounded-2xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
           <div className="flex items-center gap-2.5 mb-1">
             <MapPin size={16} className="text-cyan-400" />
-            <h3 className="text-sm font-bold text-white font-cairo">رابط Google Maps للمغسلة</h3>
+            <h3 className="text-sm font-bold text-slate-900 font-cairo">رابط Google Maps للمغسلة</h3>
           </div>
           <p className="text-xs text-slate-500 font-tajawal">سيُرسل هذا الرابط تلقائياً للعملاء بعد كل غسلة لطلب التقييم.</p>
           <div className="flex items-center gap-2">
@@ -482,7 +653,7 @@ export const ClientSettings = () => {
               onChange={e => setMapsUrl(e.target.value)}
               placeholder="https://maps.app.goo.gl/..."
               dir="ltr"
-              className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 outline-none focus:border-cyan-500/50 font-mono transition-colors"
+              className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-cyan-500/50 font-mono transition-colors"
             />
             <motion.button
               whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
@@ -502,10 +673,10 @@ export const ClientSettings = () => {
       )}
 
       {/* Notifications */}
-      <div className="p-5 rounded-2xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+      {false && <div className="p-5 rounded-2xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
         <div className="flex items-center gap-2.5 mb-1">
           <Bell size={16} className="text-purple-400" />
-          <h3 className="text-sm font-bold text-white font-cairo">الإشعارات</h3>
+          <h3 className="text-sm font-bold text-slate-900 font-cairo">الإشعارات</h3>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-sm text-slate-400 font-tajawal">إشعارات المتصفح عند وصول عميل جديد</span>
@@ -518,16 +689,16 @@ export const ClientSettings = () => {
             </button>
           )}
         </div>
-      </div>
+      </div>}
 
       {/* Security */}
       <div className="p-5 rounded-2xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
         <div className="flex items-center gap-2.5 mb-4">
           <Shield size={16} className="text-slate-400" />
-          <h3 className="text-sm font-bold text-white font-cairo">الأمان</h3>
+          <h3 className="text-sm font-bold text-slate-900 font-cairo">الأمان</h3>
         </div>
         <div className="space-y-3">
-          <div className="flex items-center justify-between py-2 border-b border-white/[0.04]">
+          <div className="flex items-center justify-between py-2 border-b border-slate-200">
               <span className="text-sm text-slate-400 font-tajawal">تغيير كلمة المرور</span>
               <button
                 onClick={async () => {
@@ -541,10 +712,6 @@ export const ClientSettings = () => {
                 إرسال رابط التغيير
               </button>
             </div>
-            <div className="flex items-center justify-between py-2">
-              <span className="text-sm text-slate-400 font-tajawal">المصادقة الثنائية</span>
-              <span className="text-xs text-slate-600 font-tajawal">قريباً</span>
-            </div>
         </div>
       </div>
       </>}
@@ -552,6 +719,35 @@ export const ClientSettings = () => {
       {/* Team Management Tab */}
       {isCarWash && tab === 'team' && (
         <div dir="rtl" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+          <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 18, padding: '20px 22px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+              <Shield size={15} color="#0B63F6" />
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>PIN المالك</span>
+            </div>
+            <p style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif', marginBottom: 14 }}>
+              عند تبديل الحساب إلى موظف، الرجوع لحساب المالك يطلب هذا الرقم السري.
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <input
+                type={showPin ? 'text' : 'password'}
+                value={ownerPin}
+                onChange={e => setOwnerPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                placeholder="• • • •"
+                dir="ltr"
+                maxLength={4}
+                inputMode="numeric"
+                style={{ width: 160, padding: '10px 40px 10px 14px', borderRadius: 10, fontSize: 20, letterSpacing: 8, background: '#FFFFFF', border: `1px solid ${ownerPin.length === 4 ? 'rgba(11,99,246,0.35)' : '#E2E8F0'}`, color: '#0F172A', outline: 'none', fontFamily: 'Sora, sans-serif', boxSizing: 'border-box', textAlign: 'center' }}
+              />
+              <button onClick={() => setShowPin(v => !v)} style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid #E2E8F0', background: '#FFFFFF', color: '#475569', cursor: 'pointer' }}>
+                {showPin ? <EyeOff size={14} /> : <Eye size={14} />}
+              </button>
+              <button onClick={saveOwnerPin} disabled={ownerPin.length !== 4 || savingOwnerPin} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', borderRadius: 12, border: 'none', cursor: ownerPin.length === 4 ? 'pointer' : 'not-allowed', background: ownerPin.length === 4 ? 'rgba(11,99,246,0.12)' : '#FFFFFF', color: ownerPin.length === 4 ? '#0B63F6' : '#94A3B8', fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: 700 }}>
+                {savingOwnerPin ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                حفظ PIN المالك
+              </button>
+            </div>
+          </div>
 
           {/* Add member form */}
           <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 18, padding: '20px 22px' }}>

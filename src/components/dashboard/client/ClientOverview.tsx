@@ -79,20 +79,20 @@ const fallbackTrend = [
 ]
 
 const fallbackAppointments = [
-  { id: 'a1', customer_name: 'James William', service_name: 'Consultation', resource_name: 'AI Agent', scheduled_at: new Date(Date.now() + 2 * 3600000).toISOString(), status: 'confirmed' },
-  { id: 'a2', customer_name: 'Emily Davis', service_name: 'Premium Service', resource_name: 'Sarah Team', scheduled_at: new Date(Date.now() + 5 * 3600000).toISOString(), status: 'confirmed' },
-  { id: 'a3', customer_name: 'Michael Brown', service_name: 'Follow-up', resource_name: 'AI Agent', scheduled_at: new Date(Date.now() + 9 * 3600000).toISOString(), status: 'pending' },
+  { id: 'a1', customer_name: 'عميل جديد', service_name: 'استشارة', resource_name: 'مساعد مدار AI', scheduled_at: new Date(Date.now() + 2 * 3600000).toISOString(), status: 'confirmed' },
+  { id: 'a2', customer_name: 'عميل متابع', service_name: 'خدمة مميزة', resource_name: 'فريق التشغيل', scheduled_at: new Date(Date.now() + 5 * 3600000).toISOString(), status: 'confirmed' },
+  { id: 'a3', customer_name: 'عميل محتمل', service_name: 'متابعة', resource_name: 'مساعد مدار AI', scheduled_at: new Date(Date.now() + 9 * 3600000).toISOString(), status: 'pending' },
 ]
 
 const fallbackConversations = [
-  { id: 'c1', customer_name: 'James William', state: 'booked', updated_at: new Date(Date.now() - 2 * 60000).toISOString(), state_data: { preview: 'Hi, I want to book an appointment' } },
-  { id: 'c2', customer_name: 'Emily Davis', state: 'faq', updated_at: new Date(Date.now() - 10 * 60000).toISOString(), state_data: { preview: 'Can you tell me about your services?' } },
-  { id: 'c3', customer_name: 'Michael Brown', state: 'idle', updated_at: new Date(Date.now() - 32 * 60000).toISOString(), state_data: { preview: 'What are your opening hours?' } },
-  { id: 'c4', customer_name: 'Olivia Wilson', state: 'booked', updated_at: new Date(Date.now() - 60 * 60000).toISOString(), state_data: { preview: 'Thank you so much!' } },
+  { id: 'c1', customer_name: 'عميل جديد', state: 'booked', updated_at: new Date(Date.now() - 2 * 60000).toISOString(), state_data: { preview: 'أبغى أحجز موعد' } },
+  { id: 'c2', customer_name: 'عميل متابع', state: 'faq', updated_at: new Date(Date.now() - 10 * 60000).toISOString(), state_data: { preview: 'أبغى أعرف الخدمات والأسعار' } },
+  { id: 'c3', customer_name: 'عميل محتمل', state: 'idle', updated_at: new Date(Date.now() - 32 * 60000).toISOString(), state_data: { preview: 'متى أوقات العمل؟' } },
+  { id: 'c4', customer_name: 'عميل مؤكد', state: 'booked', updated_at: new Date(Date.now() - 60 * 60000).toISOString(), state_data: { preview: 'شكراً لكم' } },
 ]
 
 const formatMoney = (value: number) =>
-  value > 0 ? `$${Math.round(value).toLocaleString('en-US')}` : '$24,560'
+  value > 0 ? `${Math.round(value).toLocaleString('ar-SA')} ر.س` : '0 ر.س'
 
 const monthKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
 const dayKey = (date: Date) => date.toISOString().slice(0, 10)
@@ -103,17 +103,17 @@ const timeLabel = (value?: string | null) => {
 }
 
 const timeAgo = (value?: string | null) => {
-  if (!value) return 'just now'
+  if (!value) return 'الآن'
   const minutes = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 60000))
-  if (minutes < 1) return 'just now'
-  if (minutes < 60) return `${minutes} min ago`
+  if (minutes < 1) return 'الآن'
+  if (minutes < 60) return `قبل ${minutes} دقيقة`
   const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours} hr ago`
-  return `${Math.floor(hours / 24)} day ago`
+  if (hours < 24) return `قبل ${hours} ساعة`
+  return `قبل ${Math.floor(hours / 24)} يوم`
 }
 
 const displayName = (lead: LeadRow) =>
-  lead.company_name || lead.contact_name || lead.name || 'New client'
+  lead.company_name || lead.contact_name || lead.name || 'عميل جديد'
 
 function Sparkline({ data, color = '#1b8dff' }: { data: Array<{ value: number }>; color?: string }) {
   return (
@@ -158,7 +158,7 @@ function MetricCard({
         <i><Icon size={21} /></i>
       </div>
       <strong>{value}</strong>
-      <p><TrendingUp size={13} /> {change} <span>from last month</span></p>
+      <p><TrendingUp size={13} /> {change} <span>من الشهر السابق</span></p>
       <div className="client-metric-spark">
         <Sparkline data={data} color={color} />
       </div>
@@ -176,8 +176,8 @@ export const ClientOverview = () => {
 
   const template = getClientIndustryTemplate(company?.business_type, company?.industry)
   const isCarWash = template.type === 'car_wash'
-  const ownerName = company?.owner_name || company?.name || 'Sarah Johnson'
-  const planName = company?.plan ? `${company.plan[0].toUpperCase()}${company.plan.slice(1)} Plan` : 'Premium Plan'
+  const ownerName = company?.owner_name || company?.name || 'مدير الحساب'
+  const planName = company?.plan ? `باقة ${company.plan}` : 'باقة التشغيل'
 
   useEffect(() => {
     if (authLoading) return
@@ -339,17 +339,17 @@ export const ClientOverview = () => {
       <section className="client-kpi-grid">
         <article className="client-orbit-card client-calendar-card">
           <div className="client-metric-head">
-            <span>Upcoming Appointments</span>
+            <span>المواعيد القادمة</span>
             <i><CalendarDays size={20} /></i>
           </div>
           <div className="client-calendar-body">
             <div>
               <strong>{metrics.upcomingToday}</strong>
-              <p>Today</p>
-              <button type="button">View All <ChevronRight size={14} /></button>
+              <p>اليوم</p>
+              <button type="button">عرض الكل <ChevronRight size={14} /></button>
             </div>
             <div className="client-mini-calendar">
-              <span>May 2026</span>
+              <span>مايو 2026</span>
               {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => <b key={`${day}-${index}`}>{day}</b>)}
               {Array.from({ length: 28 }, (_, index) => (
                 <em key={index} className={index === 13 ? 'active' : ''}>{index + 1}</em>
@@ -358,9 +358,9 @@ export const ClientOverview = () => {
           </div>
         </article>
 
-        <MetricCard icon={DollarSign} label="Revenue This Month" value={formatMoney(metrics.revenue)} change="18.6%" color="#13e3aa" data={sparkData} />
-        <MetricCard icon={UserPlus} label="New Clients" value={`${metrics.monthlyLeads.length || 28}`} change="12.4%" color="#9a4dff" data={appointmentsSpark} />
-        <MetricCard icon={Bot} label="AI Conversations" value={`${metrics.aiMessages.toLocaleString('en-US')}`} change="24.7%" color="#168dff" data={aiSpark} />
+        <MetricCard icon={DollarSign} label="إيراد هذا الشهر" value={formatMoney(metrics.revenue)} change="فعلي" color="#13e3aa" data={sparkData} />
+        <MetricCard icon={UserPlus} label="عملاء جدد" value={`${metrics.monthlyLeads.length || 0}`} change="فعلي" color="#9a4dff" data={appointmentsSpark} />
+        <MetricCard icon={Bot} label="محادثات AI" value={`${metrics.aiMessages.toLocaleString('ar-SA')}`} change="فعلي" color="#168dff" data={aiSpark} />
       </section>
 
       {isCarWash && (
@@ -388,8 +388,8 @@ export const ClientOverview = () => {
       <section className="client-main-grid">
         <article className="client-orbit-card client-ai-performance">
           <div className="client-card-head">
-            <h2><Sparkles size={17} /> AI Assistant Performance</h2>
-            <button type="button">This Month <ChevronDown size={14} /></button>
+            <h2><Sparkles size={17} /> أداء مساعد مدار AI</h2>
+            <button type="button">هذا الشهر <ChevronDown size={14} /></button>
           </div>
           <div className="client-ai-body">
             <div className="client-resolution-ring">
@@ -403,14 +403,14 @@ export const ClientOverview = () => {
               </ResponsiveContainer>
               <div>
                 <strong>{metrics.resolutionRate}%</strong>
-                <span>Resolution Rate</span>
+                <span>نسبة المعالجة</span>
               </div>
             </div>
             <div className="client-ai-stats">
-              <p><span>Chats</span><strong>{metrics.aiMessages}</strong><em>18.6%</em></p>
-              <p><span>Resolved</span><strong>{metrics.resolved}</strong><em>22.4%</em></p>
-              <p><span>Speed</span><strong>{metrics.responseAverage}s</strong><em>12%</em></p>
-              <p><span>Rating</span><strong>{metrics.satisfaction} / 5</strong><em>11%</em></p>
+              <p><span>محادثات</span><strong>{metrics.aiMessages}</strong><em>فعلي</em></p>
+              <p><span>تمت معالجتها</span><strong>{metrics.resolved}</strong><em>فعلي</em></p>
+              <p><span>سرعة الرد</span><strong>{metrics.responseAverage}ث</strong><em>محسوب</em></p>
+              <p><span>الرضا</span><strong>{metrics.satisfaction} / 5</strong><em>محسوب</em></p>
             </div>
           </div>
           <div className="client-wave-chart">
@@ -435,19 +435,19 @@ export const ClientOverview = () => {
 
         <article className="client-orbit-card client-conversation-card">
           <div className="client-card-head">
-            <h2><MessageCircle size={17} /> WhatsApp Conversations</h2>
-            <a href="/client/conversations">View All</a>
+            <h2><MessageCircle size={17} /> محادثات واتساب</h2>
+            <a href="/client/conversations">عرض الكل</a>
           </div>
           <div className="client-chat-list">
             {shownConversations.map((conversation, index) => (
               <div key={conversation.id} className="client-chat-row">
                 <i>{(conversation.customer_name || conversation.phone_number || 'C').slice(0, 1).toUpperCase()}</i>
                 <div>
-                  <strong>{conversation.customer_name || conversation.phone_number || 'New client'}</strong>
-                  <span>{String(conversation.state_data?.preview || (conversation.state === 'booked' ? 'Appointment handled by AI' : 'Conversation updated'))}</span>
+                  <strong>{conversation.customer_name || conversation.phone_number || 'عميل جديد'}</strong>
+                  <span>{String(conversation.state_data?.preview || (conversation.state === 'booked' ? 'تمت معالجة الطلب عبر AI' : 'تم تحديث المحادثة'))}</span>
                 </div>
                 <small>{timeAgo(conversation.updated_at)}</small>
-                <em>{conversation.state === 'booked' ? 'Resolved' : index === 1 ? 'Active' : 'Open'}</em>
+                <em>{conversation.state === 'booked' ? 'منجزة' : index === 1 ? 'نشطة' : 'مفتوحة'}</em>
               </div>
             ))}
           </div>
@@ -455,17 +455,17 @@ export const ClientOverview = () => {
 
         <aside className="client-orbit-card client-activity-feed">
           <div className="client-card-head">
-            <h2>Activity Feed</h2>
-            <a href="/client/reports">View All</a>
+            <h2>آخر النشاط</h2>
+            <a href="/client/reports">عرض الكل</a>
           </div>
           <div className="client-timeline">
             {[
-              { icon: CalendarDays, color: '#8a3dff', title: `${template.activeLabel} updated`, time: '2 min ago' },
-              { icon: CreditCard, color: '#12d8b0', title: `${formatMoney(metrics.revenue || 150)} payment received`, time: '15 min ago' },
-              { icon: Bot, color: '#147cff', title: 'AI Agent resolved a conversation', time: '32 min ago' },
-              { icon: Users, color: '#f2a31b', title: 'New client added', time: '1 hr ago' },
-              { icon: FileText, color: '#156cff', title: 'Invoice #INV-2026-058 paid', time: '2 hr ago' },
-              { icon: Star, color: '#f2a31b', title: 'Review received 5.0', time: '3 hr ago' },
+              { icon: CalendarDays, color: '#8a3dff', title: `تم تحديث ${template.activeLabel}`, time: 'قبل دقيقتين' },
+              { icon: CreditCard, color: '#12d8b0', title: `تم تسجيل دفعة ${formatMoney(metrics.revenue || 150)}`, time: 'قبل 15 دقيقة' },
+              { icon: Bot, color: '#147cff', title: 'مساعد AI عالج محادثة', time: 'قبل 32 دقيقة' },
+              { icon: Users, color: '#f2a31b', title: 'تمت إضافة عميل جديد', time: 'قبل ساعة' },
+              { icon: FileText, color: '#156cff', title: 'تم دفع فاتورة INV-2026-058', time: 'قبل ساعتين' },
+              { icon: Star, color: '#f2a31b', title: 'وصل تقييم جديد', time: 'قبل 3 ساعات' },
             ].map((activity) => {
               const Icon = activity.icon
               return (
@@ -485,8 +485,8 @@ export const ClientOverview = () => {
       <section className="client-bottom-grid">
         <article className="client-orbit-card">
           <div className="client-card-head">
-            <h2>Your Appointments</h2>
-            <a href="/client/appointments">View Calendar</a>
+            <h2>مواعيدك</h2>
+            <a href="/client/appointments">عرض التقويم</a>
           </div>
           <div className="client-appointment-list">
             {shownAppointments.map((appointment) => (
@@ -494,9 +494,9 @@ export const ClientOverview = () => {
                 <time>{timeLabel(appointment.scheduled_at)}</time>
                 <div>
                   <strong>{appointment.service_name || template.activeLabel}</strong>
-                  <span>{appointment.resource_name || appointment.customer_name || 'AI Assistant'}</span>
+                  <span>{appointment.resource_name || appointment.customer_name || 'مساعد AI'}</span>
                 </div>
-                <em className={appointment.status === 'pending' ? 'pending' : ''}>{appointment.status || 'confirmed'}</em>
+                <em className={appointment.status === 'pending' ? 'pending' : ''}>{appointment.status === 'pending' ? 'قيد الانتظار' : 'مؤكد'}</em>
               </div>
             ))}
           </div>
@@ -504,40 +504,40 @@ export const ClientOverview = () => {
 
         <article className="client-orbit-card">
           <div className="client-card-head">
-            <h2>Invoices</h2>
-            <a href="/client/reports">View All</a>
+            <h2>الفواتير</h2>
+            <a href="/client/reports">عرض الكل</a>
           </div>
           <div className="client-invoice-list">
             {[58, 57, 56, 55].map((number, index) => (
               <div key={number}>
                 <span>INV-2026-0{number}</span>
-                <small>May {12 - index * 4}, 2026</small>
-                <strong>${[150, 200, 300, 150][index]}.00</strong>
-                <em>Paid <Check size={11} /></em>
+                <small>{12 - index * 4} مايو 2026</small>
+                <strong>{[150, 200, 300, 150][index]} ر.س</strong>
+                <em>مدفوعة <Check size={11} /></em>
               </div>
             ))}
           </div>
-          <button type="button" className="client-download-btn">Download All Invoices</button>
+          <button type="button" className="client-download-btn">تحميل كل الفواتير</button>
         </article>
 
         <article className="client-orbit-card client-plan-card">
           <div className="client-card-head">
-            <h2><Zap size={17} /> Plan & Usage</h2>
+            <h2><Zap size={17} /> الباقة والاستخدام</h2>
           </div>
           <div className="client-plan-body">
             <div>
               <strong>{planName}</strong>
-              <span>Renews on Jun 14, 2026</span>
+              <span>تتجدد في 14 يونيو 2026</span>
               {(isCarWash
-                ? ['AI Assistant', 'WhatsApp Automation', 'Voice Agent', '4 Washes + 5th Free', 'Priority Support']
-                : ['AI Assistant', 'WhatsApp Automation', 'Voice Agent', 'Advanced Analytics', 'Priority Support']
+                ? ['مساعد مدار AI', 'رسائل واتساب', 'وكيل صوتي', 'ولاء العملاء', 'دعم أولوية']
+                : ['مساعد مدار AI', 'رسائل واتساب', 'وكيل صوتي', 'تحليلات متقدمة', 'دعم أولوية']
               ).map((item) => (
                 <p key={item}><Check size={13} /> {item}</p>
               ))}
             </div>
             <div className="client-plan-crystal" />
           </div>
-          <button type="button">Manage Plan</button>
+          <button type="button">إدارة الباقة</button>
         </article>
       </section>
     </div>

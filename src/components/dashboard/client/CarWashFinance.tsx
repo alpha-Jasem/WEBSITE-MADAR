@@ -539,7 +539,7 @@ export const CarWashFinance = () => {
                 )}
               </div>
             )}
-          </div>
+          </ClientPanel>
         </div>
       </FeatureLock>
 

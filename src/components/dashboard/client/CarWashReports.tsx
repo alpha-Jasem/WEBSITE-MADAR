@@ -378,6 +378,19 @@ export function CarWashReports() {
     { icon: Wrench, title: 'توقفات متكررة', desc: 'اربط وقت التسليم بالموظف لمعرفة أسباب التأخير بدقة أعلى.', color: '#EF4444' },
   ]
 
+  const serviceColors = ['#0B63F6', '#10B981', '#7C3AED', '#F59E0B', '#38BDF8']
+  const servicePie = stats.revenueServices.length > 0
+    ? stats.revenueServices
+    : [{ name: 'لا توجد بيانات', value: 1, count: 0 }]
+  const maxHeat = Math.max(1, ...stats.heatmap.flatMap(row => row.buckets.map(bucket => bucket.value)))
+  const aiCards = [
+    { icon: MessageCircle, title: 'فرص زيادة الإيرادات', desc: `${customers.filter(c => c.total_visits >= 2).length} عميل يمكن تنشيطهم بعرض زيارة قادمة.`, color: '#10B981' },
+    { icon: Gift, title: 'الخدمة الأكثر ربحية', desc: stats.revenueServices[0] ? `${stats.revenueServices[0].name} تحقق أعلى إيراد في الفترة.` : 'ابدأ بتسجيل الخدمات لظهور التحليل.', color: '#7C3AED' },
+    { icon: AlertTriangle, title: 'انخفاض الطلب', desc: stats.todayVisits === 0 ? 'لا توجد زيارات اليوم، راجع الاستقبال أو أطلق حملة خفيفة.' : 'راقب الأيام الأقل طلباً وقارنها بالأسبوع السابق.', color: '#F59E0B' },
+    { icon: Users, title: 'توصية ذكية', desc: 'ارفع تكرار العملاء عبر رسالة متابعة واحدة بعد التسليم والتقييم.', color: '#0B63F6' },
+    { icon: Wrench, title: 'توقفات متكررة', desc: 'اربط وقت التسليم بالموظف لمعرفة أسباب التأخير بدقة أعلى.', color: '#EF4444' },
+  ]
+
   return (
     <FeatureLock
       locked={!can.reports}

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Eye, EyeOff, Loader2, Lock, Mail, ArrowLeft, Shield, User, CheckCircle2, Building2 } from 'lucide-react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
-import { signInWithPassword, getCurrentUser, signOut } from '../lib/supabase'
+import { signInWithPassword, getCurrentUser, signOut, supabase } from '../lib/supabase'
 
 type Portal = 'client' | 'admin'
 
@@ -43,6 +43,22 @@ export const Login = () => {
       return
     }
 
+    if (role === 'client') {
+      const { data: company } = await supabase
+        .from('companies')
+        .select('business_type')
+        .eq('auth_user_id', profile.id)
+        .maybeSingle()
+
+      // Check DB first, then localStorage backup (set during signup)
+      const bt = company?.business_type || localStorage.getItem('madar_signup_business_type')
+      if (bt === 'clinic') {
+        localStorage.removeItem('madar_signup_business_type')
+        navigate(redirectTo || '/clinic-os/dashboard', { replace: true })
+        return
+      }
+    }
+
     navigate(redirectTo || (role === 'admin' ? '/admin' : '/client'), { replace: true })
   }
 
@@ -67,8 +83,8 @@ export const Login = () => {
   }
 
   const portalOptions: { id: Portal; label: string; sub: string; icon: typeof User; accent: string }[] = [
-    { id: 'client', label: 'بوابة العملاء', sub: 'تشغيل المغسلة والحسابات', icon: User, accent: clientAccent },
-    { id: 'admin', label: 'لوحة الإدارة', sub: 'إدارة ماضر والاشتراكات', icon: Shield, accent: adminAccent },
+    { id: 'client', label: 'بوابة العملاء', sub: 'مغاسل وعيادات', icon: User, accent: clientAccent },
+    { id: 'admin', label: 'لوحة الإدارة', sub: 'إدارة مدار والاشتراكات', icon: Shield, accent: adminAccent },
   ]
 
   return (
@@ -193,7 +209,12 @@ export const Login = () => {
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-sm font-bold text-slate-700 font-tajawal">كلمة المرور</label>
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <label className="block text-sm font-bold text-slate-700 font-tajawal">كلمة المرور</label>
+                      <Link to="/forgot-password" className="text-xs font-bold text-[#0369A1] transition-colors hover:text-[#0D1B3E] font-tajawal">
+                        هل نسيت كلمة المرور؟
+                      </Link>
+                    </div>
                     <div className="relative">
                       <Lock size={17} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
                       <input

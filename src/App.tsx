@@ -23,6 +23,11 @@ import { TrialSignup } from './pages/TrialSignup'
 import { AuthCallback } from './pages/AuthCallback'
 import { Privacy } from './pages/Privacy'
 import { Terms } from './pages/Terms'
+import { SelfCheckIn } from './pages/SelfCheckIn'
+import { CarWashStatus } from './pages/CarWashStatus'
+import { ClinicLanding } from './pages/ClinicLanding'
+import { ClinicOSProvider } from './context/ClinicOSContext'
+// Note: ClinicOSProvider wraps only /clinic-os/dashboard/* routes (protected)
 
 const AdminDashboard    = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
 const ClientPortal      = lazy(() => import('./pages/ClientPortal').then(m => ({ default: m.ClientPortal })))
@@ -49,6 +54,15 @@ const ReportsPageCO        = lazy(() => import('./pages/clinicOS/dashboard/Repor
 const SettingsPageCO       = lazy(() => import('./pages/clinicOS/dashboard/Settings').then(m => ({ default: m.Settings })))
 
 function App() {
+  useEffect(() => {
+    const handlePreloadError = (event: Event) => {
+      event.preventDefault()
+      reloadForFreshAssets('preload')
+    }
+    window.addEventListener('vite:preloadError', handlePreloadError)
+    return () => window.removeEventListener('vite:preloadError', handlePreloadError)
+  }, [])
+
   return (
     <LanguageProvider>
       <BrowserRouter>

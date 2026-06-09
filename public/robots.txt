@@ -1,7 +1,6 @@
-# MADAR AI Automation — https://madar.software
-# Updated: 2026-05-20
+# Madar.software
+# Updated: 2026-06-03
 
-# ── Standard crawlers ──────────────────────────────────
 User-agent: *
 Allow: /
 Disallow: /admin
@@ -9,9 +8,14 @@ Disallow: /admin/
 Disallow: /client
 Disallow: /client/
 Disallow: /login
+Disallow: /forgot-password
+Disallow: /reset-password
 Disallow: /auth/
+Disallow: /checkin/
+Disallow: /status/
+Disallow: /solar
+Disallow: /solar/
 
-# ── OpenAI ─────────────────────────────────────────────
 User-agent: GPTBot
 Allow: /
 
@@ -21,70 +25,13 @@ Allow: /
 User-agent: OAI-SearchBot
 Allow: /
 
-# ── Anthropic ──────────────────────────────────────────
-User-agent: ClaudeBot
-Allow: /
-
-User-agent: anthropic-ai
-Allow: /
-
-User-agent: Claude-Web
-Allow: /
-
-# ── Google ─────────────────────────────────────────────
 User-agent: Googlebot
-Allow: /
-
-User-agent: Google-Extended
 Allow: /
 
 User-agent: Googlebot-Image
 Allow: /
 
-# ── Perplexity ─────────────────────────────────────────
-User-agent: PerplexityBot
-Allow: /
-
-# ── Meta / Facebook ────────────────────────────────────
-User-agent: FacebookBot
-Allow: /
-
-User-agent: meta-externalagent
-Allow: /
-
-# ── Apple ──────────────────────────────────────────────
-User-agent: Applebot
-Allow: /
-
-User-agent: Applebot-Extended
-Allow: /
-
-# ── Bing / Microsoft ───────────────────────────────────
 User-agent: Bingbot
 Allow: /
 
-User-agent: MSNBot
-Allow: /
-
-# ── Other AI crawlers ──────────────────────────────────
-User-agent: CCBot
-Allow: /
-
-User-agent: Diffbot
-Allow: /
-
-User-agent: YouBot
-Allow: /
-
-User-agent: cohere-ai
-Allow: /
-
-User-agent: Bytespider
-Allow: /
-
-User-agent: PetalBot
-Allow: /
-
-# ── Sitemap ────────────────────────────────────────────
 Sitemap: https://madar.software/sitemap.xml
-Sitemap: https://madar.software/llms.txt

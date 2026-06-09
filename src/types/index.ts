@@ -29,6 +29,7 @@ export interface Company {
   owner_name: string
   owner_email: string
   owner_phone: string
+  logo_url?: string
   webhook_token?: string
   public_checkin_token?: string
   monthly_messages: number
@@ -43,6 +44,9 @@ export interface Company {
   tax_enabled?: boolean
   vat_rate?: number
   price_includes_vat?: boolean
+  // Clinic OS
+  package_type?: string
+  city?: string
   // Car wash config (JSONB columns kept for legacy compat)
   cw_services?: unknown
   cw_hours?: unknown

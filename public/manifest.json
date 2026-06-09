@@ -1,26 +1,26 @@
 {
-  "name": "MADAR AI Automation",
-  "short_name": "MADAR AI",
-  "description": "أتمتة الأعمال بالذكاء الاصطناعي — واتساب، CRM، وكلاء AI",
+  "name": "مدار OS للمغاسل",
+  "short_name": "مدار OS",
+  "description": "نظام SaaS عربي لتشغيل مغاسل السيارات: QR، لوحة تشغيل، عملاء، مالية، تقارير، ومساعد AI.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#05060A",
-  "theme_color": "#4F6EF7",
+  "background_color": "#F5FAFF",
+  "theme_color": "#0D1B3E",
   "orientation": "portrait-primary",
-  "lang": "ar",
+  "lang": "ar-SA",
   "dir": "rtl",
-  "categories": ["business", "productivity", "utilities"],
+  "categories": ["business", "productivity"],
   "icons": [
     {
-      "src": "/logo.jpeg",
+      "src": "/favicon-logo.png",
       "sizes": "192x192",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/logo.jpeg",
+      "src": "/logo-main.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any"
     }
   ],
@@ -29,23 +29,23 @@
       "src": "/og-image.jpg",
       "sizes": "1200x630",
       "type": "image/jpeg",
-      "label": "MADAR AI — الصفحة الرئيسية"
+      "label": "مدار OS للمغاسل"
     }
   ],
   "shortcuts": [
     {
-      "name": "احجز مكالمة",
-      "short_name": "حجز",
-      "description": "احجز استشارة مجانية",
-      "url": "https://wa.me/966546666005",
-      "icons": [{ "src": "/logo.jpeg", "sizes": "96x96" }]
+      "name": "ابدأ تجربة",
+      "short_name": "تجربة",
+      "description": "ابدأ تجربة مدار OS للمغاسل",
+      "url": "/trial",
+      "icons": [{ "src": "/favicon-logo.png", "sizes": "96x96" }]
     },
     {
-      "name": "تسجيل الدخول",
+      "name": "دخول المنصة",
       "short_name": "دخول",
-      "description": "الدخول للوحة التحكم",
+      "description": "الدخول إلى لوحة مدار OS",
       "url": "/login",
-      "icons": [{ "src": "/logo.jpeg", "sizes": "96x96" }]
+      "icons": [{ "src": "/favicon-logo.png", "sizes": "96x96" }]
     }
   ]
 }
