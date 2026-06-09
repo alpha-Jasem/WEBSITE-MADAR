@@ -333,7 +333,7 @@ export const CarWashDailyClosing = () => {
               onClick={() => setShowExport(v => !v)}
             >
               <FileDown size={14} /> تصدير <ChevronDown size={12} />
-            </button>
+            </ClientButton>
             {showExport && (
               <div className="absolute left-0 top-full mt-1 rounded-xl overflow-hidden z-50 shadow-xl" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', minWidth: 180 }}>
                 {[
@@ -469,7 +469,7 @@ export const CarWashDailyClosing = () => {
           >
             {closing ? <Loader2 size={18} className="animate-spin" /> : <ClipboardCheck size={18} />}
             {closing ? 'جاري الإغلاق...' : 'إغلاق اليوم'}
-          </ClientButton>
+          </button>
         </div>
       )}
 
