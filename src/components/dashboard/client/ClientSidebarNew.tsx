@@ -1,6 +1,7 @@
 ﻿import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Zap, Users2, BarChart3, Settings, LogOut, ChevronRight, Calendar, MessageSquare, Wrench } from 'lucide-react'
+import { LayoutDashboard, Zap, Users2, BarChart3, Settings, LogOut, ChevronRight, Calendar, MessageSquare, Wrench, Car, Stethoscope } from 'lucide-react'
 import { signOut } from '../../../lib/supabase'
+import { useClientCompany } from '../../../hooks/useClientCompany'
 
 const links = [
   { to: '/client',                    icon: LayoutDashboard, label: 'نظرة عامة',          end: true },
@@ -15,19 +16,26 @@ const links = [
 
 export const ClientSidebarNew = () => {
   const navigate = useNavigate()
+  const { company } = useClientCompany()
+
+  const isCarWash = company?.business_type === 'car_wash' || company?.industry === 'car_wash'
+  const accent    = isCarWash ? '#00BFFF' : '#10B981'
+  const ProductIcon = isCarWash ? Car : Stethoscope
+  const productName = isCarWash ? 'Car Wash OS' : 'Clinic OS'
 
   return (
     <aside className="w-64 flex-shrink-0 hidden md:flex flex-col h-screen sticky top-0"
       style={{ background: 'rgba(5,6,10,0.98)', borderLeft: '1px solid #E2E8F0' }}>
 
-      <div className="p-5 border-b" style={{ borderColor: '#F8FAFC' }}>
+      <div className="p-5 border-b" style={{ borderColor: '#0D1B3E' }}>
         <div className="flex items-center gap-3">
-          <div style={{ background: 'white', borderRadius: 8, padding: '3px 8px' }}>
-            <img src="/logo.jpeg" alt="MADAR" style={{ height: 28, width: 'auto' }} />
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: `linear-gradient(135deg, #0D1B3E, ${accent})` }}>
+            <ProductIcon size={16} className="text-white" />
           </div>
           <div>
-            <p className="text-xs font-bold text-white font-sora">MADAR</p>
-            <p className="text-[10px] font-tajawal text-primary-400">بوابة العميل</p>
+            <p className="text-xs font-bold text-white font-sora">{productName}</p>
+            <p className="text-[10px] font-tajawal" style={{ color: `${accent}99` }}>powered by Madar</p>
           </div>
         </div>
       </div>
@@ -42,7 +50,7 @@ export const ClientSidebarNew = () => {
               }`
             }
             style={({ isActive }) => isActive
-              ? { background: 'rgba(79,110,247,0.12)', color: '#4F6EF7', borderRight: '2px solid #4F6EF7' }
+              ? { background: `${accent}14`, color: accent, borderRight: `2px solid ${accent}` }
               : {}
             }
           >

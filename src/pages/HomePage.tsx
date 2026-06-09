@@ -4,7 +4,7 @@ import { ScrollProgress } from '../components/shared/ScrollProgress'
 import { WhatsAppButton } from '../components/shared/WhatsAppButton'
 import { CustomCursor }  from '../components/shared/CustomCursor'
 
-import { Navbar }        from '../components/public/Navbar'
+import { MadarNavbar }   from '../components/public/MadarNavbar'
 import { Hero }          from '../components/public/Hero'
 import { ProductsSection } from '../components/public/ProductsSection'
 import { LeadForm }      from '../components/public/LeadForm'
@@ -38,20 +38,17 @@ const Outcomes = () => (
       </motion.div>
 
       {/* Stats grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2 }}>
+      <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: 1, background: 'rgba(255,255,255,0.06)' }}>
         {stats.map((s, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
-            style={{
-              padding: '32px 24px', textAlign: 'center',
-              borderRight: i < 3 ? '1px solid rgba(255,255,255,0.06)' : 'none',
-            }}
+            style={{ padding: '28px 16px', textAlign: 'center', background: '#050810' }}
           >
-            <div style={{ fontSize: 42, fontWeight: 900, color: '#00BFFF', fontFamily: 'Cairo, sans-serif', marginBottom: 8, letterSpacing: '-1px' }}>
+            <div style={{ fontSize: 36, fontWeight: 900, color: '#00BFFF', fontFamily: 'Cairo, sans-serif', marginBottom: 8, letterSpacing: '-1px' }}>
               {s.value}
             </div>
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', fontFamily: 'Tajawal, sans-serif' }}>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontFamily: 'Tajawal, sans-serif' }}>
               {s.ar}
             </div>
           </motion.div>
@@ -61,7 +58,7 @@ const Outcomes = () => (
       {/* Social proof strip */}
       <motion.div
         initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.4 }}
-        style={{ marginTop: 48, padding: '20px 28px', borderRadius: 14, background: 'rgba(0,191,255,0.04)', border: '1px solid rgba(0,191,255,0.12)', display: 'flex', alignItems: 'center', gap: 16 }}
+        style={{ marginTop: 48, padding: '20px 28px', borderRadius: 14, background: 'rgba(0,191,255,0.04)', border: '1px solid rgba(0,191,255,0.12)', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}
       >
         <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, #00BFFF22, #1565C033)', border: '1.5px solid rgba(0,191,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <span style={{ fontSize: 18, fontWeight: 900, color: '#00BFFF' }}>ن</span>
@@ -83,10 +80,10 @@ const Outcomes = () => (
 
 export const HomePage = () => {
   return (
-    <div className="min-h-screen" style={{ background: '#050810' }}>
+    <div className="min-h-screen overflow-x-hidden" style={{ background: '#050810' }}>
       <CustomCursor />
       <ScrollProgress />
-      <Navbar />
+      <MadarNavbar navLinks={[{ href: '#outcomes', label: 'النتائج' }, { href: '#products', label: 'المنتجات' }, { href: '#contact', label: 'تواصل' }]} subtitle="نظام تشغيل ذكي" />
       <main>
         <Hero />
         <Outcomes />

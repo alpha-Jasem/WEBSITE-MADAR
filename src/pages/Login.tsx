@@ -82,7 +82,7 @@ export const Login = () => {
               <img src="/logo-main.png" alt="Madar" className="h-11 w-auto object-contain" />
               <div>
                 <p className="font-sora text-xl font-bold text-white">Madar.software</p>
-                <p className="mt-1 text-xs font-tajawal text-sky-100/60">منصة تشغيل الأعمال العربية</p>
+                <p className="mt-1 text-xs font-tajawal text-sky-100/60">نظام تشغيل للأعمال العربية</p>
               </div>
             </Link>
           </div>
@@ -90,18 +90,18 @@ export const Login = () => {
           <div className="relative max-w-md">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-sky-300/20 bg-sky-300/10 px-3 py-1.5 text-xs font-tajawal text-sky-100">
               <Building2 size={14} />
-              مدار OS للمغاسل ومراكز العناية بالسيارات
+              مدار OS للمغاسل والعيادات
             </div>
             <h1 className="font-cairo text-4xl font-bold leading-[1.25] text-white">
-              ادخل إلى لوحة تشغيل واضحة لإدارة مغسلتك من أول سيارة إلى آخر تسليم.
+              ادخل للوحة تشغيل مصممة لإدارة مشروعك بوضوح وبدون تعقيد.
             </h1>
             <p className="mt-5 font-tajawal text-base leading-8 text-sky-50/70">
-              دخول واحد لإدارة السيارات، العملاء، المالية، الأتمتة، رسائل واتساب، وبرامج الولاء من مكان واحد.
+              سواء كنت تدير مغسلة سيارات أو عيادة — لوحة واحدة تجمع التشغيل والمالية والعملاء تلقائياً.
             </p>
           </div>
 
           <div className="relative grid gap-3">
-            {['مسار سريع لاستقبال وتسليم السيارات', 'حسابات وتقارير مالية مع VAT', 'واتساب وولاء العملاء تلقائياً'].map(item => (
+            {['تشغيل يومي واضح من أول تسليم', 'مالية وتقارير مع حساب VAT تلقائي', 'واتساب وحجوزات ذكية بدون موظف إضافي'].map(item => (
               <div key={item} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/10 px-4 py-3">
                 <CheckCircle2 size={17} className="text-sky-300" />
                 <span className="font-tajawal text-sm text-white/80">{item}</span>
@@ -126,10 +126,10 @@ export const Login = () => {
             <div className="mb-5">
               <p className="text-sm font-bold text-[#0099CC] font-cairo">تسجيل الدخول</p>
               <h2 className="mt-2 text-3xl font-bold tracking-normal text-slate-950 font-cairo">
-                {portal === 'admin' ? 'مرحباً بك في الإدارة' : 'مرحباً بك في بوابتك'}
+                {portal === 'admin' ? 'مرحباً بك في الإدارة' : 'أهلاً — ادخل حسابك'}
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-500 font-tajawal">
-                اختر البوابة المناسبة ثم أدخل بيانات الحساب للمتابعة.
+                اختر البوابة المناسبة ثم أدخل بريدك وكلمة مرورك.
               </p>
             </div>
 
@@ -241,7 +241,15 @@ export const Login = () => {
                   </button>
                 </form>
 
-                <p className="mt-6 text-center text-xs text-slate-400 font-tajawal">
+                {portal === 'client' && (
+                  <p className="mt-5 text-center text-sm text-slate-500 font-tajawal">
+                    مستخدم جديد؟{' '}
+                    <Link to="/trial" className="font-bold text-[#0099CC] hover:text-[#0D1B3E] transition-colors">
+                      ابدأ تجربتك المجانية
+                    </Link>
+                  </p>
+                )}
+                <p className="mt-3 text-center text-xs text-slate-400 font-tajawal">
                   للدعم: <a href="mailto:info@madar.software" className="font-bold text-[#0099CC] hover:text-[#0D1B3E]">info@madar.software</a>
                 </p>
               </motion.section>

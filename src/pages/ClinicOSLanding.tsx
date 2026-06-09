@@ -1,448 +1,679 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { FormEvent, useEffect, useRef, useState } from 'react'
 import {
-  Bot, Calendar, MessageSquare, Users, Clock, CheckCircle, Star,
-  ArrowLeft, Phone, Shield, TrendingUp, Zap, ChevronDown, ChevronUp
+  BarChart3,
+  Bot,
+  Calendar,
+  Check,
+  ChevronLeft,
+  ChevronDown,
+  Clock,
+  MessageCircle,
+  Phone,
+  ShieldCheck,
+  Sparkles,
+  TrendingUp,
+  Users,
+  Zap,
+  AlertCircle,
+  Stethoscope,
+  Heart,
+  Activity,
+  Scissors,
+  Apple,
 } from 'lucide-react'
-import { ClinicDashMockup } from '../components/public/ClinicDashMockup'
+import { motion, AnimatePresence } from 'framer-motion'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
-const PHONE = '966546666005'
+import { MadarNavbar } from '../components/public/MadarNavbar'
+import { supabase } from '../lib/supabase'
+import { openWhatsAppChat } from '../lib/whatsapp'
 
-const OUTCOMES = [
-  { icon: Clock, value: '٧٨٪', label: 'تقليل المواعيد الفائتة', sub: 'بفضل التذكيرات التلقائية عبر واتساب' },
-  { icon: TrendingUp, value: '٣×', label: 'زيادة الحجوزات', sub: 'حجز ذكي على مدار الساعة بدون موظف' },
-  { icon: Clock, value: '٣ ساعات', label: 'توفير يومي', sub: 'وقت الاستقبال الذي يُحرَّر لرعاية المريض' },
-  { icon: Users, value: '٩٥٪', label: 'رضا المرضى', sub: 'تجربة احترافية من أول تواصل حتى الزيارة' },
+gsap.registerPlugin(ScrollTrigger)
+
+const navLinks = [
+  { href: '#pain', label: 'المشكلة' },
+  { href: '#solution', label: 'الحل' },
+  { href: '#how-it-works', label: 'كيف نبدأ' },
+  { href: '#pricing', label: 'الباقات' },
+  { href: '#contact', label: 'تواصل' },
 ]
 
-const HOW_STEPS = [
+const painPoints = [
+  'العميل المهتم أرسل على واتساب — والرد تأخر — فذهب لعيادة ثانية',
+  'مكالمة فائتة = موعد ضائع لن يعود للمتابعة بنفسه',
+  'رسائل بدون إغلاق تتراكم وتتحول إلى فرص ميتة',
+  'الإعلانات تجلب اهتماماً — وضعف المتابعة يهدر كل ريال أنفقته',
+]
+
+const solutionFeatures = [
   {
-    num: '١',
-    title: 'المريض يتواصل عبر واتساب',
-    body: 'يرسل المريض رسالة في أي وقت — ليلاً، في عطلة نهاية الأسبوع، أو بين المواعيد. النظام يرد فوراً.',
-    color: '#4F46E5',
+    icon: MessageCircle,
+    title: 'رد فوري على واتساب',
+    text: 'يستقبل الرسائل ويقود العميل نحو الحجز مباشرة — بدون تأخير.',
   },
   {
-    num: '٢',
-    title: 'وكيل الحجز الذكي يرتب كل شيء',
-    body: 'يسأل عن الخدمة والطبيب والوقت المفضل، يتحقق من التوافر، ويحجز الموعد مباشرة في جدول العيادة.',
-    color: '#10B981',
+    icon: Calendar,
+    title: 'حجز مواعيد تلقائي',
+    text: 'يتحقق من الجدول ويؤكد الموعد مع العميل بدون تدخل بشري.',
   },
   {
-    num: '٣',
-    title: 'تأكيد تلقائي وتذكيرات ذكية',
-    body: 'يصل التأكيد لحظياً. يصل تذكير قبل ٢٤ ساعة وقبل ٣ ساعات. وإذا لم يُؤكد المريض — يعرض بديلاً من قائمة الانتظار.',
-    color: '#7C3AED',
+    icon: Users,
+    title: 'متابعة العملاء المحتملين',
+    text: 'لا يترك عميلاً مهتماً بدون رد أو متابعة — حتى خارج الدوام.',
+  },
+  {
+    icon: Bot,
+    title: 'تذكير بالمواعيد',
+    text: 'يقلل نسبة الغياب ويحمي إيراد اليوم بتذكيرات تلقائية للعملاء.',
   },
 ]
 
-const PRICING = [
+const steps = [
   {
-    id: 'whatsapp',
-    name: 'باقة واتساب',
-    price: '٩,٩٩٩',
-    period: 'سنة',
-    badge: 'عرض إطلاق',
-    badgeColor: '#059669',
-    badgeBg: '#ECFDF5',
-    color: '#4F46E5',
-    features: [
-      'حجز مباشر عبر واتساب ٢٤/٧',
-      'تأكيدات وتذكيرات تلقائية',
-      'إدارة المرضى والمواعيد',
-      'جدول أطباء متكامل',
-      'قائمة انتظار ذكية',
-      'سجل رسائل واتساب',
-      'تقارير الحجوزات الأسبوعية',
-      'دعم إعداد كامل',
+    icon: BarChart3,
+    title: 'نحلل',
+    text: 'أين تضيع حجوزات عيادتك — مكالمات، رسائل، أو متابعة.',
+  },
+  {
+    icon: Sparkles,
+    title: 'نبني',
+    text: 'موظف AI حسب خدماتك وأسئلة عملائك وطريقة الحجز عندك.',
+  },
+  {
+    icon: Zap,
+    title: 'نطلقه',
+    text: 'على واتساب والمكالمات ونقيس النتائج معك من اليوم الأول.',
+  },
+]
+
+const whoItFits = [
+  { icon: Stethoscope, specialty: 'عيادات الأسنان', benefit: 'متابعة الاستفسارات وتحويلها إلى مواعيد' },
+  { icon: Heart, specialty: 'الجلدية والتجميل', benefit: 'متابعة المهتمين قبل أن يذهبوا لمركز آخر' },
+  { icon: Sparkles, specialty: 'مراكز الليزر', benefit: 'رد سريع على الأسئلة المتكررة وحجز الجلسات' },
+  { icon: Activity, specialty: 'العلاج الطبيعي', benefit: 'تنظيم الجلسات وتقليل الغياب' },
+  { icon: Apple, specialty: 'التغذية', benefit: 'متابعة المراجعين وتذكيرهم بالمواعيد' },
+  { icon: Clock, specialty: 'العيادات العامة', benefit: 'استقبال أكثر بدون موظف إضافي' },
+]
+
+const plans = [
+  {
+    name: 'تشغيل الحجوزات',
+    badge: 'للعيادة التي تستقبل معظم استفساراتها عبر واتساب',
+    result: 'رسائل واتساب تتحول إلى مواعيد منظمة بدون جهد يدوي',
+    cta: 'ابدأ بتشغيل حجوزات واتساب',
+    points: [
+      'مساعد AI يرد على واتساب ويحجز المواعيد',
+      'إجابات فورية للأسئلة المتكررة',
+      'متابعة العملاء المحتملين',
+      'تذكير تلقائي بالمواعيد',
+      'لوحة لمتابعة الاستفسارات والحجوزات',
     ],
-    locked: ['وكيل AI للمكالمات الصوتية', 'تحليلات AI المتقدمة'],
-    cta: 'اشترك في باقة واتساب',
-    ctaBg: '#4F46E5',
+    highlight: false,
   },
   {
-    id: 'ai_pro',
-    name: 'باقة AI Voice + واتساب',
-    price: '١٦,٩٩٩',
-    period: 'سنة',
-    badge: 'الأكثر طلباً',
-    badgeColor: '#7C3AED',
-    badgeBg: '#F5F3FF',
-    color: '#7C3AED',
-    recommended: true,
-    features: [
-      'كل مزايا باقة واتساب',
-      'وكيل AI للمكالمات الصوتية',
-      'تحويل المكالمات لحجوزات تلقائياً',
-      'تحليلات AI وتقارير ذكية',
-      'نسخ ومراجعة المحادثات',
-      'قائمة انتظار ذكية بأولوية AI',
-      'اكتشاف تعارضات المواعيد تلقائياً',
-      'مدير حساب مخصص',
+    name: 'موظف استقبال AI كامل',
+    badge: 'للعيادة التي تخسر حجوزات من المكالمات والرسائل معاً',
+    result: 'استقبال ذكي على واتساب والمكالمات — لا يفلت عميل مهتم بدون متابعة',
+    cta: 'ركّب موظف استقبال AI كامل',
+    points: [
+      'كل مزايا باقة تشغيل الحجوزات',
+      'AI Voice Agent يرد على المكالمات ويحجز مباشرة',
+      'متابعة المكالمات الفائتة بدون تأخير',
+      'تقليل الضغط على موظف الاستقبال في كل القنوات',
+      'أولوية دعم وإعداد مخصص',
     ],
-    locked: [],
-    cta: 'اشترك في باقة AI Voice',
-    ctaBg: 'linear-gradient(135deg, #7C3AED, #4F46E5)',
+    highlight: true,
   },
 ]
 
-const FAQS = [
-  { q: 'هل يعمل النظام مع أي عيادة؟', a: 'نعم، النظام مصمم لعيادات الأسنان، العيادات العامة، عيادات التجميل، والعيادات المتخصصة. يمكن تخصيصه لأي تخصص طبي.' },
-  { q: 'كيف يتعامل النظام مع مرضى لا يستخدمون واتساب؟', a: 'يمكن للاستقبال حجز المواعيد يدوياً من لوحة التحكم. النظام يدعم جميع قنوات الحجز ويوحدها في مكان واحد.' },
-  { q: 'هل البيانات آمنة؟', a: 'نعم. بيانات المرضى مشفرة ومحمية بالكامل. نلتزم بمعايير الخصوصية الطبية ولا يصل إليها أحد خارج عيادتك.' },
-  { q: 'كم يستغرق الإعداد؟', a: 'الإعداد الكامل يستغرق من ١ إلى ٣ أيام عمل. فريقنا يتولى كل شيء: ربط واتساب، تدريب النظام على خدماتك، وإعداد جداول الأطباء.' },
-  { q: 'ماذا يحدث إذا كان الإنترنت منقطعاً في العيادة؟', a: 'وكيل الحجز الذكي يعمل على خوادمنا السحابية، ولا يتأثر بانقطاع الإنترنت في العيادة. المواعيد المحجوزة تُزامن تلقائياً عند عودة الاتصال.' },
+const faq = [
+  {
+    q: 'هل النظام يحجز فعلاً؟',
+    a: 'نعم. يتحقق من الجدول ويؤكد الموعد مع العميل مباشرة — بدون تدخل بشري.',
+  },
+  {
+    q: 'هل يعمل على واتساب؟',
+    a: 'نعم. واتساب هو القناة الرئيسية، مع إمكانية إضافة المكالمات في الباقة الكاملة.',
+  },
+  {
+    q: 'هل يستبدل موظف الاستقبال؟',
+    a: 'لا. يساعده ويخفف ضغطه — خاصة في أوقات الزحمة وخارج الدوام.',
+  },
+  {
+    q: 'هل يناسب عيادتي إذا كان عندي نظام حجز حالي؟',
+    a: 'نعم. يتكيف مع طريقة عملك الحالية دون الحاجة لتغيير أي شيء.',
+  },
 ]
+
+const mockAppointments = [
+  { time: '09:00', patient: 'سارة المطيري', service: 'تنظيف الأسنان', doctor: 'د. أحمد', status: 'confirmed' },
+  { time: '09:45', patient: 'محمد العتيبي', service: 'استشارة تقويم', doctor: 'د. نورة', status: 'checked_in' },
+  { time: '10:30', patient: 'فاطمة القحطاني', service: 'فحص دوري', doctor: 'د. أحمد', status: 'pending' },
+  { time: '11:15', patient: 'خالد الزهراني', service: 'جراحة الفم', doctor: 'د. خالد', status: 'confirmed' },
+]
+
+const statusColor: Record<string, string> = {
+  confirmed: 'bg-emerald-100 text-emerald-700',
+  checked_in: 'bg-sky-100 text-sky-700',
+  pending: 'bg-amber-100 text-amber-700',
+}
+
+const statusLabel: Record<string, string> = {
+  confirmed: 'مؤكد',
+  checked_in: 'حاضر',
+  pending: 'انتظار',
+}
 
 export const ClinicOSLanding = () => {
-  const navigate = useNavigate()
+  const rootRef = useRef<HTMLDivElement | null>(null)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [lead, setLead] = useState({ name: '', phone: '', clinicName: '', city: '' })
+  const [sending, setSending] = useState(false)
+  const [done, setDone] = useState(false)
+  const [formError, setFormError] = useState('')
 
-  const openWa = (pkg: string) => {
-    const msg = pkg === 'ai_pro'
-      ? 'مرحباً، شاهدت ديمو نظام الحجز الذكي وأرغب بالاشتراك في باقة AI Voice + واتساب.'
-      : 'مرحباً، شاهدت ديمو نظام الحجز الذكي وأرغب بالاشتراك في باقة واتساب للعيادات.'
-    window.open(`https://wa.me/${PHONE}?text=${encodeURIComponent(msg)}`, '_blank')
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.from('.clinic-hero-copy > *', {
+        y: 34,
+        autoAlpha: 0,
+        duration: 0.85,
+        stagger: 0.12,
+        ease: 'power3.out',
+        delay: 0.15,
+      })
+      gsap.from('.clinic-orb', {
+        scale: 0.7,
+        autoAlpha: 0,
+        duration: 1.4,
+        ease: 'power3.out',
+      })
+      gsap.utils.toArray<HTMLElement>('.gsap-reveal').forEach((el) => {
+        gsap.fromTo(
+          el,
+          { y: 42, autoAlpha: 0 },
+          {
+            y: 0,
+            autoAlpha: 1,
+            duration: 0.8,
+            ease: 'power3.out',
+            scrollTrigger: { trigger: el, start: 'top 84%' },
+          },
+        )
+      })
+      gsap.from('.step-card', {
+        y: 24,
+        autoAlpha: 0,
+        stagger: 0.12,
+        duration: 0.65,
+        ease: 'power3.out',
+        scrollTrigger: { trigger: '#how-it-works', start: 'top 70%' },
+      })
+      gsap.from('.feature-card', {
+        y: 22,
+        autoAlpha: 0,
+        stagger: 0.08,
+        duration: 0.65,
+        ease: 'power3.out',
+        scrollTrigger: { trigger: '#solution', start: 'top 68%' },
+      })
+    }, rootRef)
+
+    return () => ctx.revert()
+  }, [])
+
+  const submitLead = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!lead.name.trim() || !lead.phone.trim()) return
+    setSending(true)
+    setFormError('')
+    try {
+      const { error } = await supabase.from('leads').insert([
+        {
+          name: lead.name.trim(),
+          phone: lead.phone.trim(),
+          email: '',
+          service: 'madar_os_clinic_demo',
+          message: `العيادة: ${lead.clinicName || 'عيادة'} | المدينة: ${lead.city || 'غير محددة'} | طلب تحليل مجاني`,
+          source: 'website',
+          status: 'new',
+        },
+      ])
+      if (error) throw error
+      setDone(true)
+      setLead({ name: '', phone: '', clinicName: '', city: '' })
+    } catch {
+      setFormError('حدث خطأ، تواصل معنا مباشرة عبر واتساب.')
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
-    <div style={{ direction: 'rtl', fontFamily: 'Cairo, Tajawal, sans-serif', background: '#F8FAFC', minHeight: '100vh' }}>
-      {/* Navbar */}
-      <nav style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '0 40px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Bot size={18} style={{ color: 'white' }} />
-          </div>
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 900, color: '#0F172A', lineHeight: 1 }}>مدار</div>
-            <div style={{ fontSize: 10, color: '#64748B', lineHeight: 1 }}>نظام الحجز الذكي</div>
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
-          <a href="#pricing" style={{ fontSize: 13, color: '#475569', textDecoration: 'none', fontWeight: 600 }}>الأسعار</a>
-          <a href="#how" style={{ fontSize: 13, color: '#475569', textDecoration: 'none', fontWeight: 600 }}>كيف يعمل</a>
-          <a href="#faq" style={{ fontSize: 13, color: '#475569', textDecoration: 'none', fontWeight: 600 }}>الأسئلة الشائعة</a>
-          <button onClick={() => navigate('/login')} style={{ padding: '8px 18px', borderRadius: 8, background: '#EEF2FF', color: '#4F46E5', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-            تسجيل الدخول
-          </button>
-          <button onClick={() => navigate('/trial')} style={{ padding: '8px 18px', borderRadius: 8, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-            جرب مجاناً
-          </button>
-        </div>
-      </nav>
+    <div ref={rootRef} className="min-h-screen bg-[#F5FAFF] text-[#071322]" dir="rtl">
+      <MadarNavbar navLinks={navLinks} subtitle="نظام تشغيل للعيادات" />
 
-      {/* Hero */}
-      <section style={{ background: 'linear-gradient(135deg, #EEF2FF 0%, #F5F3FF 40%, #F8FAFC 100%)', padding: '72px 40px 60px', overflow: 'hidden' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center' }}>
+      <main>
+        {/* ── Hero ── */}
+        <section className="relative min-h-[760px] overflow-hidden sm:min-h-[820px] lg:min-h-[700px]">
+          <div className="absolute inset-0 bg-gradient-to-bl from-sky-50 via-[#F5FAFF] to-white" />
+          <div className="clinic-orb absolute right-[-80px] top-[120px] h-[480px] w-[480px] rounded-full bg-[#00BFFF]/8 blur-[120px]" />
+          <div className="clinic-orb absolute bottom-[-60px] left-[10%] h-[320px] w-[320px] rounded-full bg-[#007BFF]/6 blur-[90px]" />
+          <div className="clinic-orb absolute left-[40%] top-[20%] h-[200px] w-[200px] rounded-full border border-[#00BFFF]/20 bg-[#00BFFF]/5" />
+          <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/80 to-transparent" />
 
-          {/* Right — text */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 20, background: '#EEF2FF', border: '1px solid #C7D2FE', marginBottom: 24 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981' }} />
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#4F46E5' }}>وكيل الحجز الذكي — جاهز للعيادات السعودية</span>
+          <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-center px-4 pt-36 sm:px-6 lg:flex-row lg:items-start lg:justify-between lg:pt-40">
+            <div className="clinic-hero-copy w-full max-w-[580px] text-center lg:text-right">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/70 px-4 py-2 text-xs font-black text-[#0D1B3E] shadow-sm backdrop-blur-xl font-cairo sm:text-sm">
+                <span className="h-2 w-2 rounded-full bg-[#00BFFF]" />
+                مساعد استقبال ذكي للعيادات
+              </div>
+              <h1 className="mt-4 text-[1.9rem] font-black leading-[1.15] text-[#0D1B3E] font-cairo sm:text-5xl lg:text-[3.25rem]">
+                موظف AI يحوّل رسائل<br />
+                <span className="text-[#00BFFF]">عملائك إلى مواعيد مؤكدة</span>
+              </h1>
+              <p className="mt-5 max-w-xl text-base leading-relaxed text-slate-500 font-tajawal sm:text-lg">
+                عيادتك ترد وتحجز وتتابع — حتى في أوقات الزحمة وخارج الدوام.
+              </p>
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+                <button
+                  onClick={() => openWhatsAppChat('مرحباً، أريد تحليلاً مجانياً لحجوزات عيادتي.')}
+                  className="inline-flex items-center gap-2 rounded-2xl bg-[#007BFF] px-6 py-3.5 text-sm font-black text-white shadow-[0_18px_38px_rgba(0,123,255,0.28)] font-cairo"
+                >
+                  احصل على تحليل مجاني
+                  <ChevronLeft size={16} />
+                </button>
+                <a
+                  href="#solution"
+                  className="inline-flex items-center gap-2 rounded-2xl border border-sky-100 bg-white px-6 py-3.5 text-sm font-black text-[#0D1B3E] shadow-sm font-cairo"
+                >
+                  كيف يعمل؟
+                </a>
+              </div>
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-slate-400 font-tajawal lg:justify-start">
+                {['رد فوري على العملاء', 'حجز ومتابعة تلقائية', 'ضغط أقل على الاستقبال'].map((t) => (
+                  <span key={t} className="flex items-center gap-1.5">
+                    <Check size={14} className="text-[#00BFFF]" />
+                    {t}
+                  </span>
+                ))}
+              </div>
             </div>
 
-            <h1 style={{ fontSize: 42, fontWeight: 900, color: '#0F172A', lineHeight: 1.25, margin: '0 0 18px' }}>
-              عيادتك تحجز مواعيد
-              <br />
-              <span style={{ background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                وهي نائمة
-              </span>
-            </h1>
-
-            <p style={{ fontSize: 16, color: '#475569', lineHeight: 1.8, margin: '0 0 32px', fontFamily: 'Tajawal, sans-serif' }}>
-              نظام ذكي يستقبل طلبات الحجز، يرد على المرضى، ويرتب المواعيد تلقائياً عبر واتساب — بدون موظف استقبال يعمل ليلاً.
-            </p>
-
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 24 }}>
-              <motion.button
-                whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                onClick={() => navigate('/trial')}
-                style={{ padding: '13px 28px', borderRadius: 10, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', border: 'none', fontSize: 14, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 20px rgba(79,70,229,0.35)' }}
-              >
-                ابدأ تجربتك المجانية <ArrowLeft size={15} />
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                onClick={() => openWa('general')}
-                style={{ padding: '13px 28px', borderRadius: 10, background: '#FFFFFF', color: '#0F172A', border: '1px solid #E2E8F0', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
-              >
-                <Phone size={15} /> تحدث مع فريقنا
-              </motion.button>
+            {/* mockup preview */}
+            <div className="mt-12 w-full max-w-[400px] lg:mt-8 lg:w-auto">
+              <div className="rounded-[24px] border border-sky-100 bg-white p-5 shadow-[0_24px_64px_rgba(0,123,255,0.10)]">
+                <div className="mb-4 flex items-center justify-between">
+                  <p className="text-sm font-black text-[#0D1B3E] font-cairo">مواعيد اليوم</p>
+                  <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-black text-emerald-700">4 مواعيد</span>
+                </div>
+                <div className="grid gap-2.5">
+                  {mockAppointments.map((apt) => (
+                    <div key={apt.time} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+                      <span className="w-11 text-center text-xs font-black text-slate-400 font-cairo">{apt.time}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="truncate text-sm font-black text-[#0D1B3E] font-cairo">{apt.patient}</p>
+                        <p className="truncate text-xs text-slate-400 font-tajawal">{apt.service} · {apt.doctor}</p>
+                      </div>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-black ${statusColor[apt.status]}`}>
+                        {statusLabel[apt.status]}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 flex items-center gap-2 rounded-xl bg-[#00BFFF]/8 px-3 py-2">
+                  <div className="h-2 w-2 rounded-full bg-[#00BFFF] animate-pulse" />
+                  <p className="text-xs font-black text-[#0099CC] font-cairo">مساعد AI نشط — ردّ على ٣ عملاء الساعة الماضية</p>
+                </div>
+              </div>
             </div>
+          </div>
+        </section>
 
-            <p style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', marginBottom: 32 }}>
-              لا يلزم بطاقة ائتمان • إعداد في أقل من ٣ أيام • ضمان استرداد ٣٠ يوماً
-            </p>
+        {/* ── Pain ── */}
+        <section id="pain" className="bg-[#071322] py-20">
+          <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+            <div className="gsap-reveal mb-10 text-center">
+              <h2 className="text-2xl font-black leading-snug text-white font-cairo sm:text-3xl lg:text-4xl">
+                المشكلة ليست في قلة العملاء.<br />
+                <span className="text-[#00BFFF]">المشكلة أن كثيراً منهم لا يتم إغلاقهم.</span>
+              </h2>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {painPoints.map((pt, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08 }}
+                  className="flex items-start gap-3 rounded-2xl border border-white/8 bg-white/5 p-5"
+                >
+                  <AlertCircle size={18} className="mt-0.5 shrink-0 text-[#00BFFF]" />
+                  <p className="text-sm leading-relaxed text-slate-300 font-tajawal">{pt}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
 
-            {/* Stats */}
-            <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
-              {[
-                { v: '+٢٠٠', l: 'عيادة نشطة' },
-                { v: '٩٧٪', l: 'نسبة التسليم' },
-                { v: '٢٤/٧', l: 'بدون توقف' },
-              ].map((s, i) => (
-                <div key={i}>
-                  <div style={{ fontSize: 24, fontWeight: 900, color: '#4F46E5' }}>{s.v}</div>
-                  <div style={{ fontSize: 11, color: '#64748B', fontFamily: 'Tajawal, sans-serif', marginTop: 2 }}>{s.l}</div>
+        {/* ── Solution ── */}
+        <section id="solution" className="bg-white py-24">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="gsap-reveal mb-14 text-center">
+              <p className="mb-3 text-sm font-black uppercase tracking-widest text-[#00BFFF] font-cairo">الحل</p>
+              <h2 className="text-3xl font-black text-[#071322] font-cairo sm:text-4xl">
+                موظف AI للاستقبال والحجوزات<br />داخل عيادتك
+              </h2>
+              <p className="mx-auto mt-4 max-w-2xl text-slate-500 font-tajawal">
+                يرد على عملائك، يجاوب أسئلتهم المتكررة، يحجز المواعيد، ويتابع المهتمين — حتى لا تضيع فرصة واحدة.
+              </p>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {solutionFeatures.map((f, i) => (
+                <div key={i} className="feature-card rounded-3xl border border-sky-100 bg-[#F5FAFF] p-6">
+                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#00BFFF]/10">
+                    <f.icon size={22} className="text-[#00BFFF]" />
+                  </div>
+                  <h3 className="mb-2 text-base font-black text-[#071322] font-cairo">{f.title}</h3>
+                  <p className="text-sm leading-relaxed text-slate-500 font-tajawal">{f.text}</p>
                 </div>
               ))}
             </div>
-          </motion.div>
 
-          {/* Left — Dashboard Mockup */}
-          <motion.div
-            initial={{ opacity: 0, x: -40 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            style={{ borderRadius: 20, overflow: 'hidden', boxShadow: '0 24px 80px rgba(79,70,229,0.18)', border: '1px solid #E2E8F0' }}
-          >
-            <ClinicDashMockup />
-          </motion.div>
-
-        </div>
-      </section>
-
-      {/* Outcomes */}
-      <section style={{ padding: '80px 40px', background: '#FFFFFF' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            <h2 style={{ fontSize: 32, fontWeight: 900, color: '#0F172A', margin: '0 0 12px' }}>النتائج التي تراها في الشهر الأول</h2>
-            <p style={{ fontSize: 15, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>أرقام حقيقية من عيادات تستخدم النظام</p>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
-            {OUTCOMES.map((o, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-                style={{ background: '#F8FAFC', borderRadius: 16, padding: '28px 20px', textAlign: 'center', border: '1px solid #E2E8F0' }}
-              >
-                <div style={{ width: 48, height: 48, borderRadius: 14, background: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                  <o.icon size={22} style={{ color: '#4F46E5' }} />
+            <div className="gsap-reveal mt-12 grid grid-cols-3 divide-x divide-x-reverse divide-sky-100 rounded-3xl border border-sky-100 bg-[#F5FAFF] p-8">
+              {[
+                { val: 'أسرع رد', label: 'قبل أن يفكر العميل في مكان آخر' },
+                { val: 'أقل غياب', label: 'تذكيرات تلقائية تحمي إيراد اليوم' },
+                { val: '24/7', label: 'يعمل حتى بعد انتهاء الدوام' },
+              ].map((s, i) => (
+                <div key={i} className="px-6 text-center first:pr-0 last:pl-0">
+                  <p className="text-3xl font-black text-[#007BFF] font-cairo sm:text-4xl">{s.val}</p>
+                  <p className="mt-1 text-sm text-slate-500 font-tajawal">{s.label}</p>
                 </div>
-                <div style={{ fontSize: 32, fontWeight: 900, color: '#4F46E5', marginBottom: 8 }}>{o.value}</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', marginBottom: 6 }}>{o.label}</div>
-                <div style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.6 }}>{o.sub}</div>
-              </motion.div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* How it works */}
-      <section id="how" style={{ padding: '80px 40px', background: '#F8FAFC' }}>
-        <div style={{ maxWidth: 800, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 56 }}>
-            <h2 style={{ fontSize: 32, fontWeight: 900, color: '#0F172A', margin: '0 0 12px' }}>كيف يعمل النظام؟</h2>
-            <p style={{ fontSize: 15, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>ثلاث خطوات — المريض لا يلاحظ الفرق، أنت تلاحظ النتائج</p>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            {HOW_STEPS.map((step, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.15 }}
-                style={{ display: 'flex', gap: 24, alignItems: 'flex-start', background: '#FFFFFF', borderRadius: 16, padding: '28px 32px', border: '1px solid #E2E8F0' }}
-              >
-                <div style={{ width: 52, height: 52, borderRadius: 16, background: `${step.color}15`, border: `2px solid ${step.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <span style={{ fontSize: 22, fontWeight: 900, color: step.color }}>{step.num}</span>
-                </div>
-                <div>
-                  <h3 style={{ fontSize: 17, fontWeight: 800, color: '#0F172A', margin: '0 0 8px' }}>{step.title}</h3>
-                  <p style={{ fontSize: 14, color: '#475569', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.7, margin: 0 }}>{step.body}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features highlight */}
-      <section style={{ padding: '80px 40px', background: '#FFFFFF' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            <h2 style={{ fontSize: 32, fontWeight: 900, color: '#0F172A', margin: '0 0 12px' }}>كل ما تحتاجه لإدارة عيادتك</h2>
-            <p style={{ fontSize: 15, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>من أول تواصل للمريض حتى التقرير الأسبوعي</p>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
-            {[
-              { icon: MessageSquare, color: '#10B981', bg: '#ECFDF5', title: 'حجز عبر واتساب', body: 'المريض يحجز بمحادثة طبيعية. الوكيل يفهم الطلب ويرتب الموعد.' },
-              { icon: Calendar, color: '#4F46E5', bg: '#EEF2FF', title: 'جدول عيادة ذكي', body: 'تقويم موحد لكل الأطباء. التعارضات تُكتشف تلقائياً قبل التأكيد.' },
-              { icon: Bot, color: '#7C3AED', bg: '#F5F3FF', title: 'وكيل مكالمات AI', body: 'يستقبل المكالمات، يفهم الطلبات، ويحجز دون تدخل بشري.' },
-              { icon: Zap, color: '#F59E0B', bg: '#FFFBEB', title: 'تذكيرات تلقائية', body: 'قبل ٢٤ ساعة و٣ ساعات. نسبة الحضور ترتفع، والمواعيد الفائتة تنخفض.' },
-              { icon: Users, color: '#0099CC', bg: '#EFF9FF', title: 'سجل المرضى', body: 'تاريخ كامل لكل مريض: الزيارات، الخدمات، الملاحظات، والتواصل.' },
-              { icon: Shield, color: '#059669', bg: '#ECFDF5', title: 'حماية وأمان', body: 'بيانات المرضى مشفرة ومحمية. امتثال كامل لمعايير الخصوصية الطبية.' },
-            ].map((f, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
-                style={{ padding: '24px', borderRadius: 14, border: '1px solid #E2E8F0', background: '#F8FAFC' }}
-              >
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: f.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
-                  <f.icon size={20} style={{ color: f.color }} />
-                </div>
-                <h3 style={{ fontSize: 15, fontWeight: 800, color: '#0F172A', margin: '0 0 8px' }}>{f.title}</h3>
-                <p style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.6, margin: 0 }}>{f.body}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section id="pricing" style={{ padding: '80px 40px', background: '#F8FAFC' }}>
-        <div style={{ maxWidth: 860, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            <h2 style={{ fontSize: 32, fontWeight: 900, color: '#0F172A', margin: '0 0 12px' }}>خطط واضحة، بدون رسوم خفية</h2>
-            <p style={{ fontSize: 15, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>اشتراك سنوي شامل — لا عمولة على الحجوزات</p>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-            {PRICING.map((pkg) => (
-              <motion.div
-                key={pkg.id}
-                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-                style={{
-                  background: '#FFFFFF',
-                  borderRadius: 20,
-                  border: pkg.recommended ? `2px solid ${pkg.color}` : '1px solid #E2E8F0',
-                  padding: '32px',
-                  position: 'relative',
-                  boxShadow: pkg.recommended ? `0 8px 32px ${pkg.color}20` : 'none',
-                }}
-              >
-                {pkg.recommended && (
-                  <div style={{ position: 'absolute', top: -14, right: 24, padding: '4px 14px', borderRadius: 20, background: 'linear-gradient(135deg, #7C3AED, #4F46E5)', color: 'white', fontSize: 11, fontWeight: 800 }}>
-                    ⭐ الأكثر طلباً
+        {/* ── Who It Fits ── */}
+        <section id="who-fits" className="bg-[#F5FAFF] py-20">
+          <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+            <div className="gsap-reveal mb-12 text-center">
+              <p className="mb-3 text-sm font-black uppercase tracking-widest text-[#00BFFF] font-cairo">لمن هذا النظام؟</p>
+              <h2 className="text-3xl font-black text-[#071322] font-cairo sm:text-4xl">
+                مصمم للعيادات التي تعتمد على سرعة الرد
+              </h2>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {whoItFits.map((w, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.07 }}
+                  className="flex items-start gap-4 rounded-2xl border border-white bg-white p-5 shadow-sm"
+                >
+                  <div className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#00BFFF]/10">
+                    <w.icon size={18} className="text-[#00BFFF]" />
                   </div>
-                )}
-                <div style={{ display: 'inline-flex', padding: '4px 12px', borderRadius: 20, background: pkg.badgeBg, marginBottom: 16 }}>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: pkg.badgeColor }}>{pkg.badge}</span>
-                </div>
-                <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', margin: '0 0 8px' }}>{pkg.name}</h3>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 24 }}>
-                  <span style={{ fontSize: 36, fontWeight: 900, color: pkg.color }}>{pkg.price}</span>
-                  <span style={{ fontSize: 16, color: '#475569' }}>ريال</span>
-                  <span style={{ fontSize: 13, color: '#94A3B8' }}>/ {pkg.period}</span>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
-                  {pkg.features.map((f, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                      <CheckCircle size={14} style={{ color: '#10B981', flexShrink: 0, marginTop: 2 }} />
-                      <span style={{ fontSize: 13, color: '#0F172A', fontFamily: 'Tajawal, sans-serif' }}>{f}</span>
-                    </div>
-                  ))}
-                  {pkg.locked.map((f, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, opacity: 0.4 }}>
-                      <div style={{ width: 14, height: 14, borderRadius: 7, border: '1.5px solid #CBD5E1', flexShrink: 0, marginTop: 2 }} />
-                      <span style={{ fontSize: 13, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', textDecoration: 'line-through' }}>{f}</span>
-                    </div>
-                  ))}
-                </div>
-                <button
-                  onClick={() => navigate(`/clinic-os/signup?pkg=${pkg.id}`)}
-                  style={{ width: '100%', padding: '13px', borderRadius: 10, background: pkg.ctaBg, color: 'white', border: 'none', fontSize: 14, fontWeight: 800, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}
-                >
-                  {pkg.cta}
-                </button>
-                <button
-                  onClick={() => openWa(pkg.id)}
-                  style={{ width: '100%', marginTop: 10, padding: '10px', borderRadius: 10, background: 'transparent', color: '#64748B', border: '1px solid #E2E8F0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}
-                >
-                  تحدث مع فريقنا
-                </button>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonial / case study */}
-      <section style={{ padding: '80px 40px', background: '#FFFFFF' }}>
-        <div style={{ maxWidth: 700, margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ fontSize: 40, marginBottom: 16 }}>💬</div>
-          <blockquote style={{ fontSize: 18, fontWeight: 600, color: '#0F172A', lineHeight: 1.7, fontFamily: 'Tajawal, sans-serif', margin: '0 0 24px' }}>
-            "كنا نضيع ٣ ساعات يومياً في الرد على الاستفسارات والتأكيد على المواعيد. الآن الموظفة تركز كلياً على المرضى اللي في العيادة."
-          </blockquote>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center' }}>
-            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: 16, fontWeight: 900, color: 'white' }}>س</span>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 14, fontWeight: 800, color: '#0F172A' }}>د. سارة الحربي</div>
-              <div style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>عيادات نور للأسنان — جدة</div>
-            </div>
-            <div style={{ display: 'flex', gap: 2, marginRight: 8 }}>
-              {[1,2,3,4,5].map(i => <Star key={i} size={14} style={{ fill: '#F59E0B', color: '#F59E0B' }} />)}
+                  <div>
+                    <p className="text-sm font-black text-[#071322] font-cairo">{w.specialty}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-400 font-tajawal">{w.benefit}</p>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* FAQ */}
-      <section id="faq" style={{ padding: '80px 40px', background: '#F8FAFC' }}>
-        <div style={{ maxWidth: 700, margin: '0 auto' }}>
-          <h2 style={{ fontSize: 28, fontWeight: 900, color: '#0F172A', textAlign: 'center', margin: '0 0 40px' }}>الأسئلة الشائعة</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {FAQS.map((faq, i) => (
-              <div key={i} style={{ background: '#FFFFFF', borderRadius: 12, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
-                <button
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  style={{ width: '100%', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'right' }}
+        {/* ── How It Works (3 steps) ── */}
+        <section id="how-it-works" className="bg-white py-24">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+            <div className="gsap-reveal mb-14 text-center">
+              <p className="mb-3 text-sm font-black uppercase tracking-widest text-[#00BFFF] font-cairo">كيف نبدأ</p>
+              <h2 className="text-3xl font-black text-[#071322] font-cairo sm:text-4xl">
+                ٣ خطوات فقط
+              </h2>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-3">
+              {steps.map((s, i) => (
+                <div key={i} className="step-card relative rounded-3xl border border-sky-100 bg-[#F5FAFF] p-7 text-center">
+                  <span className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[#00BFFF]/10">
+                    <s.icon size={24} className="text-[#00BFFF]" />
+                  </span>
+                  <div className="absolute left-5 top-5 text-[11px] font-black text-slate-300 font-cairo">0{i + 1}</div>
+                  <h3 className="mt-2 text-xl font-black text-[#071322] font-cairo">{s.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-500 font-tajawal">{s.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Trust ── */}
+        <section className="bg-[#F5FAFF] py-20">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+            <div className="gsap-reveal mb-12 text-center">
+              <h2 className="text-3xl font-black text-[#071322] font-cairo sm:text-4xl">
+                مبني حسب طريقة عمل عيادتك
+              </h2>
+            </div>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              {[
+                { icon: Sparkles, title: 'لا نموذج عام', text: 'ندرس خدماتك وأسئلة عملائك — ونبني حسب طريقة عملك.' },
+                { icon: Users, title: 'يدعم الفريق', text: 'يساعد موظف الاستقبال ولا يستبدل جودة التعامل البشري.' },
+                { icon: ShieldCheck, title: 'بدون مخاطرة', text: 'نبدأ بتحليل مجاني قبل أي تنفيذ — هدفنا النتيجة أولاً.' },
+                { icon: TrendingUp, title: 'قياس من اليوم الأول', text: 'نقيس معك تقليل الحجوزات الضائعة وتحسين سرعة الرد.' },
+              ].map((w, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="rounded-3xl border border-white bg-white p-6 shadow-sm"
                 >
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>{faq.q}</span>
-                  {openFaq === i ? <ChevronUp size={16} style={{ color: '#64748B', flexShrink: 0 }} /> : <ChevronDown size={16} style={{ color: '#64748B', flexShrink: 0 }} />}
-                </button>
-                {openFaq === i && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
-                    style={{ padding: '0 20px 16px', fontSize: 13, color: '#475569', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.7 }}
+                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#00BFFF]/10">
+                    <w.icon size={22} className="text-[#00BFFF]" />
+                  </div>
+                  <h3 className="mb-2 text-base font-black text-[#071322] font-cairo">{w.title}</h3>
+                  <p className="text-sm leading-relaxed text-slate-500 font-tajawal">{w.text}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Pricing ── */}
+        <section id="pricing" className="bg-white py-24">
+          <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+            <div className="gsap-reveal mb-14 text-center">
+              <p className="mb-3 text-sm font-black uppercase tracking-widest text-[#00BFFF] font-cairo">الباقات</p>
+              <h2 className="text-3xl font-black text-[#071322] font-cairo sm:text-4xl">اختر الباقة المناسبة لعيادتك</h2>
+              <p className="mt-3 text-slate-500 font-tajawal">تواصل معنا لمعرفة التفاصيل والأسعار المناسبة لحجم عيادتك</p>
+            </div>
+            <div className="grid gap-6 md:grid-cols-2">
+              {plans.map((plan, i) => (
+                <div
+                  key={i}
+                  className={`relative rounded-3xl p-7 ${
+                    plan.highlight
+                      ? 'bg-[#071322] text-white shadow-[0_24px_60px_rgba(0,123,255,0.22)]'
+                      : 'border border-sky-100 bg-[#F5FAFF]'
+                  }`}
+                >
+                  {plan.highlight && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#00BFFF] px-4 py-1 text-xs font-black text-white font-cairo">
+                      الأكثر طلباً
+                    </div>
+                  )}
+                  <div className="mb-3 inline-block rounded-full bg-[#00BFFF]/15 px-3 py-1 text-xs font-black text-[#00BFFF] font-cairo">
+                    {plan.badge}
+                  </div>
+                  <h3 className={`mt-2 text-xl font-black font-cairo ${plan.highlight ? 'text-white' : 'text-[#071322]'}`}>
+                    {plan.name}
+                  </h3>
+                  <ul className="mt-5 grid gap-2.5">
+                    {plan.points.map((pt, j) => (
+                      <li key={j} className="flex items-center gap-2 text-sm font-tajawal">
+                        <Check size={15} className="shrink-0 text-[#00BFFF]" />
+                        <span className={plan.highlight ? 'text-slate-200' : 'text-slate-600'}>{pt}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className={`mt-5 rounded-2xl p-4 ${plan.highlight ? 'bg-white/8' : 'bg-white'}`}>
+                    <p className={`text-xs font-black font-cairo ${plan.highlight ? 'text-[#00BFFF]' : 'text-[#007BFF]'}`}>
+                      النتيجة المتوقعة
+                    </p>
+                    <p className={`mt-1 text-sm font-tajawal ${plan.highlight ? 'text-slate-300' : 'text-slate-600'}`}>
+                      {plan.result}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() =>
+                      openWhatsAppChat(`مرحباً، أريد الاستفسار عن باقة ${plan.name} لنظام العيادات.`)
+                    }
+                    className={`mt-6 w-full rounded-2xl py-3.5 text-sm font-black font-cairo flex items-center justify-center gap-2 ${
+                      plan.highlight
+                        ? 'bg-[#007BFF] text-white shadow-[0_12px_28px_rgba(0,123,255,0.38)]'
+                        : 'bg-white border border-sky-100 text-[#071322]'
+                    }`}
                   >
-                    {faq.a}
-                  </motion.div>
-                )}
+                    {plan.cta}
+                    <ChevronLeft size={15} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── FAQ ── */}
+        <section id="faq" className="bg-[#F5FAFF] py-20">
+          <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
+            <div className="gsap-reveal mb-12 text-center">
+              <h2 className="text-3xl font-black text-[#071322] font-cairo sm:text-4xl">أسئلة شائعة</h2>
+            </div>
+            <div className="grid gap-3">
+              {faq.map((item, i) => (
+                <div key={i} className="rounded-2xl border border-white bg-white shadow-sm">
+                  <button
+                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                    className="flex w-full items-center justify-between px-5 py-4 text-right"
+                  >
+                    <span className="text-sm font-black text-[#071322] font-cairo">{item.q}</span>
+                    <ChevronDown
+                      size={18}
+                      className={`shrink-0 text-slate-400 transition-transform ${openFaq === i ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                  <AnimatePresence>
+                    {openFaq === i && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.22 }}
+                        className="overflow-hidden"
+                      >
+                        <p className="px-5 pb-5 text-sm leading-relaxed text-slate-500 font-tajawal">{item.a}</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Final CTA + Contact ── */}
+        <section id="contact" className="bg-[#071322] py-24">
+          <div className="mx-auto max-w-xl px-4 sm:px-6 lg:px-8">
+            <div className="gsap-reveal mb-10 text-center">
+              <h2 className="text-3xl font-black text-white font-cairo sm:text-4xl">
+                كل عميل ينتظر الرد…<br />
+                <span className="text-[#00BFFF]">قد يحجز عند عيادة ثانية.</span>
+              </h2>
+              <p className="mt-4 text-slate-400 font-tajawal leading-relaxed">
+                دعنا نحلل رحلة الحجز في عيادتك ونوضح أين تضيع الفرص — وكيف يمكن لموظف AI أن يساعدك في استرجاعها.
+              </p>
+            </div>
+
+            {done ? (
+              <div className="rounded-3xl border border-emerald-500/20 bg-emerald-500/10 p-10 text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/20">
+                  <Check size={28} className="text-emerald-400" />
+                </div>
+                <p className="text-lg font-black text-emerald-400 font-cairo">تم! سنتواصل معك قريباً</p>
+                <p className="mt-2 text-sm text-slate-400 font-tajawal">أو تواصل مباشرة عبر واتساب</p>
+                <button
+                  onClick={() => openWhatsAppChat('مرحباً، أريد تحليلاً مجانياً لحجوزات عيادتي.')}
+                  className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-[#25D366] px-6 py-3 text-sm font-black text-white font-cairo"
+                >
+                  <MessageCircle size={16} />
+                  واتساب مباشر
+                </button>
               </div>
-            ))}
+            ) : (
+              <form onSubmit={submitLead} className="rounded-3xl border border-white/10 bg-white/5 p-7">
+                <div className="grid gap-4">
+                  {[
+                    { key: 'name', placeholder: 'اسمك الكريم *', type: 'text' },
+                    { key: 'phone', placeholder: 'رقم الجوال *', type: 'tel' },
+                    { key: 'clinicName', placeholder: 'اسم العيادة', type: 'text' },
+                    { key: 'city', placeholder: 'المدينة', type: 'text' },
+                  ].map(({ key, placeholder, type }) => (
+                    <input
+                      key={key}
+                      type={type}
+                      placeholder={placeholder}
+                      value={lead[key as keyof typeof lead]}
+                      onChange={(e) => setLead((prev) => ({ ...prev, [key]: e.target.value }))}
+                      className="w-full rounded-2xl border border-white/10 bg-white/8 px-4 py-3.5 text-sm text-white outline-none placeholder:text-slate-500 focus:border-[#00BFFF] font-tajawal"
+                    />
+                  ))}
+                </div>
+                <button
+                  type="submit"
+                  disabled={sending}
+                  className="mt-5 w-full rounded-2xl bg-[#007BFF] py-4 text-sm font-black text-white shadow-[0_12px_28px_rgba(0,123,255,0.38)] disabled:opacity-60 font-cairo"
+                >
+                  {sending ? 'جارٍ الإرسال...' : 'احصل على تحليل مجاني لحجوزات عيادتك'}
+                </button>
+                {formError && <p className="mt-3 rounded-2xl bg-red-500/10 px-4 py-3 text-sm font-bold text-red-400 font-tajawal">{formError}</p>}
+                <p className="mt-3 text-center text-xs text-slate-500 font-tajawal">
+                  أو تواصل مباشرة على{' '}
+                  <button
+                    type="button"
+                    onClick={() => openWhatsAppChat('مرحباً، أريد تحليلاً مجانياً لحجوزات عيادتي.')}
+                    className="font-black text-[#25D366]"
+                  >
+                    واتساب
+                  </button>
+                </p>
+              </form>
+            )}
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
-      {/* Final CTA */}
-      <section style={{ padding: '80px 40px', background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', textAlign: 'center' }}>
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-          <h2 style={{ fontSize: 36, fontWeight: 900, color: 'white', margin: '0 0 16px' }}>جاهز تشوف كيف تبدو عيادتك بالنظام؟</h2>
-          <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.85)', fontFamily: 'Tajawal, sans-serif', marginBottom: 36 }}>
-            جرب الداشبورد الكامل مجاناً — بيانات تجريبية، بدون أي التزام
+      <footer className="border-t border-white/5 bg-[#050810] py-10">
+        <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
+          <p className="text-sm font-black text-white font-cairo">
+            Madar <span className="text-[#00BFFF]">OS</span> — نظام تشغيل ذكي للعيادات
           </p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <motion.button
-              whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-              onClick={() => navigate('/trial')}
-              style={{ padding: '14px 36px', borderRadius: 10, background: 'white', color: '#4F46E5', border: 'none', fontSize: 15, fontWeight: 800, cursor: 'pointer' }}
-            >
-              جرب الداشبورد مجاناً
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-              onClick={() => openWa('general')}
-              style={{ padding: '14px 36px', borderRadius: 10, background: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}
-            >
-              تحدث مع فريقنا
-            </motion.button>
+          <p className="mt-2 text-xs text-slate-500 font-tajawal">
+            جميع الحقوق محفوظة © {new Date().getFullYear()} مدار
+          </p>
+          <div className="mt-4 flex items-center justify-center gap-6 text-xs text-slate-500 font-tajawal">
+            <a href="/privacy" className="hover:text-slate-300">سياسة الخصوصية</a>
+            <a href="/terms" className="hover:text-slate-300">الشروط والأحكام</a>
+            <button onClick={() => openWhatsAppChat('مرحباً')} className="hover:text-slate-300">واتساب</button>
           </div>
-        </motion.div>
-      </section>
-
-      {/* Footer */}
-      <footer style={{ background: '#0F172A', padding: '40px', textAlign: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center', marginBottom: 16 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Bot size={16} style={{ color: 'white' }} />
-          </div>
-          <span style={{ fontSize: 15, fontWeight: 900, color: 'white' }}>مدار — نظام الحجز الذكي</span>
         </div>
-        <p style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>
-          © ٢٠٢٦ مدار. جميع الحقوق محفوظة. المملكة العربية السعودية.
-        </p>
       </footer>
     </div>
   )

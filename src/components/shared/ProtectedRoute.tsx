@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { LoadingScreen } from './LoadingScreen'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -69,7 +68,7 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
     }
   }, [requiredRole])
 
-  if (isLoading) return <LoadingScreen />
+  if (isLoading) return null
 
   if (!isAuthed) {
     const redirect = encodeURIComponent(`${location.pathname}${location.search}`)

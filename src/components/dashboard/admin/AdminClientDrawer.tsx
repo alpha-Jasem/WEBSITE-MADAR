@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+﻿import { useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   Building2,
@@ -20,6 +20,7 @@ import {
   X,
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
+import { logAudit } from '../../../lib/auditLog'
 import { getSelfCheckinSettings, getSelfCheckinUrl } from '../../../lib/selfCheckin'
 import type { Company, CompanyStatus, Plan } from '../../../types'
 
@@ -99,6 +100,7 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
   const [saving, setSaving] = useState(false)
   const [feedback, setFeedback] = useState('')
   const [activePlan, setActivePlan] = useState<Plan>(company.plan)
+  const [activePackageType, setActivePackageType] = useState<string>(company.package_type || 'whatsapp')
   const [flags, setFlags] = useState<Record<string, boolean>>(() => {
     const stored = ((company.cw_automations as any)?.feature_flags || {}) as Record<string, boolean>
     return {
@@ -120,7 +122,8 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
   const changed = useMemo(() => {
     const stored = ((company.cw_automations as any)?.feature_flags || {}) as Record<string, boolean>
     const flagsChanged = FEATURE_FLAGS.some(item => (stored[item.key] ?? (item.key === 'cash_pos')) !== flags[item.key])
-    return activePlan !== company.plan || flagsChanged
+    const packageChanged = activePackageType !== (company.package_type || 'whatsapp')
+    return activePlan !== company.plan || flagsChanged || packageChanged
   }, [activePlan, company, flags])
 
   const save = async () => {
@@ -135,6 +138,7 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
         plan: activePlan,
         message_limit: PLAN_CONFIG[activePlan].limit,
         cw_automations: nextAutomations,
+        ...(company.industry === 'clinic' ? { package_type: activePackageType } : {}),
       } as any)
       .eq('id', company.id)
 
@@ -143,6 +147,18 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
       setFeedback('تعذر الحفظ. حاول مرة أخرى.')
       return
     }
+    logAudit(company.id, 'company_settings_updated', {
+      entityType: 'company',
+      entityId: company.id,
+      oldValue: {
+        plan: company.plan,
+        feature_flags: (company.cw_automations as any)?.feature_flags || {},
+      },
+      newValue: {
+        plan: activePlan,
+        feature_flags: flags,
+      },
+    })
     setFeedback('تم حفظ إعدادات الشركة')
     setTimeout(() => setFeedback(''), 1600)
     onUpdated()
@@ -151,9 +167,24 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
   const toggleStatus = async () => {
     const next: CompanyStatus = company.status === 'active' ? 'suspended' : 'active'
     setSaving(true)
-    const { error } = await supabase.from('companies').update({ status: next }).eq('id', company.id)
+    const updatePayload: Record<string, unknown> = { status: next }
+    // When activating a clinic, also lock in the selected package
+    if (next === 'active' && company.industry === 'clinic') {
+      updatePayload.package_type = activePackageType
+    }
+    const { error } = await supabase.from('companies').update(updatePayload).eq('id', company.id)
     setSaving(false)
-    if (!error) onUpdated()
+    if (!error) {
+      logAudit(company.id, 'company_status_updated', {
+        entityType: 'company_status',
+        entityId: company.id,
+        oldValue: { status: company.status },
+        newValue: { status: next, ...(next === 'active' && company.industry === 'clinic' ? { package_type: activePackageType } : {}) },
+      })
+      if (next === 'active') setFeedback('✅ تم تفعيل الحساب!')
+      setTimeout(() => setFeedback(''), 3000)
+      onUpdated()
+    }
   }
 
   return (
@@ -213,29 +244,50 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
               {company.owner_phone && <ContactRow icon={Phone} label="الجوال" value={company.owner_phone} />}
             </section>
 
-            <section className="rounded-3xl bg-white p-5" style={{ border: '1px solid #E2E8F0' }}>
-              <div className="mb-4 flex items-center gap-2">
-                <CreditCard size={16} className="text-blue-600" />
-                <h3 className="text-sm font-bold text-slate-900 font-cairo">الباقة</h3>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {(Object.entries(PLAN_CONFIG) as [Plan, typeof PLAN_CONFIG[Plan]][]).map(([id, item]) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setActivePlan(id)}
-                    className="rounded-2xl p-3 text-center transition-all"
-                    style={{
-                      border: `1px solid ${activePlan === id ? item.color : '#E2E8F0'}`,
-                      background: activePlan === id ? `${item.color}12` : '#FFFFFF',
-                    }}
-                  >
-                    <strong className="block text-sm font-black font-sora" style={{ color: item.color }}>{item.label}</strong>
-                    <span className="mt-1 block text-[11px] text-slate-500 font-tajawal">{item.price} ر.س</span>
-                  </button>
-                ))}
-              </div>
-            </section>
+            {company.industry === 'clinic' ? (
+              <section className="rounded-3xl bg-white p-5" style={{ border: '1px solid #E2E8F0' }}>
+                <div className="mb-4 flex items-center gap-2">
+                  <CreditCard size={16} className="text-blue-600" />
+                  <h3 className="text-sm font-bold text-slate-900 font-cairo">باقة العيادة</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: 'whatsapp', label: 'باقة واتساب',       color: '#10B981', price: '٩,٩٩٩ / سنة' },
+                    { id: 'ai_pro',   label: 'AI Voice + واتساب', color: '#7C3AED', price: '١٦,٩٩٩ / سنة' },
+                  ].map(pkg => (
+                    <button key={pkg.id} type="button" onClick={() => setActivePackageType(pkg.id)}
+                      className="rounded-2xl p-3 text-center transition-all"
+                      style={{
+                        border: `1px solid ${activePackageType === pkg.id ? pkg.color : '#E2E8F0'}`,
+                        background: activePackageType === pkg.id ? `${pkg.color}12` : '#FFFFFF',
+                      }}>
+                      <strong className="block text-sm font-black font-cairo" style={{ color: pkg.color }}>{pkg.label}</strong>
+                      <span className="mt-1 block text-[11px] text-slate-500 font-tajawal">{pkg.price}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            ) : (
+              <section className="rounded-3xl bg-white p-5" style={{ border: '1px solid #E2E8F0' }}>
+                <div className="mb-4 flex items-center gap-2">
+                  <CreditCard size={16} className="text-blue-600" />
+                  <h3 className="text-sm font-bold text-slate-900 font-cairo">الباقة</h3>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {(Object.entries(PLAN_CONFIG) as [Plan, typeof PLAN_CONFIG[Plan]][]).map(([id, item]) => (
+                    <button key={id} type="button" onClick={() => setActivePlan(id)}
+                      className="rounded-2xl p-3 text-center transition-all"
+                      style={{
+                        border: `1px solid ${activePlan === id ? item.color : '#E2E8F0'}`,
+                        background: activePlan === id ? `${item.color}12` : '#FFFFFF',
+                      }}>
+                      <strong className="block text-sm font-black font-sora" style={{ color: item.color }}>{item.label}</strong>
+                      <span className="mt-1 block text-[11px] text-slate-500 font-tajawal">{item.price} ر.س</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
 
             <section className="rounded-3xl bg-white p-5" style={{ border: '1px solid #E2E8F0' }}>
               <div className="mb-4 flex items-center justify-between gap-3">
@@ -300,32 +352,62 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
               </section>
             )}
 
-            <div className="grid grid-cols-2 gap-3">
+            {/* Activate CTA — prominent for trial clinic accounts */}
+            {company.status === 'trial' && (
               <button
                 type="button"
                 onClick={toggleStatus}
                 disabled={saving}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold font-cairo"
-                style={{
-                  background: company.status === 'active' ? '#FEF2F2' : '#ECFDF5',
-                  color: company.status === 'active' ? '#DC2626' : '#059669',
-                  border: `1px solid ${company.status === 'active' ? '#FECACA' : '#A7F3D0'}`,
-                }}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-4 text-base font-black font-cairo text-white"
+                style={{ background: 'linear-gradient(135deg, #059669, #10B981)', boxShadow: '0 4px 20px rgba(16,185,129,0.35)' }}
               >
-                {company.status === 'active' ? <ShieldOff size={15} /> : <ShieldCheck size={15} />}
-                {company.status === 'active' ? 'تعليق الحساب' : 'تفعيل الحساب'}
+                {saving ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
+                {saving ? 'جارٍ التفعيل...' : `فعّل الحساب وافتحه ← ${company.industry === 'clinic' ? (activePackageType === 'ai_pro' ? 'AI Voice + واتساب' : 'باقة واتساب') : ''}`}
               </button>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              {company.status !== 'trial' && (
+                <button
+                  type="button"
+                  onClick={toggleStatus}
+                  disabled={saving}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold font-cairo"
+                  style={{
+                    background: company.status === 'active' ? '#FEF2F2' : '#ECFDF5',
+                    color: company.status === 'active' ? '#DC2626' : '#059669',
+                    border: `1px solid ${company.status === 'active' ? '#FECACA' : '#A7F3D0'}`,
+                  }}
+                >
+                  {company.status === 'active' ? <ShieldOff size={15} /> : <ShieldCheck size={15} />}
+                  {company.status === 'active' ? 'تعليق الحساب' : 'إعادة التفعيل'}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={save}
                 disabled={saving || !changed}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold text-white font-cairo disabled:opacity-50"
+                className={`inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold text-white font-cairo disabled:opacity-50 ${company.status !== 'trial' ? '' : 'col-span-2'}`}
                 style={{ background: 'linear-gradient(135deg, #0EA5E9, #4F6EF7)' }}
               >
                 {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
                 حفظ التغييرات
               </button>
             </div>
+
+            {/* WhatsApp notify button — shown after activation */}
+            {company.owner_phone && (
+              <a
+                href={`https://wa.me/966${company.owner_phone.replace(/^0/, '')}?text=${encodeURIComponent(`مرحباً ${company.owner_name} 👋\nتم تفعيل حسابك في نظام مدار بنجاح!\n\nيمكنك الدخول الآن على:\nhttps://madar.ai/clinic-os/login\n\nللدعم والمساعدة تواصل معنا في أي وقت.`)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold font-cairo"
+                style={{ background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', textDecoration: 'none' }}
+              >
+                <MessageSquare size={15} />
+                أبلغ العميل عبر واتساب
+              </a>
+            )}
 
             {feedback && (
               <div className="rounded-2xl bg-emerald-50 p-3 text-center text-sm font-bold text-emerald-700 font-tajawal">

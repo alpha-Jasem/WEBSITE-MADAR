@@ -246,12 +246,6 @@ export const ClientAppointments = () => {
   const confirmedCount = appointments.filter(a => a.status === 'confirmed').length
   const doneCount = appointments.filter(a => a.status === 'done').length
 
-  if (authLoading || loading) return (
-    <div className="flex items-center justify-center h-64 gap-3">
-      <Loader2 size={20} className="animate-spin text-indigo-400" />
-      <p className="text-slate-500 font-tajawal text-sm">جاري التحميل...</p>
-    </div>
-  )
 
   return (
     <>

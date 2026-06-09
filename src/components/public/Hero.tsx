@@ -413,8 +413,8 @@ export const Hero = () => {
 
           {/* Right: WhatsApp Chat Mockup */}
           <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
             className="relative flex items-center justify-center"
           >

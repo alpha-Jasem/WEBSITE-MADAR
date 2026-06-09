@@ -1,10 +1,18 @@
 ﻿import { useEffect, useState } from 'react'
-import { Car, Clock, Star, Plus, Trash2, Check, Loader2, MapPin, Save, Receipt, QrCode, Copy, ExternalLink } from 'lucide-react'
+import { Car, Clock, Star, Plus, Trash2, Check, Loader2, MapPin, Save, Receipt, QrCode, Copy, ExternalLink, type LucideIcon } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { logAudit } from '../../../lib/auditLog'
 import { getSelfCheckinUrl } from '../../../lib/selfCheckin'
+import { sanitizeDecimalInput, sanitizeNameText, toSafeNumber } from '../../../lib/formSanitizers'
 import type { CWService } from '../../../types'
+
+type SetupTab = 'services' | 'hours' | 'loyalty' | 'vat' | 'qr'
+type CarWashSetupProps = {
+  title?: string
+  description?: string
+  visibleTabs?: SetupTab[]
+}
 
 type WorkingHours = { open: string; close: string; closed: boolean }
 type DayHours = Record<string, WorkingHours>
@@ -20,7 +28,7 @@ const DAYS = [
 ]
 
 const DEFAULT_HOURS: DayHours = Object.fromEntries(
-  DAYS.map(d => [d.key, { open: '08:00', close: '22:00', closed: d.key === 'friday' }])
+  DAYS.map(d => [d.key, { open: '00:00', close: '23:59', closed: false }])
 )
 
 
@@ -31,10 +39,11 @@ const SECTION_STYLE = {
   padding: '22px 24px',
 }
 
-export function CarWashSetup() {
+export function CarWashSetup({ title = 'إعداد المغسلة', description = 'الخدمات، أوقات العمل، الولاء، والضريبة', visibleTabs }: CarWashSetupProps = {}) {
   const { companyId, company, loading: authLoading } = useClientCompany()
+  const SAUDI_VAT_RATE = 15
 
-  const [tab, setTab] = useState<'services' | 'hours' | 'loyalty' | 'vat' | 'qr'>('services')
+  const [tab, setTab] = useState<SetupTab>(visibleTabs?.[0] ?? 'services')
   const [copiedUrl, setCopiedUrl] = useState(false)
 
   // Services (table-based)
@@ -56,8 +65,8 @@ export function CarWashSetup() {
 
   // VAT
   const [taxEnabled, setTaxEnabled] = useState(false)
-  const [vatRate, setVatRate] = useState(15)
-  const [priceIncludesVat, setPriceIncludesVat] = useState(false)
+  const [vatRate, setVatRate] = useState(SAUDI_VAT_RATE)
+  const [priceIncludesVat, setPriceIncludesVat] = useState(true)
   const [savingVat, setSavingVat] = useState(false)
   const [vatSaved, setVatSaved] = useState(false)
 
@@ -87,8 +96,8 @@ export function CarWashSetup() {
         if (c.cw_loyalty_threshold) setLoyaltyThreshold(c.cw_loyalty_threshold)
         if (c.google_maps_url) setReviewUrl(c.google_maps_url)
         setTaxEnabled(!!c.tax_enabled)
-        if (c.vat_rate) setVatRate(c.vat_rate)
-        setPriceIncludesVat(!!c.price_includes_vat)
+        setVatRate(SAUDI_VAT_RATE)
+        setPriceIncludesVat(c.price_includes_vat !== false)
         if (c.cw_monthly_target) setMonthlyTarget(c.cw_monthly_target)
       }
       setLoading(false)
@@ -101,8 +110,21 @@ export function CarWashSetup() {
     if (!companyId) return
     setSavingServices(true)
 
-    const toInsert = services.filter(s => !s.id || s.id === '')
-    const toUpdate = services.filter(s => s.id && s.id !== '')
+    const normalizedServices = services.map(service => ({
+      ...service,
+      name: sanitizeNameText(service.name).trim(),
+      price: toSafeNumber(service.price),
+      duration_minutes: Math.round(toSafeNumber(service.duration_minutes, 20, 1, 600)),
+    }))
+
+    if (normalizedServices.some(service => !service.name || service.price < 0 || service.duration_minutes < 1)) {
+      alert('تأكد أن اسم الخدمة نص صحيح، والسعر والمدة أرقام فقط.')
+      setSavingServices(false)
+      return
+    }
+
+    const toInsert = normalizedServices.filter(s => !s.id || s.id === '')
+    const toUpdate = normalizedServices.filter(s => s.id && s.id !== '')
 
     await Promise.all([
       ...toInsert.map(s => supabase.from('cw_services').insert({ company_id: companyId, name: s.name, price: s.price, duration_minutes: s.duration_minutes, active: s.active })),
@@ -153,33 +175,33 @@ export function CarWashSetup() {
   const saveVat = async () => {
     if (!companyId) return
     setSavingVat(true)
-    await supabase.from('companies').update({ tax_enabled: taxEnabled, vat_rate: vatRate, price_includes_vat: priceIncludesVat } as any).eq('id', companyId)
-    logAudit(companyId, 'tax_settings_changed', { newValue: { tax_enabled: taxEnabled, vat_rate: vatRate, price_includes_vat: priceIncludesVat } })
+    await supabase.from('companies').update({ tax_enabled: taxEnabled, vat_rate: SAUDI_VAT_RATE, price_includes_vat: true } as any).eq('id', companyId)
+    setVatRate(SAUDI_VAT_RATE)
+    setPriceIncludesVat(true)
+    logAudit(companyId, 'tax_settings_changed', { newValue: { tax_enabled: taxEnabled, vat_rate: SAUDI_VAT_RATE, price_includes_vat: true } })
     setSavingVat(false)
     setVatSaved(true)
     setTimeout(() => setVatSaved(false), 3000)
   }
 
-  const TABS = [
+  useEffect(() => {
+    if (visibleTabs?.length && !visibleTabs.includes(tab)) setTab(visibleTabs[0])
+  }, [visibleTabs, tab])
+
+  const ALL_TABS: { key: SetupTab; label: string; icon: LucideIcon }[] = [
     { key: 'services', label: 'الخدمات',     icon: Car     },
-    { key: 'hours',    label: 'أوقات العمل', icon: Clock   },
     { key: 'loyalty',  label: 'الولاء',       icon: Star    },
     { key: 'vat',      label: 'الضريبة',      icon: Receipt },
     { key: 'qr',       label: 'رمز QR',       icon: QrCode  },
-  ] as const
+  ]
+  const TABS = visibleTabs?.length ? ALL_TABS.filter(t => visibleTabs.includes(t.key)) : ALL_TABS
 
-  if (authLoading || loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, gap: 10 }}>
-      <Loader2 size={18} className="animate-spin" color="#22D3EE" />
-      <span style={{ color: '#475569', fontFamily: 'Tajawal, sans-serif', fontSize: 14 }}>جاري التحميل...</span>
-    </div>
-  )
 
   return (
     <div dir="rtl" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
       <div>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>إعداد المغسلة</h1>
-        <p style={{ fontSize: 13, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginTop: 4 }}>الخدمات، أوقات العمل، الولاء، والضريبة</p>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>{title}</h1>
+        <p style={{ fontSize: 13, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginTop: 4 }}>{description}</p>
       </div>
 
       {/* Tabs */}
@@ -216,24 +238,34 @@ export function CarWashSetup() {
               <Plus size={13} /> إضافة خدمة
             </button>
           </div>
+          <div style={{ marginBottom: 14, padding: '12px 14px', borderRadius: 14, background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.18)' }}>
+            <p style={{ margin: 0, fontSize: 12, lineHeight: 1.8, color: '#0369A1', fontFamily: 'Tajawal, sans-serif' }}>
+              اكتب السعر النهائي الذي يدفعه العميل. إذا كتبت 25 ر.س فالإجمالي للعميل 25 ر.س، والنظام يفصل VAT داخلياً في الفواتير والتقارير.
+            </p>
+          </div>
 
           {services.length === 0 ? (
             <p style={{ textAlign: 'center', color: '#475569', fontFamily: 'Tajawal, sans-serif', fontSize: 13, padding: '20px 0' }}>لا توجد خدمات — أضف خدمتك الأولى</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 60px 32px', gap: 10, padding: '0 4px' }}>
-                {['اسم الخدمة', 'السعر (ر.س)', 'الوقت (دقيقة)', 'مفعّل', ''].map(h => (
+                {['اسم الخدمة', 'السعر النهائي شامل VAT', 'الوقت (دقيقة)', 'مفعّل', ''].map(h => (
                   <span key={h} style={{ fontSize: 11, color: '#475569', fontFamily: 'Tajawal, sans-serif', fontWeight: 600 }}>{h}</span>
                 ))}
               </div>
               {services.map((s, i) => (
                 <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 60px 32px', gap: 10, alignItems: 'center' }}>
-                  <input value={s.name} onChange={e => updateService(i, 'name', e.target.value)}
+                  <input value={s.name} onChange={e => updateService(i, 'name', sanitizeNameText(e.target.value))}
                     placeholder="اسم الخدمة"
+                    type="text"
                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '8px 12px', color: '#1E293B', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
-                  <input type="number" value={s.price} onChange={e => updateService(i, 'price', Number(e.target.value))}
+                  <input type="text" inputMode="decimal" pattern="[0-9]*[.]?[0-9]*" value={String(s.price ?? '')} onChange={e => updateService(i, 'price', toSafeNumber(sanitizeDecimalInput(e.target.value)))}
+                    placeholder="0"
+                    dir="ltr"
                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '8px 12px', color: '#1E293B', fontSize: 13, fontFamily: 'Sora, sans-serif', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
-                  <input type="number" value={s.duration_minutes} onChange={e => updateService(i, 'duration_minutes', Number(e.target.value))}
+                  <input type="text" inputMode="numeric" pattern="[0-9]*" value={String(s.duration_minutes ?? '')} onChange={e => updateService(i, 'duration_minutes', Math.round(toSafeNumber(sanitizeDecimalInput(e.target.value), 20, 1, 600)))}
+                    placeholder="20"
+                    dir="ltr"
                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '8px 12px', color: '#1E293B', fontSize: 13, fontFamily: 'Sora, sans-serif', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <button onClick={() => updateService(i, 'active', !s.active)}
@@ -313,8 +345,8 @@ export function CarWashSetup() {
                   عدد الغسلات المدفوعة للحصول على الغسلة المجانية
                 </label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <input type="number" min={2} max={20} value={loyaltyThreshold}
-                    onChange={e => setLoyaltyThreshold(Number(e.target.value))}
+                  <input type="text" inputMode="numeric" pattern="[0-9]*" min={2} max={20} value={loyaltyThreshold}
+                    onChange={e => setLoyaltyThreshold(Math.round(toSafeNumber(sanitizeDecimalInput(e.target.value), 5, 2, 20)))}
                     style={{ width: 80, background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: 10, padding: '8px 12px', color: '#0F172A', fontSize: 18, fontFamily: 'Sora, sans-serif', fontWeight: 700, outline: 'none', textAlign: 'center' }} />
                   <div style={{ fontSize: 13, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>
                     كل <strong style={{ color: '#F59E0B' }}>{loyaltyThreshold}</strong> غسلات مدفوعة = الغسلة <strong style={{ color: '#10B981' }}>التالية مجانية</strong>
@@ -341,27 +373,6 @@ export function CarWashSetup() {
             <input value={reviewUrl} onChange={e => setReviewUrl(e.target.value)}
               placeholder="https://maps.app.goo.gl/..." dir="ltr"
               style={{ width: '100%', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 12, padding: '10px 14px', color: '#1E293B', fontSize: 13, fontFamily: 'monospace', outline: 'none', boxSizing: 'border-box' }} />
-          </div>
-          <div style={SECTION_STYLE}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-              <span style={{ fontSize: 15 }}>🎯</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>هدف الإيراد الشهري</span>
-            </div>
-            <p style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginBottom: 14 }}>
-              حدّد الهدف الشهري لإيرادات المغسلة — سيظهر شريط التقدم في لوحة التشغيل.
-            </p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <input
-                type="number"
-                min={0}
-                value={monthlyTarget}
-                onChange={e => setMonthlyTarget(Number(e.target.value))}
-                placeholder="5000"
-                dir="ltr"
-                style={{ width: 140, background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: 10, padding: '10px 14px', color: '#0F172A', fontSize: 18, fontFamily: 'Sora, sans-serif', fontWeight: 700, outline: 'none', textAlign: 'center' }}
-              />
-              <span style={{ fontSize: 13, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>ريال سعودي / الشهر</span>
-            </div>
           </div>
           <button onClick={saveLoyalty} disabled={savingLoyalty}
             style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '11px 22px', borderRadius: 12, border: 'none', cursor: 'pointer', background: loyaltySaved ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.12)', color: loyaltySaved ? '#10B981' : '#F59E0B', fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: 700 }}>
@@ -397,31 +408,27 @@ export function CarWashSetup() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {/* VAT Rate */}
                 <div>
-                  <label style={{ display: 'block', fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', marginBottom: 8 }}>نسبة الضريبة %</label>
+                  <label style={{ display: 'block', fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', marginBottom: 8 }}>نسبة الضريبة</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <input type="number" value={vatRate} min={0} max={100}
-                      onChange={e => setVatRate(Number(e.target.value))}
-                      style={{ width: 80, background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: 10, padding: '8px 12px', color: '#0F172A', fontSize: 20, fontFamily: 'Sora, sans-serif', fontWeight: 700, outline: 'none', textAlign: 'center' }} />
-                    <span style={{ fontSize: 18, color: '#6366F1', fontFamily: 'Sora, sans-serif', fontWeight: 700 }}>%</span>
-                    <p style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>الضريبة المعتمدة في المملكة 15%</p>
+                    <div style={{ width: 86, background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: 10, padding: '8px 12px', color: '#0F172A', fontSize: 20, fontFamily: 'Sora, sans-serif', fontWeight: 700, textAlign: 'center' }}>
+                      {SAUDI_VAT_RATE}%
+                    </div>
+                    <p style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>ثابتة حسب ضريبة القيمة المضافة في السعودية، ولا تتغير من لوحة المغسلة.</p>
                   </div>
                 </div>
 
                 {/* Price includes VAT */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: '#FAFAFA', borderRadius: 14, border: '1px solid #E2E8F0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, padding: '14px 16px', background: 'rgba(16,185,129,0.08)', borderRadius: 14, border: '1px solid rgba(16,185,129,0.22)' }}>
                   <div>
-                    <p style={{ fontSize: 13, color: '#0F172A', fontFamily: 'Cairo, sans-serif', fontWeight: 600, margin: 0 }}>الأسعار تشمل الضريبة</p>
+                    <p style={{ fontSize: 13, color: '#065F46', fontFamily: 'Cairo, sans-serif', fontWeight: 700, margin: 0 }}>الأسعار شاملة الضريبة دائماً</p>
                     <p style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', margin: '4px 0 0' }}>
-                      {priceIncludesVat
-                        ? `مثال: سعر 115 ر.س = ${(115 / 1.15).toFixed(2)} ر.س + ${(115 - 115/1.15).toFixed(2)} ر.س ضريبة`
-                        : `مثال: سعر 100 ر.س + ${vatRate}% = ${(100 * (1 + vatRate/100)).toFixed(2)} ر.س للعميل`}
+                      مثال: سعر 25 ر.س = {(25 / (1 + vatRate/100)).toFixed(2)} ر.س قبل الضريبة + {(25 - 25 / (1 + vatRate/100)).toFixed(2)} ر.س VAT، والإجمالي للعميل يبقى 25 ر.س.
                     </p>
                   </div>
-                  <button
-                    onClick={() => setPriceIncludesVat(v => !v)}
-                    style={{ width: 48, height: 26, borderRadius: 99, border: 'none', cursor: 'pointer', background: priceIncludesVat ? '#6366F1' : '#E2E8F0', position: 'relative', transition: 'background 0.2s' }}>
-                    <span style={{ position: 'absolute', top: 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'right 0.2s, left 0.2s', right: priceIncludesVat ? 3 : 'auto', left: priceIncludesVat ? 'auto' : 3 }} />
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#059669', fontFamily: 'Cairo, sans-serif', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                    <Check size={14} />
+                    السعر النهائي
+                  </div>
                 </div>
 
                 {/* Summary */}

@@ -81,12 +81,6 @@ export const ClientReports = () => {
 
   const convRate = stats.leads > 0 ? Math.round((stats.wonLeads / stats.leads) * 100) : 0
 
-  if (authLoading || loading) return (
-    <div className="flex items-center justify-center h-64 gap-3">
-      <Loader2 size={20} className="animate-spin text-primary-400" />
-      <p className="text-slate-500 font-tajawal text-sm">جاري تحميل التقارير...</p>
-    </div>
-  )
 
   return (
     <div className="space-y-6">

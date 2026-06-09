@@ -80,24 +80,24 @@ const PLANS = [
 
 const ADD_ONS = [
   {
+    key: 'wallet',
     icon: Wallet,
     title: 'المحفظة الرقمية',
     desc: 'رصيد للعميل النهائي يخصم منه تلقائياً عند الزيارة.',
-    price: 'إضافة مدفوعة',
     color: '#10B981',
   },
   {
+    key: 'memberships',
     icon: Repeat,
     title: 'اشتراكات العملاء الشهرية',
     desc: 'باقات 4 أو 8 غسلات أو Unlimited مع تذكير واتساب.',
-    price: 'مرحلة ثانية',
     color: '#F59E0B',
   },
   {
+    key: 'online_payments',
     icon: Smartphone,
     title: 'Apple Pay / Google Pay',
     desc: 'دفع مسبق عبر مزود الدفع وربطه بمحفظة العميل.',
-    price: 'يتطلب تفعيل',
     color: '#6366F1',
   },
 ]
@@ -106,6 +106,11 @@ const PLAN_LABEL_MAP: Record<string, string> = {
   starter: 'Starter',
   growth: 'Pro',
   enterprise: 'Premium',
+}
+
+const UNLOCKED_BY_PLAN: Record<string, string[]> = {
+  growth: ['التسجيل الذاتي QR', 'صفحة حالة Live للعميل', 'تقارير مالية وVAT', 'إغلاق اليوم', 'أداء الموظفين'],
+  enterprise: ['تعدد الفروع', 'صلاحيات متقدمة', 'رؤى AI', 'تقارير مخصصة', 'دعم أولوية'],
 }
 
 function buildWhatsAppUrl(companyName: string, currentPlan: string, requestedPlan: string) {
@@ -118,6 +123,13 @@ export const PricingPage = () => {
   const currentPlan = company?.plan ?? 'starter'
   const currentLabel = PLAN_LABEL_MAP[currentPlan] ?? 'Starter'
   const companyName = company?.name ?? 'منشأتي'
+  const isTrial = company?.status === 'trial'
+  const isSubscribed = company?.status === 'active'
+  const featureFlags = ((company?.cw_automations as any)?.feature_flags || {}) as Record<string, boolean>
+  const visibleAddons = ADD_ONS.filter(addon => Boolean(featureFlags[addon.key]))
+  const trialDaysLeft = company?.status === 'trial' && company?.plan_reset_at
+    ? Math.max(0, Math.ceil((new Date(company.plan_reset_at).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
+    : null
 
   const planOrder = ['starter', 'growth', 'enterprise']
   const currentIndex = planOrder.indexOf(currentPlan)
@@ -156,6 +168,14 @@ export const PricingPage = () => {
       )
       const data = await resp.json()
       if (data.payment_url) {
+        const ALLOWED_PAYMENT_DOMAINS = ['moyasar.com', 'api.moyasar.com', 'secure.moyasar.com']
+        let parsedUrl: URL | null = null
+        try { parsedUrl = new URL(data.payment_url) } catch { parsedUrl = null }
+        const domainAllowed = parsedUrl && ALLOWED_PAYMENT_DOMAINS.some(d => parsedUrl!.hostname === d || parsedUrl!.hostname.endsWith(`.${d}`))
+        if (!domainAllowed) {
+          setPayingPlan(null)
+          return
+        }
         window.location.href = data.payment_url
       } else {
         // Fallback to WhatsApp if payment gateway not configured
@@ -172,15 +192,22 @@ export const PricingPage = () => {
     <div className="space-y-8" dir="rtl">
       {/* Payment status banners */}
       {paymentStatus === 'success' && (
-        <div style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <CheckCircle2 size={20} color="#10B981" />
-          <div>
+        <div style={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(0,191,255,0.08))', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 20, padding: '18px 20px', display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+          <CheckCircle2 size={22} color="#10B981" style={{ marginTop: 2 }} />
+          <div className="flex-1">
             <p style={{ fontSize: 15, fontWeight: 700, color: '#10B981', fontFamily: 'Cairo, sans-serif', margin: 0 }}>
-              تم الدفع بنجاح! 🎉
+              تم الدفع بنجاح
             </p>
             <p style={{ fontSize: 13, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>
-              تم ترقية باقتك إلى {successPlan ? PLAN_LABEL_MAP[successPlan] ?? successPlan : ''} — أعد تحميل الصفحة لرؤية المميزات الجديدة.
+              تم ترقية باقتك إلى {successPlan ? PLAN_LABEL_MAP[successPlan] ?? successPlan : ''}. هذه أهم المميزات التي أصبحت متاحة الآن:
             </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {(UNLOCKED_BY_PLAN[successPlan || ''] || ['مميزات الباقة الجديدة']).map(item => (
+                <span key={item} className="rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-700 font-tajawal">
+                  {item}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -199,19 +226,38 @@ export const PricingPage = () => {
       {/* Header */}
       <div className="text-center">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-tajawal mb-4" style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', color: '#A5B4FC' }}>
-          <Sparkles size={12} /> باقتك الحالية: {currentLabel}
+          <Sparkles size={12} /> {isTrial ? `تجربتك الحالية: ${currentLabel}` : `باقتك الحالية: ${currentLabel}`}
         </div>
         <h1 className="text-3xl font-bold text-slate-900 font-cairo mb-3">باقات مدار للمغاسل</h1>
         <p className="text-slate-400 font-tajawal text-base max-w-lg mx-auto leading-relaxed">
           اختر مستوى التشغيل المناسب لمغسلتك. ابدأ بالكاش ونقطة البيع، ثم فعّل QR والتقارير والإضافات المتقدمة عند الحاجة.
         </p>
+        {trialDaysLeft !== null && (
+          <div className="mx-auto mt-5 max-w-xl rounded-2xl border border-sky-100 bg-white px-5 py-4 text-right shadow-sm">
+            <p className="text-sm font-bold text-slate-900 font-cairo">أنت الآن في تجربة Pro المجانية</p>
+            <p className="mt-1 text-xs leading-5 text-slate-500 font-tajawal">
+              باقي {trialDaysLeft} يوم على التجربة. عند الدفع تتحول الباقة إلى اشتراك نشط وتبقى إعدادات المغسلة كما هي.
+            </p>
+          </div>
+        )}
+        {isSubscribed && (
+          <div className="mx-auto mt-5 max-w-xl rounded-2xl border border-emerald-100 bg-emerald-50 px-5 py-4 text-right shadow-sm">
+            <p className="text-sm font-bold text-emerald-800 font-cairo">اشتراكك مفعل</p>
+            <p className="mt-1 text-xs leading-5 text-emerald-700 font-tajawal">
+              تم تفعيل الاشتراك على باقة {currentLabel}. تم إيقاف الدفع من هذه الصفحة حتى لا يتم خصم اشتراك ثاني بالغلط.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Plan cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {PLANS.map((plan, idx) => {
           const isCurrent = plan.id === currentPlan
-          const isUpgrade = idx > currentIndex
+          const isCurrentPaid = isCurrent && !isTrial
+          const canActivateTrialPlan = isTrial
+          const isTrialCurrent = isCurrent && isTrial
+          const isUpgrade = !isSubscribed && idx > currentIndex
           const isDowngrade = idx < currentIndex
           const isPro = plan.id === 'growth'
 
@@ -220,12 +266,12 @@ export const PricingPage = () => {
               key={plan.id}
               style={{
                 background: isPro ? `linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.05))` : '#F8FAFC',
-                border: `1px solid ${isCurrent ? plan.color : isPro ? plan.border : '#E2E8F0'}`,
+                border: `1px solid ${(isCurrentPaid || isTrialCurrent) ? plan.color : isPro ? plan.border : '#E2E8F0'}`,
                 borderRadius: 20,
                 padding: '28px 24px',
                 position: 'relative',
-                boxShadow: isPro ? `0 0 40px ${plan.glow}` : isCurrent ? `0 0 20px ${plan.glow}` : 'none',
-                transform: isPro ? 'scale(1.03)' : 'scale(1)',
+                boxShadow: isPro ? `0 0 40px ${plan.glow}` : (isCurrentPaid || isTrialCurrent) ? `0 0 20px ${plan.glow}` : 'none',
+                transform: 'none',
               }}
             >
               {/* Badge */}
@@ -243,7 +289,7 @@ export const PricingPage = () => {
                 </div>
               )}
 
-              {isCurrent && (
+              {(isCurrentPaid || isTrialCurrent) && (
                 <div style={{
                   position: 'absolute', top: -13, left: '50%', transform: 'translateX(-50%)',
                   background: plan.color, color: '#F4F6FB',
@@ -251,7 +297,7 @@ export const PricingPage = () => {
                   fontSize: 11, fontWeight: 700, fontFamily: 'Tajawal, sans-serif',
                   whiteSpace: 'nowrap',
                 }}>
-                  باقتك الحالية ✓
+                  {isTrialCurrent ? 'تجربة حالية' : 'باقتك الحالية ✓'}
                 </div>
               )}
 
@@ -290,11 +336,15 @@ export const PricingPage = () => {
               </div>
 
               {/* CTA */}
-              {isCurrent ? (
+              {isSubscribed ? (
+                <div style={{ width: '100%', padding: '11px 0', borderRadius: 12, background: '#FFFFFF', border: '1px solid #BBF7D0', color: '#047857', fontSize: 13, fontFamily: 'Tajawal, sans-serif', textAlign: 'center', fontWeight: 700 }}>
+                  {isCurrent ? 'تم الاشتراك في هذه الباقة ✓' : 'الاشتراك مفعل بالفعل'}
+                </div>
+              ) : isCurrentPaid ? (
                 <div style={{ width: '100%', padding: '11px 0', borderRadius: 12, background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569', fontSize: 13, fontFamily: 'Tajawal, sans-serif', textAlign: 'center', fontWeight: 600 }}>
                   باقتك الحالية ✓
                 </div>
-              ) : isUpgrade ? (
+              ) : (isUpgrade || canActivateTrialPlan) ? (
                 <button
                   onClick={() => handlePay(plan.id)}
                   disabled={payingPlan !== null}
@@ -311,7 +361,7 @@ export const PricingPage = () => {
                 >
                   {payingPlan === plan.id
                     ? <><Loader2 size={14} className="animate-spin" /> جاري التوجيه...</>
-                    : <><CreditCard size={14} /> ادفع الآن — {plan.price} ر.س/شهر</>
+                    : <><CreditCard size={14} /> {canActivateTrialPlan ? 'ثبّت الاشتراك الآن' : 'ادفع الآن'} — {plan.price} ر.س/شهر</>
                   }
                 </button>
               ) : (
@@ -324,28 +374,30 @@ export const PricingPage = () => {
         })}
       </div>
 
-      <div className="rounded-3xl p-5" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-        <div className="mb-4 flex flex-col gap-1 text-right">
-          <p className="text-sm font-bold text-slate-900 font-cairo">إضافات مدفوعة للمرحلة الثانية</p>
-          <p className="text-xs text-slate-500 font-tajawal">تظهر للعميل فقط إذا فعّلها صاحب النظام من لوحة الإدارة لكل مغسلة.</p>
-        </div>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          {ADD_ONS.map(addon => (
-            <div key={addon.title} className="rounded-2xl p-4" style={{ background: '#FFFFFF', border: `1px solid ${addon.color}33` }}>
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: `${addon.color}18`, border: `1px solid ${addon.color}33` }}>
-                  <addon.icon size={18} style={{ color: addon.color }} />
+      {visibleAddons.length > 0 && (
+        <div className="rounded-3xl p-5" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+          <div className="mb-4 flex flex-col gap-1 text-right">
+            <p className="text-sm font-bold text-slate-900 font-cairo">إضافات مفعلة لحسابك</p>
+            <p className="text-xs text-slate-500 font-tajawal">هذه تظهر فقط للحسابات التي فعّل لها صاحب النظام إضافات مدفوعة من لوحة الإدارة.</p>
+          </div>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            {visibleAddons.map(addon => (
+              <div key={addon.title} className="rounded-2xl p-4" style={{ background: '#FFFFFF', border: `1px solid ${addon.color}33` }}>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: `${addon.color}18`, border: `1px solid ${addon.color}33` }}>
+                    <addon.icon size={18} style={{ color: addon.color }} />
+                  </div>
+                  <span className="rounded-full px-2.5 py-1 text-[11px] font-bold font-tajawal" style={{ color: addon.color, background: `${addon.color}12` }}>
+                    مفعلة
+                  </span>
                 </div>
-                <span className="rounded-full px-2.5 py-1 text-[11px] font-bold font-tajawal" style={{ color: addon.color, background: `${addon.color}12` }}>
-                  {addon.price}
-                </span>
+                <p className="text-sm font-bold text-slate-900 font-cairo">{addon.title}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500 font-tajawal">{addon.desc}</p>
               </div>
-              <p className="text-sm font-bold text-slate-900 font-cairo">{addon.title}</p>
-              <p className="mt-1 text-xs leading-5 text-slate-500 font-tajawal">{addon.desc}</p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Bottom trust section */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">

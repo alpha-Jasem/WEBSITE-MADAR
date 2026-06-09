@@ -119,12 +119,6 @@ export const ClientSetup = () => {
     load()
   }, [companyId])
 
-  if (authLoading || loading) return (
-    <div className="flex items-center justify-center h-64 gap-3">
-      <Loader2 size={20} className="animate-spin text-indigo-400" />
-      <p className="text-slate-500 font-tajawal text-sm">جاري التحميل...</p>
-    </div>
-  )
 
   const tabs = [
     { icon: GitBranch, label: 'الفرع' },

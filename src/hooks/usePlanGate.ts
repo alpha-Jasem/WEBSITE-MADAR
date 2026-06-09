@@ -4,6 +4,7 @@ import { PLAN_LABELS } from '../lib/constants'
 export function usePlanGate() {
   const { company, loading } = useClientCompany()
   const plan = company?.plan ?? 'starter'
+  const flags = ((company?.cw_automations as any)?.feature_flags || {}) as Record<string, boolean>
   const isPro = plan === 'growth' || plan === 'enterprise'
   const isPremium = plan === 'enterprise'
 
@@ -25,6 +26,10 @@ export function usePlanGate() {
       aiInsights: allOpen || isPremium,
       weeklyPromoAI: allOpen || isPremium,
       multiBranch: allOpen || isPremium,
+      wallet: allOpen || Boolean(flags.wallet),
+      memberships: allOpen || Boolean(flags.memberships),
+      onlinePayments: allOpen || Boolean(flags.online_payments),
+      customerRevenue: allOpen || Boolean(flags.wallet || flags.memberships || flags.online_payments),
     },
   }
 }

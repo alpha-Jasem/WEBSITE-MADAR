@@ -31,12 +31,37 @@ export function ClientCompanyProvider({ children }: { children: ReactNode }) {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user || !mounted) { setState(s => ({ ...s, loading: false })); return }
 
-      const [{ data: userRow }, { data: company }] = await Promise.all([
-        supabase.from('users').select('role').eq('id', user.id).single(),
+      const [{ data: userRow }, { data: companyDirect }] = await Promise.all([
+        supabase.from('users').select('role, company_id').eq('id', user.id).single(),
         supabase.from('companies').select('*').eq('auth_user_id', user.id).single(),
       ])
 
       if (!mounted) return
+
+      // Fallback 1: legacy linkage via users.company_id
+      let company = companyDirect
+      if (!company && userRow?.company_id) {
+        const { data: legacyCompany } = await supabase
+          .from('companies')
+          .select('*')
+          .eq('id', userRow.company_id)
+          .single()
+        company = legacyCompany ?? null
+      }
+
+      // Fallback 2: match by owner_email (accounts created before auth_user_id existed)
+      if (!company && user.email) {
+        const { data: emailCompany } = await supabase
+          .from('companies')
+          .select('*')
+          .eq('owner_email', user.email)
+          .maybeSingle()
+        if (emailCompany) {
+          // Backfill auth_user_id so future lookups are instant
+          supabase.from('companies').update({ auth_user_id: user.id }).eq('id', emailCompany.id)
+          company = emailCompany
+        }
+      }
 
       setState({
         company: company ?? null,

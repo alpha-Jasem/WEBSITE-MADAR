@@ -1,13 +1,19 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { Suspense, lazy } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { Suspense, lazy, useEffect } from 'react'
+
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  return null
+}
 import { LanguageProvider } from './context/LanguageContext'
 import { ClientCompanyProvider } from './context/ClientCompanyContext'
 import { ActiveProfileProvider } from './context/ActiveProfileContext'
+import { ClinicOSProvider } from './context/ClinicOSContext'
 import { ProtectedRoute } from './components/shared/ProtectedRoute'
-import { LoadingScreen } from './components/shared/LoadingScreen'
 import { ErrorBoundary } from './components/shared/ErrorBoundary'
 import { HomePage } from './pages/HomePage'
-import { CarWashLanding } from './pages/CarWashLanding'
+import { CarWashPage } from './pages/CarWashPage'
 import { ClinicLanding } from './pages/ClinicLanding'
 import { ClinicOSLanding } from './pages/ClinicOSLanding'
 import { Login } from './pages/Login'
@@ -18,23 +24,69 @@ import { AuthCallback } from './pages/AuthCallback'
 import { Privacy } from './pages/Privacy'
 import { Terms } from './pages/Terms'
 
-const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
-const ClientPortal = lazy(() => import('./pages/ClientPortal').then(m => ({ default: m.ClientPortal })))
-const SolarEngine = lazy(() => import('./pages/SolarEngine').then(m => ({ default: m.SolarEngine })))
-const SelfCheckIn = lazy(() => import('./pages/SelfCheckIn').then(m => ({ default: m.SelfCheckIn })))
-const CarWashStatus = lazy(() => import('./pages/CarWashStatus').then(m => ({ default: m.CarWashStatus })))
+const AdminDashboard    = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
+const ClientPortal      = lazy(() => import('./pages/ClientPortal').then(m => ({ default: m.ClientPortal })))
+const SolarEngine       = lazy(() => import('./pages/SolarEngine').then(m => ({ default: m.SolarEngine })))
+const SelfCheckIn       = lazy(() => import('./pages/SelfCheckIn').then(m => ({ default: m.SelfCheckIn })))
+const CarWashStatus     = lazy(() => import('./pages/CarWashStatus').then(m => ({ default: m.CarWashStatus })))
+
+// ClinicOS
+const ClinicOSLoginPage    = lazy(() => import('./pages/clinicOS/ClinicOSLogin').then(m => ({ default: m.ClinicOSLogin })))
+const ClinicOSSignupPage   = lazy(() => import('./pages/clinicOS/ClinicOSSignup').then(m => ({ default: m.ClinicOSSignup })))
+const DemoSignupPage       = lazy(() => import('./pages/clinicOS/DemoSignup').then(m => ({ default: m.DemoSignup })))
+const DemoConfirmPage      = lazy(() => import('./pages/clinicOS/DemoConfirm').then(m => ({ default: m.DemoConfirm })))
+const PackageSelectorPage  = lazy(() => import('./pages/clinicOS/PackageSelector').then(m => ({ default: m.PackageSelector })))
+const ClinicOSDashLayout   = lazy(() => import('./components/clinicOS/layout/ClinicOSDashboardLayout').then(m => ({ default: m.ClinicOSDashboardLayout })))
+const DashboardOverview    = lazy(() => import('./pages/clinicOS/dashboard/DashboardOverview').then(m => ({ default: m.DashboardOverview })))
+const AppointmentsPage     = lazy(() => import('./pages/clinicOS/dashboard/Appointments').then(m => ({ default: m.Appointments })))
+const AIBookingPage        = lazy(() => import('./pages/clinicOS/dashboard/AIBooking').then(m => ({ default: m.AIBooking })))
+const PatientsPage         = lazy(() => import('./pages/clinicOS/dashboard/Patients').then(m => ({ default: m.Patients })))
+const DoctorsPage          = lazy(() => import('./pages/clinicOS/dashboard/Doctors').then(m => ({ default: m.Doctors })))
+const ServicesPage         = lazy(() => import('./pages/clinicOS/dashboard/Services').then(m => ({ default: m.Services })))
+const CalendarPageCO       = lazy(() => import('./pages/clinicOS/dashboard/CalendarPage').then(m => ({ default: m.CalendarPage })))
+const MessagesPageCO       = lazy(() => import('./pages/clinicOS/dashboard/Messages').then(m => ({ default: m.Messages })))
+const ReportsPageCO        = lazy(() => import('./pages/clinicOS/dashboard/Reports').then(m => ({ default: m.Reports })))
+const SettingsPageCO       = lazy(() => import('./pages/clinicOS/dashboard/Settings').then(m => ({ default: m.Settings })))
 
 function App() {
   return (
     <LanguageProvider>
       <BrowserRouter>
         <ErrorBoundary>
-        <Suspense fallback={<LoadingScreen />}>
+        <ScrollToTop />
+        <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/car-wash" element={<CarWashLanding />} />
+            <Route path="/car-wash" element={<CarWashPage />} />
             <Route path="/clinic" element={<ClinicLanding />} />
             <Route path="/clinic-os" element={<ClinicOSLanding />} />
+
+            {/* ── ClinicOS Auth & Onboarding ── */}
+            <Route path="/clinic-os/login"    element={<ClinicOSLoginPage />} />
+            <Route path="/clinic-os/signup"   element={<ClinicOSSignupPage />} />
+            <Route path="/clinic-os/demo"     element={<DemoSignupPage />} />
+            <Route path="/clinic-os/demo/confirm" element={<DemoConfirmPage />} />
+            <Route path="/clinic-os/select"   element={
+              <ClinicOSProvider><PackageSelectorPage /></ClinicOSProvider>
+            } />
+
+            {/* ── ClinicOS Dashboard ── */}
+            <Route path="/clinic-os/dashboard/*" element={
+              <ClinicOSProvider>
+                <ClinicOSDashLayout />
+              </ClinicOSProvider>
+            }>
+              <Route index          element={<DashboardOverview />} />
+              <Route path="appointments" element={<AppointmentsPage />} />
+              <Route path="ai-booking"   element={<AIBookingPage />} />
+              <Route path="patients"     element={<PatientsPage />} />
+              <Route path="doctors"      element={<DoctorsPage />} />
+              <Route path="services"     element={<ServicesPage />} />
+              <Route path="calendar"     element={<CalendarPageCO />} />
+              <Route path="messages"     element={<MessagesPageCO />} />
+              <Route path="reports"      element={<ReportsPageCO />} />
+              <Route path="settings"     element={<SettingsPageCO />} />
+            </Route>
             <Route path="/real-estate" element={<Navigate to="/#products" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />

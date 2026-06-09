@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Check, Loader2, Eye, EyeOff, Building2, Car, Stethoscope, Briefcase } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'

@@ -101,12 +101,6 @@ export const ClientConversations = () => {
   const bookedCount = conversations.filter(c => c.state === 'booked').length
   const abandonedCount = conversations.filter(c => c.state === 'abandoned').length
 
-  if (authLoading || loading) return (
-    <div className="flex items-center justify-center h-64 gap-3">
-      <Loader2 size={20} className="animate-spin text-indigo-400" />
-      <p className="text-slate-500 font-tajawal text-sm">جاري التحميل...</p>
-    </div>
-  )
 
   return (
     <div className="space-y-6">

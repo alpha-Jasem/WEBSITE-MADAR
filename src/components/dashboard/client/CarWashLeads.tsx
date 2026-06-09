@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
+import { ClientButton, ClientPageHeader } from './ClientUI'
 
 const N8N_BASE             = 'https://keepcalm.app.n8n.cloud/webhook'
 const N8N_REGISTER_WEBHOOK = `${N8N_BASE}/cw-registration`
@@ -114,23 +115,43 @@ export function CarWashLeads() {
   const [crudSaving, setCrudSaving] = useState(false)
   const [crudDeleting, setCrudDeleting] = useState(false)
 
-  const load = async () => {
+  const sortCustomers = (rows: CWCustomer[]) => rows.sort((a, b) => {
+    const aTime = new Date(a.last_visit_at || a.created_at || 0).getTime()
+    const bTime = new Date(b.last_visit_at || b.created_at || 0).getTime()
+    return bTime - aTime
+  })
+
+  const upsertCustomerLive = (row: CWCustomer) => {
+    setCustomers(prev => sortCustomers([row, ...prev.filter(customer => customer.id !== row.id)]))
+  }
+
+  const load = async (silent = false) => {
     if (!companyId) return
-    setLoading(true)
+    if (!silent) setLoading(true)
     const { data } = await supabase
       .from('cw_customers')
       .select('*')
       .eq('company_id', companyId)
       .order('last_visit_at', { ascending: false })
     setCustomers((data as CWCustomer[]) || [])
-    setLoading(false)
+    if (!silent) setLoading(false)
   }
 
   useEffect(() => {
     if (authLoading || !companyId) return
     load()
     const ch = supabase.channel('cw_leads_rt')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'cw_customers' }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cw_customers', filter: `company_id=eq.${companyId}` }, (payload: any) => {
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+          upsertCustomerLive(payload.new as CWCustomer)
+          return
+        }
+        if (payload.eventType === 'DELETE') {
+          setCustomers(prev => prev.filter(customer => customer.id !== payload.old?.id))
+          return
+        }
+        load(true)
+      })
       .subscribe()
     return () => { supabase.removeChannel(ch) }
   }, [authLoading, companyId])
@@ -166,13 +187,18 @@ export function CarWashLeads() {
     if (!companyId || !campaignMsg.trim() || selected.size === 0) return
     setSending(true)
     const phones = customers.filter(c => selected.has(c.id)).map(c => c.phone)
-    const { data: campaign } = await supabase.from('cw_campaigns').insert({ company_id: companyId, message: campaignMsg.trim(), phones, status: 'sending' }).select('id').single()
-    // Fire webhook immediately instead of waiting for polling
-    fetch('https://keepcalm.app.n8n.cloud/webhook/cw-campaign-send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ campaign_id: campaign?.id, message: campaignMsg.trim(), phones, company_id: companyId }),
-    }).catch(() => {})
+    const { data: campaign, error: campaignError } = await supabase
+      .from('cw_campaigns')
+      .insert({ company_id: companyId, message: campaignMsg.trim(), phones, status: 'pending' })
+      .select('id')
+      .single()
+
+    if (campaignError || !campaign?.id) {
+      setSending(false)
+      alert('تعذر إنشاء الحملة. حاول مرة أخرى.')
+      return
+    }
+
     setSending(false)
     setSent(true)
     setTimeout(() => { setSent(false); setShowCampaign(false); setSelected(new Set()); setCampaignMsg('') }, 2500)
@@ -212,16 +238,45 @@ export function CarWashLeads() {
       alert('هذا الرقم مسجّل مسبقاً')
       return
     }
-    await supabase.from('cw_customers').insert({
+    const now = new Date().toISOString()
+    const tempId = `temp-${Date.now()}`
+    const optimisticCustomer: CWCustomer = {
+      id: tempId,
+      company_id: companyId,
+      phone,
+      name: crudForm.name.trim() || null,
+      total_visits: 0,
+      loyalty_tier: 'bronze',
+      last_visit_at: now,
+      google_review_requested: false,
+      welcome_sent: true,
+      created_at: now,
+    } as CWCustomer
+
+    setSearch('')
+    setFilter('all')
+    upsertCustomerLive(optimisticCustomer)
+    setShowAddModal(false)
+
+    const { data: inserted, error } = await supabase.from('cw_customers').insert({
       company_id: companyId, phone, name: crudForm.name.trim() || null,
-      total_visits: 0, welcome_sent: true, last_visit_at: new Date().toISOString(),
-    })
+      total_visits: 0, welcome_sent: true, last_visit_at: now,
+    }).select('*').single()
+    if (error) {
+      setCustomers(prev => prev.filter(customer => customer.id !== tempId))
+      setCrudSaving(false)
+      alert('تعذر إضافة العميل. حاول مرة أخرى.')
+      return
+    }
+    if (inserted) {
+      setCustomers(prev => sortCustomers([(inserted as CWCustomer), ...prev.filter(customer => customer.id !== tempId && customer.id !== inserted.id)]))
+    }
     fireWebhook(N8N_REGISTER_WEBHOOK, {
       phone, customer_name: crudForm.name.trim() || '',
       company_name: company?.name ?? 'المغسلة', company_id: companyId,
     })
+    load(true)
     setCrudSaving(false)
-    setShowAddModal(false)
   }
 
   const updateCustomer = async () => {
@@ -229,7 +284,8 @@ export function CarWashLeads() {
     setCrudSaving(true)
     const raw = crudForm.phone.replace(/\D/g, '')
     const phone = raw.startsWith('966') ? raw : raw.startsWith('0') ? `966${raw.slice(1)}` : `966${raw}`
-    await supabase.from('cw_customers').update({ name: crudForm.name.trim() || null, phone }).eq('id', editTarget.id)
+    const { data } = await supabase.from('cw_customers').update({ name: crudForm.name.trim() || null, phone }).eq('id', editTarget.id).select('*').single()
+    if (data) upsertCustomerLive(data as CWCustomer)
     setCrudSaving(false)
     setEditTarget(null)
   }
@@ -238,6 +294,7 @@ export function CarWashLeads() {
     if (!deleteTarget) return
     setCrudDeleting(true)
     await supabase.from('cw_customers').delete().eq('id', deleteTarget.id)
+    setCustomers(prev => prev.filter(customer => customer.id !== deleteTarget.id))
     setCrudDeleting(false)
     setDeleteTarget(null)
   }
@@ -247,67 +304,39 @@ export function CarWashLeads() {
     return (Date.now() - new Date(c.last_visit_at).getTime()) > 30 * 86400000
   }).length
 
-  if (authLoading || loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, gap: 10 }}>
-      <Car size={18} color="#22D3EE" />
-      <span style={{ color: '#475569', fontFamily: 'Tajawal, sans-serif', fontSize: 14 }}>جاري تحميل العملاء...</span>
-    </div>
-  )
 
   return (
     <div dir="rtl" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>العملاء</h1>
-          <p style={{ fontSize: 13, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginTop: 4 }}>
-            {customers.length} عميل مسجل — {inactive} غير نشط (أكثر من 30 يوم)
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+      <ClientPageHeader
+        eyebrow="ملف العملاء والولاء"
+        title="العملاء"
+        description={`${customers.length} عميل مسجل — ${inactive} غير نشط أكثر من 30 يوم.`}
+        actions={(
+          <>
           {selected.size > 0 && (
             can.campaigns ? (
-              <button onClick={() => setShowCampaign(true)} style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px',
-                background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)',
-                borderRadius: 10, fontSize: 13, color: '#818CF8', fontFamily: 'Cairo, sans-serif', fontWeight: 700,
-                cursor: 'pointer',
-              }}>
+              <ClientButton onClick={() => setShowCampaign(true)}>
                 <Send size={14} /> إرسال لـ {selected.size} عميل
-              </button>
+              </ClientButton>
             ) : (
-              <button
+              <ClientButton
+                tone="secondary"
                 onClick={() => window.location.href = '/client/upgrade'}
                 title="ميزة Pro — ارتقِ لتفعيل الحملات"
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px',
-                  background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.2)',
-                  borderRadius: 10, fontSize: 13, color: '#64748B', fontFamily: 'Cairo, sans-serif', fontWeight: 700,
-                  cursor: 'pointer',
-                }}>
+              >
                 <Lock size={13} /> حملة واتساب — Pro
-              </button>
+              </ClientButton>
             )
           )}
-          <button onClick={openAdd} style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px',
-            background: 'linear-gradient(135deg, #22D3EE22, #06B6D422)',
-            border: '1px solid rgba(34,211,238,0.3)',
-            borderRadius: 10, fontSize: 13, color: '#22D3EE', fontFamily: 'Cairo, sans-serif', fontWeight: 700,
-            cursor: 'pointer',
-          }}>
+          <ClientButton onClick={openAdd}>
             <Plus size={14} /> إضافة عميل
-          </button>
-          <button onClick={exportExcel} style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px',
-            background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)',
-            borderRadius: 10, fontSize: 13, color: '#10B981', fontFamily: 'Tajawal, sans-serif',
-            cursor: 'pointer',
-          }}>
+          </ClientButton>
+          <ClientButton tone="secondary" onClick={exportExcel}>
             <Download size={14} /> تصدير Excel
-          </button>
-        </div>
-      </div>
+          </ClientButton>
+          </>
+        )}
+      />
 
       {/* Summary pills */}
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -368,12 +397,12 @@ export function CarWashLeads() {
       </div>
 
       {/* Table */}
-      <div style={{
+      <div className="cw-leads-table" style={{
         background: '#FAFAFA', border: '1px solid #E2E8F0',
         borderRadius: 18, overflow: 'hidden',
       }}>
         {/* Column headers */}
-        <div style={{
+        <div className="cw-leads-table-head" style={{
           display: 'grid', gridTemplateColumns: '36px 1fr 140px 130px 110px 100px 90px 72px',
           padding: '10px 20px', borderBottom: '1px solid #E2E8F0',
           fontSize: 11, color: '#475569', fontFamily: 'Tajawal, sans-serif',
@@ -401,7 +430,7 @@ export function CarWashLeads() {
           const isMilestone = c.total_visits > 0 && c.total_visits % threshold === 0
           const isNear = c.total_visits % threshold === threshold - 1
           return (
-            <div key={c.id} style={{
+            <div key={c.id} className="cw-leads-table-row" style={{
               display: 'grid', gridTemplateColumns: '36px 1fr 140px 130px 110px 100px 90px 72px',
               padding: '13px 20px', alignItems: 'center',
               borderBottom: i < filtered.length - 1 ? '1px solid #E2E8F0' : 'none',
@@ -458,21 +487,21 @@ export function CarWashLeads() {
 
               {/* Row actions */}
               <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                <button onClick={() => openHistory(c)} title="سجل الزيارات" style={{
+                <button onClick={() => openHistory(c)} title="سجل الزيارات" aria-label={`سجل زيارات ${c.name || c.phone}`} style={{
                   width: 28, height: 28, borderRadius: 7, border: '1px solid rgba(99,102,241,0.2)',
                   background: 'rgba(99,102,241,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   cursor: 'pointer', color: '#6366F1',
                 }}>
                   <Clock size={12} />
                 </button>
-                <button onClick={() => openEdit(c)} title="تعديل" style={{
+                <button onClick={() => openEdit(c)} title="تعديل" aria-label={`تعديل ${c.name || c.phone}`} style={{
                   width: 28, height: 28, borderRadius: 7, border: '1px solid #E2E8F0',
                   background: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   cursor: 'pointer', color: '#64748B',
                 }}>
                   <Pencil size={12} />
                 </button>
-                <button onClick={() => setDeleteTarget(c)} title="حذف" style={{
+                <button onClick={() => setDeleteTarget(c)} title="حذف" aria-label={`حذف ${c.name || c.phone}`} style={{
                   width: 28, height: 28, borderRadius: 7, border: '1px solid rgba(239,68,68,0.15)',
                   background: 'rgba(239,68,68,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   cursor: 'pointer', color: '#EF4444',
@@ -481,6 +510,62 @@ export function CarWashLeads() {
                 </button>
               </div>
             </div>
+          )
+        })}
+      </div>
+
+      <div className="cw-leads-mobile-list">
+        {filtered.length === 0 ? (
+          <div className="cw-leads-mobile-empty">
+            {customers.length === 0 ? 'لا يوجد عملاء مسجلون حتى الآن' : 'لا توجد نتائج'}
+          </div>
+        ) : filtered.map(c => {
+          const isInactive = c.last_visit_at && (Date.now() - new Date(c.last_visit_at).getTime()) > 30 * 86400000
+          const isMilestone = c.total_visits > 0 && c.total_visits % threshold === 0
+          const isNear = c.total_visits % threshold === threshold - 1
+          return (
+            <article key={`mobile-${c.id}`} className={`cw-leads-mobile-card${selected.has(c.id) ? ' selected' : ''}`}>
+              <div className="cw-leads-mobile-top">
+                <input
+                  type="checkbox"
+                  checked={selected.has(c.id)}
+                  onChange={() => toggleSelect(c.id)}
+                  aria-label="تحديد العميل"
+                />
+                <div className="cw-leads-mobile-avatar">
+                  {isMilestone ? <Trophy size={15} /> : (c.name || c.phone).slice(0, 1)}
+                </div>
+                <div className="cw-leads-mobile-name">
+                  <strong>{c.name || 'عميل بدون اسم'}</strong>
+                  <span><Phone size={11} /> {formatPhone(c.phone)}</span>
+                </div>
+                <div className="cw-leads-mobile-visits">
+                  <strong>{c.total_visits}</strong>
+                  <span>زيارة</span>
+                </div>
+              </div>
+
+              <div className="cw-leads-mobile-meta">
+                <span style={{ color: TIER_COLORS[c.loyalty_tier] || '#CD7F32', background: `${TIER_COLORS[c.loyalty_tier]}15`, borderColor: `${TIER_COLORS[c.loyalty_tier]}30` }}>
+                  <Star size={10} /> {TIER_LABELS[c.loyalty_tier] || 'برونزي'}
+                </span>
+                {isMilestone && <span className="gold"><Gift size={10} /> يستحق مكافأة</span>}
+                {isNear && !isMilestone && <span className="cyan"><Car size={10} /> قريب من المكافأة</span>}
+                {isInactive && <span className="red"><Clock size={10} /> غير نشط</span>}
+                <span><Clock size={10} /> {timeAgo(c.last_visit_at)}</span>
+              </div>
+
+              <div className="cw-leads-mobile-loyalty">
+                <span>تقدم الولاء</span>
+                <LoyaltyDots visits={c.total_visits} threshold={company?.cw_loyalty_threshold || 5} />
+              </div>
+
+              <div className="cw-leads-mobile-actions">
+                <button type="button" onClick={() => openHistory(c)}><Clock size={12} /> السجل</button>
+                <button type="button" onClick={() => openEdit(c)}><Pencil size={12} /> تعديل</button>
+                <button type="button" className="danger" onClick={() => setDeleteTarget(c)}><Trash2 size={12} /> حذف</button>
+              </div>
+            </article>
           )
         })}
       </div>
@@ -509,7 +594,7 @@ export function CarWashLeads() {
                   placeholder="اكتب رسالتك هنا... مثال: عروض نهاية الأسبوع 🚗✨"
                   style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', outline: 'none', fontFamily: 'Tajawal, sans-serif', resize: 'vertical', boxSizing: 'border-box' }} />
                 <p style={{ fontSize: 11, color: '#334155', fontFamily: 'Tajawal, sans-serif', marginTop: 4 }}>
-                  ستُرسل فوراً عبر WhatsApp
+                  ستُرسل للعملاء المحددين عبر واتساب بعد الضغط على إرسال
                 </p>
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
@@ -687,7 +772,7 @@ export function CarWashLeads() {
           display: 'flex', alignItems: 'center', gap: 8,
         }}>
           <span style={{ color: '#EF4444', fontWeight: 700 }}>⚠️ {inactive} عميل</span>
-          لم يزوروا المغسلة منذ أكثر من 30 يوماً — يُنصح بإرسال حملة reactivation عبر n8n.
+          لم يزوروا المغسلة منذ أكثر من 30 يوماً — يُنصح بإرسال حملة إعادة تنشيط من محرك مدار.
         </div>
       )}
     </div>

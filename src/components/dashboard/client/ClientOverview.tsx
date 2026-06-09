@@ -15,6 +15,7 @@ import {
   MessageCircle,
   Sparkles,
   Star,
+  Stethoscope,
   TrendingUp,
   UserPlus,
   Users,
@@ -289,6 +290,28 @@ export const ClientOverview = () => {
 
   return (
     <div className="client-orbit-dashboard" style={{ '--client-accent': template.accent } as CSSProperties}>
+
+      {/* Product identity bar */}
+      <div className="flex items-center justify-between px-5 py-2.5 mb-3 rounded-xl"
+        style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)' }}>
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-lg flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #0D2B1E, #10B981)' }}>
+            <Stethoscope size={11} className="text-white" />
+          </div>
+          <span className="text-xs font-bold text-white font-sora">Clinic OS</span>
+          <span className="text-[10px] font-tajawal" style={{ color: 'rgba(16,185,129,0.6)' }}>
+            · powered by Madar
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+          <span className="text-[10px] font-tajawal" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            {company?.name || 'العيادة'} — نشط
+          </span>
+        </div>
+      </div>
+
       <header className="client-orbit-header">
         <div>
           <span>Welcome,</span>
