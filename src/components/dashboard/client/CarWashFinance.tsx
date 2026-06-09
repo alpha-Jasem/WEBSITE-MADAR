@@ -1,13 +1,17 @@
 ﻿import { useEffect, useState } from 'react'
-import { Plus, X, Loader2, TrendingUp, TrendingDown, Wallet, Users, DollarSign, ClipboardCheck, FileDown, Pencil } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
+import { Plus, X, Loader2, TrendingUp, TrendingDown, Wallet, Users, DollarSign, ClipboardCheck, FileDown, Pencil, Search, Receipt, Copy, Save, ShoppingCart } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
 import { CarWashDailyClosing } from './CarWashDailyClosing'
+import { CarWashSetup } from './CarWashSetup'
 import { FeatureLock } from '../../dash/FeatureLock'
 import { logAudit } from '../../../lib/auditLog'
 import { downloadCSV, formatDateForCSV } from '../../../lib/exportUtils'
 import type { CWExpense, ExpenseCategory, PaymentMethod } from '../../../types'
+import { ClientButton, ClientEmptyState, ClientPageHeader, ClientPanel, ClientStatCard } from './ClientUI'
+import { CarWashPOS } from './CarWashPOS'
 
 const DATE_PRESETS = [
   { label: 'اليوم',       days: 1  },
@@ -23,24 +27,18 @@ const CATEGORIES: { value: ExpenseCategory; label: string }[] = [
 ]
 
 const EMPTY_FORM = { amount: '', category: 'other' as ExpenseCategory, description: '' }
-
-function StatCard({ icon: Icon, label, value, color, sub }: { icon: typeof Wallet; label: string; value: string; color: string; sub?: string }) {
-  return (
-    <div className="p-5 rounded-2xl" style={{ background: '#FFFFFF', border: `1px solid ${color}44`, borderTop: `3px solid ${color}`, boxShadow: '0 2px 16px rgba(13,27,62,0.07)' }}>
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: color + '18' }}>
-          <Icon size={16} style={{ color }} />
-        </div>
-        <p className="text-xs font-tajawal" style={{ color: '#5A6E85' }}>{label}</p>
-      </div>
-      <p className="text-2xl font-bold font-sora" style={{ color }}>{value}</p>
-      {sub && <p className="text-xs font-tajawal mt-1" style={{ color: '#415169' }}>{sub}</p>}
-    </div>
-  )
+const PAYMENT_LABELS: Record<string, string> = {
+  cash: 'كاش',
+  mada: 'مدى',
+  visa: 'فيزا',
+  bank_transfer: 'تحويل',
+  stc_pay: 'STC Pay',
+  other: 'أخرى',
 }
 
 export const CarWashFinance = () => {
-  const [tab, setTab] = useState<'finance' | 'closing'>('finance')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [tab, setTab] = useState<'pos' | 'finance' | 'closing' | 'services'>('pos')
   const { companyId, company, loading: authLoading } = useClientCompany()
   const { can, planLabel } = usePlanGate()
   const [loading, setLoading] = useState(true)
@@ -52,14 +50,31 @@ export const CarWashFinance = () => {
   const [freeWashCount, setFreeWashCount] = useState(0)
   const [freeWashDiscount, setFreeWashDiscount] = useState(0)
   const [showForm, setShowForm] = useState(false)
+  const [formMode, setFormMode] = useState<'expense' | 'cash'>('expense')
   const [editingExpense, setEditingExpense] = useState<CWExpense | null>(null)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [days, setDays] = useState(1)
   const [visitsData, setVisitsData] = useState<any[]>([])
+  const [customerMap, setCustomerMap] = useState<Record<string, { name: string | null; phone: string }>>({})
+  const [invoiceSearch, setInvoiceSearch] = useState('')
+  const [invoicePaymentFilter, setInvoicePaymentFilter] = useState('all')
+  const [targetValue, setTargetValue] = useState('')
+  const [savingTarget, setSavingTarget] = useState(false)
+  const [showExpenseDetails, setShowExpenseDetails] = useState(false)
 
   const today = new Date().toISOString().slice(0, 10)
+
+  useEffect(() => {
+    const requestedTab = searchParams.get('tab')
+    setTab(requestedTab === 'pos' ? 'pos' : requestedTab === 'closing' ? 'closing' : requestedTab === 'services' ? 'services' : requestedTab === 'finance' ? 'finance' : 'pos')
+  }, [searchParams])
+
+  const selectTab = (nextTab: 'pos' | 'finance' | 'closing' | 'services') => {
+    setTab(nextTab)
+    setSearchParams(nextTab === 'pos' ? {} : { tab: nextTab }, { replace: true })
+  }
 
   const getDateRange = (d: number) => {
     const start = new Date()
@@ -77,18 +92,20 @@ export const CarWashFinance = () => {
 
     const expFrom = selectedDays === 1 ? today : rangeStart.toISOString().slice(0, 10)
 
-    const [{ data: visits }, { data: queue }, { data: workers }, { data: exps }] = await Promise.all([
+    const [{ data: visits }, { data: queue }, { data: workers }, { data: exps }, { data: customers }] = await Promise.all([
       supabase.from('cw_visits')
-        .select('price, subtotal, vat_amount, payment_method, is_free_wash, discount_amount, payment_status, created_at, service_name')
+        .select('id, customer_id, price, subtotal, vat_amount, total_amount, payment_method, is_free_wash, discount_amount, payment_status, created_at, service_name')
         .eq('company_id', companyId)
         .gte('created_at', rangeStart.toISOString())
         .not('payment_status', 'in', '("refunded","cancelled")'),
       supabase.from('cw_queue').select('price, subtotal, worker_id, status').eq('company_id', companyId).eq('status', 'delivered').gte('delivered_at', rangeStart.toISOString()),
       supabase.from('cw_workers').select('id, commission_type, commission_value, salary_type, fixed_salary').eq('company_id', companyId),
       supabase.from('cw_expenses').select('*').eq('company_id', companyId).gte('expense_date', expFrom).order('created_at', { ascending: false }),
+      supabase.from('cw_customers').select('id, name, phone').eq('company_id', companyId),
     ])
 
-    const totalRevenue = (visits || []).reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0)
+    const visitTotal = (v: any) => v.is_free_wash ? 0 : Number(v.total_amount ?? ((v.subtotal ?? v.price ?? 0) + (v.vat_amount ?? 0)))
+    const totalRevenue = (visits || []).reduce((s, v) => s + visitTotal(v), 0)
     setRevenue(totalRevenue)
     setVisitCount((visits || []).length)
     setVisitsData(visits || [])
@@ -98,7 +115,7 @@ export const CarWashFinance = () => {
     let freeDiscount = 0
     for (const v of visits || []) {
       const pm = (v.payment_method as PaymentMethod) || 'cash'
-      breakdown[pm] = (breakdown[pm] || 0) + (v.subtotal ?? v.price ?? 0)
+      breakdown[pm] = (breakdown[pm] || 0) + visitTotal(v)
       if (v.is_free_wash) {
         freeCount++
         freeDiscount += v.discount_amount || 0
@@ -118,6 +135,7 @@ export const CarWashFinance = () => {
     }, 0)
     setWorkerCost(totalWorkerCost)
     setExpenses((exps || []) as CWExpense[])
+    setCustomerMap(Object.fromEntries((customers || []).map((customer: any) => [customer.id, { name: customer.name, phone: customer.phone }])))
     setLoading(false)
   }
 
@@ -125,27 +143,126 @@ export const CarWashFinance = () => {
     if (!authLoading && companyId) loadData(days)
   }, [authLoading, companyId, days])
 
+  useEffect(() => {
+    setTargetValue(String(Number((company as any)?.cw_monthly_target || 0) || ''))
+  }, [company?.id, (company as any)?.cw_monthly_target])
+
   const exportCSV = () => {
     const rows = visitsData.map((v: any) => ({
       'التاريخ': formatDateForCSV(v.created_at),
       'الخدمة': v.service_name || '',
       'قبل الضريبة': (v.subtotal ?? v.price ?? 0).toFixed(2),
       'الضريبة': (v.vat_amount ?? 0).toFixed(2),
-      'الإجمالي': (v.subtotal ?? v.price ?? 0).toFixed(2),
+      'الإجمالي': (v.is_free_wash ? 0 : Number(v.total_amount ?? ((v.subtotal ?? v.price ?? 0) + (v.vat_amount ?? 0)))).toFixed(2),
       'طريقة الدفع': v.payment_method || 'cash',
       'غسلة مجانية': v.is_free_wash ? 'نعم' : 'لا',
     }))
     downloadCSV(rows, `madar-finance-${today}.csv`)
   }
 
+  const visitTotal = (v: any) => v.is_free_wash ? 0 : Number(v.total_amount ?? ((v.subtotal ?? v.price ?? 0) + (v.vat_amount ?? 0)))
+  const invoiceRows = visitsData
+    .map((visit: any, index: number) => {
+      const customer = visit.customer_id ? customerMap[visit.customer_id] : null
+      const total = visitTotal(visit)
+      const invoiceNo = `INV-${new Date(visit.created_at).toISOString().slice(0, 10).replaceAll('-', '')}-${String(index + 1).padStart(3, '0')}`
+      return {
+        ...visit,
+        invoiceNo,
+        customerName: customer?.name || customer?.phone || 'عميل غير مسجل',
+        customerPhone: customer?.phone || '',
+        total,
+        vat: Number(visit.vat_amount || 0),
+        subtotalValue: Number(visit.subtotal ?? visit.price ?? 0),
+        paymentLabel: PAYMENT_LABELS[visit.payment_method || 'cash'] || visit.payment_method || 'كاش',
+        statusLabel: visit.payment_status === 'paid' ? 'مدفوعة' : visit.is_free_wash ? 'مجانية' : 'مسجلة',
+      }
+    })
+    .filter((invoice: any) => {
+      const q = invoiceSearch.trim().toLowerCase()
+      const matchesSearch = !q || [invoice.invoiceNo, invoice.customerName, invoice.customerPhone, invoice.service_name, invoice.paymentLabel]
+        .some(value => String(value || '').toLowerCase().includes(q))
+      const matchesPayment = invoicePaymentFilter === 'all' || (invoice.payment_method || 'cash') === invoicePaymentFilter
+      return matchesSearch && matchesPayment
+    })
+  const invoicePaymentOptions = Array.from(new Set(visitsData.map((visit: any) => visit.payment_method || 'cash')))
+  const exportInvoicesCSV = () => {
+    const rows = invoiceRows.map((invoice: any) => ({
+      'رقم الفاتورة': invoice.invoiceNo,
+      'العميل': invoice.customerName,
+      'الجوال': invoice.customerPhone,
+      'الخدمة': invoice.service_name || '',
+      'طريقة الدفع': invoice.paymentLabel,
+      'قبل الضريبة': invoice.subtotalValue.toFixed(2),
+      'VAT': invoice.vat.toFixed(2),
+      'قيمة الفاتورة': invoice.total.toFixed(2),
+      'الحالة': invoice.statusLabel,
+      'التاريخ': formatDateForCSV(invoice.created_at),
+    }))
+    downloadCSV(rows, `madar-sales-invoices-${today}.csv`)
+  }
+  const copyInvoice = async (invoice: any) => {
+    const text = [
+      `فاتورة ${invoice.invoiceNo}`,
+      `العميل: ${invoice.customerName}`,
+      `الخدمة: ${invoice.service_name || 'خدمة مغسلة'}`,
+      `طريقة الدفع: ${invoice.paymentLabel}`,
+      `الإجمالي: ${invoice.total.toFixed(2)} ر.س`,
+      `التاريخ: ${formatDateForCSV(invoice.created_at)}`,
+    ].join('\n')
+    await navigator.clipboard?.writeText(text)
+  }
+
   const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0)
   const netProfit = revenue - totalExpenses - workerCost
-
+  const cashRevenue = paymentBreakdown.cash || 0
+  const posRevenue = ['mada', 'visa', 'stc_pay'].reduce((sum, key) => sum + (paymentBreakdown[key] || 0), 0)
+  const transferRevenue = paymentBreakdown.bank_transfer || 0
+  const otherRevenue = Math.max(0, revenue - cashRevenue - posRevenue - transferRevenue)
+  const marginPercent = revenue > 0 ? Math.round((netProfit / revenue) * 100) : 0
+  const monthlyTarget = Number((company as any)?.cw_monthly_target || 0)
+  const targetProgress = monthlyTarget > 0 ? Math.min(100, Math.round((revenue / monthlyTarget) * 100)) : 0
+  const saveMonthlyTarget = async () => {
+    if (!companyId) return
+    setSavingTarget(true)
+    const nextTarget = Math.max(0, Math.round(Number(targetValue || 0)))
+    await supabase.from('companies').update({ cw_monthly_target: nextTarget } as any).eq('id', companyId)
+    logAudit(companyId, 'monthly_revenue_target_updated', { newValue: { cw_monthly_target: nextTarget } })
+    setSavingTarget(false)
+    window.location.reload()
+  }
+  const closingChecks = [
+    { label: 'طابق الكاش الموجود بالصندوق', value: `${cashRevenue.toFixed(0)} ر.س`, tone: '#059669' },
+    { label: 'راجع عمليات مدى والبطاقات', value: `${posRevenue.toFixed(0)} ر.س`, tone: '#2563EB' },
+    { label: 'تأكد من المصاريف قبل الإغلاق', value: `${totalExpenses.toFixed(0)} ر.س`, tone: totalExpenses > revenue * 0.35 && revenue > 0 ? '#DC2626' : '#D97706' },
+  ]
   const closeForm = () => { setShowForm(false); setEditingExpense(null); setForm(EMPTY_FORM) }
 
   const addExpense = async () => {
     if (!companyId || !form.amount || Number(form.amount) <= 0) return
     setSaving(true)
+    if (formMode === 'cash') {
+      const amount = Number(form.amount)
+      const vatRate = company?.tax_enabled === false ? 0 : Number(company?.vat_rate ?? 15) / 100
+      const subtotal = vatRate > 0 ? amount / (1 + vatRate) : amount
+      const vatAmount = amount - subtotal
+      const { data: inserted } = await supabase.from('cw_visits').insert({
+        company_id: companyId,
+        service_name: form.description || 'إضافة كاش',
+        price: amount,
+        subtotal,
+        vat_amount: vatAmount,
+        total_amount: amount,
+        payment_method: 'cash',
+        payment_status: 'paid',
+        is_free_wash: false,
+      }).select().single()
+      if (inserted) logAudit(companyId, 'cash_revenue_added', { entityType: 'cw_visits', entityId: inserted.id, newValue: { amount, service_name: form.description || 'إضافة كاش' } })
+      closeForm()
+      setSaving(false)
+      loadData()
+      return
+    }
     if (editingExpense) {
       await supabase.from('cw_expenses').update({
         amount: Number(form.amount),
@@ -177,22 +294,18 @@ export const CarWashFinance = () => {
     loadData()
   }
 
-  if (authLoading || loading) return (
-    <div className="flex items-center justify-center h-64 gap-3">
-      <Loader2 size={20} className="animate-spin text-primary-400" />
-      <p className="text-slate-500 font-tajawal text-sm">جاري تحميل المالية...</p>
-    </div>
-  )
 
   return (
     <div className="space-y-6">
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 8, borderBottom: '1px solid #E2E8F0', paddingBottom: 0 }}>
         {[
-          { key: 'finance', label: 'المالية',     icon: Wallet },
-          { key: 'closing', label: 'إغلاق اليوم', icon: ClipboardCheck },
+          { key: 'pos',      label: 'شاشة البيع',        icon: ShoppingCart },
+          { key: 'finance',  label: 'تحليل مالي',          icon: Wallet },
+          { key: 'closing',  label: 'إغلاق اليوم',       icon: ClipboardCheck },
+          { key: 'services', label: 'الخدمات والضريبة',  icon: DollarSign },
         ].map(({ key, label, icon: Icon }) => (
-          <button key={key} onClick={() => setTab(key as typeof tab)}
+          <button key={key} onClick={() => selectTab(key as typeof tab)}
             style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', fontSize: 13, fontFamily: 'Cairo, sans-serif', fontWeight: 700, cursor: 'pointer', border: 'none', background: 'transparent', borderBottom: tab === key ? '2px solid #22D3EE' : '2px solid transparent', color: tab === key ? '#22D3EE' : '#475569', transition: 'all 0.15s', marginBottom: -1 }}>
             <Icon size={14} />
             {label}
@@ -200,43 +313,110 @@ export const CarWashFinance = () => {
         ))}
       </div>
 
-      {tab === 'closing' ? <CarWashDailyClosing /> : <>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-white font-cairo">المالية</h1>
-          <div className="flex gap-2 mt-2 flex-wrap">
-            {DATE_PRESETS.map(p => (
-              <button key={p.days} onClick={() => setDays(p.days)}
-                style={{
-                  padding: '4px 14px', borderRadius: 20, fontSize: 12, fontFamily: 'Tajawal, sans-serif',
-                  cursor: 'pointer', border: `1px solid ${days === p.days ? '#22D3EE' : '#CBD5E1'}`,
-                  background: days === p.days ? 'rgba(34,211,238,0.1)' : 'transparent',
-                  color: days === p.days ? '#22D3EE' : '#64748B', fontWeight: days === p.days ? 700 : 400,
-                }}>
-                {p.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={exportCSV}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-tajawal font-medium"
-            style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#94A3B8' }}>
-            <FileDown size={15} /> تصدير
-          </button>
+      {tab === 'pos' ? <CarWashPOS /> : tab === 'closing' ? <CarWashDailyClosing /> : tab === 'services' ? (
+        <CarWashSetup
+          title="الخدمات والضريبة"
+          description="عدّل أسعار الخدمات النهائية التي يدفعها العميل، وتأكد أن VAT محسوبة بنفس طريقة المالية."
+          visibleTabs={['services', 'vat']}
+        />
+      ) : <>
+      <ClientPageHeader
+        eyebrow="مركز الماليات"
+        title="تحليل مالي"
+        description="إيرادات، مصاريف، تكاليف الموظفين، وصافي الربح في شاشة واحدة واضحة للمغسلة."
+        actions={(
+          <>
+            <ClientButton tone="secondary" onClick={exportCSV}>
+              <FileDown size={15} /> تصدير
+            </ClientButton>
+            <div className="flex gap-2 rounded-2xl bg-white p-1" style={{ border: '1px solid #E2E8F0' }}>
+              {DATE_PRESETS.map(p => (
+                <button key={p.days} onClick={() => setDays(p.days)}
+                  className="rounded-xl px-3 text-xs font-bold font-tajawal transition-all"
+                  style={{
+                    minHeight: 34,
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: days === p.days ? 'rgba(0,191,255,0.12)' : 'transparent',
+                    color: days === p.days ? '#1565C0' : '#64748B',
+                  }}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <ClientButton tone="secondary" onClick={() => { setFormMode('cash'); setEditingExpense(null); setForm(EMPTY_FORM); setShowForm(true) }}>
+              <Plus size={16} /> إضافة كاش
+            </ClientButton>
           {can.financeExpenses && (
-            <button onClick={() => setShowForm(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-tajawal font-medium text-white" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
+            <ClientButton onClick={() => { setFormMode('expense'); setShowForm(true) }}>
               <Plus size={16} /> إضافة مصروف
-            </button>
+            </ClientButton>
           )}
-        </div>
-      </div>
+          </>
+        )}
+      />
 
       {/* Revenue cards — always visible */}
-      <div className="grid grid-cols-2 gap-4">
-        <StatCard icon={TrendingUp} label="الإيرادات" value={`${revenue.toFixed(0)} ر.س`} color="#10B981" sub={`${visitCount} زيارة — ${DATE_PRESETS.find(p => p.days === days)?.label || ''}`} />
-        <StatCard icon={DollarSign} label="متوسط الزيارة" value={`${visitCount > 0 ? (revenue / visitCount).toFixed(0) : 0} ر.س`} color="#22D3EE" sub="لكل سيارة" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+        <ClientStatCard icon={TrendingUp} label="الإيرادات" value={`${revenue.toFixed(0)} ر.س`} tone="green" sub={`${visitCount} زيارة — ${DATE_PRESETS.find(p => p.days === days)?.label || ''}`} />
+        <ClientStatCard icon={TrendingDown} label="المصاريف" value={`${totalExpenses.toFixed(0)} ر.س`} tone="red" sub={`${expenses.length} بند`} />
+        <ClientStatCard icon={DollarSign} label="صافي الربح" value={`${netProfit.toFixed(0)} ر.س`} tone={netProfit >= 0 ? 'blue' : 'red'} sub={netProfit >= 0 ? `${marginPercent}% هامش` : 'راجع المصاريف'} />
+        <ClientStatCard icon={DollarSign} label="متوسط الزيارة" value={`${visitCount > 0 ? (revenue / visitCount).toFixed(0) : 0} ر.س`} tone="blue" sub="لكل سيارة" />
+        <ClientStatCard icon={TrendingUp} label="هدف الشهر" value={monthlyTarget > 0 ? `${monthlyTarget.toFixed(0)} ر.س` : 'غير محدد'} tone="blue" sub={monthlyTarget > 0 ? `${targetProgress}% من الهدف` : 'حدده من المالية'} />
       </div>
+
+      <ClientPanel title="هدف الإيراد الشهري" description="حدد رقم الشهر المستهدف للمغسلة، وسيظهر تقدمه في المالية والرئيسية.">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-sm font-bold text-slate-900 font-cairo">
+              {monthlyTarget > 0 ? `تم تحقيق ${targetProgress}% من الهدف الحالي` : 'لا يوجد هدف شهري محدد حالياً'}
+            </p>
+            <p className="mt-1 text-xs text-slate-500 font-tajawal">يفضل تحديثه بداية كل شهر حسب متوسط المبيعات المتوقع.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              value={targetValue}
+              onChange={event => setTargetValue(event.target.value.replace(/[^\d]/g, ''))}
+              inputMode="numeric"
+              dir="ltr"
+              className="h-11 w-36 rounded-2xl bg-white px-4 text-center text-sm font-black text-slate-900 outline-none font-sora"
+              style={{ border: '1px solid #DDE8F7' }}
+              placeholder="20000"
+            />
+            <ClientButton tone="secondary" onClick={saveMonthlyTarget} disabled={savingTarget}>
+              {savingTarget ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+              حفظ الهدف
+            </ClientButton>
+          </div>
+        </div>
+      </ClientPanel>
+
+      <ClientPanel title="مركز تحصيل اليوم" description="ملخص تنفيذي قبل إغلاق الكاشير: النقد، الشبكة، التحويل، والهامش المتوقع.">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          {[
+            { label: 'نقد متوقع', value: `${cashRevenue.toFixed(0)} ر.س`, color: '#059669' },
+            { label: 'مدى وبطاقات', value: `${posRevenue.toFixed(0)} ر.س`, color: '#2563EB' },
+            { label: 'تحويلات', value: `${transferRevenue.toFixed(0)} ر.س`, color: '#7C3AED' },
+            { label: 'هامش صافي', value: revenue > 0 ? `${marginPercent}%` : '—', color: marginPercent >= 25 ? '#059669' : marginPercent >= 0 ? '#D97706' : '#DC2626' },
+          ].map(item => (
+            <div key={item.label} className="rounded-2xl p-4" style={{ background: `${item.color}10`, border: `1px solid ${item.color}22` }}>
+              <p className="text-xs text-slate-500 font-tajawal">{item.label}</p>
+              <p className="mt-2 text-xl font-black font-sora" style={{ color: item.color }}>{item.value}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+          {closingChecks.map(item => (
+            <div key={item.label} className="flex items-center justify-between gap-3 rounded-2xl bg-white p-3" style={{ border: '1px solid #E2E8F0' }}>
+              <span className="text-sm font-bold text-slate-700 font-tajawal">{item.label}</span>
+              <strong className="text-sm font-sora" style={{ color: item.tone }}>{item.value}</strong>
+            </div>
+          ))}
+        </div>
+        {otherRevenue > 0 && (
+          <p className="mt-3 text-xs text-slate-500 font-tajawal">يوجد {otherRevenue.toFixed(0)} ر.س في طرق دفع أخرى. راجعها قبل الإغلاق إذا كانت غير واضحة.</p>
+        )}
+      </ClientPanel>
 
       {/* Expenses, profit bar, workers cost — Pro feature */}
       <FeatureLock
@@ -250,20 +430,19 @@ export const CarWashFinance = () => {
         <div className="space-y-6">
           {/* Summary cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <StatCard icon={TrendingDown} label="المصاريف"       value={`${totalExpenses.toFixed(0)} ر.س`} color="#EF4444" sub={`${expenses.length} بند`} />
-            <StatCard icon={Users}        label="تكاليف الموظفين" value={`${workerCost.toFixed(0)} ر.س`}   color="#F59E0B" sub="عمولات اليوم" />
-            <StatCard
+            <ClientStatCard icon={TrendingDown} label="المصاريف"       value={`${totalExpenses.toFixed(0)} ر.س`} tone="red" sub={`${expenses.length} بند`} />
+            <ClientStatCard icon={Users}        label="تكاليف الموظفين" value={`${workerCost.toFixed(0)} ر.س`}   tone="amber" sub="عمولات اليوم" />
+            <ClientStatCard
               icon={DollarSign}
               label="صافي الربح"
               value={`${netProfit.toFixed(0)} ر.س`}
-              color={netProfit >= 0 ? '#6366F1' : '#EF4444'}
+              tone={netProfit >= 0 ? 'blue' : 'red'}
               sub={netProfit >= 0 ? 'ممتاز اليوم' : 'خسارة — راجع المصاريف'}
             />
           </div>
 
           {/* Profit bar */}
-          <div className="p-5 rounded-2xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-            <p className="text-sm font-bold text-white font-cairo mb-4">توزيع الإيرادات</p>
+          <ClientPanel title="توزيع الإيرادات" description="كيف تنقسم مبيعات اليوم بين ربح وتكاليف تشغيل.">
             {revenue > 0 ? (
               <div className="space-y-3">
                 {[
@@ -283,28 +462,9 @@ export const CarWashFinance = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-slate-600 font-tajawal text-sm text-center py-4">لا توجد إيرادات بعد</p>
+              <ClientEmptyState icon={Wallet} title="لا توجد إيرادات بعد" description="بمجرد تسليم أول سيارة ستظهر الأرقام هنا." />
             )}
-          </div>
-
-          {/* Payment method breakdown */}
-          {Object.keys(paymentBreakdown).length > 0 && (
-            <div className="p-5 rounded-2xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-              <p className="text-sm font-bold text-white font-cairo mb-4">توزيع طرق الدفع</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {Object.entries(paymentBreakdown).map(([pm, amount]) => {
-                  const labels: Record<string, string> = { cash: 'كاش', mada: 'مدى', visa: 'فيزا', bank_transfer: 'تحويل', stc_pay: 'STC Pay', other: 'أخرى' }
-                  return (
-                    <div key={pm} className="p-3 rounded-xl text-center" style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.15)' }}>
-                      <p className="text-xs text-slate-400 font-tajawal mb-1">{labels[pm] || pm}</p>
-                      <p className="text-base font-bold text-white font-sora">{amount.toFixed(0)}</p>
-                      <p className="text-xs text-slate-600 font-tajawal">ر.س</p>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
+          </ClientPanel>
 
           {/* Free washes */}
           {freeWashCount > 0 && (
@@ -317,31 +477,66 @@ export const CarWashFinance = () => {
             </div>
           )}
 
-          {/* Expenses list */}
-          <div className="p-5 rounded-2xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-            <p className="text-sm font-bold font-cairo mb-4" style={{ color: '#0F172A' }}>مصاريف اليوم</p>
-            {expenses.length === 0 ? (
-              <p className="text-slate-500 font-tajawal text-sm text-center py-4">لا توجد مصاريف مسجّلة</p>
-            ) : (
-              <div className="space-y-2">
-                {expenses.map(e => (
-                  <div key={e.id} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                    <div className="flex-1">
-                      <p className="text-sm font-tajawal" style={{ color: '#1E293B' }}>{e.description || CATEGORIES.find(c => c.value === e.category)?.label}</p>
-                      <p className="text-xs text-slate-500 font-tajawal">{CATEGORIES.find(c => c.value === e.category)?.label}</p>
+          {/* Expenses list — collapsible */}
+          <div className="rounded-2xl overflow-hidden" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+            <button
+              className="w-full flex items-center justify-between px-5 py-4"
+              style={{ background: '#FAFAFA', borderBottom: showExpenseDetails ? '1px solid #E2E8F0' : 'none', cursor: 'pointer', border: 'none' }}
+              onClick={() => setShowExpenseDetails(v => !v)}
+            >
+              <div className="flex items-center gap-2">
+                <TrendingDown size={15} className="text-red-400" />
+                <span className="text-sm font-bold text-slate-900 font-cairo">مصاريف اليوم</span>
+                <span className="text-xs text-slate-500 font-tajawal">
+                  ({expenses.length} بند — {totalExpenses.toFixed(0)} ر.س)
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                {!showExpenseDetails && can.financeExpenses && (
+                  <button
+                    onClick={e => { e.stopPropagation(); setFormMode('expense'); setEditingExpense(null); setForm(EMPTY_FORM); setShowForm(true) }}
+                    className="flex items-center gap-1 text-xs font-cairo font-bold px-3 py-1.5 rounded-lg"
+                    style={{ background: '#0EA5A5', color: '#fff', border: 'none', cursor: 'pointer' }}
+                  >
+                    <Plus size={12} /> إضافة
+                  </button>
+                )}
+                <span className="text-slate-400 text-xs font-tajawal">{showExpenseDetails ? '▲ إخفاء' : '▼ عرض التفاصيل'}</span>
+              </div>
+            </button>
+            {showExpenseDetails && (
+              <div className="p-4 space-y-2">
+                {can.financeExpenses && (
+                  <button
+                    onClick={() => { setFormMode('expense'); setEditingExpense(null); setForm(EMPTY_FORM); setShowForm(true) }}
+                    className="flex items-center gap-1.5 text-xs font-cairo font-bold px-3 py-2 rounded-lg mb-3"
+                    style={{ background: 'rgba(14,165,165,0.1)', color: '#0EA5A5', border: '1px solid rgba(14,165,165,0.2)', cursor: 'pointer' }}
+                  >
+                    <Plus size={12} /> إضافة مصروف
+                  </button>
+                )}
+                {expenses.length === 0 ? (
+                  <ClientEmptyState icon={TrendingDown} title="لا توجد مصاريف مسجلة" description="أضف مصروفًا عند شراء مواد أو تسجيل تكلفة تشغيل." />
+                ) : (
+                  expenses.map(e => (
+                    <div key={e.id} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                      <div className="flex-1">
+                        <p className="text-sm font-tajawal" style={{ color: '#1E293B' }}>{e.description || CATEGORIES.find(c => c.value === e.category)?.label}</p>
+                        <p className="text-xs text-slate-500 font-tajawal">{CATEGORIES.find(c => c.value === e.category)?.label}</p>
+                      </div>
+                      <p className="text-sm font-sora font-bold" style={{ color: '#EF4444' }}>{e.amount.toFixed(0)} ر.س</p>
+                      <button
+                        onClick={() => { setFormMode('expense'); setEditingExpense(e); setForm({ amount: String(e.amount), category: e.category, description: e.description || '' }); setShowForm(true) }}
+                        className="text-slate-400 hover:text-indigo-500 transition-colors"
+                      >
+                        <Pencil size={13} />
+                      </button>
+                      <button onClick={() => deleteExpense(e.id)} disabled={deleting === e.id} className="text-slate-400 hover:text-red-400 transition-colors">
+                        {deleting === e.id ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />}
+                      </button>
                     </div>
-                    <p className="text-sm font-sora font-bold" style={{ color: '#EF4444' }}>{e.amount.toFixed(0)} ر.س</p>
-                    <button
-                      onClick={() => { setEditingExpense(e); setForm({ amount: String(e.amount), category: e.category, description: e.description || '' }); setShowForm(true) }}
-                      className="text-slate-400 hover:text-indigo-500 transition-colors"
-                    >
-                      <Pencil size={13} />
-                    </button>
-                    <button onClick={() => deleteExpense(e.id)} disabled={deleting === e.id} className="text-slate-400 hover:text-red-400 transition-colors">
-                      {deleting === e.id ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />}
-                    </button>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             )}
           </div>
@@ -350,20 +545,21 @@ export const CarWashFinance = () => {
 
       {/* Add expense modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15,23,42,0.5)' }}>
+        <div className="fixed inset-0 flex items-center justify-center p-4" style={{ background: 'rgba(15,23,42,0.5)', zIndex: 9999 }}>
           <div role="dialog" aria-modal="true" className="w-full max-w-sm p-6 rounded-2xl" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 20px 60px rgba(15,23,42,0.15)' }}>
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold font-cairo" style={{ color: '#0F172A' }}>{editingExpense ? 'تعديل مصروف' : 'إضافة مصروف'}</h2>
+              <h2 className="text-lg font-bold font-cairo" style={{ color: '#0F172A' }}>{formMode === 'cash' ? 'إضافة كاش' : editingExpense ? 'تعديل مصروف' : 'إضافة مصروف'}</h2>
               <button aria-label="Close dialog" onClick={closeForm} className="text-slate-400 hover:text-slate-700"><X size={18} /></button>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">المبلغ (ر.س) *</label>
-                <input type="number" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} placeholder="0" min={0} className="w-full px-4 py-2.5 rounded-xl text-sm font-sora text-white placeholder-slate-600 outline-none" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }} dir="ltr" />
+                <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">المبلغ (ر.س) *</label>
+                <input type="number" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} placeholder="0" min={0} className="w-full px-4 py-2.5 rounded-xl text-sm font-sora text-slate-900 placeholder-slate-400 outline-none focus:border-sky-400" style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }} dir="ltr" />
               </div>
+              {formMode !== 'cash' && (
               <div>
-                <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">الفئة</label>
+                <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">الفئة</label>
                 <div className="grid grid-cols-2 gap-2">
                   {CATEGORIES.map(c => (
                     <button key={c.value} onClick={() => setForm(f => ({ ...f, category: c.value }))} className="py-2 rounded-xl text-xs font-tajawal transition-all" style={{ background: form.category === c.value ? 'rgba(99,102,241,0.3)' : '#FFFFFF', border: `1px solid ${form.category === c.value ? '#6366F1' : '#E2E8F0'}`, color: form.category === c.value ? '#A5B4FC' : '#94A3B8' }}>
@@ -372,18 +568,19 @@ export const CarWashFinance = () => {
                   ))}
                 </div>
               </div>
+              )}
               <div>
-                <label className="text-xs text-slate-400 font-tajawal mb-1.5 block">وصف (اختياري)</label>
-                <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="تفاصيل المصروف..." className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-white placeholder-slate-600 outline-none" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }} />
+                <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">وصف (اختياري)</label>
+                <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder={formMode === 'cash' ? 'مثال: غسيل خارجي، إيراد إضافي...' : 'تفاصيل المصروف...'} className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-slate-900 placeholder-slate-400 outline-none focus:border-sky-400" style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }} />
               </div>
             </div>
 
             <div className="flex gap-3 mt-5">
-              <button onClick={closeForm} className="flex-1 py-2.5 rounded-xl text-sm font-tajawal" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#64748B' }}>إلغاء</button>
-              <button onClick={addExpense} disabled={saving || !form.amount || Number(form.amount) <= 0} className="flex-1 py-2.5 rounded-xl text-sm font-tajawal text-white flex items-center justify-center gap-2 disabled:opacity-50" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
+              <ClientButton tone="secondary" onClick={closeForm} className="flex-1">إلغاء</ClientButton>
+              <ClientButton onClick={addExpense} disabled={saving || !form.amount || Number(form.amount) <= 0} className="flex-1">
                 {saving ? <Loader2 size={14} className="animate-spin" /> : editingExpense ? <Pencil size={14} /> : <Plus size={14} />}
                 {saving ? 'جاري الحفظ...' : editingExpense ? 'حفظ التعديل' : 'إضافة'}
-              </button>
+              </ClientButton>
             </div>
           </div>
         </div>
