@@ -78,8 +78,12 @@ export function TrialSignup() {
 
   const sendOtp = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.company_name.trim() || !form.owner_name.trim() || !form.email.trim()) {
+    const email = form.email.trim().toLowerCase()
+    if (!form.company_name.trim() || !form.owner_name.trim() || !email) {
       setError('يرجى تعبئة اسم المنشأة واسم المالك والبريد الإلكتروني.'); return
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('أدخل بريدًا إلكترونيًا صالحًا.'); return
     }
     if (form.password.length < 6) { setError(errorCode('password_short')); return }
     if (form.password !== form.confirm_password) { setError(errorCode('password_mismatch')); return }
@@ -88,13 +92,17 @@ export function TrialSignup() {
     setError('')
     try {
       const { error: otpErr } = await supabase.auth.signInWithOtp({
-        email: form.email.trim(),
+        email,
         options: { shouldCreateUser: true },
       })
       if (otpErr) throw otpErr
       setStep('otp')
-    } catch {
-      setError('تعذر إرسال الرمز. تأكد من البريد الإلكتروني وأعد المحاولة.')
+    } catch (err: any) {
+      console.error('TrialSignup sendOtp error', err)
+      const msg = err?.message?.toLowerCase() || ''
+      if (msg.includes('invalid email')) setError('أدخل بريدًا إلكترونيًا صالحًا.')
+      else if (msg.includes('rate limit')) setError('حاول لاحقًا؛ تم تجاوز حدود إرسال الرموز.')
+      else setError('تعذر إرسال الرمز. تأكد من البريد الإلكتروني وأعد المحاولة.')
     } finally {
       setLoading(false)
     }
@@ -152,16 +160,22 @@ export function TrialSignup() {
   }
 
   const resendOtp = async () => {
+    const email = form.email.trim().toLowerCase()
+    if (!email) {
+      setError('أدخل بريدًا إلكترونيًا صالحًا لإعادة إرسال الرمز.'); return
+    }
+
     setLoading(true)
     setError('')
     setOtp('')
     try {
       const { error: otpErr } = await supabase.auth.signInWithOtp({
-        email: form.email.trim(),
+        email,
         options: { shouldCreateUser: true },
       })
       if (otpErr) throw otpErr
-    } catch {
+    } catch (err: any) {
+      console.error('TrialSignup resendOtp error', err)
       setError('تعذر إعادة إرسال الرمز. حاول بعد دقيقة.')
     } finally {
       setLoading(false)
