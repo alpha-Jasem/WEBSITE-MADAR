@@ -1410,6 +1410,9 @@ export const CarWashQueue = () => {
             vat_number: (company as any).vat_number || null,
             commercial_reg: (company as any).commercial_reg || null,
             address: (company as any).address || null,
+            logo_url: (company as any).logo_url || null,
+            tax_enabled: company.tax_enabled,
+            print_footer: (company as any).cw_automations?.print_settings?.footer || null,
           }}
           onClose={() => setInvoiceData(null)}
         />

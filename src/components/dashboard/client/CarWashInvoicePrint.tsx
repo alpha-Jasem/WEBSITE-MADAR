@@ -31,6 +31,9 @@ interface Props {
     vat_number?: string | null
     commercial_reg?: string | null
     address?: string | null
+    logo_url?: string | null
+    tax_enabled?: boolean
+    print_footer?: string | null
   }
   onClose: () => void
 }
@@ -62,6 +65,8 @@ export function CarWashInvoicePrint({ data, company, onClose }: Props) {
 
   const payLabel = PM_LABELS[data.paymentMethod] || data.paymentMethod
   const itemCount = data.items.reduce((s, i) => s + i.qty, 0)
+  const taxEnabled = company.tax_enabled !== false
+  const showVat = taxEnabled && data.vatAmount > 0
 
   return (
     <>
@@ -100,9 +105,16 @@ export function CarWashInvoicePrint({ data, company, onClose }: Props) {
             style={{ padding: '28px 32px', fontFamily: 'Cairo, Tajawal, sans-serif', color: '#111' }}
           >
 
+            {/* Logo */}
+            {company.logo_url && (
+              <div style={{ textAlign: 'center', marginBottom: 14 }}>
+                <img src={company.logo_url} alt="logo" style={{ maxHeight: 64, maxWidth: 180, objectFit: 'contain' }} />
+              </div>
+            )}
+
             {/* Page title */}
             <h1 style={{ textAlign: 'center', fontSize: 18, fontWeight: 900, margin: '0 0 22px', letterSpacing: 0.5 }}>
-              فاتورة ضريبية مبسطة
+              {taxEnabled ? 'فاتورة ضريبية مبسطة' : 'فاتورة'}
             </h1>
 
             {/* Header: company (right) + customer (left) */}
@@ -164,8 +176,7 @@ export function CarWashInvoicePrint({ data, company, onClose }: Props) {
 
             {/* Products table */}
             {(() => {
-              const hasVAT = data.vatAmount > 0
-              const headers = hasVAT
+              const headers = showVat
                 ? ['كمية', 'اسم المنتج', 'السعر غير شامل الضريبة', 'الضريبة', 'الإجمالي (شامل الضريبة)']
                 : ['كمية', 'اسم المنتج', 'الإجمالي']
               return (
@@ -180,18 +191,18 @@ export function CarWashInvoicePrint({ data, company, onClose }: Props) {
                   <tbody>
                     {data.items.map((item, i) => {
                       const lineTotal = item.price * item.qty
-                      const lineSub   = hasVAT ? lineTotal / 1.15 : lineTotal
-                      const lineVat   = hasVAT ? lineTotal - lineSub : 0
+                      const lineSub   = showVat ? lineTotal / 1.15 : lineTotal
+                      const lineVat   = showVat ? lineTotal - lineSub : 0
                       return (
                         <tr key={i}>
                           <td style={{ padding: '8px 10px', border: '1px solid #DDD', textAlign: 'center' }}>{item.qty}x</td>
                           <td style={{ padding: '8px 10px', border: '1px solid #DDD', fontWeight: 700 }}>{item.name}</td>
-                          {hasVAT && (
+                          {showVat && (
                             <td style={{ padding: '8px 10px', border: '1px solid #DDD', textAlign: 'center', direction: 'ltr' }}>
                               {lineSub.toFixed(2)} ر.س
                             </td>
                           )}
-                          {hasVAT && (
+                          {showVat && (
                             <td style={{ padding: '8px 10px', border: '1px solid #DDD', textAlign: 'center', direction: 'ltr' }}>
                               {lineVat.toFixed(2)} ر.س / 15%
                             </td>
@@ -208,51 +219,49 @@ export function CarWashInvoicePrint({ data, company, onClose }: Props) {
             })()}
 
             {/* Summary section */}
-            {(() => {
-              const hasVAT = data.vatAmount > 0
-              return (
-                <div style={{ border: '1px solid #CCC', marginBottom: 22, fontSize: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 14px', borderBottom: '1px solid #EEE' }}>
-                    <strong>إجمالي العناصر</strong><span>{itemCount}</span>
-                  </div>
-                  {hasVAT && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 14px', borderBottom: '1px solid #EEE' }}>
-                      <strong>الإجمالي غير شامل للضريبة</strong>
-                      <span dir="ltr">{data.subtotal.toFixed(2)} ر.س</span>
-                    </div>
-                  )}
-                  {data.discount > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 14px', borderBottom: '1px solid #EEE', color: '#D00' }}>
-                      <strong>إجمالي الخصم</strong>
-                      <span dir="ltr">- {data.discount.toFixed(2)} ر.س</span>
-                    </div>
-                  )}
-                  {hasVAT && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 14px', borderBottom: '1px solid #EEE' }}>
-                      <strong>ضريبة القيمة المضافة (15%)</strong>
-                      <span dir="ltr">{data.vatAmount.toFixed(2)} ر.س</span>
-                    </div>
-                  )}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 14px', borderBottom: '1px solid #EEE', fontWeight: 900, fontSize: 13, background: '#F9FAFB' }}>
-                    <strong>الإجمالي {hasVAT ? '(شامل الضريبة)' : ''}</strong>
-                    <span dir="ltr">{data.total.toFixed(2)} ر.س</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 14px', borderBottom: '1px solid #EEE' }}>
-                    <strong>المبلغ المدفوع ({payLabel})</strong>
-                    <span dir="ltr">{data.total.toFixed(2)} ر.س</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 14px', color: '#777', fontSize: 11 }}>
-                    <span>Pay{data.invoiceNo}</span>
-                    <span></span>
-                  </div>
+            <div style={{ border: '1px solid #CCC', marginBottom: 22, fontSize: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 14px', borderBottom: '1px solid #EEE' }}>
+                <strong>إجمالي العناصر</strong><span>{itemCount}</span>
+              </div>
+              {showVat && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 14px', borderBottom: '1px solid #EEE' }}>
+                  <strong>الإجمالي غير شامل للضريبة</strong>
+                  <span dir="ltr">{data.subtotal.toFixed(2)} ر.س</span>
                 </div>
-              )
-            })()}
+              )}
+              {data.discount > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 14px', borderBottom: '1px solid #EEE', color: '#D00' }}>
+                  <strong>إجمالي الخصم</strong>
+                  <span dir="ltr">- {data.discount.toFixed(2)} ر.س</span>
+                </div>
+              )}
+              {showVat && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 14px', borderBottom: '1px solid #EEE' }}>
+                  <strong>ضريبة القيمة المضافة (15%)</strong>
+                  <span dir="ltr">{data.vatAmount.toFixed(2)} ر.س</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 14px', borderBottom: '1px solid #EEE', fontWeight: 900, fontSize: 13, background: '#F9FAFB' }}>
+                <strong>الإجمالي {showVat ? '(شامل الضريبة)' : ''}</strong>
+                <span dir="ltr">{data.total.toFixed(2)} ر.س</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 14px', borderBottom: '1px solid #EEE' }}>
+                <strong>المبلغ المدفوع ({payLabel})</strong>
+                <span dir="ltr">{data.total.toFixed(2)} ر.س</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 14px', color: '#777', fontSize: 11 }}>
+                <span>Pay{data.invoiceNo}</span>
+                <span></span>
+              </div>
+            </div>
 
             {/* Footer */}
             <div style={{ textAlign: 'center', borderTop: '1px solid #DDD', paddingTop: 14 }}>
               <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 900 }}>{company.name} - SA</p>
-              <p style={{ margin: 0, fontSize: 12, color: '#777' }}>شكراً لزيارتكم</p>
+              {company.print_footer
+                ? <p style={{ margin: 0, fontSize: 12, color: '#555', whiteSpace: 'pre-wrap' }}>{company.print_footer}</p>
+                : <p style={{ margin: 0, fontSize: 12, color: '#777' }}>شكراً لزيارتكم</p>
+              }
             </div>
           </div>
         </div>

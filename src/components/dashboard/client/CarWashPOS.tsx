@@ -281,6 +281,13 @@ export function CarWashPOS() {
         overflow: 'hidden', border: '1px solid #E5E7EB',
       }}
     >
+      <style>{`
+        @media (max-width: 640px) {
+          .cw-pos-body { flex-direction: column !important; }
+          .cw-pos-cart { width: 100% !important; height: auto !important; flex-shrink: 1 !important; border-left: none !important; border-bottom: 1px solid #E5E7EB !important; max-height: 300px !important; }
+          .cw-pos-services { flex: 1 !important; min-height: 0 !important; }
+        }
+      `}</style>
 
       {/* ── Main Tabs ── */}
       <div style={{ display: 'flex', background: '#FFFFFF', borderBottom: '1px solid #E5E7EB', paddingRight: 4 }}>
@@ -333,10 +340,10 @@ export function CarWashPOS() {
         </div>
 
         {/* POS Body */}
-        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        <div className="cw-pos-body" style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
           {/* ── LEFT: Cart ── */}
-          <div style={{ width: 400, flexShrink: 0, background: '#FFFFFF', borderLeft: '1px solid #E5E7EB', display: 'flex', flexDirection: 'column' }}>
+          <div className="cw-pos-cart" style={{ width: 400, flexShrink: 0, background: '#FFFFFF', borderLeft: '1px solid #E5E7EB', display: 'flex', flexDirection: 'column' }}>
 
             {/* Totals summary */}
             <div style={{ padding: '12px 16px 8px', borderBottom: '1px solid #F3F4F6' }}>
@@ -430,7 +437,7 @@ export function CarWashPOS() {
           </div>
 
           {/* ── RIGHT: Services ── */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div className="cw-pos-services" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
             {/* Search */}
             <div style={{ padding: '11px 14px', background: '#FFFFFF', borderBottom: '1px solid #E5E7EB' }}>
@@ -698,7 +705,17 @@ export function CarWashPOS() {
       {listInvoiceData && company && (
         <CarWashInvoicePrint
           data={listInvoiceData}
-          company={{ name: company.name, owner_name: company.owner_name, owner_phone: company.owner_phone, vat_number: (company as any).vat_number || null, commercial_reg: (company as any).commercial_reg || null, address: (company as any).address || null }}
+          company={{
+            name: company.name,
+            owner_name: company.owner_name,
+            owner_phone: company.owner_phone,
+            vat_number: (company as any).vat_number || null,
+            commercial_reg: (company as any).commercial_reg || null,
+            address: (company as any).address || null,
+            logo_url: (company as any).logo_url || null,
+            tax_enabled: company.tax_enabled,
+            print_footer: (company as any).cw_automations?.print_settings?.footer || null,
+          }}
           onClose={() => setListInvoiceData(null)}
         />
       )}
@@ -711,6 +728,12 @@ export function CarWashPOS() {
             name: company.name,
             owner_name: company.owner_name,
             owner_phone: company.owner_phone,
+            vat_number: (company as any).vat_number || null,
+            commercial_reg: (company as any).commercial_reg || null,
+            address: (company as any).address || null,
+            logo_url: (company as any).logo_url || null,
+            tax_enabled: company.tax_enabled,
+            print_footer: (company as any).cw_automations?.print_settings?.footer || null,
           }}
           onClose={handleInvoiceClose}
         />

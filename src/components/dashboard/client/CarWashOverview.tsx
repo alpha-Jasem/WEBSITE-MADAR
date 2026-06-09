@@ -1,10 +1,11 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
-import { Activity, AlertTriangle, Calendar, CalendarClock, Car, CheckCircle2, DollarSign, Download, FileText, Loader2, Plus, Sparkles, Star, TrendingDown, TrendingUp, Users, Wrench } from 'lucide-react'
+import { Activity, AlertTriangle, Calendar, CalendarClock, Car, CheckCircle2, Copy, DollarSign, Download, ExternalLink, FileText, Loader2, Plus, QrCode, Sparkles, Star, TrendingDown, TrendingUp, Users, Wrench } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { downloadCSV, formatDateForCSV } from '../../../lib/exportUtils'
+import { getSelfCheckinUrl } from '../../../lib/selfCheckin'
 import type { QueueStatus } from '../../../types'
 
 type CWVisit = {
@@ -170,6 +171,7 @@ export function CarWashOverview() {
   const [expenses, setExpenses] = useState<CWExpenseLite[]>([])
   const [revenueRange, setRevenueRange] = useState<RevenueRange>('daily')
   const [salesBreakdownTab, setSalesBreakdownTab] = useState<SalesBreakdownTab>('period')
+  const [qrCopied, setQrCopied] = useState(false)
 
   const DATE_FILTERS = [
     { label: 'اليوم', days: 1 },
@@ -641,6 +643,39 @@ export function CarWashOverview() {
               </Link>
             )}
           </div>
+          {/* QR Check-in Card */}
+          {(() => {
+            const checkinUrl = getSelfCheckinUrl(company as any)
+            if (!checkinUrl) return null
+            const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=10&data=${encodeURIComponent(checkinUrl)}`
+            return (
+              <div className="cw-card cw-card-pad" style={{ textAlign: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <h3 className="cw-title" style={{ fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <QrCode size={15} color="#0B63F6" /> تسجيل ذاتي للعملاء
+                  </h3>
+                </div>
+                <img src={qrSrc} alt="QR Code" style={{ width: 140, height: 140, borderRadius: 10, display: 'block', margin: '0 auto 12px' }} />
+                <p className="cw-muted" style={{ fontSize: 11, marginBottom: 10, lineHeight: 1.6 }}>
+                  اطبع هذا الكود وضعه عند الاستقبال — العميل يمسح ويسجل سيارته بنفسه
+                </p>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(checkinUrl); setQrCopied(true); setTimeout(() => setQrCopied(false), 2000) }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 8, border: '1px solid #D7E1F0', background: qrCopied ? '#DCFCE7' : '#F8FBFF', color: qrCopied ? '#059669' : '#0D1B3E', fontSize: 11, fontFamily: 'Tajawal,sans-serif', fontWeight: 900, cursor: 'pointer' }}
+                  >
+                    <Copy size={12} /> {qrCopied ? 'تم النسخ' : 'نسخ الرابط'}
+                  </button>
+                  <a
+                    href={checkinUrl} target="_blank" rel="noreferrer"
+                    style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 8, border: '1px solid #D7E1F0', background: '#F8FBFF', color: '#0D1B3E', fontSize: 11, fontFamily: 'Tajawal,sans-serif', fontWeight: 900, textDecoration: 'none' }}
+                  >
+                    <ExternalLink size={12} /> معاينة
+                  </a>
+                </div>
+              </div>
+            )
+          })()}
         </aside>
 
         <main className="cw-main">
