@@ -51,21 +51,35 @@ export const CarWashSeedDemo = ({ companyId, onDone, onClose }: Props) => {
 
   const seed = async () => {
     setSeeding(true)
+    const insertedIds: { table: string; ids: string[] }[] = []
+
+    const rollback = async () => {
+      for (const { table, ids } of insertedIds.reverse()) {
+        await supabase.from(table as any).delete().in('id', ids)
+      }
+    }
+
     try {
       setStep('جاري إضافة الخدمات...')
-      const { data: insertedServices } = await supabase.from('cw_services').insert(
+      const { data: insertedServices, error: svcErr } = await supabase.from('cw_services').insert(
         DEMO_SERVICES.map(s => ({ ...s, company_id: companyId, active: true }))
       ).select()
+      if (svcErr) throw svcErr
+      if (insertedServices?.length) insertedIds.push({ table: 'cw_services', ids: insertedServices.map(r => r.id) })
 
       setStep('جاري إضافة الموظفين...')
-      const { data: insertedWorkers } = await supabase.from('cw_workers').insert(
+      const { data: insertedWorkers, error: wrkErr } = await supabase.from('cw_workers').insert(
         DEMO_WORKERS.map(w => ({ ...w, company_id: companyId, active: true }))
       ).select()
+      if (wrkErr) throw wrkErr
+      if (insertedWorkers?.length) insertedIds.push({ table: 'cw_workers', ids: insertedWorkers.map(r => r.id) })
 
       setStep('جاري إضافة العملاء...')
-      await supabase.from('cw_customers').insert(
+      const { data: insertedCustomers, error: custErr } = await supabase.from('cw_customers').insert(
         DEMO_CUSTOMERS.map(c => ({ ...c, company_id: companyId, free_washes_available: 0, google_review_requested: false, welcome_sent: false }))
-      )
+      ).select()
+      if (custErr) throw custErr
+      if (insertedCustomers?.length) insertedIds.push({ table: 'cw_customers', ids: insertedCustomers.map(r => r.id) })
 
       setStep('جاري إضافة السيارات...')
       const serviceList = insertedServices || []
@@ -77,20 +91,27 @@ export const CarWashSeedDemo = ({ companyId, onDone, onClose }: Props) => {
         { customer_name: 'عبدالله الشهري', phone: '0555555555', car_type: 'جي إم سي يوكون', plate: 'ي ك ل 3456', status: 'ready', payment_status: 'unpaid', payment_method: 'visa', service_name: serviceList[0]?.name || 'غسيل عادي', service_id: serviceList[0]?.id || null, price: serviceList[0]?.price || 30, worker_id: workerList[0]?.id || null },
         { customer_name: 'خالد السبيعي', phone: '0556667788', car_type: 'لكزس ES', plate: 'م ن س 7890', status: 'received', payment_status: 'unpaid', payment_method: 'cash', service_name: serviceList[3]?.name || 'تلميع خارجي', service_id: serviceList[3]?.id || null, price: serviceList[3]?.price || 150, worker_id: workerList[1]?.id || null },
       ]
-      await supabase.from('cw_queue').insert(queueItems.map(q => ({ ...q, company_id: companyId })))
+      const { data: insertedQueue, error: queueErr } = await supabase.from('cw_queue').insert(
+        queueItems.map(q => ({ ...q, company_id: companyId }))
+      ).select()
+      if (queueErr) throw queueErr
+      if (insertedQueue?.length) insertedIds.push({ table: 'cw_queue', ids: insertedQueue.map(r => r.id) })
 
       setStep('جاري إضافة المصاريف...')
       const today = new Date().toISOString().slice(0, 10)
-      await supabase.from('cw_expenses').insert(
+      const { data: insertedExpenses, error: expErr } = await supabase.from('cw_expenses').insert(
         DEMO_EXPENSES.map(e => ({ ...e, company_id: companyId, expense_date: today }))
-      )
+      ).select()
+      if (expErr) throw expErr
+      if (insertedExpenses?.length) insertedIds.push({ table: 'cw_expenses', ids: insertedExpenses.map(r => r.id) })
 
       logAudit(companyId, 'demo_data_seeded', { newValue: { services: DEMO_SERVICES.length, workers: DEMO_WORKERS.length } })
       setStep('تم!')
       setDone(true)
     } catch (err) {
-      console.error('Seed error:', err)
-      setStep('حدث خطأ — حاول مرة أخرى')
+      console.error('Seed error — rolling back:', err)
+      await rollback()
+      setStep('حدث خطأ — تم التراجع عن التغييرات، حاول مرة أخرى')
     }
     setSeeding(false)
   }

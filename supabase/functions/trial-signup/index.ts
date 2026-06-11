@@ -35,7 +35,15 @@ Deno.serve(async (req) => {
         return json({ error: 'missing_required_fields' }, 400)
       }
 
-      // check duplicate
+      // rate limit: one company per auth user
+      const { data: existingByUser } = await supabaseAdmin
+        .from('companies')
+        .select('id')
+        .eq('auth_user_id', user.id)
+        .maybeSingle()
+      if (existingByUser) return json({ error: 'email_already_registered' }, 409)
+
+      // check duplicate email
       const { data: existing } = await supabaseAdmin
         .from('companies')
         .select('id')
@@ -44,10 +52,14 @@ Deno.serve(async (req) => {
 
       if (existing) return json({ error: 'email_already_registered' }, 409)
 
-      const planResetAt = new Date()
+      const now = new Date()
+      const planResetAt = new Date(now)
       planResetAt.setMonth(planResetAt.getMonth() + 1)
       planResetAt.setDate(1)
       planResetAt.setHours(0, 0, 0, 0)
+
+      const trialEndsAt = new Date(now)
+      trialEndsAt.setDate(trialEndsAt.getDate() + 3)
 
       // create company
       const { data: company, error: companyErr } = await supabaseAdmin
@@ -57,13 +69,15 @@ Deno.serve(async (req) => {
           owner_name: owner_name.trim(),
           owner_email: email.trim().toLowerCase(),
           owner_phone: phone?.trim() || '',
+          city: city?.trim() || '',
           industry: btype,
           business_type: btype,
           plan: 'growth',
-          status: 'active',
+          status: 'trial',
           package_type: btype === 'clinic' ? 'whatsapp' : null,
           auth_user_id: user.id,
           plan_reset_at: planResetAt.toISOString(),
+          trial_ends_at: trialEndsAt.toISOString(),
           monthly_messages: 0,
           monthly_leads: 0,
           automations_count: 0,
@@ -89,7 +103,7 @@ Deno.serve(async (req) => {
         role: 'client',
       })
 
-      const redirectTo = btype === 'clinic' ? '/clinic-os/dashboard' : '/client?welcome=trial'
+      const redirectTo = btype === 'clinic' ? '/clinic-os/dashboard' : '/client'
       return json({ success: true, company_id: company.id, redirect_to: redirectTo })
     }
 

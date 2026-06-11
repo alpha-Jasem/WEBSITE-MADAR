@@ -38,6 +38,7 @@ export interface Company {
   message_limit: number
   messages_used: number
   plan_reset_at: string
+  trial_ends_at?: string
   auth_user_id?: string
   created_at: string
   // VAT settings

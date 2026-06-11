@@ -14,15 +14,16 @@ type BusinessType = 'car_wash' | 'clinic'
 const FIELD_CLASS =
   'w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 pr-11 text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-[#00BFFF] focus:ring-4 focus:ring-sky-400/15 font-tajawal'
 
-function errorCode(msg: string) {
+function errorCode(msg: string): string | null {
   const map: Record<string, string> = {
     otp_invalid: 'الرمز غير صحيح أو انتهت صلاحيته. اضغط "إعادة إرسال".',
     email_already_registered: 'هذا البريد مسجل مسبقاً — استخدم تسجيل الدخول.',
     company_create_failed: 'تعذر إنشاء الحساب. تواصل معنا على info@madar.software.',
     password_mismatch: 'كلمة المرور وتأكيدها غير متطابقتين.',
     password_short: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل.',
+    missing_required_fields: 'يرجى تعبئة جميع الحقول المطلوبة.',
   }
-  return map[msg] || 'حدث خطأ غير متوقع — حاول مرة أخرى.'
+  return map[msg] ?? null
 }
 
 function getErrorMessage(error: unknown) {
@@ -100,8 +101,11 @@ export function TrialSignup() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError('أدخل بريدًا إلكترونيًا صالحًا.'); return
     }
-    if (form.password.length < 6) { setError(errorCode('password_short')); return }
-    if (form.password !== form.confirm_password) { setError(errorCode('password_mismatch')); return }
+    if (form.phone && !/^05\d{8}$/.test(form.phone.replace(/\s/g, ''))) {
+      setError('رقم الجوال يجب أن يبدأ بـ 05 ويتكون من 10 أرقام.'); return
+    }
+    if (form.password.length < 6) { setError(errorCode('password_short')!); return }
+    if (form.password !== form.confirm_password) { setError(errorCode('password_mismatch')!); return }
 
     setLoading(true)
     setError('')
@@ -149,10 +153,7 @@ export function TrialSignup() {
       const session = authData.session
       if (!session) throw new Error('otp_invalid')
 
-      // set password after OTP login
-      await supabase.auth.updateUser({ password: form.password })
-
-      // create company
+      // create company first — if this fails, password stays unset (clean state)
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/trial-signup`,
         {
@@ -179,9 +180,12 @@ export function TrialSignup() {
         throw new Error(result.error || 'company_create_failed')
       }
 
-      navigate(result.redirect_to || '/client?welcome=trial', { replace: true })
+      // set password only after company is successfully created
+      await supabase.auth.updateUser({ password: form.password })
+
+      navigate(result.redirect_to || '/client', { replace: true })
     } catch (err: any) {
-      const message = errorCode(err?.message) || getErrorMessage(err)
+      const message = errorCode(err?.message) ?? getErrorMessage(err)
       setError(message)
     } finally {
       setLoading(false)
@@ -304,12 +308,17 @@ export function TrialSignup() {
             {/* Progress */}
             <div className="mb-5 grid grid-cols-2 gap-2">
               {(['details', 'otp'] as Step[]).map((s, i) => {
-                const labels = ['البيانات', 'التحقق بالبريد']
-                const active = step === s || (step === 'otp' && i === 0)
+                const labels = ['① البيانات', '② التحقق بالبريد']
+                const isActive = step === s
+                const isCompleted = step === 'otp' && i === 0
                 return (
                   <div key={s} className="rounded-xl px-3 py-2 text-center text-xs font-bold font-tajawal transition-all"
-                    style={{ background: active ? '#E0F7FF' : '#F8FAFC', color: active ? '#0369A1' : '#94A3B8' }}>
-                    {labels[i]}
+                    style={{
+                      background: isActive ? '#E0F7FF' : isCompleted ? '#F0FDF4' : '#F8FAFC',
+                      color: isActive ? '#0369A1' : isCompleted ? '#15803D' : '#94A3B8',
+                      border: isActive ? '1.5px solid #BAE6FD' : isCompleted ? '1.5px solid #BBF7D0' : '1.5px solid transparent',
+                    }}>
+                    {isCompleted ? `✓ البيانات` : labels[i]}
                   </div>
                 )
               })}

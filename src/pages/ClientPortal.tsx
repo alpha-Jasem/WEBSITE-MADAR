@@ -77,7 +77,9 @@ function usePageTitle(navItems: NavItem[]) {
 }
 
 function isTrialExpired(company: ReturnType<typeof useClientCompany>['company']) {
-  return company?.status === 'trial' && company.plan_reset_at && new Date(company.plan_reset_at).getTime() < Date.now()
+  if (company?.status !== 'trial') return false
+  const expiryDate = (company as any).trial_ends_at || company.plan_reset_at
+  return expiryDate && new Date(expiryDate).getTime() < Date.now()
 }
 
 function TrialExpiredGate() {
@@ -201,6 +203,8 @@ export const ClientPortal = () => {
   useEffect(() => {
     if (!isCarWash || !companyId || loading || seedChecked) return
     setSeedChecked(true)
+    const dismissKey = `madar_seed_done_${companyId}`
+    if (localStorage.getItem(dismissKey)) return
     const check = async () => {
       const [{ count: svcCount }, { count: wrkCount }] = await Promise.all([
         supabase.from('cw_services').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
@@ -273,8 +277,16 @@ export const ClientPortal = () => {
         {!trialExpired && showSeedDemo && companyId && (
           <CarWashSeedDemo
             companyId={companyId}
-            onDone={() => { setShowSeedDemo(false); navigate('/client/queue') }}
-            onClose={() => setShowSeedDemo(false)}
+            onDone={() => {
+              localStorage.setItem(`madar_seed_done_${companyId}`, '1')
+              setShowSeedDemo(false)
+              navigate('/client/queue')
+            }}
+            onClose={() => {
+              localStorage.setItem(`madar_seed_done_${companyId}`, '1')
+              setShowSeedDemo(false)
+              navigate('/client/queue')
+            }}
           />
         )}
       </Suspense>
