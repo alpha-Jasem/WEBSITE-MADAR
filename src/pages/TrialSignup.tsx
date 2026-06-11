@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -60,8 +60,10 @@ export function TrialSignup() {
   const navigate = useNavigate()
   const [step, setStep] = useState<Step>('details')
   const [loading, setLoading] = useState(false)
+  const [loadingStep, setLoadingStep] = useState('')
   const [error, setError] = useState('')
   const [otp, setOtp] = useState('')
+  const autoSubmittedRef = useRef(false)
   const [showPass, setShowPass] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [form, setForm] = useState({
@@ -74,6 +76,15 @@ export function TrialSignup() {
     password: '',
     confirm_password: '',
   })
+
+  // auto-submit when OTP is fully entered
+  useEffect(() => {
+    if (otp.length === 8 && step === 'otp' && !loading && !autoSubmittedRef.current) {
+      autoSubmittedRef.current = true
+      verifyAndCreate()
+    }
+    if (otp.length < 8) autoSubmittedRef.current = false
+  }, [otp])
 
   const sidebar = SIDEBAR_CONTENT[form.business_type]
   const accentColor = form.business_type === 'clinic' ? '#7C3AED' : '#00BFFF'
@@ -137,21 +148,29 @@ export function TrialSignup() {
     }
   }
 
-  const verifyAndCreate = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const verifyAndCreate = async (e?: React.FormEvent) => {
+    e?.preventDefault()
     if (otp.length < 8) { setError('أدخل الرمز المكوّن من 8 أرقام.'); return }
     setLoading(true)
+    setLoadingStep('جاري التحقق من الرمز...')
     setError('')
     try {
-      const { data: authData, error: verifyErr } = await supabase.auth.verifyOtp({
-        email: form.email.trim(),
-        token: otp.trim(),
-        type: 'email',
-      })
-      if (verifyErr) throw new Error('otp_invalid')
+      // try 'email' first (magic link), fall back to 'signup' (confirm signup)
+      let authData: any = null
+      const tryTypes = ['email', 'signup'] as const
+      let lastErr: any = null
+      for (const type of tryTypes) {
+        const { data, error } = await supabase.auth.verifyOtp({
+          email: form.email.trim(),
+          token: otp.trim(),
+          type,
+        })
+        if (!error && data.session) { authData = data; break }
+        lastErr = error
+      }
+      if (!authData?.session) throw new Error('otp_invalid')
 
-      const session = authData.session
-      if (!session) throw new Error('otp_invalid')
+      setLoadingStep('جاري إنشاء الحساب...')
 
       // create company first — if this fails, password stays unset (clean state)
       const res = await fetch(
@@ -160,7 +179,7 @@ export function TrialSignup() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
+            'Authorization': `Bearer ${authData.session.access_token}`,
             'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
           },
           body: JSON.stringify({
@@ -180,8 +199,9 @@ export function TrialSignup() {
         throw new Error(result.error || 'company_create_failed')
       }
 
-      // set password only after company is successfully created
-      await supabase.auth.updateUser({ password: form.password })
+      // set password — failure is non-fatal (user can reset later)
+      const { error: pwErr } = await supabase.auth.updateUser({ password: form.password })
+      if (pwErr) console.warn('Password update failed (non-fatal):', pwErr.message)
 
       navigate(result.redirect_to || '/client', { replace: true })
     } catch (err: any) {
@@ -189,6 +209,7 @@ export function TrialSignup() {
       setError(message)
     } finally {
       setLoading(false)
+      setLoadingStep('')
     }
   }
 
@@ -468,7 +489,7 @@ export function TrialSignup() {
                       />
                     </div>
 
-                    {error && <ErrorBox text={error} />}
+                    {error && <ErrorBox text={error} showHelp={error.includes('تعذر إنشاء')} />}
 
                     <button
                       type="submit"
@@ -477,7 +498,7 @@ export function TrialSignup() {
                       style={{ background: `linear-gradient(135deg, ${accentColor}, ${accentDark})`, boxShadow: `0 16px 34px ${accentColor}40` }}
                     >
                       {loading
-                        ? <><Loader2 size={17} className="animate-spin" /> جاري تجهيز الحساب...</>
+                        ? <><Loader2 size={17} className="animate-spin" /> {loadingStep || 'جاري تجهيز الحساب...'}</>
                         : <><CheckCircle2 size={17} /> تأكيد وإنشاء الحساب</>
                       }
                     </button>
@@ -532,14 +553,24 @@ function Field({
   )
 }
 
-function ErrorBox({ text }: { text: string }) {
+function ErrorBox({ text, showHelp }: { text: string; showHelp?: boolean }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}
       className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 font-tajawal"
     >
-      {text}
+      <p>{text}</p>
+      {showHelp && (
+        <a
+          href="https://wa.me/966546666005?text=مرحبا،%20واجهت%20مشكلة%20في%20إنشاء%20الحساب%20على%20مدار"
+          target="_blank"
+          rel="noreferrer"
+          className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-red-600 underline hover:text-red-800"
+        >
+          تواصل مع الدعم على واتساب ←
+        </a>
+      )}
     </motion.div>
   )
 }
