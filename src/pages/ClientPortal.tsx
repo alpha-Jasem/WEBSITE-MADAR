@@ -82,6 +82,39 @@ function isTrialExpired(company: ReturnType<typeof useClientCompany>['company'])
   return expiryDate && new Date(expiryDate).getTime() < Date.now()
 }
 
+function trialDaysLeft(company: ReturnType<typeof useClientCompany>['company']): number | null {
+  if (company?.status !== 'trial') return null
+  const expiryDate = (company as any).trial_ends_at
+  if (!expiryDate) return null
+  const ms = new Date(expiryDate).getTime() - Date.now()
+  return Math.max(0, Math.ceil(ms / (1000 * 60 * 60 * 24)))
+}
+
+function TrialBanner({ daysLeft }: { daysLeft: number }) {
+  const urgent = daysLeft <= 1
+  return (
+    <div dir="rtl" className="mx-4 mt-3 mb-1 flex items-center justify-between gap-3 rounded-2xl px-4 py-2.5 font-tajawal text-sm"
+      style={{
+        background: urgent ? '#FFF7ED' : '#F0F9FF',
+        border: `1px solid ${urgent ? '#FED7AA' : '#BAE6FD'}`,
+      }}>
+      <div className="flex items-center gap-2">
+        <span style={{ fontSize: 16 }}>{urgent ? '⏰' : '🎁'}</span>
+        <span style={{ color: urgent ? '#9A3412' : '#0369A1', fontWeight: 700 }}>
+          {daysLeft === 0
+            ? 'تنتهي تجربتك المجانية اليوم'
+            : `تجربتك المجانية تنتهي خلال ${daysLeft} ${daysLeft === 1 ? 'يوم' : 'أيام'}`}
+        </span>
+      </div>
+      <a href="/client/upgrade"
+        className="rounded-xl px-3 py-1.5 text-xs font-bold text-white transition-all"
+        style={{ background: urgent ? '#EA580C' : '#0EA5E9' }}>
+        فعّل الاشتراك
+      </a>
+    </div>
+  )
+}
+
 function TrialExpiredGate() {
   const assurances = [
     'بيانات المغسلة محفوظة',
@@ -196,6 +229,7 @@ export const ClientPortal = () => {
 
   const pageTitle = usePageTitle(navItems)
   const trialExpired = isTrialExpired(company)
+  const daysLeft = trialDaysLeft(company)
 
   const [showSeedDemo, setShowSeedDemo] = useState(false)
   const [seedChecked, setSeedChecked] = useState(false)
@@ -250,6 +284,7 @@ export const ClientPortal = () => {
 
   return (
     <DashShell navItems={navItems} role="client" pageTitle={pageTitle}>
+      {daysLeft !== null && !trialExpired && <TrialBanner daysLeft={daysLeft} />}
       <Suspense fallback={<PageLoader />}>
         {trialExpired && !location.pathname.startsWith('/client/upgrade') ? (
           <TrialExpiredGate />
