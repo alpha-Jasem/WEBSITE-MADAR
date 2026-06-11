@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Loader2, Sparkles, X, Check, Rocket, Wrench, Users, Car, Receipt } from 'lucide-react'
+import { Loader2, X, Check } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { logAudit } from '../../../lib/auditLog'
 
@@ -31,11 +31,11 @@ const DEMO_EXPENSES = [
 ]
 
 const ITEMS = [
-  { icon: Wrench,  label: `${DEMO_SERVICES.length} خدمات جاهزة للتشغيل`, color: '#0EA5E9' },
-  { icon: Users,   label: `${DEMO_WORKERS.length} موظفين بأنواع رواتب مختلفة`, color: '#8B5CF6' },
-  { icon: Users,   label: `${DEMO_CUSTOMERS.length} عملاء بمستويات ولاء`, color: '#10B981' },
-  { icon: Car,     label: '5 سيارات في لوحة التشغيل', color: '#F59E0B' },
-  { icon: Receipt, label: `${DEMO_EXPENSES.length} مصاريف يومية`, color: '#EF4444' },
+  { emoji: '🔧', label: `${DEMO_SERVICES.length} خدمات جاهزة للتشغيل`,        bg: '#EFF6FF', border: '#BFDBFE', text: '#1D4ED8' },
+  { emoji: '👷', label: `${DEMO_WORKERS.length} موظفين بأنواع رواتب مختلفة`, bg: '#F5F3FF', border: '#DDD6FE', text: '#6D28D9' },
+  { emoji: '🧑‍🤝‍🧑', label: `${DEMO_CUSTOMERS.length} عملاء بمستويات ولاء`,   bg: '#F0FDF4', border: '#BBF7D0', text: '#15803D' },
+  { emoji: '🚗', label: '5 سيارات في لوحة التشغيل',                           bg: '#FFFBEB', border: '#FDE68A', text: '#B45309' },
+  { emoji: '🧾', label: `${DEMO_EXPENSES.length} مصاريف يومية`,               bg: '#FFF1F2', border: '#FECDD3', text: '#BE123C' },
 ]
 
 interface Props {
@@ -96,93 +96,107 @@ export const CarWashSeedDemo = ({ companyId, onDone, onClose }: Props) => {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15,23,42,0.55)', backdropFilter: 'blur(6px)' }}>
-      <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
-
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(2,8,23,0.7)', backdropFilter: 'blur(8px)' }}
+    >
+      <div
+        className="w-full max-w-[420px] rounded-[28px] overflow-hidden"
+        style={{
+          background: 'white',
+          boxShadow: '0 32px 80px rgba(0,0,0,0.28), 0 0 0 1px rgba(0,0,0,0.05)',
+        }}
+      >
         {!done ? (
           <>
-            {/* Header gradient */}
-            <div className="relative px-6 pt-6 pb-5 text-center" style={{ background: 'linear-gradient(135deg, #EFF6FF 0%, #F0FDF4 100%)' }}>
-              <button
-                onClick={onClose}
-                disabled={seeding}
-                className="absolute left-4 top-4 p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-white/80 transition-all disabled:opacity-0"
-              >
-                <X size={16} />
-              </button>
+            {/* ── Header ── */}
+            <div className="relative overflow-hidden px-7 pt-7 pb-6 text-center"
+              style={{ background: 'linear-gradient(145deg, #0EA5E9 0%, #0369A1 55%, #1E3A8A 100%)' }}>
 
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-3 shadow-sm"
-                style={{ background: 'linear-gradient(135deg, #0EA5E9, #0284C7)' }}>
-                <Rocket size={26} className="text-white" />
+              {/* decorative circles */}
+              <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full opacity-20"
+                style={{ background: 'radial-gradient(circle, #fff, transparent)' }} />
+              <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full opacity-10"
+                style={{ background: 'radial-gradient(circle, #7DD3FC, transparent)' }} />
+
+              {!seeding && (
+                <button onClick={onClose}
+                  className="absolute left-4 top-4 p-1.5 rounded-full text-white/60 hover:text-white hover:bg-white/15 transition-all">
+                  <X size={15} />
+                </button>
+              )}
+
+              {/* icon */}
+              <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4"
+                style={{ background: 'rgba(255,255,255,0.18)', border: '1.5px solid rgba(255,255,255,0.3)', backdropFilter: 'blur(4px)' }}>
+                <span style={{ fontSize: 30 }}>🚀</span>
               </div>
 
-              <h2 className="text-xl font-bold text-slate-900 font-cairo mb-1">
-                أهلاً بك في مدار! 🎉
+              <h2 className="font-cairo text-2xl font-black text-white mb-1.5" style={{ letterSpacing: '-0.3px' }}>
+                أهلاً بك في مدار!
               </h2>
-              <p className="text-sm text-slate-500 font-tajawal leading-6">
-                لمساعدتك على استكشاف النظام، يمكنك تحميل بيانات تجريبية
-                <br />جاهزة تُشغّل لوحتك مباشرة
+              <p className="font-tajawal text-sm text-sky-100 leading-7 opacity-90">
+                جهّز لوحتك في ثوانٍ — نضيف لك بيانات تجريبية<br />حقيقية لتستكشف كل ميزة بوضوح
               </p>
             </div>
 
-            {/* Items list */}
-            <div className="px-6 py-4 space-y-2.5">
-              {ITEMS.map(({ icon: Icon, label, color }, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                  <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ background: color + '18' }}>
-                    <Icon size={15} style={{ color }} />
-                  </div>
-                  <span className="text-sm text-slate-700 font-tajawal">{label}</span>
+            {/* ── Items ── */}
+            <div className="px-5 pt-4 pb-2 space-y-2">
+              {ITEMS.map(({ emoji, label, bg, border, text }, i) => (
+                <div key={i} className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all"
+                  style={{ background: bg, border: `1px solid ${border}` }}>
+                  <span className="text-lg leading-none select-none">{emoji}</span>
+                  <span className="font-tajawal text-sm font-semibold" style={{ color: text }}>{label}</span>
                 </div>
               ))}
             </div>
 
-            {/* Progress */}
+            {/* ── Progress bar ── */}
             {seeding && (
-              <div className="mx-6 mb-3 flex items-center gap-2 p-3 rounded-xl"
-                style={{ background: '#EFF6FF', border: '1px solid #BFDBFE' }}>
+              <div className="mx-5 mt-3 flex items-center gap-2.5 px-4 py-2.5 rounded-2xl"
+                style={{ background: '#F0F9FF', border: '1px solid #BAE6FD' }}>
                 <Loader2 size={14} className="animate-spin text-sky-500 flex-shrink-0" />
                 <p className="text-xs text-sky-700 font-tajawal">{step}</p>
               </div>
             )}
 
-            {/* Buttons */}
-            <div className="px-6 pb-6 flex gap-3">
-              <button
-                onClick={onClose}
-                disabled={seeding}
-                className="flex-1 py-3 rounded-xl text-sm font-tajawal font-bold text-slate-600 transition-all hover:bg-slate-100 disabled:opacity-40"
-                style={{ background: '#F1F5F9', border: '1px solid #E2E8F0' }}
-              >
+            {/* ── Buttons ── */}
+            <div className="px-5 pt-3 pb-5 flex gap-2.5">
+              <button onClick={onClose} disabled={seeding}
+                className="flex-1 py-3 rounded-2xl font-tajawal text-sm font-bold text-slate-500 transition-all hover:bg-slate-100 disabled:opacity-40"
+                style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0' }}>
                 تخطّ الآن
               </button>
-              <button
-                onClick={seed}
-                disabled={seeding}
-                className="flex-1 py-3 rounded-xl text-sm font-tajawal font-bold text-white flex items-center justify-center gap-2 transition-all disabled:opacity-60"
-                style={{ background: 'linear-gradient(135deg, #0EA5E9, #0284C7)', boxShadow: '0 8px 20px rgba(14,165,233,0.3)' }}
-              >
-                {seeding ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
-                {seeding ? 'جاري التحميل...' : 'تحميل البيانات'}
+              <button onClick={seed} disabled={seeding}
+                className="flex-[2] py-3 rounded-2xl font-tajawal text-sm font-bold text-white flex items-center justify-center gap-2 transition-all disabled:opacity-60 active:scale-[0.98]"
+                style={{
+                  background: 'linear-gradient(135deg, #0EA5E9 0%, #0369A1 100%)',
+                  boxShadow: '0 8px 24px rgba(14,165,233,0.4)',
+                }}>
+                {seeding
+                  ? <><Loader2 size={15} className="animate-spin" /> جاري التحميل...</>
+                  : <><span style={{ fontSize: 15 }}>✨</span> تحميل البيانات التجريبية</>
+                }
               </button>
             </div>
           </>
         ) : (
-          <div className="p-8 text-center">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-              style={{ background: 'linear-gradient(135deg, #D1FAE5, #A7F3D0)' }}>
-              <Check size={28} className="text-emerald-600" />
+          /* ── Success state ── */
+          <div className="px-7 py-10 text-center">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-5"
+              style={{ background: 'linear-gradient(135deg, #D1FAE5, #6EE7B7)' }}>
+              <Check size={36} className="text-emerald-600" strokeWidth={2.5} />
             </div>
-            <p className="text-xl font-bold text-slate-900 font-cairo mb-2">تم التحميل بنجاح!</p>
-            <p className="text-sm text-slate-500 font-tajawal mb-6 leading-6">
+            <p className="font-cairo text-2xl font-black text-slate-900 mb-2">تم التحميل! 🎉</p>
+            <p className="font-tajawal text-sm text-slate-500 mb-7 leading-7">
               البيانات التجريبية جاهزة — استكشف النظام بحرية
             </p>
-            <button
-              onClick={onDone}
-              className="w-full py-3 rounded-xl text-sm font-tajawal font-bold text-white"
-              style={{ background: 'linear-gradient(135deg, #0EA5E9, #0284C7)', boxShadow: '0 8px 20px rgba(14,165,233,0.3)' }}
-            >
+            <button onClick={onDone}
+              className="w-full py-3.5 rounded-2xl font-tajawal text-sm font-bold text-white"
+              style={{
+                background: 'linear-gradient(135deg, #0EA5E9, #0369A1)',
+                boxShadow: '0 8px 24px rgba(14,165,233,0.4)',
+              }}>
               ابدأ الاستكشاف ←
             </button>
           </div>
