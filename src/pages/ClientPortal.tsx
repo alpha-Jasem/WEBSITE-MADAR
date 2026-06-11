@@ -91,25 +91,55 @@ function trialDaysLeft(company: ReturnType<typeof useClientCompany>['company']):
 }
 
 function TrialBanner({ daysLeft }: { daysLeft: number }) {
-  const urgent = daysLeft <= 1
+  const urgent = daysLeft <= 3
+  const gradient = urgent
+    ? 'linear-gradient(135deg, #DC2626 0%, #EA580C 100%)'
+    : 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)'
   return (
-    <div dir="rtl" className="mx-4 mt-3 mb-1 flex items-center justify-between gap-3 rounded-2xl px-4 py-2.5 font-tajawal text-sm"
-      style={{
-        background: urgent ? '#FFF7ED' : '#F0F9FF',
-        border: `1px solid ${urgent ? '#FED7AA' : '#BAE6FD'}`,
-      }}>
-      <div className="flex items-center gap-2">
-        <span style={{ fontSize: 16 }}>{urgent ? '⏰' : '🎁'}</span>
-        <span style={{ color: urgent ? '#9A3412' : '#0369A1', fontWeight: 700 }}>
-          {daysLeft === 0
-            ? 'تنتهي تجربتك المجانية اليوم'
-            : `تجربتك المجانية تنتهي خلال ${daysLeft} ${daysLeft === 1 ? 'يوم' : 'أيام'}`}
-        </span>
+    <div dir="rtl" style={{
+      margin: '12px 16px 4px',
+      borderRadius: 16,
+      background: gradient,
+      padding: '12px 16px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
+      boxShadow: urgent
+        ? '0 4px 20px rgba(220,38,38,0.25)'
+        : '0 4px 20px rgba(124,58,237,0.25)',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+        <span style={{ fontSize: 18, flexShrink: 0 }}>✦</span>
+        <div>
+          <p style={{ margin: 0, color: '#fff', fontWeight: 900, fontSize: 13, fontFamily: 'Cairo,sans-serif', lineHeight: 1.3 }}>
+            ارتق إلى Premium
+          </p>
+          <p style={{ margin: 0, color: 'rgba(255,255,255,0.85)', fontSize: 11, fontFamily: 'Tajawal,sans-serif', lineHeight: 1.4 }}>
+            {daysLeft === 0
+              ? 'تجربتك المجانية تنتهي اليوم — لا تفوّت الفرصة.'
+              : `تجربتك المجانية فعالة، باقي `}
+            {daysLeft > 0 && (
+              <strong style={{ color: '#fff', fontFamily: 'Sora,sans-serif' }}>{daysLeft}</strong>
+            )}
+            {daysLeft > 0 && ` ${daysLeft === 1 ? 'يوم' : 'يوم'} لتثبيت الاشتراك.`}
+          </p>
+        </div>
       </div>
-      <a href="/client/upgrade"
-        className="rounded-xl px-3 py-1.5 text-xs font-bold text-white transition-all"
-        style={{ background: urgent ? '#EA580C' : '#0EA5E9' }}>
-        فعّل الاشتراك
+      <a href="/client/upgrade" style={{
+        flexShrink: 0,
+        background: '#fff',
+        color: urgent ? '#DC2626' : '#7C3AED',
+        fontWeight: 900,
+        fontSize: 12,
+        fontFamily: 'Cairo,sans-serif',
+        padding: '7px 14px',
+        borderRadius: 10,
+        textDecoration: 'none',
+        whiteSpace: 'nowrap',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+      }}>
+        ترقية إلى Premium
       </a>
     </div>
   )
