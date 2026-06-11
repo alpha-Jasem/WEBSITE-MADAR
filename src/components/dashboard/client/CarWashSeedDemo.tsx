@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Loader2, X, Check } from 'lucide-react'
+import { Loader2, X, Check, Wrench, HardHat, Users, Car, Receipt, Rocket } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { logAudit } from '../../../lib/auditLog'
 
@@ -31,11 +31,11 @@ const DEMO_EXPENSES = [
 ]
 
 const ITEMS = [
-  { emoji: '🔧', label: `${DEMO_SERVICES.length} خدمات جاهزة للتشغيل`,        bg: '#EFF6FF', border: '#BFDBFE', text: '#1D4ED8' },
-  { emoji: '👷', label: `${DEMO_WORKERS.length} موظفين بأنواع رواتب مختلفة`, bg: '#F5F3FF', border: '#DDD6FE', text: '#6D28D9' },
-  { emoji: '🧑‍🤝‍🧑', label: `${DEMO_CUSTOMERS.length} عملاء بمستويات ولاء`,   bg: '#F0FDF4', border: '#BBF7D0', text: '#15803D' },
-  { emoji: '🚗', label: '5 سيارات في لوحة التشغيل',                           bg: '#FFFBEB', border: '#FDE68A', text: '#B45309' },
-  { emoji: '🧾', label: `${DEMO_EXPENSES.length} مصاريف يومية`,               bg: '#FFF1F2', border: '#FECDD3', text: '#BE123C' },
+  { icon: Wrench,   label: `${DEMO_SERVICES.length} خدمات جاهزة للتشغيل`,        bg: '#EFF6FF', border: '#BFDBFE', iconColor: '#2563EB', text: '#1D4ED8' },
+  { icon: HardHat,  label: `${DEMO_WORKERS.length} موظفين بأنواع رواتب مختلفة`, bg: '#F5F3FF', border: '#DDD6FE', iconColor: '#7C3AED', text: '#6D28D9' },
+  { icon: Users,    label: `${DEMO_CUSTOMERS.length} عملاء بمستويات ولاء`,       bg: '#F0FDF4', border: '#BBF7D0', iconColor: '#16A34A', text: '#15803D' },
+  { icon: Car,      label: '5 سيارات في لوحة التشغيل',                           bg: '#FFFBEB', border: '#FDE68A', iconColor: '#D97706', text: '#B45309' },
+  { icon: Receipt,  label: `${DEMO_EXPENSES.length} مصاريف يومية`,               bg: '#FFF1F2', border: '#FECDD3', iconColor: '#E11D48', text: '#BE123C' },
 ]
 
 interface Props {
@@ -129,7 +129,7 @@ export const CarWashSeedDemo = ({ companyId, onDone, onClose }: Props) => {
               {/* icon */}
               <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4"
                 style={{ background: 'rgba(255,255,255,0.18)', border: '1.5px solid rgba(255,255,255,0.3)', backdropFilter: 'blur(4px)' }}>
-                <span style={{ fontSize: 30 }}>🚀</span>
+                <Rocket size={30} className="text-white" strokeWidth={1.8} />
               </div>
 
               <h2 className="font-cairo text-2xl font-black text-white mb-1.5" style={{ letterSpacing: '-0.3px' }}>
@@ -142,10 +142,13 @@ export const CarWashSeedDemo = ({ companyId, onDone, onClose }: Props) => {
 
             {/* ── Items ── */}
             <div className="px-5 pt-4 pb-2 space-y-2">
-              {ITEMS.map(({ emoji, label, bg, border, text }, i) => (
+              {ITEMS.map(({ icon: Icon, label, bg, border, iconColor, text }, i) => (
                 <div key={i} className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all"
                   style={{ background: bg, border: `1px solid ${border}` }}>
-                  <span className="text-lg leading-none select-none">{emoji}</span>
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: iconColor + '18' }}>
+                    <Icon size={16} style={{ color: iconColor }} strokeWidth={2} />
+                  </div>
                   <span className="font-tajawal text-sm font-semibold" style={{ color: text }}>{label}</span>
                 </div>
               ))}
@@ -175,7 +178,7 @@ export const CarWashSeedDemo = ({ companyId, onDone, onClose }: Props) => {
                 }}>
                 {seeding
                   ? <><Loader2 size={15} className="animate-spin" /> جاري التحميل...</>
-                  : <><span style={{ fontSize: 15 }}>✨</span> تحميل البيانات التجريبية</>
+                  : <><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg> تحميل البيانات التجريبية</>
                 }
               </button>
             </div>
