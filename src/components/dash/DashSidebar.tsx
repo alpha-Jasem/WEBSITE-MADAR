@@ -189,7 +189,7 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
                 ? TXT.starterCopy
                 : TXT.premiumCopy}
             </p>
-            <button type="button" onClick={() => { navigate('/client/upgrade'); onClose() }}>
+            <button type="button" onClick={() => { window.open('https://wa.me/966546666005?text=' + encodeURIComponent('مرحباً، أريد الاشتراك الشهري في نظام مادار 🚗'), '_blank'); onClose() }}>
               <Sparkles size={12} />
               {plan === 'starter' ? TXT.buttonPro : TXT.buttonPremium}
             </button>
