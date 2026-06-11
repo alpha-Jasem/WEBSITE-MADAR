@@ -3632,62 +3632,77 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 
 .dash-upgrade-card {
   padding: 16px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, rgba(99,102,241,0.07), rgba(139,92,246,0.05));
-  border: 1px solid rgba(99,102,241,0.18);
+  border-radius: 18px;
+  background: #FFFFFF;
+  border: 1px solid #EEF2FF;
+  box-shadow: 0 2px 14px rgba(13,27,62,0.08);
 }
 
 .dash-upgrade-icon {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 10px;
   display: grid;
   place-items: center;
-  color: var(--d-accent);
-  background: rgba(99,102,241,0.1);
-  margin-bottom: 10px;
+  background: linear-gradient(135deg, #0B63F6, #0EA5E9) !important;
+  border: none !important;
+  flex-shrink: 0;
 }
 
 .dash-upgrade-card strong,
 .dash-user-card strong {
   display: block;
-  color: var(--d-text1);
-  font-family: 'Sora', sans-serif;
-  font-size: 13px;
+  color: #0D1B3E;
+  font-family: 'Cairo', sans-serif;
+  font-size: 14px;
+  font-weight: 900;
+  margin-bottom: 5px;
 }
 
 .dash-upgrade-card p {
-  margin-top: 10px;
-  color: var(--d-text2);
+  margin: 0 0 14px;
+  color: #64748B;
+  font-family: 'Tajawal', sans-serif;
   font-size: 12px;
-  line-height: 1.6;
+  line-height: 1.65;
 }
 
 .dash-upgrade-card button {
   width: 100%;
-  height: 36px;
-  border-radius: 10px;
+  height: 40px;
+  border-radius: 12px;
   border: none;
-  margin-top: 14px;
   color: #fff;
-  background: linear-gradient(135deg, var(--d-accent), var(--d-accent2));
-  box-shadow: 0 4px 16px rgba(99,102,241,0.3);
+  font-size: 13px;
+  font-weight: 900;
+  font-family: 'Cairo', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #0B63F6, #0EA5E9);
+  box-shadow: 0 4px 14px rgba(11,99,246,0.28);
   cursor: pointer;
+  transition: opacity 0.15s;
 }
+
+.dash-upgrade-card button:hover { opacity: 0.9; }
 
 .dash-upgrade-card-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .dash-upgrade-card-head span {
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 99px;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 900;
   font-family: 'Sora', sans-serif;
+  background: #F3F4F6;
+  color: #6B7280;
 }
 
 .dash-user-card {
@@ -4683,7 +4698,6 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 
 .dash-sidebar-client .dash-upgrade-card {
   margin-top: 16px;
-  background: rgba(99,102,241,0.07);
 }
 
 .client-orbit-dashboard {

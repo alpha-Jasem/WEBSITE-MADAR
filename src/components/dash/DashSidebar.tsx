@@ -69,8 +69,9 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
   const isPremium = plan === 'enterprise'
   const planColor = PLAN_COLORS[plan] ?? '#00BFFF'
   const companyId = (company as any)?.id ?? null
-  const trialDaysLeft = role === 'client' && company?.status === 'trial' && company?.plan_reset_at
-    ? Math.max(0, Math.ceil((new Date(company.plan_reset_at).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
+  const trialEndsAt = (company as any)?.trial_ends_at ?? company?.plan_reset_at
+  const trialDaysLeft = role === 'client' && company?.status === 'trial' && trialEndsAt
+    ? Math.max(0, Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
     : null
 
   const [dropOpen, setDropOpen] = useState(false)

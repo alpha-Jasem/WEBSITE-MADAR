@@ -91,60 +91,25 @@ function trialDaysLeft(company: ReturnType<typeof useClientCompany>['company']):
 }
 
 function TrialBanner({ daysLeft }: { daysLeft: number }) {
-  const urgent = daysLeft <= 3
+  const urgent = daysLeft <= 1
   return (
-    <div dir="rtl" style={{
-      margin: '12px 16px 4px',
-      borderRadius: 20,
-      background: '#FFFFFF',
-      padding: '14px 16px',
-      boxShadow: '0 2px 16px rgba(13,27,62,0.08)',
-      border: '1px solid #EEF2FF',
-    }}>
-      {/* Header row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-        <span style={{
-          fontSize: 11, fontWeight: 900, fontFamily: 'Sora,sans-serif',
-          color: '#6B7280', background: '#F3F4F6',
-          borderRadius: 999, padding: '3px 10px',
-        }}>Pro</span>
-        <span style={{
-          width: 30, height: 30, borderRadius: 10,
-          background: 'linear-gradient(135deg,#0B63F6,#0EA5E9)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
-          </svg>
+    <div dir="rtl" className="mx-4 mt-3 mb-1 flex items-center justify-between gap-3 rounded-2xl px-4 py-2.5 font-tajawal text-sm"
+      style={{
+        background: urgent ? '#FFF7ED' : '#F0F9FF',
+        border: `1px solid ${urgent ? '#FED7AA' : '#BAE6FD'}`,
+      }}>
+      <div className="flex items-center gap-2">
+        <span style={{ fontSize: 16 }}>{urgent ? '⏰' : '🎁'}</span>
+        <span style={{ color: urgent ? '#9A3412' : '#0369A1', fontWeight: 700 }}>
+          {daysLeft === 0
+            ? 'تنتهي تجربتك المجانية اليوم'
+            : `تجربتك المجانية تنتهي خلال ${daysLeft} ${daysLeft === 1 ? 'يوم' : 'أيام'}`}
         </span>
       </div>
-
-      {/* Text */}
-      <p style={{ margin: '0 0 4px', fontWeight: 900, fontSize: 15, color: '#0D1B3E', fontFamily: 'Cairo,sans-serif', textAlign: 'right' }}>
-        ارتق إلى Premium
-      </p>
-      <p style={{ margin: '0 0 14px', fontSize: 12, color: '#6B7280', fontFamily: 'Tajawal,sans-serif', textAlign: 'right', lineHeight: 1.6 }}>
-        {daysLeft === 0
-          ? 'تجربتك المجانية تنتهي اليوم.'
-          : <>تجربتك المجانية فعالة، باقي <strong style={{ color: urgent ? '#DC2626' : '#0D1B3E' }}>{daysLeft} يوم</strong> لتثبيت الاشتراك.</>}
-      </p>
-
-      {/* Button */}
-      <a href="/client/upgrade" style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-        width: '100%', padding: '10px 0',
-        borderRadius: 12,
-        background: urgent
-          ? 'linear-gradient(135deg,#DC2626,#EA580C)'
-          : 'linear-gradient(135deg,#0B63F6,#0EA5E9)',
-        color: '#fff', fontWeight: 900, fontSize: 13,
-        fontFamily: 'Cairo,sans-serif', textDecoration: 'none',
-        boxShadow: urgent
-          ? '0 4px 14px rgba(220,38,38,0.3)'
-          : '0 4px 14px rgba(11,99,246,0.3)',
-      }}>
-        <span style={{ fontSize: 14 }}>✦</span>
-        ترقية إلى Premium
+      <a href="/client/upgrade"
+        className="rounded-xl px-3 py-1.5 text-xs font-bold text-white transition-all"
+        style={{ background: urgent ? '#EA580C' : '#0EA5E9' }}>
+        فعّل الاشتراك
       </a>
     </div>
   )
