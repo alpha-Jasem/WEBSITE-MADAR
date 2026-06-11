@@ -25,6 +25,21 @@ function errorCode(msg: string) {
   return map[msg] || 'حدث خطأ غير متوقع — حاول مرة أخرى.'
 }
 
+function getErrorMessage(error: unknown) {
+  if (!error) return 'حدث خطأ غير متوقع — حاول مرة أخرى.'
+  if (typeof error === 'string') return error
+  if (typeof error === 'object' && error !== null) {
+    const err = error as Record<string, any>
+    if (typeof err.message === 'string' && err.message) return err.message
+    if (typeof err.details === 'string' && err.details) return err.details
+    if (typeof err.error_description === 'string' && err.error_description) return err.error_description
+    if (typeof err.status === 'number' || typeof err.statusText === 'string') {
+      return `${err.status ?? ''} ${err.statusText ?? ''}`.trim() || JSON.stringify(err)
+    }
+  }
+  try { return JSON.stringify(error) } catch { return 'حدث خطأ غير متوقع — حاول مرة أخرى.' }
+}
+
 const SIDEBAR_CONTENT = {
   car_wash: {
     badge: 'مدار OS للمغاسل',
@@ -112,7 +127,7 @@ export function TrialSignup() {
       else if (msg.includes('rate limit')) setError('حاول لاحقًا؛ تم تجاوز حدود إرسال الرموز.')
       else if (msg.includes('already') || msg.includes('duplicate')) setError('هذا البريد مسجّل مسبقاً. حاول تسجيل الدخول.')
       else if (msg.includes('not allowed') || msg.includes('disabled')) setError('تم تعطيل إرسال البريد في الإعدادات. راجع إعدادات Supabase.')
-      else setError(err?.message || 'تعذر إرسال الرمز. تأكد من البريد الإلكتروني وأعد المحاولة.')
+      else setError(getErrorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -163,7 +178,8 @@ export function TrialSignup() {
 
       navigate(result.redirect_to || '/client?welcome=trial', { replace: true })
     } catch (err: any) {
-      setError(errorCode(err.message))
+      const message = errorCode(err?.message) || getErrorMessage(err)
+      setError(message)
     } finally {
       setLoading(false)
     }

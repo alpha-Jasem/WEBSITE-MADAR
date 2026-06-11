@@ -127,10 +127,6 @@ export function CarWashAutomations() {
   }
   const enabledCount = DEFS.filter(def => automations[def.key]?.enabled !== false).length
   const disabledCount = DEFS.length - enabledCount
-  const messagesUsed = company?.messages_used || 0
-  const messageLimit = company?.message_limit || 2000
-  const remainingMessages = Math.max(0, messageLimit - messagesUsed)
-  const usagePercent = messageLimit > 0 ? Math.min(100, Math.round((messagesUsed / messageLimit) * 100)) : 0
   const automationInsights = [
     { title: 'رسائل واتساب الأساسية', description: `${enabledCount} من ${DEFS.length} رسائل تلقائية مفعلة. هذه الرسائل تقلل متابعة الموظف اليدوية.`, tone: disabledCount > 2 ? 'amber' as const : 'green' as const },
     stats.deliveries > 0
@@ -161,13 +157,6 @@ export function CarWashAutomations() {
           value="جاهز للإرسال"
           hint="الإرسال يعتمد على إعدادات واتساب في النظام."
           color="#10B981"
-        />
-        <StatusTile
-          icon={Send}
-          title="المتبقي من الباقة"
-          value={`${remainingMessages.toLocaleString('ar-SA')} رسالة`}
-          hint={`${messagesUsed.toLocaleString('ar-SA')} مستخدمة من ${messageLimit.toLocaleString('ar-SA')} (${usagePercent}%)`}
-          color={usagePercent > 85 ? '#F59E0B' : '#0EA5E9'}
         />
         <StatusTile
           icon={ShieldCheck}

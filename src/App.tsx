@@ -1,11 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Suspense, lazy, useEffect } from 'react'
-
-function ScrollToTop() {
-  const { pathname } = useLocation()
-  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
-  return null
-}
 import { LanguageProvider } from './context/LanguageContext'
 import { ClientCompanyProvider } from './context/ClientCompanyContext'
 import { ActiveProfileProvider } from './context/ActiveProfileContext'
@@ -23,11 +17,13 @@ import { TrialSignup } from './pages/TrialSignup'
 import { AuthCallback } from './pages/AuthCallback'
 import { Privacy } from './pages/Privacy'
 import { Terms } from './pages/Terms'
-import { SelfCheckIn } from './pages/SelfCheckIn'
-import { CarWashStatus } from './pages/CarWashStatus'
-import { ClinicLanding } from './pages/ClinicLanding'
-import { ClinicOSProvider } from './context/ClinicOSContext'
 // Note: ClinicOSProvider wraps only /clinic-os/dashboard/* routes (protected)
+
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  return null
+}
 
 const AdminDashboard    = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
 const ClientPortal      = lazy(() => import('./pages/ClientPortal').then(m => ({ default: m.ClientPortal })))

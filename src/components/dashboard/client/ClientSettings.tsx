@@ -311,16 +311,46 @@ export const ClientSettings = () => {
                 <h3 className="text-sm font-bold text-slate-900 font-cairo">معلومات الحساب</h3>
               </div>
               {[
-                { label: 'الشركة',            value: company.name },
-                { label: 'الباقة',            value: `${PLAN_LABELS[company.plan] ?? company.plan} — ${(company.message_limit || 2000).toLocaleString()} رسالة/شهر` },
-                { label: 'الحالة',            value: company.status === 'active' ? 'نشط ✓' : company.status },
-                { label: 'الرسائل المستخدمة', value: `${(company.messages_used || 0).toLocaleString()} / ${(company.message_limit || 2000).toLocaleString()}` },
+                { label: 'الشركة',  value: company.name },
+                { label: 'الباقة',  value: `${PLAN_LABELS[company.plan] ?? company.plan} — ${(company.message_limit || 2000).toLocaleString()} رسالة/شهر` },
+                { label: 'الحالة',  value: company.status === 'active' ? 'نشط ✓' : company.status },
               ].map(({ label, value }) => (
                 <div key={label} className="flex items-center justify-between py-2 border-b border-slate-200 last:border-0">
                   <span className="text-sm text-slate-400 font-tajawal">{label}</span>
                   <span className="text-sm font-bold text-slate-900 font-tajawal">{value}</span>
                 </div>
               ))}
+
+              {/* Messages usage bar */}
+              {(() => {
+                const used  = company.messages_used  ?? 0
+                const limit = company.message_limit  ?? 2000
+                const remaining = Math.max(0, limit - used)
+                const pct   = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0
+                const barColor = pct >= 95 ? '#EF4444' : pct >= 85 ? '#F59E0B' : '#0EA5E9'
+                return (
+                  <div className="pt-3">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs text-slate-500 font-tajawal">المتبقي من الباقة</span>
+                      <span className="text-xs font-bold font-work" style={{ color: barColor }}>
+                        {remaining.toLocaleString('ar-SA')} رسالة
+                      </span>
+                    </div>
+                    <div className="h-2 rounded-full overflow-hidden mb-1" style={{ background: '#E2E8F0' }}>
+                      <div className="h-full rounded-full transition-all duration-700"
+                        style={{ width: `${pct}%`, background: barColor }} />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-slate-400 font-tajawal">
+                        {used.toLocaleString('ar-SA')} مستخدمة
+                      </span>
+                      <span className="text-[11px] text-slate-400 font-tajawal">
+                        من {limit.toLocaleString('ar-SA')} ({pct}%)
+                      </span>
+                    </div>
+                  </div>
+                )
+              })()}
             </div>
           )}
 

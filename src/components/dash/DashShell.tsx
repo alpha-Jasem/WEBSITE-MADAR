@@ -248,13 +248,7 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
           {children}
         </main>
       </div>
-      {role === 'client' ? (
-        <MadarAgentWidget
-          agentType="client_support"
-          companyId={company?.id ?? null}
-          pageTitle={pageTitle}
-        />
-      ) : (
+      {role !== 'client' && (
         <MadarAIAssistant
           role={role}
           companyId={null}

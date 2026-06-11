@@ -109,19 +109,9 @@ const faq = [
   },
 ]
 
-const dashboardTabs = [
-  { id: 'operations', label: 'التشغيل', icon: Gauge },
-  { id: 'customers', label: 'العملاء', icon: Users },
-  { id: 'finance', label: 'المالية', icon: BarChart3 },
-] as const
-
-const stageLabels = ['استلام', 'قيد الخدمة', 'جاهزة', 'تم التسليم']
-
 export const CarWashPage = () => {
   const rootRef = useRef<HTMLDivElement | null>(null)
   const heroImageRef = useRef<HTMLImageElement | null>(null)
-  const [activeTab, setActiveTab] = useState<(typeof dashboardTabs)[number]['id']>('operations')
-  const [carStage, setCarStage] = useState(0)
   const [closingOpen, setClosingOpen] = useState(false)
   const [lead, setLead] = useState({ name: '', phone: '', business: '', city: '' })
   const [sending, setSending] = useState(false)
@@ -215,7 +205,6 @@ export const CarWashPage = () => {
     }
   }
 
-  const moveCar = () => setCarStage((current) => (current + 1) % stageLabels.length)
 
   return (
     <div ref={rootRef} className="min-h-screen bg-[#F5FAFF] text-[#071322]" dir="rtl">
@@ -320,176 +309,27 @@ export const CarWashPage = () => {
             </div>
 
             <div className="dashboard-card mt-12 rounded-[38px] border border-sky-100 bg-white p-3 shadow-[0_38px_110px_rgba(13,27,62,0.16)] sm:p-4">
-              <div className="grid min-h-[720px] overflow-hidden rounded-[32px] border border-sky-100 bg-[#F7FBFF] lg:grid-cols-[210px_1fr]">
-                <aside className="hidden bg-[#071B35] p-5 text-white lg:block">
-                  <img src="/logo-main.png" alt="Madar.software" className="h-16 w-auto" />
-                  <div className="mt-10 space-y-2 font-cairo">
-                    {dashboardTabs.map(({ id, label, icon: Icon }) => (
-                      <button
-                        key={id}
-                        onClick={() => setActiveTab(id)}
-                        className={`flex w-full items-center gap-3 rounded-2xl px-4 py-4 text-sm font-black transition ${
-                          activeTab === id ? 'bg-[#007BFF]' : 'text-white/72 hover:bg-white/10'
-                        }`}
-                      >
-                        <Icon size={18} />
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="mt-12 rounded-3xl border border-white/10 bg-white/8 p-4">
-                    <p className="text-xs font-bold text-white/55 font-tajawal">ترقية أعلى</p>
-                    <p className="mt-2 text-lg font-black font-cairo">مزايا متقدمة ودعم خاص</p>
-                    <button onClick={requestDemo} className="mt-4 w-full rounded-2xl bg-[#00BFFF] px-4 py-3 text-sm font-black text-[#071322] font-cairo">
-                      ترقية الآن
-                    </button>
-                  </div>
-                </aside>
-
-                <div className="p-4 sm:p-7 lg:p-8">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="text-xs font-black text-[#0099CC] font-cairo">مركز تشغيل اليوم</p>
-                      <h3 className="mt-1 text-3xl font-black font-cairo">مغسلة المدار</h3>
-                    </div>
-                    <div className="flex rounded-2xl bg-white p-1 shadow-sm lg:hidden">
-                      {dashboardTabs.map(({ id, label }) => (
-                        <button
-                          key={id}
-                          onClick={() => setActiveTab(id)}
-                          className={`rounded-xl px-3 py-2 text-xs font-black font-cairo ${activeTab === id ? 'bg-[#007BFF] text-white' : 'text-slate-500'}`}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <AnimatePresence mode="wait">
-                    {activeTab === 'operations' && (
-                      <motion.div key="operations" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="mt-6">
-                        <div className="grid gap-4 sm:grid-cols-4">
-                          {[
-                            ['12,540', 'إيراد اليوم'],
-                            ['86', 'السيارات'],
-                            ['145', 'متوسط الفاتورة'],
-                            ['23', 'عميل جديد'],
-                          ].map(([value, label]) => (
-                            <div key={label} className="rounded-3xl border border-sky-100 bg-white p-5 shadow-sm">
-                              <p className="font-sora text-3xl font-black">{value}</p>
-                              <p className="mt-1 text-xs font-bold text-slate-500 font-tajawal">{label}</p>
-                              <span className="mt-4 inline-flex rounded-full bg-emerald-50 px-3 py-1 font-sora text-xs font-black text-emerald-600">+12%</span>
-                            </div>
-                          ))}
-                        </div>
-
-                        <div className="mt-6 rounded-[30px] border border-sky-100 bg-white p-6 shadow-sm">
-                          <div className="flex items-center justify-between">
-                            <h4 className="text-2xl font-black font-cairo">مسار السيارات</h4>
-                            <button onClick={moveCar} className="rounded-2xl bg-[#00BFFF] px-4 py-2 text-sm font-black text-[#071322] font-cairo">
-                              حرّك السيارة
-                            </button>
-                          </div>
-                          <div className="mt-6 grid gap-4 md:grid-cols-4">
-                            {stageLabels.map((stage, index) => (
-                              <button
-                                key={stage}
-                                onClick={() => setCarStage(index)}
-                                className={`relative min-h-[168px] rounded-3xl border p-5 text-center transition ${
-                                  carStage === index ? 'border-[#007BFF] bg-blue-50 shadow-lg' : 'border-sky-100 bg-white hover:border-sky-300'
-                                }`}
-                              >
-                                <Car className="mx-auto text-[#007BFF]" size={24} />
-                                <p className="mt-3 font-black font-cairo">{stage}</p>
-                                <p className="mt-2 font-sora text-3xl font-black">{index === carStage ? 'A-014' : index === 3 ? '49' : index * 6 + 12}</p>
-                                <p className="mt-1 text-xs font-bold text-slate-500 font-tajawal">{index === carStage ? 'السيارة الحالية' : 'سيارة'}</p>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="mt-6 grid gap-4 lg:grid-cols-3">
-                          <div className="rounded-[28px] border border-sky-100 bg-white p-5 shadow-sm">
-                            <h5 className="text-lg font-black font-cairo">تقرير ضريبة القيمة المضافة</h5>
-                            <div className="mt-5 space-y-3 text-sm font-bold text-slate-500 font-tajawal">
-                              <div className="flex items-center justify-between"><span>المبيعات الخاضعة</span><strong className="font-sora text-[#071322]">10,478</strong></div>
-                              <div className="flex items-center justify-between"><span>VAT (15%)</span><strong className="font-sora text-[#071322]">1,572</strong></div>
-                              <div className="flex items-center justify-between"><span>الإجمالي</span><strong className="font-sora text-[#071322]">12,540</strong></div>
-                            </div>
-                            <div className="mt-5 h-12 rounded-2xl bg-[linear-gradient(110deg,#e0f2fe,#ffffff,#dbeafe)]" />
-                          </div>
-
-                          <div className="rounded-[28px] border border-sky-100 bg-white p-5 shadow-sm">
-                            <h5 className="text-lg font-black font-cairo">أفضل العملاء</h5>
-                            <div className="mt-5 space-y-3">
-                              {['محمد خالد', 'أحمد السبيعي', 'عبدالله الشهري'].map((name, index) => (
-                                <div key={name} className="flex items-center justify-between">
-                                  <div className="flex items-center gap-3">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-50 font-sora text-xs font-black text-[#007BFF]">{index + 1}</div>
-                                    <div>
-                                      <p className="text-sm font-black font-cairo">{name}</p>
-                                      <p className="text-xs font-bold text-slate-500 font-tajawal">{120 - index * 22} نقطة</p>
-                                    </div>
-                                  </div>
-                                  <span className="rounded-full bg-amber-50 px-2 py-1 text-xs font-black text-amber-500">VIP</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="rounded-[28px] border border-sky-100 bg-white p-5 shadow-sm">
-                            <h5 className="text-lg font-black font-cairo">إغلاق اليوم</h5>
-                            <div className="mt-5 space-y-3 text-sm font-bold text-slate-500 font-tajawal">
-                              <div className="flex items-center justify-between"><span>إجمالي الإيراد</span><strong className="font-sora text-[#071322]">12,540</strong></div>
-                              <div className="flex items-center justify-between"><span>عدد السيارات</span><strong className="font-sora text-[#071322]">86</strong></div>
-                              <div className="flex items-center justify-between"><span>متوسط الفاتورة</span><strong className="font-sora text-[#071322]">145</strong></div>
-                            </div>
-                            <button
-                              onClick={() => setClosingOpen(true)}
-                              className="mt-5 w-full rounded-2xl bg-[#007BFF] px-5 py-4 text-base font-black text-white font-cairo"
-                            >
-                              إغلاق اليوم
-                            </button>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {activeTab === 'customers' && (
-                      <motion.div key="customers" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="mt-6 grid gap-4">
-                        {['محمد خالد', 'أحمد السبيعي', 'عبدالله الشهري'].map((name, index) => (
-                          <div key={name} className="flex items-center justify-between rounded-3xl border border-sky-100 bg-white p-5">
-                            <div>
-                              <p className="font-black font-cairo">{name}</p>
-                              <p className="mt-1 text-sm text-slate-500 font-tajawal">{120 - index * 22} نقطة ولاء</p>
-                            </div>
-                            <div className="rounded-2xl bg-amber-50 px-4 py-2 text-sm font-black text-amber-600 font-cairo">عميل مميز</div>
-                          </div>
-                        ))}
-                      </motion.div>
-                    )}
-
-                    {activeTab === 'finance' && (
-                      <motion.div key="finance" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="mt-6 grid gap-4 sm:grid-cols-2">
-                        {[
-                          ['10,478', 'المبيعات الخاضعة'],
-                          ['1,572', 'ضريبة القيمة المضافة'],
-                          ['12,540', 'الإجمالي'],
-                          ['86', 'عدد السيارات'],
-                        ].map(([value, label]) => (
-                          <div key={label} className="rounded-3xl border border-sky-100 bg-white p-6">
-                            <p className="font-sora text-3xl font-black">{value}</p>
-                            <p className="mt-2 font-bold text-slate-500 font-tajawal">{label}</p>
-                          </div>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+              {/* Browser chrome bar */}
+              <div className="flex items-center gap-2 px-4 pb-3 pt-2">
+                <span className="h-3 w-3 rounded-full bg-red-400" />
+                <span className="h-3 w-3 rounded-full bg-yellow-400" />
+                <span className="h-3 w-3 rounded-full bg-green-400" />
+                <div className="mr-3 flex-1 rounded-lg bg-slate-100 px-3 py-1 text-center text-xs text-slate-400 font-tajawal">
+                  madar.software/client
                 </div>
+              </div>
+              <div className="overflow-hidden rounded-[28px] border border-sky-100">
+                <img
+                  src="/assets/cw-dashboard.png"
+                  alt="لوحة تحكم مغسلة مدار"
+                  className="w-full object-cover object-top"
+                  style={{ maxHeight: 620 }}
+                />
               </div>
             </div>
           </div>
         </section>
+
 
         <section className="bg-[#071322] py-20 text-white">
           <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">

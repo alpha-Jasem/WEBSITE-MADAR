@@ -15,10 +15,17 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 export const signInWithPassword = (email: string, password: string) =>
   supabase.auth.signInWithPassword({ email, password })
 
-export const signInWithMagicLink = (email: string) =>
+export const signInWithOtp = (email: string) =>
   supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    options: { shouldCreateUser: false },
+  })
+
+export const verifyOtp = (email: string, token: string) =>
+  supabase.auth.verifyOtp({
+    email,
+    token,
+    type: 'email',
   })
 
 export const signOut = () => supabase.auth.signOut()

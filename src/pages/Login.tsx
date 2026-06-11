@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Eye, EyeOff, Loader2, Lock, Mail, ArrowLeft, Shield, User, CheckCircle2, Building2 } from 'lucide-react'
+import { Loader2, Lock, Mail, ArrowLeft, Shield, User, CheckCircle2, Building2 } from 'lucide-react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
-import { signInWithPassword, getCurrentUser, signOut, supabase } from '../lib/supabase'
+import { signInWithOtp, verifyOtp, getCurrentUser, signOut, supabase } from '../lib/supabase'
 
 type Portal = 'client' | 'admin'
+
+type LoginStep = 'email' | 'otp'
 
 export const Login = () => {
   const navigate = useNavigate()
@@ -17,9 +19,9 @@ export const Login = () => {
   }, [searchParams])
 
   const [portal, setPortal] = useState<Portal>(initialPortal)
+  const [step, setStep] = useState<LoginStep>('email')
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPass, setShowPass] = useState(false)
+  const [otp, setOtp] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -67,19 +69,54 @@ export const Login = () => {
     setError('')
     setLoading(true)
     try {
-      const { error: err } = await signInWithPassword(email, password)
-      if (err) throw err
-      await afterLogin()
+      if (step === 'email') {
+        const trimmedEmail = email.trim().toLowerCase()
+        if (!trimmedEmail) throw new Error('invalid email')
+        const { error: err } = await signInWithOtp(trimmedEmail)
+        if (err) throw err
+        setStep('otp')
+        setOtp('')
+      } else {
+        const { data, error: err } = await verifyOtp(email.trim().toLowerCase(), otp.trim())
+        if (err) throw err
+        if (!data?.session) throw new Error('OTP login failed')
+        await afterLogin()
+      }
     } catch (err: any) {
-      const msg = err?.message || ''
-      setError(
-        msg.includes('Invalid') || msg.includes('credentials')
-          ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة'
-          : 'حدث خطأ، حاول مجدداً'
-      )
+      const msg = (err?.message || '').toLowerCase()
+      if (msg.includes('invalid email')) setError('أدخل بريدًا إلكترونيًا صالحًا.')
+      else if (msg.includes('not found') || msg.includes('invalid login credentials')) setError('هذا البريد غير مسجل.')
+      else if (msg.includes('rate limit')) setError('حاول لاحقًا؛ تم تجاوز حدود إرسال الرموز.')
+      else setError(err?.message || 'حدث خطأ، حاول مجدداً')
     } finally {
       setLoading(false)
     }
+  }
+
+  const resendOtp = async () => {
+    setError('')
+    setLoading(true)
+    try {
+      const trimmedEmail = email.trim().toLowerCase()
+      if (!trimmedEmail) throw new Error('invalid email')
+      const { error: err } = await signInWithOtp(trimmedEmail)
+      if (err) throw err
+      setOtp('')
+    } catch (err: any) {
+      const msg = (err?.message || '').toLowerCase()
+      if (msg.includes('invalid email')) setError('أدخل بريدًا إلكترونيًا صالحًا.')
+      else if (msg.includes('not found') || msg.includes('invalid login credentials')) setError('هذا البريد غير مسجل.')
+      else if (msg.includes('rate limit')) setError('حاول لاحقًا؛ تم تجاوز حدود إرسال الرموز.')
+      else setError(err?.message || 'حدث خطأ، حاول مجدداً')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const resetEmail = () => {
+    setStep('email')
+    setOtp('')
+    setError('')
   }
 
   const portalOptions: { id: Portal; label: string; sub: string; icon: typeof User; accent: string }[] = [
@@ -145,7 +182,7 @@ export const Login = () => {
                 {portal === 'admin' ? 'مرحباً بك في الإدارة' : 'أهلاً — ادخل حسابك'}
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-500 font-tajawal">
-                اختر البوابة المناسبة ثم أدخل بريدك وكلمة مرورك.
+                اختر البوابة المناسبة ثم أدخل بريدك. سنرسل لك رمز تحقق (OTP) على بريدك بدلًا من رابط الدخول.
               </p>
             </div>
 
@@ -203,40 +240,46 @@ export const Login = () => {
                         placeholder="name@company.com"
                         required
                         dir="ltr"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 text-left text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-[#00BFFF] focus:bg-white focus:ring-4 focus:ring-sky-400/15 font-sora"
+                        disabled={step === 'otp'}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 text-left text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-[#00BFFF] focus:bg-white focus:ring-4 focus:ring-sky-400/15 font-sora disabled:cursor-not-allowed disabled:opacity-70"
                       />
                     </div>
                   </div>
 
-                  <div>
-                    <div className="mb-2 flex items-center justify-between gap-3">
-                      <label className="block text-sm font-bold text-slate-700 font-tajawal">كلمة المرور</label>
-                      <Link to="/forgot-password" className="text-xs font-bold text-[#0369A1] transition-colors hover:text-[#0D1B3E] font-tajawal">
-                        هل نسيت كلمة المرور؟
-                      </Link>
-                    </div>
-                    <div className="relative">
-                      <Lock size={17} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                      <input
-                        type={showPass ? 'text' : 'password'}
-                        value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        placeholder="••••••••"
-                        required
-                        dir="ltr"
-                        minLength={6}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-11 py-3.5 text-left text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-[#00BFFF] focus:bg-white focus:ring-4 focus:ring-sky-400/15 font-sora"
-                      />
-                      <button
-                        type="button"
-                        aria-label={showPass ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
-                        onClick={() => setShowPass(!showPass)}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-700"
-                      >
-                        {showPass ? <EyeOff size={17} /> : <Eye size={17} />}
-                      </button>
-                    </div>
-                  </div>
+                  {step === 'otp' && (
+                    <>
+                      <div className="rounded-2xl border border-sky-100 bg-sky-50 p-4 text-sm text-slate-700 font-tajawal">
+                        رمز التحقق أرسلناه إلى البريد التالي:
+                        <div className="mt-2 font-bold text-slate-900 break-all">{email}</div>
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-bold text-slate-700 font-tajawal">رمز التحقق (OTP)</label>
+                        <div className="relative">
+                          <Lock size={17} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                          <input
+                            type="text"
+                            value={otp}
+                            onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                            placeholder="12345678"
+                            required
+                            dir="ltr"
+                            inputMode="numeric"
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-11 py-3.5 text-left text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-[#00BFFF] focus:bg-white focus:ring-4 focus:ring-sky-400/15 font-sora"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-3 text-xs font-bold text-slate-500 font-tajawal">
+                        <button type="button" onClick={resendOtp} disabled={loading} className="text-[#0369A1] hover:text-[#0D1B3E] transition-colors">
+                          إعادة إرسال الرمز
+                        </button>
+                        <button type="button" onClick={resetEmail} disabled={loading} className="text-[#9CA3AF] hover:text-slate-700 transition-colors">
+                          تعديل البريد
+                        </button>
+                      </div>
+                    </>
+                  )}
 
                   {error && (
                     <motion.div
@@ -258,7 +301,7 @@ export const Login = () => {
                     }}
                   >
                     {loading && <Loader2 size={17} className="animate-spin" />}
-                    {loading ? 'جاري الدخول...' : portal === 'admin' ? 'دخول لوحة الإدارة' : 'دخول البوابة'}
+                    {loading ? (step === 'email' ? 'جاري إرسال الرمز...' : 'جاري التحقق...') : (step === 'email' ? 'أرسل رمز التحقق' : 'تأكيد الرمز')}
                   </button>
                 </form>
 
