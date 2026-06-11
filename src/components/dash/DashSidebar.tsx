@@ -174,12 +174,12 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
         </nav>
 
         {role === 'client' && company && !isPremium && (
-          <div className="dash-upgrade-card" style={{ borderColor: planColor + '44' }}>
+          <div className="dash-upgrade-card">
             <div className="dash-upgrade-card-head">
-              <div className="dash-upgrade-icon" style={{ background: planColor + '22', border: '1px solid ' + planColor + '44' }}>
-                <TrendingUp size={16} style={{ color: planColor }} />
+              <div className="dash-upgrade-icon">
+                <TrendingUp size={16} color="rgba(255,255,255,0.9)" />
               </div>
-              <span style={{ color: planColor, background: planColor + '18' }}>{planLabel}</span>
+              <span>{planLabel}</span>
             </div>
             <strong>{plan === 'starter' ? TXT.upgradePro : TXT.upgradePremium}</strong>
             <p>

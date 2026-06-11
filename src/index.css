@@ -3633,9 +3633,33 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 .dash-upgrade-card {
   padding: 16px;
   border-radius: 18px;
-  background: #FFFFFF;
-  border: 1px solid #EEF2FF;
-  box-shadow: 0 2px 14px rgba(13,27,62,0.08);
+  background: linear-gradient(135deg, #7C3AED 0%, #2563EB 100%);
+  border: 1px solid rgba(255,255,255,0.22);
+  box-shadow: 0 8px 32px rgba(124,58,237,0.38), inset 0 1px 0 rgba(255,255,255,0.18);
+  position: relative;
+  overflow: hidden;
+}
+
+.dash-upgrade-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(6px);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.dash-upgrade-card::after {
+  content: '';
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  top: -28px;
+  left: -28px;
+  pointer-events: none;
 }
 
 .dash-upgrade-icon {
@@ -3644,34 +3668,42 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   border-radius: 10px;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, #0B63F6, #0EA5E9) !important;
-  border: none !important;
+  background: rgba(255,255,255,0.18) !important;
+  border: 1px solid rgba(255,255,255,0.3) !important;
+  position: relative;
+  z-index: 1;
   flex-shrink: 0;
 }
 
 .dash-upgrade-card strong,
 .dash-user-card strong {
   display: block;
-  color: #0D1B3E;
+  color: #FFFFFF;
   font-family: 'Cairo', sans-serif;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 900;
-  margin-bottom: 5px;
+  margin-bottom: 6px;
+  position: relative;
+  z-index: 1;
 }
 
 .dash-upgrade-card p {
   margin: 0 0 14px;
-  color: #64748B;
+  color: rgba(255,255,255,0.78);
   font-family: 'Tajawal', sans-serif;
   font-size: 12px;
   line-height: 1.65;
+  position: relative;
+  z-index: 1;
 }
 
 .dash-upgrade-card button {
   width: 100%;
   height: 40px;
   border-radius: 12px;
-  border: none;
+  border: 1px solid rgba(255,255,255,0.45);
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(8px);
   color: #fff;
   font-size: 13px;
   font-weight: 900;
@@ -3679,20 +3711,25 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  background: linear-gradient(135deg, #0B63F6, #0EA5E9);
-  box-shadow: 0 4px 14px rgba(11,99,246,0.28);
+  gap: 7px;
   cursor: pointer;
-  transition: opacity 0.15s;
+  position: relative;
+  z-index: 1;
+  transition: background 0.2s, border-color 0.2s;
 }
 
-.dash-upgrade-card button:hover { opacity: 0.9; }
+.dash-upgrade-card button:hover {
+  background: rgba(255,255,255,0.26);
+  border-color: rgba(255,255,255,0.65);
+}
 
 .dash-upgrade-card-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+  position: relative;
+  z-index: 1;
 }
 
 .dash-upgrade-card-head span {
@@ -3701,8 +3738,9 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   font-size: 11px;
   font-weight: 900;
   font-family: 'Sora', sans-serif;
-  background: #F3F4F6;
-  color: #6B7280;
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.28);
 }
 
 .dash-user-card {
