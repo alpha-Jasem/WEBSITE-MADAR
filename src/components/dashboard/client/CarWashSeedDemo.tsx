@@ -1,5 +1,5 @@
-﻿import { useState } from 'react'
-import { Loader2, Sparkles, X, Check } from 'lucide-react'
+import { useState } from 'react'
+import { Loader2, Sparkles, X, Check, Rocket, Wrench, Users, Car, Receipt } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { logAudit } from '../../../lib/auditLog'
 
@@ -28,6 +28,14 @@ const DEMO_EXPENSES = [
   { category: 'tools', description: 'شامبو وملمع', amount: 120 },
   { category: 'electricity', description: 'فاتورة الكهرباء', amount: 350 },
   { category: 'other', description: 'مستلزمات تنظيف', amount: 80 },
+]
+
+const ITEMS = [
+  { icon: Wrench,  label: `${DEMO_SERVICES.length} خدمات جاهزة للتشغيل`, color: '#0EA5E9' },
+  { icon: Users,   label: `${DEMO_WORKERS.length} موظفين بأنواع رواتب مختلفة`, color: '#8B5CF6' },
+  { icon: Users,   label: `${DEMO_CUSTOMERS.length} عملاء بمستويات ولاء`, color: '#10B981' },
+  { icon: Car,     label: '5 سيارات في لوحة التشغيل', color: '#F59E0B' },
+  { icon: Receipt, label: `${DEMO_EXPENSES.length} مصاريف يومية`, color: '#EF4444' },
 ]
 
 interface Props {
@@ -78,7 +86,6 @@ export const CarWashSeedDemo = ({ companyId, onDone, onClose }: Props) => {
       )
 
       logAudit(companyId, 'demo_data_seeded', { newValue: { services: DEMO_SERVICES.length, workers: DEMO_WORKERS.length } })
-
       setStep('تم!')
       setDone(true)
     } catch (err) {
@@ -89,76 +96,94 @@ export const CarWashSeedDemo = ({ companyId, onDone, onClose }: Props) => {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.8)' }}>
-      <div className="w-full max-w-sm rounded-2xl p-6" style={{ background: '#0D1422', border: '1px solid #CBD5E1' }}>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Sparkles size={18} className="text-primary-400" />
-            <h2 className="text-base font-bold text-white font-cairo">بيانات تجريبية</h2>
-          </div>
-          {!seeding && <button onClick={onClose} className="text-slate-500 hover:text-white"><X size={16} /></button>}
-        </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15,23,42,0.55)', backdropFilter: 'blur(6px)' }}>
+      <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
 
         {!done ? (
           <>
-            <p className="text-sm text-slate-400 font-tajawal mb-6">
-              سيتم إضافة بيانات تجريبية حقيقية لمساعدتك على استكشاف النظام:
-            </p>
-            <div className="space-y-2 mb-6">
-              {[
-                `${DEMO_SERVICES.length} خدمات (غسيل، تلميع، بخار...)`,
-                `${DEMO_WORKERS.length} موظفين بأنواع رواتب مختلفة`,
-                `${DEMO_CUSTOMERS.length} عملاء بمستويات ولاء`,
-                `5 سيارات في لوحة التشغيل`,
-                `${DEMO_EXPENSES.length} مصاريف يومية`,
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-2 text-xs text-slate-400 font-tajawal">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary-400 flex-shrink-0" />
-                  {item}
+            {/* Header gradient */}
+            <div className="relative px-6 pt-6 pb-5 text-center" style={{ background: 'linear-gradient(135deg, #EFF6FF 0%, #F0FDF4 100%)' }}>
+              <button
+                onClick={onClose}
+                disabled={seeding}
+                className="absolute left-4 top-4 p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-white/80 transition-all disabled:opacity-0"
+              >
+                <X size={16} />
+              </button>
+
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-3 shadow-sm"
+                style={{ background: 'linear-gradient(135deg, #0EA5E9, #0284C7)' }}>
+                <Rocket size={26} className="text-white" />
+              </div>
+
+              <h2 className="text-xl font-bold text-slate-900 font-cairo mb-1">
+                أهلاً بك في مدار! 🎉
+              </h2>
+              <p className="text-sm text-slate-500 font-tajawal leading-6">
+                لمساعدتك على استكشاف النظام، يمكنك تحميل بيانات تجريبية
+                <br />جاهزة تُشغّل لوحتك مباشرة
+              </p>
+            </div>
+
+            {/* Items list */}
+            <div className="px-6 py-4 space-y-2.5">
+              {ITEMS.map(({ icon: Icon, label, color }, i) => (
+                <div key={i} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: color + '18' }}>
+                    <Icon size={15} style={{ color }} />
+                  </div>
+                  <span className="text-sm text-slate-700 font-tajawal">{label}</span>
                 </div>
               ))}
             </div>
 
+            {/* Progress */}
             {seeding && (
-              <div className="flex items-center gap-2 mb-4 p-3 rounded-xl" style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)' }}>
-                <Loader2 size={14} className="animate-spin text-primary-400" />
-                <p className="text-xs text-primary-400 font-tajawal">{step}</p>
+              <div className="mx-6 mb-3 flex items-center gap-2 p-3 rounded-xl"
+                style={{ background: '#EFF6FF', border: '1px solid #BFDBFE' }}>
+                <Loader2 size={14} className="animate-spin text-sky-500 flex-shrink-0" />
+                <p className="text-xs text-sky-700 font-tajawal">{step}</p>
               </div>
             )}
 
-            <div className="flex gap-3">
+            {/* Buttons */}
+            <div className="px-6 pb-6 flex gap-3">
               <button
                 onClick={onClose}
                 disabled={seeding}
-                className="flex-1 py-2.5 rounded-xl text-sm font-tajawal text-slate-400 disabled:opacity-40"
-                style={{ background: '#FFFFFF', border: '1px solid #CBD5E1' }}
+                className="flex-1 py-3 rounded-xl text-sm font-tajawal font-bold text-slate-600 transition-all hover:bg-slate-100 disabled:opacity-40"
+                style={{ background: '#F1F5F9', border: '1px solid #E2E8F0' }}
               >
-                إلغاء
+                تخطّ الآن
               </button>
               <button
                 onClick={seed}
                 disabled={seeding}
-                className="flex-1 py-2.5 rounded-xl text-sm font-tajawal text-white flex items-center justify-center gap-2 disabled:opacity-50"
-                style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}
+                className="flex-1 py-3 rounded-xl text-sm font-tajawal font-bold text-white flex items-center justify-center gap-2 transition-all disabled:opacity-60"
+                style={{ background: 'linear-gradient(135deg, #0EA5E9, #0284C7)', boxShadow: '0 8px 20px rgba(14,165,233,0.3)' }}
               >
-                {seeding ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                {seeding ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
                 {seeding ? 'جاري التحميل...' : 'تحميل البيانات'}
               </button>
             </div>
           </>
         ) : (
-          <div className="text-center">
-            <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'rgba(16,185,129,0.15)' }}>
-              <Check size={24} className="text-emerald-400" />
+          <div className="p-8 text-center">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{ background: 'linear-gradient(135deg, #D1FAE5, #A7F3D0)' }}>
+              <Check size={28} className="text-emerald-600" />
             </div>
-            <p className="text-base font-bold text-white font-cairo mb-2">تم التحميل بنجاح! 🎉</p>
-            <p className="text-sm text-slate-400 font-tajawal mb-6">البيانات التجريبية جاهزة للاستكشاف</p>
+            <p className="text-xl font-bold text-slate-900 font-cairo mb-2">تم التحميل بنجاح!</p>
+            <p className="text-sm text-slate-500 font-tajawal mb-6 leading-6">
+              البيانات التجريبية جاهزة — استكشف النظام بحرية
+            </p>
             <button
               onClick={onDone}
-              className="w-full py-2.5 rounded-xl text-sm font-tajawal text-white"
-              style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}
+              className="w-full py-3 rounded-xl text-sm font-tajawal font-bold text-white"
+              style={{ background: 'linear-gradient(135deg, #0EA5E9, #0284C7)', boxShadow: '0 8px 20px rgba(14,165,233,0.3)' }}
             >
-              الذهاب للوحة التشغيل
+              ابدأ الاستكشاف ←
             </button>
           </div>
         )}
