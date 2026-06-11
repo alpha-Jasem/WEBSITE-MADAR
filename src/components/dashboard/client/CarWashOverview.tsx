@@ -75,7 +75,13 @@ const formatSAR = (value: number) =>
 const isToday = (value?: string | null) =>
   Boolean(value && value.startsWith(new Date().toISOString().slice(0, 10)))
 
-function StatCard({ icon: Icon, label, value, sub, color, trend = 'فعلي' }: { icon: typeof Car; label: string; value: string | number; sub?: string; color: string; trend?: string }) {
+function StatCard({ icon: Icon, label, value, sub, color, trend = 'فعلي', trendDir = 'neutral' }: { icon: typeof Car; label: string; value: string | number; sub?: string; color: string; trend?: string; trendDir?: 'up' | 'down' | 'neutral' }) {
+  const badgeStyle = trendDir === 'up'
+    ? { color: '#059669', background: '#DCFCE7' }
+    : trendDir === 'down'
+    ? { color: '#DC2626', background: '#FEE2E2' }
+    : { color: '#6B7280', background: '#F3F4F6' }
+  const arrow = trendDir === 'up' ? '↑ ' : trendDir === 'down' ? '↓ ' : ''
   return (
     <div style={{
       background: '#FFFFFF', border: '1px solid #E3EAF6',
@@ -90,7 +96,7 @@ function StatCard({ icon: Icon, label, value, sub, color, trend = 'فعلي' }: 
       </div>
       <strong style={{ fontSize: 28, fontWeight: 900, color: '#0D1B3E', fontFamily: 'Sora, sans-serif', display: 'block', lineHeight: 1 }}>{value}</strong>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
-        <span style={{ fontSize: 11, fontWeight: 800, color: '#059669', background: '#DCFCE7', borderRadius: 999, padding: '3px 8px', fontFamily: 'Sora, sans-serif' }}>{trend}</span>
+        <span style={{ fontSize: 11, fontWeight: 800, borderRadius: 999, padding: '3px 8px', fontFamily: 'Sora, sans-serif', ...badgeStyle }}>{arrow}{trend}</span>
         {sub && <span style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>{sub}</span>}
       </div>
     </div>
@@ -136,6 +142,24 @@ function Sparkline({ data, color = '#0B63F6' }: { data: Array<{ date: string; vi
   )
 }
 
+function LoadingSkeleton() {
+  return (
+    <div dir="rtl" style={{ color: '#0D1B3E' }}>
+      <style>{`
+        @keyframes cw-shimmer { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
+        .cw-shimmer { background:linear-gradient(90deg,#F0F4FF 25%,#E2EAF8 50%,#F0F4FF 75%); background-size:1200px 100%; animation:cw-shimmer 1.5s infinite linear; border-radius:12px; }
+      `}</style>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,minmax(126px,1fr))', gap: 12, marginBottom: 16 }}>
+        {Array.from({ length: 6 }).map((_, i) => <div key={i} className="cw-shimmer" style={{ height: 110 }} />)}
+      </div>
+      <div className="cw-shimmer" style={{ height: 340, marginBottom: 16 }} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(118px,1fr))', gap: 14 }}>
+        {Array.from({ length: 4 }).map((_, i) => <div key={i} className="cw-shimmer" style={{ height: 130 }} />)}
+      </div>
+    </div>
+  )
+}
+
 function BreakdownRow({ label, value, hint, color, max }: { label: string; value: number; hint: string; color: string; max: number }) {
   const width = max > 0 ? Math.max(7, Math.min(100, (value / max) * 100)) : 0
   return (
@@ -172,6 +196,7 @@ export function CarWashOverview() {
   const [revenueRange, setRevenueRange] = useState<RevenueRange>('daily')
   const [salesBreakdownTab, setSalesBreakdownTab] = useState<SalesBreakdownTab>('period')
   const [qrCopied, setQrCopied] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
   const DATE_FILTERS = [
     { label: 'اليوم', days: 1 },
@@ -193,44 +218,52 @@ export function CarWashOverview() {
     if (authLoading || !companyId) return
     const load = async () => {
       setLoading(true)
-      let since: Date, until: Date
-      if (isCustomActive) {
-        since = new Date(customFrom + 'T00:00:00')
-        until = new Date(customTo + 'T23:59:59')
-      } else {
-        since = new Date()
-        since.setDate(since.getDate() - days)
-        until = new Date()
+      setFetchError(null)
+      try {
+        let since: Date, until: Date
+        if (isCustomActive) {
+          since = new Date(customFrom + 'T00:00:00')
+          until = new Date(customTo + 'T23:59:59')
+        } else {
+          since = new Date()
+          since.setDate(since.getDate() - days)
+          until = new Date()
+        }
+        const todayStart = new Date()
+        todayStart.setHours(0, 0, 0, 0)
+        const expenseFrom = since.toISOString().slice(0, 10)
+        const expenseTo = until.toISOString().slice(0, 10)
+        const [{ data: v, error: e1 }, { data: c }, { data: w }, { data: q }, { data: s }, { data: exps }] = await Promise.all([
+          supabase.from('cw_visits').select('id, created_at, price, subtotal, vat_amount, payment_method, is_free_wash, discount_amount, service_name, customer_id, worker_id')
+            .eq('company_id', companyId)
+            .gte('created_at', since.toISOString())
+            .lte('created_at', until.toISOString())
+            .order('created_at', { ascending: true }),
+          supabase.from('cw_customers').select('id, name, phone, total_visits, loyalty_tier')
+            .eq('company_id', companyId)
+            .order('total_visits', { ascending: false })
+            .limit(50),
+          supabase.from('cw_workers').select('id, name, commission_type, commission_value, salary_type, fixed_salary').eq('company_id', companyId),
+          supabase.from('cw_queue').select('id, created_at, started_at, delivered_at, customer_name, phone, service_name, price, subtotal, total_amount, worker_id, status, payment_status, notes')
+            .eq('company_id', companyId)
+            .gte('created_at', todayStart.toISOString())
+            .order('created_at', { ascending: true }),
+          supabase.from('cw_services').select('id, name, active').eq('company_id', companyId).order('created_at', { ascending: true }),
+          supabase.from('cw_expenses').select('amount, expense_date').eq('company_id', companyId).gte('expense_date', expenseFrom).lte('expense_date', expenseTo),
+        ])
+        if (e1) throw new Error(e1.message)
+        setVisits((v as CWVisit[]) || [])
+        setCustomers((c as CWCustomer[]) || [])
+        setWorkers((w as CWWorker[]) || [])
+        setQueueItems((q as CWQueueOverviewItem[]) || [])
+        setServices((s as CWServiceLite[]) || [])
+        setExpenses((exps as CWExpenseLite[]) || [])
+      } catch (err: any) {
+        console.error('Overview load error:', err)
+        setFetchError('تعذر تحميل البيانات. تأكد من الاتصال بالإنترنت.')
+      } finally {
+        setLoading(false)
       }
-      const todayStart = new Date()
-      todayStart.setHours(0, 0, 0, 0)
-      const expenseFrom = since.toISOString().slice(0, 10)
-      const expenseTo = until.toISOString().slice(0, 10)
-      const [{ data: v }, { data: c }, { data: w }, { data: q }, { data: s }, { data: exps }] = await Promise.all([
-        supabase.from('cw_visits').select('id, created_at, price, subtotal, vat_amount, payment_method, is_free_wash, discount_amount, service_name, customer_id, worker_id')
-          .eq('company_id', companyId)
-          .gte('created_at', since.toISOString())
-          .lte('created_at', until.toISOString())
-          .order('created_at', { ascending: true }),
-        supabase.from('cw_customers').select('id, name, phone, total_visits, loyalty_tier')
-          .eq('company_id', companyId)
-          .order('total_visits', { ascending: false })
-          .limit(50),
-        supabase.from('cw_workers').select('id, name, commission_type, commission_value, salary_type, fixed_salary').eq('company_id', companyId),
-        supabase.from('cw_queue').select('id, created_at, started_at, delivered_at, customer_name, phone, service_name, price, subtotal, total_amount, worker_id, status, payment_status, notes')
-          .eq('company_id', companyId)
-          .gte('created_at', todayStart.toISOString())
-          .order('created_at', { ascending: true }),
-        supabase.from('cw_services').select('id, name, active').eq('company_id', companyId).order('created_at', { ascending: true }),
-        supabase.from('cw_expenses').select('amount, expense_date').eq('company_id', companyId).gte('expense_date', expenseFrom).lte('expense_date', expenseTo),
-      ])
-      setVisits((v as CWVisit[]) || [])
-      setCustomers((c as CWCustomer[]) || [])
-      setWorkers((w as CWWorker[]) || [])
-      setQueueItems((q as CWQueueOverviewItem[]) || [])
-      setServices((s as CWServiceLite[]) || [])
-      setExpenses((exps as CWExpenseLite[]) || [])
-      setLoading(false)
     }
     load()
   }, [authLoading, companyId, days, isCustomActive, customFrom, customTo])
@@ -278,9 +311,9 @@ export function CarWashOverview() {
     const freeWashCount = visits.filter(v => v.is_free_wash).length
     const freeWashDiscount = visits.filter(v => v.is_free_wash).reduce((s, v) => s + (v.discount_amount || 0), 0)
 
-    // Payment breakdown for month
+    // Payment breakdown for the selected period (not just current month)
     const paymentBreakdown: Record<string, number> = {}
-    for (const v of visits.filter(v => v.created_at.startsWith(thisMonthStr))) {
+    for (const v of visits) {
       const pm = v.payment_method || 'cash'
       paymentBreakdown[pm] = (paymentBreakdown[pm] || 0) + (v.subtotal ?? v.price ?? 0)
     }
@@ -307,7 +340,7 @@ export function CarWashOverview() {
       serviceMap[s].count += 1
       serviceMap[s].revenue += (v.subtotal ?? v.price ?? 0)
     })
-    const services = Object.entries(serviceMap)
+    const topServices = Object.entries(serviceMap)
       .sort((a, b) => b[1].count - a[1].count)
       .slice(0, 5)
 
@@ -318,7 +351,8 @@ export function CarWashOverview() {
 
     const returningCustomers = customers.filter(c => c.total_visits > 1).length
     const retentionRate = customers.length ? Math.round((returningCustomers / customers.length) * 100) : 0
-    const avgInvoice = monthVisits ? Math.round(revenue / monthVisits) : 0
+    // Fixed: use full period visits count, not just current month
+    const avgInvoice = visits.length ? Math.round(revenue / visits.length) : 0
 
     const weekdayNames = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة']
     const heatmap = weekdayNames.map((day, dayIndex) => {
@@ -339,7 +373,16 @@ export function CarWashOverview() {
       return { id: w.id, name: w.name, count: wVisits.length, revenue }
     }).filter(w => w.count > 0).sort((a, b) => b.count - a.count)
 
-    return { todayVisits, monthVisits, revenue, totalExpenses, workerCost, netProfit, netMargin, milestones, dailyChart, services, revenueServices, freeWashCount, freeWashDiscount, paymentBreakdown, workerStats, returningCustomers, retentionRate, avgInvoice, heatmap, queueStatusCounts, activeQueue, readyQueue, deliveredQueue, todayQueueItems }
+    // Trend: today vs yesterday
+    const yesterdayStr = new Date(now.getTime() - 86400000).toISOString().slice(0, 10)
+    const todayRevenue = visits.filter(v => v.created_at.startsWith(todayStr)).reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0)
+    const yesterdayRevenue = visits.filter(v => v.created_at.startsWith(yesterdayStr)).reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0)
+    const yesterdayVisitsCount = visits.filter(v => v.created_at.startsWith(yesterdayStr)).length
+    const revenueTrend: 'up' | 'down' | 'neutral' = todayRevenue > 0 && yesterdayRevenue > 0 ? (todayRevenue >= yesterdayRevenue ? 'up' : 'down') : 'neutral'
+    const carsTrend: 'up' | 'down' | 'neutral' = todayVisits > 0 && yesterdayVisitsCount > 0 ? (todayVisits >= yesterdayVisitsCount ? 'up' : 'down') : 'neutral'
+    const profitTrend: 'up' | 'down' | 'neutral' = netProfit > 0 ? 'up' : netProfit < 0 ? 'down' : 'neutral'
+
+    return { todayVisits, monthVisits, revenue, totalExpenses, workerCost, netProfit, netMargin, milestones, dailyChart, topServices, revenueServices, freeWashCount, freeWashDiscount, paymentBreakdown, workerStats, returningCustomers, retentionRate, avgInvoice, heatmap, queueStatusCounts, activeQueue, readyQueue, deliveredQueue, todayQueueItems, revenueTrend, carsTrend, profitTrend }
   }, [visits, customers, workers, expenses, queueItems, days, isCustomActive, customFrom, customTo])
 
   const topCustomers = customers.slice(0, 8)
@@ -560,6 +603,15 @@ export function CarWashOverview() {
     .map(item => ({ ...item, label: item.date, value: item.revenue, hint: `${item.visits} زيارة` }))
   const maxPeriodRevenue = Math.max(1, ...salesPeriodRows.map(item => item.value))
 
+  if (loading) return <LoadingSkeleton />
+  if (fetchError) return (
+    <div dir="rtl" style={{ padding: 40, textAlign: 'center', fontFamily: 'Tajawal,sans-serif' }}>
+      <AlertTriangle size={36} color="#DC2626" style={{ margin: '0 auto 12px' }} />
+      <p style={{ color: '#DC2626', fontWeight: 700, fontSize: 15 }}>{fetchError}</p>
+      <button onClick={() => window.location.reload()} style={{ marginTop: 14, padding: '9px 22px', borderRadius: 10, border: '1px solid #FCA5A5', background: '#FFF', color: '#DC2626', cursor: 'pointer', fontWeight: 700, fontSize: 13 }}>إعادة المحاولة</button>
+    </div>
+  )
+
   return (<div dir="rtl" style={{ color: '#0D1B3E' }}>
       <style>{`
         .cw-board { direction:rtl; display:grid; grid-template-columns:1fr; grid-template-areas:"main" "rail" "ai"; gap:16px; align-items:start; }
@@ -715,12 +767,12 @@ export function CarWashOverview() {
           )}
 
           <div className="cw-stat-grid">
-            <StatCard icon={DollarSign} label="إجمالي الإيرادات" value={formatSAR(stats.revenue)} sub="ر.س في الفترة" color="#10B981" trend="فعلي" />
-            <StatCard icon={TrendingDown} label="صافي الربح" value={Math.round(stats.netProfit).toLocaleString('ar-SA')} sub={`${stats.netMargin}% هامش`} color={stats.netProfit >= 0 ? '#0B63F6' : '#EF4444'} trend={stats.netProfit >= 0 ? 'بعد التكاليف' : 'راجع المصاريف'} />
-            <StatCard icon={Car} label="سيارات اليوم" value={displayCars} sub={`${stats.queueStatusCounts.active} نشطة الآن`} color="#0B63F6" trend="اليوم" />
-            <StatCard icon={CalendarClock} label="متوسط الفاتورة" value={stats.avgInvoice || 0} sub="ر.س" color="#7C3AED" trend="محسوب" />
-            <StatCard icon={Users} label="العملاء المسجلون" value={customers.length} sub={`${stats.returningCustomers} عائدون`} color="#F97316" trend="CRM" />
-            <StatCard icon={Star} label="مكافآت الولاء" value={Math.max(stats.milestones, 0)} sub={`هدف ${threshold} زيارات`} color="#38BDF8" trend="ولاء" />
+            <StatCard icon={DollarSign} label="إجمالي الإيرادات" value={formatSAR(stats.revenue)} sub="ر.س في الفترة" color="#10B981" trend={stats.revenueTrend === 'up' ? 'نمو' : stats.revenueTrend === 'down' ? 'مراجعة' : 'فعلي'} trendDir={stats.revenueTrend} />
+            <StatCard icon={TrendingDown} label="صافي الربح" value={Math.round(stats.netProfit).toLocaleString('ar-SA')} sub={`${stats.netMargin}% هامش`} color={stats.netProfit >= 0 ? '#0B63F6' : '#EF4444'} trend={stats.netProfit >= 0 ? 'بعد التكاليف' : 'راجع المصاريف'} trendDir={stats.profitTrend} />
+            <StatCard icon={Car} label="سيارات اليوم" value={displayCars} sub={`${stats.queueStatusCounts.active} نشطة الآن`} color="#0B63F6" trend={stats.carsTrend === 'up' ? 'نمو' : stats.carsTrend === 'down' ? 'أقل من أمس' : 'اليوم'} trendDir={stats.carsTrend} />
+            <StatCard icon={CalendarClock} label="متوسط الفاتورة" value={stats.avgInvoice || 0} sub="ر.س للزيارة" color="#7C3AED" trend="محسوب" trendDir="neutral" />
+            <StatCard icon={Users} label="العملاء المسجلون" value={customers.length} sub={`${stats.returningCustomers} عائدون`} color="#F97316" trend={stats.returningCustomers > 0 ? 'عائدون' : 'CRM'} trendDir={stats.returningCustomers > 0 ? 'up' : 'neutral'} />
+            <StatCard icon={Star} label="مكافآت الولاء" value={Math.max(stats.milestones, 0)} sub={`هدف ${threshold} زيارات`} color="#38BDF8" trend={stats.milestones > 0 ? 'نشط' : 'ولاء'} trendDir={stats.milestones > 0 ? 'up' : 'neutral'} />
           </div>
 
           <SectionCard
@@ -814,7 +866,7 @@ export function CarWashOverview() {
 
           <div className="cw-insight-grid">
             <SectionCard title="أفضل الخدمات اليوم" icon={Car}>
-              {stats.services.length ? stats.services.slice(0, 4).map(([name, data], i) => (
+              {stats.topServices.length ? stats.topServices.slice(0, 4).map(([name, data], i) => (
                 <div key={`${name}-${i}`} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, padding: '9px 0', borderBottom: i < 3 ? '1px solid #EEF3FA' : 'none' }}>
                   <span><strong style={{ display: 'block', color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>{name}</strong><em className="cw-muted" style={{ fontStyle: 'normal', fontSize: 11 }}>{(data as any).count || 0} سيارة</em></span>
                   <strong style={{ color: '#0D1B3E', fontSize: 13, fontFamily: 'Sora,sans-serif' }}>{((data as any).revenue || 0).toLocaleString('ar-SA')}</strong>
@@ -835,11 +887,48 @@ export function CarWashOverview() {
               </div>
             </SectionCard>
           </div>
+
+          {stats.heatmap.some(row => row.buckets.some(b => b.value > 0)) && (
+            <SectionCard title="أوقات الذروة" icon={Activity}>
+              <div style={{ overflowX: 'auto' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '70px repeat(7, 1fr)', gap: 4, minWidth: 480 }}>
+                  <div />
+                  {stats.heatmap[0]?.buckets.map(b => (
+                    <div key={b.hour} style={{ textAlign: 'center', fontSize: 10, color: '#64748B', fontFamily: 'Sora,sans-serif', paddingBottom: 4 }}>{b.hour}</div>
+                  ))}
+                  {stats.heatmap.map(row => {
+                    const maxVal = Math.max(1, ...row.buckets.map(b => b.value))
+                    return (
+                      <>
+                        <div key={row.day} style={{ fontSize: 11, color: '#334155', fontFamily: 'Tajawal,sans-serif', display: 'flex', alignItems: 'center', fontWeight: 700 }}>{row.day}</div>
+                        {row.buckets.map(b => {
+                          const alpha = b.value === 0 ? 0.04 : Math.max(0.12, (b.value / maxVal) * 0.85)
+                          return (
+                            <div key={b.hour} title={`${b.value} زيارة`} style={{ height: 28, borderRadius: 6, background: `rgba(239,68,68,${alpha})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              {b.value > 0 && <span style={{ fontSize: 9, fontWeight: 900, color: alpha > 0.5 ? '#fff' : '#DC2626', fontFamily: 'Sora,sans-serif' }}>{b.value}</span>}
+                            </div>
+                          )
+                        })}
+                      </>
+                    )
+                  })}
+                </div>
+                <div style={{ display: 'flex', gap: 16, marginTop: 12, justifyContent: 'flex-end' }}>
+                  {[{ label: 'خفيف', alpha: 0.1 }, { label: 'متوسط', alpha: 0.45 }, { label: 'مرتفع', alpha: 0.85 }].map(l => (
+                    <span key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#64748B', fontFamily: 'Tajawal,sans-serif' }}>
+                      <span style={{ width: 14, height: 14, borderRadius: 4, background: `rgba(239,68,68,${l.alpha})`, display: 'inline-block' }} />
+                      {l.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </SectionCard>
+          )}
         </main>
 
         <aside className="cw-rail cw-rail-ai">
           <div className="cw-card cw-card-pad">
-            <h3 className="cw-title" style={{ fontSize: 17, marginBottom: 14 }}><Sparkles size={18} color="#0B63F6" /> مساعد الذكاء الاصطناعي</h3>
+            <h3 className="cw-title" style={{ fontSize: 17, marginBottom: 14 }}><Sparkles size={18} color="#0B63F6" /> توصيات ذكية</h3>
             <Link to={aiCards[0].to} className="cw-link cw-clickable" style={{ width: '100%', minHeight: 40, border: 'none', borderRadius: 10, background: '#F3F7FF', color: '#0B63F6', fontWeight: 950, fontFamily: 'Tajawal,sans-serif', marginBottom: 12, display: 'grid', placeItems: 'center', textAlign: 'center', padding: '10px 12px' }}>{aiCards[0].title}</Link>
             {aiCards.slice(1).map(card => {
               const Icon = card.icon
