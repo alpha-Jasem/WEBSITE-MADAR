@@ -1,6 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
+import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from 'recharts'
 import { Activity, AlertTriangle, Calendar, CalendarClock, Car, CheckCircle2, Copy, DollarSign, Download, ExternalLink, FileText, Loader2, Plus, QrCode, Sparkles, Star, TrendingDown, TrendingUp, Users, Wrench } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
@@ -160,21 +160,34 @@ function LoadingSkeleton() {
   )
 }
 
-function BreakdownRow({ label, value, hint, color, max }: { label: string; value: number; hint: string; color: string; max: number }) {
-  const width = max > 0 ? Math.max(7, Math.min(100, (value / max) * 100)) : 0
+function BreakdownAreaChart({ data, emptyMsg, emptyLink }: { data: { label: string; value: number; hint?: string }[]; emptyMsg?: string; emptyLink?: string }) {
+  if (!data.length) {
+    return emptyLink
+      ? <Link to={emptyLink} style={{ display: 'block', border: '1px dashed #D7E1F0', borderRadius: 14, padding: 14, textAlign: 'center', color: '#64748B', fontSize: 12, fontFamily: 'Tajawal,sans-serif', textDecoration: 'none' }}>{emptyMsg}</Link>
+      : <span style={{ color: '#64748B', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>{emptyMsg || 'لا توجد بيانات في الفترة.'}</span>
+  }
   return (
-    <div style={{ display: 'grid', gap: 7 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-        <span style={{ minWidth: 0 }}>
-          <strong style={{ display: 'block', color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</strong>
-          <em className="cw-muted" style={{ display: 'block', fontSize: 10, fontStyle: 'normal' }}>{hint}</em>
-        </span>
-        <strong style={{ color: '#0D1B3E', fontSize: 13, fontFamily: 'Sora,sans-serif', whiteSpace: 'nowrap' }}>{Math.round(value).toLocaleString('ar-SA')} ر.س</strong>
-      </div>
-      <div style={{ height: 6, borderRadius: 999, background: '#EAF1FA', overflow: 'hidden' }}>
-        <span style={{ display: 'block', width: `${width}%`, height: '100%', borderRadius: 999, background: color }} />
-      </div>
-    </div>
+    <ResponsiveContainer width="100%" height={200}>
+      <AreaChart data={data} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
+        <defs>
+          <linearGradient id="bdGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#7C3AED" stopOpacity={0.32} />
+            <stop offset="100%" stopColor="#7C3AED" stopOpacity={0.02} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="4 4" stroke="#EDE9FE" vertical={false} />
+        <XAxis dataKey="label" tick={{ fill: '#64748B', fontSize: 10, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fill: '#64748B', fontSize: 10, fontFamily: 'Sora' }} axisLine={false} tickLine={false} tickFormatter={v => v > 0 ? v.toLocaleString('ar-SA') : '0'} />
+        <Tooltip
+          formatter={(v: number) => [`${v.toLocaleString('ar-SA')} ر.س`, 'الإيراد']}
+          contentStyle={{ fontFamily: 'Tajawal,sans-serif', fontSize: 12, borderRadius: 8, border: '1px solid #EDE9FE' }}
+        />
+        <Area type="monotone" dataKey="value" name="revenue" stroke="#7C3AED" strokeWidth={2.5} fill="url(#bdGrad)"
+          dot={{ fill: '#7C3AED', r: 4, strokeWidth: 0 }}
+          activeDot={{ r: 6, fill: '#7C3AED', stroke: '#EDE9FE', strokeWidth: 2 }}
+        />
+      </AreaChart>
+    </ResponsiveContainer>
   )
 }
 
@@ -823,21 +836,25 @@ export function CarWashOverview() {
               <Link to="/client/reports" style={{ marginInlineStart: 'auto', color: '#0B63F6', fontSize: 12, fontWeight: 900, fontFamily: 'Tajawal,sans-serif', textDecoration: 'none' }}>عرض التقارير</Link>
             </div>
 
-            <div style={{ display: 'grid', gap: 13 }}>
+            <div>
               {salesBreakdownTab === 'period' && (
-                salesPeriodRows.length ? salesPeriodRows.map((item, i) => (
-                  <BreakdownRow key={`${item.label}-${i}`} label={item.label} value={item.value} hint={item.hint} color={serviceColors[i % serviceColors.length]} max={maxPeriodRevenue} />
-                )) : <span className="cw-muted" style={{ fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>لا توجد مبيعات في الفترة.</span>
+                <BreakdownAreaChart
+                  data={salesPeriodRows.map(r => ({ label: r.label, value: r.value, hint: r.hint }))}
+                  emptyMsg="لا توجد مبيعات في الفترة."
+                />
               )}
               {salesBreakdownTab === 'services' && (
-                topServiceRevenue.length ? topServiceRevenue.map((item, i) => (
-                  <BreakdownRow key={item.name} label={item.name} value={item.value} hint={`${item.count} سيارة`} color={serviceColors[i % serviceColors.length]} max={maxServiceRevenue} />
-                )) : <span className="cw-muted" style={{ fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>لا توجد مبيعات خدمات في الفترة.</span>
+                <BreakdownAreaChart
+                  data={topServiceRevenue.map(r => ({ label: r.name, value: r.value, hint: `${r.count} سيارة` }))}
+                  emptyMsg="لا توجد مبيعات خدمات في الفترة."
+                />
               )}
               {salesBreakdownTab === 'workers' && (
-                topWorkerRevenue.length ? topWorkerRevenue.map((item, i) => (
-                  <BreakdownRow key={item.id} label={item.name} value={item.revenue} hint={`${item.count} سيارة`} color={serviceColors[(i + 2) % serviceColors.length]} max={maxWorkerRevenue} />
-                )) : <Link to="/client/workers" className="cw-link" style={{ display: 'block', border: '1px dashed #D7E1F0', borderRadius: 14, padding: 14, textAlign: 'center', color: '#64748B', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>عيّن الموظف للسيارات حتى يظهر تفصيل المبيعات حسب الفريق.</Link>
+                <BreakdownAreaChart
+                  data={topWorkerRevenue.map(r => ({ label: r.name, value: r.revenue, hint: `${r.count} سيارة` }))}
+                  emptyMsg="عيّن الموظف للسيارات حتى يظهر تفصيل المبيعات حسب الفريق."
+                  emptyLink="/client/workers"
+                />
               )}
             </div>
           </SectionCard>
