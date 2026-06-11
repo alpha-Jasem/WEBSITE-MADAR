@@ -174,7 +174,10 @@ export function TrialSignup() {
         },
       )
       const result = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(result.error || 'company_create_failed')
+      if (!res.ok) {
+        console.error('trial-signup API error:', result)
+        throw new Error(result.error || 'company_create_failed')
+      }
 
       navigate(result.redirect_to || '/client?welcome=trial', { replace: true })
     } catch (err: any) {

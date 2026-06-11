@@ -47,6 +47,11 @@ Deno.serve(async (req) => {
       const trialEnds = new Date()
       trialEnds.setDate(trialEnds.getDate() + 3)
 
+      const planResetAt = new Date()
+      planResetAt.setMonth(planResetAt.getMonth() + 1)
+      planResetAt.setDate(1)
+      planResetAt.setHours(0, 0, 0, 0)
+
       // create company
       const { data: company, error: companyErr } = await supabaseAdmin
         .from('companies')
@@ -63,6 +68,7 @@ Deno.serve(async (req) => {
           package_type: btype === 'clinic' ? 'whatsapp' : null,
           auth_user_id: user.id,
           trial_ends_at: trialEnds.toISOString(),
+          plan_reset_at: planResetAt.toISOString(),
           monthly_messages: 0,
           monthly_leads: 0,
           automations_count: 0,
