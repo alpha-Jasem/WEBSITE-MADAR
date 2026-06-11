@@ -189,9 +189,13 @@ export function CarWashInvoicePrint({ data, company, onClose }: Props) {
                     </tr>
                   </thead>
                   <tbody>
+                    {data.items.length === 0 && (
+                      <tr><td colSpan={5} style={{ padding: '12px', textAlign: 'center', color: '#999', fontFamily: 'Tajawal' }}>لا توجد بنود</td></tr>
+                    )}
                     {data.items.map((item, i) => {
                       const lineTotal = item.price * item.qty
-                      const lineSub   = showVat ? lineTotal / 1.15 : lineTotal
+                      const vatDivisor = 1 + (data.vatAmount && data.subtotal ? (data.vatAmount / data.subtotal) : 0.15)
+                      const lineSub   = showVat ? lineTotal / vatDivisor : lineTotal
                       const lineVat   = showVat ? lineTotal - lineSub : 0
                       return (
                         <tr key={i}>

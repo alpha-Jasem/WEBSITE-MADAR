@@ -111,10 +111,10 @@ export function CarWashPOS() {
 
   /* ── calculations (prices include VAT — extract, don't add) ── */
   const gross = cart.reduce((s, i) => s + i.price * i.qty, 0)
-  const disc  = Math.min(Number(discount) || 0, gross)
+  const disc  = Math.min(Math.max(0, Number(discount) || 0), gross)
   const grossAfterDisc = gross - disc
   const { subtotal: net, vat_amount: vat, total_amount: total } =
-    calcVAT(grossAfterDisc, company?.tax_enabled ?? true, 15, true)
+    calcVAT(grossAfterDisc, company?.tax_enabled ?? true, company?.vat_rate || 15, company?.price_includes_vat !== false)
 
   const filtered  = useMemo(() => services.filter(s => s.name.includes(search)), [services, search])
   const filtCusts = useMemo(() => customers.filter(c =>

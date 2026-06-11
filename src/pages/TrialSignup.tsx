@@ -203,7 +203,9 @@ export function TrialSignup() {
       const { error: pwErr } = await supabase.auth.updateUser({ password: form.password })
       if (pwErr) console.warn('Password update failed (non-fatal):', pwErr.message)
 
-      navigate(result.redirect_to || '/client', { replace: true })
+      const ALLOWED = ['/client', '/clinic-os/dashboard']
+      const safeRedirect = ALLOWED.includes(result.redirect_to) ? result.redirect_to : '/client'
+      navigate(safeRedirect, { replace: true })
     } catch (err: any) {
       const message = errorCode(err?.message) ?? getErrorMessage(err)
       setError(message)

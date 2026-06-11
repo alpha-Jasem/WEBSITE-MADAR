@@ -12,6 +12,7 @@ import type { CWQueueItem, CWWorker, CWService, QueueStatus, PaymentMethod } fro
 import { CarWashInvoicePrint } from './CarWashInvoicePrint'
 import type { InvoiceData } from './CarWashInvoicePrint'
 import { sendCWInvoice } from '../../../lib/n8nCarWash'
+import { normalizePhone } from '../../../lib/phoneUtils'
 import { ClientInsightPanel } from './ClientUI'
 
 // Notifications (car_ready, delivery_receipt, loyalty_milestone, daily_closing)
@@ -321,9 +322,8 @@ export const CarWashQueue = () => {
 
       // Upsert cw_customers + fire registration webhook for new customers
       if (form.phone) {
-        const rawPhone = form.phone.replace(/\D/g, '')
-        const normalizedPhone = rawPhone.startsWith('966') ? rawPhone : rawPhone.startsWith('0') ? `966${rawPhone.slice(1)}` : `966${rawPhone}`
-        const localPhone = rawPhone.startsWith('966') ? `0${rawPhone.slice(3)}` : rawPhone.startsWith('0') ? rawPhone : `0${rawPhone}`
+        const normalizedPhone = normalizePhone(form.phone)
+        const localPhone = normalizedPhone.startsWith('966') ? `0${normalizedPhone.slice(3)}` : normalizedPhone
 
         const { data: existingCustomer } = await supabase
           .from('cw_customers')
@@ -434,17 +434,20 @@ export const CarWashQueue = () => {
 
   const confirmDelivery = async () => {
     if (!deliverModal || !companyId || delivering) return
+    // idempotency: prevent double-delivery
+    if (deliverModal.payment_status === 'paid' || deliverModal.status === 'delivered') {
+      setDeliverModal(null); return
+    }
     setDelivering(true)
     setDeliveryError('')
     const item = deliverModal
     const isMembershipPayment = false
     const price = item.is_free_wash ? 0 : item.price
-    const vat = calcVAT(price, company?.tax_enabled ?? true, 15, true)
+    const vat = calcVAT(price, company?.tax_enabled ?? true, company?.vat_rate || 15, company?.price_includes_vat !== false)
     const now = new Date().toISOString()
 
     // Look up customer first so we can link the visit record
-    const rawPhone = item.phone?.replace(/\D/g, '') || ''
-    const phone = rawPhone.startsWith('966') ? rawPhone : rawPhone.startsWith('0') ? `966${rawPhone.slice(1)}` : rawPhone ? `966${rawPhone}` : ''
+    const phone = normalizePhone(item.phone || '')
     let customer: { id: string; free_washes_available: number; loyalty_count: number; total_visits: number; wallet_balance?: number | null } | null = null
     if (phone && companyId) {
       const { data } = await supabase
@@ -486,6 +489,7 @@ export const CarWashQueue = () => {
       total_amount: vat.total_amount,
       discount_amount: isMembershipPayment ? item.price : item.discount_amount || 0,
       delivered_at: now,
+      updated_at: now,
     }
 
     const { error: queueError } = await supabase.from('cw_queue').update(deliveryUpdate).eq('id', item.id)
@@ -591,25 +595,25 @@ export const CarWashQueue = () => {
     }
 
     if (phone) {
-      sendCWInvoice({
-        phone,
-        customer_name: item.customer_name || '',
-        company_name: company?.name || '',
-        company_id: companyId || '',
-        invoice_no: invoiceNo,
-        services: item.service_name || '',
-        subtotal: vat.subtotal.toFixed(2),
-        vat: vat.vat_amount.toFixed(2),
-        total: vat.total_amount.toFixed(2),
-        payment_method: selectedPayment,
-        date: now,
-        plate: item.plate || null,
-      })
+      try {
+        sendCWInvoice({
+          phone,
+          customer_name: item.customer_name || '',
+          company_name: company?.name || '',
+          company_id: companyId || '',
+          invoice_no: invoiceNo,
+          services: item.service_name || '',
+          subtotal: vat.subtotal.toFixed(2),
+          vat: vat.vat_amount.toFixed(2),
+          total: vat.total_amount.toFixed(2),
+          payment_method: selectedPayment,
+          date: now,
+          plate: item.plate || null,
+        })
+      } catch (invoiceErr) {
+        console.warn('Invoice send failed (non-fatal):', invoiceErr)
+      }
     }
-
-    setItems(prev => prev.map(row => row.id === item.id ? deliveredItem : row))
-    showQueueNotice('تم تسليم السيارة ونقلها إلى تم التسليم.')
-    void loadItems(companyId)
 
     setDelivering(false)
     setDeliverModal(null)
@@ -1219,7 +1223,7 @@ export const CarWashQueue = () => {
               {/* Mini invoice */}
               {form.price && Number(form.price) > 0 && (() => {
                 const price = Number(form.price)
-                const vat = calcVAT(price, company?.tax_enabled ?? true, 15, true)
+                const vat = calcVAT(price, company?.tax_enabled ?? true, company?.vat_rate || 15, company?.price_includes_vat !== false)
                 return (
                   <div className="mt-4 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(0,191,255,0.22)' }}>
                     <div className="px-4 py-2" style={{ background: 'rgba(0,191,255,0.08)', borderBottom: '1px solid rgba(0,191,255,0.15)' }}>
@@ -1291,7 +1295,7 @@ export const CarWashQueue = () => {
             {/* VAT breakdown */}
             {(() => {
               const price = deliverModal.is_free_wash ? 0 : deliverModal.price
-              const vat = calcVAT(price, company?.tax_enabled ?? true, 15, true)
+              const vat = calcVAT(price, company?.tax_enabled ?? true, company?.vat_rate || 15, company?.price_includes_vat !== false)
               return (
                 <div className="mb-4 space-y-1.5 p-3 rounded-xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                   {deliverModal.is_free_wash ? (
