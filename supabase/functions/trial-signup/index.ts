@@ -44,9 +44,6 @@ Deno.serve(async (req) => {
 
       if (existing) return json({ error: 'email_already_registered' }, 409)
 
-      const trialEnds = new Date()
-      trialEnds.setDate(trialEnds.getDate() + 3)
-
       const planResetAt = new Date()
       planResetAt.setMonth(planResetAt.getMonth() + 1)
       planResetAt.setDate(1)
@@ -60,20 +57,21 @@ Deno.serve(async (req) => {
           owner_name: owner_name.trim(),
           owner_email: email.trim().toLowerCase(),
           owner_phone: phone?.trim() || '',
-          city: city?.trim() || '',
           industry: btype,
           business_type: btype,
           plan: 'growth',
-          status: 'trial',
+          status: 'active',
           package_type: btype === 'clinic' ? 'whatsapp' : null,
           auth_user_id: user.id,
-          trial_ends_at: trialEnds.toISOString(),
           plan_reset_at: planResetAt.toISOString(),
           monthly_messages: 0,
           monthly_leads: 0,
           automations_count: 0,
           message_limit: 500,
           messages_used: 0,
+          tax_enabled: true,
+          vat_rate: 15,
+          price_includes_vat: true,
         })
         .select('id')
         .single()
@@ -89,8 +87,6 @@ Deno.serve(async (req) => {
         email: email.trim().toLowerCase(),
         full_name: owner_name.trim(),
         role: 'client',
-        company_id: company.id,
-        phone: phone?.trim() || '',
       })
 
       const redirectTo = btype === 'clinic' ? '/clinic-os/dashboard' : '/client?welcome=trial'
