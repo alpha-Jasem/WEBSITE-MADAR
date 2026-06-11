@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from 'react'
-import { Car, Clock, Star, Plus, Trash2, Check, Loader2, MapPin, Save, Receipt, QrCode, Copy, ExternalLink, type LucideIcon } from 'lucide-react'
+import { Car, Clock, Star, Plus, Trash2, Check, Loader2, MapPin, Save, Receipt, QrCode, Copy, ExternalLink, FileText, type LucideIcon } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { logAudit } from '../../../lib/auditLog'
@@ -7,7 +7,7 @@ import { getSelfCheckinUrl } from '../../../lib/selfCheckin'
 import { sanitizeDecimalInput, sanitizeNameText, toSafeNumber } from '../../../lib/formSanitizers'
 import type { CWService } from '../../../types'
 
-type SetupTab = 'services' | 'hours' | 'loyalty' | 'vat' | 'qr'
+type SetupTab = 'services' | 'hours' | 'loyalty' | 'vat' | 'qr' | 'invoice'
 type CarWashSetupProps = {
   title?: string
   description?: string
@@ -73,6 +73,15 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
   // Monthly target
   const [monthlyTarget, setMonthlyTarget] = useState(0)
 
+  // Invoice settings
+  const [invVatNumber, setInvVatNumber] = useState('')
+  const [invCommercialReg, setInvCommercialReg] = useState('')
+  const [invAddress, setInvAddress] = useState('')
+  const [invFooter, setInvFooter] = useState('')
+  const [invOwnerPhone, setInvOwnerPhone] = useState('')
+  const [savingInv, setSavingInv] = useState(false)
+  const [invSaved, setInvSaved] = useState(false)
+
 
   const [loading, setLoading] = useState(true)
 
@@ -84,7 +93,7 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
       const [{ data: svcData }, { data: co }] = await Promise.all([
         supabase.from('cw_services').select('*').eq('company_id', companyId).order('created_at'),
         supabase.from('companies')
-          .select('cw_hours, cw_loyalty_threshold, google_maps_url, tax_enabled, vat_rate, price_includes_vat, cw_message_templates, cw_monthly_target')
+          .select('cw_hours, cw_loyalty_threshold, google_maps_url, tax_enabled, vat_rate, price_includes_vat, cw_message_templates, cw_monthly_target, vat_number, commercial_reg, address, print_footer, owner_phone')
           .eq('id', companyId).single(),
       ])
 
@@ -99,6 +108,11 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
         setVatRate(SAUDI_VAT_RATE)
         setPriceIncludesVat(c.price_includes_vat !== false)
         if (c.cw_monthly_target) setMonthlyTarget(c.cw_monthly_target)
+        setInvVatNumber(c.vat_number || '')
+        setInvCommercialReg(c.commercial_reg || '')
+        setInvAddress(c.address || '')
+        setInvFooter(c.print_footer || '')
+        setInvOwnerPhone(c.owner_phone || '')
       }
       setLoading(false)
     }
@@ -184,15 +198,32 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
     setTimeout(() => setVatSaved(false), 3000)
   }
 
+  const saveInvoiceSettings = async () => {
+    if (!companyId) return
+    setSavingInv(true)
+    await supabase.from('companies').update({
+      vat_number: invVatNumber.trim() || null,
+      commercial_reg: invCommercialReg.trim() || null,
+      address: invAddress.trim() || null,
+      print_footer: invFooter.trim() || null,
+      owner_phone: invOwnerPhone.trim() || null,
+    } as any).eq('id', companyId)
+    logAudit(companyId, 'invoice_settings_updated', {})
+    setSavingInv(false)
+    setInvSaved(true)
+    setTimeout(() => setInvSaved(false), 2500)
+  }
+
   useEffect(() => {
     if (visibleTabs?.length && !visibleTabs.includes(tab)) setTab(visibleTabs[0])
   }, [visibleTabs, tab])
 
   const ALL_TABS: { key: SetupTab; label: string; icon: LucideIcon }[] = [
-    { key: 'services', label: 'الخدمات',     icon: Car     },
-    { key: 'loyalty',  label: 'الولاء',       icon: Star    },
-    { key: 'vat',      label: 'الضريبة',      icon: Receipt },
-    { key: 'qr',       label: 'رمز QR',       icon: QrCode  },
+    { key: 'services', label: 'الخدمات',     icon: Car      },
+    { key: 'loyalty',  label: 'الولاء',       icon: Star     },
+    { key: 'vat',      label: 'الضريبة',      icon: Receipt  },
+    { key: 'invoice',  label: 'الفاتورة',     icon: FileText },
+    { key: 'qr',       label: 'رمز QR',       icon: QrCode   },
   ]
   const TABS = visibleTabs?.length ? ALL_TABS.filter(t => visibleTabs.includes(t.key)) : ALL_TABS
 
@@ -510,6 +541,68 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
           </div>
         )
       })()}
+
+      {/* Invoice Settings Tab */}
+      {tab === 'invoice' && (
+        <div style={SECTION_STYLE}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+            <FileText size={15} color="#22D3EE" />
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>بيانات الفاتورة</span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+            {[
+              { label: 'الرقم الضريبي', value: invVatNumber, set: setInvVatNumber, placeholder: '3XXXXXXXXXXXXXXXXX' },
+              { label: 'السجل التجاري', value: invCommercialReg, set: setInvCommercialReg, placeholder: '10XXXXXXXX' },
+              { label: 'رقم هاتف المالك', value: invOwnerPhone, set: setInvOwnerPhone, placeholder: '05XXXXXXXX' },
+              { label: 'العنوان', value: invAddress, set: setInvAddress, placeholder: 'المدينة، الحي، الشارع' },
+            ].map(field => (
+              <div key={field.label}>
+                <label style={{ display: 'block', fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginBottom: 6 }}>
+                  {field.label}
+                </label>
+                <input
+                  dir="rtl"
+                  value={field.value}
+                  onChange={e => field.set(e.target.value)}
+                  placeholder={field.placeholder}
+                  style={{ width: '100%', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '9px 12px', color: '#1E293B', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+            ))}
+
+            <div>
+              <label style={{ display: 'block', fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginBottom: 6 }}>
+                نص تذييل الفاتورة
+              </label>
+              <textarea
+                dir="rtl"
+                rows={3}
+                value={invFooter}
+                onChange={e => setInvFooter(e.target.value)}
+                placeholder="شكراً لزيارتكم — نراكم قريباً"
+                style={{ width: '100%', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '9px 12px', color: '#1E293B', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
+              />
+            </div>
+
+            <div style={{ padding: '12px 14px', borderRadius: 12, background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.15)' }}>
+              <p style={{ margin: 0, fontSize: 12, color: '#0369A1', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.7 }}>
+                هذه البيانات تظهر تلقائياً في كل فاتورة تطبعها. الرقم الضريبي والسجل التجاري مطلوبان للفواتير الرسمية في المملكة.
+              </p>
+            </div>
+
+            <button
+              onClick={saveInvoiceSettings}
+              disabled={savingInv}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '11px 22px', borderRadius: 12, border: 'none', background: invSaved ? 'rgba(16,185,129,0.15)' : 'rgba(34,211,238,0.12)', color: invSaved ? '#10B981' : '#0099CC', cursor: savingInv ? 'not-allowed' : 'pointer', fontSize: 13, fontFamily: 'Cairo, sans-serif', fontWeight: 700, opacity: savingInv ? 0.7 : 1, alignSelf: 'flex-start' }}
+            >
+              {savingInv ? <Loader2 size={14} style={{ animation: 'spin 0.8s linear infinite' }} /> : invSaved ? <Check size={14} /> : <Save size={14} />}
+              {savingInv ? 'جاري الحفظ...' : invSaved ? 'تم الحفظ ✓' : 'حفظ بيانات الفاتورة'}
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   )
