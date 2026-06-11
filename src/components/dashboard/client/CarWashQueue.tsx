@@ -107,6 +107,9 @@ export const CarWashQueue = () => {
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('cash')
   const [delivering, setDelivering] = useState(false)
   const [deliveryError, setDeliveryError] = useState('')
+  const [editPrice, setEditPrice] = useState('')
+  const [editServiceName, setEditServiceName] = useState('')
+  const [editDiscount, setEditDiscount] = useState('')
   const [queueError, setQueueError] = useState('')
   const [queueNotice, setQueueNotice] = useState('')
   const [lastSyncAt, setLastSyncAt] = useState<string | null>(null)
@@ -411,6 +414,9 @@ export const CarWashQueue = () => {
       setDeliverModal(item)
       setSelectedPayment('cash')
       setDeliveryError('')
+      setEditPrice(String(item.price))
+      setEditServiceName(item.service_name || '')
+      setEditDiscount(String(item.discount_amount || 0))
       return
     }
 
@@ -442,7 +448,10 @@ export const CarWashQueue = () => {
     setDeliveryError('')
     const item = deliverModal
     const isMembershipPayment = false
-    const price = item.is_free_wash ? 0 : item.price
+    const editedPrice = item.is_free_wash ? 0 : Math.max(0, parseFloat(editPrice) || item.price)
+    const editedDiscount = Math.max(0, parseFloat(editDiscount) || 0)
+    const priceAfterDiscount = Math.max(0, editedPrice - editedDiscount)
+    const price = priceAfterDiscount
     const vat = calcVAT(price, company?.tax_enabled ?? true, company?.vat_rate || 15, company?.price_includes_vat !== false)
     const now = new Date().toISOString()
 
@@ -487,14 +496,16 @@ export const CarWashQueue = () => {
       subtotal: vat.subtotal,
       vat_amount: vat.vat_amount,
       total_amount: vat.total_amount,
-      discount_amount: isMembershipPayment ? item.price : item.discount_amount || 0,
+      price: editedPrice,
+      discount_amount: editedDiscount,
+      service_name: editServiceName || item.service_name,
       delivered_at: now,
-      updated_at: now,
     }
 
     const { error: queueError } = await supabase.from('cw_queue').update(deliveryUpdate).eq('id', item.id)
     if (queueError) {
-      setDeliveryError('تعذر نقل السيارة إلى تم التسليم. حاول مرة ثانية.')
+      console.error('[delivery] queue update error:', queueError)
+      setDeliveryError(`تعذر نقل السيارة إلى تم التسليم: ${queueError.message || 'حاول مرة ثانية.'}`)
       setDelivering(false)
       return
     }
@@ -502,9 +513,9 @@ export const CarWashQueue = () => {
     const { error: visitError } = await supabase.from('cw_visits').insert({
       company_id: item.company_id,
       customer_id: customer?.id || null,
-      service_name: item.service_name,
+      service_name: editServiceName || item.service_name,
       service_id: item.service_id || null,
-      price: item.price,
+      price: editedPrice,
       subtotal: vat.subtotal,
       vat_amount: vat.vat_amount,
       total_amount: vat.total_amount,
@@ -512,7 +523,7 @@ export const CarWashQueue = () => {
       payment_status: 'paid',
       is_free_wash: item.is_free_wash || isMembershipPayment || false,
       original_price: item.original_price || null,
-      discount_amount: isMembershipPayment ? item.price : item.discount_amount || 0,
+      discount_amount: editedDiscount,
       worker_id: item.worker_id || null,
       plate: item.plate || null,
       notes: membershipId ? `${item.notes || ''} [membership:${membershipId}]`.trim() : item.notes || null,
@@ -1272,108 +1283,182 @@ export const CarWashQueue = () => {
         </div>
       )}
 
-      {/* Delivery / payment modal */}
-      {deliverModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
-          <div role="dialog" aria-modal="true" aria-label="Confirm delivery" className="w-full max-w-sm rounded-2xl p-6" style={{ background: '#0D1422', border: '1px solid #CBD5E1' }}>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-white font-cairo">تأكيد التسليم</h2>
-              <button aria-label="Close dialog" onClick={() => setDeliverModal(null)} className="text-slate-400 hover:text-white"><X size={18} /></button>
-            </div>
+      {/* Delivery / payment modal — live editable invoice */}
+      {deliverModal && (() => {
+        const rawPrice = deliverModal.is_free_wash ? 0 : Math.max(0, parseFloat(editPrice) || 0)
+        const rawDiscount = Math.max(0, parseFloat(editDiscount) || 0)
+        const netPrice = Math.max(0, rawPrice - rawDiscount)
+        const vat = calcVAT(netPrice, company?.tax_enabled ?? true, company?.vat_rate || 15, company?.price_includes_vat !== false)
+        const taxEnabled = (company?.tax_enabled ?? true) && vat.vat_amount > 0
 
-            <div className="mb-4 p-3 rounded-xl space-y-1" style={{ background: '#FFFFFF' }}>
-              <p className="text-sm font-bold text-slate-950 font-cairo">{deliverModal.customer_name}</p>
-              {deliverModal.service_name && <p className="text-xs text-slate-400 font-tajawal">{deliverModal.service_name}</p>}
-              {deliverModal.is_free_wash && (
-                <div className="flex items-center gap-1.5 mt-1">
-                  <Gift size={12} className="text-amber-400" />
-                  <span className="text-xs text-amber-400 font-tajawal">غسلة مجانية</span>
-                </div>
-              )}
-            </div>
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3" style={{ background: 'rgba(0,0,0,0.8)' }}>
+            <div role="dialog" aria-modal="true" className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl" style={{ background: '#0D1422', border: '1px solid rgba(255,255,255,0.1)' }}>
 
-            {/* VAT breakdown */}
-            {(() => {
-              const price = deliverModal.is_free_wash ? 0 : deliverModal.price
-              const vat = calcVAT(price, company?.tax_enabled ?? true, company?.vat_rate || 15, company?.price_includes_vat !== false)
-              return (
-                <div className="mb-4 space-y-1.5 p-3 rounded-xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                  {deliverModal.is_free_wash ? (
-                    <>
-                      <div className="flex justify-between text-xs font-tajawal">
-                        <span className="text-slate-500">السعر الأصلي</span>
-                        <span className="text-slate-400 line-through">{deliverModal.original_price} ر.س</span>
-                      </div>
-                      <div className="flex justify-between text-xs font-tajawal">
-                        <span className="text-slate-500">خصم الولاء</span>
-                        <span className="text-amber-400">-{deliverModal.original_price} ر.س</span>
-                      </div>
-                      <div className="flex justify-between text-sm font-bold font-cairo pt-1 border-t border-white/5">
-                        <span className="text-slate-900">الإجمالي</span>
-                        <span className="text-emerald-400">0 ر.س</span>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex justify-between text-xs font-tajawal">
-                        <span className="text-slate-500">قبل الضريبة</span>
-                        <span className="text-slate-300">{vat.subtotal.toFixed(2)} ر.س</span>
-                      </div>
-                      <div className="flex justify-between text-xs font-tajawal">
-                        <span className="text-slate-500">ضريبة 15%</span>
-                        <span className="text-slate-300">{vat.vat_amount.toFixed(2)} ر.س</span>
-                      </div>
-                      <div className="flex justify-between text-sm font-bold font-cairo pt-1 border-t border-white/5">
-                        <span className="text-slate-900">الإجمالي</span>
-                        <span className="text-emerald-400">{vat.total_amount.toFixed(2)} ر.س</span>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )
-            })()}
-
-            {/* Payment method selector */}
-            {!deliverModal.is_free_wash && (
-              <div className="mb-5">
-                <p className="text-xs text-slate-400 font-tajawal mb-2">طريقة الدفع</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {QUEUE_PAYMENT_BUTTONS.map(pm => (
-                    <button
-                      key={pm.value}
-                      onClick={() => setSelectedPayment(pm.value)}
-                      className="py-2 rounded-xl text-xs font-tajawal font-medium transition-all"
-                      style={{
-                        background: selectedPayment === pm.value ? 'rgba(99,102,241,0.3)' : '#FFFFFF',
-                        border: `1px solid ${selectedPayment === pm.value ? '#6366F1' : '#E2E8F0'}`,
-                        color: selectedPayment === pm.value ? '#A5B4FC' : '#94A3B8',
-                      }}
-                    >
-                      {pm.label}
-                    </button>
-                  ))}
-                </div>
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <button onClick={() => setDeliverModal(null)} className="text-slate-400 hover:text-white"><X size={18} /></button>
+                <h2 className="text-base font-bold text-white font-cairo">فاتورة التسليم</h2>
+                <Receipt size={16} className="text-emerald-400" />
               </div>
-            )}
 
-            {deliveryError && (
-              <p className="mb-3 rounded-xl px-3 py-2 text-xs font-bold text-amber-200 font-tajawal" style={{ background: 'rgba(245,158,11,0.14)', border: '1px solid rgba(245,158,11,0.32)' }}>
-                {deliveryError}
-              </p>
-            )}
+              <div className="p-5 space-y-4 overflow-y-auto" style={{ maxHeight: '75vh' }}>
 
-            <button
-              onClick={confirmDelivery}
-              disabled={delivering}
-              className="w-full py-3 rounded-xl text-sm font-tajawal font-medium text-white flex items-center justify-center gap-2 disabled:opacity-50"
-              style={{ background: 'linear-gradient(135deg, #10B981, #059669)' }}
-            >
-              {delivering ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-              {delivering ? 'جاري التأكيد...' : 'تأكيد التسليم'}
-            </button>
+                {/* Customer info */}
+                <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold font-cairo text-white" style={{ background: 'linear-gradient(135deg,#7C3AED,#3B82F6)' }}>
+                    {(deliverModal.customer_name || 'ع')[0]}
+                  </div>
+                  <div className="flex-1 text-right">
+                    <p className="text-sm font-bold text-white font-cairo">{deliverModal.customer_name || 'عميل نقدي'}</p>
+                    {deliverModal.plate && <p className="text-xs text-slate-400 font-tajawal">{deliverModal.plate}</p>}
+                    {deliverModal.is_free_wash && (
+                      <div className="flex items-center gap-1 justify-end mt-0.5">
+                        <Gift size={11} className="text-amber-400" />
+                        <span className="text-xs text-amber-400 font-tajawal">غسلة مجانية</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Editable fields */}
+                {!deliverModal.is_free_wash && (
+                  <div className="space-y-3">
+                    <p className="text-xs text-slate-400 font-tajawal text-right">تعديل الفاتورة</p>
+
+                    {/* Service name */}
+                    <div>
+                      <label className="text-xs text-slate-500 font-tajawal block text-right mb-1">اسم الخدمة</label>
+                      <input
+                        dir="rtl"
+                        value={editServiceName}
+                        onChange={e => setEditServiceName(e.target.value)}
+                        className="w-full rounded-xl px-3 py-2.5 text-sm font-tajawal text-white text-right outline-none focus:ring-2"
+                        style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', focusRingColor: '#6366F1' }}
+                      />
+                    </div>
+
+                    {/* Price + Discount */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-slate-500 font-tajawal block text-right mb-1">السعر (ر.س)</label>
+                        <input
+                          dir="ltr"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={editPrice}
+                          onChange={e => setEditPrice(e.target.value)}
+                          className="w-full rounded-xl px-3 py-2.5 text-sm font-cairo text-white text-left outline-none"
+                          style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)' }}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-500 font-tajawal block text-right mb-1">خصم (ر.س)</label>
+                        <input
+                          dir="ltr"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={editDiscount}
+                          onChange={e => setEditDiscount(e.target.value)}
+                          className="w-full rounded-xl px-3 py-2.5 text-sm font-cairo text-white text-left outline-none"
+                          style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Live invoice preview */}
+                <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span className="text-xs text-slate-400 font-tajawal">معاينة الفاتورة</span>
+                    <span className="text-xs text-slate-400 font-cairo">{editServiceName || deliverModal.service_name}</span>
+                  </div>
+
+                  <div className="p-4 space-y-2 font-tajawal text-sm" dir="rtl">
+                    {deliverModal.is_free_wash ? (
+                      <>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-slate-400 line-through">{deliverModal.original_price} ر.س</span>
+                          <span className="text-slate-400">السعر الأصلي</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-amber-400">-{deliverModal.original_price} ر.س</span>
+                          <span className="text-slate-400">خصم الولاء</span>
+                        </div>
+                        <div className="flex justify-between font-bold pt-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+                          <span className="text-emerald-400 text-base">0.00 ر.س</span>
+                          <span className="text-white">الإجمالي</span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {rawDiscount > 0 && (
+                          <div className="flex justify-between text-xs">
+                            <span className="text-red-400">-{rawDiscount.toFixed(2)} ر.س</span>
+                            <span className="text-slate-400">خصم</span>
+                          </div>
+                        )}
+                        {taxEnabled && (
+                          <>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-slate-300">{vat.subtotal.toFixed(2)} ر.س</span>
+                              <span className="text-slate-400">قبل الضريبة</span>
+                            </div>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-slate-300">{vat.vat_amount.toFixed(2)} ر.س</span>
+                              <span className="text-slate-400">ضريبة {company?.vat_rate || 15}%</span>
+                            </div>
+                          </>
+                        )}
+                        <div className="flex justify-between font-bold pt-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+                          <span className="text-emerald-400 text-base">{vat.total_amount.toFixed(2)} ر.س</span>
+                          <span className="text-white">الإجمالي</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Payment method */}
+                {!deliverModal.is_free_wash && (
+                  <div>
+                    <p className="text-xs text-slate-400 font-tajawal mb-2 text-right">طريقة الدفع</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {QUEUE_PAYMENT_BUTTONS.map(pm => (
+                        <button key={pm.value} onClick={() => setSelectedPayment(pm.value)}
+                          className="py-2.5 rounded-xl text-xs font-tajawal font-bold transition-all"
+                          style={{
+                            background: selectedPayment === pm.value ? 'rgba(99,102,241,0.25)' : 'rgba(255,255,255,0.05)',
+                            border: `1px solid ${selectedPayment === pm.value ? '#6366F1' : 'rgba(255,255,255,0.1)'}`,
+                            color: selectedPayment === pm.value ? '#A5B4FC' : '#64748B',
+                          }}
+                        >{pm.label}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {deliveryError && (
+                  <p className="rounded-xl px-3 py-2 text-xs font-tajawal text-amber-200" style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)' }}>
+                    {deliveryError}
+                  </p>
+                )}
+
+                <button onClick={confirmDelivery} disabled={delivering}
+                  className="w-full py-3.5 rounded-xl text-sm font-bold font-cairo text-white flex items-center justify-center gap-2 disabled:opacity-50 transition-opacity"
+                  style={{ background: 'linear-gradient(135deg, #10B981, #059669)', boxShadow: '0 4px 20px rgba(16,185,129,0.3)' }}
+                >
+                  {delivering ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
+                  {delivering ? 'جاري التأكيد...' : `تأكيد التسليم — ${vat.total_amount.toFixed(2)} ر.س`}
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* Cancel confirmation modal */}
       {cancelConfirm && (
