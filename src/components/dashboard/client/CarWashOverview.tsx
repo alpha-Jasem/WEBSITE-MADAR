@@ -686,28 +686,6 @@ export function CarWashOverview() {
             })}
           </div>
 
-          <div className="cw-card cw-card-pad">
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-              <h3 className="cw-title" style={{ fontSize: 15 }}>السيارات النشطة الآن</h3>
-              <Link to="/client/queue" style={{ border: 'none', background: 'transparent', color: '#0B63F6', fontWeight: 900, fontSize: 12, fontFamily: 'Tajawal,sans-serif', textDecoration: 'none' }}>عرض الكل</Link>
-            </div>
-            {upcoming.length ? upcoming.map((item, i) => (
-              <Link to="/client/queue" className="cw-link cw-clickable" key={item.id} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, alignItems: 'center', padding: '11px 8px', borderRadius: 12, borderBottom: i < upcoming.length - 1 ? '1px solid #EEF3FA' : 'none' }}>
-                <span>
-                  <strong style={{ color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>{item.service_name || 'خدمة غير محددة'}</strong>
-                  <em className="cw-muted" style={{ display: 'block', fontSize: 11, fontStyle: 'normal' }}>{item.customer_name || item.phone || 'عميل بدون اسم'}</em>
-                </span>
-                <span style={{ textAlign: 'left' }}>
-                  <strong style={{ display: 'block', color: '#0D1B3E', fontSize: 13, fontFamily: 'Sora,sans-serif' }}>{formatSAR(item.total_amount || item.subtotal || item.price || 0)}</strong>
-                  <em style={{ fontStyle: 'normal', fontSize: 10, color: item.status === 'ready' ? '#10B981' : '#0B63F6', background: item.status === 'ready' ? '#DCFCE7' : '#DBEAFE', borderRadius: 999, padding: '2px 7px', fontFamily: 'Tajawal,sans-serif' }}>{STATUS_LABELS[item.status]}</em>
-                </span>
-              </Link>
-            )) : (
-              <Link to="/client/queue" className="cw-link" style={{ display: 'block', border: '1px dashed #D7E1F0', borderRadius: 14, padding: 14, textAlign: 'center', color: '#64748B', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>
-                لا توجد سيارات نشطة الآن. افتح لوحة التشغيل لإضافة أول سيارة.
-              </Link>
-            )}
-          </div>
           {/* QR Check-in Card */}
           {(() => {
             const checkinUrl = getSelfCheckinUrl(company as any)
