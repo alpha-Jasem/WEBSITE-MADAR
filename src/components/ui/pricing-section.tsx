@@ -9,43 +9,43 @@ import { openWhatsAppChat } from "@/lib/whatsapp";
 
 const plans = [
   {
-    name: "Starter",
-    description: "مثالي للمغسلة الناشئة — ابدأ بالتنظيم والكفاءة من أول يوم",
-    monthlyPrice: 299,
-    yearlyPrice: 2870,
-    buttonText: "ابدأ الآن",
+    name: "Pro",
+    description: "للمغسلة التي تريد نظام تشغيل كامل بسرعة: QR، شاشة عرض، عملاء، مالية، تقارير، ومساعد مدار AI.",
+    monthlyPrice: 799,
+    yearlyPrice: 7670,
+    buttonText: "احجز Pro على واتساب",
     buttonVariant: "outline" as const,
     popular: false,
     features: [
-      { text: "إدارة الزيارات والطابور", icon: <Car size={20} /> },
-      { text: "نظام الإيصالات والفواتير", icon: <BarChart3 size={20} /> },
-      { text: "تقارير يومية أساسية", icon: <Zap size={20} /> },
+      { text: "QR للتسجيل الذاتي", icon: <Car size={20} /> },
+      { text: "لوحة تشغيل السيارات", icon: <BarChart3 size={20} /> },
+      { text: "شاشة عرض مباشرة", icon: <Zap size={20} /> },
     ],
     includes: [
       "يشمل أيضاً:",
-      "لوحة تحكم سهلة الاستخدام",
-      "إدارة الخدمات والأسعار",
-      "دعم فني متاح",
+      "العملاء والولاء",
+      "VAT وإغلاق اليوم",
+      "مساعد مدار AI",
     ],
   },
   {
-    name: "Pro",
-    description: "نظام تشغيل متكامل — حوّل مغسلتك إلى آلة ربح بدون فوضى",
-    monthlyPrice: 799,
-    yearlyPrice: 7670,
-    buttonText: "ابدأ بـ Pro",
+    name: "Premium",
+    description: "للمغسلة التي تريد إعداداً أعمق، أولوية دعم، وتقارير متقدمة وتوسعة جاهزة للفروع والإضافات.",
+    monthlyPrice: 1999,
+    yearlyPrice: 19190,
+    buttonText: "احجز Premium على واتساب",
     buttonVariant: "default" as const,
     popular: true,
     features: [
-      { text: "إدارة موظفين وعمولات", icon: <Users size={20} /> },
-      { text: "تقارير مالية متقدمة وتحليلات", icon: <BarChart3 size={20} /> },
-      { text: "أتمتة ذكية وإشعارات واتساب", icon: <Zap size={20} /> },
+      { text: "كل مزايا Pro", icon: <Users size={20} /> },
+      { text: "تحليل أداء الموظفين", icon: <BarChart3 size={20} /> },
+      { text: "تقارير متقدمة", icon: <Zap size={20} /> },
     ],
     includes: [
-      "كل شيء في Starter، زائد:",
-      "برنامج ولاء العملاء",
-      "مساعد AI للتحليل والتوصيات",
-      "تقارير أسبوعية تلقائية",
+      "يشمل أيضاً:",
+      "دعم أولوية",
+      "تجهيز توسعة الفروع",
+      "إعداد وتشغيل مخصص",
     ],
   },
 ];
@@ -148,7 +148,7 @@ export default function PricingSection() {
           customVariants={revealVariants}
           className="md:text-6xl sm:text-4xl text-3xl font-black font-cairo text-gray-900 mb-4"
         >
-          باقات صُمِّمت{" "}
+          اختر الباقة وابدأ تشغيل{" "}
           <TimelineContent
             as="span"
             animationNum={1}
@@ -156,7 +156,7 @@ export default function PricingSection() {
             customVariants={revealVariants}
             className="border border-dashed border-blue-500 px-2 py-1 rounded-xl bg-blue-100 inline-block"
           >
-            لتحقق ربح أكثر
+            المغسلة بدون تعقيد
           </TimelineContent>
         </TimelineContent>
 
@@ -167,7 +167,7 @@ export default function PricingSection() {
           customVariants={revealVariants}
           className="sm:text-base text-sm text-gray-600 font-tajawal sm:w-[70%] w-[85%] mx-auto"
         >
-          نظام إدارة مغسلة السيارات الأذكى — تتبع كل ريال، كل سيارة، كل موظف، بدون فوضى
+          بعد التحويل، نفّعل الحساب بدوياً. تم تضيف أي تكاملات اختيارية عند الحاجة.
         </TimelineContent>
       </div>
 
@@ -226,6 +226,11 @@ export default function PricingSection() {
                   </span>
                   <span className="text-2xl font-bold text-gray-700">ر.س</span>
                 </div>
+                {isYearly && (
+                  <p className="text-xs text-green-600 font-tajawal text-right mt-1">
+                    وفّرت {Math.round(plan.monthlyPrice * 12 - plan.yearlyPrice).toLocaleString('ar-SA')} ر.س مقارنة بالشهري
+                  </p>
+                )}
               </CardHeader>
 
               <CardContent className="pt-0">
