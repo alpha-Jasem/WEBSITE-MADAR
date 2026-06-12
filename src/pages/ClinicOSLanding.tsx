@@ -131,8 +131,8 @@ export const ClinicOSLanding = () => {
           <div className="clinic-hero-veil" />
           <motion.div className="clinic-hero-copy" initial={reduceMotion ? undefined : { opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
             <span className="clinic-eyebrow"><Sparkles size={15} /> نظام تشغيل يومي للعيادات</span>
-            <h1>عيادتك تعمل بوضوح،<br /><em>حتى في أكثر الأيام ازدحاماً.</em></h1>
-            <p>من المواعيد والمرضى إلى الأطباء والتذكيرات والتقارير، Clinic OS يجمع تشغيل العيادة في مكان واحد.</p>
+            <h1>كل موعد في مكانه.<br /><em>وكل يوم في عيادتك تحت السيطرة.</em></h1>
+            <p>نظّم المواعيد والمرضى والأطباء والتذكيرات والتقارير من شاشة واحدة، واعرف ما يحتاج انتباهك قبل أن يتحول إلى فوضى.</p>
             <div className="clinic-hero-buttons"><button className="primary-button" onClick={() => navigate('/clinic-os/demo')}>جرّب الداشبورد <ArrowLeft size={17} /></button><button className="secondary-button" onClick={() => navigate('/clinic-os/signup')}>إنشاء حساب عيادة</button></div>
             <div className="clinic-live-strip"><span><i /> 12 موعد اليوم</span><span>9 مؤكدة</span><span>2 بانتظار التأكيد</span></div>
           </motion.div>
