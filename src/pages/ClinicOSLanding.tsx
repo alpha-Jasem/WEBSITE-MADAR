@@ -118,7 +118,7 @@ export const ClinicOSLanding = () => {
     <div className="clinic-site" dir="rtl">
       <header className={`clinic-public-nav ${scrolled ? 'is-scrolled' : ''}`}>
         <button className="clinic-public-logo" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} aria-label="العودة للأعلى">
-          <img src="/logo-main.png" alt="مدار" /><span><b>Clinic OS</b><small>من مدار</small></span>
+          <img src="/logo-main.png" alt="Madar.software" /><span><b>Madar<span className="brand-domain">.software</span></b><small>Clinic OS للعيادات</small></span>
         </button>
         <nav className={menuOpen ? 'open' : ''}>{navItems.map(([id, label]) => <button key={id} onClick={() => go(id)}>{label}</button>)}</nav>
         <div className="clinic-nav-actions"><button className="text-button" onClick={() => navigate('/clinic-os/login')}>تسجيل الدخول</button><button className="nav-cta" onClick={() => navigate('/clinic-os/signup')}>إنشاء حساب</button></div>
@@ -168,7 +168,7 @@ export const ClinicOSLanding = () => {
         <section className="clinic-final-cta"><motion.div {...reveal}><span>Clinic OS من مدار</span><h2>شاهد يوم عيادتك من شاشة واحدة.</h2><p>جرّب الداشبورد، ثم أنشئ حساب العيادة عندما تكون جاهزاً.</p><div><button onClick={() => navigate('/clinic-os/demo')}>فتح الديمو</button><button onClick={() => navigate('/clinic-os/signup')}>إنشاء حساب</button></div></motion.div></section>
       </main>
 
-      <footer className="clinic-public-footer"><div><img src="/logo-main.png" alt="مدار" /><p>منصة عربية لتنظيم تشغيل العيادات بوضوح.</p></div><nav><button onClick={() => navigate('/clinic-os/demo')}>الديمو</button><button onClick={() => navigate('/clinic-os/login')}>تسجيل الدخول</button><button onClick={openWhatsApp}>واتساب</button></nav><small>© 2026 مدار. جميع الحقوق محفوظة.</small></footer>
+      <footer className="clinic-public-footer"><div><img src="/logo-main.png" alt="Madar.software" /><p><strong>Madar.software</strong><br />منصة عربية لتنظيم تشغيل العيادات بوضوح.</p></div><nav><button onClick={() => navigate('/clinic-os/demo')}>الديمو</button><button onClick={() => navigate('/clinic-os/login')}>تسجيل الدخول</button><button onClick={openWhatsApp}>واتساب</button></nav><small>© 2026 Madar.software. جميع الحقوق محفوظة.</small></footer>
     </div>
   )
 }

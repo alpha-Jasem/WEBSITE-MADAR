@@ -9,7 +9,7 @@
 .clinic-public-nav.is-scrolled { height:66px; color:var(--clinic-ink); background:rgba(255,255,255,.94); border-bottom:1px solid rgba(30,20,55,.08); backdrop-filter:blur(18px); box-shadow:0 8px 28px rgba(25,15,48,.06); }
 .clinic-public-logo { display:flex; align-items:center; gap:10px; border:0; background:none; color:inherit; cursor:pointer; }
 .clinic-public-logo img { width:44px; height:44px; object-fit:contain; }
-.clinic-public-logo span { display:grid; text-align:right; line-height:1.15; }.clinic-public-logo b{font-size:16px}.clinic-public-logo small{font-size:10px;opacity:.72}
+.clinic-public-logo span { display:grid; text-align:left; direction:ltr; line-height:1.15; }.clinic-public-logo b{font-size:17px;font-weight:700}.clinic-public-logo .brand-domain{color:#a98cff}.clinic-public-nav.is-scrolled .clinic-public-logo .brand-domain{color:var(--clinic-purple)}.clinic-public-logo small{font-size:9px;direction:rtl;text-align:left;opacity:.76;margin-top:3px;font-weight:500}
 .clinic-public-nav>nav { display:flex; gap:28px; }.clinic-public-nav>nav button,.text-button { border:0;background:none;color:inherit;cursor:pointer;font-weight:700;font-size:13px; }
 .clinic-nav-actions{display:flex;align-items:center;gap:9px}.nav-cta{border:1px solid rgba(255,255,255,.5);background:rgba(255,255,255,.13);color:#fff;padding:9px 17px;border-radius:7px;cursor:pointer;font-weight:800;backdrop-filter:blur(10px)}
 .is-scrolled .nav-cta{background:var(--clinic-purple);border-color:var(--clinic-purple);}.clinic-menu-button{display:none;border:0;background:none;color:inherit;cursor:pointer}
