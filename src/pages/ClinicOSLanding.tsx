@@ -14,7 +14,25 @@ const navItems = [
   ['product', 'النظام'],
   ['workflow', 'كيف يعمل'],
   ['features', 'المزايا'],
+  ['plans', 'الباقات'],
   ['faq', 'الأسئلة'],
+]
+
+const plans = [
+  {
+    name: 'Clinic Core',
+    label: 'لبداية تشغيل مرتبة',
+    description: 'الأساس اليومي الذي يجمع فريق العيادة في نظام واحد واضح.',
+    features: ['المواعيد والتقويم', 'ملفات المرضى', 'الأطباء والخدمات', 'التقارير والصلاحيات'],
+    featured: false,
+  },
+  {
+    name: 'Clinic AI',
+    label: 'للتشغيل والنمو الذكي',
+    description: 'كل ما في Core، مع قنوات ذكية تقلل العمل اليدوي وتسرّع الاستجابة.',
+    features: ['كل مزايا Clinic Core', 'تأكيدات وتذكيرات واتساب', 'حجز ذكي ومساعد AI', 'تكاملات حسب احتياج العيادة'],
+    featured: true,
+  },
 ]
 
 const workflow = [
@@ -111,7 +129,7 @@ export const ClinicOSLanding = () => {
     setMenuOpen(false)
     document.getElementById(id)?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth' })
   }
-  const openWhatsApp = () => window.open(`https://wa.me/${PHONE}?text=${encodeURIComponent('مرحباً، أريد معرفة المزيد عن Clinic OS للعيادات.')}`, '_blank', 'noopener,noreferrer')
+  const openWhatsApp = (message = 'مرحباً، أريد معرفة المزيد عن Clinic OS للعيادات.') => window.open(`https://wa.me/${PHONE}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer')
   const reveal = reduceMotion ? {} : { initial: { opacity: 0, y: 24 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, amount: 0.2 }, transition: { duration: 0.55 } }
 
   return (
@@ -139,6 +157,13 @@ export const ClinicOSLanding = () => {
           <button className="clinic-scroll-cue" onClick={() => go('product')}><span>اكتشف النظام</span><ChevronDown /></button>
         </section>
 
+        <section className="clinic-trust-strip" aria-label="مزايا الثقة">
+          <span><ShieldCheck /> بيانات كل عيادة مستقلة</span>
+          <span><Users /> صلاحيات واضحة للفريق</span>
+          <span><Clock3 /> يعمل على الجوال والكمبيوتر</span>
+          <span><FileBarChart /> تقارير تشغيل جاهزة للقرار</span>
+        </section>
+
         <section id="product" className="clinic-product-section">
           <motion.div className="section-heading" {...reveal}><span>المنتج الحقيقي</span><h2>نفس واجهة التشغيل التي يستخدمها فريق العيادة</h2><p>المعاينة مبنية من مكونات المنصة نفسها، حتى ترى شكل العمل قبل إنشاء الحساب.</p></motion.div>
           <motion.div className="dashboard-stage" {...reveal}><DashboardPreview /></motion.div>
@@ -156,8 +181,23 @@ export const ClinicOSLanding = () => {
         </section>
 
         <section className="clinic-decision-section">
-          <motion.div className="decision-copy" {...reveal}><span>ابدأ بالأساس، ثم توسّع</span><h2>نجهز العيادة على تشغيلها الحقيقي</h2><p>ابدأ بإدارة المواعيد والمرضى والأطباء والتقارير. ثم فعّل الحجز الذكي والتكاملات عندما تحتاجها.</p><div><button className="primary-button" onClick={() => navigate('/clinic-os/signup')}>ابدأ إعداد العيادة <ArrowLeft size={17} /></button><button className="whatsapp-button" onClick={openWhatsApp}><Phone size={17} /> تحدث معنا</button></div></motion.div>
+          <motion.div className="decision-copy" {...reveal}><span>ابدأ بالأساس، ثم توسّع</span><h2>نجهز العيادة على تشغيلها الحقيقي</h2><p>ابدأ بإدارة المواعيد والمرضى والأطباء والتقارير. ثم فعّل الحجز الذكي والتكاملات عندما تحتاجها.</p><div><button className="primary-button" onClick={() => navigate('/clinic-os/signup')}>ابدأ إعداد العيادة <ArrowLeft size={17} /></button><button className="whatsapp-button" onClick={() => openWhatsApp()}><Phone size={17} /> تحدث معنا</button></div></motion.div>
           <motion.div className="decision-list" {...reveal}>{['إعداد الحساب والبيانات الأساسية', 'تجربة واجهة التشغيل قبل القرار', 'تفعيل المزايا حسب احتياج العيادة', 'دعم واضح أثناء التجهيز'].map((text, index) => <div key={text}><span>{index + 1}</span><b>{text}</b><Check /></div>)}</motion.div>
+        </section>
+
+        <section id="plans" className="clinic-plans-section">
+          <motion.div className="section-heading" {...reveal}><span>اختر نقطة البداية</span><h2>باقتان واضحتان، حسب طريقة تشغيل عيادتك</h2><p>نحدد السعر بعد معرفة عدد الأطباء والفروع والتكاملات المطلوبة، حتى تدفع مقابل ما تحتاجه فعلاً.</p></motion.div>
+          <div className="clinic-plans-grid">
+            {plans.map(plan => <motion.article className={plan.featured ? 'featured' : ''} key={plan.name} {...reveal}>
+              {plan.featured && <b className="plan-badge">الأكثر تكاملاً</b>}
+              <small>{plan.label}</small>
+              <h3>{plan.name}</h3>
+              <p>{plan.description}</p>
+              <ul>{plan.features.map(feature => <li key={feature}><Check /> {feature}</li>)}</ul>
+              <button onClick={() => openWhatsApp(`مرحباً، أريد عرضاً مناسباً لباقة ${plan.name} لعيادتي.`)}>اطلب عرض عيادتك <ArrowLeft /></button>
+            </motion.article>)}
+          </div>
+          <p className="plans-note">جلسة التعريف مجانية، والعرض يوضح الإعداد والتشغيل والدعم قبل أي التزام.</p>
         </section>
 
         <section id="faq" className="clinic-faq-section">
@@ -168,7 +208,7 @@ export const ClinicOSLanding = () => {
         <section className="clinic-final-cta"><motion.div {...reveal}><span>Clinic OS من مدار</span><h2>شاهد يوم عيادتك من شاشة واحدة.</h2><p>جرّب الداشبورد، ثم أنشئ حساب العيادة عندما تكون جاهزاً.</p><div><button onClick={() => navigate('/clinic-os/demo')}>فتح الديمو</button><button onClick={() => navigate('/clinic-os/signup')}>إنشاء حساب</button></div></motion.div></section>
       </main>
 
-      <footer className="clinic-public-footer"><div><img src="/logo-main.png" alt="Madar.software" /><p><strong>Madar.software</strong><br />منصة عربية لتنظيم تشغيل العيادات بوضوح.</p></div><nav><button onClick={() => navigate('/clinic-os/demo')}>الديمو</button><button onClick={() => navigate('/clinic-os/login')}>تسجيل الدخول</button><button onClick={openWhatsApp}>واتساب</button></nav><small>© 2026 Madar.software. جميع الحقوق محفوظة.</small></footer>
+      <footer className="clinic-public-footer"><div><img src="/logo-main.png" alt="Madar.software" /><p><strong>Madar.software</strong><br />منصة عربية لتنظيم تشغيل العيادات بوضوح.</p></div><nav><button onClick={() => navigate('/clinic-os/demo')}>الديمو</button><button onClick={() => navigate('/clinic-os/login')}>تسجيل الدخول</button><button onClick={() => openWhatsApp()}>واتساب</button></nav><small>© 2026 Madar.software. جميع الحقوق محفوظة.</small></footer>
     </div>
   )
 }
