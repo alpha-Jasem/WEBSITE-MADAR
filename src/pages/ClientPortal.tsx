@@ -8,6 +8,7 @@ import { ClientCompanyProvider } from '../context/ClientCompanyContext'
 import { getClientIndustryTemplate } from '../lib/clientIndustryTemplates'
 import { supabase } from '../lib/supabase'
 import { useActiveProfile } from '../context/ActiveProfileContext'
+import { LoadingScreen } from '../components/shared/LoadingScreen'
 
 const ClientOverview     = lazy(() => import('../components/dashboard/client/ClientOverview').then(m => ({ default: m.ClientOverview })))
 const CarWashOverview    = lazy(() => import('../components/dashboard/client/CarWashOverview').then(m => ({ default: m.CarWashOverview })))
@@ -211,6 +212,7 @@ export const ClientPortal = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { profile } = useActiveProfile()
+
   const template = getClientIndustryTemplate(company?.business_type, company?.industry)
   const isCarWash = template.type === 'car_wash'
   const isClinic  = template.type === 'clinic'
@@ -250,6 +252,8 @@ export const ClientPortal = () => {
     }
     check()
   }, [isCarWash, companyId, loading, seedChecked])
+
+  if (loading) return <LoadingScreen variant="portal" />
 
   const canAccess = (path: string) =>
     profile.isOwner || !isCarWash || profile.permissions.includes(path)

@@ -9,7 +9,7 @@ import { ClientInsightPanel, ClientPageHeader, ClientPanel } from './ClientUI'
 // ─── Static automation definitions ───────────────────────────────────────────
 
 type AutomationKey =
-  | 'car_ready' | 'delivery_receipt' | 'loyalty_milestone' | 'daily_closing'
+  | 'checkin_receipt' | 'car_ready' | 'delivery_receipt' | 'loyalty_milestone' | 'daily_closing'
   | 'daily_reactivation'
 
 interface AutomationDef {
@@ -24,6 +24,12 @@ interface AutomationDef {
 
 const DEFS: AutomationDef[] = [
   // ── Webhook-based ──────────────────────────────────────────────────────
+  {
+    key: 'checkin_receipt', label: 'رسالة استقبال السيارة', section: 'webhook',
+    icon: MessageSquare, color: '#3B82F6',
+    description: 'يُرسل للعميل فور تسجيل سيارته في القائمة: تأكيد الاستلام وبدء الخدمة',
+    whenLabel: 'عند إضافة السيارة للقائمة',
+  },
   {
     key: 'car_ready', label: 'إشعار السيارة جاهزة', section: 'webhook',
     icon: Car, color: '#22D3EE',

@@ -62,11 +62,18 @@ export const ClientSettings = () => {
   const [logoError, setLogoError]               = useState('')
 
   // ── Print tab ──────────────────────────────────────────────────────────────
-  const [printFooter, setPrintFooter]   = useState('')
-  const [printSize, setPrintSize]       = useState<'thermal' | 'a4'>('thermal')
-  const [printShowVat, setPrintShowVat] = useState(true)
-  const [savingPrint, setSavingPrint]   = useState(false)
-  const [printSaved, setPrintSaved]     = useState(false)
+  const [printFooter, setPrintFooter]         = useState('')
+  const [printSize, setPrintSize]             = useState<'thermal' | 'a4'>('thermal')
+  const [printShowVat, setPrintShowVat]         = useState(true)
+  const [printFontSize, setPrintFontSize]       = useState<'small' | 'medium' | 'large'>('medium')
+  const [printShowPhone, setPrintShowPhone]     = useState(true)
+  const [printHeaderColor, setPrintHeaderColor] = useState('#1E293B')
+  const [printShowPlate, setPrintShowPlate]     = useState(true)
+  const [printShowWorker, setPrintShowWorker]   = useState(true)
+  const [printShowQr, setPrintShowQr]           = useState(false)
+  const [printLogoUrl, setPrintLogoUrl]         = useState('')
+  const [savingPrint, setSavingPrint]         = useState(false)
+  const [printSaved, setPrintSaved]           = useState(false)
 
   // ── Team tab ───────────────────────────────────────────────────────────────
   interface StaffMember { id: string; full_name: string; pin: string | null; permissions: string[] }
@@ -95,6 +102,14 @@ export const ClientSettings = () => {
     setPrintFooter(ps.footer || '')
     setPrintSize(ps.size || 'thermal')
     setPrintShowVat(ps.show_vat !== false)
+    const inv = ((company as any)?.cw_invoice_settings || {}) as any
+    setPrintFontSize(inv.font_size || 'medium')
+    setPrintShowPhone(inv.show_customer_phone !== false)
+    setPrintHeaderColor(inv.header_color || '#1E293B')
+    setPrintShowPlate(inv.show_plate !== false)
+    setPrintShowWorker(inv.show_worker !== false)
+    setPrintShowQr(inv.show_qr === true)
+    setPrintLogoUrl(inv.logo_url || '')
   }, [company])
 
   useEffect(() => {
@@ -205,7 +220,10 @@ export const ClientSettings = () => {
     if (!companyId || !company) return
     setSavingPrint(true)
     const current = ((company as any).cw_automations || {}) as Record<string, any>
-    await supabase.from('companies').update({ cw_automations: { ...current, print_settings: { footer: printFooter, size: printSize, show_vat: printShowVat } } } as any).eq('id', companyId)
+    await supabase.from('companies').update({
+      cw_automations: { ...current, print_settings: { footer: printFooter, size: printSize, show_vat: printShowVat } },
+      cw_invoice_settings: { layout: printSize, font_size: printFontSize, show_customer_phone: printShowPhone, header_color: printHeaderColor, show_plate: printShowPlate, show_worker: printShowWorker, show_qr: printShowQr, logo_url: printLogoUrl },
+    } as any).eq('id', companyId)
     setSavingPrint(false); setPrintSaved(true)
     setTimeout(() => setPrintSaved(false), 2500)
   }
@@ -373,48 +391,6 @@ export const ClientSettings = () => {
             </div>
           )}
 
-          {/* Send email — non-car-wash only */}
-          {!isCarWash && (
-            <div style={panelStyle} className="space-y-3">
-              <div className="flex items-center gap-2.5 mb-1">
-                <Mail size={16} className="text-yellow-400" />
-                <h3 className="text-sm font-bold text-slate-900 font-cairo">إرسال إيميل</h3>
-              </div>
-              <input value={emailTo} onChange={e => setEmailTo(e.target.value)} placeholder="البريد الإلكتروني للمستلم" dir="rtl"
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none font-tajawal" />
-              <input value={emailSubject} onChange={e => setEmailSubject(e.target.value)} placeholder="الموضوع" dir="rtl"
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none font-tajawal" />
-              <textarea value={emailBody} onChange={e => setEmailBody(e.target.value)} placeholder="نص الرسالة..." rows={4} dir="rtl"
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none font-tajawal resize-none" />
-              <button onClick={sendEmail} disabled={sendingEmail || !emailTo || !emailSubject}
-                className="w-full py-2.5 rounded-xl text-sm font-bold font-tajawal text-white cursor-pointer disabled:opacity-40 transition-all"
-                style={{ background: emailSent ? '#10B981' : 'linear-gradient(135deg, #F59E0B, #EF4444)' }}>
-                {sendingEmail ? <Loader2 size={14} className="animate-spin mx-auto" /> : emailSent ? 'تم الإرسال ✅' : 'إرسال الإيميل'}
-              </button>
-            </div>
-          )}
-
-          {/* Security */}
-          <div style={panelStyle}>
-            <div className="flex items-center gap-2.5 mb-4">
-              <Shield size={16} className="text-slate-400" />
-              <h3 className="text-sm font-bold text-slate-900 font-cairo">الأمان</h3>
-            </div>
-            <div className="flex items-center justify-between py-2 border-b border-slate-200">
-              <span className="text-sm text-slate-400 font-tajawal">تغيير كلمة المرور</span>
-              <button
-                onClick={async () => {
-                  const { data: { session } } = await supabase.auth.getSession()
-                  if (session?.user?.email) {
-                    await supabase.auth.resetPasswordForEmail(session.user.email)
-                    alert('تم إرسال رابط تغيير كلمة المرور لبريدك الإلكتروني')
-                  }
-                }}
-                className="text-xs text-primary-400 hover:text-primary-300 font-tajawal cursor-pointer">
-                إرسال رابط التغيير
-              </button>
-            </div>
-          </div>
         </div>
       )}
 
@@ -563,62 +539,235 @@ export const ClientSettings = () => {
       )}
 
       {/* ═══ TAB: الطباعة والفاتورة ══════════════════════════════════════════ */}
-      {isCarWash && tab === 'print' && (
-        <div className="space-y-5" dir="rtl">
+      {isCarWash && tab === 'print' && (() => {
+        const fontSizePx = printFontSize === 'small' ? 11 : printFontSize === 'large' ? 15 : 13
+        const isThermal = printSize === 'thermal'
+        const companyName = company?.name ?? 'مغسلة نايف'
+        const previewStyle: React.CSSProperties = {
+          fontFamily: 'Tajawal, Cairo, sans-serif',
+          fontSize: fontSizePx,
+          direction: 'rtl',
+          color: '#1a1a1a',
+          background: '#fff',
+          padding: isThermal ? '12px 10px' : '16px 20px',
+          maxWidth: isThermal ? 280 : '100%',
+          margin: isThermal ? '0 auto' : 0,
+          lineHeight: 1.55,
+        }
+        return (
+        <div dir="rtl" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.1fr) minmax(0,0.9fr)', gap: 20, alignItems: 'start' }}>
 
-          {/* Print size */}
-          <div style={panelStyle} className="space-y-4">
-            <div className="flex items-center gap-2.5 mb-2">
-              <FileText size={16} className="text-indigo-400" />
-              <h3 className="text-sm font-bold text-slate-900 font-cairo">إعدادات الطباعة</h3>
+          {/* ─── Live Preview ─── */}
+          <div style={{ position: 'sticky', top: 80 }}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold text-slate-500 font-tajawal">معاينة مباشرة</span>
+              <span className="text-xs font-tajawal px-2 py-0.5 rounded-full" style={{ background: 'rgba(99,102,241,0.1)', color: '#6366F1' }}>
+                {isThermal ? 'حراري 80mm' : 'A4'}
+              </span>
             </div>
+            <div style={{ background: '#F1F5F9', borderRadius: 16, padding: isThermal ? 20 : 16, display: 'flex', justifyContent: 'center', minHeight: 420 }}>
+              <div style={{ ...previewStyle, boxShadow: '0 2px 16px rgba(0,0,0,0.10)', borderRadius: 6, width: isThermal ? 280 : '100%', transition: 'all 0.2s' }}>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-500 font-tajawal mb-3">حجم الإيصال</label>
-              <div className="flex gap-3 flex-wrap">
-                {([['thermal', 'حرارية 80mm (موصى بها)', 'مناسبة للطابعات الحرارية الشائعة'], ['a4', 'A4 عادية', 'للطباعة من متصفح أو PDF']] as const).map(([val, label, desc]) => (
-                  <button key={val} onClick={() => setPrintSize(val)}
-                    className="flex-1 min-w-[140px] text-right p-3 rounded-xl border transition-all"
-                    style={{ background: printSize === val ? 'rgba(99,102,241,0.1)' : '#FFFFFF', border: `1px solid ${printSize === val ? 'rgba(99,102,241,0.4)' : '#E2E8F0'}`, color: printSize === val ? '#6366F1' : '#475569' }}>
-                    <div className="text-sm font-bold font-cairo">{label}</div>
-                    <div className="text-xs font-tajawal mt-1" style={{ color: '#94A3B8' }}>{desc}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
+                {/* Header */}
+                <div style={{ background: printHeaderColor, color: '#fff', padding: isThermal ? '10px 12px' : '12px 16px', borderRadius: '4px 4px 0 0', marginBottom: 10, textAlign: 'center' }}>
+                  {printLogoUrl && (
+                    <img src={printLogoUrl} alt="logo" onError={e => (e.currentTarget.style.display = 'none')}
+                      style={{ height: 32, objectFit: 'contain', marginBottom: 4, filter: 'brightness(0) invert(1)' }} />
+                  )}
+                  <div style={{ fontSize: fontSizePx + 4, fontWeight: 800 }}>{companyName}</div>
+                  {(company as any)?.address && <div style={{ fontSize: fontSizePx - 1, opacity: 0.85, marginTop: 2 }}>{(company as any).address}</div>}
+                  {(company as any)?.vat_number && <div style={{ fontSize: fontSizePx - 1, opacity: 0.8 }}>الرقم الضريبي: {(company as any).vat_number}</div>}
+                </div>
 
-            <div className="flex items-center justify-between p-3 rounded-xl" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-              <div>
-                <p className="text-sm font-bold text-slate-900 font-cairo">إظهار تفاصيل الضريبة</p>
-                <p className="text-xs text-slate-500 font-tajawal">يُظهر المبلغ قبل الضريبة ومبلغ VAT في الإيصال</p>
+                {/* Meta */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: fontSizePx - 1, color: '#555', marginBottom: 8, gap: 8, flexWrap: 'wrap' }}>
+                  <span>رقم الفاتورة: <b>INV-0042</b></span>
+                  <span>{new Date().toLocaleDateString('ar-SA')}</span>
+                </div>
+
+                {/* Customer */}
+                <div style={{ borderTop: '1px dashed #ddd', borderBottom: '1px dashed #ddd', padding: '6px 0', marginBottom: 8, fontSize: fontSizePx - 1 }}>
+                  <div>العميل: <b>محمد عبدالله</b></div>
+                  {printShowPhone && <div style={{ color: '#555' }}>الجوال: 0501234567</div>}
+                  {printShowPlate && <div style={{ color: '#555' }}>لوحة السيارة: <b>أ ب ج 1234</b></div>}
+                  {printShowWorker && <div style={{ color: '#555' }}>الموظف: <b>فهد العتيبي</b></div>}
+                </div>
+
+                {/* Items table */}
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: fontSizePx - 1, marginBottom: 8 }}>
+                  <thead>
+                    <tr style={{ background: '#f5f5f5' }}>
+                      <th style={{ textAlign: 'right', padding: '4px 6px', fontWeight: 700 }}>الخدمة</th>
+                      {!isThermal && <th style={{ textAlign: 'center', padding: '4px 6px', fontWeight: 700 }}>الكمية</th>}
+                      <th style={{ textAlign: 'left', padding: '4px 6px', fontWeight: 700 }}>المبلغ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style={{ borderBottom: '1px solid #eee' }}>
+                      <td style={{ padding: '4px 6px' }}>غسيل خارجي</td>
+                      {!isThermal && <td style={{ textAlign: 'center', padding: '4px 6px' }}>1</td>}
+                      <td style={{ textAlign: 'left', padding: '4px 6px' }}>50 ر.س</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '4px 6px' }}>تلميع داخلي</td>
+                      {!isThermal && <td style={{ textAlign: 'center', padding: '4px 6px' }}>1</td>}
+                      <td style={{ textAlign: 'left', padding: '4px 6px' }}>30 ر.س</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                {/* Totals */}
+                <div style={{ borderTop: '1px solid #ddd', paddingTop: 8, fontSize: fontSizePx - 1 }}>
+                  {printShowVat && (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>المجموع قبل الضريبة</span><span>69.57 ر.س</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#666' }}>
+                        <span>ضريبة القيمة المضافة 15%</span><span>10.43 ر.س</span>
+                      </div>
+                    </>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: fontSizePx + 1, borderTop: '1px solid #ddd', marginTop: 4, paddingTop: 4 }}>
+                    <span>الإجمالي</span><span>80 ر.س</span>
+                  </div>
+                </div>
+
+                {/* QR */}
+                {printShowQr && (
+                  <div style={{ textAlign: 'center', marginTop: 10 }}>
+                    <div style={{ display: 'inline-block', padding: 6, background: '#fff', border: '1px solid #ddd', borderRadius: 4 }}>
+                      <svg width={56} height={56} viewBox="0 0 56 56" fill="none">
+                        <rect width={56} height={56} fill="white"/>
+                        {[0,8,16,40,48].map(x => [0,8,16,40,48].map(y => (
+                          <rect key={`${x}${y}`} x={x} y={y} width={6} height={6} fill="#1a1a1a" opacity={Math.random() > 0.4 ? 1 : 0} />
+                        )))}
+                        <rect x={0} y={0} width={22} height={22} rx={2} fill="none" stroke="#1a1a1a" strokeWidth={2}/>
+                        <rect x={4} y={4} width={14} height={14} fill="#1a1a1a"/>
+                        <rect x={34} y={0} width={22} height={22} rx={2} fill="none" stroke="#1a1a1a" strokeWidth={2}/>
+                        <rect x={38} y={4} width={14} height={14} fill="#1a1a1a"/>
+                        <rect x={0} y={34} width={22} height={22} rx={2} fill="none" stroke="#1a1a1a" strokeWidth={2}/>
+                        <rect x={4} y={38} width={14} height={14} fill="#1a1a1a"/>
+                      </svg>
+                    </div>
+                    <div style={{ fontSize: fontSizePx - 3, color: '#888', marginTop: 2 }}>رمز التحقق</div>
+                  </div>
+                )}
+
+                {/* Footer */}
+                {printFooter && (
+                  <div style={{ borderTop: '1px dashed #ddd', marginTop: 10, paddingTop: 8, textAlign: 'center', fontSize: fontSizePx - 2, color: '#666' }}>
+                    {printFooter}
+                  </div>
+                )}
               </div>
-              <button onClick={() => setPrintShowVat(v => !v)}
-                style={{ width: 48, height: 26, borderRadius: 99, border: 'none', cursor: 'pointer', background: printShowVat ? '#6366F1' : '#E2E8F0', position: 'relative', transition: 'background 0.2s' }}>
-                <span style={{ position: 'absolute', top: 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'right 0.2s, left 0.2s', right: printShowVat ? 3 : 'auto', left: printShowVat ? 'auto' : 3 }} />
-              </button>
             </div>
           </div>
 
-          {/* Footer text */}
-          <div style={panelStyle} className="space-y-3">
-            <div className="flex items-center gap-2.5 mb-1">
-              <FileText size={16} className="text-indigo-400" />
-              <h3 className="text-sm font-bold text-slate-900 font-cairo">نص ذيل الفاتورة</h3>
+          {/* ─── Settings Panel ─── */}
+          <div className="space-y-4">
+
+            {/* Layout */}
+            <div style={panelStyle} className="space-y-4">
+              <div className="flex items-center gap-2.5 mb-1">
+                <FileText size={16} className="text-indigo-400" />
+                <h3 className="text-sm font-bold text-slate-900 font-cairo">إعدادات الطباعة</h3>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 font-tajawal mb-3">تخطيط الإيصال</label>
+                <div className="flex gap-3">
+                  {([['thermal', 'حراري 80mm'], ['a4', 'A4']] as const).map(([val, label]) => (
+                    <button key={val} onClick={() => setPrintSize(val)}
+                      className="flex-1 p-3 rounded-xl border text-sm font-bold font-cairo transition-all"
+                      style={{ background: printSize === val ? 'rgba(99,102,241,0.1)' : '#FFFFFF', border: `1px solid ${printSize === val ? 'rgba(99,102,241,0.4)' : '#E2E8F0'}`, color: printSize === val ? '#6366F1' : '#475569' }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 font-tajawal mb-3">حجم الخط</label>
+                <div className="flex gap-2">
+                  {([['small', 'صغير'], ['medium', 'متوسط'], ['large', 'كبير']] as const).map(([val, label]) => (
+                    <button key={val} onClick={() => setPrintFontSize(val)}
+                      className="flex-1 p-2.5 rounded-xl border text-sm font-bold font-cairo transition-all"
+                      style={{ background: printFontSize === val ? 'rgba(99,102,241,0.1)' : '#FFFFFF', border: `1px solid ${printFontSize === val ? 'rgba(99,102,241,0.4)' : '#E2E8F0'}`, color: printFontSize === val ? '#6366F1' : '#475569' }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 font-tajawal mb-3">لون الترويسة</label>
+                <div className="flex gap-2 flex-wrap items-center">
+                  {['#1E293B', '#0F4C81', '#065F46', '#7C3AED', '#9A3412', '#1a1a1a'].map(color => (
+                    <button key={color} onClick={() => setPrintHeaderColor(color)}
+                      style={{ width: 30, height: 30, borderRadius: 7, background: color, border: `3px solid ${printHeaderColor === color ? '#6366F1' : 'transparent'}`, cursor: 'pointer', outline: printHeaderColor === color ? '2px solid #6366F1' : 'none', outlineOffset: 2 }} />
+                  ))}
+                  <input type="color" value={printHeaderColor} onChange={e => setPrintHeaderColor(e.target.value)}
+                    style={{ width: 30, height: 30, borderRadius: 7, border: '1px solid #E2E8F0', cursor: 'pointer', padding: 2 }} />
+                </div>
+              </div>
             </div>
-            <p className="text-xs text-slate-500 font-tajawal">يظهر في أسفل كل إيصال مطبوع. مثال: "شكراً لثقتكم — زورونا مجدداً!"</p>
-            <textarea value={printFooter} onChange={e => setPrintFooter(e.target.value)} rows={3} dir="rtl" maxLength={200}
-              placeholder="اكتب نصاً اختيارياً يظهر في ذيل الفاتورة..."
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-400 font-tajawal resize-none transition-colors" />
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-400 font-tajawal">{printFooter.length}/200 حرف</span>
-              <button onClick={savePrintSettings} style={saveBtnStyle(printSaved, '#6366F1')}>
-                {savingPrint ? <Loader2 size={14} className="animate-spin" /> : printSaved ? <Check size={14} /> : <Save size={14} />}
-                {printSaved ? 'تم الحفظ ✓' : 'حفظ إعدادات الطباعة'}
-              </button>
+
+            {/* Toggles */}
+            <div style={panelStyle} className="space-y-3">
+              <h3 className="text-sm font-bold text-slate-900 font-cairo mb-1">عناصر الإيصال</h3>
+
+              {([
+                [printShowVat,    setPrintShowVat,    'تفاصيل الضريبة',  'المبلغ قبل الضريبة + مبلغ VAT'],
+                [printShowPhone,  setPrintShowPhone,  'جوال العميل',     'يظهر بجانب اسم العميل'],
+                [printShowPlate,  setPrintShowPlate,  'لوحة السيارة',    'رقم اللوحة يظهر في الفاتورة'],
+                [printShowWorker, setPrintShowWorker, 'اسم الموظف',      'من نفّذ الخدمة'],
+                [printShowQr,     setPrintShowQr,     'QR Code',         'رمز QR للتحقق من صحة الفاتورة'],
+              ] as [boolean, React.Dispatch<React.SetStateAction<boolean>>, string, string][]).map(([val, setter, title, desc]) => (
+                <div key={title} className="flex items-center justify-between p-3 rounded-xl" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900 font-cairo">{title}</p>
+                    <p className="text-xs text-slate-500 font-tajawal">{desc}</p>
+                  </div>
+                  <button onClick={() => setter(v => !v)}
+                    style={{ width: 44, height: 24, borderRadius: 99, border: 'none', cursor: 'pointer', background: val ? '#6366F1' : '#E2E8F0', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                    <span style={{ position: 'absolute', top: 2, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'right 0.2s, left 0.2s', right: val ? 2 : 'auto', left: val ? 'auto' : 2 }} />
+                  </button>
+                </div>
+              ))}
+
+              {/* Logo URL */}
+              <div className="space-y-2">
+                <p className="text-sm font-bold text-slate-900 font-cairo">شعار الشركة (لوغو)</p>
+                <p className="text-xs text-slate-500 font-tajawal">رابط صورة اللوغو يظهر في رأس الفاتورة بجانب اسم الشركة</p>
+                <input type="url" value={printLogoUrl} onChange={e => setPrintLogoUrl(e.target.value)} dir="ltr"
+                  placeholder="https://..."
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-400 font-mono transition-colors" />
+                {printLogoUrl && (
+                  <img src={printLogoUrl} alt="logo preview" onError={e => (e.currentTarget.style.display = 'none')}
+                    style={{ height: 40, objectFit: 'contain', borderRadius: 6, border: '1px solid #E2E8F0', padding: 4, background: '#fff' }} />
+                )}
+              </div>
+            </div>
+
+            {/* Footer text */}
+            <div style={panelStyle} className="space-y-3">
+              <h3 className="text-sm font-bold text-slate-900 font-cairo">نص ذيل الفاتورة</h3>
+              <textarea value={printFooter} onChange={e => setPrintFooter(e.target.value)} rows={3} dir="rtl" maxLength={200}
+                placeholder='مثال: "شكراً لثقتكم — زورونا مجدداً!"'
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-400 font-tajawal resize-none transition-colors" />
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-400 font-tajawal">{printFooter.length}/200 حرف</span>
+                <button onClick={savePrintSettings} style={saveBtnStyle(printSaved, '#6366F1')}>
+                  {savingPrint ? <Loader2 size={14} className="animate-spin" /> : printSaved ? <Check size={14} /> : <Save size={14} />}
+                  {printSaved ? 'تم الحفظ ✓' : 'حفظ الإعدادات'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      )}
+        )
+      })()}
 
       {/* ═══ TAB: الفريق ══════════════════════════════════════════════════════ */}
       {isCarWash && tab === 'team' && (

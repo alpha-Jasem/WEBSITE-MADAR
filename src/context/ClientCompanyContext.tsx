@@ -28,6 +28,9 @@ export function ClientCompanyProvider({ children }: { children: ReactNode }) {
     let mounted = true
 
     const load = async () => {
+      // Show loading only on first load (when no company cached yet)
+      setState(s => s.company ? s : { ...s, loading: true })
+
       const { data: { user } } = await supabase.auth.getUser()
       if (!user || !mounted) { setState(s => ({ ...s, loading: false })); return }
 
@@ -73,7 +76,10 @@ export function ClientCompanyProvider({ children }: { children: ReactNode }) {
 
     load()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => { load() })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      // Skip INITIAL_SESSION — already handled by the direct load() call above
+      if (event !== 'INITIAL_SESSION') load()
+    })
     return () => { mounted = false; subscription.unsubscribe() }
   }, [])
 

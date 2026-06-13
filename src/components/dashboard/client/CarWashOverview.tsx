@@ -1,7 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from 'recharts'
-import { Activity, AlertTriangle, Calendar, CalendarClock, Car, CheckCircle2, Copy, DollarSign, Download, ExternalLink, FileText, Loader2, Plus, QrCode, Sparkles, Star, TrendingDown, TrendingUp, Users, Wrench } from 'lucide-react'
+import { AlertTriangle, Calendar, CalendarClock, Car, CheckCircle2, Copy, DollarSign, ExternalLink, Loader2, Plus, QrCode, TrendingDown, TrendingUp, Wrench } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { downloadCSV, formatDateForCSV } from '../../../lib/exportUtils'
@@ -70,7 +70,7 @@ const STATUS_LABELS: Record<QueueStatus, string> = {
 }
 
 const formatSAR = (value: number) =>
-  value > 0 ? value.toLocaleString('ar-SA') : '0'
+  value > 0 ? value.toLocaleString('en-US') : '0'
 
 const isToday = (value?: string | null) =>
   Boolean(value && value.startsWith(new Date().toISOString().slice(0, 10)))
@@ -509,8 +509,6 @@ export function CarWashOverview() {
   }
 
 
-  const serviceColors = ['#0B63F6', '#10B981', '#7C3AED', '#F59E0B', '#38BDF8']
-  const activeServices = services.filter(service => service.active).length
   const displayCars = stats.queueStatusCounts.total
   const statusFlow = [
     { label: 'استلام', value: stats.queueStatusCounts.received, icon: Car, color: '#0B63F6', to: '/client/queue' },
@@ -519,42 +517,7 @@ export function CarWashOverview() {
     { label: 'تم التسليم', value: stats.queueStatusCounts.delivered, icon: Car, color: '#0D1B3E', to: '/client/finance?tab=closing' },
   ]
   const completionRate = displayCars ? Math.round((stats.queueStatusCounts.delivered / displayCars) * 100) : 0
-  const aiCards = [
-    { icon: TrendingUp, title: 'قرار اليوم', desc: stats.queueStatusCounts.ready > 0 ? `يوجد ${stats.queueStatusCounts.ready} سيارة جاهزة. الأولوية الآن للتسليم والتحصيل.` : 'لا توجد سيارات جاهزة الآن. ركز على إدخال السيارات الجديدة بسرعة.', color: '#0B63F6', to: '/client/queue' },
-    { icon: Users, title: `${customers.length} عميل محفوظ`, desc: stats.returningCustomers > 0 ? `${stats.returningCustomers} عميل عائد يمكن متابعته من صفحة العملاء.` : 'ابدأ بتجميع العملاء من QR ولوحة التشغيل.', color: '#6D5DFB', to: '/client/leads' },
-    { icon: Star, title: `${stats.freeWashCount} غسلات مجانية`, desc: 'راجع مكافآت الولاء قبل إغلاق اليوم حتى تكون الإيرادات واضحة.', color: '#F59E0B', to: '/client/finance?tab=closing' },
-    { icon: Plus, title: activeServices ? `${activeServices} خدمات فعالة` : 'الخدمات غير جاهزة', desc: activeServices ? 'الخدمات مفعلة ويمكن تعديل الأسعار من الإعدادات.' : 'أضف خدمات وأسعار واقعية قبل البيع الفعلي.', color: '#10B981', to: '/client/settings' },
-  ]
-  const notifications = [
-    stats.queueStatusCounts.ready > 0 ? { title: `${stats.queueStatusCounts.ready} سيارات جاهزة للتسليم`, desc: 'افتح لوحة التشغيل وأكمل التسليم والتحصيل', time: 'الآن', icon: Car, color: '#10B981', to: '/client/queue' } : null,
-    stats.queueStatusCounts.unassigned > 0 ? { title: `${stats.queueStatusCounts.unassigned} سيارات بدون موظف`, desc: 'عيّن الموظف حتى يظهر أداء العاملين بدقة', time: 'اليوم', icon: Users, color: '#7C3AED', to: '/client/queue' } : null,
-    !company?.google_maps_url ? { title: 'رابط تقييم Google غير مضاف', desc: 'أضفه من الإعدادات حتى تعمل طلبات التقييم', time: 'إعداد ناقص', icon: AlertTriangle, color: '#F97316', to: '/client/settings' } : null,
-    activeServices === 0 ? { title: 'لا توجد خدمات مفعلة', desc: 'أضف الخدمات والأسعار قبل تشغيل QR', time: 'إعداد ناقص', icon: Wrench, color: '#F97316', to: '/client/settings' } : null,
-  ].filter(Boolean) as Array<{ title: string; desc: string; time: string; icon: typeof Car; color: string; to: string }>
-  const actionableNotifications = notifications.length ? notifications : [
-    { title: 'لا توجد تنبيهات حرجة', desc: 'التشغيل مستقر حالياً حسب بيانات اليوم', time: 'الآن', icon: CheckCircle2, color: '#10B981', to: '/client/queue' },
-  ]
-  const upcoming = stats.activeQueue.slice(0, 4)
-  const paymentRows = Object.entries(stats.paymentBreakdown)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 4)
-  const paymentLabels: Record<string, string> = {
-    cash: 'كاش',
-    mada: 'مدى',
-    visa: 'فيزا',
-    bank_transfer: 'تحويل',
-    stc_pay: 'STC Pay',
-    other: 'أخرى',
-  }
-  const paymentPie = paymentRows.length
-    ? paymentRows.map(([name, value]) => ({ name, value }))
-    : [{ name: 'لا توجد مدفوعات', value: 1 }]
-  const expectedActiveRevenue = stats.activeQueue.reduce((sum, item) => sum + (item.total_amount || item.subtotal || item.price || stats.avgInvoice || 0), 0)
-  const topServiceRevenue = stats.revenueServices.slice(0, 4)
   const topWorkerRevenue = stats.workerStats.slice(0, 4)
-  const maxServiceRevenue = Math.max(1, ...topServiceRevenue.map(item => item.value))
-  const maxPaymentRevenue = Math.max(1, ...paymentRows.map(([, value]) => value))
-  const maxWorkerRevenue = Math.max(1, ...topWorkerRevenue.map(item => item.revenue))
   const todayText = new Date().toLocaleDateString('ar-SA', { day: 'numeric', month: 'long', weekday: 'long' })
   const setRevenuePeriod = (range: RevenueRange) => {
     const option = REVENUE_RANGES.find(item => item.key === range)
@@ -668,58 +631,6 @@ export function CarWashOverview() {
       `}</style>
 
       <div className="cw-board">
-        <aside className="cw-rail cw-rail-primary">
-          <div className="cw-card cw-card-pad">
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-              <h3 className="cw-title" style={{ fontSize: 15 }}>التنبيهات العملية</h3>
-              <Link to="/client/queue" style={{ border: 'none', background: 'transparent', color: '#0B63F6', fontWeight: 900, fontSize: 12, fontFamily: 'Tajawal,sans-serif', textDecoration: 'none' }}>لوحة التشغيل</Link>
-            </div>
-            {actionableNotifications.map((n, i) => {
-              const Icon = n.icon
-              return (
-                <Link to={n.to} className="cw-link cw-clickable" key={n.title} style={{ display: 'grid', gridTemplateColumns: '34px 1fr auto', gap: 10, alignItems: 'center', padding: '11px 8px', borderRadius: 12, borderBottom: i < actionableNotifications.length - 1 ? '1px solid #EEF3FA' : 'none' }}>
-                  <span style={{ width: 34, height: 34, borderRadius: 12, background: `${n.color}14`, display: 'grid', placeItems: 'center' }}><Icon size={16} color={n.color} /></span>
-                  <span><strong style={{ display: 'block', color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>{n.title}</strong><em className="cw-muted" style={{ display: 'block', fontSize: 11, fontStyle: 'normal' }}>{n.desc}</em></span>
-                  <small className="cw-muted" style={{ fontSize: 10 }}>{n.time}</small>
-                </Link>
-              )
-            })}
-          </div>
-
-          {/* QR Check-in Card */}
-          {(() => {
-            const checkinUrl = getSelfCheckinUrl(company as any)
-            if (!checkinUrl) return null
-            const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=10&data=${encodeURIComponent(checkinUrl)}`
-            return (
-              <div className="cw-card cw-card-pad" style={{ textAlign: 'center' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <h3 className="cw-title" style={{ fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <QrCode size={15} color="#0B63F6" /> تسجيل ذاتي للعملاء
-                  </h3>
-                </div>
-                <img src={qrSrc} alt="QR Code" style={{ width: 140, height: 140, borderRadius: 10, display: 'block', margin: '0 auto 12px' }} />
-                <p className="cw-muted" style={{ fontSize: 11, marginBottom: 10, lineHeight: 1.6 }}>
-                  اطبع هذا الكود وضعه عند الاستقبال — العميل يمسح ويسجل سيارته بنفسه
-                </p>
-                <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                  <button
-                    onClick={() => { navigator.clipboard.writeText(checkinUrl); setQrCopied(true); setTimeout(() => setQrCopied(false), 2000) }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 8, border: '1px solid #D7E1F0', background: qrCopied ? '#DCFCE7' : '#F8FBFF', color: qrCopied ? '#059669' : '#0D1B3E', fontSize: 11, fontFamily: 'Tajawal,sans-serif', fontWeight: 900, cursor: 'pointer' }}
-                  >
-                    <Copy size={12} /> {qrCopied ? 'تم النسخ' : 'نسخ الرابط'}
-                  </button>
-                  <a
-                    href={checkinUrl} target="_blank" rel="noreferrer"
-                    style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 8, border: '1px solid #D7E1F0', background: '#F8FBFF', color: '#0D1B3E', fontSize: 11, fontFamily: 'Tajawal,sans-serif', fontWeight: 900, textDecoration: 'none' }}
-                  >
-                    <ExternalLink size={12} /> معاينة
-                  </a>
-                </div>
-              </div>
-            )
-          })()}
-        </aside>
 
         <main className="cw-main">
           <div className="cw-heading">
@@ -759,189 +670,161 @@ export function CarWashOverview() {
 
           <div className="cw-stat-grid">
             <StatCard icon={DollarSign} label="إجمالي الإيرادات" value={formatSAR(stats.revenue)} sub="ر.س في الفترة" color="#10B981" trend={stats.revenueTrend === 'up' ? 'نمو' : stats.revenueTrend === 'down' ? 'مراجعة' : 'فعلي'} trendDir={stats.revenueTrend} />
-            <StatCard icon={TrendingDown} label="صافي الربح" value={Math.round(stats.netProfit).toLocaleString('ar-SA')} sub={`${stats.netMargin}% هامش`} color={stats.netProfit >= 0 ? '#0B63F6' : '#EF4444'} trend={stats.netProfit >= 0 ? 'بعد التكاليف' : 'راجع المصاريف'} trendDir={stats.profitTrend} />
+            <StatCard icon={TrendingDown} label="صافي الربح" value={Math.round(stats.netProfit).toLocaleString('en-US')} sub={`${stats.netMargin}% هامش`} color={stats.netProfit >= 0 ? '#0B63F6' : '#EF4444'} trend={stats.netProfit >= 0 ? 'بعد التكاليف' : 'راجع المصاريف'} trendDir={stats.profitTrend} />
             <StatCard icon={Car} label="سيارات اليوم" value={displayCars} sub={`${stats.queueStatusCounts.active} نشطة الآن`} color="#0B63F6" trend={stats.carsTrend === 'up' ? 'نمو' : stats.carsTrend === 'down' ? 'أقل من أمس' : 'اليوم'} trendDir={stats.carsTrend} />
             <StatCard icon={CalendarClock} label="متوسط الفاتورة" value={stats.avgInvoice || 0} sub="ر.س للزيارة" color="#7C3AED" trend="محسوب" trendDir="neutral" />
-            <StatCard icon={Users} label="العملاء المسجلون" value={customers.length} sub={`${stats.returningCustomers} عائدون`} color="#F97316" trend={stats.returningCustomers > 0 ? 'عائدون' : 'CRM'} trendDir={stats.returningCustomers > 0 ? 'up' : 'neutral'} />
-            <StatCard icon={Star} label="مكافآت الولاء" value={Math.max(stats.milestones, 0)} sub={`هدف ${threshold} زيارات`} color="#38BDF8" trend={stats.milestones > 0 ? 'نشط' : 'ولاء'} trendDir={stats.milestones > 0 ? 'up' : 'neutral'} />
           </div>
 
-          <SectionCard
-            title="أداء الإيرادات"
-            icon={TrendingUp}
-            action={(
-              <div className="cw-segmented" aria-label="فترة أداء الإيرادات">
-                {REVENUE_RANGES.map(option => (
-                  <button
-                    key={option.key}
-                    type="button"
-                    className={revenueRange === option.key ? 'active' : ''}
-                    onClick={() => setRevenuePeriod(option.key)}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          >
-            <div className="cw-revenue-chart">
-              <ResponsiveContainer width="100%" height={220}>
-                <AreaChart data={revenueChartData}>
-                  <defs><linearGradient id="reportRevenueGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#0B63F6" stopOpacity={0.30} /><stop offset="100%" stopColor="#0B63F6" stopOpacity={0.03} /></linearGradient></defs>
-                  <XAxis dataKey="date" tick={{ fill: '#64748B', fontSize: 10, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: '#64748B', fontSize: 10 }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<ChartTooltip />} />
-                  <Area type="monotone" dataKey="revenue" name="revenue" stroke="#0B63F6" strokeWidth={3} fill="url(#reportRevenueGrad)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+          {/* ── 2-column layout: left col stacks Chart+Status, right col stacks Breakdown+Ops ── */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16, alignItems: 'start' }}>
 
-            <div className="cw-sales-tabs" aria-label="تفصيل المبيعات">
-              {[
-                { key: 'period' as const, label: 'الفترة' },
-                { key: 'services' as const, label: 'الخدمات' },
-                { key: 'workers' as const, label: 'الموظفون' },
-              ].map(tab => (
-                <button
-                  key={tab.key}
-                  type="button"
-                  className={salesBreakdownTab === tab.key ? 'active' : ''}
-                  onClick={() => setSalesBreakdownTab(tab.key)}
-                >
-                  {tab.label}
-                </button>
-              ))}
-              <Link to="/client/reports" style={{ marginInlineStart: 'auto', color: '#0B63F6', fontSize: 12, fontWeight: 900, fontFamily: 'Tajawal,sans-serif', textDecoration: 'none' }}>عرض التقارير</Link>
-            </div>
+            {/* LEFT COLUMN */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-            <div>
-              {salesBreakdownTab === 'period' && (
-                <BreakdownAreaChart
-                  data={salesPeriodRows.map(r => ({ label: r.label, value: r.value, hint: r.hint }))}
-                  emptyMsg="لا توجد مبيعات في الفترة."
-                />
-              )}
-              {salesBreakdownTab === 'services' && (
-                <BreakdownAreaChart
-                  data={topServiceRevenue.map(r => ({ label: r.name, value: r.value, hint: `${r.count} سيارة` }))}
-                  emptyMsg="لا توجد مبيعات خدمات في الفترة."
-                />
-              )}
-              {salesBreakdownTab === 'workers' && (
-                <BreakdownAreaChart
-                  data={topWorkerRevenue.map(r => ({ label: r.name, value: r.revenue, hint: `${r.count} سيارة` }))}
-                  emptyMsg="عيّن الموظف للسيارات حتى يظهر تفصيل المبيعات حسب الفريق."
-                  emptyLink="/client/workers"
-                />
-              )}
-            </div>
-          </SectionCard>
-
-          <div className="cw-card cw-card-pad">
-            <h2 className="cw-title" style={{ fontSize: 18, marginBottom: 18 }}>حالة السيارات اليوم</h2>
-            <div className="cw-flow-grid">
-              {statusFlow.map((step, i) => {
-                const Icon = step.icon
-                return (
-                  <Link to={step.to} className="cw-link cw-clickable" key={step.label} style={{ border: `1.5px solid ${step.color}`, borderRadius: 14, minHeight: 130, display: 'grid', placeItems: 'center', textAlign: 'center', position: 'relative', background: step.label === 'جاهزة' ? '#F0FDF4' : '#FFFFFF' }}>
-                    <Icon size={28} color={step.color} />
-                    <strong style={{ color: step.color, fontSize: 14, fontWeight: 950, fontFamily: 'Cairo,sans-serif' }}>{step.label}</strong>
-                    <span style={{ color: '#0D1B3E', fontSize: 25, fontWeight: 950, fontFamily: 'Sora,sans-serif' }}>{step.value}</span>
-                    <em className="cw-muted" style={{ fontSize: 12, fontStyle: 'normal' }}>سيارة</em>
-                    {i < statusFlow.length - 1 && <span className="cw-stage-arrow">←</span>}
-                  </Link>
-                )
-              })}
-            </div>
-            <div style={{ marginTop: 22, display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'center' }}>
-              <div style={{ height: 6, borderRadius: 999, background: '#DDE8F7', position: 'relative', overflow: 'hidden' }}><span style={{ position: 'absolute', inset: `0 0 0 ${100 - completionRate}%`, borderRadius: 999, background: '#0B63F6' }} /></div>
-              <strong style={{ color: completionRate >= 70 ? '#10B981' : '#0B63F6', fontFamily: 'Sora,sans-serif' }}>{completionRate}% مكتمل</strong>
-            </div>
-          </div>
-
-          <div className="cw-insight-grid">
-            <SectionCard title="أفضل الخدمات اليوم" icon={Car}>
-              {stats.topServices.length ? stats.topServices.slice(0, 4).map(([name, data], i) => (
-                <div key={`${name}-${i}`} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, padding: '9px 0', borderBottom: i < 3 ? '1px solid #EEF3FA' : 'none' }}>
-                  <span><strong style={{ display: 'block', color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>{name}</strong><em className="cw-muted" style={{ fontStyle: 'normal', fontSize: 11 }}>{(data as any).count || 0} سيارة</em></span>
-                  <strong style={{ color: '#0D1B3E', fontSize: 13, fontFamily: 'Sora,sans-serif' }}>{((data as any).revenue || 0).toLocaleString('ar-SA')}</strong>
+              {/* Revenue chart */}
+              <div className="cw-card cw-card-pad">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
+                  <h2 className="cw-title" style={{ fontSize: 15, margin: 0 }}>أداء الإيرادات</h2>
+                  <div className="cw-segmented" aria-label="فترة أداء الإيرادات">
+                    {REVENUE_RANGES.map(option => (
+                      <button key={option.key} type="button" className={revenueRange === option.key ? 'active' : ''} onClick={() => setRevenuePeriod(option.key)}>{option.label}</button>
+                    ))}
+                  </div>
                 </div>
-              )) : (
-                <Link to="/client/settings" className="cw-link" style={{ display: 'block', border: '1px dashed #D7E1F0', borderRadius: 14, padding: 14, textAlign: 'center', color: '#64748B', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>
-                  لا توجد خدمات منفذة في الفترة. راجع إعدادات الخدمات أو أضف سيارة من لوحة التشغيل.
-                </Link>
-              )}
-            </SectionCard>
-
-            <SectionCard title="توزيع طرق الدفع" icon={Activity}>
-              <ResponsiveContainer width="100%" height={138}>
-                <PieChart><Pie data={paymentPie} innerRadius={38} outerRadius={58} dataKey="value">{paymentPie.map((_, i) => <Cell key={i} fill={serviceColors[i % serviceColors.length]} />)}</Pie></PieChart>
-              </ResponsiveContainer>
-              <div style={{ display: 'grid', gap: 6 }}>
-                {paymentRows.length ? paymentRows.map(([name, value], i) => <span key={name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontFamily: 'Tajawal,sans-serif', color: '#64748B' }}><em style={{ fontStyle: 'normal' }}>{name}</em><b style={{ color: '#0D1B3E' }}>{formatSAR(value)} ر.س</b></span>) : <span className="cw-muted" style={{ fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>لا توجد مدفوعات في الفترة.</span>}
+                <ResponsiveContainer width="100%" height={200}>
+                  <AreaChart data={revenueChartData}>
+                    <defs><linearGradient id="reportRevenueGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#0B63F6" stopOpacity={0.25} /><stop offset="100%" stopColor="#0B63F6" stopOpacity={0.02} /></linearGradient></defs>
+                    <XAxis dataKey="date" tick={{ fill: '#64748B', fontSize: 10, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: '#64748B', fontSize: 10 }} axisLine={false} tickLine={false} width={40} />
+                    <Tooltip content={<ChartTooltip />} />
+                    <Area type="monotone" dataKey="revenue" name="revenue" stroke="#0B63F6" strokeWidth={2.5} fill="url(#reportRevenueGrad)" />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
-            </SectionCard>
-          </div>
 
-          {stats.heatmap.some(row => row.buckets.some(b => b.value > 0)) && (
-            <SectionCard title="أوقات الذروة" icon={Activity}>
-              <div style={{ overflowX: 'auto' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '70px repeat(7, 1fr)', gap: 4, minWidth: 480 }}>
-                  <div />
-                  {stats.heatmap[0]?.buckets.map(b => (
-                    <div key={b.hour} style={{ textAlign: 'center', fontSize: 10, color: '#64748B', fontFamily: 'Sora,sans-serif', paddingBottom: 4 }}>{b.hour}</div>
-                  ))}
-                  {stats.heatmap.map(row => {
-                    const maxVal = Math.max(1, ...row.buckets.map(b => b.value))
+              {/* Car status */}
+              <div className="cw-card cw-card-pad">
+                <h2 className="cw-title" style={{ fontSize: 15, marginBottom: 16 }}>حالة السيارات اليوم</h2>
+                <div className="cw-flow-grid">
+                  {statusFlow.map((step, i) => {
+                    const Icon = step.icon
                     return (
-                      <>
-                        <div key={row.day} style={{ fontSize: 11, color: '#334155', fontFamily: 'Tajawal,sans-serif', display: 'flex', alignItems: 'center', fontWeight: 700 }}>{row.day}</div>
-                        {row.buckets.map(b => {
-                          const alpha = b.value === 0 ? 0.04 : Math.max(0.12, (b.value / maxVal) * 0.85)
-                          return (
-                            <div key={b.hour} title={`${b.value} زيارة`} style={{ height: 28, borderRadius: 6, background: `rgba(239,68,68,${alpha})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              {b.value > 0 && <span style={{ fontSize: 9, fontWeight: 900, color: alpha > 0.5 ? '#fff' : '#DC2626', fontFamily: 'Sora,sans-serif' }}>{b.value}</span>}
-                            </div>
-                          )
-                        })}
-                      </>
+                      <Link to={step.to} className="cw-link cw-clickable" key={step.label} style={{ border: `1.5px solid ${step.color}`, borderRadius: 14, minHeight: 110, display: 'grid', placeItems: 'center', textAlign: 'center', position: 'relative', background: step.label === 'جاهزة' ? '#F0FDF4' : '#FFFFFF' }}>
+                        <Icon size={24} color={step.color} />
+                        <strong style={{ color: step.color, fontSize: 12, fontWeight: 950, fontFamily: 'Cairo,sans-serif' }}>{step.label}</strong>
+                        <span style={{ color: '#0D1B3E', fontSize: 22, fontWeight: 950, fontFamily: 'Sora,sans-serif' }}>{step.value}</span>
+                        <em className="cw-muted" style={{ fontSize: 11, fontStyle: 'normal' }}>سيارة</em>
+                        {i < statusFlow.length - 1 && <span className="cw-stage-arrow">←</span>}
+                      </Link>
                     )
                   })}
                 </div>
-                <div style={{ display: 'flex', gap: 16, marginTop: 12, justifyContent: 'flex-end' }}>
-                  {[{ label: 'خفيف', alpha: 0.1 }, { label: 'متوسط', alpha: 0.45 }, { label: 'مرتفع', alpha: 0.85 }].map(l => (
-                    <span key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#64748B', fontFamily: 'Tajawal,sans-serif' }}>
-                      <span style={{ width: 14, height: 14, borderRadius: 4, background: `rgba(239,68,68,${l.alpha})`, display: 'inline-block' }} />
-                      {l.label}
-                    </span>
-                  ))}
+                <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'center' }}>
+                  <div style={{ height: 5, borderRadius: 999, background: '#DDE8F7', position: 'relative', overflow: 'hidden' }}><span style={{ position: 'absolute', inset: `0 0 0 ${100 - completionRate}%`, borderRadius: 999, background: '#0B63F6' }} /></div>
+                  <strong style={{ color: completionRate >= 70 ? '#10B981' : '#0B63F6', fontFamily: 'Sora,sans-serif', fontSize: 13 }}>{completionRate}% مكتمل</strong>
                 </div>
               </div>
-            </SectionCard>
-          )}
+
+            </div>
+
+            {/* RIGHT COLUMN */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+              {/* Sales breakdown */}
+              <div className="cw-card cw-card-pad">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                  <h2 className="cw-title" style={{ fontSize: 15, margin: 0 }}>تفصيل المبيعات</h2>
+                  <Link to="/client/reports" style={{ color: '#0B63F6', fontSize: 11, fontWeight: 900, fontFamily: 'Tajawal,sans-serif', textDecoration: 'none' }}>التقارير</Link>
+                </div>
+                <div className="cw-sales-tabs" style={{ marginBottom: 12 }} aria-label="تفصيل المبيعات">
+                  {[{ key: 'services' as const, label: 'الخدمات' }, { key: 'workers' as const, label: 'الموظفون' }, { key: 'period' as const, label: 'الفترة' }].map(tab => (
+                    <button key={tab.key} type="button" className={salesBreakdownTab === tab.key ? 'active' : ''} onClick={() => setSalesBreakdownTab(tab.key)}>{tab.label}</button>
+                  ))}
+                </div>
+                {salesBreakdownTab === 'services' && (
+                  stats.topServices.length ? stats.topServices.slice(0, 5).map(([name, data], i) => (
+                    <div key={`${name}-${i}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: i < 4 ? '1px solid #EEF3FA' : 'none' }}>
+                      <span>
+                        <strong style={{ display: 'block', color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>{name}</strong>
+                        <em style={{ fontStyle: 'normal', fontSize: 11, color: '#94A3B8' }}>{(data as any).count || 0} سيارة</em>
+                      </span>
+                      <strong style={{ color: '#0D1B3E', fontSize: 12, fontFamily: 'Sora,sans-serif' }}>{((data as any).revenue || 0).toLocaleString('en-US')} ر.س</strong>
+                    </div>
+                  )) : <p style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal,sans-serif', textAlign: 'center', paddingTop: 20 }}>لا توجد بيانات في الفترة</p>
+                )}
+                {salesBreakdownTab === 'workers' && (
+                  <BreakdownAreaChart data={topWorkerRevenue.map(r => ({ label: r.name, value: r.revenue, hint: `${r.count} سيارة` }))} emptyMsg="عيّن الموظف للسيارات لعرض التفصيل." emptyLink="/client/workers" />
+                )}
+                {salesBreakdownTab === 'period' && (
+                  <BreakdownAreaChart data={salesPeriodRows.map(r => ({ label: r.label, value: r.value, hint: r.hint }))} emptyMsg="لا توجد مبيعات في الفترة." />
+                )}
+              </div>
+
+              {/* Recent operations */}
+              <div className="cw-card cw-card-pad">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                  <h2 className="cw-title" style={{ fontSize: 15, margin: 0 }}>آخر العمليات</h2>
+                  <Link to="/client/queue" style={{ color: '#0B63F6', fontSize: 11, fontWeight: 900, fontFamily: 'Tajawal,sans-serif', textDecoration: 'none' }}>عرض الكل</Link>
+                </div>
+                {stats.todayQueueItems.length === 0 ? (
+                  <p style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal,sans-serif', textAlign: 'center', paddingTop: 20 }}>لا توجد عمليات اليوم</p>
+                ) : (
+                  stats.todayQueueItems.slice(0, 6).map((item, i) => {
+                    const statusColor: Record<string, string> = { delivered: '#10B981', ready: '#0B63F6', washing: '#F97316', received: '#94A3B8', cancelled: '#EF4444', drying: '#7C3AED' }
+                    return (
+                      <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: i < 5 ? '1px solid #EEF3FA' : 'none', gap: 8 }}>
+                        <span style={{ minWidth: 0 }}>
+                          <strong style={{ display: 'block', color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.customer_name || 'عميل'}</strong>
+                          <em style={{ fontStyle: 'normal', fontSize: 11, color: '#94A3B8' }}>{item.service_name || '—'}</em>
+                        </span>
+                        <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, flexShrink: 0 }}>
+                          <strong style={{ fontSize: 12, fontFamily: 'Sora,sans-serif', color: '#0D1B3E' }}>{item.price ? `${item.price} ر.س` : '—'}</strong>
+                          <span style={{ fontSize: 10, fontWeight: 800, borderRadius: 999, padding: '1px 7px', background: `${statusColor[item.status] || '#94A3B8'}18`, color: statusColor[item.status] || '#94A3B8', fontFamily: 'Tajawal,sans-serif' }}>{STATUS_LABELS[item.status]}</span>
+                        </span>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+
+            </div>
+          </div>
+
+          {/* ── QR Self Check-in ── */}
+          {(() => {
+            const checkinUrl = getSelfCheckinUrl(company as any)
+            if (!checkinUrl) return null
+            const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=10&data=${encodeURIComponent(checkinUrl)}`
+            return (
+              <div className="cw-card cw-card-pad" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 20, alignItems: 'center' }}>
+                <img src={qrSrc} alt="QR Code" style={{ width: 120, height: 120, borderRadius: 10, display: 'block', border: '1px solid #E3EAF6' }} />
+                <div>
+                  <h3 className="cw-title" style={{ fontSize: 15, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <QrCode size={16} color="#0B63F6" /> تسجيل ذاتي للعملاء
+                  </h3>
+                  <p className="cw-muted" style={{ fontSize: 12, lineHeight: 1.7, marginBottom: 12 }}>
+                    اطبع هذا الرمز وضعه عند الاستقبال — العميل يمسح ويسجل سيارته بنفسه دون الحاجة لموظف
+                  </p>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(checkinUrl); setQrCopied(true); setTimeout(() => setQrCopied(false), 2000) }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 9, border: '1px solid #D7E1F0', background: qrCopied ? '#DCFCE7' : '#F8FBFF', color: qrCopied ? '#059669' : '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif', fontWeight: 900, cursor: 'pointer' }}
+                    >
+                      <Copy size={12} /> {qrCopied ? 'تم النسخ ✓' : 'نسخ الرابط'}
+                    </button>
+                    <a href={checkinUrl} target="_blank" rel="noreferrer"
+                      style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 9, border: '1px solid #D7E1F0', background: '#F8FBFF', color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif', fontWeight: 900, textDecoration: 'none' }}
+                    >
+                      <ExternalLink size={12} /> معاينة الصفحة
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
+
         </main>
 
-        <aside className="cw-rail cw-rail-ai">
-          <div className="cw-card cw-card-pad">
-            <h3 className="cw-title" style={{ fontSize: 17, marginBottom: 14 }}><Sparkles size={18} color="#0B63F6" /> توصيات ذكية</h3>
-            <Link to={aiCards[0].to} className="cw-link cw-clickable" style={{ width: '100%', minHeight: 40, border: 'none', borderRadius: 10, background: '#F3F7FF', color: '#0B63F6', fontWeight: 950, fontFamily: 'Tajawal,sans-serif', marginBottom: 12, display: 'grid', placeItems: 'center', textAlign: 'center', padding: '10px 12px' }}>{aiCards[0].title}</Link>
-            {aiCards.slice(1).map(card => {
-              const Icon = card.icon
-              return (
-                <Link to={card.to} className="cw-link cw-clickable" key={card.title} style={{ display: 'grid', gridTemplateColumns: '38px 1fr', gap: 10, alignItems: 'center', border: '1px solid #EEF3FA', borderRadius: 12, padding: 12, marginBottom: 10 }}>
-                  <span style={{ width: 38, height: 38, borderRadius: 12, background: `${card.color}12`, display: 'grid', placeItems: 'center' }}><Icon size={18} color={card.color} /></span>
-                  <span><strong style={{ display: 'block', color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>{card.title}</strong><em className="cw-muted" style={{ display: 'block', fontSize: 11, fontStyle: 'normal' }}>{card.desc}</em></span>
-                </Link>
-              )
-            })}
-          </div>
-          <div className="cw-card cw-card-pad" style={{ textAlign: 'center', background: 'linear-gradient(180deg,#FFFFFF,#F8FBFF)' }}>
-            <h3 className="cw-title" style={{ fontSize: 15 }}>إيراد السيارات النشطة</h3>
-            <strong style={{ display: 'block', marginTop: 14, color: '#0D1B3E', fontSize: 34, fontWeight: 950, fontFamily: 'Sora,sans-serif' }}>{formatSAR(expectedActiveRevenue)}</strong>
-            <span className="cw-muted" style={{ fontSize: 12 }}>ر.س</span>
-            <Link to="/client/queue" className="cw-link" style={{ width: '100%', height: 46, border: 'none', borderRadius: 12, background: '#0B63F6', color: '#fff', fontWeight: 950, fontFamily: 'Tajawal,sans-serif', marginTop: 20, display: 'grid', placeItems: 'center' }}>فتح لوحة التشغيل</Link>
-          </div>
-        </aside>
       </div>
     </div>
   )

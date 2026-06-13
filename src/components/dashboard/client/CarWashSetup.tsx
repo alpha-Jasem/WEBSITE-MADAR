@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from 'react'
-import { Car, Clock, Star, Plus, Trash2, Check, Loader2, MapPin, Save, Receipt, QrCode, Copy, ExternalLink, FileText, type LucideIcon } from 'lucide-react'
+import { Car, Clock, Star, Plus, Trash2, Check, Loader2, MapPin, Save, Receipt, QrCode, Copy, ExternalLink, FileText, Printer, type LucideIcon } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { logAudit } from '../../../lib/auditLog'
@@ -7,7 +7,7 @@ import { getSelfCheckinUrl } from '../../../lib/selfCheckin'
 import { sanitizeDecimalInput, sanitizeNameText, toSafeNumber } from '../../../lib/formSanitizers'
 import type { CWService } from '../../../types'
 
-type SetupTab = 'services' | 'hours' | 'loyalty' | 'vat' | 'qr' | 'invoice'
+type SetupTab = 'services' | 'hours' | 'loyalty' | 'vat' | 'qr' | 'invoice' | 'print'
 type CarWashSetupProps = {
   title?: string
   description?: string
@@ -79,6 +79,10 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
   const [invAddress, setInvAddress] = useState('')
   const [invFooter, setInvFooter] = useState('')
   const [invOwnerPhone, setInvOwnerPhone] = useState('')
+  const [invLayout, setInvLayout] = useState<'a4' | 'thermal'>('a4')
+  const [invFontSize, setInvFontSize] = useState<'small' | 'medium' | 'large'>('medium')
+  const [invShowPhone, setInvShowPhone] = useState(true)
+  const [invHeaderColor, setInvHeaderColor] = useState('#1E293B')
   const [savingInv, setSavingInv] = useState(false)
   const [invSaved, setInvSaved] = useState(false)
 
@@ -93,7 +97,7 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
       const [{ data: svcData }, { data: co }] = await Promise.all([
         supabase.from('cw_services').select('*').eq('company_id', companyId).order('created_at'),
         supabase.from('companies')
-          .select('cw_hours, cw_loyalty_threshold, google_maps_url, tax_enabled, vat_rate, price_includes_vat, cw_message_templates, cw_monthly_target, vat_number, commercial_reg, address, print_footer, owner_phone')
+          .select('cw_hours, cw_loyalty_threshold, google_maps_url, tax_enabled, vat_rate, price_includes_vat, cw_message_templates, cw_monthly_target, vat_number, commercial_reg, address, print_footer, owner_phone, cw_invoice_settings')
           .eq('id', companyId).single(),
       ])
 
@@ -113,6 +117,11 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
         setInvAddress(c.address || '')
         setInvFooter(c.print_footer || '')
         setInvOwnerPhone(c.owner_phone || '')
+        const inv = (c as any).cw_invoice_settings ?? {}
+        setInvLayout(inv.layout ?? 'a4')
+        setInvFontSize(inv.font_size ?? 'medium')
+        setInvShowPhone(inv.show_customer_phone !== false)
+        setInvHeaderColor(inv.header_color ?? '#1E293B')
       }
       setLoading(false)
     }
@@ -207,6 +216,12 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
       address: invAddress.trim() || null,
       print_footer: invFooter.trim() || null,
       owner_phone: invOwnerPhone.trim() || null,
+      cw_invoice_settings: {
+        layout: invLayout,
+        font_size: invFontSize,
+        show_customer_phone: invShowPhone,
+        header_color: invHeaderColor,
+      },
     } as any).eq('id', companyId)
     logAudit(companyId, 'invoice_settings_updated', {})
     setSavingInv(false)
@@ -223,6 +238,7 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
     { key: 'loyalty',  label: 'الولاء',       icon: Star     },
     { key: 'vat',      label: 'الضريبة',      icon: Receipt  },
     { key: 'invoice',  label: 'الفاتورة',     icon: FileText },
+    { key: 'print',    label: 'الطباعة',      icon: Printer  },
     { key: 'qr',       label: 'رمز QR',       icon: QrCode   },
   ]
   const TABS = visibleTabs?.length ? ALL_TABS.filter(t => visibleTabs.includes(t.key)) : ALL_TABS
@@ -478,6 +494,87 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
             {savingVat ? <Loader2 size={14} className="animate-spin" /> : vatSaved ? <Check size={14} /> : <Save size={14} />}
             {vatSaved ? 'تم الحفظ ✓' : 'حفظ إعدادات الضريبة'}
           </button>
+        </div>
+      )}
+
+      {/* Print Settings Tab */}
+      {tab === 'print' && (
+        <div style={SECTION_STYLE}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+            <Printer size={15} color="#22D3EE" />
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>إعدادات الطباعة</span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+            {/* التخطيط */}
+            <div>
+              <label style={{ display: 'block', fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginBottom: 8 }}>تخطيط الطباعة</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {([['a4', 'A4 (ورقة عادية)'], ['thermal', 'حراري 80mm']] as const).map(([val, lbl]) => (
+                  <button key={val} onClick={() => setInvLayout(val)}
+                    style={{ flex: 1, padding: '10px 12px', borderRadius: 10, border: `2px solid ${invLayout === val ? '#22D3EE' : '#E2E8F0'}`, background: invLayout === val ? 'rgba(34,211,238,0.08)' : '#fff', color: invLayout === val ? '#0099CC' : '#475569', fontSize: 13, fontFamily: 'Tajawal, sans-serif', fontWeight: 700, cursor: 'pointer' }}>
+                    {lbl}
+                  </button>
+                ))}
+              </div>
+              <p style={{ margin: '6px 0 0', fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>
+                {invLayout === 'thermal' ? 'تخطيط ضيق 80mm مناسب لطابعات الإيصالات الحرارية' : 'تخطيط A4 احترافي للطباعة على الورق العادي أو إرسال PDF'}
+              </p>
+            </div>
+
+            {/* حجم الخط */}
+            <div>
+              <label style={{ display: 'block', fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginBottom: 8 }}>حجم الخط</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {([['small', 'صغير'], ['medium', 'متوسط'], ['large', 'كبير']] as const).map(([val, lbl]) => (
+                  <button key={val} onClick={() => setInvFontSize(val)}
+                    style={{ flex: 1, padding: '10px 12px', borderRadius: 10, border: `2px solid ${invFontSize === val ? '#22D3EE' : '#E2E8F0'}`, background: invFontSize === val ? 'rgba(34,211,238,0.08)' : '#fff', color: invFontSize === val ? '#0099CC' : '#475569', fontSize: 13, fontFamily: 'Tajawal, sans-serif', fontWeight: 700, cursor: 'pointer' }}>
+                    {lbl}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* إظهار رقم العميل */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderRadius: 10, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+              <div>
+                <p style={{ margin: 0, fontSize: 13, color: '#334155', fontFamily: 'Tajawal, sans-serif', fontWeight: 600 }}>إظهار رقم جوال العميل</p>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>يظهر في الفاتورة بجانب اسم العميل</p>
+              </div>
+              <button onClick={() => setInvShowPhone(v => !v)}
+                style={{ width: 44, height: 24, borderRadius: 12, border: 'none', background: invShowPhone ? '#22D3EE' : '#CBD5E1', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                <span style={{ position: 'absolute', top: 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', left: invShowPhone ? 23 : 3 }} />
+              </button>
+            </div>
+
+            {/* لون الترويسة */}
+            <div>
+              <label style={{ display: 'block', fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginBottom: 8 }}>لون الترويسة</label>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                {['#1E293B', '#0F4C81', '#065F46', '#7C3AED', '#9A3412', '#1a1a1a'].map(color => (
+                  <button key={color} onClick={() => setInvHeaderColor(color)}
+                    style={{ width: 36, height: 36, borderRadius: 10, border: `3px solid ${invHeaderColor === color ? '#22D3EE' : 'transparent'}`, background: color, cursor: 'pointer', outline: invHeaderColor === color ? '2px solid #22D3EE' : 'none', outlineOffset: 2 }} />
+                ))}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <input type="color" value={invHeaderColor} onChange={e => setInvHeaderColor(e.target.value)}
+                    style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid #E2E8F0', cursor: 'pointer', padding: 2 }} />
+                  <span style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'monospace' }}>{invHeaderColor}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* معاينة اللون */}
+            <div style={{ padding: '12px 16px', borderRadius: 10, background: invHeaderColor, color: '#fff', textAlign: 'center', fontFamily: 'Cairo, sans-serif', fontSize: 14, fontWeight: 700 }}>
+              معاينة الترويسة — {company?.name ?? 'اسم المغسلة'}
+            </div>
+
+            <button onClick={saveInvoiceSettings} disabled={savingInv}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '11px 22px', borderRadius: 12, border: 'none', background: invSaved ? 'rgba(16,185,129,0.15)' : 'rgba(34,211,238,0.12)', color: invSaved ? '#10B981' : '#0099CC', cursor: savingInv ? 'not-allowed' : 'pointer', fontSize: 13, fontFamily: 'Cairo, sans-serif', fontWeight: 700, opacity: savingInv ? 0.7 : 1, alignSelf: 'flex-start' }}>
+              {savingInv ? <Loader2 size={14} style={{ animation: 'spin 0.8s linear infinite' }} /> : invSaved ? <Check size={14} /> : <Save size={14} />}
+              {savingInv ? 'جاري الحفظ...' : invSaved ? 'تم الحفظ ✓' : 'حفظ إعدادات الطباعة'}
+            </button>
+          </div>
         </div>
       )}
 
