@@ -210,6 +210,7 @@ export function CarWashOverview() {
   const [salesBreakdownTab, setSalesBreakdownTab] = useState<SalesBreakdownTab>('period')
   const [qrCopied, setQrCopied] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
+  const [chartPeriod, setChartPeriod] = useState<'today' | 'yesterday' | '7days' | '30days'>('today')
 
   const DATE_FILTERS = [
     { label: 'اليوم', days: 1 },
@@ -391,14 +392,83 @@ export function CarWashOverview() {
     const todayRevenue = visits.filter(v => v.created_at.startsWith(todayStr)).reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0)
     const yesterdayRevenue = visits.filter(v => v.created_at.startsWith(yesterdayStr)).reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0)
     const yesterdayVisitsCount = visits.filter(v => v.created_at.startsWith(yesterdayStr)).length
+    const todayExpenses = expenses.filter(e => e.expense_date === todayStr).reduce((s, e) => s + Number(e.amount), 0)
+    const yesterdayExpenses = expenses.filter(e => e.expense_date === yesterdayStr).reduce((s, e) => s + Number(e.amount), 0)
+    const todayNetProfit = todayRevenue - todayExpenses
+    const yesterdayNetProfit = yesterdayRevenue - yesterdayExpenses
+    const todayAvgInvoice = todayVisits > 0 ? Math.round(todayRevenue / todayVisits) : 0
+    const yesterdayAvgInvoice = yesterdayVisitsCount > 0 ? Math.round(yesterdayRevenue / yesterdayVisitsCount) : 0
     const revenueTrend: 'up' | 'down' | 'neutral' = todayRevenue > 0 && yesterdayRevenue > 0 ? (todayRevenue >= yesterdayRevenue ? 'up' : 'down') : 'neutral'
     const carsTrend: 'up' | 'down' | 'neutral' = todayVisits > 0 && yesterdayVisitsCount > 0 ? (todayVisits >= yesterdayVisitsCount ? 'up' : 'down') : 'neutral'
     const profitTrend: 'up' | 'down' | 'neutral' = netProfit > 0 ? 'up' : netProfit < 0 ? 'down' : 'neutral'
 
-    return { todayVisits, monthVisits, revenue, totalExpenses, workerCost, netProfit, netMargin, milestones, dailyChart, topServices, revenueServices, freeWashCount, freeWashDiscount, paymentBreakdown, workerStats, returningCustomers, retentionRate, avgInvoice, heatmap, queueStatusCounts, activeQueue, readyQueue, deliveredQueue, todayQueueItems, revenueTrend, carsTrend, profitTrend }
+    return { todayVisits, monthVisits, revenue, totalExpenses, workerCost, netProfit, netMargin, milestones, dailyChart, topServices, revenueServices, freeWashCount, freeWashDiscount, paymentBreakdown, workerStats, returningCustomers, retentionRate, avgInvoice, heatmap, queueStatusCounts, activeQueue, readyQueue, deliveredQueue, todayQueueItems, revenueTrend, carsTrend, profitTrend, todayRevenue, yesterdayRevenue, yesterdayVisitsCount, todayNetProfit, yesterdayNetProfit, todayAvgInvoice, yesterdayAvgInvoice }
   }, [visits, customers, workers, expenses, queueItems, days, isCustomActive, customFrom, customTo])
 
   const topCustomers = customers.slice(0, 8)
+
+  const hourlyChartData = useMemo(() => {
+    const now = new Date()
+    const todayStr = now.toISOString().slice(0, 10)
+    const yesterdayStr = new Date(now.getTime() - 86400000).toISOString().slice(0, 10)
+    const makeRevenue = (items: CWVisit[]) => items.reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0)
+    if (chartPeriod === 'today' || chartPeriod === 'yesterday') {
+      const target = chartPeriod === 'today' ? todayStr : yesterdayStr
+      return Array.from({ length: 12 }, (_, i) => {
+        const h = i * 2
+        const dayVisits = visits.filter(v => {
+          if (!v.created_at.startsWith(target)) return false
+          const vh = new Date(v.created_at).getHours()
+          return vh === h || vh === h + 1
+        })
+        const label = h < 12 ? `${h || 12}:00 ص` : `${h === 12 ? 12 : h - 12}:00 م`
+        return { label, revenue: makeRevenue(dayVisits), visits: dayVisits.length }
+      })
+    }
+    const numDays = chartPeriod === '7days' ? 7 : 30
+    return Array.from({ length: numDays }, (_, i) => {
+      const d = new Date(now)
+      d.setDate(d.getDate() - (numDays - 1 - i))
+      const key = d.toISOString().slice(0, 10)
+      const dayVisits = visits.filter(v => v.created_at.startsWith(key))
+      return {
+        label: d.toLocaleDateString('ar-SA', { day: 'numeric', month: 'short' }),
+        revenue: makeRevenue(dayVisits),
+        visits: dayVisits.length,
+      }
+    })
+  }, [visits, chartPeriod])
+
+  const alerts = useMemo(() => {
+    const now = new Date()
+    const todayStr = now.toISOString().slice(0, 10)
+    const result: Array<{ type: 'warning' | 'loyalty' | 'expense' | 'info'; title: string; desc: string; detail?: string; time: string }> = []
+    queueItems
+      .filter(item => (item.status === 'washing' || item.status === 'drying') && item.started_at && (now.getTime() - new Date(item.started_at).getTime()) > 30 * 60 * 1000)
+      .slice(0, 2)
+      .forEach(item => {
+        const mins = Math.round((now.getTime() - new Date(item.started_at!).getTime()) / 60000)
+        const h = new Date(item.started_at!).getHours(), m = new Date(item.started_at!).getMinutes()
+        result.push({ type: 'warning', title: 'سيارة متأخرة', desc: `${item.customer_name || 'عميل'} — ${item.service_name || ''}`, detail: `متأخرة عن الوقت المتوقع بـ ${mins} دقيقة`, time: `${String(h % 12 || 12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${h < 12 ? 'ص' : 'م'}` })
+      })
+    const todayPhones = new Set(queueItems.filter(q => q.status !== 'cancelled').map(q => q.phone).filter(Boolean))
+    customers
+      .filter(c => c.total_visits > 0 && c.total_visits % threshold === 0 && c.phone && todayPhones.has(c.phone))
+      .slice(0, 1)
+      .forEach(c => { result.push({ type: 'loyalty', title: `عميل وصل للغسلة ${c.total_visits}`, desc: c.name || c.phone, time: '' }) })
+    expenses
+      .filter(e => e.expense_date === todayStr)
+      .slice(0, 1)
+      .forEach(e => { result.push({ type: 'expense', title: 'مصروف جديد', desc: `${Number(e.amount).toLocaleString('en-US')} ريال`, time: '' }) })
+    queueItems
+      .filter(item => item.status === 'ready' && item.started_at && (now.getTime() - new Date(item.started_at).getTime()) > 20 * 60 * 1000)
+      .slice(0, 1)
+      .forEach(item => {
+        const h = new Date(item.started_at!).getHours(), m = new Date(item.started_at!).getMinutes()
+        result.push({ type: 'info', title: 'سيارة جاهزة ولم يتم استلامها', desc: `${item.customer_name || 'عميل'} — ${item.service_name || ''}`, time: `${String(h % 12 || 12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${h < 12 ? 'ص' : 'م'}` })
+      })
+    return result
+  }, [queueItems, customers, expenses, threshold])
 
   const exportSalesCSV = () => {
     const rows = visits.map(v => ({
@@ -588,244 +658,263 @@ export function CarWashOverview() {
     </div>
   )
 
-  return (<div dir="rtl" style={{ color: '#0D1B3E' }}>
+  const todayRevDiff = stats.todayRevenue - stats.yesterdayRevenue
+  const carsDiff = stats.todayVisits - stats.yesterdayVisitsCount
+  const avgDiff = stats.todayAvgInvoice - stats.yesterdayAvgInvoice
+  const profitDiff = stats.todayNetProfit - stats.yesterdayNetProfit
+
+  const STATUS_DOTS = [
+    { label: 'في الانتظار', count: stats.queueStatusCounts.received, color: '#94A3B8' },
+    { label: 'قيد الخدمة', count: queueItems.filter(q => q.status === 'washing').length, color: '#0B63F6' },
+    { label: 'التجفيف', count: queueItems.filter(q => q.status === 'drying').length, color: '#F97316' },
+    { label: 'جاهزة', count: stats.queueStatusCounts.ready, color: '#10B981' },
+  ]
+
+  const OP_DESC: Record<string, string> = {
+    received: 'تم استلام سيارة جديدة',
+    washing: 'جارٍ غسيل السيارة',
+    drying: 'جارٍ تجفيف السيارة',
+    ready: 'سيارة جاهزة للاستلام',
+    delivered: 'تم تسليم السيارة',
+    cancelled: 'تم إلغاء السيارة',
+  }
+  const OP_COLORS: Record<string, string> = {
+    received: '#94A3B8', washing: '#0B63F6', drying: '#F97316',
+    ready: '#10B981', delivered: '#64748B', cancelled: '#EF4444',
+  }
+
+  const ALERT_ICONS: Record<string, { bg: string; color: string; symbol: string }> = {
+    warning: { bg: '#FEE2E2', color: '#DC2626', symbol: '⚠' },
+    loyalty: { bg: '#FEF3C7', color: '#D97706', symbol: '🎁' },
+    expense: { bg: '#DBEAFE', color: '#2563EB', symbol: '📄' },
+    info:    { bg: '#DBEAFE', color: '#2563EB', symbol: 'ℹ' },
+  }
+
+  const chartPeriodLabels = [
+    { key: 'today' as const, label: 'اليوم' },
+    { key: 'yesterday' as const, label: 'أمس' },
+    { key: '7days' as const, label: '7 أيام' },
+    { key: '30days' as const, label: '30 يوم' },
+  ]
+
+  const formatFmtDiff = (diff: number, unit = '') => {
+    if (diff === 0) return null
+    const sign = diff > 0 ? '+' : ''
+    return `${sign}${Math.round(Math.abs(diff)).toLocaleString('en-US')} ${unit} عن أمس`
+  }
+
+  const checkinUrl = getSelfCheckinUrl(company as any)
+
+  return (
+    <div dir="rtl" style={{ color: '#0D1B3E', fontFamily: 'Tajawal, sans-serif' }}>
       <style>{`
-        .cw-board { direction:rtl; display:grid; grid-template-columns:1fr; grid-template-areas:"main" "rail" "ai"; gap:16px; align-items:start; }
-        .cw-main,.cw-rail { direction:rtl; display:grid; gap:14px; min-width:0; }
-        .cw-main { grid-area:main; }
-        .cw-rail-primary { grid-area:rail; }
-        .cw-rail-ai { grid-area:ai; }
-        .cw-card { background:rgba(255,255,255,.94); border:1px solid #E3EAF6; border-radius:16px; box-shadow:0 16px 42px rgba(13,27,62,.055); }
-        .cw-card-pad { padding:16px; }
-        .cw-heading { display:grid; grid-template-columns:minmax(260px,1fr) auto; gap:18px; align-items:start; padding:18px; background:linear-gradient(135deg,#FFFFFF 0%,#F4F9FF 100%); border:1px solid #DDE8F7; border-radius:20px; box-shadow:0 18px 48px rgba(13,27,62,.06); }
-        .cw-heading-actions { display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:wrap; max-width:560px; }
-        .cw-stat-grid { display:grid; grid-template-columns:repeat(6,minmax(126px,1fr)); gap:12px; }
-        .cw-title { margin:0; color:#0D1B3E; font-family:Cairo,sans-serif; font-weight:950; }
-        .cw-muted { color:#64748B; font-family:Tajawal,sans-serif; }
-        .cw-link { text-decoration:none; color:inherit; }
-        .cw-clickable { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
-        .cw-clickable:hover { transform: translateY(-2px); box-shadow:0 18px 46px rgba(13,27,62,.08); border-color:#BFD3F1; }
-        .cw-command-bar { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:16px; padding:10px; background:rgba(255,255,255,.86); border:1px solid #DDE8F7; border-radius:16px; box-shadow:0 14px 34px rgba(13,27,62,.055); backdrop-filter:blur(14px); }
-        .cw-command-group { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-        .cw-main-action { height:40px; border-radius:12px; padding:0 15px; display:inline-flex; align-items:center; justify-content:center; gap:8px; background:#0B63F6; color:#fff; font-size:12px; font-weight:950; font-family:Cairo,sans-serif; box-shadow:0 14px 28px rgba(11,99,246,.18); text-decoration:none; }
-        .cw-secondary-action { height:40px; border-radius:12px; padding:0 13px; display:inline-flex; align-items:center; justify-content:center; gap:8px; background:#F8FBFF; color:#0D1B3E; border:1px solid #D7E1F0; font-size:12px; font-weight:900; font-family:Tajawal,sans-serif; text-decoration:none; }
-        .cw-soft-button { height:36px; border-radius:11px; border:1px solid #D7E1F0; background:#fff; padding:0 11px; display:inline-flex; align-items:center; gap:7px; color:#0D1B3E; font-weight:900; font-size:11px; font-family:Tajawal,sans-serif; cursor:pointer; }
-        .cw-soft-select { height:36px; border-radius:11px; border:1px solid #D7E1F0; background:#fff; padding:0 10px; color:#0D1B3E; font-weight:900; font-size:11px; font-family:Tajawal,sans-serif; }
-        .cw-insight-grid { display:grid; grid-template-columns:minmax(290px, 1.1fr) minmax(220px, .8fr) minmax(190px, .65fr); gap:14px; }
-        .cw-segmented { display:inline-flex; align-items:center; gap:4px; padding:4px; border:1px solid #DDE8F7; border-radius:12px; background:#F8FBFF; flex-wrap:wrap; }
-        .cw-segmented button { min-height:28px; border:0; border-radius:9px; padding:0 10px; background:transparent; color:#64748B; cursor:pointer; font-family:Tajawal,sans-serif; font-size:11px; font-weight:900; }
-        .cw-segmented button.active { background:#0B63F6; color:#FFFFFF; box-shadow:0 8px 18px rgba(11,99,246,.16); }
-        .cw-sales-tabs { display:flex; align-items:center; gap:6px; padding:5px; border:1px solid #DDE8F7; border-radius:13px; background:#F8FBFF; margin-bottom:16px; flex-wrap:wrap; }
-        .cw-sales-tabs button { min-height:34px; border:0; border-radius:10px; padding:0 13px; background:transparent; color:#64748B; cursor:pointer; font-family:Cairo,sans-serif; font-size:12px; font-weight:900; }
-        .cw-sales-tabs button.active { background:#FFFFFF; color:#0B63F6; box-shadow:0 10px 22px rgba(13,27,62,.07); }
-        .cw-flow-grid { display:grid; grid-template-columns:repeat(4,minmax(118px,1fr)); gap:14px; align-items:center; }
-        .cw-revenue-chart { min-width:0; }
-        .cw-stage-arrow { position:absolute; left:-15px; top:50%; color:#0D1B3E; font-size:22px; transform:translateY(-50%); }
-        @media (max-width: 1500px) { .cw-stat-grid { grid-template-columns:repeat(3,minmax(150px,1fr)); } .cw-insight-grid { grid-template-columns:minmax(280px,1.1fr) minmax(210px,.75fr); } .cw-insight-grid section:last-child { grid-column:1 / -1; } }
-        .cw-rail-primary,.cw-rail-ai { grid-template-columns:repeat(2,minmax(0,1fr)); }
-        @media (max-width: 1280px) { .cw-heading { grid-template-columns:1fr; } .cw-heading-actions { max-width:none; justify-content:flex-start; } }
-        @media (max-width: 920px) { .cw-insight-grid { grid-template-columns:1fr; } .cw-insight-grid section:last-child { grid-column:auto; } .cw-flow-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .cw-stage-arrow { display:none; } .cw-rail-primary,.cw-rail-ai { grid-template-columns:1fr; } }
-        @media (max-width: 700px) { .cw-stat-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-        @media (max-width: 640px) { .cw-card-pad { padding:14px; } .cw-board,.cw-main,.cw-rail { gap:12px; } .cw-heading { padding:0; } .cw-command-bar { display:grid; grid-template-columns:1fr; gap:8px; align-items:stretch; padding:10px; } .cw-command-group { width:100%; display:grid; gap:8px; flex-wrap:nowrap; } .cw-command-primary { grid-template-columns:repeat(3,minmax(0,1fr)); } .cw-command-tools { grid-template-columns:minmax(118px,1.15fr) minmax(82px,.85fr) minmax(58px,.55fr) minmax(58px,.55fr); } .cw-main-action,.cw-secondary-action,.cw-soft-button,.cw-soft-select { width:100%; min-width:0; } .cw-main-action,.cw-secondary-action { height:38px; padding:0 8px; white-space:nowrap; font-size:11px; } .cw-soft-button,.cw-soft-select { height:34px; padding:0 7px; white-space:nowrap; font-size:10px; justify-content:center; } .cw-revenue-chart .recharts-xAxis .recharts-cartesian-axis-tick:nth-child(even) { display:none; } }
-        @media (max-width: 420px) { .cw-stat-grid,.cw-flow-grid,.cw-command-primary { grid-template-columns:1fr; } .cw-command-tools { grid-template-columns:1fr 1fr; } }
+        .ov2-kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:16px; }
+        .ov2-mid-row { display:grid; grid-template-columns:270px 1fr; gap:14px; margin-bottom:14px; }
+        .ov2-bot-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+        .ov2-panel { background:#fff; border:1px solid #E3EAF6; border-radius:16px; padding:18px; box-shadow:0 8px 24px rgba(13,27,62,.045); }
+        .ov2-ph { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+        .ov2-ph h2 { margin:0; font-size:15px; font-weight:900; color:#0D1B3E; font-family:Cairo,sans-serif; }
+        .ov2-ph a { color:#0B63F6; font-size:12px; font-weight:700; text-decoration:none; font-family:Tajawal,sans-serif; }
+        .ov2-period-tabs { display:flex; gap:4px; background:#F1F5FB; padding:4px; border-radius:10px; }
+        .ov2-period-tabs button { border:0; padding:5px 12px; border-radius:7px; font-size:12px; font-weight:700; font-family:Tajawal,sans-serif; cursor:pointer; background:transparent; color:#64748B; }
+        .ov2-period-tabs button.act { background:#fff; color:#0B63F6; box-shadow:0 2px 8px rgba(11,99,246,.12); }
+        .ov2-kpi-card { background:#fff; border:1px solid #E3EAF6; border-radius:16px; padding:18px; box-shadow:0 8px 24px rgba(13,27,62,.04); }
+        .ov2-kpi-card .kpi-label { font-size:12px; color:#64748B; font-family:Tajawal,sans-serif; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; }
+        .ov2-kpi-card .kpi-val { font-size:28px; font-weight:900; color:#0D1B3E; font-family:Sora,sans-serif; line-height:1; }
+        .ov2-kpi-card .kpi-unit { font-size:13px; color:#64748B; font-family:Tajawal,sans-serif; margin-top:4px; }
+        .ov2-kpi-card .kpi-diff { font-size:11px; font-weight:700; border-radius:999px; padding:3px 9px; margin-top:10px; display:inline-block; font-family:Tajawal,sans-serif; }
+        .ov2-kpi-icon { width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .ov2-dot-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #F1F5FB; }
+        .ov2-dot-row:last-child { border-bottom:none; }
+        .ov2-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+        .ov2-op-row { display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:start; padding:10px 0; border-bottom:1px solid #F1F5FB; }
+        .ov2-op-row:last-child { border-bottom:none; }
+        .ov2-alert-row { display:grid; grid-template-columns:36px 1fr auto; gap:10px; align-items:center; padding:10px 0; border-bottom:1px solid #F1F5FB; }
+        .ov2-alert-row:last-child { border-bottom:none; }
+        .ov2-qr-bar { background:#fff; border:1px solid #E3EAF6; border-radius:16px; padding:16px; box-shadow:0 8px 24px rgba(13,27,62,.04); display:grid; grid-template-columns:auto 1fr; gap:18px; align-items:center; }
+        @media(max-width:1100px) { .ov2-kpi-grid { grid-template-columns:repeat(2,1fr); } }
+        @media(max-width:860px) { .ov2-mid-row,.ov2-bot-row { grid-template-columns:1fr; } }
+        @media(max-width:480px) { .ov2-kpi-grid { grid-template-columns:1fr 1fr; } .ov2-qr-bar { grid-template-columns:1fr; } }
       `}</style>
 
-      <div className="cw-board">
-
-        <main className="cw-main">
-          <div className="cw-heading">
-            <div>
-              <span className="cw-muted" style={{ fontSize: 13, fontWeight: 800 }}>مرحباً بك، {company?.owner_name || 'مدير المغسلة'}</span>
-              <h1 className="cw-title" style={{ fontSize: 'clamp(26px, 3vw, 34px)' }}>مركز تشغيل اليوم</h1>
-              <p className="cw-muted" style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.8, maxWidth: 560 }}>
-                تابع الاستقبال، السيارات النشطة، الإيراد، العملاء والولاء من شاشة واحدة مرتبة لقرار سريع داخل المغسلة.
-              </p>
-              <div style={{ marginTop: 10 }}>
-                <strong style={{ color: '#0D1B3E', fontFamily: 'Cairo,sans-serif' }}>{todayText}</strong>
-                <span className="cw-muted" style={{ marginInlineStart: 8, fontSize: 12 }}>{company?.name || 'المغسلة'}</span>
-              </div>
-            </div>
-            <div className="cw-heading-actions">
-              <Link to="/client/queue" className="cw-main-action">
-                <Plus size={15} /> إضافة سيارة
-              </Link>
-              <Link to="/client/queue" className="cw-secondary-action">
-                <Car size={15} /> لوحة التشغيل
-              </Link>
-              <button onClick={() => setShowCustom(v => !v)} className="cw-soft-button">
-                <Calendar size={15} color="#0B63F6" /> {isCustomActive ? `${customFrom} - ${customTo}` : 'اليوم'}
-              </button>
-              <select value={days} onChange={e => { setDays(Number(e.target.value)); setShowCustom(false) }} className="cw-soft-select">
-                {DATE_FILTERS.map(f => <option key={f.days} value={f.days}>{f.label}</option>)}
-              </select>
-            </div>
-          </div>
-
-          {showCustom && (
-            <div className="cw-card cw-card-pad" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} style={{ padding: '9px 12px', borderRadius: 10, border: '1px solid #D7E1F0', background: '#F8FBFF', color: '#0D1B3E', fontSize: 12, fontFamily: 'Sora,sans-serif' }} />
-              <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)} style={{ padding: '9px 12px', borderRadius: 10, border: '1px solid #D7E1F0', background: '#F8FBFF', color: '#0D1B3E', fontSize: 12, fontFamily: 'Sora,sans-serif' }} />
-            </div>
-          )}
-
-          <div className="cw-stat-grid">
-            <StatCard icon={DollarSign} label="إجمالي الإيرادات" value={formatSAR(stats.revenue)} sub="ر.س في الفترة" color="#10B981" trend={stats.revenueTrend === 'up' ? 'نمو' : stats.revenueTrend === 'down' ? 'مراجعة' : 'فعلي'} trendDir={stats.revenueTrend} />
-            <StatCard icon={TrendingDown} label="صافي الربح" value={Math.round(stats.netProfit).toLocaleString('en-US')} sub={`${stats.netMargin}% هامش`} color={stats.netProfit >= 0 ? '#0B63F6' : '#EF4444'} trend={stats.netProfit >= 0 ? 'بعد التكاليف' : 'راجع المصاريف'} trendDir={stats.profitTrend} />
-            <StatCard icon={Car} label="سيارات اليوم" value={displayCars} sub={`${stats.queueStatusCounts.active} نشطة الآن`} color="#0B63F6" trend={stats.carsTrend === 'up' ? 'نمو' : stats.carsTrend === 'down' ? 'أقل من أمس' : 'اليوم'} trendDir={stats.carsTrend} />
-            <StatCard icon={CalendarClock} label="متوسط الفاتورة" value={stats.avgInvoice || 0} sub="ر.س للزيارة" color="#7C3AED" trend="محسوب" trendDir="neutral" />
-          </div>
-
-          {/* ── 2-column layout: left col stacks Chart+Status, right col stacks Breakdown+Ops ── */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16, alignItems: 'start' }}>
-
-            {/* LEFT COLUMN */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-              {/* Revenue chart */}
-              <div className="cw-card cw-card-pad">
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
-                  <h2 className="cw-title" style={{ fontSize: 15, margin: 0 }}>أداء الإيرادات</h2>
-                  <div className="cw-segmented" aria-label="فترة أداء الإيرادات">
-                    {REVENUE_RANGES.map(option => (
-                      <button key={option.key} type="button" className={revenueRange === option.key ? 'active' : ''} onClick={() => setRevenuePeriod(option.key)}>{option.label}</button>
-                    ))}
-                  </div>
-                </div>
-                <ResponsiveContainer width="100%" height={200}>
-                  <AreaChart data={revenueChartData}>
-                    <defs><linearGradient id="reportRevenueGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#0B63F6" stopOpacity={0.25} /><stop offset="100%" stopColor="#0B63F6" stopOpacity={0.02} /></linearGradient></defs>
-                    <XAxis dataKey="date" tick={{ fill: '#64748B', fontSize: 10, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fill: '#64748B', fontSize: 10 }} axisLine={false} tickLine={false} width={40} />
-                    <Tooltip content={<ChartTooltip />} />
-                    <Area type="monotone" dataKey="revenue" name="revenue" stroke="#0B63F6" strokeWidth={2.5} fill="url(#reportRevenueGrad)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Car status */}
-              <div className="cw-card cw-card-pad">
-                <h2 className="cw-title" style={{ fontSize: 15, marginBottom: 16 }}>حالة السيارات اليوم</h2>
-                <div className="cw-flow-grid">
-                  {statusFlow.map((step, i) => {
-                    const Icon = step.icon
-                    return (
-                      <Link to={step.to} className="cw-link cw-clickable" key={step.label} style={{ border: `1.5px solid ${step.color}`, borderRadius: 14, minHeight: 110, display: 'grid', placeItems: 'center', textAlign: 'center', position: 'relative', background: step.label === 'جاهزة' ? '#F0FDF4' : '#FFFFFF' }}>
-                        <Icon size={24} color={step.color} />
-                        <strong style={{ color: step.color, fontSize: 12, fontWeight: 950, fontFamily: 'Cairo,sans-serif' }}>{step.label}</strong>
-                        <span style={{ color: '#0D1B3E', fontSize: 22, fontWeight: 950, fontFamily: 'Sora,sans-serif' }}>{step.value}</span>
-                        <em className="cw-muted" style={{ fontSize: 11, fontStyle: 'normal' }}>سيارة</em>
-                        {i < statusFlow.length - 1 && <span className="cw-stage-arrow">←</span>}
-                      </Link>
-                    )
-                  })}
-                </div>
-                <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'center' }}>
-                  <div style={{ height: 5, borderRadius: 999, background: '#DDE8F7', position: 'relative', overflow: 'hidden' }}><span style={{ position: 'absolute', inset: `0 0 0 ${100 - completionRate}%`, borderRadius: 999, background: '#0B63F6' }} /></div>
-                  <strong style={{ color: completionRate >= 70 ? '#10B981' : '#0B63F6', fontFamily: 'Sora,sans-serif', fontSize: 13 }}>{completionRate}% مكتمل</strong>
-                </div>
-              </div>
-
-            </div>
-
-            {/* RIGHT COLUMN */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-              {/* Sales breakdown */}
-              <div className="cw-card cw-card-pad">
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                  <h2 className="cw-title" style={{ fontSize: 15, margin: 0 }}>تفصيل المبيعات</h2>
-                  <Link to="/client/reports" style={{ color: '#0B63F6', fontSize: 11, fontWeight: 900, fontFamily: 'Tajawal,sans-serif', textDecoration: 'none' }}>التقارير</Link>
-                </div>
-                <div className="cw-sales-tabs" style={{ marginBottom: 12 }} aria-label="تفصيل المبيعات">
-                  {[{ key: 'services' as const, label: 'الخدمات' }, { key: 'workers' as const, label: 'الموظفون' }, { key: 'period' as const, label: 'الفترة' }].map(tab => (
-                    <button key={tab.key} type="button" className={salesBreakdownTab === tab.key ? 'active' : ''} onClick={() => setSalesBreakdownTab(tab.key)}>{tab.label}</button>
-                  ))}
-                </div>
-                {salesBreakdownTab === 'services' && (
-                  stats.topServices.length ? stats.topServices.slice(0, 5).map(([name, data], i) => (
-                    <div key={`${name}-${i}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: i < 4 ? '1px solid #EEF3FA' : 'none' }}>
-                      <span>
-                        <strong style={{ display: 'block', color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif' }}>{name}</strong>
-                        <em style={{ fontStyle: 'normal', fontSize: 11, color: '#94A3B8' }}>{(data as any).count || 0} سيارة</em>
-                      </span>
-                      <strong style={{ color: '#0D1B3E', fontSize: 12, fontFamily: 'Sora,sans-serif' }}>{((data as any).revenue || 0).toLocaleString('en-US')} ر.س</strong>
-                    </div>
-                  )) : <p style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal,sans-serif', textAlign: 'center', paddingTop: 20 }}>لا توجد بيانات في الفترة</p>
-                )}
-                {salesBreakdownTab === 'workers' && (
-                  <BreakdownAreaChart data={topWorkerRevenue.map(r => ({ label: r.name, value: r.revenue, hint: `${r.count} سيارة` }))} emptyMsg="عيّن الموظف للسيارات لعرض التفصيل." emptyLink="/client/workers" />
-                )}
-                {salesBreakdownTab === 'period' && (
-                  <BreakdownAreaChart data={salesPeriodRows.map(r => ({ label: r.label, value: r.value, hint: r.hint }))} emptyMsg="لا توجد مبيعات في الفترة." />
-                )}
-              </div>
-
-              {/* Recent operations */}
-              <div className="cw-card cw-card-pad">
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                  <h2 className="cw-title" style={{ fontSize: 15, margin: 0 }}>آخر العمليات</h2>
-                  <Link to="/client/queue" style={{ color: '#0B63F6', fontSize: 11, fontWeight: 900, fontFamily: 'Tajawal,sans-serif', textDecoration: 'none' }}>عرض الكل</Link>
-                </div>
-                {stats.todayQueueItems.length === 0 ? (
-                  <p style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal,sans-serif', textAlign: 'center', paddingTop: 20 }}>لا توجد عمليات اليوم</p>
-                ) : (
-                  stats.todayQueueItems.slice(0, 6).map((item, i) => {
-                    const statusColor: Record<string, string> = { delivered: '#10B981', ready: '#0B63F6', washing: '#F97316', received: '#94A3B8', cancelled: '#EF4444', drying: '#7C3AED' }
-                    return (
-                      <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: i < 5 ? '1px solid #EEF3FA' : 'none', gap: 8 }}>
-                        <span style={{ minWidth: 0 }}>
-                          <strong style={{ display: 'block', color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.customer_name || 'عميل'}</strong>
-                          <em style={{ fontStyle: 'normal', fontSize: 11, color: '#94A3B8' }}>{item.service_name || '—'}</em>
-                        </span>
-                        <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, flexShrink: 0 }}>
-                          <strong style={{ fontSize: 12, fontFamily: 'Sora,sans-serif', color: '#0D1B3E' }}>{item.price ? `${item.price} ر.س` : '—'}</strong>
-                          <span style={{ fontSize: 10, fontWeight: 800, borderRadius: 999, padding: '1px 7px', background: `${statusColor[item.status] || '#94A3B8'}18`, color: statusColor[item.status] || '#94A3B8', fontFamily: 'Tajawal,sans-serif' }}>{STATUS_LABELS[item.status]}</span>
-                        </span>
-                      </div>
-                    )
-                  })
-                )}
-              </div>
-
-            </div>
-          </div>
-
-          {/* ── QR Self Check-in ── */}
-          {(() => {
-            const checkinUrl = getSelfCheckinUrl(company as any)
-            if (!checkinUrl) return null
-            const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=10&data=${encodeURIComponent(checkinUrl)}`
-            return (
-              <div className="cw-card cw-card-pad" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 20, alignItems: 'center' }}>
-                <img src={qrSrc} alt="QR Code" style={{ width: 120, height: 120, borderRadius: 10, display: 'block', border: '1px solid #E3EAF6' }} />
-                <div>
-                  <h3 className="cw-title" style={{ fontSize: 15, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <QrCode size={16} color="#0B63F6" /> تسجيل ذاتي للعملاء
-                  </h3>
-                  <p className="cw-muted" style={{ fontSize: 12, lineHeight: 1.7, marginBottom: 12 }}>
-                    اطبع هذا الرمز وضعه عند الاستقبال — العميل يمسح ويسجل سيارته بنفسه دون الحاجة لموظف
-                  </p>
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <button
-                      onClick={() => { navigator.clipboard.writeText(checkinUrl); setQrCopied(true); setTimeout(() => setQrCopied(false), 2000) }}
-                      style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 9, border: '1px solid #D7E1F0', background: qrCopied ? '#DCFCE7' : '#F8FBFF', color: qrCopied ? '#059669' : '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif', fontWeight: 900, cursor: 'pointer' }}
-                    >
-                      <Copy size={12} /> {qrCopied ? 'تم النسخ ✓' : 'نسخ الرابط'}
-                    </button>
-                    <a href={checkinUrl} target="_blank" rel="noreferrer"
-                      style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 9, border: '1px solid #D7E1F0', background: '#F8FBFF', color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif', fontWeight: 900, textDecoration: 'none' }}
-                    >
-                      <ExternalLink size={12} /> معاينة الصفحة
-                    </a>
-                  </div>
-                </div>
-              </div>
-            )
-          })()}
-
-        </main>
-
+      {/* Header */}
+      <div style={{ marginBottom: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 900, fontFamily: 'Cairo,sans-serif', color: '#0D1B3E' }}>{company?.name || 'المغسلة'}</h1>
+          <span style={{ fontSize: 13, color: '#64748B' }}>{todayText}</span>
+        </div>
+        <Link to="/client/queue" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#0B63F6', color: '#fff', padding: '9px 18px', borderRadius: 12, textDecoration: 'none', fontSize: 13, fontWeight: 900 }}>
+          <Plus size={15} /> إضافة سيارة
+        </Link>
       </div>
+
+      {/* KPI Cards */}
+      <div className="ov2-kpi-grid">
+        {[
+          { label: 'إجمالي الإيرادات', val: formatSAR(stats.todayRevenue), unit: 'ريال', diff: todayRevDiff, dunit: '', color: '#10B981', icon: <DollarSign size={17} color="#10B981" />, bg: '#DCFCE7' },
+          { label: 'صافي الربح', val: Math.round(stats.todayNetProfit).toLocaleString('en-US'), unit: 'ريال', diff: profitDiff, dunit: '', color: '#0B63F6', icon: <TrendingUp size={17} color="#0B63F6" />, bg: '#DBEAFE' },
+          { label: 'متوسط الفاتورة', val: String(stats.todayAvgInvoice), unit: 'ريال', diff: avgDiff, dunit: '', color: '#7C3AED', icon: <CalendarClock size={17} color="#7C3AED" />, bg: '#EDE9FE' },
+          { label: 'سيارات اليوم', val: String(stats.todayVisits), unit: 'سيارة', diff: carsDiff, dunit: '', color: '#0099CC', icon: <Car size={17} color="#0099CC" />, bg: '#CFFAFE' },
+        ].map(card => {
+          const diffText = formatFmtDiff(card.diff, card.dunit)
+          const isPos = card.diff >= 0
+          return (
+            <div className="ov2-kpi-card" key={card.label}>
+              <div className="kpi-label">
+                <span>{card.label}</span>
+                <div className="ov2-kpi-icon" style={{ background: card.bg }}>{card.icon}</div>
+              </div>
+              <div className="kpi-val">{card.val}</div>
+              <div className="kpi-unit">{card.unit}</div>
+              {diffText && (
+                <div className="kpi-diff" style={{ background: isPos ? '#DCFCE7' : '#FEE2E2', color: isPos ? '#059669' : '#DC2626' }}>
+                  {isPos ? '↑' : '↓'} {Math.abs(card.diff) > 0 ? Math.round(Math.abs(card.diff)).toLocaleString('en-US') : '0'} عن أمس
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Middle row */}
+      <div className="ov2-mid-row">
+        {/* حالات السيارات */}
+        <div className="ov2-panel">
+          <div className="ov2-ph">
+            <h2>حالات السيارات</h2>
+            <Link to="/client/queue">عرض الكل ›</Link>
+          </div>
+          {STATUS_DOTS.map(s => (
+            <div key={s.label} className="ov2-dot-row">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div className="ov2-dot" style={{ background: s.color }} />
+                <span style={{ fontSize: 13, color: '#334155', fontFamily: 'Tajawal,sans-serif' }}>{s.label}</span>
+              </div>
+              <span style={{ fontSize: 14, fontWeight: 900, color: '#0D1B3E', fontFamily: 'Sora,sans-serif' }}>{s.count}</span>
+            </div>
+          ))}
+          <div className="ov2-dot-row" style={{ marginTop: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div className="ov2-dot" style={{ background: '#64748B' }} />
+              <span style={{ fontSize: 13, color: '#334155' }}>تم التسليم</span>
+            </div>
+            <span style={{ fontSize: 14, fontWeight: 900, color: '#0D1B3E', fontFamily: 'Sora,sans-serif' }}>{stats.queueStatusCounts.delivered}</span>
+          </div>
+        </div>
+
+        {/* الإيرادات */}
+        <div className="ov2-panel">
+          <div className="ov2-ph">
+            <h2>الإيرادات خلال اليوم</h2>
+            <div className="ov2-period-tabs">
+              {chartPeriodLabels.map(p => (
+                <button key={p.key} type="button" className={chartPeriod === p.key ? 'act' : ''} onClick={() => setChartPeriod(p.key)}>{p.label}</button>
+              ))}
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={210}>
+            <AreaChart data={hourlyChartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="ov2RevGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#0B63F6" stopOpacity={0.25} />
+                  <stop offset="100%" stopColor="#0B63F6" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#F0F4FF" vertical={false} />
+              <XAxis dataKey="label" tick={{ fill: '#94A3B8', fontSize: 10, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+              <YAxis tick={{ fill: '#94A3B8', fontSize: 10 }} axisLine={false} tickLine={false} width={45} tickFormatter={v => v > 0 ? v.toLocaleString('en-US') : '0'} />
+              <Tooltip
+                formatter={(v: number) => [`${v.toLocaleString('en-US')} ر.س`, 'الإيراد']}
+                contentStyle={{ fontFamily: 'Tajawal,sans-serif', fontSize: 12, borderRadius: 10, border: '1px solid #E3EAF6', boxShadow: '0 4px 16px rgba(0,0,0,.08)' }}
+              />
+              <Area type="monotone" dataKey="revenue" stroke="#0B63F6" strokeWidth={2.5} fill="url(#ov2RevGrad)"
+                dot={false} activeDot={{ r: 5, fill: '#0B63F6', stroke: '#fff', strokeWidth: 2 }} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Bottom row */}
+      <div className="ov2-bot-row">
+        {/* آخر العمليات */}
+        <div className="ov2-panel">
+          <div className="ov2-ph">
+            <h2>آخر العمليات</h2>
+            <Link to="/client/queue">عرض الكل ›</Link>
+          </div>
+          {stats.todayQueueItems.length === 0 ? (
+            <p style={{ color: '#94A3B8', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>لا توجد عمليات اليوم</p>
+          ) : (
+            [...stats.todayQueueItems].reverse().slice(0, 5).map((item, i) => {
+              const d = new Date(item.created_at)
+              const h = d.getHours(), m = d.getMinutes()
+              const timeStr = `${String(h % 12 || 12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${h < 12 ? 'ص' : 'م'}`
+              const sc = OP_COLORS[item.status] || '#94A3B8'
+              return (
+                <div key={item.id} className="ov2-op-row" style={{ borderBottom: i < 4 ? undefined : 'none' }}>
+                  <span style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Sora,sans-serif', paddingTop: 2, minWidth: 55 }}>{timeStr}</span>
+                  <span style={{ minWidth: 0 }}>
+                    <strong style={{ display: 'block', fontSize: 13, color: '#0D1B3E', fontFamily: 'Tajawal,sans-serif' }}>{OP_DESC[item.status] || 'تحديث حالة'}</strong>
+                    <em style={{ fontStyle: 'normal', fontSize: 11, color: '#94A3B8' }}>{item.customer_name || 'عميل'}{item.service_name ? ` — ${item.service_name}` : ''}</em>
+                  </span>
+                  <span style={{ fontSize: 10, fontWeight: 800, borderRadius: 999, padding: '3px 9px', background: `${sc}18`, color: sc, fontFamily: 'Tajawal,sans-serif', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                    {STATUS_LABELS[item.status]}
+                  </span>
+                </div>
+              )
+            })
+          )}
+        </div>
+
+        {/* تنبيهات اليوم */}
+        <div className="ov2-panel">
+          <div className="ov2-ph">
+            <h2>تنبيهات اليوم</h2>
+            <Link to="/client/queue">عرض الكل ›</Link>
+          </div>
+          {alerts.length === 0 ? (
+            <p style={{ color: '#94A3B8', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>لا توجد تنبيهات اليوم</p>
+          ) : (
+            alerts.map((a, i) => {
+              const ic = ALERT_ICONS[a.type] || ALERT_ICONS.info
+              return (
+                <div key={i} className="ov2-alert-row" style={{ borderBottom: i < alerts.length - 1 ? undefined : 'none' }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: ic.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{ic.symbol}</div>
+                  <div style={{ minWidth: 0 }}>
+                    <strong style={{ display: 'block', fontSize: 13, color: '#0D1B3E', fontFamily: 'Tajawal,sans-serif' }}>{a.title}</strong>
+                    <em style={{ fontStyle: 'normal', fontSize: 11, color: '#64748B' }}>{a.desc}</em>
+                    {a.detail && <em style={{ fontStyle: 'normal', fontSize: 10, color: '#94A3B8', display: 'block' }}>{a.detail}</em>}
+                  </div>
+                  {a.time && <span style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Sora,sans-serif', whiteSpace: 'nowrap', flexShrink: 0 }}>{a.time}</span>}
+                </div>
+              )
+            })
+          )}
+        </div>
+      </div>
+
+      {/* QR Bar */}
+      {checkinUrl && (
+        <div className="ov2-qr-bar">
+          <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=8&data=${encodeURIComponent(checkinUrl)}`} alt="QR" style={{ width: 90, height: 90, borderRadius: 10, border: '1px solid #E3EAF6', display: 'block' }} />
+          <div>
+            <h3 style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 900, fontFamily: 'Cairo,sans-serif', color: '#0D1B3E', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <QrCode size={15} color="#0B63F6" /> تسجيل ذاتي للعملاء
+            </h3>
+            <p style={{ margin: '0 0 12px', fontSize: 12, color: '#64748B', lineHeight: 1.7 }}>اطبع هذا الرمز وضعه عند الاستقبال — العميل يمسح ويسجل سيارته بنفسه</p>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button onClick={() => { navigator.clipboard.writeText(checkinUrl); setQrCopied(true); setTimeout(() => setQrCopied(false), 2000) }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 9, border: '1px solid #D7E1F0', background: qrCopied ? '#DCFCE7' : '#F8FBFF', color: qrCopied ? '#059669' : '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif', fontWeight: 900, cursor: 'pointer' }}>
+                <Copy size={12} /> {qrCopied ? 'تم النسخ ✓' : 'نسخ الرابط'}
+              </button>
+              <a href={checkinUrl} target="_blank" rel="noreferrer"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 9, border: '1px solid #D7E1F0', background: '#F8FBFF', color: '#0D1B3E', fontSize: 12, fontFamily: 'Tajawal,sans-serif', fontWeight: 900, textDecoration: 'none' }}>
+                <ExternalLink size={12} /> معاينة الصفحة
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
