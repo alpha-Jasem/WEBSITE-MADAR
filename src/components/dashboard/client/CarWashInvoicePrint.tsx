@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { Printer, X } from 'lucide-react'
 
 export interface InvoiceItem {
@@ -57,6 +58,8 @@ const PRINT_STYLE = `
 `
 
 export function CarWashInvoicePrint({ data, company, onClose }: Props) {
+  const printAreaRef = useRef<HTMLDivElement>(null)
+
   const dateStr = new Date(data.date).toLocaleString('ar-SA', {
     year: 'numeric', month: '2-digit', day: '2-digit',
     hour: '2-digit', minute: '2-digit', second: '2-digit',
@@ -67,6 +70,17 @@ export function CarWashInvoicePrint({ data, company, onClose }: Props) {
   const itemCount = data.items.reduce((s, i) => s + i.qty, 0)
   const taxEnabled = company.tax_enabled !== false
   const showVat = taxEnabled && data.vatAmount > 0
+
+  const handlePrint = () => {
+    const el = printAreaRef.current
+    if (!el) return
+    const win = window.open('', '_blank', 'width=900,height=750')
+    if (!win) { window.print(); return }
+    win.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><title>فاتورة</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Cairo,Tajawal,Arial,sans-serif;padding:14mm 16mm;color:#111;font-size:12px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:6px 10px;text-align:right}th{background:#f5f5f5;font-weight:700}img{max-height:64px;max-width:180px;object-fit:contain}@media print{body{padding:8mm 12mm}}</style></head><body>${el.innerHTML}</body></html>`)
+    win.document.close()
+    win.focus()
+    setTimeout(() => { win.print(); win.close() }, 350)
+  }
 
   return (
     <>
@@ -84,7 +98,7 @@ export function CarWashInvoicePrint({ data, company, onClose }: Props) {
             <span style={{ fontSize: 15, fontWeight: 900, fontFamily: 'Cairo, sans-serif', color: '#111827' }}>فاتورة ضريبية مبسطة</span>
             <div style={{ display: 'flex', gap: 8 }}>
               <button
-                onClick={() => window.print()}
+                onClick={handlePrint}
                 style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 18px', borderRadius: 8, border: 'none', background: '#0EA5A5', color: '#fff', fontSize: 13, fontFamily: 'Cairo, sans-serif', fontWeight: 700, cursor: 'pointer' }}
               >
                 <Printer size={15} /> طباعة
@@ -100,6 +114,7 @@ export function CarWashInvoicePrint({ data, company, onClose }: Props) {
 
           {/* ── Invoice Body ── */}
           <div
+            ref={printAreaRef}
             className="cw-invoice-printarea"
             dir="rtl"
             style={{ padding: '28px 32px', fontFamily: 'Cairo, Tajawal, sans-serif', color: '#111' }}
