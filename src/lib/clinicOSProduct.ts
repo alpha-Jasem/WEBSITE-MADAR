@@ -57,8 +57,8 @@ export const getUsageMetrics = (packageType: PackageType): UsageMetric[] => {
 export const usagePercentage = ({ used, limit }: Pick<UsageMetric, 'used' | 'limit'>) =>
   limit <= 0 ? 0 : Math.min(100, Math.round((used / limit) * 100))
 
-export const getOverallUsage = (packageType: PackageType) =>
-  Math.max(...getUsageMetrics(packageType).map(usagePercentage))
+export const getOverallUsage = (packageType: PackageType, metrics = getUsageMetrics(packageType)) =>
+  Math.max(0, ...metrics.map(usagePercentage))
 
 export const getAccountStatus = (packageType: PackageType): ClinicAccountStatus => {
   const usage = getOverallUsage(packageType)

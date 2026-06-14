@@ -1,25 +1,131 @@
-import { useState } from 'react'
-import { AlertTriangle, BarChart3, Bell, Building2, CalendarClock, FileClock, LayoutDashboard, Settings, SlidersHorizontal, TrendingUp, UsersRound, Wrench } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { AlertTriangle, Building2, CalendarClock, CheckCircle2, Loader2, RefreshCw, TrendingUp, UsersRound, Wrench } from 'lucide-react'
+import { supabase } from '../../../lib/supabase'
+import { CLINIC_PLANS } from '../../../lib/clinicOSProduct'
+import type { PackageType } from '../../../types/clinicOS'
 import '../dashboard/clinic-ai-dashboard.css'
 
-const clients = [
-  {name:'عيادة نور للأسنان',plan:'AI Receptionist + Smart Calls',status:'نشط',usage:68,end:'12 يونيو 2027',lost:13,calls:18},
-  {name:'مجمع لمسة الطبي',plan:'WhatsApp AI Receptionist',status:'اقتربت من الحد',usage:92,end:'3 أكتوبر 2026',lost:21,calls:27},
-  {name:'عيادات صفاء',plan:'WhatsApp AI Receptionist',status:'متوقف مؤقتاً',usage:100,end:'18 أغسطس 2026',lost:9,calls:15},
-  {name:'مركز الحياة الطبي',plan:'AI Receptionist + Smart Calls',status:'نشط',usage:54,end:'29 ديسمبر 2026',lost:6,calls:8},
-]
-
-export const ClinicOSAdmin = ({embedded=false}:{embedded?:boolean}) => {
-  const [section,setSection] = useState('الرئيسية')
-  const menu = [['الرئيسية',LayoutDashboard],['كل العملاء',UsersRound],['الاشتراكات والاستخدام',BarChart3],['فرص الترقية',TrendingUp],['التنبيهات',Bell],['السجلات',FileClock],['إعدادات الباقات',Settings],['حدود الاستخدام',SlidersHorizontal],['إدارة التفعيل والتجديد',Wrench],['الإعدادات',Settings]] as const
-  const content = section==='الرئيسية'?<AdminHome/>:<AdminTable section={section}/>
-  if(embedded) return <div className="clinic-ai-page"><div className="clinic-ai-header"><div><h1>لوحة إدارة Clinic OS</h1><p>متابعة العملاء، الاستخدام، الاشتراكات وفرص الترقية من مكان واحد.</p></div><span className="clinic-status-pill">جميع الأنظمة تعمل</span></div><div className="clinic-filter-row">{menu.slice(0,6).map(([label])=><button onClick={()=>setSection(label)} className={`clinic-filter ${section===label?'active':''}`} key={label}>{label}</button>)}</div>{content}</div>
-  return <div style={{minHeight:'100vh',display:'flex',direction:'rtl',background:'#f6f8fc'}}><aside style={{width:235,background:'#fff',borderLeft:'1px solid #e5e9f2',padding:12}}><div style={{display:'flex',alignItems:'center',gap:9,padding:'12px 8px 20px'}}><div style={{width:38,height:38,borderRadius:8,background:'#6557d9',display:'grid',placeItems:'center',color:'#fff'}}><Building2 size={19}/></div><div><strong style={{font:'900 13px Cairo'}}>إدارة Clinic OS</strong><div style={{font:'10px Tajawal',color:'#7a8699'}}>مالك المنصة</div></div></div>{menu.map(([label,Icon])=><button key={label} onClick={()=>setSection(label)} style={{width:'100%',display:'flex',alignItems:'center',gap:9,padding:'10px',marginBottom:3,borderRadius:7,border:'1px solid transparent',background:section===label?'#f0efff':'transparent',color:section===label?'#5146bd':'#566277',font:'700 11px Cairo',cursor:'pointer'}}><Icon size={15}/>{label}</button>)}</aside><main className="clinic-ai-page" style={{flex:1,padding:24,overflow:'auto'}}><div className="clinic-ai-header"><div><h1>{section}</h1><p>إدارة عملاء Clinic OS والخدمات الذكية يدوياً بدون بوابة دفع.</p></div></div>{content}</main></div>
+type UsageRow = {
+  whatsapp_conversations_used?: number
+  ai_messages_used?: number
+  smart_call_minutes_used?: number
+  appointment_reminders_used?: number
 }
 
-const AdminHome=()=> <><div className="clinic-kpi-grid"><AdminMetric label="إجمالي العملاء" value="24" icon={UsersRound}/><AdminMetric label="العملاء النشطون" value="19" icon={Building2}/><AdminMetric label="اقتربوا من الحد" value="3" icon={AlertTriangle}/><AdminMetric label="متوقفون مؤقتاً" value="2" icon={Wrench}/><AdminMetric label="تنتهي قريباً" value="4" icon={CalendarClock}/><AdminMetric label="فرص ترقية" value="7" icon={TrendingUp}/></div><AdminTable section="آخر العملاء"/></>
+type LimitsRow = {
+  whatsapp_conversations_limit?: number
+  ai_messages_limit?: number
+  smart_call_minutes_limit?: number
+  appointment_reminders_limit?: number
+}
 
-const AdminMetric=({label,value,icon:Icon}:{label:string;value:string;icon:typeof UsersRound})=><div className="clinic-card clinic-kpi"><div className="clinic-kpi-icon" style={{background:'#f0efff',color:'#6557d9'}}><Icon size={18}/></div><div className="clinic-kpi-label">{label}</div><div className="clinic-kpi-value">{value}</div><div className="clinic-kpi-description">تحديث مباشر</div></div>
+type ClinicClient = {
+  id: string
+  name: string
+  owner_name?: string
+  owner_email?: string
+  owner_phone?: string
+  city?: string
+  status: string
+  clinic_plan_code?: PackageType
+  subscription_status?: string
+  subscription_start_date?: string
+  subscription_end_date?: string
+  usage?: UsageRow | null
+  limits?: LimitsRow | null
+}
 
-const AdminTable=({section}:{section:string})=><div className="clinic-card clinic-section"><div className="clinic-section-head"><div><h2>{section}</h2><p>استخدم الإجراءات اليدوية لإدارة التفعيل والتجديد والحدود.</p></div><button className="clinic-action">إضافة عميل</button></div><div className="clinic-list">{clients.map(c=><div className="clinic-list-row" key={c.name} style={{gridTemplateColumns:'1.2fr 1.4fr .7fr 1fr .8fr auto'}}><div><strong>{c.name}</strong><div className="clinic-muted">عيادة</div></div><div>{c.plan}</div><span className={`clinic-badge ${c.status==='نشط'?'success':c.usage>=100?'danger':'warning'}`}>{c.status}</span><div><div className="clinic-usage-meta"><span>الاستخدام</span><strong>{c.usage}%</strong></div><div className="clinic-progress"><span style={{width:`${c.usage}%`,background:c.usage>=100?'#d44b5c':c.usage>=80?'#c77a18':'#0f9f78'}}/></div></div><div className="clinic-muted">{c.end}</div><button className="clinic-action secondary">عرض التفاصيل</button></div>)}</div></div>
+const planName = (client: ClinicClient) => client.subscription_status === 'active'
+  ? CLINIC_PLANS[client.clinic_plan_code || 'whatsapp'].name
+  : 'Free'
 
+const usagePercent = (client: ClinicClient) => {
+  if (!client.usage || !client.limits) return 0
+  const rows = [
+    [client.usage.whatsapp_conversations_used, client.limits.whatsapp_conversations_limit],
+    [client.usage.ai_messages_used, client.limits.ai_messages_limit],
+    [client.usage.smart_call_minutes_used, client.limits.smart_call_minutes_limit],
+    [client.usage.appointment_reminders_used, client.limits.appointment_reminders_limit],
+  ]
+  return Math.max(0, ...rows.map(([used = 0, limit = 0]) => limit ? Math.round((used / limit) * 100) : 0))
+}
+
+export const ClinicOSAdmin = ({ embedded = false }: { embedded?: boolean }) => {
+  const [clients, setClients] = useState<ClinicClient[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [activating, setActivating] = useState<string | null>(null)
+  const [selectedPlans, setSelectedPlans] = useState<Record<string, PackageType>>({})
+
+  const loadClients = useCallback(async () => {
+    setLoading(true)
+    setError('')
+    const { data, error: invokeError } = await supabase.functions.invoke('admin-ops', {
+      body: { action: 'clinic_clients' },
+    })
+    if (invokeError || data?.error) setError('تعذر تحميل حسابات العيادات. تأكد أن حسابك يملك صلاحية الإدارة.')
+    else setClients(data?.clients || [])
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { loadClients() }, [loadClients])
+
+  const activate = async (client: ClinicClient) => {
+    const planCode = selectedPlans[client.id] || client.clinic_plan_code || 'whatsapp'
+    setActivating(client.id)
+    setError('')
+    const { data, error: invokeError } = await supabase.functions.invoke('admin-ops', {
+      body: { action: 'activate_clinic_subscription', company_id: client.id, plan_code: planCode },
+    })
+    if (invokeError || data?.error) setError('تعذر تفعيل الاشتراك. لم يتم تغيير الحساب.')
+    else await loadClients()
+    setActivating(null)
+  }
+
+  const stats = useMemo(() => {
+    const active = clients.filter(client => client.subscription_status === 'active').length
+    const trial = clients.length - active
+    const nearLimit = clients.filter(client => usagePercent(client) >= 80).length
+    const expiring = clients.filter(client => client.subscription_end_date && new Date(client.subscription_end_date).getTime() - Date.now() < 30 * 86400000).length
+    return { active, trial, nearLimit, expiring }
+  }, [clients])
+
+  const body = <div className="clinic-ai-page">
+    <div className="clinic-ai-header">
+      <div><h1>اشتراكات Clinic OS</h1><p>فعّل الباقة والحدود ودورة الاستخدام للعميل بضغطة واحدة بعد تأكيد التحويل.</p></div>
+      <button className="clinic-action secondary" onClick={loadClients} disabled={loading}><RefreshCw size={15}/>تحديث</button>
+    </div>
+    <div className="clinic-kpi-grid">
+      <AdminMetric label="إجمالي العيادات" value={clients.length} icon={UsersRound}/>
+      <AdminMetric label="اشتراكات نشطة" value={stats.active} icon={CheckCircle2}/>
+      <AdminMetric label="حسابات Free" value={stats.trial} icon={Building2}/>
+      <AdminMetric label="اقتربت من الحد" value={stats.nearLimit} icon={AlertTriangle}/>
+      <AdminMetric label="تنتهي خلال 30 يوماً" value={stats.expiring} icon={CalendarClock}/>
+      <AdminMetric label="فرص الترقية" value={clients.filter(client => client.subscription_status === 'active' && client.clinic_plan_code === 'whatsapp').length} icon={TrendingUp}/>
+    </div>
+    {error && <div className="clinic-note" style={{ color: '#b93446', marginBottom: 14 }}>{error}</div>}
+    <div className="clinic-card clinic-section">
+      <div className="clinic-section-head"><div><h2>إدارة التفعيل والتجديد</h2><p>كل تفعيل يضبط سنة الاشتراك، دورة الشهر، حدود الاستخدام، وسجل التدقيق تلقائياً.</p></div></div>
+      {loading ? <div className="clinic-empty-state"><Loader2 className="spin" size={24}/><strong>جاري تحميل الحسابات</strong></div> :
+      <div className="clinic-list">{clients.map(client => {
+        const active = client.subscription_status === 'active' && client.status !== 'trial'
+        const usage = usagePercent(client)
+        return <div className="clinic-list-row clinic-admin-client" key={client.id} style={{ gridTemplateColumns: '1.25fr 1fr .7fr .85fr .9fr auto' }}>
+          <div><strong>{client.name}</strong><div className="clinic-muted">{client.owner_email || client.owner_phone || client.city || 'بدون بيانات تواصل'}</div></div>
+          <div><strong>{planName(client)}</strong><div className="clinic-muted">{client.subscription_end_date ? `حتى ${client.subscription_end_date}` : 'لم يبدأ الاشتراك'}</div></div>
+          <span className={`clinic-badge ${active ? 'success' : 'warning'}`}>{active ? 'نشط' : 'Free'}</span>
+          <div><div className="clinic-usage-meta"><span>الاستخدام</span><strong>{usage}%</strong></div><div className="clinic-progress"><span style={{ width: `${usage}%`, background: usage >= 100 ? '#d44b5c' : usage >= 80 ? '#c77a18' : '#0f9f78' }}/></div></div>
+          <select className="clinic-select" value={selectedPlans[client.id] || client.clinic_plan_code || 'whatsapp'} onChange={event => setSelectedPlans(current => ({ ...current, [client.id]: event.target.value as PackageType }))}>
+            <option value="whatsapp">WhatsApp AI</option><option value="ai_pro">AI + Smart Calls</option>
+          </select>
+          <button className="clinic-action" onClick={() => activate(client)} disabled={activating === client.id}>{activating === client.id ? <><Loader2 className="spin" size={14}/>جاري التفعيل</> : <><Wrench size={14}/>{active ? 'تحديث الباقة' : 'تفعيل الاشتراك'}</>}</button>
+        </div>
+      })}{!clients.length && <div className="clinic-empty-state"><Building2 size={22}/><strong>لا توجد حسابات عيادات</strong></div>}</div>}
+    </div>
+  </div>
+
+  if (embedded) return body
+  return <div style={{ minHeight: '100vh', direction: 'rtl', background: '#f6f8fc', padding: 24 }}>{body}</div>
+}
+
+const AdminMetric = ({ label, value, icon: Icon }: { label: string; value: number; icon: typeof UsersRound }) => <div className="clinic-card clinic-kpi"><div className="clinic-kpi-icon" style={{ background: '#f0efff', color: '#6557d9' }}><Icon size={18}/></div><div className="clinic-kpi-label">{label}</div><div className="clinic-kpi-value">{value}</div><div className="clinic-kpi-description">بيانات مباشرة</div></div>

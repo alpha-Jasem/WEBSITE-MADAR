@@ -118,6 +118,53 @@ Deno.serve(async (req) => {
 
   const action = String(payload.action || 'overview')
 
+  if (action === 'clinic_clients') {
+    const { data: companies, error } = await service
+      .from('companies')
+      .select('id, name, owner_name, owner_email, owner_phone, city, status, clinic_plan_code, subscription_status, subscription_start_date, subscription_end_date, monthly_usage_cycle_start, monthly_usage_cycle_end, created_at')
+      .or('industry.eq.clinic,business_type.eq.clinic')
+      .order('created_at', { ascending: false })
+
+    if (error) return json({ error: 'clinic_clients_failed', details: error.message }, 500)
+
+    const ids = (companies || []).map(company => company.id)
+    const [limitsResult, usageResult] = ids.length ? await Promise.all([
+      service.from('clinic_os_usage_limits').select('*').in('company_id', ids),
+      service.from('clinic_os_usage').select('*').in('company_id', ids).order('cycle_start', { ascending: false }),
+    ]) : [{ data: [] }, { data: [] }]
+
+    const limits = new Map((limitsResult.data || []).map(row => [row.company_id, row]))
+    const usage = new Map<string, Record<string, unknown>>()
+    for (const row of usageResult.data || []) {
+      if (!usage.has(row.company_id)) usage.set(row.company_id, row)
+    }
+
+    return json({
+      clients: (companies || []).map(company => ({
+        ...company,
+        limits: limits.get(company.id) || null,
+        usage: usage.get(company.id) || null,
+      })),
+    })
+  }
+
+  if (action === 'activate_clinic_subscription') {
+    const companyId = String(payload.company_id || '')
+    const planCode = String(payload.plan_code || '')
+    if (!companyId || !['whatsapp', 'ai_pro'].includes(planCode)) {
+      return json({ error: 'invalid_activation_request' }, 400)
+    }
+
+    const { data, error } = await service.rpc('admin_activate_clinic_subscription', {
+      p_company_id: companyId,
+      p_plan_code: planCode,
+      p_actor_id: userData.user.id,
+    })
+
+    if (error) return json({ error: 'activation_failed', details: error.message }, 500)
+    return json({ activated: true, subscription: data })
+  }
+
   if (action === 'overview') {
     const today = startOfToday()
     const month = startOfMonth()
