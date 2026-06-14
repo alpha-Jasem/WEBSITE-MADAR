@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
-import { User, Shield, Link2, Copy, Check, Mail, Loader2, MapPin, ClipboardList, Save, Users, Plus, Trash2, Eye, EyeOff, QrCode, ExternalLink, Image as ImageIcon, Building2, Car, FileText } from 'lucide-react'
+import { User, Shield, Link2, Copy, Check, Mail, Loader2, MapPin, Save, Users, Plus, Trash2, Eye, EyeOff, QrCode, ExternalLink, Image as ImageIcon, Building2, Car, FileText } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { getClientIndustryTemplate } from '../../../lib/clientIndustryTemplates'
-import { CarWashSetup } from './CarWashSetup'
 import { PLAN_LABELS } from '../../../lib/constants'
 import { getSelfCheckinSettings, getSelfCheckinUrl } from '../../../lib/selfCheckin'
 import { usePlanGate } from '../../../hooks/usePlanGate'
@@ -286,7 +285,6 @@ export const ClientSettings = () => {
   const CW_TABS: { key: SettingsTab; label: string; icon: typeof User }[] = [
     { key: 'account', label: 'الحساب',   icon: User      },
     { key: 'carwash', label: 'المغسلة',  icon: Car       },
-    { key: 'finance', label: 'المالية',  icon: ClipboardList },
     { key: 'print',   label: 'الطباعة',  icon: FileText  },
     { key: 'team',    label: 'الفريق',   icon: Users     },
   ]
@@ -527,15 +525,6 @@ export const ClientSettings = () => {
           {/* Launch checklist */}
           <CarWashLaunchChecklist compact />
         </div>
-      )}
-
-      {/* ═══ TAB: المالية والخدمات ════════════════════════════════════════════ */}
-      {isCarWash && tab === 'finance' && (
-        <CarWashSetup
-          visibleTabs={['services', 'vat', 'loyalty']}
-          title="المالية والخدمات"
-          description="الخدمات والأسعار، الضريبة، وبرنامج الولاء"
-        />
       )}
 
       {/* ═══ TAB: الطباعة والفاتورة ══════════════════════════════════════════ */}
