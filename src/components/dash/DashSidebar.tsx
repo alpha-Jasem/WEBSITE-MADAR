@@ -292,21 +292,28 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
             style={role === 'client' ? { cursor: 'pointer', userSelect: 'none' } : undefined}
           >
             {role === 'client' ? (
-              <div style={{ position: 'relative', width: 38, height: 38, flexShrink: 0 }}>
-                <svg width="38" height="38" style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}>
-                  <circle cx="19" cy="19" r="17" fill="none" stroke="#C8D5E8" strokeWidth="3" />
-                  <circle cx="19" cy="19" r="17" fill="none" stroke={ringColor} strokeWidth="3" opacity="0.18" />
-                  <circle cx="19" cy="19" r="17" fill="none" stroke={ringColor} strokeWidth="3"
-                    strokeDasharray={`${circumference}`}
-                    strokeDashoffset={`${circumference * (1 - maxPct / 100)}`}
-                    strokeLinecap="round"
-                    style={{ transition: 'stroke-dashoffset 0.5s ease, stroke 0.3s ease' }}
-                  />
-                </svg>
-                <div className="dash-user-avatar" style={{ width: 28, height: 28, position: 'absolute', inset: 5, fontSize: 13, lineHeight: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <>
+                {/* Desktop only: ring avatar */}
+                <div className="sidebar-ring-wrap" style={{ position: 'relative', width: 38, height: 38, flexShrink: 0 }}>
+                  <svg width="38" height="38" style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}>
+                    <circle cx="19" cy="19" r="17" fill="none" stroke="#C8D5E8" strokeWidth="3" />
+                    <circle cx="19" cy="19" r="17" fill="none" stroke={ringColor} strokeWidth="3" opacity="0.18" />
+                    <circle cx="19" cy="19" r="17" fill="none" stroke={ringColor} strokeWidth="3"
+                      strokeDasharray={`${circumference}`}
+                      strokeDashoffset={`${circumference * (1 - maxPct / 100)}`}
+                      strokeLinecap="round"
+                      style={{ transition: 'stroke-dashoffset 0.5s ease, stroke 0.3s ease' }}
+                    />
+                  </svg>
+                  <div className="dash-user-avatar" style={{ width: 28, height: 28, position: 'absolute', inset: 5, fontSize: 13, lineHeight: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {profile.isOwner ? (company?.owner_name?.[0] ?? 'A') : profile.name[0]}
+                  </div>
+                </div>
+                {/* Mobile only: plain avatar */}
+                <div className="sidebar-plain-avatar dash-user-avatar">
                   {profile.isOwner ? (company?.owner_name?.[0] ?? 'A') : profile.name[0]}
                 </div>
-              </div>
+              </>
             ) : (
               <div className="dash-user-avatar">
                 {profile.isOwner ? (company?.owner_name?.[0] ?? 'A') : profile.name[0]}

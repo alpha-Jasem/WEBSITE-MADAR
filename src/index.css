@@ -5843,6 +5843,16 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
   border-color: transparent;
 }
 
+/* Desktop: show ring, hide plain avatar */
+.sidebar-ring-wrap { display: block; }
+.sidebar-plain-avatar { display: none; }
+
+/* Mobile: hide ring (topbar has it), show plain avatar */
+@media (max-width: 768px) {
+  .sidebar-ring-wrap { display: none; }
+  .sidebar-plain-avatar { display: flex; }
+}
+
 .dash-shell-client .dash-logout-btn {
   color: var(--d-text3);
 }
