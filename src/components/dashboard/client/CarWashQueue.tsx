@@ -898,6 +898,15 @@ export const CarWashQueue = () => {
                       </p>
                     )}
 
+                    {(item.status === 'washing' || item.status === 'drying') && (() => {
+                      const mins = Math.floor((Date.now() - new Date(item.created_at).getTime()) / 60000)
+                      return mins >= 30 ? (
+                        <div className="mt-3 flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-tajawal" style={{ color: '#B91C1C', background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.25)' }}>
+                          <AlertTriangle size={13} className="flex-shrink-0" />
+                          <span>متأخرة {mins} دقيقة — تحقق من الموظف</span>
+                        </div>
+                      ) : null
+                    })()}
                     {workerRequiredId === item.id && (
                       <div className="mt-3 flex items-start gap-2 rounded-lg px-3 py-2 text-xs font-tajawal" style={{ color: '#B45309', background: '#FFFBEB', border: '1px solid #FCD34D70' }}>
                         <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
@@ -923,11 +932,18 @@ export const CarWashQueue = () => {
 
                 {cars.length === 0 && (
                   <div
-                    className="flex h-40 flex-col items-center justify-center rounded-xl text-center"
-                    style={{ background: '#FFFFFF', border: '1px dashed #CBD5E1' }}
+                    className="flex flex-col items-center justify-center rounded-xl text-center"
+                    style={{ background: '#FFFFFF', border: '1px dashed #CBD5E1', minHeight: 120, padding: '24px 16px' }}
                   >
                     <Car size={22} style={{ color: '#CBD5E1' }} />
-                    <p className="mt-2 text-sm font-tajawal" style={{ color: '#94A3B8' }}>لا توجد سيارات</p>
+                    <p className="mt-2 text-sm font-tajawal" style={{ color: '#94A3B8' }}>
+                      {lane.key === 'received' ? 'لا توجد سيارات في الانتظار' : 'لا توجد سيارات'}
+                    </p>
+                    {lane.key === 'received' && (
+                      <button onClick={openAdd} className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold font-tajawal" style={{ background: 'linear-gradient(135deg, #D9F99D, #34D399)', color: '#052e16' }}>
+                        <Plus size={13} /> أضف سيارة
+                      </button>
+                    )}
                   </div>
                 )}
                 {lane.key === 'delivered' && allCars.length > 5 && (

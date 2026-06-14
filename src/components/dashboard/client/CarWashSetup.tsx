@@ -1,13 +1,15 @@
 ﻿import { useEffect, useState } from 'react'
-import { Car, Clock, Star, Plus, Trash2, Check, Loader2, MapPin, Save, Receipt, QrCode, Copy, ExternalLink, FileText, Printer, type LucideIcon } from 'lucide-react'
+import { Car, Clock, Star, Plus, Trash2, Check, Loader2, MapPin, Save, Receipt, QrCode, Copy, ExternalLink, FileText, Printer, BarChart2, type LucideIcon } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
+import { usePlanGate } from '../../../hooks/usePlanGate'
+import { useDailyUsage } from '../../../hooks/useDailyUsage'
 import { logAudit } from '../../../lib/auditLog'
 import { getSelfCheckinUrl } from '../../../lib/selfCheckin'
 import { sanitizeDecimalInput, sanitizeNameText, toSafeNumber } from '../../../lib/formSanitizers'
 import type { CWService } from '../../../types'
 
-type SetupTab = 'services' | 'hours' | 'loyalty' | 'vat' | 'qr' | 'invoice' | 'print'
+type SetupTab = 'services' | 'hours' | 'loyalty' | 'vat' | 'qr' | 'invoice' | 'print' | 'plan'
 type CarWashSetupProps = {
   title?: string
   description?: string
@@ -41,6 +43,8 @@ const SECTION_STYLE = {
 
 export function CarWashSetup({ title = 'إعداد المغسلة', description = 'الخدمات، أوقات العمل، الولاء، والضريبة', visibleTabs }: CarWashSetupProps = {}) {
   const { companyId, company, loading: authLoading } = useClientCompany()
+  const { planLabel } = usePlanGate()
+  const dailyUsage = useDailyUsage(companyId, planLabel)
   const SAUDI_VAT_RATE = 15
 
   const [tab, setTab] = useState<SetupTab>(visibleTabs?.[0] ?? 'services')
@@ -234,12 +238,13 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
   }, [visibleTabs, tab])
 
   const ALL_TABS: { key: SetupTab; label: string; icon: LucideIcon }[] = [
-    { key: 'services', label: 'الخدمات',     icon: Car      },
-    { key: 'loyalty',  label: 'الولاء',       icon: Star     },
-    { key: 'vat',      label: 'الضريبة',      icon: Receipt  },
-    { key: 'invoice',  label: 'الفاتورة',     icon: FileText },
-    { key: 'print',    label: 'الطباعة',      icon: Printer  },
-    { key: 'qr',       label: 'رمز QR',       icon: QrCode   },
+    { key: 'services', label: 'الخدمات',        icon: Car       },
+    { key: 'loyalty',  label: 'الولاء',          icon: Star      },
+    { key: 'vat',      label: 'الضريبة',         icon: Receipt   },
+    { key: 'invoice',  label: 'الفاتورة',        icon: FileText  },
+    { key: 'print',    label: 'الطباعة',         icon: Printer   },
+    { key: 'qr',       label: 'رمز QR',          icon: QrCode    },
+    { key: 'plan',     label: 'الباقة والاستخدام', icon: BarChart2 },
   ]
   const TABS = visibleTabs?.length ? ALL_TABS.filter(t => visibleTabs.includes(t.key)) : ALL_TABS
 
@@ -700,6 +705,88 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
           </div>
         </div>
       )}
+
+      {/* Plan & Usage Tab */}
+      {tab === 'plan' && (() => {
+        const metrics = [
+          { label: 'السيارات', used: dailyUsage.cars, limit: dailyUsage.limits.cars, pct: dailyUsage.carsPct, color: '#0099CC' },
+          { label: 'QR', used: dailyUsage.qr, limit: dailyUsage.limits.qr, pct: dailyUsage.qrPct, color: '#7C3AED' },
+          { label: 'الشاشة', used: dailyUsage.screenUpdates, limit: dailyUsage.limits.screenUpdates, pct: dailyUsage.screenPct, color: '#F59E0B' },
+          { label: 'واتساب', used: dailyUsage.whatsapp, limit: dailyUsage.limits.whatsapp, pct: dailyUsage.whatsappPct, color: '#10B981' },
+        ]
+        const checklist = [
+          { label: 'خدمة واحدة على الأقل مضافة', done: services.length > 0 },
+          { label: 'الضريبة محددة (مفعّلة أو معطّلة)', done: true },
+          { label: 'QR code تم إعداده', done: !!companyId },
+          { label: 'الفاتورة تحتوي اسم المغسلة', done: !!(company?.name) },
+          { label: 'هدف الإيراد الشهري محدد', done: monthlyTarget > 0 },
+        ]
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Plan card */}
+            <div style={SECTION_STYLE}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                <BarChart2 size={15} color="#22D3EE" />
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>باقتك الحالية</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(34,211,238,0.06)', border: '1px solid rgba(34,211,238,0.18)' }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(34,211,238,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <BarChart2 size={22} color="#22D3EE" />
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>{planLabel}</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>يتم إعادة تصفير الاستخدام يومياً عند 12:00 صباحاً</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Daily usage */}
+            <div style={SECTION_STYLE}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 16 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>استخدام اليوم</span>
+                <span style={{ fontSize: 13, fontWeight: 900, color: dailyUsage.ringColor, fontFamily: 'Sora, sans-serif' }}>{dailyUsage.maxPct}%</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {metrics.map(m => (
+                  <div key={m.label}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>{m.label}</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', fontFamily: 'Sora, sans-serif' }}>{m.used} / {m.limit}</span>
+                    </div>
+                    <div style={{ height: 6, borderRadius: 99, background: '#F1F5F9', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', borderRadius: 99, background: m.color, width: `${Math.min(m.pct, 100)}%`, transition: 'width 0.4s ease' }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Readiness checklist */}
+            <div style={SECTION_STYLE}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                <Check size={15} color="#10B981" />
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>جاهزية الحساب للتشغيل</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {checklist.map(item => (
+                  <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, background: item.done ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.04)', border: `1px solid ${item.done ? 'rgba(16,185,129,0.18)' : 'rgba(239,68,68,0.15)'}` }}>
+                    <div style={{ width: 22, height: 22, borderRadius: 99, display: 'flex', alignItems: 'center', justifyContent: 'center', background: item.done ? '#10B981' : '#EF4444', flexShrink: 0 }}>
+                      <Check size={12} color="#fff" />
+                    </div>
+                    <span style={{ fontSize: 13, fontFamily: 'Tajawal, sans-serif', color: item.done ? '#065F46' : '#7F1D1D' }}>{item.label}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 10, background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.14)' }}>
+                <p style={{ margin: 0, fontSize: 12, color: '#0369A1', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.7 }}>
+                  {checklist.filter(c => c.done).length} من {checklist.length} عناصر جاهزية مكتملة.
+                  {checklist.filter(c => !c.done).length > 0 ? ' أكمل باقي العناصر لضمان تجربة تشغيل كاملة.' : ' مغسلتك جاهزة للتشغيل الكامل! ✓'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
     </div>
   )
