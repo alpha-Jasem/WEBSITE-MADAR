@@ -177,9 +177,9 @@ function BreakdownAreaChart({ data, emptyMsg, emptyLink }: { data: { label: stri
         </defs>
         <CartesianGrid strokeDasharray="4 4" stroke="#EDE9FE" vertical={false} />
         <XAxis dataKey="label" tick={{ fill: '#64748B', fontSize: 10, fontFamily: 'Tajawal' }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fill: '#64748B', fontSize: 10, fontFamily: 'Sora' }} axisLine={false} tickLine={false} tickFormatter={v => v > 0 ? v.toLocaleString('ar-SA') : '0'} />
+        <YAxis tick={{ fill: '#64748B', fontSize: 10, fontFamily: 'Sora' }} axisLine={false} tickLine={false} tickFormatter={v => v > 0 ? v.toLocaleString('en-US') : '0'} />
         <Tooltip
-          formatter={(v: number) => [`${v.toLocaleString('ar-SA')} ر.س`, 'الإيراد']}
+          formatter={(v: number) => [`${v.toLocaleString('en-US')} ر.س`, 'الإيراد']}
           contentStyle={{ fontFamily: 'Tajawal,sans-serif', fontSize: 12, borderRadius: 8, border: '1px solid #EDE9FE' }}
         />
         <Area type="monotone" dataKey="value" name="revenue" stroke="#7C3AED" strokeWidth={2.5} fill="url(#bdGrad)"
@@ -510,7 +510,7 @@ export function CarWashOverview() {
       const rows = [
         ['زيارات اليوم', String(stats.todayVisits)],
         ['زيارات هذا الشهر', String(stats.monthVisits)],
-        ['الإيرادات (ر.س)', stats.revenue > 0 ? stats.revenue.toLocaleString('ar-SA') : '—'],
+        ['الإيرادات (ر.س)', stats.revenue > 0 ? stats.revenue.toLocaleString('en-US') : '—'],
         ['مكافآت الولاء', String(stats.milestones)],
         ['إجمالي العملاء', String(customers.length)],
       ]

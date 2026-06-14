@@ -27,6 +27,7 @@ export function sendCWInvoice(payload: {
   payment_method: string
   date: string
   plate?: string | null
+  review_url?: string | null
 }) {
   // URL: set up your n8n workflow and replace 'cw-invoice' with your path
   void post('cw-invoice', payload as unknown as Record<string, unknown>)

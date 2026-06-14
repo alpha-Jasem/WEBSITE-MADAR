@@ -189,7 +189,7 @@ export const CarWashDailyClosing = () => {
   const saveCashMovement = async () => {
     if (!companyId || !cashAmount || Number(cashAmount) <= 0 || savingCash) return
     setSavingCash(true)
-    await supabase.from('cw_expenses').insert({
+    const { error } = await supabase.from('cw_expenses').insert({
       company_id: companyId,
       amount: Number(cashAmount),
       category: cashType,
@@ -197,6 +197,7 @@ export const CarWashDailyClosing = () => {
       expense_date: today,
     })
     setSavingCash(false)
+    if (error) { alert('خطأ في الحفظ: ' + error.message); return }
     setShowCashModal(false)
     setCashAmount('')
     setCashNotes('')

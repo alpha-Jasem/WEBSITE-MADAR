@@ -429,7 +429,7 @@ export function CarWashReports() {
       </div>
 
       <div className="cw-report-card-grid">
-        <StatCard icon={DollarSign} label="إجمالي الإيرادات" value={stats.revenue > 0 ? stats.revenue.toLocaleString('ar-SA') : '0'} sub="حسب الفترة المحددة" color="#10B981" trend="فعلي" />
+        <StatCard icon={DollarSign} label="إجمالي الإيرادات" value={stats.revenue > 0 ? stats.revenue.toLocaleString('en-US') : '0'} sub="حسب الفترة المحددة" color="#10B981" trend="فعلي" />
         <StatCard icon={Car} label="عدد السيارات" value={stats.monthVisits} sub="زيارة مسجلة" color="#0B63F6" trend="فعلي" />
         <StatCard icon={CalendarClock} label="متوسط الفاتورة" value={stats.avgInvoice || 0} sub="ر.س" color="#7C3AED" trend="محسوب" />
         <StatCard icon={Users} label="العملاء الجدد" value={Math.max(customers.length - stats.returningCustomers, 0)} sub="من سجل العملاء" color="#F97316" trend="فعلي" />
@@ -467,7 +467,7 @@ export function CarWashReports() {
             </ResponsiveContainer>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ textAlign: 'center', marginBottom: 2 }}>
-                <strong style={{ display: 'block', color: '#0D1B3E', fontSize: 26, fontWeight: 950, fontFamily: 'Sora, sans-serif' }}>{stats.revenue.toLocaleString('ar-SA')}</strong>
+                <strong style={{ display: 'block', color: '#0D1B3E', fontSize: 26, fontWeight: 950, fontFamily: 'Sora, sans-serif' }}>{stats.revenue.toLocaleString('en-US')}</strong>
                 <span style={{ color: '#64748B', fontSize: 12, fontFamily: 'Tajawal, sans-serif' }}>إجمالي الإيرادات</span>
               </div>
               {stats.revenueServices.slice(0, 5).map((item, i) => (
@@ -483,7 +483,7 @@ export function CarWashReports() {
 
         <SectionCard title="ملخص الأداء" icon={BarChart3}>
           {[
-            { icon: DollarSign, value: stats.revenue.toLocaleString('ar-SA'), trend: 'إيراد', color: '#10B981' },
+            { icon: DollarSign, value: stats.revenue.toLocaleString('en-US'), trend: 'إيراد', color: '#10B981' },
             { icon: Car, value: stats.monthVisits, trend: 'سيارات', color: '#0B63F6' },
             { icon: Calendar, value: stats.avgInvoice || 0, trend: 'فاتورة', color: '#7C3AED' },
             { icon: Users, value: customers.length, trend: 'عملاء', color: '#F97316' },

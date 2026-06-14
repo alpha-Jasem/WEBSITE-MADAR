@@ -74,7 +74,7 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
   const { maxPct, ringColor } = dailyUsage
   const circumference = 2 * Math.PI * 17
   const trialEndsAt = (company as any)?.trial_ends_at ?? company?.plan_reset_at
-  const trialDaysLeft = role === 'client' && company?.status === 'trial' && trialEndsAt
+  const trialDaysLeft = role === 'client' && company?.status === 'trial' && plan === 'starter' && trialEndsAt
     ? Math.max(0, Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
     : null
 

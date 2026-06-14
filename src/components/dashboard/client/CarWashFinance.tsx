@@ -1,10 +1,9 @@
 ﻿import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Plus, X, Loader2, TrendingUp, TrendingDown, Wallet, Users, DollarSign, ClipboardCheck, FileDown, Pencil, Save, ShoppingCart } from 'lucide-react'
+import { Plus, X, Loader2, TrendingUp, TrendingDown, Wallet, Users, DollarSign, FileDown, Pencil, Save, ShoppingCart } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
-import { CarWashDailyClosing } from './CarWashDailyClosing'
 import { CarWashSetup } from './CarWashSetup'
 import { FeatureLock } from '../../dash/FeatureLock'
 import { logAudit } from '../../../lib/auditLog'
@@ -434,7 +433,6 @@ export const CarWashFinance = () => {
           { key: 'pos',      label: 'شاشة البيع',        icon: ShoppingCart },
           { key: 'finance',  label: 'تحليل مالي',          icon: Wallet },
           { key: 'expenses', label: 'المصاريف',           icon: TrendingDown },
-          { key: 'closing',  label: 'إغلاق اليوم',       icon: ClipboardCheck },
           { key: 'services', label: 'الخدمات والضريبة',  icon: DollarSign },
         ].map(({ key, label, icon: Icon }) => (
           <button key={key} onClick={() => selectTab(key as typeof tab)}
@@ -445,11 +443,11 @@ export const CarWashFinance = () => {
         ))}
       </div>
 
-      {tab === 'pos' ? <CarWashPOS /> : tab === 'closing' ? <CarWashDailyClosing /> : tab === 'expenses' ? <ExpensesTab companyId={companyId} company={company} can={can} planLabel={planLabel} /> : tab === 'services' ? (
+      {tab === 'pos' ? <CarWashPOS /> : tab === 'expenses' ? <ExpensesTab companyId={companyId} company={company} can={can} planLabel={planLabel} /> : tab === 'services' ? (
         <CarWashSetup
-          title="الخدمات والضريبة"
-          description="عدّل أسعار الخدمات النهائية التي يدفعها العميل، وتأكد أن VAT محسوبة بنفس طريقة المالية."
-          visibleTabs={['services', 'vat']}
+          title="الخدمات والضريبة والولاء"
+          description="عدّل أسعار الخدمات النهائية، ضريبة القيمة المضافة، وإعدادات برنامج الولاء."
+          visibleTabs={['services', 'loyalty', 'vat']}
         />
       ) : <>
       <ClientPageHeader

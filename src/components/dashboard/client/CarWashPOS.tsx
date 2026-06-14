@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Search, Plus, X, User, RefreshCw, Trash2, ShoppingCart, Loader2, Receipt, Copy, FileDown, Printer } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { calcVAT } from '../../../lib/vatUtils'
@@ -7,9 +7,10 @@ import type { CWService, CWWorker } from '../../../types'
 import { logAudit } from '../../../lib/auditLog'
 import { downloadCSV, formatDateForCSV } from '../../../lib/exportUtils'
 import { CarWashInvoicePrint, type InvoiceData } from './CarWashInvoicePrint'
+import { CarWashDailyClosing } from './CarWashDailyClosing'
 import { sendCWInvoice } from '../../../lib/n8nCarWash'
 
-type POSTab = 'pos' | 'invoices'
+type POSTab = 'pos' | 'invoices' | 'closing'
 type PM    = 'cash' | 'mada' | 'visa'
 
 interface CartItem { id: string; name: string; price: number; qty: number }
@@ -75,12 +76,23 @@ export function CarWashPOS() {
   const [invSearch,    setInvSearch]    = useState('')
   const [invPayFilter, setInvPayFilter] = useState('all')
 
-  /* ── customer modal ── */
+  /* ── customer picker ── */
   const [showCust,    setShowCust]    = useState(false)
   const [custSearch,  setCustSearch]  = useState('')
   const [showNewCust, setShowNewCust] = useState(false)
   const [newCust,     setNewCust]     = useState({ name: '', phone: '' })
   const [savingCust,  setSavingCust]  = useState(false)
+  const custDropRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!showCust) return
+    const handler = (e: MouseEvent) => {
+      if (custDropRef.current && !custDropRef.current.contains(e.target as Node)) {
+        setShowCust(false); setShowNewCust(false); setCustSearch('')
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showCust])
 
   /* ── load base data ── */
   useEffect(() => {
@@ -294,6 +306,7 @@ export function CarWashPOS() {
         {([
           { key: 'pos',      label: 'شاشة البيع' },
           { key: 'invoices', label: 'قائمة الفواتير' },
+          { key: 'closing',  label: 'إغلاق اليوم' },
         ] as const).map(t => (
           <button key={t.key} onClick={() => setPosTab(t.key)}
             style={{
@@ -328,15 +341,91 @@ export function CarWashPOS() {
               {workers.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
             </select>
           )}
-          <button style={actionBtn(!!customer)} onClick={() => setShowCust(true)}>
-            <User size={13} />{customer ? customer.name : 'العميل'}
-            {customer && (
-              <span
-                onClick={e => { e.stopPropagation(); setCustomer(null); setPlate('') }}
-                style={{ marginRight: 2, fontSize: 11, opacity: 0.6 }}
-              >✕</span>
+          <div ref={custDropRef} style={{ position: 'relative' }}>
+            <button style={actionBtn(!!customer)} onClick={() => setShowCust(v => !v)}>
+              <User size={13} />{customer ? customer.name : 'العميل'}
+              {customer && (
+                <span
+                  onClick={e => { e.stopPropagation(); setCustomer(null); setPlate('') }}
+                  style={{ marginRight: 2, fontSize: 11, opacity: 0.6 }}
+                >✕</span>
+              )}
+            </button>
+
+            {/* ── Customer picker popover ── */}
+            {showCust && !showNewCust && (
+              <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 9999, width: 420, background: '#FFF', borderRadius: 14, boxShadow: '0 8px 40px rgba(0,0,0,0.18)', overflow: 'hidden', border: '1px solid #E5E7EB' }}>
+                {/* Search row */}
+                <div style={{ display: 'flex', gap: 8, padding: '10px 10px 8px', borderBottom: '1px solid #F0F0F0' }}>
+                  <button onClick={() => setShowNewCust(true)}
+                    style={{ width: 44, height: 44, borderRadius: 10, border: 'none', background: '#0EA5E9', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Plus size={22} />
+                  </button>
+                  <div style={{ flex: 1, position: 'relative' }}>
+                    <Search size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} />
+                    <input autoFocus value={custSearch} onChange={e => setCustSearch(e.target.value)}
+                      placeholder="اسم العميل أو رقم هاتفه أو رمزه"
+                      style={{ width: '100%', height: 44, padding: '0 36px 0 12px', borderRadius: 10, border: '1px solid #E5E7EB', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                </div>
+                {/* Column headers */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', padding: '5px 14px', background: '#F8FAFC', borderBottom: '1px solid #F0F0F0' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', fontFamily: 'Tajawal, sans-serif' }}>الإسم / الكود</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', fontFamily: 'Tajawal, sans-serif' }}>رقم الهاتف</span>
+                </div>
+                {/* Customer rows */}
+                <div style={{ maxHeight: 280, overflowY: 'auto' }}>
+                  {filtCusts.length === 0 ? (
+                    <div style={{ padding: 24, textAlign: 'center', color: '#9CA3AF', fontFamily: 'Tajawal, sans-serif', fontSize: 13 }}>
+                      لا يوجد عملاء — اضغط + لإضافة جديد
+                    </div>
+                  ) : filtCusts.map(c => (
+                    <button key={c.id} onClick={() => { setCustomer(c); if (c.plate) setPlate(c.plate); closeCust() }}
+                      style={{ width: '100%', padding: '9px 14px', display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'center', border: 'none', borderBottom: '1px solid #F9FAFB', background: 'transparent', cursor: 'pointer', textAlign: 'right' }}>
+                      <div>
+                        <p style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: '#111827', fontFamily: 'Tajawal, sans-serif' }}>{c.name}</p>
+                        {c.plate && <p style={{ margin: '1px 0 0', fontSize: 11, color: '#9CA3AF', fontFamily: 'monospace' }}>{c.plate}</p>}
+                      </div>
+                      <span style={{ fontSize: 12.5, color: '#6B7280', fontFamily: 'monospace', direction: 'ltr', whiteSpace: 'nowrap' }}>{c.phone}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
-          </button>
+
+            {/* ── New customer form popover ── */}
+            {showCust && showNewCust && (
+              <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 9999, width: 360, background: '#FFF', borderRadius: 14, boxShadow: '0 8px 40px rgba(0,0,0,0.18)', border: '1px solid #E5E7EB', padding: '16px 18px 18px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                  <h3 style={{ margin: 0, fontSize: 15, fontWeight: 900, fontFamily: 'Cairo, sans-serif', color: '#111827' }}>إضافة عميل جديد</h3>
+                  <button onClick={() => setShowNewCust(false)} style={iconBtn()}><X size={14} /></button>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#6B7280', fontFamily: 'Tajawal, sans-serif', marginBottom: 4 }}>اسم العميل *</label>
+                    <input autoFocus value={newCust.name} onChange={e => setNewCust(p => ({ ...p, name: e.target.value }))} dir="rtl"
+                      style={{ width: '100%', padding: '8px 11px', borderRadius: 9, border: '1px solid #E5E7EB', fontSize: 12.5, fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#6B7280', fontFamily: 'Tajawal, sans-serif', marginBottom: 4 }}>رقم الجوال *</label>
+                    <div style={{ display: 'flex', gap: 7 }}>
+                      <div style={{ padding: '8px 11px', borderRadius: 9, border: '1px solid #E5E7EB', background: '#F9FAFB', fontSize: 12.5, fontFamily: 'monospace', color: '#6B7280', flexShrink: 0 }}>🇸🇦 +966</div>
+                      <input value={newCust.phone} onChange={e => setNewCust(p => ({ ...p, phone: e.target.value }))} dir="ltr" inputMode="numeric" placeholder="5XXXXXXXX"
+                        style={{ flex: 1, padding: '8px 11px', borderRadius: 9, border: '1px solid #E5E7EB', fontSize: 12.5, fontFamily: 'monospace', outline: 'none' }} />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 7, marginTop: 4 }}>
+                    <button onClick={addNewCustomer} disabled={!newCust.name.trim() || !newCust.phone.trim() || savingCust}
+                      style={{ flex: 1, padding: '10px 0', borderRadius: 9, border: 'none', background: '#0EA5A5', color: '#fff', fontSize: 13.5, fontWeight: 900, fontFamily: 'Cairo, sans-serif', cursor: 'pointer', opacity: (!newCust.name.trim() || !newCust.phone.trim()) ? 0.5 : 1 }}>
+                      {savingCust ? 'جاري الحفظ...' : 'إضافة'}
+                    </button>
+                    <button onClick={() => setShowNewCust(false)}
+                      style={{ padding: '10px 18px', borderRadius: 9, border: '1px solid #E5E7EB', background: '#F9FAFB', color: '#374151', fontSize: 13, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer' }}>رجوع</button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* POS Body */}
@@ -637,80 +726,10 @@ export function CarWashPOS() {
         </div>
       )}
 
-      {/* ════════════════ CUSTOMER MODAL ════════════════ */}
-      {showCust && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={closeCust}>
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(15,23,42,0.35)', backdropFilter: 'blur(3px)' }} />
-          <div style={{ position: 'relative', width: 480, maxWidth: '95vw', background: '#FFFFFF', borderRadius: 18, boxShadow: '0 20px 60px rgba(0,0,0,0.12)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
-
-            {!showNewCust ? <>
-              <div style={{ padding: '18px 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <h2 style={{ margin: 0, fontSize: 17, fontWeight: 900, fontFamily: 'Cairo, sans-serif', color: '#111827' }}>اختيار العميل</h2>
-                <button onClick={closeCust} style={iconBtn()}><X size={14} /></button>
-              </div>
-              <div style={{ padding: '12px 20px', display: 'flex', gap: 8 }}>
-                <div style={{ flex: 1, position: 'relative' }}>
-                  <Search size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} />
-                  <input autoFocus value={custSearch} onChange={e => setCustSearch(e.target.value)}
-                    placeholder="اسم العميل أو رقم جواله"
-                    style={{ width: '100%', padding: '9px 32px 9px 12px', borderRadius: 9, border: '1px solid #E5E7EB', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
-                </div>
-                <button onClick={() => setShowNewCust(true)}
-                  style={{ width: 38, height: 38, flexShrink: 0, borderRadius: 9, border: 'none', background: '#0EA5A5', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Plus size={18} />
-                </button>
-              </div>
-              <div style={{ maxHeight: 340, overflowY: 'auto', borderTop: '1px solid #F3F4F6' }}>
-                {filtCusts.length === 0 ? (
-                  <div style={{ padding: 28, textAlign: 'center', color: '#9CA3AF', fontFamily: 'Tajawal, sans-serif', fontSize: 13 }}>
-                    لا يوجد عملاء مطابقون — اضغط + لإضافة جديد
-                  </div>
-                ) : filtCusts.map(c => (
-                  <button key={c.id} onClick={() => { setCustomer(c); if (c.plate) setPlate(c.plate); closeCust() }}
-                    style={{ width: '100%', padding: '11px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: 'none', borderBottom: '1px solid #F9FAFB', background: 'transparent', cursor: 'pointer', textAlign: 'right' }}>
-                    <div>
-                      <p style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: '#111827', fontFamily: 'Tajawal, sans-serif' }}>{c.name}</p>
-                      {c.plate && <p style={{ margin: '1px 0 0', fontSize: 11, color: '#6B7280', fontFamily: 'monospace' }}>{c.plate}</p>}
-                    </div>
-                    <span style={{ fontSize: 12, color: '#9CA3AF', fontFamily: 'monospace', direction: 'ltr' }}>{c.phone}</span>
-                  </button>
-                ))}
-              </div>
-            </> : <>
-              <div style={{ padding: '18px 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <h2 style={{ margin: 0, fontSize: 17, fontWeight: 900, fontFamily: 'Cairo, sans-serif', color: '#111827' }}>إضافة عميل جديد</h2>
-                <button onClick={() => setShowNewCust(false)} style={iconBtn()}><X size={14} /></button>
-              </div>
-              <div style={{ padding: '14px 20px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {[
-                  { label: 'اسم العميل *', key: 'name', dir: 'rtl', ph: '' },
-                  { label: 'رقم الجوال *', key: 'phone', dir: 'ltr', ph: '5XXXXXXXX' },
-                ].map(f => (
-                  <div key={f.key}>
-                    <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#6B7280', fontFamily: 'Tajawal, sans-serif', marginBottom: 4 }}>{f.label}</label>
-                    {f.key === 'phone' ? (
-                      <div style={{ display: 'flex', gap: 7 }}>
-                        <div style={{ padding: '8px 11px', borderRadius: 9, border: '1px solid #E5E7EB', background: '#F9FAFB', fontSize: 12.5, fontFamily: 'monospace', color: '#6B7280', flexShrink: 0 }}>🇸🇦 +966</div>
-                        <input value={newCust.phone} onChange={e => setNewCust(p => ({ ...p, phone: e.target.value }))} dir="ltr" inputMode="numeric" placeholder={f.ph}
-                          style={{ flex: 1, padding: '8px 11px', borderRadius: 9, border: '1px solid #E5E7EB', fontSize: 12.5, fontFamily: 'monospace', outline: 'none' }} />
-                      </div>
-                    ) : (
-                      <input autoFocus={f.key === 'name'} value={(newCust as any)[f.key]} onChange={e => setNewCust(p => ({ ...p, [f.key]: e.target.value }))} dir={f.dir as any} placeholder={f.ph}
-                        style={{ width: '100%', padding: '8px 11px', borderRadius: 9, border: '1px solid #E5E7EB', fontSize: 12.5, fontFamily: 'Tajawal, sans-serif', outline: 'none', boxSizing: 'border-box' }} />
-                    )}
-                  </div>
-                ))}
-                <div style={{ display: 'flex', gap: 7, marginTop: 2 }}>
-                  <button onClick={addNewCustomer} disabled={!newCust.name.trim() || !newCust.phone.trim() || savingCust}
-                    style={{ flex: 1, padding: '10px 0', borderRadius: 9, border: 'none', background: '#0EA5A5', color: '#fff', fontSize: 13.5, fontWeight: 900, fontFamily: 'Cairo, sans-serif', cursor: 'pointer', opacity: (!newCust.name.trim() || !newCust.phone.trim()) ? 0.5 : 1 }}>
-                    {savingCust ? 'جاري الحفظ...' : 'إضافة'}
-                  </button>
-                  <button onClick={() => setShowNewCust(false)}
-                    style={{ padding: '10px 18px', borderRadius: 9, border: '1px solid #E5E7EB', background: '#F9FAFB', color: '#374151', fontSize: 13, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer' }}>رجوع</button>
-                </div>
-              </div>
-            </>}
-          </div>
+      {/* ════════════════ DAILY CLOSING TAB ════════════════ */}
+      {posTab === 'closing' && (
+        <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
+          <CarWashDailyClosing />
         </div>
       )}
 

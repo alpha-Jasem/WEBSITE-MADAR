@@ -620,6 +620,7 @@ export const CarWashQueue = () => {
           payment_method: selectedPayment,
           date: now,
           plate: item.plate || null,
+          review_url: (company as any)?.google_maps_url || null,
         })
       } catch (invoiceErr) {
         console.warn('Invoice send failed (non-fatal):', invoiceErr)
@@ -755,7 +756,7 @@ export const CarWashQueue = () => {
             { label: 'في المسار', value: pendingItems.length, hint: 'غير مسلمة', tone: '#38BDF8' },
             { label: 'قيد الخدمة', value: inServiceItems.length, hint: 'داخل المغسلة', tone: '#8B5CF6' },
             { label: 'جاهزة', value: readyItems.length, hint: 'تنتظر العميل', tone: '#10B981' },
-            { label: 'إيراد اليوم', value: todayRevenue.toLocaleString('ar-SA'), hint: 'ر.س مستلمة', tone: '#F59E0B' },
+            { label: 'إيراد اليوم', value: todayRevenue.toLocaleString('en-US'), hint: 'ر.س مستلمة', tone: '#F59E0B' },
           ].map(stat => (
             <div
               key={stat.label}
@@ -1515,9 +1516,9 @@ export const CarWashQueue = () => {
             vat_number: (company as any).vat_number || null,
             commercial_reg: (company as any).commercial_reg || null,
             address: (company as any).address || null,
-            logo_url: (company as any).logo_url || null,
+            logo_url: (company as any).cw_invoice_settings?.logo_url || (company as any).logo_url || null,
             tax_enabled: company.tax_enabled,
-            print_footer: (company as any).cw_automations?.print_settings?.footer || null,
+            print_footer: (company as any).cw_invoice_settings?.print_footer || (company as any).cw_automations?.print_settings?.footer || null,
           }}
           onClose={() => setInvoiceData(null)}
         />

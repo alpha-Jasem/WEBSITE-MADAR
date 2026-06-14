@@ -47,7 +47,7 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
   const dailyUsage = useDailyUsage(companyId, planLabel)
   const SAUDI_VAT_RATE = 15
 
-  const [tab, setTab] = useState<SetupTab>(visibleTabs?.[0] ?? 'services')
+  const [tab, setTab] = useState<SetupTab>(visibleTabs?.[0] ?? 'invoice')
   const [copiedUrl, setCopiedUrl] = useState(false)
 
   // Services (table-based)
@@ -87,9 +87,19 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
   const [invFontSize, setInvFontSize] = useState<'small' | 'medium' | 'large'>('medium')
   const [invShowPhone, setInvShowPhone] = useState(true)
   const [invHeaderColor, setInvHeaderColor] = useState('#1E293B')
+  const [invLogoUrl, setInvLogoUrl] = useState('')
+  const [uploadingLogo, setUploadingLogo] = useState(false)
   const [savingInv, setSavingInv] = useState(false)
   const [invSaved, setInvSaved] = useState(false)
 
+
+  // QR self-checkin settings
+  const [qrEnabled, setQrEnabled] = useState(true)
+  const [qrRequireApproval, setQrRequireApproval] = useState(true)
+  const [qrPreventDuplicate, setQrPreventDuplicate] = useState(true)
+  const [qrWaitMinutes, setQrWaitMinutes] = useState(10)
+  const [savingQr, setSavingQr] = useState(false)
+  const [qrSaved, setQrSaved] = useState(false)
 
   const [loading, setLoading] = useState(true)
 
@@ -101,7 +111,7 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
       const [{ data: svcData }, { data: co }] = await Promise.all([
         supabase.from('cw_services').select('*').eq('company_id', companyId).order('created_at'),
         supabase.from('companies')
-          .select('cw_hours, cw_loyalty_threshold, google_maps_url, tax_enabled, vat_rate, price_includes_vat, cw_message_templates, cw_monthly_target, vat_number, commercial_reg, address, print_footer, owner_phone, cw_invoice_settings')
+          .select('cw_hours, cw_loyalty_threshold, google_maps_url, tax_enabled, vat_rate, price_includes_vat, cw_message_templates, cw_monthly_target, vat_number, commercial_reg, address, print_footer, owner_phone, cw_invoice_settings, cw_automations')
           .eq('id', companyId).single(),
       ])
 
@@ -126,6 +136,12 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
         setInvFontSize(inv.font_size ?? 'medium')
         setInvShowPhone(inv.show_customer_phone !== false)
         setInvHeaderColor(inv.header_color ?? '#1E293B')
+        setInvLogoUrl(inv.logo_url ?? '')
+        const sc = (c as any).cw_automations?.self_checkin ?? {}
+        setQrEnabled(sc.enabled !== false)
+        setQrRequireApproval(sc.require_approval !== false)
+        setQrPreventDuplicate(sc.prevent_duplicate !== false)
+        setQrWaitMinutes(sc.wait_minutes ?? 10)
       }
       setLoading(false)
     }
@@ -225,12 +241,38 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
         font_size: invFontSize,
         show_customer_phone: invShowPhone,
         header_color: invHeaderColor,
+        logo_url: invLogoUrl || null,
       },
     } as any).eq('id', companyId)
     logAudit(companyId, 'invoice_settings_updated', {})
     setSavingInv(false)
     setInvSaved(true)
     setTimeout(() => setInvSaved(false), 2500)
+  }
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !companyId) return
+    setUploadingLogo(true)
+    const ext = file.name.split('.').pop()
+    const path = `logos/${companyId}-${Date.now()}.${ext}`
+    await supabase.storage.from('company-assets').upload(path, file, { upsert: true })
+    const { data } = supabase.storage.from('company-assets').getPublicUrl(path)
+    setInvLogoUrl(data.publicUrl)
+    setUploadingLogo(false)
+  }
+
+  const saveQrSettings = async () => {
+    if (!companyId) return
+    setSavingQr(true)
+    const { data: co } = await supabase.from('companies').select('cw_automations').eq('id', companyId).single()
+    const existing = (co as any)?.cw_automations ?? {}
+    await supabase.from('companies').update({
+      cw_automations: { ...existing, self_checkin: { enabled: qrEnabled, require_approval: qrRequireApproval, prevent_duplicate: qrPreventDuplicate, wait_minutes: qrWaitMinutes } }
+    } as any).eq('id', companyId)
+    setSavingQr(false)
+    setQrSaved(true)
+    setTimeout(() => setQrSaved(false), 2500)
   }
 
   useEffect(() => {
@@ -246,7 +288,8 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
     { key: 'qr',       label: 'رمز QR',          icon: QrCode    },
     { key: 'plan',     label: 'الباقة والاستخدام', icon: BarChart2 },
   ]
-  const TABS = visibleTabs?.length ? ALL_TABS.filter(t => visibleTabs.includes(t.key)) : ALL_TABS
+  const SETTINGS_ONLY_TABS: SetupTab[] = ['invoice', 'print', 'qr', 'plan']
+  const TABS = visibleTabs?.length ? ALL_TABS.filter(t => visibleTabs.includes(t.key)) : ALL_TABS.filter(t => SETTINGS_ONLY_TABS.includes(t.key))
 
 
   return (
@@ -589,57 +632,72 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
         const qrSrc = checkinUrl
           ? `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=14&data=${encodeURIComponent(checkinUrl)}`
           : ''
+        const toggleRow = (label: string, value: boolean, onChange: (v: boolean) => void) => (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F1F5F9' }}>
+            <span style={{ fontSize: 13, color: '#1E293B', fontFamily: 'Tajawal, sans-serif', fontWeight: 600 }}>{label}</span>
+            <button onClick={() => onChange(!value)}
+              style={{ width: 44, height: 24, borderRadius: 12, border: 'none', background: value ? '#22D3EE' : '#CBD5E1', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+              <span style={{ position: 'absolute', top: 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', left: value ? 23 : 3 }} />
+            </button>
+          </div>
+        )
         return (
-          <div style={{ ...SECTION_STYLE, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, textAlign: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <QrCode size={16} color="#22D3EE" />
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>رمز QR للتسجيل الذاتي</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            {/* QR Settings Card */}
+            <div style={SECTION_STYLE}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                <QrCode size={15} color="#22D3EE" />
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>إعدادات التسجيل الذاتي</span>
+              </div>
+              {toggleRow('تفعيل التسجيل الذاتي عبر QR', qrEnabled, setQrEnabled)}
+              {toggleRow('اعتماد موظف قبل الإضافة للقائمة', qrRequireApproval, setQrRequireApproval)}
+              {toggleRow('منع تكرار نفس السيارة', qrPreventDuplicate, setQrPreventDuplicate)}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0' }}>
+                <span style={{ fontSize: 13, color: '#1E293B', fontFamily: 'Tajawal, sans-serif', fontWeight: 600 }}>وقت الانتظار المسموح (دقيقة)</span>
+                <input type="number" min={1} max={120} value={qrWaitMinutes} onChange={e => setQrWaitMinutes(Number(e.target.value))}
+                  style={{ width: 70, padding: '6px 10px', borderRadius: 9, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: 'monospace', outline: 'none', textAlign: 'center' }} />
+              </div>
+              <button onClick={saveQrSettings} disabled={savingQr}
+                style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 7, padding: '10px 22px', borderRadius: 12, border: 'none', cursor: 'pointer', background: qrSaved ? 'rgba(16,185,129,0.15)' : 'rgba(34,211,238,0.12)', color: qrSaved ? '#10B981' : '#22D3EE', fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: 700 }}>
+                {savingQr ? <Loader2 size={14} style={{ animation: 'spin 0.8s linear infinite' }} /> : qrSaved ? <Check size={14} /> : <Save size={14} />}
+                {savingQr ? 'جاري الحفظ...' : qrSaved ? 'تم الحفظ ✓' : 'حفظ الإعدادات'}
+              </button>
             </div>
 
-            <p style={{ margin: 0, color: '#475569', fontFamily: 'Tajawal, sans-serif', fontSize: 13, maxWidth: 380, lineHeight: 1.7 }}>
-              ضع هذا الرمز عند مدخل المغسلة أو أرسله للعملاء — يسجلون سيارتهم ويحصلون على رقم تذكرتهم بأنفسهم.
-            </p>
-
-            {checkinUrl ? (
-              <>
-                <img
-                  src={qrSrc}
-                  alt="QR Code"
-                  style={{ width: 200, height: 200, borderRadius: 18, background: '#FFFFFF', padding: 10, boxShadow: '0 8px 32px rgba(13,27,62,0.12)', border: '1px solid #E2E8F0' }}
-                />
-
-                <div style={{ width: '100%', maxWidth: 420, background: '#F1F5F9', borderRadius: 12, padding: '10px 14px', border: '1px solid #E2E8F0', fontFamily: 'Sora, sans-serif', fontSize: 11, color: '#475569', wordBreak: 'break-all', textAlign: 'left', direction: 'ltr' }}>
-                  {checkinUrl}
-                </div>
-
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(checkinUrl)
-                      setCopiedUrl(true)
-                      setTimeout(() => setCopiedUrl(false), 2500)
-                    }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', borderRadius: 12, border: '1px solid #E2E8F0', background: copiedUrl ? 'rgba(16,185,129,0.1)' : '#FFFFFF', color: copiedUrl ? '#10B981' : '#475569', fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-                  >
-                    {copiedUrl ? <Check size={14} /> : <Copy size={14} />}
-                    {copiedUrl ? 'تم النسخ ✓' : 'نسخ الرابط'}
-                  </button>
-                  <a
-                    href={checkinUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', borderRadius: 12, border: '1px solid rgba(34,211,238,0.3)', background: 'rgba(34,211,238,0.08)', color: '#0099CC', fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
-                  >
-                    <ExternalLink size={14} />
-                    فتح الصفحة
-                  </a>
-                </div>
-              </>
-            ) : (
-              <div style={{ padding: '20px', color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', fontSize: 13 }}>
-                الرابط غير متاح — تأكد من تفعيل التسجيل الذاتي في الإعدادات.
+            {/* QR Code display */}
+            <div style={{ ...SECTION_STYLE, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, textAlign: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <QrCode size={16} color="#22D3EE" />
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>رمز QR للتسجيل الذاتي</span>
               </div>
-            )}
+              <p style={{ margin: 0, color: '#475569', fontFamily: 'Tajawal, sans-serif', fontSize: 13, maxWidth: 380, lineHeight: 1.7 }}>
+                ضع هذا الرمز عند مدخل المغسلة أو أرسله للعملاء — يسجلون سيارتهم ويحصلون على رقم تذكرتهم بأنفسهم.
+              </p>
+              {checkinUrl ? (
+                <>
+                  <img src={qrSrc} alt="QR Code"
+                    style={{ width: 200, height: 200, borderRadius: 18, background: '#FFFFFF', padding: 10, boxShadow: '0 8px 32px rgba(13,27,62,0.12)', border: '1px solid #E2E8F0' }} />
+                  <div style={{ width: '100%', maxWidth: 420, background: '#F1F5F9', borderRadius: 12, padding: '10px 14px', border: '1px solid #E2E8F0', fontFamily: 'Sora, sans-serif', fontSize: 11, color: '#475569', wordBreak: 'break-all', textAlign: 'left', direction: 'ltr' }}>
+                    {checkinUrl}
+                  </div>
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+                    <button onClick={() => { navigator.clipboard.writeText(checkinUrl); setCopiedUrl(true); setTimeout(() => setCopiedUrl(false), 2500) }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', borderRadius: 12, border: '1px solid #E2E8F0', background: copiedUrl ? 'rgba(16,185,129,0.1)' : '#FFFFFF', color: copiedUrl ? '#10B981' : '#475569', fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                      {copiedUrl ? <Check size={14} /> : <Copy size={14} />}
+                      {copiedUrl ? 'تم النسخ ✓' : 'نسخ الرابط'}
+                    </button>
+                    <a href={checkinUrl} target="_blank" rel="noopener noreferrer"
+                      style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', borderRadius: 12, border: '1px solid rgba(34,211,238,0.3)', background: 'rgba(34,211,238,0.08)', color: '#0099CC', fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
+                      <ExternalLink size={14} /> فتح الصفحة
+                    </a>
+                  </div>
+                </>
+              ) : (
+                <div style={{ padding: '20px', color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', fontSize: 13 }}>
+                  الرابط غير متاح — تأكد من تفعيل التسجيل الذاتي في الإعدادات.
+                </div>
+              )}
+            </div>
           </div>
         )
       })()}
@@ -653,6 +711,22 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+            {/* Logo Upload */}
+            <div>
+              <label style={{ display: 'block', fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginBottom: 8 }}>شعار المغسلة (يظهر في الفاتورة)</label>
+              {invLogoUrl && (
+                <div style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <img src={invLogoUrl} alt="logo" style={{ maxHeight: 52, maxWidth: 160, objectFit: 'contain', borderRadius: 8, border: '1px solid #E2E8F0' }} />
+                  <button onClick={() => setInvLogoUrl('')} style={{ padding: '4px 10px', borderRadius: 8, border: '1px solid #FCA5A5', background: 'rgba(239,68,68,0.06)', color: '#EF4444', fontSize: 12, cursor: 'pointer', fontFamily: 'Tajawal, sans-serif' }}>حذف</button>
+                </div>
+              )}
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 10, border: '1px solid #E2E8F0', background: '#F8FAFC', color: '#475569', fontSize: 12.5, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer' }}>
+                {uploadingLogo ? <Loader2 size={14} style={{ animation: 'spin 0.8s linear infinite' }} /> : <MapPin size={14} />}
+                {uploadingLogo ? 'جاري الرفع...' : invLogoUrl ? 'تغيير الصورة' : 'رفع صورة الشعار'}
+                <input type="file" accept="image/*" onChange={handleLogoUpload} style={{ display: 'none' }} />
+              </label>
+            </div>
 
             {[
               { label: 'الرقم الضريبي', value: invVatNumber, set: setInvVatNumber, placeholder: '3XXXXXXXXXXXXXXXXX' },
