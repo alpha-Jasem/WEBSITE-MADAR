@@ -11,3 +11,9 @@ export const PLAN_PRICES: Record<string, string> = {
   growth: '799',
   enterprise: '1,999',
 }
+
+export const DAILY_LIMITS: Record<string, { cars: number; qr: number; screenUpdates: number; whatsapp: number }> = {
+  starter:    { cars: 50,  qr: 30,  screenUpdates: 150, whatsapp: 30  },
+  growth:     { cars: 100, qr: 75,  screenUpdates: 300, whatsapp: 100 },
+  enterprise: { cars: 300, qr: 200, screenUpdates: 1000, whatsapp: 300 },
+}

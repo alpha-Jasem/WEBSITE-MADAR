@@ -1,12 +1,13 @@
 ﻿import { useEffect, useRef, useState } from 'react'
-import { useLocation } from 'react-router-dom'
-import { AlertCircle, Bell, ChevronDown, Menu, MessageSquare, ShieldCheck, X } from 'lucide-react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { AlertCircle, Bell, ChevronDown, LogOut, Menu, MessageSquare, Settings, ShieldCheck, X } from 'lucide-react'
 import { DashSidebar, type NavItem } from './DashSidebar'
 import { useClientCompany } from '../../hooks/useClientCompany'
 import { MadarAIAssistant } from './MadarAIAssistant'
 import { MadarAgentWidget } from './MadarAgentWidget'
 import { useActiveProfile } from '../../context/ActiveProfileContext'
-import { PLAN_LABELS } from '../../lib/constants'
+import { PLAN_LABELS, MADAR_WHATSAPP_NUMBER } from '../../lib/constants'
+import { useDailyUsage } from '../../hooks/useDailyUsage'
 import { supabase } from '../../lib/supabase'
 
 interface Props {
@@ -28,11 +29,14 @@ interface StaffUser {
 export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topbarRight }: Props) => {
   const [menuOpen, setMenuOpen] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
   const { company } = useClientCompany()
   const { profile, switchToProfile, returnToOwner } = useActiveProfile()
   const companyId = (company as any)?.id ?? null
-  const planLabel = PLAN_LABELS[company?.plan ?? 'starter'] ?? 'Starter'
+  const planKey = company?.plan ?? 'starter'
+  const planLabel = PLAN_LABELS[planKey] ?? 'Starter'
   const [profileOpen, setProfileOpen] = useState(false)
+  const [showStaffSwitcher, setShowStaffSwitcher] = useState(false)
   const [staff, setStaff] = useState<StaffUser[]>([])
   const [staffLoaded, setStaffLoaded] = useState(false)
   const [selected, setSelected] = useState<StaffUser | null>(null)
@@ -40,11 +44,13 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
   const [pinError, setPinError] = useState(false)
   const topProfileRef = useRef<HTMLDivElement>(null)
 
+  const dailyUsage = useDailyUsage(role === 'client' ? companyId : null, planKey)
+
   useEffect(() => { setMenuOpen(false) }, [location.pathname])
-  useEffect(() => { setProfileOpen(false); setSelected(null); setPin(''); setPinError(false) }, [location.pathname])
+  useEffect(() => { setProfileOpen(false); setShowStaffSwitcher(false); setSelected(null); setPin(''); setPinError(false) }, [location.pathname])
 
   useEffect(() => {
-    if (!profileOpen || staffLoaded || !companyId || role !== 'client') return
+    if ((!profileOpen && !showStaffSwitcher) || staffLoaded || !companyId || role !== 'client') return
     supabase
       .from('company_users')
       .select('id, full_name, pin, permissions')
@@ -53,12 +59,13 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
         setStaff((data as StaffUser[]) || [])
         setStaffLoaded(true)
       })
-  }, [profileOpen, staffLoaded, companyId, role])
+  }, [profileOpen, showStaffSwitcher, staffLoaded, companyId, role])
 
   useEffect(() => {
     const close = (event: MouseEvent) => {
       if (!topProfileRef.current?.contains(event.target as Node)) {
         setProfileOpen(false)
+        setShowStaffSwitcher(false)
         setSelected(null)
         setPin('')
         setPinError(false)
@@ -95,6 +102,25 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
     setPin('')
   }
 
+  const { maxPct, ringColor, carsPct, qrPct, screenPct, whatsappPct, cars, qr, screenUpdates, whatsapp, limits, topMetric } = dailyUsage
+  const circumference = 2 * Math.PI * 15
+  const letter = profile.isOwner ? (company?.owner_name?.[0] ?? 'م') : profile.name[0]
+
+  const getStatusMessage = () => {
+    if (maxPct >= 100) return { text: 'تم الوصول إلى الحد اليومي. بعض الخدمات قد تتوقف مؤقتاً.', color: '#EF4444' }
+    if (maxPct >= 90) return { text: 'أنت قريب جداً من الحد اليومي. تواصل مع الإدارة لرفع الحد.', color: '#F97316' }
+    if (maxPct >= 70) return { text: 'اقتربت من حد الاستخدام اليومي. تابع الأرقام بعناية.', color: '#F59E0B' }
+    return { text: 'استخدامك اليوم ضمن الحد المسموح. كل شيء يعمل بشكل طبيعي.', color: '#16A34A' }
+  }
+
+  const statusMsg = getStatusMessage()
+
+  const MiniBar = ({ pct, color }: { pct: number; color: string }) => (
+    <div style={{ height: 4, borderRadius: 4, background: '#EEF2F8', overflow: 'hidden', flex: 1 }}>
+      <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 4, transition: 'width 0.5s ease' }} />
+    </div>
+  )
+
   const renderClientTopbarControls = () => (
     <>
       <button type="button" className="dash-topbar-icon" aria-label="الإشعارات">
@@ -109,22 +135,148 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
           className="dash-topbar-profile"
           onClick={() => {
             setProfileOpen(prev => !prev)
+            setShowStaffSwitcher(false)
             setSelected(null)
             setPin('')
             setPinError(false)
           }}
         >
-          <span className="dash-user-avatar dash-topbar-avatar">
-            {profile.isOwner ? (company?.owner_name?.[0] ?? 'م') : profile.name[0]}
-          </span>
+          {/* Avatar with SVG progress ring */}
+          <div style={{ position: 'relative', width: 36, height: 36 }} title={`استخدام اليوم: ${maxPct}%`}>
+            <svg width="36" height="36" style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}>
+              <circle cx="18" cy="18" r="15" fill="none" stroke="#E2EBF6" strokeWidth="2.5" />
+              <circle
+                cx="18" cy="18" r="15" fill="none"
+                stroke={ringColor}
+                strokeWidth="2.5"
+                strokeDasharray={`${circumference}`}
+                strokeDashoffset={`${circumference * (1 - maxPct / 100)}`}
+                strokeLinecap="round"
+                style={{ transition: 'stroke-dashoffset 0.5s ease, stroke 0.3s ease' }}
+              />
+            </svg>
+            <span className="dash-user-avatar dash-topbar-avatar" style={{ width: 28, height: 28, position: 'absolute', inset: 4, fontSize: 13, lineHeight: '28px' }}>
+              {letter}
+            </span>
+          </div>
           <span className="dash-topbar-profile-copy">
             <strong>{profile.isOwner ? (company?.owner_name ?? 'مدير المغسلة') : profile.name}</strong>
             <small>{profile.isOwner ? planLabel : `${profile.permissions.length} صلاحية`}</small>
           </span>
-          <ChevronDown size={14} style={{ transform: profileOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+          <ChevronDown size={14} style={{ transform: profileOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
         </button>
 
-        {profileOpen && (
+        {profileOpen && !showStaffSwitcher && !selected && (
+          <div className="dash-profile-switcher dash-topbar-switcher" style={{ width: 280, padding: 0, overflow: 'hidden' }}>
+            {/* Section 1: User info */}
+            <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #EEF2F8', display: 'flex', gap: 10, alignItems: 'center' }}>
+              <div style={{ position: 'relative', width: 40, height: 40, flexShrink: 0 }}>
+                <svg width="40" height="40" style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}>
+                  <circle cx="20" cy="20" r="17" fill="none" stroke="#E2EBF6" strokeWidth="2.5" />
+                  <circle cx="20" cy="20" r="17" fill="none" stroke={ringColor} strokeWidth="2.5"
+                    strokeDasharray={`${2 * Math.PI * 17}`}
+                    strokeDashoffset={`${2 * Math.PI * 17 * (1 - maxPct / 100)}`}
+                    strokeLinecap="round" style={{ transition: 'stroke-dashoffset 0.5s ease' }} />
+                </svg>
+                <span className="dash-user-avatar" style={{ width: 30, height: 30, position: 'absolute', inset: 5, fontSize: 14, lineHeight: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {letter}
+                </span>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, fontSize: 13, color: '#0D1B3E', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {profile.isOwner ? (company?.owner_name ?? 'مدير المغسلة') : profile.name}
+                </div>
+                <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>
+                  {profile.isOwner ? (company?.name ?? '') : `${profile.permissions.length} صلاحية`}
+                </div>
+                <div style={{ fontSize: 10, color: ringColor, fontWeight: 600, marginTop: 1 }}>
+                  {planLabel} · {maxPct}% استخدام اليوم
+                </div>
+              </div>
+            </div>
+
+            {/* Section 2: Daily usage */}
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid #EEF2F8' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#475569' }}>استخدام اليوم</span>
+                <span style={{ fontSize: 10, color: '#94A3B8' }}>يُصفَّر عند 12:00 صباحاً</span>
+              </div>
+
+              {/* Overall bar */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <span style={{ fontSize: 22, fontWeight: 900, color: ringColor, lineHeight: 1 }}>{maxPct}%</span>
+                <div style={{ flex: 1 }}>
+                  <MiniBar pct={maxPct} color={ringColor} />
+                  <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 3 }}>أعلى مقياس: {topMetric}</div>
+                </div>
+              </div>
+
+              {/* 4 metric rows */}
+              {[
+                { label: 'السيارات', val: cars, limit: limits.cars, pct: carsPct },
+                { label: 'QR', val: qr, limit: limits.qr, pct: qrPct },
+                { label: 'الشاشة', val: screenUpdates, limit: limits.screenUpdates, pct: screenPct },
+                { label: 'واتساب', val: whatsapp, limit: limits.whatsapp, pct: whatsappPct },
+              ].map(({ label, val, limit, pct }) => {
+                const c = getRingColorLocal(pct)
+                return (
+                  <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, color: '#475569', width: 52, textAlign: 'right', flexShrink: 0 }}>{label}</span>
+                    <MiniBar pct={pct} color={c} />
+                    <span style={{ fontSize: 10, color: '#94A3B8', width: 52, textAlign: 'left', flexShrink: 0 }}>{val}/{limit}</span>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Section 3: Status message */}
+            <div style={{ padding: '10px 16px', borderBottom: '1px solid #EEF2F8', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: statusMsg.color, marginTop: 5, flexShrink: 0 }} />
+              <p style={{ fontSize: 11, color: '#475569', margin: 0, lineHeight: 1.5 }}>{statusMsg.text}</p>
+            </div>
+
+            {/* Section 4: Quick actions */}
+            <div style={{ padding: '8px 0' }}>
+              <button type="button" onClick={() => { navigate('/client/settings'); setProfileOpen(false) }}
+                style={{ width: '100%', padding: '9px 16px', display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#0D1B3E', textAlign: 'right' }}>
+                <Settings size={14} color="#64748B" />
+                الإعدادات والباقة
+              </button>
+
+              {maxPct >= 100 && (
+                <a href={`https://wa.me/${MADAR_WHATSAPP_NUMBER}?text=أحتاج%20رفع%20حد%20الاستخدام%20اليومي`}
+                  target="_blank" rel="noopener noreferrer"
+                  style={{ width: '100%', padding: '9px 16px', display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', fontSize: 13, color: '#EF4444', fontWeight: 600 }}>
+                  <span style={{ fontSize: 14 }}>📲</span>
+                  تواصل مع الإدارة
+                </a>
+              )}
+
+              <button type="button" onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login' }}
+                style={{ width: '100%', padding: '9px 16px', display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#EF4444', textAlign: 'right' }}>
+                <LogOut size={14} />
+                تسجيل الخروج
+              </button>
+
+              <div style={{ borderTop: '1px solid #EEF2F8', marginTop: 4, padding: '6px 16px 2px' }}>
+                {!profile.isOwner && (
+                  <button type="button" className="dash-owner-return" onClick={handleReturnToOwner}
+                    style={{ marginBottom: 4, fontSize: 11 }}>
+                    <ShieldCheck size={12} />
+                    رجوع لحساب المالك
+                  </button>
+                )}
+                <button type="button" onClick={() => setShowStaffSwitcher(true)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#64748B', padding: 0, textDecoration: 'underline' }}>
+                  تبديل المستخدم
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Staff switcher panel */}
+        {profileOpen && showStaffSwitcher && (
           <div className="dash-profile-switcher dash-topbar-switcher">
             <div className="dash-profile-switcher-head">
               {selected ? (
@@ -133,7 +285,13 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
                   <span>{selected.full_name}</span>
                 </div>
               ) : (
-                <span>تبديل المستخدم</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                  <span>تبديل المستخدم</span>
+                  <button type="button" onClick={() => setShowStaffSwitcher(false)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#64748B', padding: 0 }}>
+                    رجوع
+                  </button>
+                </div>
               )}
             </div>
 
@@ -211,6 +369,13 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
       </div>
     </>
   )
+
+  function getRingColorLocal(pct: number): string {
+    if (pct >= 100) return '#EF4444'
+    if (pct >= 90) return '#F97316'
+    if (pct >= 70) return '#F59E0B'
+    return '#0099CC'
+  }
 
   return (
     <div className={`dash-shell dash-shell-${role}`} dir="rtl">
