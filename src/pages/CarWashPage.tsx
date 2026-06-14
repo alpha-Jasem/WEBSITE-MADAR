@@ -457,7 +457,7 @@ export const CarWashPage = () => {
         <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-white/70 to-transparent" />
         <div className="hero-pulse absolute bottom-[24%] left-[26%] hidden h-20 w-20 rounded-full border-2 border-[#00BFFF]/70 bg-[#00BFFF]/10 shadow-[0_0_55px_rgba(0,191,255,0.55)] lg:block" />
 
-        <div className="absolute inset-0 z-10 mx-auto flex max-w-7xl items-start justify-start px-4 pt-28 sm:items-center sm:px-6 sm:pt-16 lg:px-8">
+        <div className="absolute inset-0 z-10 mx-auto flex max-w-7xl items-start justify-start px-4 pt-24 sm:items-start sm:px-6 sm:pt-28 lg:px-8 lg:pt-32">
           <div className="hero-copy w-full max-w-[560px] text-[#0D1B3E]">
             <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/70 px-3.5 py-2 text-xs font-black text-[#0D1B3E] shadow-sm backdrop-blur-xl sm:px-5 sm:py-2.5 sm:text-sm" style={{ fontFamily: 'IBM Plex Sans Arabic, Cairo, sans-serif' }}>
               <span className="h-2 w-2 rounded-full bg-[#00BFFF]" />
