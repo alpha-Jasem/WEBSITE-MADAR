@@ -1,182 +1,402 @@
-import { FormEvent, useEffect, useRef, useState } from 'react'
+import { FormEvent, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   BarChart3,
-  Bot,
+  Bell,
   Car,
   Check,
+  ChevronDown,
   ChevronLeft,
   CircleDollarSign,
   Clock,
   CreditCard,
-  Gauge,
+  FileText,
+  Gift,
   MessageCircle,
+  Menu,
   Monitor,
   QrCode,
+  ReceiptText,
   ShieldCheck,
   Sparkles,
+  Star,
   TrendingUp,
   Users,
+  Wallet,
   X,
   Zap,
 } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-
-import { MadarNavbar } from '../components/public/MadarNavbar'
-import { MadarAgentWidget } from '../components/dash/MadarAgentWidget'
 import { supabase } from '../lib/supabase'
 import { openWhatsAppChat } from '../lib/whatsapp'
-
-gsap.registerPlugin(ScrollTrigger)
+import { MadarAgentWidget } from '../components/dash/MadarAgentWidget'
 
 const adminPhone = import.meta.env.VITE_ADMIN_WHATSAPP || '966546666005'
 
-const navLinks = [
-  { href: '#experience', label: 'طريقة QR' },
-  { href: '#dashboard', label: 'الدليل' },
-  { href: '#pricing', label: 'الباقات' },
-  { href: '#faq', label: 'الأسئلة' },
-  { href: '#contact', label: 'واتساب' },
-]
+const requestDemo = () =>
+  openWhatsAppChat('مرحباً، أريد تجربة مدار OS لمغسلتي ومعرفة أفضل باقة مناسبة للتشغيل.')
 
-const flow = [
-  { icon: QrCode, title: 'يمسح QR', text: 'العميل يسجل نفسه من المدخل بدون انتظار الكاشير.' },
-  { icon: Car, title: 'يحصل على رقم', text: 'مدار يصدر كود واضح مثل A-014 يعرفه العميل والموظف.' },
-  { icon: Gauge, title: 'الفريق يحرّك الحالة', text: 'استلام، قيد الخدمة، جاهزة، تم التسليم بزر واحد.' },
-  { icon: CircleDollarSign, title: 'تسليم وإغلاق', text: 'الفاتورة، الإيراد، وضريبة VAT تدخل في إغلاق اليوم.' },
-]
+// ─── tiny helpers ────────────────────────────────────────────────────────────
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 28 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true },
+  transition: { duration: 0.55, delay, ease: [0.22, 1, 0.36, 1] },
+})
 
-const features = [
-  {
-    icon: MessageCircle,
-    title: 'واتساب تلقائي بالكامل',
-    text: 'إشعار السيارة جاهزة، فاتورة PDF، تذكير بعد ٣ أيام، وطلب تقييم Google — كل رسالة تصير وحدها.',
-  },
-  {
-    icon: Monitor,
-    title: 'مركز تشغيل واضح',
-    text: 'كل سيارة، مرحلة، وتسليم تظهر في شاشة واحدة يفهمها الفريق بسرعة.',
-  },
-  {
-    icon: Users,
-    title: 'عملاء وولاء',
-    text: 'اعرف العميل المتكرر، زياراته، ومكافآته بدون دفاتر أو متابعة يدوية.',
-  },
-  {
-    icon: BarChart3,
-    title: 'مالية يومية',
-    text: 'إيراد اليوم، متوسط الفاتورة، VAT، وطرق الدفع تظهر لصاحب المغسلة مباشرة.',
-  },
-]
+const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
+  waiting:  { bg: '#F1F5F9', text: '#64748B', label: 'في الانتظار' },
+  washing:  { bg: '#EDE9FE', text: '#7C3AED', label: 'جاري الغسيل' },
+  drying:   { bg: '#FFF7ED', text: '#EA580C', label: 'التجفيف' },
+  ready:    { bg: '#DCFCE7', text: '#16A34A', label: 'جاهزة' },
+}
 
-const plans = [
-  {
-    name: 'Pro',
-    launchPrice: '500',
-    regularPrice: '799',
-    badge: 'عرض إطلاق لأول 5 مغاسل',
-    note: 'للمغسلة التي تريد نظام تشغيل كامل بسرعة: QR، شاشة عرض، عملاء، مالية، تقارير، ومساعد مدار AI.',
-    points: ['QR للتسجيل الذاتي', 'لوحة تشغيل السيارات', 'شاشة عرض مباشرة', 'العملاء والولاء', 'VAT وإغلاق اليوم', 'مساعد مدار AI'],
-  },
-  {
-    name: 'Platinum',
-    launchPrice: '1,000',
-    regularPrice: '1,999',
-    badge: 'للمغاسل الجادة',
-    note: 'للمغسلة التي تريد إعداد أعمق، أولوية دعم، وتقارير وتوسعة جاهزة للفروع والإضافات.',
-    points: ['كل مزايا Pro', 'تحليل أداء الموظفين', 'تقارير متقدمة', 'دعم أولوية', 'تجهيز توسعة الفروع', 'إعداد وتشغيل مخصص'],
-  },
-]
+// ─── NAVBAR ──────────────────────────────────────────────────────────────────
+function Navbar() {
+  const [open, setOpen] = useState(false)
+  const links = [
+    { href: '#how', label: 'كيف يعمل' },
+    { href: '#waiting-screen', label: 'شاشة الانتظار' },
+    { href: '#features', label: 'المميزات' },
+    { href: '#finance', label: 'المالية والتقارير' },
+    { href: '#pricing', label: 'الباقات' },
+    { href: '#faq', label: 'تواصل معنا' },
+  ]
+  return (
+    <header style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(18px)', borderBottom: '1px solid #E2EBF6', boxShadow: '0 1px 12px rgba(13,27,62,0.06)' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
+        {/* Logo */}
+        <a href="#" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: '#0D1B3E', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Car size={18} color="#38BDF8" />
+          </div>
+          <span style={{ fontSize: 17, fontWeight: 700, color: '#0D1B3E', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif' }}>Madar OS</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: '#64748B', background: '#F1F5F9', padding: '2px 8px', borderRadius: 20 }}>مغاسل</span>
+        </a>
 
-const faq = [
-  {
-    q: 'ماذا أستلم عند تفعيل مدار OS؟',
-    a: 'نجهز لك حساب مغسلة كامل: لوحة تشغيل السيارات، QR للتسجيل الذاتي، شاشة عرض، العملاء والولاء، المالية، التقارير، وإغلاق اليوم.',
-  },
-  {
-    q: 'كيف أبدأ الاشتراك الآن؟',
-    a: 'تختار الباقة المناسبة، يتم الدفع بتحويل بنكي، ثم نفعّل الحساب يدوياً ونرسل لك بيانات الدخول. الدفع الإلكتروني والرسائل الرسمية إضافات يمكن تفعيلها لاحقاً عند الحاجة.',
-  },
-  {
-    q: 'هل أقدر أجرب قبل الاشتراك؟',
-    a: 'نعم. التجربة 3 أيام حتى تشاهد النظام على سيناريو قريب من تشغيل مغسلتك: دخول سيارة، انتقال المراحل، تسليم، وتقارير اليوم.',
-  },
-  {
-    q: 'هل لازم أستخدم QR من أول يوم؟',
-    a: 'لا. تقدر تبدأ بإضافة السيارات من الموظف، ثم تفعّل QR عندما تريد تقليل الزحام وتسريع تسجيل العملاء عند المدخل.',
-  },
-]
+        {/* Desktop nav */}
+        <nav style={{ display: 'flex', alignItems: 'center', gap: 4 }} className="hidden-mobile">
+          {links.map(l => (
+            <a key={l.href} href={l.href} style={{ fontSize: 13.5, fontWeight: 500, color: '#334155', padding: '6px 12px', borderRadius: 8, textDecoration: 'none', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif', transition: 'color .2s' }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#0099CC')}
+              onMouseLeave={e => (e.currentTarget.style.color = '#334155')}
+            >{l.label}</a>
+          ))}
+        </nav>
 
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button onClick={requestDemo} style={{ background: '#0D1B3E', color: '#fff', border: 'none', borderRadius: 10, padding: '9px 20px', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif' }}>
+            اطلب تجربة
+          </button>
+          <button onClick={() => setOpen(true)} className="show-mobile" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+            <Menu size={22} color="#0D1B3E" />
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile drawer */}
+      <AnimatePresence>
+        {open && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(13,27,62,0.45)', backdropFilter: 'blur(4px)' }}
+            onClick={() => setOpen(false)}
+          >
+            <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+              onClick={e => e.stopPropagation()}
+              style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 280, background: '#fff', padding: 24, display: 'flex', flexDirection: 'column', gap: 4 }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <span style={{ fontSize: 16, fontWeight: 700, color: '#0D1B3E', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif' }}>القائمة</span>
+                <button onClick={() => setOpen(false)} style={{ background: '#F1F5F9', border: 'none', borderRadius: 8, padding: 8, cursor: 'pointer' }}><X size={16} /></button>
+              </div>
+              {links.map(l => (
+                <a key={l.href} href={l.href} onClick={() => setOpen(false)}
+                  style={{ fontSize: 15, fontWeight: 500, color: '#0D1B3E', padding: '11px 12px', borderRadius: 10, textDecoration: 'none', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif' }}
+                >{l.label}</a>
+              ))}
+              <button onClick={() => { setOpen(false); requestDemo() }} style={{ marginTop: 'auto', background: '#0D1B3E', color: '#fff', border: 'none', borderRadius: 12, padding: '13px 20px', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif' }}>
+                اطلب تجربة الآن
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
+        *, *::before, *::after { box-sizing: border-box; }
+        .hidden-mobile { display: flex; }
+        .show-mobile { display: none; }
+        @media (max-width: 768px) {
+          .hidden-mobile { display: none !important; }
+          .show-mobile { display: flex !important; }
+        }
+      `}</style>
+    </header>
+  )
+}
+
+// ─── HERO MOCKUP ─────────────────────────────────────────────────────────────
+function HeroMockup() {
+  return (
+    <div style={{ position: 'relative', width: '100%', maxWidth: 460 }}>
+      {/* QR card */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.7 }}
+        style={{ background: '#fff', borderRadius: 20, padding: '20px 24px', boxShadow: '0 8px 40px rgba(13,27,62,0.12)', border: '1px solid #E2EBF6', marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 56, height: 56, background: '#0D1B3E', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <QrCode size={28} color="#38BDF8" />
+          </div>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#64748B', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>تسجيل ذاتي</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#0D1B3E', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>امسح QR — سجّل سيارتك</div>
+          </div>
+          <div style={{ marginRight: 'auto', background: '#DCFCE7', color: '#16A34A', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>مباشر</div>
+        </div>
+      </motion.div>
+
+      {/* Mini queue table */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.7 }}
+        style={{ background: '#fff', borderRadius: 20, overflow: 'hidden', boxShadow: '0 8px 40px rgba(13,27,62,0.12)', border: '1px solid #E2EBF6', marginBottom: 12 }}>
+        <div style={{ background: '#0D1B3E', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Monitor size={14} color="#38BDF8" />
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#fff', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>شاشة الانتظار الحية</span>
+          <span style={{ marginRight: 'auto', width: 6, height: 6, borderRadius: '50%', background: '#4ADE80', boxShadow: '0 0 6px #4ADE80' }} />
+        </div>
+        {[
+          { num: '06', car: 'كامري', status: 'waiting' },
+          { num: '05', car: 'جيب',   status: 'washing' },
+          { num: '04', car: 'أكورد', status: 'ready' },
+        ].map(row => {
+          const s = STATUS_COLORS[row.status]
+          return (
+            <div key={row.num} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 16px', borderBottom: '1px solid #F1F5F9' }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#0D1B3E', width: 24, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{row.num}</span>
+              <Car size={14} color="#64748B" />
+              <span style={{ fontSize: 13, fontWeight: 500, color: '#334155', flexGrow: 1, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{row.car}</span>
+              <span style={{ fontSize: 11, fontWeight: 700, background: s.bg, color: s.text, padding: '3px 10px', borderRadius: 20, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{s.label}</span>
+            </div>
+          )
+        })}
+      </motion.div>
+
+      {/* Revenue card */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7, duration: 0.7 }}
+        style={{ background: 'linear-gradient(135deg, #0D1B3E 0%, #1E3A6E 100%)', borderRadius: 20, padding: '18px 20px', boxShadow: '0 8px 40px rgba(13,27,62,0.2)', display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ width: 44, height: 44, background: 'rgba(56,189,248,0.15)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <CircleDollarSign size={22} color="#38BDF8" />
+        </div>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.6)', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>إيراد اليوم</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: '#fff', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>8,420 ر.س</div>
+        </div>
+        <div style={{ marginRight: 'auto', display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(74,222,128,0.15)', padding: '4px 10px', borderRadius: 20 }}>
+          <TrendingUp size={12} color="#4ADE80" />
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#4ADE80', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>+12%</span>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
+// ─── KANBAN MOCKUP ───────────────────────────────────────────────────────────
+function KanbanMockup() {
+  const cols = [
+    { label: 'في الانتظار', color: '#64748B', bg: '#F8FAFC', cards: [{ car: 'كامري', plate: 'أ ب ج 1234', service: 'داخلي وخارجي', time: '5 د' }] },
+    { label: 'جاري الغسيل', color: '#7C3AED', bg: '#FAF5FF', cards: [{ car: 'جيب', plate: 'د هـ و 5678', service: 'بخار', time: '18 د' }, { car: 'باترول', plate: 'ز ح ط 9012', service: 'خارجي', time: '12 د' }] },
+    { label: 'التجفيف', color: '#EA580C', bg: '#FFF7ED', cards: [{ car: 'أكورد', plate: 'ي ك ل 3456', service: 'تلميع', time: '7 د' }] },
+    { label: 'المراجعة', color: '#0099CC', bg: '#F0F9FF', cards: [] },
+    { label: 'جاهزة', color: '#16A34A', bg: '#F0FDF4', cards: [{ car: 'إلنترا', plate: 'م ن س 7890', service: 'داخلي', time: 'الآن' }] },
+  ]
+  return (
+    <div style={{ overflowX: 'auto', paddingBottom: 8 }}>
+      <div style={{ display: 'flex', gap: 10, minWidth: 700 }}>
+        {cols.map(col => (
+          <div key={col.label} style={{ flex: 1, minWidth: 130, background: col.bg, borderRadius: 14, padding: 10, border: `1px solid ${col.color}22` }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: col.color, flexShrink: 0 }} />
+              <span style={{ fontSize: 11, fontWeight: 700, color: col.color, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{col.label}</span>
+              <span style={{ marginRight: 'auto', fontSize: 10, fontWeight: 700, color: col.color, background: `${col.color}18`, borderRadius: 20, padding: '1px 7px' }}>{col.cards.length}</span>
+            </div>
+            {col.cards.map(card => (
+              <div key={card.plate} style={{ background: '#fff', borderRadius: 10, padding: '9px 10px', marginBottom: 6, border: '1px solid #E2EBF6', boxShadow: '0 1px 4px rgba(13,27,62,0.06)' }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#0D1B3E', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{card.car}</div>
+                <div style={{ fontSize: 10, color: '#64748B', fontFamily: 'IBM Plex Sans Arabic, sans-serif', marginTop: 2 }}>{card.plate}</div>
+                <div style={{ fontSize: 10, color: '#64748B', fontFamily: 'IBM Plex Sans Arabic, sans-serif', marginTop: 2 }}>{card.service}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6 }}>
+                  <Clock size={9} color="#94A3B8" />
+                  <span style={{ fontSize: 10, color: '#94A3B8', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{card.time}</span>
+                </div>
+              </div>
+            ))}
+            {col.cards.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '16px 0', fontSize: 10, color: '#CBD5E1', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>فارغ</div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── WAITING SCREEN MOCKUP ───────────────────────────────────────────────────
+function WaitingScreenMockup() {
+  const rows = [
+    { num: '07', car: 'كامري',  service: 'داخلي وخارجي', status: 'waiting', time: '28 دقيقة' },
+    { num: '06', car: 'جيب',    service: 'بخار',          status: 'washing', time: '18 دقيقة' },
+    { num: '05', car: 'أكورد',  service: 'خارجي',         status: 'drying',  time: '9 دقائق' },
+    { num: '04', car: 'إلنترا', service: 'تلميع سريع',    status: 'ready',   time: 'الآن' },
+  ]
+  return (
+    <div style={{ background: '#0D1B3E', borderRadius: 20, overflow: 'hidden', boxShadow: '0 20px 60px rgba(13,27,62,0.25)' }}>
+      {/* Header bar */}
+      <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#4ADE80', boxShadow: '0 0 8px #4ADE80' }} />
+        <span style={{ fontSize: 13, fontWeight: 600, color: '#fff', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>شاشة الانتظار — مغسلة نايف</span>
+        <span style={{ marginRight: 'auto', fontSize: 11, color: 'rgba(255,255,255,0.4)', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>مباشر الآن</span>
+      </div>
+      {/* Column headers */}
+      <div style={{ display: 'grid', gridTemplateColumns: '48px 1fr 1fr 120px 100px', gap: 0, padding: '10px 20px', background: 'rgba(255,255,255,0.04)' }}>
+        {['#', 'السيارة', 'الخدمة', 'الحالة', 'الوقت'].map(h => (
+          <span key={h} style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.4)', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{h}</span>
+        ))}
+      </div>
+      {rows.map((row, i) => {
+        const s = STATUS_COLORS[row.status]
+        return (
+          <div key={row.num} style={{ display: 'grid', gridTemplateColumns: '48px 1fr 1fr 120px 100px', gap: 0, padding: '13px 20px', borderBottom: i < rows.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none', alignItems: 'center' }}>
+            <span style={{ fontSize: 16, fontWeight: 700, color: '#38BDF8', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{row.num}</span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: '#fff', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{row.car}</span>
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{row.service}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, background: s.bg, color: s.text, padding: '4px 12px', borderRadius: 20, display: 'inline-block', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{s.label}</span>
+            <span style={{ fontSize: 13, color: row.status === 'ready' ? '#4ADE80' : 'rgba(255,255,255,0.5)', fontWeight: row.status === 'ready' ? 700 : 400, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{row.time}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── FINANCE CARDS MOCKUP ─────────────────────────────────────────────────────
+function FinanceMockup() {
+  const cards = [
+    { label: 'دخل اليوم',      value: '8,420',  unit: 'ر.س', color: '#0099CC', icon: CircleDollarSign },
+    { label: 'عدد السيارات',   value: '64',     unit: 'سيارة', color: '#7C3AED', icon: Car },
+    { label: 'متوسط الفاتورة', value: '131',    unit: 'ر.س', color: '#EA580C', icon: ReceiptText },
+    { label: 'كاش',            value: '3,200',  unit: 'ر.س', color: '#16A34A', icon: Wallet },
+    { label: 'مدى',            value: '4,100',  unit: 'ر.س', color: '#0099CC', icon: CreditCard },
+    { label: 'تحويل',          value: '1,120',  unit: 'ر.س', color: '#64748B', icon: TrendingUp },
+    { label: 'مصاريف',         value: '980',    unit: 'ر.س', color: '#EF4444', icon: FileText },
+    { label: 'VAT',            value: '1,054',  unit: 'ر.س', color: '#F59E0B', icon: ShieldCheck },
+    { label: 'صافي الربح',     value: '6,386',  unit: 'ر.س', color: '#16A34A', icon: Star },
+  ]
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+      {cards.map(c => (
+        <div key={c.label} style={{ background: '#fff', borderRadius: 14, padding: '14px 16px', border: '1px solid #E2EBF6', boxShadow: '0 2px 8px rgba(13,27,62,0.05)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+            <c.icon size={14} color={c.color} />
+            <span style={{ fontSize: 11, color: '#64748B', fontWeight: 500, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{c.label}</span>
+          </div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#0D1B3E', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{c.value} <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 400 }}>{c.unit}</span></div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── LOYALTY CARD MOCKUP ─────────────────────────────────────────────────────
+function LoyaltyCard() {
+  return (
+    <div style={{ background: 'linear-gradient(135deg, #0D1B3E 0%, #1E3A6E 100%)', borderRadius: 20, padding: '24px', boxShadow: '0 16px 48px rgba(13,27,62,0.25)', maxWidth: 340, margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+        <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(56,189,248,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Gift size={22} color="#38BDF8" />
+        </div>
+        <div>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>بطاقة الولاء</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>محمد العتيبي</div>
+        </div>
+        <div style={{ marginRight: 'auto', background: 'rgba(74,222,128,0.15)', borderRadius: 20, padding: '4px 10px' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#4ADE80', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>عميل متكرر</span>
+        </div>
+      </div>
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>الزيارات</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#38BDF8', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>4 / 5</span>
+        </div>
+        <div style={{ height: 8, background: 'rgba(255,255,255,0.1)', borderRadius: 4, overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: '80%', background: 'linear-gradient(90deg, #38BDF8, #0099CC)', borderRadius: 4 }} />
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        {[1,2,3,4].map(n => (
+          <div key={n} style={{ flex: 1, height: 32, background: 'rgba(56,189,248,0.25)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Check size={14} color="#38BDF8" />
+          </div>
+        ))}
+        <div style={{ flex: 1, height: 32, background: 'rgba(255,255,255,0.08)', borderRadius: 8, border: '1.5px dashed rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Sparkles size={14} color="rgba(255,255,255,0.3)" />
+        </div>
+      </div>
+      <div style={{ marginTop: 14, background: 'rgba(74,222,128,0.1)', borderRadius: 10, padding: '10px 14px', border: '1px solid rgba(74,222,128,0.2)' }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: '#4ADE80', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>الغسلة القادمة عليها مكافأة ⭐</span>
+      </div>
+    </div>
+  )
+}
+
+// ─── FAQ ITEM ────────────────────────────────────────────────────────────────
+function FaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div style={{ borderRadius: 14, border: '1px solid #E2EBF6', background: '#fff', overflow: 'hidden', boxShadow: '0 1px 4px rgba(13,27,62,0.04)' }}>
+      <button onClick={() => setOpen(v => !v)} style={{ width: '100%', background: 'none', border: 'none', padding: '18px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', textAlign: 'right' }}>
+        <span style={{ fontSize: 15, fontWeight: 700, color: '#0D1B3E', fontFamily: 'IBM Plex Sans Arabic, sans-serif', textAlign: 'right', flex: 1 }}>{q}</span>
+        <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.25 }} style={{ marginRight: 12, flexShrink: 0, color: '#0099CC' }}>
+          <ChevronDown size={18} />
+        </motion.span>
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }}>
+            <div style={{ padding: '0 20px 18px', fontSize: 14, lineHeight: 1.8, color: '#475569', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{a}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+// ─── SECTION WRAPPER ─────────────────────────────────────────────────────────
+const S = ({ id, bg = '#fff', children }: { id?: string; bg?: string; children: React.ReactNode }) => (
+  <section id={id} style={{ background: bg, padding: '80px 0' }}>
+    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>{children}</div>
+  </section>
+)
+
+const SectionLabel = ({ text }: { text: string }) => (
+  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#EFF6FF', borderRadius: 20, padding: '5px 14px', marginBottom: 16 }}>
+    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#0099CC' }} />
+    <span style={{ fontSize: 12, fontWeight: 700, color: '#0099CC', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{text}</span>
+  </div>
+)
+
+const H2 = ({ children }: { children: React.ReactNode }) => (
+  <h2 style={{ fontSize: 'clamp(26px, 4vw, 40px)', fontWeight: 700, color: '#0D1B3E', lineHeight: 1.25, margin: '0 0 16px', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{children}</h2>
+)
+
+const Sub = ({ children }: { children: React.ReactNode }) => (
+  <p style={{ fontSize: 16, lineHeight: 1.8, color: '#475569', fontFamily: 'IBM Plex Sans Arabic, sans-serif', margin: 0 }}>{children}</p>
+)
+
+// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 export const CarWashPage = () => {
-  const rootRef = useRef<HTMLDivElement | null>(null)
-  const heroImageRef = useRef<HTMLImageElement | null>(null)
-  const [closingOpen, setClosingOpen] = useState(false)
   const [lead, setLead] = useState({ name: '', phone: '', business: '', city: '' })
   const [sending, setSending] = useState(false)
   const [done, setDone] = useState(false)
   const [formError, setFormError] = useState('')
-
-  const requestDemo = () =>
-    openWhatsAppChat('مرحباً، أريد تجربة مدار OS لمغسلتي ومعرفة أفضل باقة مناسبة للتشغيل.')
-
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        heroImageRef.current,
-        { autoAlpha: 0.92 },
-        { autoAlpha: 1, duration: 1.2, ease: 'power3.out' },
-      )
-      gsap.from('.hero-copy > *', {
-        y: 34,
-        autoAlpha: 0,
-        duration: 0.85,
-        stagger: 0.12,
-        ease: 'power3.out',
-        delay: 0.15,
-      })
-      gsap.from('.hero-pulse', {
-        scale: 0.7,
-        autoAlpha: 0,
-        duration: 1,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-      })
-      gsap.utils.toArray<HTMLElement>('.gsap-reveal').forEach((el) => {
-        gsap.fromTo(
-          el,
-          { y: 42, autoAlpha: 0 },
-          {
-            y: 0,
-            autoAlpha: 1,
-            duration: 0.8,
-            ease: 'power3.out',
-            scrollTrigger: { trigger: el, start: 'top 84%' },
-          },
-        )
-      })
-      gsap.from('.flow-step', {
-        y: 24,
-        autoAlpha: 0,
-        stagger: 0.12,
-        duration: 0.65,
-        ease: 'power3.out',
-        scrollTrigger: { trigger: '#experience', start: 'top 70%' },
-      })
-      gsap.from('.dashboard-card', {
-        y: 22,
-        autoAlpha: 0,
-        stagger: 0.08,
-        duration: 0.65,
-        ease: 'power3.out',
-        scrollTrigger: { trigger: '#dashboard', start: 'top 68%' },
-      })
-    }, rootRef)
-
-    return () => ctx.revert()
-  }, [])
 
   const submitLead = async (event: FormEvent) => {
     event.preventDefault()
@@ -184,17 +404,15 @@ export const CarWashPage = () => {
     setSending(true)
     setFormError('')
     try {
-      const { error } = await supabase.from('leads').insert([
-        {
-          name: lead.name.trim(),
-          phone: lead.phone.trim(),
-          email: '',
-          service: 'madar_os_car_wash_demo',
-          message: `النشاط: ${lead.business || 'مغسلة سيارات'} | المدينة: ${lead.city || 'غير محددة'} | طلب تجربة مدار OS`,
-          source: 'website',
-          status: 'new',
-        },
-      ])
+      const { error } = await supabase.from('leads').insert([{
+        name: lead.name.trim(),
+        phone: lead.phone.trim(),
+        email: '',
+        service: 'madar_os_car_wash_demo',
+        message: `النشاط: ${lead.business || 'مغسلة سيارات'} | المدينة: ${lead.city || 'غير محددة'} | طلب تجربة مدار OS`,
+        source: 'website',
+        status: 'new',
+      }])
       if (error) throw error
       setDone(true)
       setLead({ name: '', phone: '', business: '', city: '' })
@@ -205,361 +423,617 @@ export const CarWashPage = () => {
     }
   }
 
+  const inputStyle: React.CSSProperties = {
+    width: '100%', background: '#F8FAFC', border: '1.5px solid #E2EBF6', borderRadius: 12,
+    padding: '13px 16px', fontSize: 14, color: '#0D1B3E', outline: 'none',
+    fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif', transition: 'border-color .2s',
+  }
 
   return (
-    <div ref={rootRef} className="min-h-screen bg-[#F5FAFF] text-[#071322]" dir="rtl">
-      <MadarNavbar navLinks={navLinks} subtitle="نظام تشغيل للمغاسل" />
+    <div dir="rtl" style={{ minHeight: '100vh', background: '#F8FAFC', fontFamily: 'IBM Plex Sans Arabic, Tajawal, Cairo, sans-serif' }}>
+      <Navbar />
 
-      <main>
-        <section className="relative min-h-[760px] overflow-hidden bg-white sm:min-h-[820px] lg:min-h-0">
-          <img
-            ref={heroImageRef}
-            src="/madar-carwash-hero-real.png"
-            alt="Madar OS car wash hero"
-            className="absolute inset-0 h-full w-full object-cover object-[35%_center] lg:static lg:block lg:h-auto lg:object-contain"
-          />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(255,255,255,0.66)_34%,rgba(255,255,255,0.18)_66%,rgba(255,255,255,0.02)_100%)] sm:bg-[linear-gradient(270deg,rgba(255,255,255,0.98)_0%,rgba(255,255,255,0.90)_24%,rgba(255,255,255,0.48)_45%,rgba(255,255,255,0.04)_68%)]" />
-          <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/90 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-white/70 to-transparent" />
-          <div className="hero-pulse absolute bottom-[24%] left-[26%] hidden h-20 w-20 rounded-full border-2 border-[#00BFFF]/70 bg-[#00BFFF]/10 shadow-[0_0_55px_rgba(0,191,255,0.55)] lg:block" />
-
-          <div className="absolute inset-0 z-10 mx-auto flex max-w-7xl items-start px-4 pt-28 sm:items-center sm:px-6 sm:pt-16 lg:px-8">
-            <div className="hero-copy ml-auto w-full max-w-[580px] text-[#0D1B3E] lg:ml-0">
-              <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/70 px-3.5 py-2 text-xs font-black text-[#0D1B3E] shadow-sm backdrop-blur-xl font-cairo sm:px-5 sm:py-2.5 sm:text-sm">
-                <span className="h-2 w-2 rounded-full bg-[#00BFFF]" />
-                واتساب + ذكاء اصطناعي للمغاسل
+      {/* ── 1. HERO ── */}
+      <section style={{ background: 'linear-gradient(160deg, #F0F7FF 0%, #FAFCFF 50%, #F0F7FF 100%)', padding: '80px 0 72px', borderBottom: '1px solid #E2EBF6' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 48, alignItems: 'center' }}>
+          <div>
+            <motion.div {...fadeUp(0)}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#DBEAFE', borderRadius: 20, padding: '5px 14px', marginBottom: 20 }}>
+                <Zap size={12} color="#0099CC" />
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#0099CC', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>نظام تشغيل للمغاسل</span>
               </div>
-              <h1 className="mt-5 text-[2rem] font-black leading-[1.08] tracking-normal drop-shadow-[0_2px_0_rgba(255,255,255,0.85)] font-cairo sm:mt-7 sm:text-6xl lg:text-7xl">
-                عميلك يرجع لوحده.
-                <span className="block text-[#008FE8]">واتساب يتابع بدلاً عنك.</span>
-              </h1>
-              <p className="mt-3 max-w-[300px] rounded-xl border border-white/50 bg-white/50 px-3 py-2.5 text-[13px] font-bold leading-6 text-slate-800 shadow-sm backdrop-blur-md font-tajawal sm:mt-5 sm:max-w-xl sm:rounded-2xl sm:bg-white/75 sm:px-5 sm:py-4 sm:text-xl sm:leading-8">
-                إشعار جاهزية السيارة، تذكير العميل، وطلب التقييم — كل شيء يصير تلقائياً عبر واتساب بدون موظف يتذكر.
+            </motion.div>
+            <motion.h1 {...fadeUp(0.08)} style={{ fontSize: 'clamp(28px, 4.5vw, 48px)', fontWeight: 700, color: '#0D1B3E', lineHeight: 1.2, margin: '0 0 20px', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+              نظام يشغّل مغسلتك<br />
+              <span style={{ color: '#0099CC' }}>من دخول السيارة حتى استلامها</span>
+            </motion.h1>
+            <motion.p {...fadeUp(0.15)} style={{ fontSize: 16, lineHeight: 1.9, color: '#475569', marginBottom: 16, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+              العميل يمسح QR، يسجل سيارته، يشوف دوره على الشاشة، ويوصله تنبيه عند الجاهزية — وأنت تتابع السيارات، الإيرادات، الموظفين، والولاء من لوحة واحدة.
+            </motion.p>
+            <motion.div {...fadeUp(0.2)} style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 12, padding: '10px 16px', marginBottom: 28 }}>
+              <p style={{ fontSize: 13.5, color: '#C2410C', fontWeight: 600, margin: 0, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+                بدل الفوضى والسؤال المتكرر: وين سيارتي؟ خلي كل شيء واضح للعميل والموظف وصاحب المغسلة.
               </p>
-              <div className="mt-5 flex flex-col items-start gap-2.5 sm:mt-7 sm:flex-row sm:items-center sm:gap-3">
-                <Link
-                  to="/trial"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#00BFFF] px-4 py-3 text-sm font-black text-[#071322] shadow-[0_14px_32px_rgba(0,191,255,0.30)] font-cairo sm:rounded-2xl sm:px-6 sm:py-4 sm:text-base sm:shadow-[0_18px_45px_rgba(0,191,255,0.36)]"
-                >
-                  ابدأ تجربة 3 أيام
-                  <ChevronLeft size={18} />
-                </Link>
-                <a
-                  href="#dashboard"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-200 bg-white/74 px-4 py-3 text-sm font-black text-[#0D1B3E] shadow-sm backdrop-blur-xl font-cairo sm:rounded-2xl sm:bg-white/82 sm:px-6 sm:py-4 sm:text-base"
-                >
-                  شاهد الديمو الحي
-                  <Monitor size={18} />
-                </a>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="experience" className="relative overflow-hidden bg-white py-20">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-3xl text-center">
-              <p className="text-sm font-black text-[#0099CC] font-cairo">كيف يعمل QR داخل المغسلة؟</p>
-              <h2 className="mt-3 text-3xl font-black leading-tight font-cairo sm:text-5xl">
-                العميل يدخل أسرع، والموظف يشوف السيارة مباشرة.
-              </h2>
-              <p className="mx-auto mt-5 max-w-2xl leading-8 text-slate-600 font-tajawal">
-                لا تطبيق، ولا تسجيل طويل. مسح QR، اختيار الخدمة، رقم انتظار، ثم متابعة مباشرة في لوحة التشغيل.
-              </p>
-            </div>
-            <div className="relative mt-14 grid gap-4 lg:grid-cols-4">
-              <div className="absolute left-12 right-12 top-[52px] hidden h-0.5 bg-sky-100 lg:block" />
-              {flow.map(({ icon: Icon, title, text }, index) => (
-                <div key={title} className="flow-step relative rounded-[28px] border border-sky-100 bg-[#F5FAFF] p-6 shadow-sm">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-[#007BFF] shadow-sm">
-                    <Icon size={24} />
-                  </div>
-                  <div className="mt-6 inline-flex rounded-full bg-[#0D1B3E] px-3 py-1 font-sora text-xs font-black text-white">
-                    0{index + 1}
-                  </div>
-                  <h3 className="mt-4 text-xl font-black font-cairo">{title}</h3>
-                  <p className="mt-3 leading-7 text-slate-600 font-tajawal">{text}</p>
-                </div>
+            </motion.div>
+            <motion.div {...fadeUp(0.25)} style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <button onClick={requestDemo} style={{ background: '#0D1B3E', color: '#fff', border: 'none', borderRadius: 12, padding: '13px 28px', fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'IBM Plex Sans Arabic, sans-serif', boxShadow: '0 8px 24px rgba(13,27,62,0.25)' }}>
+                اطلب تجربة الآن
+              </button>
+              <a href="#how" style={{ background: '#fff', color: '#0D1B3E', border: '1.5px solid #E2EBF6', borderRadius: 12, padding: '13px 22px', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'IBM Plex Sans Arabic, sans-serif', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                شاهد كيف يعمل النظام <ChevronLeft size={16} />
+              </a>
+            </motion.div>
+            <motion.div {...fadeUp(0.32)} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 24 }}>
+              {['تسجيل ذاتي عبر QR', 'شاشة انتظار مباشرة', 'تنبيه عند جاهزية السيارة', 'تقارير وإيرادات'].map(b => (
+                <span key={b} style={{ fontSize: 12, fontWeight: 600, color: '#0099CC', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 20, padding: '5px 14px', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{b}</span>
               ))}
-            </div>
+            </motion.div>
           </div>
-        </section>
+          <motion.div {...fadeUp(0.1)} style={{ display: 'flex', justifyContent: 'center' }}>
+            <HeroMockup />
+          </motion.div>
+        </div>
+      </section>
 
-        {/* ── WhatsApp Automation Section ── */}
-        <section className="bg-[#071322] py-20 text-white overflow-hidden">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-14">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-black text-[#00BFFF] font-cairo mb-4">
-                <MessageCircle size={14} />
-                واتساب تلقائي
+      {/* ── 2. PAIN ── */}
+      <S bg="#FAFCFF">
+        <motion.div {...fadeUp()} style={{ textAlign: 'center', marginBottom: 48 }}>
+          <SectionLabel text="المشاكل اليومية" />
+          <H2>كل يوم في المغسلة نفس المشاكل</H2>
+        </motion.div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+          {[
+            { icon: MessageCircle, title: 'العميل يسأل كل شوي', text: 'متى تخلص السيارة؟ كم باقي؟ وين وصلت؟ أسئلة تتكرر وتضغط على الموظفين.', color: '#EF4444' },
+            { icon: Car, title: 'ترتيب الدور يضيع', text: 'مع الزحمة، السيارات تدخل وتطلع بدون وضوح، والعميل يحس أن الدور غير منظم.', color: '#F59E0B' },
+            { icon: Users, title: 'الموظف ينسى الحالة', text: 'سيارة في الانتظار، سيارة تحت الغسيل، سيارة جاهزة… بدون نظام واضح تبدأ اللخبطة.', color: '#8B5CF6' },
+            { icon: Wallet, title: 'الكاش ما يطابق', text: 'آخر اليوم تبدأ الأسئلة: كم دخلنا؟ كم مصروف؟ كم مدى؟ كم كاش؟', color: '#EF4444' },
+            { icon: TrendingUp, title: 'فرص البيع تضيع', text: 'تلميع، تعطير، غسيل داخلي، اشتراكات… إضافات ممكن ترفع الفاتورة لكنها لا تُعرض بذكاء.', color: '#0099CC' },
+            { icon: Star, title: 'العميل ما يرجع', text: 'بدون ولاء وتذكير وتجربة مرتبة، العميل يزورك مرة وينسى يرجع.', color: '#16A34A' },
+          ].map(({ icon: Icon, title, text, color }, i) => (
+            <motion.div key={title} {...fadeUp(i * 0.06)}
+              style={{ background: '#fff', borderRadius: 16, padding: '22px 20px', border: '1px solid #E2EBF6', boxShadow: '0 2px 8px rgba(13,27,62,0.05)' }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: `${color}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+                <Icon size={20} color={color} />
               </div>
-              <h2 className="text-3xl font-black leading-tight font-cairo sm:text-5xl">
-                كل رسالة تصير وحدها — بدون ما تحرك ساعدك.
-              </h2>
-              <p className="mt-5 text-lg leading-8 text-white/60 font-tajawal max-w-2xl mx-auto">
-                بمجرد ما تضغط "جاهز للتسليم"، النظام يرسل إشعار واتساب للعميل، الفاتورة، ثم تذكير ومتابعة تلقائية.
-              </p>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 relative">
-              <div className="absolute left-12 right-12 top-[52px] hidden h-0.5 bg-white/10 lg:block" />
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0D1B3E', margin: '0 0 8px', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{title}</h3>
+              <p style={{ fontSize: 13.5, lineHeight: 1.8, color: '#64748B', margin: 0, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{text}</p>
+            </motion.div>
+          ))}
+        </div>
+        <motion.div {...fadeUp(0.4)} style={{ marginTop: 40, background: 'linear-gradient(135deg, #0D1B3E 0%, #1E3A6E 100%)', borderRadius: 16, padding: '20px 24px', textAlign: 'center' }}>
+          <p style={{ fontSize: 16, fontWeight: 600, color: '#fff', margin: 0, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+            مدار OS يحول هذه الفوضى إلى مسار واضح من أول مسحة QR إلى استلام السيارة.
+          </p>
+        </motion.div>
+      </S>
+
+      {/* ── 3. HOW IT WORKS ── */}
+      <S id="how" bg="#fff">
+        <motion.div {...fadeUp()} style={{ textAlign: 'center', marginBottom: 48 }}>
+          <SectionLabel text="آلية العمل" />
+          <H2>كيف يعمل النظام؟</H2>
+          <Sub>٤ خطوات بسيطة تحول مغسلتك من فوضى إلى تشغيل احترافي.</Sub>
+        </motion.div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 16, marginBottom: 40 }}>
+          {[
+            { icon: QrCode, num: '01', title: 'العميل يمسح QR', text: 'يدخل من جواله بدون تطبيق وبدون انتظار موظف.' },
+            { icon: Car, num: '02', title: 'يسجل السيارة والخدمة', text: 'الاسم، رقم الجوال، اللوحة، نوع السيارة، والخدمة المطلوبة.' },
+            { icon: Monitor, num: '03', title: 'السيارة تظهر على الشاشة', text: 'تظهر مباشرة في شاشة الانتظار ولوحة التشغيل الداخلية.' },
+            { icon: Bell, num: '04', title: 'يوصله تنبيه عند الجاهزية', text: 'عند تغيير الحالة إلى جاهزة، يتم إرسال إشعار للعميل.' },
+          ].map(({ icon: Icon, num, title, text }, i) => (
+            <motion.div key={num} {...fadeUp(i * 0.08)}
+              style={{ background: '#F8FAFC', borderRadius: 16, padding: '24px 20px', border: '1px solid #E2EBF6', position: 'relative' }}>
+              <div style={{ position: 'absolute', top: 16, left: 16, fontSize: 13, fontWeight: 700, color: '#0099CC', background: '#EFF6FF', borderRadius: 20, padding: '3px 10px', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{num}</div>
+              <div style={{ width: 48, height: 48, background: '#0D1B3E', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                <Icon size={22} color="#38BDF8" />
+              </div>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0D1B3E', margin: '0 0 8px', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{title}</h3>
+              <p style={{ fontSize: 13.5, lineHeight: 1.8, color: '#64748B', margin: 0, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{text}</p>
+            </motion.div>
+          ))}
+        </div>
+        {/* Flow bar */}
+        <motion.div {...fadeUp(0.3)} style={{ background: '#F0F7FF', borderRadius: 14, padding: '16px 20px', overflowX: 'auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 560, justifyContent: 'center', flexWrap: 'wrap' }}>
+            {['QR', 'تسجيل السيارة', 'في الانتظار', 'جاري الغسيل', 'التجفيف', 'المراجعة', 'جاهزة'].map((step, i, arr) => (
+              <div key={step} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: i === arr.length - 1 ? '#16A34A' : '#0099CC', background: i === arr.length - 1 ? '#DCFCE7' : '#DBEAFE', borderRadius: 20, padding: '5px 12px', fontFamily: 'IBM Plex Sans Arabic, sans-serif', whiteSpace: 'nowrap' }}>{step}</span>
+                {i < arr.length - 1 && <ChevronLeft size={14} color="#94A3B8" />}
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      </S>
+
+      {/* ── 4. LIVE WAITING SCREEN ── */}
+      <S id="waiting-screen" bg="#F0F7FF">
+        <motion.div {...fadeUp()} style={{ textAlign: 'center', marginBottom: 40 }}>
+          <SectionLabel text="شاشة الانتظار" />
+          <H2>شاشة انتظار تريح العميل والموظف</H2>
+          <Sub>بدل ما يسأل العميل كل شوي، يشوف دوره وحالة سيارته مباشرة على الشاشة.</Sub>
+        </motion.div>
+        <motion.div {...fadeUp(0.1)}>
+          <WaitingScreenMockup />
+        </motion.div>
+        <motion.div {...fadeUp(0.2)} style={{ marginTop: 24, background: '#fff', borderRadius: 14, padding: '16px 20px', border: '1px solid #E2EBF6', textAlign: 'center' }}>
+          <p style={{ fontSize: 15, fontWeight: 600, color: '#0D1B3E', margin: 0, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+            النتيجة: عميل أهدأ، موظف أقل ضغط، وتجربة احترافية تشبه الشركات الكبرى.
+          </p>
+        </motion.div>
+      </S>
+
+      {/* ── 5. OPERATIONS DASHBOARD ── */}
+      <S id="features" bg="#fff">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 48, alignItems: 'start' }}>
+          <div>
+            <motion.div {...fadeUp()}>
+              <SectionLabel text="لوحة التشغيل" />
+              <H2>لوحة تشغيل تعرفك ماذا يحدث الآن</H2>
+              <Sub>لوحة Kanban تعرض كل سيارة وحالتها وموظفها في الوقت الفعلي — بدون اتصالات وبدون لخبطة.</Sub>
+            </motion.div>
+            <motion.div {...fadeUp(0.1)} style={{ marginTop: 28, display: 'flex', flexDirection: 'column', gap: 10 }}>
               {[
-                { icon: Car,           step: '01', title: 'السيارة جاهزة', text: 'الموظف يضغط "جاهز" — النظام يحرك الباقي تلقائياً.' },
-                { icon: MessageCircle, step: '02', title: 'إشعار فوري',     text: 'العميل يستلم رسالة واتساب: "سيارتك جاهزة + PDF الفاتورة".' },
-                { icon: TrendingUp,    step: '03', title: 'متابعة ذكية',    text: 'بعد ٣ أيام: رسالة شكر وطلب تقييم Google.' },
-                { icon: ShieldCheck,   step: '04', title: 'ولاء تلقائي',    text: 'بعد ٥ زيارات: رسالة مكافأة وعرض خاص للعميل المتكرر.' },
-              ].map(({ icon: Icon, step, title, text }) => (
-                <div key={step} className="relative rounded-[28px] border border-white/10 bg-white/5 p-6">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#00BFFF]/10 text-[#00BFFF]">
-                    <Icon size={24} />
+                'عرض حالة كل سيارة بالوقت الفعلي',
+                'تغيير الحالة بضغطة زر للموظف',
+                'إشعار فوري للعميل عند الجاهزية',
+                'عدد السيارات في كل مرحلة',
+                'تتبع موظف كل سيارة',
+                'تنبيه عند تأخير السيارة',
+                'ربط مع الفاتورة والمالية',
+              ].map((f, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 22, height: 22, background: '#DCFCE7', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Check size={13} color="#16A34A" />
                   </div>
-                  <div className="mt-6 inline-flex rounded-full bg-[#00BFFF] px-3 py-1 font-sora text-xs font-black text-[#071322]">
-                    {step}
+                  <span style={{ fontSize: 14, color: '#334155', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{f}</span>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+          <motion.div {...fadeUp(0.15)}>
+            <div style={{ background: '#F8FAFC', borderRadius: 20, padding: 16, border: '1px solid #E2EBF6' }}>
+              <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Monitor size={14} color="#0099CC" />
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#0D1B3E', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>لوحة تشغيل السيارات</span>
+              </div>
+              <KanbanMockup />
+            </div>
+          </motion.div>
+        </div>
+      </S>
+
+      {/* ── 6. WHATSAPP NOTIFICATION ── */}
+      <S bg="#0D1B3E">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 48, alignItems: 'center' }}>
+          <motion.div {...fadeUp()}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(56,189,248,0.1)', borderRadius: 20, padding: '5px 14px', marginBottom: 16 }}>
+              <MessageCircle size={12} color="#38BDF8" />
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#38BDF8', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>واتساب تلقائي</span>
+            </div>
+            <h2 style={{ fontSize: 'clamp(24px, 3.5vw, 36px)', fontWeight: 700, color: '#fff', lineHeight: 1.3, margin: '0 0 16px', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+              السيارة جاهزة؟<br />العميل يعرف فورًا
+            </h2>
+            <p style={{ fontSize: 15, lineHeight: 1.9, color: 'rgba(255,255,255,0.6)', marginBottom: 28, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+              بمجرد ما الموظف يضغط "جاهز"، يتم إرسال واتساب للعميل تلقائياً — بدون مكالمة، بدون صوت عالٍ، بدون ازدحام الاستقبال.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {['إشعار فوري', 'فاتورة PDF', 'تذكير بعد ٣ أيام', 'طلب تقييم Google'].map(c => (
+                <span key={c} style={{ fontSize: 12, fontWeight: 600, color: '#38BDF8', background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.2)', borderRadius: 20, padding: '5px 14px', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{c}</span>
+              ))}
+            </div>
+          </motion.div>
+          <motion.div {...fadeUp(0.1)}>
+            {/* WhatsApp mockup */}
+            <div style={{ background: '#0B141A', borderRadius: 20, overflow: 'hidden', boxShadow: '0 16px 48px rgba(0,0,0,0.4)' }}>
+              <div style={{ background: '#1F2C34', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 36, height: 36, background: '#25D366', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Car size={18} color="#fff" />
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>مغسلة نايف</div>
+                  <div style={{ fontSize: 11, color: '#8E9EA8', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>متصل الآن</div>
+                </div>
+              </div>
+              <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 12, minHeight: 200 }}>
+                <div style={{ background: '#1F2C34', borderRadius: '12px 12px 12px 4px', padding: '12px 14px', maxWidth: '85%', alignSelf: 'flex-start' }}>
+                  <p style={{ fontSize: 14, color: '#fff', margin: '0 0 6px', lineHeight: 1.6, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+                    مرحبًا، سيارتك جاهزة للاستلام. شكرًا لاختيارك مغسلتنا.
+                  </p>
+                  <p style={{ fontSize: 10, color: '#8E9EA8', margin: 0, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>10:42 ص ✓✓</p>
+                </div>
+                <div style={{ background: '#1F2C34', borderRadius: '12px 12px 12px 4px', padding: '12px 14px', maxWidth: '85%', alignSelf: 'flex-start' }}>
+                  <p style={{ fontSize: 14, color: '#fff', margin: '0 0 6px', lineHeight: 1.6, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+                    فاتورتك: 115 ر.س (شامل VAT). لأي استفسار نحن هنا.
+                  </p>
+                  <div style={{ background: '#0D1B3E', borderRadius: 8, padding: '8px 12px', marginTop: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <FileText size={14} color="#38BDF8" />
+                    <span style={{ fontSize: 12, color: '#38BDF8', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>invoice-2026-06-14.pdf</span>
                   </div>
-                  <h3 className="mt-4 text-xl font-black font-cairo">{title}</h3>
-                  <p className="mt-3 leading-7 text-white/60 font-tajawal">{text}</p>
+                  <p style={{ fontSize: 10, color: '#8E9EA8', margin: '6px 0 0', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>10:42 ص ✓✓</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </S>
+
+      {/* ── 7. UPSELL ── */}
+      <S bg="#FAFCFF">
+        <motion.div {...fadeUp()} style={{ textAlign: 'center', marginBottom: 40 }}>
+          <SectionLabel text="رفع قيمة الفاتورة" />
+          <H2>ارفع قيمة الفاتورة من نفس التسجيل</H2>
+          <Sub>كل عميل يدخل للتسجيل فرصة بيع إضافية.</Sub>
+        </motion.div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
+          {[
+            { name: 'تعطير', price: '+10', color: '#8B5CF6' },
+            { name: 'تلميع داخلي', price: '+25', color: '#0099CC' },
+            { name: 'تنظيف مكينة', price: '+40', color: '#EA580C' },
+            { name: 'غسيل بخار', price: '+60', color: '#16A34A' },
+            { name: 'اشتراك شهري', price: 'عرض', color: '#EF4444' },
+          ].map(({ name, price, color }, i) => (
+            <motion.div key={name} {...fadeUp(i * 0.06)}
+              style={{ background: '#fff', borderRadius: 16, padding: '20px 16px', border: '1px solid #E2EBF6', textAlign: 'center', boxShadow: '0 2px 8px rgba(13,27,62,0.04)' }}>
+              <div style={{ fontSize: 20, fontWeight: 700, color, fontFamily: 'IBM Plex Sans Arabic, sans-serif', marginBottom: 6 }}>{price} ر.س</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#0D1B3E', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{name}</div>
+              <div style={{ marginTop: 10, height: 3, borderRadius: 2, background: `${color}22` }}>
+                <div style={{ height: '100%', width: '100%', background: color, borderRadius: 2, opacity: 0.4 }} />
+              </div>
+            </motion.div>
+          ))}
+        </div>
+        <motion.div {...fadeUp(0.35)} style={{ marginTop: 28, background: '#EFF6FF', borderRadius: 14, padding: '16px 20px', textAlign: 'center', border: '1px solid #BFDBFE' }}>
+          <p style={{ fontSize: 15, fontWeight: 600, color: '#1D4ED8', margin: 0, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+            الإضافات تظهر للعميل لحظة التسجيل — يختار بنفسه، الفاتورة ترتفع بدون ضغط على الموظف.
+          </p>
+        </motion.div>
+      </S>
+
+      {/* ── 8. LOYALTY ── */}
+      <S bg="#fff">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 48, alignItems: 'center' }}>
+          <motion.div {...fadeUp()}>
+            <SectionLabel text="برنامج الولاء" />
+            <H2>خلي العميل يرجع بدل ما يروح لمغسلة ثانية</H2>
+            <Sub>نظام ولاء تلقائي يتتبع زيارات كل عميل ويرسل مكافأة عند الزيارة الخامسة — بدون دفاتر وبدون متابعة يدوية.</Sub>
+            <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[
+                'تتبع تلقائي لكل زيارة',
+                'مكافأة عند اكتمال ٥ زيارات',
+                'رسالة واتساب تلقائية للعميل المتكرر',
+                'معرفة أكثر عميل وفاءً لمغسلتك',
+              ].map((f, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <Gift size={16} color="#0099CC" />
+                  <span style={{ fontSize: 14, color: '#334155', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{f}</span>
                 </div>
               ))}
             </div>
-          </div>
-        </section>
+          </motion.div>
+          <motion.div {...fadeUp(0.1)}>
+            <LoyaltyCard />
+          </motion.div>
+        </div>
+      </S>
 
-        <section id="dashboard" className="overflow-hidden bg-[#F5FAFF] py-20">
-          <div className="mx-auto max-w-[1500px] px-4 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-4xl text-center">
-              <p className="text-sm font-black text-[#0099CC] font-cairo">الدليل داخل المنتج</p>
-              <h2 className="mt-3 text-3xl font-black leading-tight font-cairo sm:text-5xl">
-                الداشبورد يثبت لصاحب المغسلة أن اليوم صار تحت السيطرة.
-              </h2>
-              <p className="mx-auto mt-5 max-w-3xl text-lg leading-9 text-slate-600 font-tajawal">
-                حركة السيارات، العملاء، الإيراد، VAT، وإغلاق اليوم تظهر في مكان واحد. هذا هو الفرق بين برنامج "يسجل بيانات" ونظام يشغّل المغسلة.
-              </p>
-              <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                {features.map(({ icon: Icon, title, text }) => (
-                  <div key={title} className="dashboard-card rounded-3xl border border-sky-100 bg-white p-5 text-right shadow-sm">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-50 text-[#007BFF]">
-                      <Icon size={21} />
-                    </div>
-                    <p className="mt-4 font-black font-cairo">{title}</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600 font-tajawal">{text}</p>
+      {/* ── 9. FINANCE & VAT ── */}
+      <S id="finance" bg="#F0F7FF">
+        <motion.div {...fadeUp()} style={{ textAlign: 'center', marginBottom: 40 }}>
+          <SectionLabel text="المالية اليومية" />
+          <H2>اعرف دخل اليوم بدون تخمين</H2>
+          <Sub>بدل ما تنتظر نهاية اليوم وتراجع الورق، شوف أرقامك مباشرة.</Sub>
+        </motion.div>
+        <motion.div {...fadeUp(0.1)}>
+          <FinanceMockup />
+        </motion.div>
+        <motion.div {...fadeUp(0.25)} style={{ marginTop: 24, background: 'linear-gradient(135deg, #0D1B3E 0%, #1E3A6E 100%)', borderRadius: 16, padding: '20px 24px', textAlign: 'center' }}>
+          <p style={{ fontSize: 15, fontWeight: 600, color: '#fff', margin: 0, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+            VAT محسوبة تلقائياً على كل فاتورة — جاهزة لإغلاق اليوم والتقارير الضريبية.
+          </p>
+        </motion.div>
+      </S>
+
+      {/* ── 10. REPORTS ── */}
+      <S bg="#fff">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 48, alignItems: 'start' }}>
+          <motion.div {...fadeUp()}>
+            <SectionLabel text="التقارير" />
+            <H2>تقارير تعرفك أين تزيد وأين تخسر</H2>
+            <Sub>تقارير يومية وأسبوعية وشهرية تكشف فرص التحسين ومواطن الخسارة.</Sub>
+            <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {[
+                { icon: BarChart3, label: 'إيراد يومي وشهري' },
+                { icon: Car, label: 'عدد السيارات لكل خدمة' },
+                { icon: Users, label: 'أداء الموظفين' },
+                { icon: Clock, label: 'متوسط وقت الخدمة' },
+                { icon: TrendingUp, label: 'أكثر الخدمات مبيعاً' },
+                { icon: CreditCard, label: 'توزيع طرق الدفع' },
+                { icon: Star, label: 'تقييمات العملاء' },
+                { icon: Zap, label: 'أوقات الذروة' },
+              ].map(({ icon: Icon, label }, i) => (
+                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#F8FAFC', borderRadius: 10, padding: '10px 12px', border: '1px solid #E2EBF6' }}>
+                  <Icon size={15} color="#0099CC" />
+                  <span style={{ fontSize: 13, fontWeight: 500, color: '#334155', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{label}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+          <motion.div {...fadeUp(0.1)}>
+            <div style={{ background: '#F8FAFC', borderRadius: 20, padding: 20, border: '1px solid #E2EBF6' }}>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0D1B3E', margin: '0 0 16px', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>رؤى تلقائية من بياناتك</h3>
+              {[
+                { label: 'أكثر وقت زحمة', value: '6 مساءً', icon: Clock, color: '#EF4444' },
+                { label: 'أكثر خدمة مبيعاً', value: 'داخلي وخارجي', icon: Car, color: '#0099CC' },
+                { label: 'متوسط وقت الغسيل', value: '24 دقيقة', icon: Zap, color: '#16A34A' },
+              ].map(({ label, value, icon: Icon, color }) => (
+                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#fff', borderRadius: 12, padding: '14px 16px', marginBottom: 10, border: '1px solid #E2EBF6' }}>
+                  <div style={{ width: 36, height: 36, background: `${color}12`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon size={16} color={color} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{label}</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#0D1B3E', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{value}</div>
+                  </div>
+                </div>
+              ))}
+              {/* Mini bar chart */}
+              <div style={{ marginTop: 16 }}>
+                <div style={{ fontSize: 12, color: '#64748B', marginBottom: 8, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>إيراد الأسبوع</div>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 60 }}>
+                  {[45, 60, 38, 72, 55, 80, 48].map((h, i) => (
+                    <div key={i} style={{ flex: 1, background: i === 5 ? '#0099CC' : '#BFDBFE', borderRadius: '4px 4px 0 0', height: `${h}%` }} />
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
+                  {['أحد', 'إثن', 'ثلث', 'أرب', 'خمس', 'جمع', 'سبت'].map(d => (
+                    <div key={d} style={{ flex: 1, fontSize: 9, color: '#94A3B8', textAlign: 'center', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{d}</div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </S>
+
+      {/* ── 11. OWNER OUTCOMES ── */}
+      <S bg="#F0F7FF">
+        <motion.div {...fadeUp()} style={{ textAlign: 'center', marginBottom: 40 }}>
+          <SectionLabel text="ما يكسبه صاحب المغسلة" />
+          <H2>ماذا يكسب صاحب المغسلة؟</H2>
+        </motion.div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 }}>
+          {[
+            { icon: Clock, title: 'وقت أقل في الاستقبال', text: 'QR يستبدل الموظف في التسجيل — فريقك يشتغل بدل ما يتكلم.' },
+            { icon: CircleDollarSign, title: 'إيراد أعلى لكل سيارة', text: 'الإضافات تُعرض تلقائياً — الفاتورة ترتفع بدون ضغط.' },
+            { icon: Users, title: 'عملاء يرجعون', text: 'الولاء والتذكير يجيب العميل القديم بدون تكلفة إعلان.' },
+            { icon: BarChart3, title: 'أرقام واضحة كل يوم', text: 'إيراد اليوم، VAT، وصافي الربح — بدون حسابات يدوية.' },
+            { icon: ShieldCheck, title: 'ثقة بالموظف', text: 'كل عملية موثقة — تعرف من فعل ماذا ومتى.' },
+            { icon: TrendingUp, title: 'قرارات بناءً على بيانات', text: 'اعرف أفضل وقت، أكثر خدمة، وأكثر موظف إنتاجاً.' },
+            { icon: Zap, title: 'تشغيل أسرع', text: 'الانتظار ينخفض، الإنتاجية ترتفع، وتسلّم أكثر يومياً.' },
+            { icon: Star, title: 'سمعة أفضل', text: 'تجربة منظمة تنتج تقييمات Google أعلى بدون طلب.' },
+          ].map(({ icon: Icon, title, text }, i) => (
+            <motion.div key={title} {...fadeUp(i * 0.05)}
+              style={{ background: '#fff', borderRadius: 16, padding: '20px', border: '1px solid #E2EBF6', boxShadow: '0 2px 8px rgba(13,27,62,0.04)' }}>
+              <div style={{ width: 40, height: 40, background: '#EFF6FF', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                <Icon size={18} color="#0099CC" />
+              </div>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0D1B3E', margin: '0 0 6px', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{title}</h3>
+              <p style={{ fontSize: 13, lineHeight: 1.7, color: '#64748B', margin: 0, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{text}</p>
+            </motion.div>
+          ))}
+        </div>
+        <motion.div {...fadeUp(0.45)} style={{ marginTop: 32, background: 'linear-gradient(135deg, #0D1B3E 0%, #1E3A6E 100%)', borderRadius: 16, padding: '20px 24px', textAlign: 'center' }}>
+          <p style={{ fontSize: 16, fontWeight: 600, color: '#fff', margin: 0, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+            النظام لا يضيف شاشة فقط، النظام ينظم التشغيل ويرفع قيمة كل زيارة.
+          </p>
+        </motion.div>
+      </S>
+
+      {/* ── 12. PRICING ── */}
+      <S id="pricing" bg="#fff">
+        <motion.div {...fadeUp()} style={{ textAlign: 'center', marginBottom: 48 }}>
+          <SectionLabel text="الباقات" />
+          <H2>باقات واضحة لمغسلتك</H2>
+          <Sub>اختر الباقة المناسبة وابدأ تشغيل مغسلتك خلال 24 ساعة.</Sub>
+        </motion.div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))', gap: 20 }}>
+          {[
+            {
+              name: 'Starter',
+              price: '299',
+              period: 'ر.س / شهر',
+              desc: 'للمغسلة الصغيرة التي تريد البداية بالأساسيات.',
+              recommended: false,
+              features: ['QR للتسجيل الذاتي', 'شاشة انتظار مباشرة', 'لوحة تشغيل الموظف', 'سجل العملاء الأساسي', 'إيراد يومي بسيط', 'دعم واتساب', 'تقرير أسبوعي'],
+            },
+            {
+              name: 'Pro',
+              price: '500',
+              period: 'ر.س / شهر',
+              desc: 'للمغسلة الجادة: QR، شاشة عرض، عملاء، مالية، تقارير، وواتساب تلقائي.',
+              recommended: true,
+              features: ['كل مزايا Starter', 'واتساب تلقائي بالكامل', 'فاتورة PDF تلقائية', 'برنامج الولاء', 'إضافات البيع الذكي', 'VAT وإغلاق اليوم', 'تقارير متقدمة', 'تحليل أداء الموظفين', 'مساعد مدار AI', 'دعم أولوية', 'تجربة 3 أيام مجانية', 'إعداد كامل'],
+            },
+            {
+              name: 'Premium',
+              price: '1,000',
+              period: 'ر.س / شهر',
+              desc: 'لفرع أو أكثر — إعداد مخصص وتوسعة كاملة.',
+              recommended: false,
+              features: ['كل مزايا Pro', 'دعم متعدد الفروع', 'تقارير مقارنة بين الفروع', 'مدير حساب مخصص', 'إعداد وتشغيل مخصص', 'تكاملات إضافية', 'سرعة أولوية قصوى', 'تدريب الفريق', 'حسب احتياجك', 'اتصل للتفاصيل', 'عرض سعر خاص', 'دعم 7 أيام'],
+            },
+          ].map((plan, i) => (
+            <motion.div key={plan.name} {...fadeUp(i * 0.08)}
+              style={{ borderRadius: 20, border: plan.recommended ? '2px solid #0099CC' : '1.5px solid #E2EBF6', background: plan.recommended ? '#F0F9FF' : '#fff', padding: '28px 24px', position: 'relative', boxShadow: plan.recommended ? '0 8px 32px rgba(0,153,204,0.12)' : '0 2px 8px rgba(13,27,62,0.04)' }}>
+              {plan.recommended && (
+                <div style={{ position: 'absolute', top: -14, right: 24, background: '#0099CC', color: '#fff', fontSize: 12, fontWeight: 700, padding: '4px 14px', borderRadius: 20, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+                  الأكثر طلباً
+                </div>
+              )}
+              <div style={{ fontSize: 22, fontWeight: 700, color: '#0D1B3E', marginBottom: 4, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{plan.name}</div>
+              <p style={{ fontSize: 13, color: '#64748B', lineHeight: 1.7, margin: '0 0 20px', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{plan.desc}</p>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 20 }}>
+                <span style={{ fontSize: 36, fontWeight: 700, color: '#0D1B3E', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{plan.price}</span>
+                <span style={{ fontSize: 13, color: '#64748B', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{plan.period}</span>
+              </div>
+              <button onClick={requestDemo} style={{ width: '100%', borderRadius: 12, padding: '13px 0', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'IBM Plex Sans Arabic, sans-serif', border: 'none', background: plan.recommended ? '#0D1B3E' : '#F1F5F9', color: plan.recommended ? '#fff' : '#0D1B3E', marginBottom: 20 }}>
+                اطلب {plan.name} على واتساب
+              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {plan.features.map(f => (
+                  <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Check size={14} color="#16A34A" />
+                    <span style={{ fontSize: 13, color: '#334155', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{f}</span>
                   </div>
                 ))}
               </div>
-            </div>
+            </motion.div>
+          ))}
+        </div>
+      </S>
 
-            <div className="dashboard-card mt-12 rounded-[38px] border border-sky-100 bg-white p-3 shadow-[0_38px_110px_rgba(13,27,62,0.16)] sm:p-4">
-              {/* Browser chrome bar */}
-              <div className="flex items-center gap-2 px-4 pb-3 pt-2">
-                <span className="h-3 w-3 rounded-full bg-red-400" />
-                <span className="h-3 w-3 rounded-full bg-yellow-400" />
-                <span className="h-3 w-3 rounded-full bg-green-400" />
-                <div className="mr-3 flex-1 rounded-lg bg-slate-100 px-3 py-1 text-center text-xs text-slate-400 font-tajawal">
-                  madar.software/client
-                </div>
-              </div>
-              <div className="overflow-hidden rounded-[28px] border border-sky-100">
-                <img
-                  src="/assets/cw-dashboard.png"
-                  alt="لوحة تحكم مغسلة مدار"
-                  className="w-full object-cover object-top"
-                  style={{ maxHeight: 620 }}
-                />
-              </div>
-            </div>
+      {/* ── 13. CTA SECTION ── */}
+      <S bg="#0D1B3E">
+        <motion.div {...fadeUp()} style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto' }}>
+          <h2 style={{ fontSize: 'clamp(26px, 4vw, 40px)', fontWeight: 700, color: '#fff', lineHeight: 1.25, margin: '0 0 16px', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+            جاهز تنقل مغسلتك من الفوضى إلى التشغيل الذكي؟
+          </h2>
+          <p style={{ fontSize: 16, lineHeight: 1.8, color: 'rgba(255,255,255,0.6)', marginBottom: 32, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+            ابدأ تجربة 3 أيام مجانية — نجهز لك الحساب، نشرح النظام، ونكون معك من أول يوم.
+          </p>
+          <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button onClick={requestDemo} style={{ background: '#38BDF8', color: '#0D1B3E', border: 'none', borderRadius: 12, padding: '14px 32px', fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'IBM Plex Sans Arabic, sans-serif', boxShadow: '0 8px 24px rgba(56,189,248,0.3)' }}>
+              اطلب تجربة الآن
+            </button>
+            <button onClick={requestDemo} style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', border: '1.5px solid rgba(255,255,255,0.2)', borderRadius: 12, padding: '14px 28px', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'IBM Plex Sans Arabic, sans-serif', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <MessageCircle size={18} />
+              تواصل عبر واتساب
+            </button>
           </div>
-        </section>
+        </motion.div>
+      </S>
 
-
-        <section className="bg-[#071322] py-20 text-white">
-          <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
-            <div>
-              <p className="text-sm font-black text-[#00BFFF] font-cairo">لماذا يشتريها صاحب المغسلة؟</p>
-              <h2 className="mt-3 text-3xl font-black leading-tight font-cairo sm:text-5xl">
-                لأن مدار يحل ثلاث لحظات تسبب الفوضى كل يوم.
-              </h2>
-              <p className="mt-5 text-lg leading-9 text-white/72 font-tajawal">
-                الاستقبال، متابعة السيارة، وإغلاق الإيراد. إذا هذه اللحظات صارت واضحة، المغسلة تشتغل أسرع والمالك يثق بالأرقام.
-              </p>
+      {/* ── 14. FAQ + CONTACT ── */}
+      <S id="faq" bg="#FAFCFF">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 48, alignItems: 'start' }}>
+          <motion.div {...fadeUp()}>
+            <SectionLabel text="الأسئلة الشائعة" />
+            <H2>الأسئلة الشائعة</H2>
+            <Sub>كل ما يحتاجه صاحب المغسلة قبل البدء.</Sub>
+            <div style={{ marginTop: 28, background: 'linear-gradient(135deg, #0D1B3E 0%, #1E3A6E 100%)', borderRadius: 16, padding: '20px', textAlign: 'center' }}>
+              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', margin: '0 0 12px', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>سؤال ما لقيت إجابته؟</p>
+              <button onClick={requestDemo} style={{ background: '#38BDF8', color: '#0D1B3E', border: 'none', borderRadius: 10, padding: '11px 20px', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+                تواصل معنا الآن
+              </button>
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
+          </motion.div>
+          <motion.div {...fadeUp(0.1)} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {[
+              { q: 'ماذا أستلم عند تفعيل مدار OS؟', a: 'نجهز لك حساب مغسلة كامل: لوحة تشغيل السيارات، QR للتسجيل الذاتي، شاشة انتظار، العملاء والولاء، المالية، التقارير، وإغلاق اليوم — كل شيء جاهز من أول يوم.' },
+              { q: 'كيف أبدأ الاشتراك الآن؟', a: 'اختر الباقة المناسبة، يتم الدفع بتحويل بنكي، ثم نفعّل الحساب ونرسل لك بيانات الدخول خلال 24 ساعة.' },
+              { q: 'هل أقدر أجرب قبل الاشتراك؟', a: 'نعم. التجربة 3 أيام مجانية — تشاهد النظام على سيناريو قريب من تشغيل مغسلتك: دخول سيارة، انتقال المراحل، تسليم، وتقارير اليوم.' },
+              { q: 'هل لازم أستخدم QR من أول يوم؟', a: 'لا. تقدر تبدأ بإضافة السيارات من الموظف، ثم تفعّل QR عندما تريد تقليل الزحام وتسريع تسجيل العملاء.' },
+              { q: 'هل يعمل النظام بدون إنترنت؟', a: 'النظام يعتمد على الإنترنت للمزامنة الفورية. اشتراك بيانات بسيط كافٍ — لا يحتاج شبكة سريعة.' },
+              { q: 'هل يمكن تفعيله لأكثر من فرع؟', a: 'نعم، باقة Premium تدعم أكثر من فرع مع تقارير مقارنة وإدارة مركزية. تواصل معنا لعرض مخصص.' },
+            ].map(item => (
+              <FaqItem key={item.q} q={item.q} a={item.a} />
+            ))}
+          </motion.div>
+        </div>
+      </S>
+
+      {/* ── 15. LEAD FORM ── */}
+      <S id="contact" bg="#fff">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 48, alignItems: 'center' }}>
+          <motion.div {...fadeUp()}>
+            <SectionLabel text="ابدأ الآن" />
+            <H2>احجز تجربتك المجانية</H2>
+            <Sub>اترك بياناتك ونتواصل معك خلال ساعات لتجهيز حساب المغسلة.</Sub>
+            <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[
-                ['01', 'الدخول يصير ذاتي: العميل يسجل نفسه ويأخذ رقم انتظار واضح.'],
-                ['02', 'التشغيل يصير مرئي: كل سيارة لها مرحلة ومسؤولية واضحة.'],
-                ['03', 'الإغلاق يصير أسرع: الإيراد وVAT وعدد السيارات جاهزة آخر اليوم.'],
-              ].map(([title, text]) => (
-                <div key={title} className="rounded-[30px] border border-white/10 bg-white/8 p-6">
-                  <p className="font-sora text-sm font-black text-[#00BFFF]">{title}</p>
-                  <p className="mt-4 text-xl font-black leading-8 font-cairo">{text}</p>
+                '٣ أيام تجربة مجانية',
+                'إعداد كامل للحساب',
+                'دعم مباشر عبر واتساب',
+                'لا يحتاج بطاقة ائتمانية',
+              ].map((f, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <Check size={16} color="#16A34A" />
+                  <span style={{ fontSize: 14, color: '#334155', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{f}</span>
                 </div>
               ))}
             </div>
-          </div>
-        </section>
-
-        <section id="pricing" className="bg-white py-20">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-3xl text-center">
-              <p className="text-sm font-black text-[#0099CC] font-cairo">الباقات</p>
-              <h2 className="mt-3 text-3xl font-black leading-tight font-cairo sm:text-5xl">
-                اختر الباقة وابدأ تشغيل المغسلة بدون تعقيد.
-              </h2>
-              <p className="mt-5 leading-8 text-slate-600 font-tajawal">
-                عرض الإطلاق لأول 5 مغاسل فقط. نفعّل الحساب يدوياً بعد التحويل، ثم نضيف أي تكاملات اختيارية عند الحاجة.
-              </p>
-            </div>
-
-            <div className="mx-auto mt-12 grid max-w-5xl gap-5 lg:grid-cols-2">
-              {plans.map((plan) => (
-                <div
-                  key={plan.name}
-                  className={`relative rounded-[32px] border p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl ${
-                    plan.badge ? 'border-[#00BFFF] bg-[#F5FAFF]' : 'border-sky-100 bg-white'
-                  }`}
-                >
-                  {plan.badge && (
-                    <div className="absolute -top-4 right-6 rounded-full bg-[#00BFFF] px-4 py-2 text-xs font-black text-[#071322] font-cairo">
-                      {plan.badge}
-                    </div>
-                  )}
-                  <h3 className="text-2xl font-black font-cairo">{plan.name}</h3>
-                  <p className="mt-3 min-h-[56px] leading-7 text-slate-600 font-tajawal">{plan.note}</p>
-                  <div className="mt-6 rounded-3xl border border-sky-100 bg-white p-4">
-                    <div className="flex items-end gap-2">
-                      <span className="font-sora text-5xl font-black">{plan.launchPrice}</span>
-                      <span className="mb-2 text-sm font-bold text-slate-500 font-tajawal">ر.س / شهر</span>
-                    </div>
-                    <p className="mt-2 text-xs font-bold text-emerald-600 font-tajawal">
-                      سعر الإطلاق لأول 5 مغاسل
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500 font-tajawal">
-                      بعد أول 5 مغاسل: <span className="font-sora line-through">{plan.regularPrice}</span> ر.س / شهر
-                    </p>
+          </motion.div>
+          <motion.div {...fadeUp(0.1)}>
+            <div style={{ background: '#F8FAFC', borderRadius: 20, padding: 28, border: '1px solid #E2EBF6' }}>
+              {done ? (
+                <div style={{ textAlign: 'center', padding: '32px 0' }}>
+                  <div style={{ width: 56, height: 56, background: '#DCFCE7', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                    <Check size={28} color="#16A34A" />
                   </div>
-                  <button
-                    onClick={requestDemo}
-                    className={`mt-6 w-full rounded-2xl px-5 py-4 text-base font-black font-cairo ${
-                      plan.badge ? 'bg-[#071B35] text-white' : 'border border-sky-100 bg-white text-[#071B35]'
-                    }`}
-                  >
-                    احجز {plan.name} على واتساب
+                  <h3 style={{ fontSize: 18, fontWeight: 700, color: '#0D1B3E', margin: '0 0 8px', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>تم استلام طلبك</h3>
+                  <p style={{ fontSize: 14, color: '#64748B', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>سنتواصل معك خلال ساعات لتجهيز الحساب.</p>
+                </div>
+              ) : (
+                <form onSubmit={submitLead} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <h3 style={{ fontSize: 18, fontWeight: 700, color: '#0D1B3E', margin: '0 0 4px', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>أو اترك بياناتك ونرجع لك</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <input value={lead.name} onChange={e => setLead(p => ({ ...p, name: e.target.value }))} placeholder="اسمك" required style={inputStyle} />
+                    <input value={lead.phone} onChange={e => setLead(p => ({ ...p, phone: e.target.value }))} placeholder="رقم الجوال" required style={inputStyle} />
+                    <input value={lead.business} onChange={e => setLead(p => ({ ...p, business: e.target.value }))} placeholder="اسم المغسلة" style={inputStyle} />
+                    <input value={lead.city} onChange={e => setLead(p => ({ ...p, city: e.target.value }))} placeholder="المدينة" style={inputStyle} />
+                  </div>
+                  <button type="submit" disabled={sending} style={{ background: '#0D1B3E', color: '#fff', border: 'none', borderRadius: 12, padding: '14px', fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'IBM Plex Sans Arabic, sans-serif', opacity: sending ? 0.6 : 1 }}>
+                    {sending ? 'جار إرسال الطلب...' : 'أرسل طلب التجربة'}
                   </button>
-                  <div className="mt-6 space-y-3">
-                    {plan.points.map((point) => (
-                      <div key={point} className="flex items-center gap-2 text-sm font-bold text-slate-700 font-tajawal">
-                        <Check size={17} className="text-emerald-500" />
-                        {point}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
+                  {formError && <p style={{ fontSize: 13, color: '#EF4444', background: '#FEF2F2', borderRadius: 10, padding: '10px 14px', margin: 0, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{formError}</p>}
+                  <button type="button" onClick={requestDemo} style={{ background: '#fff', color: '#0D1B3E', border: '1.5px solid #E2EBF6', borderRadius: 12, padding: '12px', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'IBM Plex Sans Arabic, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                    <MessageCircle size={16} color="#25D366" />
+                    تواصل واتساب بدلاً من النموذج
+                  </button>
+                </form>
+              )}
             </div>
-          </div>
-        </section>
+          </motion.div>
+        </div>
+      </S>
 
-        <section id="faq" className="bg-[#F5FAFF] py-20">
-          <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
-            <div>
-              <p className="text-sm font-black text-[#0099CC] font-cairo">قرار الاشتراك</p>
-              <h2 className="mt-3 text-3xl font-black leading-tight font-cairo sm:text-5xl">كل ما يحتاجه صاحب المغسلة قبل البدء.</h2>
-              <p className="mt-5 leading-8 text-slate-600 font-tajawal">
-                ابدأ بتشغيل واضح ومباشر، ثم أضف المزايا الاختيارية حسب احتياج المغسلة ونموها.
-              </p>
-            </div>
-            <div className="space-y-4">
-              {faq.map((item) => (
-                <div key={item.q} className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm">
-                  <h3 className="text-lg font-black font-cairo">{item.q}</h3>
-                  <p className="mt-3 leading-7 text-slate-600 font-tajawal">{item.a}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="contact" className="bg-white px-4 py-20 sm:px-6 lg:px-8">
-          <div className="mx-auto grid max-w-7xl overflow-hidden rounded-[36px] bg-[#071B35] text-white lg:grid-cols-[0.95fr_1.05fr]">
-            <div className="p-8 sm:p-10 lg:p-12">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-black text-[#00BFFF] font-cairo">
-                <Sparkles size={15} />
-                الخطوة التالية
+      {/* ── 16. FOOTER ── */}
+      <footer style={{ background: '#0D1B3E', padding: '40px 0 32px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 28 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(56,189,248,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Car size={18} color="#38BDF8" />
               </div>
-              <h2 className="mt-6 text-3xl font-black leading-tight font-cairo sm:text-5xl">
-                احجز مكانك ضمن أول 5 مغاسل بسعر الإطلاق.
-              </h2>
-              <p className="mt-5 leading-8 text-white/72 font-tajawal">
-                أرسل لنا اسم المغسلة والمدينة على واتساب، ونجهز لك تجربة 3 أيام على مسار تشغيل واضح: QR، طابور السيارات، العملاء، المالية، وإغلاق اليوم.
-              </p>
-              <button
-                type="button"
-                onClick={requestDemo}
-                className="mt-8 inline-flex items-center justify-center gap-2 rounded-2xl bg-[#00BFFF] px-7 py-4 text-base font-black text-[#071322] shadow-[0_18px_45px_rgba(0,191,255,0.28)] font-cairo"
-              >
-                تواصل واتساب الآن
-                <MessageCircle size={18} />
-              </button>
-            </div>
-
-            <form onSubmit={submitLead} className="bg-white p-8 text-[#071322] sm:p-10 lg:p-12">
-              <h3 className="text-2xl font-black font-cairo">أو اترك بياناتك ونجهز التواصل</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-500 font-tajawal">
-                الواتساب أسرع. النموذج مناسب إذا تبي نرجع لك بتفاصيل الباقة والتفعيل.
-              </p>
-              <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                <input value={lead.name} onChange={(event) => setLead((prev) => ({ ...prev, name: event.target.value }))} className="rounded-2xl border border-sky-100 bg-[#F5FAFF] px-4 py-4 font-tajawal outline-none focus:border-[#00BFFF]" placeholder="اسمك" />
-                <input value={lead.phone} onChange={(event) => setLead((prev) => ({ ...prev, phone: event.target.value }))} className="rounded-2xl border border-sky-100 bg-[#F5FAFF] px-4 py-4 font-tajawal outline-none focus:border-[#00BFFF]" placeholder="رقم الجوال" />
-                <input value={lead.business} onChange={(event) => setLead((prev) => ({ ...prev, business: event.target.value }))} className="rounded-2xl border border-sky-100 bg-[#F5FAFF] px-4 py-4 font-tajawal outline-none focus:border-[#00BFFF]" placeholder="اسم المغسلة" />
-                <input value={lead.city} onChange={(event) => setLead((prev) => ({ ...prev, city: event.target.value }))} className="rounded-2xl border border-sky-100 bg-[#F5FAFF] px-4 py-4 font-tajawal outline-none focus:border-[#00BFFF]" placeholder="المدينة" />
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>Madar OS</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>نظام عربي للمغاسل</div>
               </div>
-              <button disabled={sending} className="mt-5 w-full rounded-2xl bg-[#00BFFF] px-6 py-4 text-base font-black text-[#071322] disabled:opacity-60 font-cairo">
-                {sending ? 'جار إرسال الطلب...' : 'أرسل طلب التجربة'}
-              </button>
-              {done && <p className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 font-tajawal">تم استلام طلبك. سنتواصل معك لتجهيز الحساب.</p>}
-              {formError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600 font-tajawal">{formError}</p>}
-              <button type="button" onClick={requestDemo} className="mt-3 w-full rounded-2xl border border-sky-100 bg-white px-6 py-4 text-base font-black text-[#071B35] font-cairo">
-                تواصل واتساب بدلاً من النموذج
-              </button>
-            </form>
+            </div>
+            <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+              {[
+                { href: '#how', label: 'كيف يعمل' },
+                { href: '#pricing', label: 'الباقات' },
+                { href: '#faq', label: 'الأسئلة' },
+                { href: `/login`, label: 'دخول العملاء', isLink: true },
+              ].map(item => item.isLink ? (
+                <Link key={item.label} to="/login" style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{item.label}</Link>
+              ) : (
+                <a key={item.label} href={item.href} style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{item.label}</a>
+              ))}
+              <a href={`https://wa.me/${adminPhone}`} style={{ fontSize: 13, color: '#38BDF8', fontWeight: 600, textDecoration: 'none', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>واتساب</a>
+            </div>
           </div>
-        </section>
-      </main>
-
-      <footer className="border-t border-sky-100 bg-white py-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 text-sm text-slate-500 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
-          <p>© 2026 Madar.software — نظام تشغيل للمغاسل والعيادات.</p>
-          <div className="flex items-center gap-4">
-            <a href={`https://wa.me/${adminPhone}`} className="font-bold text-[#0099CC]">واتساب</a>
-            <Link to="/login" className="font-bold text-slate-700">دخول العملاء</Link>
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', margin: 0, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+              مدار OS — نظام عربي لتشغيل مغاسل السيارات من التسجيل إلى الاستلام.
+            </p>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', margin: 0, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+              © 2026 madar.software
+            </p>
           </div>
         </div>
       </footer>
-
-      <AnimatePresence>
-        {closingOpen && (
-          <motion.div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#071322]/55 p-4 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <motion.div initial={{ scale: 0.94, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.94, y: 20 }} className="w-full max-w-md rounded-[30px] bg-white p-6 shadow-2xl">
-              <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-black font-cairo">إغلاق اليوم</h3>
-                <button onClick={() => setClosingOpen(false)} className="rounded-2xl bg-slate-100 p-3"><X size={18} /></button>
-              </div>
-              <div className="mt-6 grid gap-3">
-                {[
-                  ['إجمالي الإيراد', '12,540 ر.س'],
-                  ['عدد السيارات', '86'],
-                  ['VAT', '1,572 ر.س'],
-                ].map(([label, value]) => (
-                  <div key={label} className="flex items-center justify-between rounded-2xl bg-[#F5FAFF] p-4">
-                    <span className="font-bold text-slate-500 font-tajawal">{label}</span>
-                    <span className="font-sora text-xl font-black">{value}</span>
-                  </div>
-                ))}
-              </div>
-              <button onClick={() => setClosingOpen(false)} className="mt-5 w-full rounded-2xl bg-[#00BFFF] px-5 py-4 font-black text-[#071322] font-cairo">
-                تم
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       <MadarAgentWidget agentType="sales_website" label="اسأل مدار AI" />
     </div>
