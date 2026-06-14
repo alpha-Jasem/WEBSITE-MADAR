@@ -788,13 +788,16 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
           { label: 'الشاشة', used: dailyUsage.screenUpdates, limit: dailyUsage.limits.screenUpdates, pct: dailyUsage.screenPct, color: '#F59E0B' },
           { label: 'واتساب', used: dailyUsage.whatsapp, limit: dailyUsage.limits.whatsapp, pct: dailyUsage.whatsappPct, color: '#10B981' },
         ]
-        const checklist = [
-          { label: 'خدمة واحدة على الأقل مضافة', done: services.length > 0 },
-          { label: 'الضريبة محددة (مفعّلة أو معطّلة)', done: true },
-          { label: 'QR code تم إعداده', done: !!companyId },
-          { label: 'الفاتورة تحتوي اسم المغسلة', done: !!(company?.name) },
-          { label: 'هدف الإيراد الشهري محدد', done: monthlyTarget > 0 },
+        const checklist: { label: string; done: boolean; hint: string; tabKey?: SetupTab; essential: boolean }[] = [
+          { label: 'خدمة واحدة على الأقل مضافة', done: services.length > 0, hint: 'أضف الخدمات من المالية', essential: true },
+          { label: 'الرقم الضريبي في الفاتورة', done: !!invVatNumber, hint: 'افتح تبويب الفاتورة', tabKey: 'invoice', essential: true },
+          { label: 'QR التسجيل الذاتي مفعّل', done: qrEnabled, hint: 'افتح إعدادات QR', tabKey: 'qr', essential: true },
+          { label: 'رابط Google Maps للتقييم', done: !!reviewUrl, hint: 'أضف الرابط من المالية → الولاء', essential: false },
+          { label: 'هدف الإيراد الشهري محدد', done: monthlyTarget > 0, hint: 'حدده من المالية → تحليل مالي', essential: false },
         ]
+        const essentialDone = checklist.filter(c => c.essential && c.done).length
+        const essentialTotal = checklist.filter(c => c.essential).length
+        const totalDone = checklist.filter(c => c.done).length
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {/* Plan card */}
@@ -837,26 +840,57 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
 
             {/* Readiness checklist */}
             <div style={SECTION_STYLE}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                 <Check size={15} color="#10B981" />
                 <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>جاهزية الحساب للتشغيل</span>
               </div>
+
+              {/* Dual progress bars */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontSize: 11.5, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>أساسي</span>
+                    <span style={{ fontSize: 11.5, fontWeight: 700, color: '#10B981', fontFamily: 'Sora, sans-serif' }}>{essentialDone}/{essentialTotal}</span>
+                  </div>
+                  <div style={{ height: 7, borderRadius: 99, background: '#F1F5F9', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', borderRadius: 99, background: '#10B981', width: `${Math.round((essentialDone / essentialTotal) * 100)}%`, transition: 'width 0.4s' }} />
+                  </div>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontSize: 11.5, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>كامل</span>
+                    <span style={{ fontSize: 11.5, fontWeight: 700, color: '#0099CC', fontFamily: 'Sora, sans-serif' }}>{totalDone}/{checklist.length}</span>
+                  </div>
+                  <div style={{ height: 7, borderRadius: 99, background: '#F1F5F9', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', borderRadius: 99, background: '#0099CC', width: `${Math.round((totalDone / checklist.length) * 100)}%`, transition: 'width 0.4s' }} />
+                  </div>
+                </div>
+              </div>
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {checklist.map(item => (
-                  <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, background: item.done ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.04)', border: `1px solid ${item.done ? 'rgba(16,185,129,0.18)' : 'rgba(239,68,68,0.15)'}` }}>
-                    <div style={{ width: 22, height: 22, borderRadius: 99, display: 'flex', alignItems: 'center', justifyContent: 'center', background: item.done ? '#10B981' : '#EF4444', flexShrink: 0 }}>
-                      <Check size={12} color="#fff" />
+                  <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, background: item.done ? 'rgba(16,185,129,0.06)' : '#FAFAFA', border: `1px solid ${item.done ? 'rgba(16,185,129,0.18)' : '#E2E8F0'}` }}>
+                    <div style={{ width: 22, height: 22, borderRadius: 99, display: 'flex', alignItems: 'center', justifyContent: 'center', background: item.done ? '#10B981' : '#E2E8F0', flexShrink: 0 }}>
+                      <Check size={12} color={item.done ? '#fff' : '#94A3B8'} />
                     </div>
-                    <span style={{ fontSize: 13, fontFamily: 'Tajawal, sans-serif', color: item.done ? '#065F46' : '#7F1D1D' }}>{item.label}</span>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ margin: 0, fontSize: 13, fontFamily: 'Tajawal, sans-serif', fontWeight: 600, color: item.done ? '#065F46' : '#1E293B' }}>{item.label}</p>
+                      {!item.done && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>{item.hint}</p>}
+                    </div>
+                    {!item.done && item.tabKey && (
+                      <button onClick={() => setTab(item.tabKey!)}
+                        style={{ padding: '4px 10px', borderRadius: 8, border: '1px solid rgba(34,211,238,0.3)', background: 'rgba(34,211,238,0.08)', color: '#0099CC', fontSize: 11.5, fontFamily: 'Cairo, sans-serif', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                        فتح
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
-              <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 10, background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.14)' }}>
-                <p style={{ margin: 0, fontSize: 12, color: '#0369A1', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.7 }}>
-                  {checklist.filter(c => c.done).length} من {checklist.length} عناصر جاهزية مكتملة.
-                  {checklist.filter(c => !c.done).length > 0 ? ' أكمل باقي العناصر لضمان تجربة تشغيل كاملة.' : ' مغسلتك جاهزة للتشغيل الكامل! ✓'}
-                </p>
-              </div>
+              {totalDone === checklist.length && (
+                <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 10, background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.2)', textAlign: 'center' }}>
+                  <p style={{ margin: 0, fontSize: 13, color: '#065F46', fontFamily: 'Cairo, sans-serif', fontWeight: 700 }}>مغسلتك جاهزة للتشغيل الكامل ✓</p>
+                </div>
+              )}
             </div>
           </div>
         )
