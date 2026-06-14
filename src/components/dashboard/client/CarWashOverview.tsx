@@ -665,9 +665,9 @@ export function CarWashOverview() {
 
   const STATUS_DOTS = [
     { label: 'في الانتظار', count: stats.queueStatusCounts.received, color: '#94A3B8' },
-    { label: 'قيد الخدمة', count: queueItems.filter(q => q.status === 'washing').length, color: '#0B63F6' },
-    { label: 'التجفيف', count: queueItems.filter(q => q.status === 'drying').length, color: '#F97316' },
+    { label: 'قيد الخدمة', count: stats.queueStatusCounts.service, color: '#0B63F6' },
     { label: 'جاهزة', count: stats.queueStatusCounts.ready, color: '#10B981' },
+    { label: 'تم التسليم', count: stats.queueStatusCounts.delivered, color: '#64748B' },
   ]
 
   const OP_DESC: Record<string, string> = {
@@ -793,13 +793,6 @@ export function CarWashOverview() {
               <span style={{ fontSize: 14, fontWeight: 900, color: '#0D1B3E', fontFamily: 'Sora,sans-serif' }}>{s.count}</span>
             </div>
           ))}
-          <div className="ov2-dot-row" style={{ marginTop: 4 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div className="ov2-dot" style={{ background: '#64748B' }} />
-              <span style={{ fontSize: 13, color: '#334155' }}>تم التسليم</span>
-            </div>
-            <span style={{ fontSize: 14, fontWeight: 900, color: '#0D1B3E', fontFamily: 'Sora,sans-serif' }}>{stats.queueStatusCounts.delivered}</span>
-          </div>
         </div>
 
         {/* الإيرادات */}
