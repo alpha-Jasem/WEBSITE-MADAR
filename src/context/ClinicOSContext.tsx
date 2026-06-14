@@ -11,6 +11,8 @@ interface ClinicOSContextValue {
   userName: string
   companyId: string | null
   isDemo: boolean
+  isSubscribed: boolean
+  subscriptionStatus: string | null
   logout: () => void
 }
 
@@ -27,6 +29,8 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
   const [userName, setUserName] = useState('')
   const [companyId, setCompanyId] = useState<string | null>(null)
   const [isDemo, setIsDemo] = useState(false)
+  const [isSubscribed, setIsSubscribed] = useState(false)
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -36,7 +40,7 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
         if (!user) return
 
         const [companyRes, userRes] = await Promise.allSettled([
-          supabase.from('companies').select('id, name, package_type, status').eq('auth_user_id', user.id).single(),
+          supabase.from('companies').select('id, name, package_type, clinic_plan_code, status, subscription_status, subscription_start_date, subscription_end_date').eq('auth_user_id', user.id).single(),
           supabase.from('users').select('full_name').eq('id', user.id).single(),
         ])
 
@@ -46,9 +50,11 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
         if (company?.id) setCompanyId(company.id)
         if (company?.name) setClinicName(company.name)
         setIsDemo(!company || company.status === 'trial')
+        setSubscriptionStatus(company?.subscription_status || null)
+        setIsSubscribed(Boolean(company && company.status !== 'trial' && company.subscription_status === 'active' && company.subscription_start_date && company.subscription_end_date))
         if (userRow?.full_name) setUserName(userRow.full_name)
-        if (company?.package_type) {
-          const pkg = company.package_type as PackageType
+        if (company?.clinic_plan_code || company?.package_type) {
+          const pkg = (company.clinic_plan_code || company.package_type) as PackageType
           setPackageTypeState(pkg)
           localStorage.setItem(PACKAGE_KEY, pkg)
         }
@@ -71,7 +77,7 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <ClinicOSContext.Provider value={{ packageType, setPackageType, clinicName, userName, companyId, isDemo, logout }}>
+    <ClinicOSContext.Provider value={{ packageType, setPackageType, clinicName, userName, companyId, isDemo, isSubscribed, subscriptionStatus, logout }}>
       <ToastProvider>
         {children}
       </ToastProvider>

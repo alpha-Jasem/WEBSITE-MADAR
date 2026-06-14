@@ -12,6 +12,11 @@
   --clinic-danger: #d44b5c;
 }
 
+/* Three-tier subscription comparison. */
+.clinic-plan-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.clinic-comparison-row{grid-template-columns:1.4fr repeat(3,1fr)}
+@media(max-width:1050px){.clinic-plan-grid{grid-template-columns:1fr}}
+
 .clinic-ai-page { direction: rtl; color: var(--clinic-ink); font-family: Tajawal, Cairo, sans-serif; display: flex; flex-direction: column; gap: 22px; }
 .clinic-ai-page * { box-sizing: border-box; }
 .clinic-ai-page h1,.clinic-ai-page h2,.clinic-ai-page h3 { font-family: Cairo, Tajawal, sans-serif; letter-spacing: 0; }
