@@ -1,5 +1,7 @@
-import { FormEvent, useState } from 'react'
+import { FormEvent, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import {
   BarChart3,
   Bell,
@@ -30,6 +32,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import { openWhatsAppChat } from '../lib/whatsapp'
 import { MadarAgentWidget } from '../components/dash/MadarAgentWidget'
+
+gsap.registerPlugin(ScrollTrigger)
 
 const adminPhone = import.meta.env.VITE_ADMIN_WHATSAPP || '966546666005'
 
@@ -393,10 +397,17 @@ const Sub = ({ children }: { children: React.ReactNode }) => (
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 export const CarWashPage = () => {
+  const heroImageRef = useRef<HTMLImageElement | null>(null)
   const [lead, setLead] = useState({ name: '', phone: '', business: '', city: '' })
   const [sending, setSending] = useState(false)
   const [done, setDone] = useState(false)
   const [formError, setFormError] = useState('')
+
+  useEffect(() => {
+    gsap.fromTo(heroImageRef.current, { autoAlpha: 0.92 }, { autoAlpha: 1, duration: 1.2, ease: 'power3.out' })
+    gsap.from('.hero-copy > *', { y: 34, autoAlpha: 0, duration: 0.85, stagger: 0.12, ease: 'power3.out', delay: 0.15 })
+    gsap.from('.hero-pulse', { scale: 0.7, autoAlpha: 0, duration: 1, repeat: -1, yoyo: true, ease: 'sine.inOut' })
+  }, [])
 
   const submitLead = async (event: FormEvent) => {
     event.preventDefault()
@@ -434,44 +445,50 @@ export const CarWashPage = () => {
       <Navbar />
 
       {/* ── 1. HERO ── */}
-      <section style={{ background: 'linear-gradient(160deg, #F0F7FF 0%, #FAFCFF 50%, #F0F7FF 100%)', padding: '80px 0 72px', borderBottom: '1px solid #E2EBF6' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 48, alignItems: 'center' }}>
-          <div>
-            <motion.div {...fadeUp(0)}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#DBEAFE', borderRadius: 20, padding: '5px 14px', marginBottom: 20 }}>
-                <Zap size={12} color="#0099CC" />
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#0099CC', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>نظام تشغيل للمغاسل</span>
-              </div>
-            </motion.div>
-            <motion.h1 {...fadeUp(0.08)} style={{ fontSize: 'clamp(28px, 4.5vw, 48px)', fontWeight: 700, color: '#0D1B3E', lineHeight: 1.2, margin: '0 0 20px', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
-              نظام يشغّل مغسلتك<br />
-              <span style={{ color: '#0099CC' }}>من دخول السيارة حتى استلامها</span>
-            </motion.h1>
-            <motion.p {...fadeUp(0.15)} style={{ fontSize: 16, lineHeight: 1.9, color: '#475569', marginBottom: 16, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
-              العميل يمسح QR، يسجل سيارته، يشوف دوره على الشاشة، ويوصله تنبيه عند الجاهزية — وأنت تتابع السيارات، الإيرادات، الموظفين، والولاء من لوحة واحدة.
-            </motion.p>
-            <motion.div {...fadeUp(0.2)} style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 12, padding: '10px 16px', marginBottom: 28 }}>
-              <p style={{ fontSize: 13.5, color: '#C2410C', fontWeight: 600, margin: 0, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
-                بدل الفوضى والسؤال المتكرر: وين سيارتي؟ خلي كل شيء واضح للعميل والموظف وصاحب المغسلة.
-              </p>
-            </motion.div>
-            <motion.div {...fadeUp(0.25)} style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <button onClick={requestDemo} style={{ background: '#0D1B3E', color: '#fff', border: 'none', borderRadius: 12, padding: '13px 28px', fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'IBM Plex Sans Arabic, sans-serif', boxShadow: '0 8px 24px rgba(13,27,62,0.25)' }}>
-                اطلب تجربة الآن
-              </button>
-              <a href="#how" style={{ background: '#fff', color: '#0D1B3E', border: '1.5px solid #E2EBF6', borderRadius: 12, padding: '13px 22px', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'IBM Plex Sans Arabic, sans-serif', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                شاهد كيف يعمل النظام <ChevronLeft size={16} />
+      <section className="relative min-h-[760px] overflow-hidden bg-white sm:min-h-[820px] lg:min-h-0">
+        <img
+          ref={heroImageRef}
+          src="/madar-carwash-hero-real.png"
+          alt="Madar OS car wash hero"
+          className="absolute inset-0 h-full w-full object-cover object-[35%_center] lg:static lg:block lg:h-auto lg:object-contain"
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(255,255,255,0.66)_34%,rgba(255,255,255,0.18)_66%,rgba(255,255,255,0.02)_100%)] sm:bg-[linear-gradient(270deg,rgba(255,255,255,0.98)_0%,rgba(255,255,255,0.90)_24%,rgba(255,255,255,0.48)_45%,rgba(255,255,255,0.04)_68%)]" />
+        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/90 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-white/70 to-transparent" />
+        <div className="hero-pulse absolute bottom-[24%] left-[26%] hidden h-20 w-20 rounded-full border-2 border-[#00BFFF]/70 bg-[#00BFFF]/10 shadow-[0_0_55px_rgba(0,191,255,0.55)] lg:block" />
+
+        <div className="absolute inset-0 z-10 mx-auto flex max-w-7xl items-start px-4 pt-28 sm:items-center sm:px-6 sm:pt-16 lg:px-8">
+          <div className="hero-copy ml-auto w-full max-w-[580px] text-[#0D1B3E] lg:ml-0">
+            <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/70 px-3.5 py-2 text-xs font-black text-[#0D1B3E] shadow-sm backdrop-blur-xl sm:px-5 sm:py-2.5 sm:text-sm" style={{ fontFamily: 'IBM Plex Sans Arabic, Cairo, sans-serif' }}>
+              <span className="h-2 w-2 rounded-full bg-[#00BFFF]" />
+              واتساب + ذكاء اصطناعي للمغاسل
+            </div>
+            <h1 className="mt-5 text-[2rem] font-black leading-[1.08] tracking-normal drop-shadow-[0_2px_0_rgba(255,255,255,0.85)] sm:mt-7 sm:text-6xl lg:text-7xl" style={{ fontFamily: 'IBM Plex Sans Arabic, Cairo, sans-serif' }}>
+              عميلك يرجع لوحده.
+              <span className="block text-[#008FE8]">واتساب يتابع بدلاً عنك.</span>
+            </h1>
+            <p className="mt-3 max-w-[300px] rounded-xl border border-white/50 bg-white/50 px-3 py-2.5 text-[13px] font-bold leading-6 text-slate-800 shadow-sm backdrop-blur-md sm:mt-5 sm:max-w-xl sm:rounded-2xl sm:bg-white/75 sm:px-5 sm:py-4 sm:text-xl sm:leading-8" style={{ fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif' }}>
+              إشعار جاهزية السيارة، تذكير العميل، وطلب التقييم — كل شيء يصير تلقائياً عبر واتساب بدون موظف يتذكر.
+            </p>
+            <div className="mt-5 flex flex-col items-start gap-2.5 sm:mt-7 sm:flex-row sm:items-center sm:gap-3">
+              <Link
+                to="/trial"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#00BFFF] px-4 py-3 text-sm font-black text-[#071322] shadow-[0_14px_32px_rgba(0,191,255,0.30)] sm:rounded-2xl sm:px-6 sm:py-4 sm:text-base sm:shadow-[0_18px_45px_rgba(0,191,255,0.36)]"
+                style={{ fontFamily: 'IBM Plex Sans Arabic, Cairo, sans-serif' }}
+              >
+                ابدأ تجربة 3 أيام
+                <ChevronLeft size={18} />
+              </Link>
+              <a
+                href="#features"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-200 bg-white/80 px-4 py-3 text-sm font-black text-[#0D1B3E] shadow-sm backdrop-blur-xl sm:rounded-2xl sm:px-6 sm:py-4 sm:text-base"
+                style={{ fontFamily: 'IBM Plex Sans Arabic, Cairo, sans-serif' }}
+              >
+                شاهد الديمو الحي
+                <Monitor size={18} />
               </a>
-            </motion.div>
-            <motion.div {...fadeUp(0.32)} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 24 }}>
-              {['تسجيل ذاتي عبر QR', 'شاشة انتظار مباشرة', 'تنبيه عند جاهزية السيارة', 'تقارير وإيرادات'].map(b => (
-                <span key={b} style={{ fontSize: 12, fontWeight: 600, color: '#0099CC', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 20, padding: '5px 14px', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{b}</span>
-              ))}
-            </motion.div>
+            </div>
           </div>
-          <motion.div {...fadeUp(0.1)} style={{ display: 'flex', justifyContent: 'center' }}>
-            <HeroMockup />
-          </motion.div>
         </div>
       </section>
 
