@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { X, Search, User, Stethoscope, Clock, CheckCircle, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react'
 import { DEMO_PATIENTS, DEMO_DOCTORS, DEMO_SERVICES, getAvailableSlots } from '../../../lib/clinicOSDemoData'
 import type { Appointment, Doctor, Service, Patient } from '../../../types/clinicOS'
-import { useClinicDoctors, useClinicServices, useClinicPatients, createAppointment } from '../../../lib/clinicOSQueries'
+import { useClinicDoctors, useClinicServices, useClinicPatients, createAppointment, createPatient } from '../../../lib/clinicOSQueries'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 import { notifyApptCreated } from '../../../lib/clinicN8n'
 
@@ -21,9 +21,9 @@ export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props)
   const { data: servicesData } = useClinicServices(companyId, isDemo)
   const { data: patientsData } = useClinicPatients(companyId, isDemo)
 
-  const doctors: Doctor[] = doctorsData ?? DEMO_DOCTORS
-  const services: Service[] = servicesData ?? DEMO_SERVICES
-  const patients: Patient[] = patientsData ?? DEMO_PATIENTS
+  const doctors: Doctor[] = isDemo ? DEMO_DOCTORS : (doctorsData ?? [])
+  const services: Service[] = isDemo ? DEMO_SERVICES : (servicesData ?? [])
+  const patients: Patient[] = isDemo ? DEMO_PATIENTS : (patientsData ?? [])
 
   const [step, setStep] = useState(1)
   const [patientSearch, setPatientSearch] = useState('')
@@ -60,7 +60,7 @@ export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props)
     setCreating(true)
     setCreateError(null)
 
-    const patient = selectedPatient || { id: `pat-new-${Date.now()}`, name: newPatient.name, phone: newPatient.phone, patient_type: 'new' as const }
+    let patient = selectedPatient || { id: `pat-new-${Date.now()}`, name: newPatient.name, phone: newPatient.phone, patient_type: 'new' as const }
     const apptData: Partial<Appointment> = {
       clinic_id: companyId ?? 'demo-clinic-001',
       patient_id: patient.id,
@@ -93,6 +93,20 @@ export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props)
         finalAppt = { id: `apt-new-${Date.now()}`, ...apptData } as Appointment
         onCreated(finalAppt)
       } else {
+        if (!selectedPatient) {
+          patient = await createPatient({
+            clinic_id: companyId!,
+            name: newPatient.name.trim(),
+            phone: newPatient.phone.trim(),
+            patient_type: 'new',
+            tags: ['new_patient'],
+            no_show_count: 0,
+            total_visits: 0,
+          })
+          apptData.patient_id = patient.id
+          apptData.patient_name = patient.name
+          apptData.patient_phone = patient.phone
+        }
         finalAppt = await createAppointment(apptData)
         onCreated(finalAppt)
       }

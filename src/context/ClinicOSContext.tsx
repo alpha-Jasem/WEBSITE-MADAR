@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import type { PackageType } from '../types/clinicOS'
 import { supabase, signOut } from '../lib/supabase'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { ToastProvider } from '../components/clinicOS/ui/Toast'
 import { CLINIC_PLANS, type UsageMetric } from '../lib/clinicOSProduct'
 
@@ -20,7 +20,13 @@ interface ClinicOSContextValue {
   setPackageType: (p: PackageType) => void
   clinicName: string
   userName: string
+  userEmail: string
+  clinicPhone: string
+  clinicEmail: string
+  clinicCity: string
+  clinicSettings: Record<string, unknown>
   companyId: string | null
+  accountLoading: boolean
   isDemo: boolean
   isSubscribed: boolean
   subscriptionStatus: string | null
@@ -40,13 +46,20 @@ const PACKAGE_KEY = 'clinicos_package'
 
 export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate()
+  const location = useLocation()
   const [packageType, setPackageTypeState] = useState<PackageType>(() =>
     (localStorage.getItem(PACKAGE_KEY) as PackageType) || 'whatsapp'
   )
   const [clinicName, setClinicName] = useState('')
   const [userName, setUserName] = useState('')
+  const [userEmail, setUserEmail] = useState('')
+  const [clinicPhone, setClinicPhone] = useState('')
+  const [clinicEmail, setClinicEmail] = useState('')
+  const [clinicCity, setClinicCity] = useState('')
+  const [clinicSettings, setClinicSettings] = useState<Record<string, unknown>>({})
   const [companyId, setCompanyId] = useState<string | null>(null)
   const [isDemo, setIsDemo] = useState(false)
+  const [accountLoading, setAccountLoading] = useState(true)
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null)
   const [subscriptionStartDate, setSubscriptionStartDate] = useState<string | null>(null)
@@ -57,13 +70,17 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
   const [usageSummary, setUsageSummary] = useState<ClinicUsageSummary>({ bookings: 0, conversations: 0, afterHours: 0, lostOpportunities: 0, smartCallMinutes: 0, recoveredCalls: 0, humanHandoffs: 0 })
 
   const load = async () => {
+      setAccountLoading(true)
       try {
+        const demoRoute = location.pathname.includes('/demo-review') || location.pathname.includes('/clinic-os/demo')
+        setIsDemo(demoRoute)
         const { data: authData } = await supabase.auth.getUser()
         const user = authData?.user
         if (!user) return
+        setUserEmail(user.email || '')
 
         const [companyRes, userRes] = await Promise.allSettled([
-          supabase.from('companies').select('id, name, package_type, clinic_plan_code, status, subscription_status, subscription_start_date, subscription_end_date, monthly_usage_cycle_start, monthly_usage_cycle_end').eq('auth_user_id', user.id).single(),
+          supabase.from('companies').select('id, name, owner_phone, owner_email, city, clinic_settings, package_type, clinic_plan_code, status, subscription_status, subscription_start_date, subscription_end_date, monthly_usage_cycle_start, monthly_usage_cycle_end').eq('auth_user_id', user.id).single(),
           supabase.from('users').select('full_name').eq('id', user.id).single(),
         ])
 
@@ -72,7 +89,10 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
 
         if (company?.id) setCompanyId(company.id)
         if (company?.name) setClinicName(company.name)
-        setIsDemo(!company || company.status === 'trial')
+        setClinicPhone(company?.owner_phone || '')
+        setClinicEmail(company?.owner_email || user.email || '')
+        setClinicCity(company?.city || '')
+        setClinicSettings((company?.clinic_settings as Record<string, unknown>) || {})
         setSubscriptionStatus(company?.subscription_status || null)
         setSubscriptionStartDate(company?.subscription_start_date || null)
         setSubscriptionEndDate(company?.subscription_end_date || null)
@@ -115,13 +135,15 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
           }
         }
       } catch {
-        // context loads with defaults, user can still use demo mode
+        // Individual pages expose their own recoverable error states.
+      } finally {
+        setAccountLoading(false)
       }
     }
 
   useEffect(() => {
     load()
-  }, [])
+  }, [location.pathname])
 
   const setPackageType = (p: PackageType) => {
     setPackageTypeState(p)
@@ -135,7 +157,7 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <ClinicOSContext.Provider value={{ packageType, setPackageType, clinicName, userName, companyId, isDemo, isSubscribed, subscriptionStatus, subscriptionStartDate, subscriptionEndDate, usageCycleStart, usageCycleEnd, usageMetrics, usageSummary, refreshAccount: load, logout }}>
+    <ClinicOSContext.Provider value={{ packageType, setPackageType, clinicName, userName, userEmail, clinicPhone, clinicEmail, clinicCity, clinicSettings, companyId, accountLoading, isDemo, isSubscribed, subscriptionStatus, subscriptionStartDate, subscriptionEndDate, usageCycleStart, usageCycleEnd, usageMetrics, usageSummary, refreshAccount: load, logout }}>
       <ToastProvider>
         {children}
       </ToastProvider>
