@@ -9,26 +9,18 @@ import { useIsMobile } from '../../../lib/useBreakpoint'
 import type { Appointment } from '../../../types/clinicOS'
 
 const PAGE_TITLES: Record<string, string> = {
-  '/clinic-os/dashboard': 'لوحة التحكم',
-  '/clinic-os/dashboard/appointments': 'المواعيد',
-  '/clinic-os/dashboard/ai-booking': 'الحجز الذكي',
-  '/clinic-os/dashboard/patients': 'العملاء',
-  '/clinic-os/dashboard/doctors': 'الأطباء',
-  '/clinic-os/dashboard/services': 'الخدمات',
-  '/clinic-os/dashboard/calendar': 'التقويم',
-  '/clinic-os/dashboard/messages': 'الرسائل',
+  '/clinic-os/dashboard': 'الرئيسية',
+  '/clinic-os/dashboard/value': 'قيمة النظام',
+  '/clinic-os/dashboard/conversations': 'المحادثات',
+  '/clinic-os/dashboard/bookings': 'الحجوزات',
+  '/clinic-os/dashboard/leads': 'العملاء المحتملون',
+  '/clinic-os/dashboard/lost-opportunities': 'الفرص الضائعة',
+  '/clinic-os/dashboard/smart-calls': 'المكالمات الذكية',
+  '/clinic-os/dashboard/missed-calls': 'المكالمات الفائتة',
+  '/clinic-os/dashboard/usage': 'الباقة والاستخدام',
+  '/clinic-os/dashboard/knowledge': 'مركز المعرفة',
   '/clinic-os/dashboard/reports': 'التقارير',
   '/clinic-os/dashboard/settings': 'الإعدادات',
-  '/clinic-os/demo': 'لوحة التحكم',
-  '/clinic-os/demo/appointments': 'المواعيد',
-  '/clinic-os/demo/ai-booking': 'الحجز الذكي',
-  '/clinic-os/demo/patients': 'العملاء',
-  '/clinic-os/demo/doctors': 'الأطباء',
-  '/clinic-os/demo/services': 'الخدمات',
-  '/clinic-os/demo/calendar': 'التقويم',
-  '/clinic-os/demo/messages': 'الرسائل',
-  '/clinic-os/demo/reports': 'التقارير',
-  '/clinic-os/demo/settings': 'الإعدادات',
 }
 
 export const ClinicOSDashboardLayout = () => {
@@ -43,7 +35,7 @@ export const ClinicOSDashboardLayout = () => {
   const closeSidebar = () => setSidebarOpen(false)
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#F8FAFC', direction: 'rtl' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#F6F8FC', direction: 'rtl' }}>
       <DemoModeBanner />
 
       {/* Mobile overlay */}
@@ -64,11 +56,11 @@ export const ClinicOSDashboardLayout = () => {
           zIndex: isMobile ? 50 : 'auto',
           transition: isMobile ? 'right 0.25s ease' : 'none',
           flexShrink: 0,
-          width: 220,
+          width: 232,
         }}>
           <ClinicOSSidebar
             onNewAppointment={() => { setShowNewAppt(true); closeSidebar() }}
-            onClose={closeSidebar}
+            onClose={isMobile ? closeSidebar : undefined}
           />
         </div>
 
@@ -79,7 +71,7 @@ export const ClinicOSDashboardLayout = () => {
             onMenuToggle={() => setSidebarOpen(o => !o)}
             showMenuBtn={isMobile}
           />
-          <main style={{ flex: 1, padding: isMobile ? '16px' : '24px', overflowY: 'auto' }}>
+          <main style={{ flex: 1, padding: isMobile ? '14px' : '22px', overflowY: 'auto' }}>
             <Outlet />
           </main>
         </div>

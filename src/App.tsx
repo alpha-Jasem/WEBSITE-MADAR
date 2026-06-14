@@ -48,6 +48,17 @@ const CalendarPageCO       = lazy(() => import('./pages/clinicOS/dashboard/Calen
 const MessagesPageCO       = lazy(() => import('./pages/clinicOS/dashboard/Messages').then(m => ({ default: m.Messages })))
 const ReportsPageCO        = lazy(() => import('./pages/clinicOS/dashboard/Reports').then(m => ({ default: m.Reports })))
 const SettingsPageCO       = lazy(() => import('./pages/clinicOS/dashboard/Settings').then(m => ({ default: m.Settings })))
+const SystemValuePage      = lazy(() => import('./pages/clinicOS/dashboard/AIReceptionistPages').then(m => ({ default: m.SystemValuePage })))
+const ConversationsPage    = lazy(() => import('./pages/clinicOS/dashboard/AIReceptionistPages').then(m => ({ default: m.ConversationsPage })))
+const BookingsPage         = lazy(() => import('./pages/clinicOS/dashboard/AIReceptionistPages').then(m => ({ default: m.BookingsPage })))
+const LeadsPage            = lazy(() => import('./pages/clinicOS/dashboard/AIReceptionistPages').then(m => ({ default: m.LeadsPage })))
+const LostOpportunitiesPage = lazy(() => import('./pages/clinicOS/dashboard/AIReceptionistPages').then(m => ({ default: m.LostOpportunitiesPage })))
+const SmartCallsPage       = lazy(() => import('./pages/clinicOS/dashboard/AIReceptionistPages').then(m => ({ default: m.SmartCallsPage })))
+const MissedCallsPage      = lazy(() => import('./pages/clinicOS/dashboard/AIReceptionistPages').then(m => ({ default: m.MissedCallsPage })))
+const PlanUsagePage        = lazy(() => import('./pages/clinicOS/dashboard/AIReceptionistPages').then(m => ({ default: m.PlanUsagePage })))
+const KnowledgeCenterPage  = lazy(() => import('./pages/clinicOS/dashboard/AIReceptionistPages').then(m => ({ default: m.KnowledgeCenterPage })))
+const DemoReviewPage       = lazy(() => import('./pages/clinicOS/DemoReview').then(m => ({ default: m.DemoReview })))
+const ClinicOSAdminPage    = lazy(() => import('./pages/clinicOS/admin/ClinicOSAdmin').then(m => ({ default: m.ClinicOSAdmin })))
 
 function App() {
   useEffect(() => {
@@ -76,6 +87,8 @@ function App() {
             <Route path="/clinic-os/signup"   element={<ClinicOSSignupPage />} />
             <Route path="/clinic-os/demo"     element={<DemoSignupPage />} />
             <Route path="/clinic-os/demo/confirm" element={<DemoConfirmPage />} />
+            <Route path="/demo-review" element={<ClinicOSProvider><DemoReviewPage /></ClinicOSProvider>} />
+            <Route path="/clinic-os/admin" element={<ClinicOSAdminPage />} />
             <Route path="/clinic-os/select"   element={
               <ClinicOSProvider><PackageSelectorPage /></ClinicOSProvider>
             } />
@@ -87,6 +100,15 @@ function App() {
               </ClinicOSProvider>
             }>
               <Route index          element={<DashboardOverview />} />
+              <Route path="value" element={<SystemValuePage />} />
+              <Route path="conversations" element={<ConversationsPage />} />
+              <Route path="bookings" element={<BookingsPage />} />
+              <Route path="leads" element={<LeadsPage />} />
+              <Route path="lost-opportunities" element={<LostOpportunitiesPage />} />
+              <Route path="smart-calls" element={<SmartCallsPage />} />
+              <Route path="missed-calls" element={<MissedCallsPage />} />
+              <Route path="usage" element={<PlanUsagePage />} />
+              <Route path="knowledge" element={<KnowledgeCenterPage />} />
               <Route path="appointments" element={<AppointmentsPage />} />
               <Route path="ai-booking"   element={<AIBookingPage />} />
               <Route path="patients"     element={<PatientsPage />} />

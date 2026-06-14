@@ -1,180 +1,39 @@
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 import {
-  LayoutDashboard, Calendar, Bot, Users, UserCheck,
-  Stethoscope, CalendarDays, MessageSquare, Settings, Lock, Plus, X, TrendingUp, Sparkles,
+  BarChart3, BookOpen, CalendarCheck, LineChart, Headphones, LayoutDashboard,
+  Lock, MessageCircle, Phone, PhoneMissed, Settings, Sparkles, TrendingUp, UsersRound, X,
 } from 'lucide-react'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 
-interface NavItem {
-  path: string
-  icon: React.ElementType
-  label: string
-  locked?: boolean
-}
+interface Props { onNewAppointment?: () => void; onClose?: () => void }
 
-interface Props {
-  onNewAppointment?: () => void
-  onClose?: () => void
-}
+const WHATSAPP_UPGRADE = `https://wa.me/966546666005?text=${encodeURIComponent('مرحباً، نرغب بترقية باقتنا إلى AI Receptionist + Smart Calls.')}`
 
-export const ClinicOSSidebar = ({ onNewAppointment, onClose }: Props) => {
-  const { packageType, isDemo, clinicName } = useClinicOS()
-  const location = useLocation()
-  const isAIPro = packageType === 'ai_pro'
+export const ClinicOSSidebar = ({ onClose }: Props) => {
+  const { packageType, clinicName } = useClinicOS()
+  const smartCalls = packageType === 'ai_pro'
+  const base = '/clinic-os/dashboard'
+  const items = [
+    ['', LayoutDashboard, 'الرئيسية'],
+    ['/value', LineChart, 'قيمة النظام'],
+    ['/conversations', MessageCircle, 'المحادثات'],
+    ['/bookings', CalendarCheck, 'الحجوزات'],
+    ['/leads', UsersRound, 'العملاء المحتملون'],
+    ['/lost-opportunities', TrendingUp, 'الفرص الضائعة'],
+    ['/smart-calls', Phone, 'المكالمات الذكية', !smartCalls],
+    ['/missed-calls', PhoneMissed, 'المكالمات الفائتة', !smartCalls],
+    ['/usage', BarChart3, 'الباقة والاستخدام'],
+    ['/knowledge', BookOpen, 'مركز المعرفة'],
+    ['/reports', LineChart, 'التقارير'],
+    ['/settings', Settings, 'الإعدادات'],
+  ] as const
 
-  // Use demo prefix when in /clinic-os/demo, dashboard prefix otherwise
-  const inDemo = location.pathname.startsWith('/clinic-os/demo')
-  const base = inDemo ? '/clinic-os/demo' : '/clinic-os/dashboard'
-
-  const navItems: NavItem[] = [
-    { path: '',                icon: LayoutDashboard, label: 'الرئيسية' },
-    { path: '/appointments',   icon: Calendar,        label: 'المواعيد' },
-    { path: '/ai-booking',     icon: Bot,             label: 'الحجز الذكي', locked: !isAIPro },
-    { path: '/patients',       icon: Users,           label: 'العملاء' },
-    { path: '/doctors',        icon: UserCheck,       label: 'الأطباء' },
-    { path: '/services',       icon: Stethoscope,     label: 'الخدمات' },
-    { path: '/calendar',       icon: CalendarDays,    label: 'التقويم' },
-    { path: '/messages',       icon: MessageSquare,   label: 'الرسائل' },
-    { path: '/reports',        icon: TrendingUp,      label: 'التقارير' },
-    { path: '/settings',       icon: Settings,        label: 'الإعدادات' },
-  ]
-
-  return (
-    <aside style={{
-      width: 220,
-      background: '#FFFFFF',
-      borderLeft: '1px solid #E2E8F0',
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100vh',
-      flexShrink: 0,
-      direction: 'rtl',
-    }}>
-      {/* Logo + close btn */}
-      <div style={{ padding: '16px 12px 12px', borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 10, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Stethoscope size={15} style={{ color: 'white' }} />
-          </div>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif', lineHeight: 1.2 }}>Clinic OS</div>
-            <div style={{ fontSize: 10, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 100 }}>
-              {clinicName || 'نظام الحجز الذكي'}
-            </div>
-          </div>
-        </div>
-        {onClose && (
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <X size={16} />
-          </button>
-        )}
-      </div>
-
-      {/* New Appointment */}
-      <div style={{ padding: '10px 10px 6px' }}>
-        <button
-          onClick={onNewAppointment}
-          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px', borderRadius: 10, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}
-        >
-          <Plus size={15} />
-          موعد جديد
-        </button>
-      </div>
-
-      {/* Nav */}
-      <nav style={{ flex: 1, overflowY: 'auto', padding: '6px 8px' }}>
-        {navItems.map(item => {
-          const Icon = item.icon
-          const to = base + item.path
-          return (
-            <NavLink
-              key={to}
-              to={to}
-              end={item.path === ''}
-              onClick={onClose}
-              style={({ isActive }) => ({
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '9px 12px', borderRadius: 9, marginBottom: 2,
-                textDecoration: 'none', fontSize: 13, fontWeight: 600,
-                fontFamily: 'Tajawal, Cairo, sans-serif',
-                background: isActive ? '#EEF2FF' : 'transparent',
-                color: isActive ? '#4F46E5' : item.locked ? '#CBD5E1' : '#475569',
-                transition: 'all 0.15s',
-              })}
-              onMouseEnter={e => { const el = e.currentTarget as HTMLElement; if (!el.style.background.includes('EEF2FF')) el.style.background = '#F8FAFC' }}
-              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; if (!el.style.background.includes('EEF2FF')) el.style.background = 'transparent' }}
-            >
-              <Icon size={16} />
-              <span style={{ flex: 1 }}>{item.label}</span>
-              {item.locked && <Lock size={12} style={{ color: '#CBD5E1' }} />}
-            </NavLink>
-          )
-        })}
-      </nav>
-
-      {/* Upgrade Card / Active Badge */}
-      <div style={{ padding: '8px 10px 12px', borderTop: '1px solid #F1F5F9' }}>
-        {!isAIPro ? (
-          /* ── Upgrade Card ── */
-          <div style={{
-            borderRadius: 14,
-            background: 'linear-gradient(145deg, #EEF2FF 0%, #F5F3FF 100%)',
-            border: '1px solid #C7D2FE',
-            padding: '14px 14px 12px',
-            position: 'relative',
-            overflow: 'hidden',
-          }}>
-            {/* Glow blob */}
-            <div style={{ position: 'absolute', bottom: -20, left: -20, width: 80, height: 80, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 70%)', pointerEvents: 'none' }} />
-
-            {/* Top row */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <span style={{
-                fontSize: 10, padding: '2px 9px', borderRadius: 20,
-                background: 'rgba(79,70,229,0.12)', color: '#4F46E5',
-                fontWeight: 800, fontFamily: 'Cairo, sans-serif',
-                border: '1px solid rgba(79,70,229,0.2)',
-              }}>
-                واتساب
-              </span>
-              <div style={{ width: 26, height: 26, borderRadius: 8, background: 'white', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-                <TrendingUp size={13} style={{ color: '#4F46E5' }} />
-              </div>
-            </div>
-
-            {/* Text */}
-            <div style={{ fontSize: 13, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif', marginBottom: 4, lineHeight: 1.35 }}>
-              ارتق إلى AI Pro
-            </div>
-            <div style={{ fontSize: 11, color: '#64748B', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.5, marginBottom: 12 }}>
-              {isDemo ? 'جرّب الحجز الذكي بالكامل مع وكيل AI يستقبل مكالماتك.' : 'وكيل AI يحجز بدلاً عنك ٢٤/٧ بدون موظف استقبال.'}
-            </div>
-
-            {/* CTA Button */}
-            <a
-              href={`https://wa.me/966546666005?text=${encodeURIComponent('مرحباً 👋\nأريد الترقية إلى باقة AI Voice + واتساب.\nيرجى إرسال تفاصيل الترقية.')}`}
-              target="_blank" rel="noreferrer"
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                width: '100%', padding: '9px 0', borderRadius: 9,
-                background: 'linear-gradient(135deg, #4F46E5, #7C3AED)',
-                color: 'white', fontSize: 12, fontWeight: 800,
-                fontFamily: 'Cairo, sans-serif', textDecoration: 'none',
-                boxShadow: '0 4px 14px rgba(79,70,229,0.35)',
-              }}
-            >
-              <Sparkles size={12} />
-              ثبّت الاشتراك الآن
-            </a>
-          </div>
-        ) : (
-          /* ── Active AI Pro Badge ── */
-          <div style={{ padding: '10px 12px', borderRadius: 10, background: 'linear-gradient(135deg, #F5F3FF, #EDE9FE)', border: '1px solid #C4B5FD' }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#7C3AED', fontFamily: 'Cairo, sans-serif', marginBottom: 2 }}>AI Voice + واتساب</div>
-            <div style={{ fontSize: 10, color: '#A78BFA', fontFamily: 'Tajawal, sans-serif' }}>{isDemo ? 'وضع التجربة' : 'حساب نشط ✓'}</div>
-          </div>
-        )}
-      </div>
-    </aside>
-  )
+  return <aside style={{width:232,background:'#fff',borderLeft:'1px solid #e5e9f2',display:'flex',flexDirection:'column',height:'100vh',direction:'rtl'}}>
+    <div style={{height:68,padding:'0 14px',display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid #eef1f6'}}>
+      <div style={{display:'flex',alignItems:'center',gap:10,minWidth:0}}><div style={{width:36,height:36,borderRadius:8,background:'#6557d9',display:'grid',placeItems:'center',color:'#fff'}}><Headphones size={18}/></div><div style={{minWidth:0}}><strong style={{display:'block',font:'900 13px Cairo',color:'#172033'}}>Clinic OS</strong><span style={{display:'block',font:'11px Tajawal',color:'#7a8699',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:130}}>{clinicName || 'موظف الاستقبال الذكي'}</span></div></div>
+      {onClose&&<button onClick={onClose} aria-label="إغلاق القائمة" style={{border:0,background:'transparent',color:'#8893a5',cursor:'pointer'}}><X size={17}/></button>}
+    </div>
+    <nav style={{flex:1,overflowY:'auto',padding:'12px 9px'}}>{items.map(([path,Icon,label,locked])=><NavLink key={path} to={base+path} end={path===''} onClick={onClose} style={({isActive})=>({display:'flex',alignItems:'center',gap:10,minHeight:38,padding:'7px 11px',marginBottom:3,borderRadius:7,textDecoration:'none',font:'700 12px Tajawal',color:isActive?'#5549c6':locked?'#a8afbd':'#536075',background:isActive?'#f0efff':'transparent',border:isActive?'1px solid #dedaff':'1px solid transparent'})}><Icon size={16}/><span style={{flex:1}}>{label}</span>{locked&&<Lock size={12}/>}</NavLink>)}</nav>
+    <div style={{padding:10,borderTop:'1px solid #eef1f6'}}>{smartCalls?<div style={{padding:12,borderRadius:8,background:'#eafaf5',border:'1px solid #bdebdc'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:5}}><strong style={{font:'800 11px Cairo',color:'#08785b'}}>AI Voice + WhatsApp</strong><span style={{font:'800 9px Cairo',color:'#08785b'}}>نشط</span></div><div style={{font:'11px Tajawal',color:'#498574'}}>الباقة مفعلة</div></div>:<div style={{padding:13,borderRadius:8,background:'#f7f6ff',border:'1px solid #dedaff'}}><Sparkles size={17} color="#6557d9"/><strong style={{display:'block',margin:'8px 0 4px',font:'900 12px Cairo',color:'#302a72'}}>فعّل الاتصال الذكي</strong><p style={{margin:'0 0 10px',font:'11px/1.55 Tajawal',color:'#706b94'}}>لا تخسر المكالمات خارج الدوام أو وقت انشغال الموظفين.</p><a href={WHATSAPP_UPGRADE} target="_blank" rel="noreferrer" style={{display:'flex',justifyContent:'center',padding:8,borderRadius:6,background:'#6557d9',color:'#fff',textDecoration:'none',font:'800 11px Cairo'}}>ترقية الباقة</a></div>}</div>
+  </aside>
 }

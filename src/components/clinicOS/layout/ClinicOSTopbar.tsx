@@ -1,131 +1,29 @@
-import { useEffect, useRef, useState } from 'react'
-import { Search, Bell, ChevronDown, LogOut, User, Menu, CheckCheck, Calendar, MessageSquare, AlertCircle } from 'lucide-react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { Bell, BookOpen, ChevronDown, LogOut, Menu, MessageCircle, Settings, Sparkles } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useClinicOS } from '../../../context/ClinicOSContext'
+import { CLINIC_PLANS, getOverallUsage } from '../../../lib/clinicOSProduct'
 
-interface Props {
-  pageTitle?: string
-  onMenuToggle?: () => void
-  showMenuBtn?: boolean
-  onSearch?: (q: string) => void
+interface Props { pageTitle?: string; onMenuToggle?: () => void; showMenuBtn?: boolean; onSearch?: (q:string)=>void }
+
+export const ClinicOSTopbar = ({ pageTitle, onMenuToggle, showMenuBtn }: Props) => {
+  const { packageType, clinicName, logout } = useClinicOS()
+  const navigate = useNavigate()
+  const [open,setOpen] = useState(false)
+  const [notifs,setNotifs] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const usage = getOverallUsage(packageType)
+  const plan = CLINIC_PLANS[packageType]
+  const color = usage >= 100 ? '#d44b5c' : usage >= 80 ? '#c77a18' : '#0f9f78'
+  useEffect(()=>{const close=(e:MouseEvent)=>{if(ref.current&&!ref.current.contains(e.target as Node))setOpen(false)};document.addEventListener('mousedown',close);return()=>document.removeEventListener('mousedown',close)},[])
+  return <header style={{height:64,background:'#fff',borderBottom:'1px solid #e5e9f2',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 18px',direction:'rtl',zIndex:30}}>
+    <div style={{display:'flex',alignItems:'center',gap:10}}>{showMenuBtn&&<button onClick={onMenuToggle} aria-label="القائمة" style={{width:36,height:36,borderRadius:7,border:'1px solid #e5e9f2',background:'#fff',display:'grid',placeItems:'center'}}><Menu size={18}/></button>}<h1 style={{margin:0,font:'900 15px Cairo',color:'#172033'}}>{pageTitle}</h1></div>
+    <div style={{display:'flex',alignItems:'center',gap:8}}>
+      <div style={{position:'relative'}}><button onClick={()=>setNotifs(!notifs)} aria-label="الإشعارات" style={{width:36,height:36,borderRadius:7,border:'1px solid #e5e9f2',background:'#fff',display:'grid',placeItems:'center',color:'#566277'}}><Bell size={16}/><span style={{position:'absolute',top:7,right:7,width:6,height:6,borderRadius:'50%',background:'#d44b5c',border:'1px solid #fff'}}/></button>{notifs&&<div style={{position:'absolute',top:44,left:0,width:310,padding:10,background:'#fff',border:'1px solid #e5e9f2',borderRadius:8,boxShadow:'0 18px 45px rgba(27,37,61,.13)'}}>{['تم حجز موعد عبر واتساب قبل 4 دقائق','فرصتان ساخنتان تحتاجان متابعة','استخدامك الشهري ضمن الحد المسموح'].map((n,i)=><div key={n} style={{padding:11,borderBottom:i<2?'1px solid #eef1f6':'none',font:'12px Tajawal',color:'#344055'}}>{n}</div>)}</div>}</div>
+      <div ref={ref} style={{position:'relative'}}><button onClick={()=>setOpen(!open)} title={`استخدام هذا الشهر: ${usage}%`} style={{display:'flex',alignItems:'center',gap:8,padding:'4px 8px 4px 5px',borderRadius:8,border:'1px solid #e5e9f2',background:'#fff',cursor:'pointer'}}><div style={{width:34,height:34,borderRadius:'50%',padding:3,background:`conic-gradient(${color} ${usage*3.6}deg,#e9edf3 0)`}}><div style={{width:'100%',height:'100%',borderRadius:'50%',background:'#6557d9',display:'grid',placeItems:'center',color:'#fff',font:'800 11px Cairo'}}>{(clinicName||'ع').charAt(0)}</div></div><div className="hide-on-mobile" style={{textAlign:'right'}}><strong style={{display:'block',maxWidth:130,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',font:'800 11px Cairo',color:'#172033'}}>{clinicName||'عيادة نور'}</strong><span style={{font:'10px Tajawal',color:'#788499'}}>{usage}% استخدام</span></div><ChevronDown size={13} color="#8791a2"/></button>
+      {open&&<div style={{position:'absolute',top:48,left:0,width:330,background:'#fff',border:'1px solid #e5e9f2',borderRadius:8,boxShadow:'0 20px 55px rgba(27,37,61,.15)',padding:15,direction:'rtl'}}><div style={{display:'flex',gap:10,alignItems:'center',paddingBottom:13,borderBottom:'1px solid #eef1f6'}}><div style={{width:42,height:42,borderRadius:8,background:'#6557d9',display:'grid',placeItems:'center',color:'#fff',font:'900 16px Cairo'}}>{(clinicName||'ع').charAt(0)}</div><div><strong style={{font:'900 13px Cairo'}}>{clinicName||'عيادة نور للأسنان'}</strong><div style={{font:'11px Tajawal',color:'#778398'}}>{plan.name}</div></div><span style={{marginRight:'auto',padding:'3px 8px',borderRadius:20,background:'#eafaf5',color:'#08785b',font:'800 9px Cairo'}}>نشط</span></div><div style={{padding:'13px 0'}}><div style={{display:'flex',justifyContent:'space-between',font:'11px Cairo',marginBottom:7}}><span>استخدام هذا الشهر</span><strong>{usage}%</strong></div><div style={{height:7,borderRadius:8,background:'#edf0f5',overflow:'hidden'}}><span style={{display:'block',width:`${usage}%`,height:'100%',background:color}}/></div><p style={{font:'11px/1.6 Tajawal',color:'#778398',margin:'8px 0 0'}}>دورة الاستخدام: 10 يونيو - 9 يوليو</p></div><div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:7}}><button onClick={()=>navigate('/clinic-os/dashboard/usage')} style={quick}><Sparkles size={13}/>الباقة والاستخدام</button><button onClick={()=>navigate('/clinic-os/dashboard/knowledge')} style={quick}><BookOpen size={13}/>مركز المعرفة</button><button onClick={()=>navigate('/clinic-os/dashboard/settings')} style={quick}><Settings size={13}/>الإعدادات</button><a href="https://wa.me/966546666005" target="_blank" rel="noreferrer" style={{...quick,textDecoration:'none'}}><MessageCircle size={13}/>تواصل مع الإدارة</a></div><button onClick={logout} style={{...quick,width:'100%',marginTop:9,color:'#b93446'}}><LogOut size={13}/>تسجيل الخروج</button></div>}</div>
+    </div>
+  </header>
 }
 
-const DEMO_NOTIFS = [
-  { id: 'n1', icon: MessageSquare, color: '#25D366', bg: '#ECFDF5', text: 'مريضة جديدة حجزت عبر واتساب', sub: 'سارة العمري — تنظيف أسنان', time: 'منذ ٣ دقائق', read: false },
-  { id: 'n2', icon: Calendar,      color: '#4F46E5', bg: '#EEF2FF', text: 'تذكير: ٤ مواعيد غداً الصباح',   sub: 'د. أحمد الزهراني — ٩ص', time: 'منذ ١٢ دقيقة', read: false },
-  { id: 'n3', icon: AlertCircle,   color: '#DC2626', bg: '#FEF2F2', text: 'فشل إرسال رسالة تأكيد',         sub: 'خالد المطيري — رقم غير صحيح', time: 'منذ ساعة', read: false },
-  { id: 'n4', icon: CheckCheck,    color: '#059669', bg: '#ECFDF5', text: 'تم تأكيد ٦ مواعيد تلقائياً',   sub: 'واتساب — الجلسة الصباحية', time: 'منذ ساعتين', read: true },
-]
-
-export const ClinicOSTopbar = ({ pageTitle, onMenuToggle, showMenuBtn, onSearch }: Props) => {
-  const { userName, logout } = useClinicOS()
-  const [showMenu, setShowMenu] = useState(false)
-  const [showNotifs, setShowNotifs] = useState(false)
-  const [notifs, setNotifs] = useState(DEMO_NOTIFS)
-  const [search, setSearch] = useState('')
-  const notifRef = useRef<HTMLDivElement>(null)
-  const menuRef  = useRef<HTMLDivElement>(null)
-
-  const unread = notifs.filter(n => !n.read).length
-
-  const markAllRead = () => setNotifs(prev => prev.map(n => ({ ...n, read: true })))
-  const markRead = (id: string) => setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setShowNotifs(false)
-      if (menuRef.current  && !menuRef.current.contains(e.target as Node))  setShowMenu(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
-
-  return (
-    <header style={{ height: 56, background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', flexShrink: 0, direction: 'rtl', gap: 8, position: 'relative', zIndex: 30 }}>
-      {/* Right: hamburger + title */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        {showMenuBtn && (
-          <button onClick={onMenuToggle} style={{ width: 36, height: 36, borderRadius: 8, background: '#F8FAFC', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
-            <Menu size={18} style={{ color: '#475569' }} />
-          </button>
-        )}
-        {pageTitle && <h1 style={{ fontSize: 15, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0, whiteSpace: 'nowrap' }}>{pageTitle}</h1>}
-      </div>
-
-      {/* Left: search + actions */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-        {/* Search */}
-        <div className="hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '6px 12px', width: 200 }}>
-          <Search size={13} style={{ color: '#94A3B8', flexShrink: 0 }} />
-          <input
-            placeholder="بحث..."
-            value={search}
-            onChange={e => { setSearch(e.target.value); onSearch?.(e.target.value) }}
-            style={{ border: 'none', background: 'transparent', fontSize: 12, color: '#334155', fontFamily: 'Tajawal, sans-serif', outline: 'none', width: '100%', direction: 'rtl' }}
-          />
-        </div>
-
-        {/* Notifications */}
-        <div ref={notifRef} style={{ position: 'relative', flexShrink: 0 }}>
-          <button
-            onClick={() => setShowNotifs(v => !v)}
-            style={{ position: 'relative', width: 34, height: 34, borderRadius: 8, background: showNotifs ? '#EEF2FF' : '#F8FAFC', border: `1px solid ${showNotifs ? '#C7D2FE' : '#E2E8F0'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-          >
-            <Bell size={15} style={{ color: showNotifs ? '#4F46E5' : '#475569' }} />
-            {unread > 0 && <span style={{ position: 'absolute', top: 5, right: 5, width: 7, height: 7, borderRadius: '50%', background: '#EF4444', border: '1.5px solid white' }} />}
-          </button>
-
-          {showNotifs && (
-            <div style={{ position: 'absolute', top: 42, left: 0, width: 320, background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 14, boxShadow: '0 16px 40px rgba(0,0,0,0.12)', zIndex: 200, overflow: 'hidden', direction: 'rtl' }}>
-              <div style={{ padding: '12px 16px', borderBottom: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 13, fontWeight: 800, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>الإشعارات {unread > 0 && <span style={{ fontSize: 11, background: '#EF4444', color: 'white', borderRadius: 20, padding: '1px 7px', marginRight: 4 }}>{unread}</span>}</span>
-                {unread > 0 && <button onClick={markAllRead} style={{ fontSize: 11, color: '#4F46E5', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Cairo, sans-serif', fontWeight: 700 }}>تعيين الكل كمقروء</button>}
-              </div>
-              {notifs.map(n => {
-                const Icon = n.icon
-                return (
-                  <div key={n.id} onClick={() => markRead(n.id)} style={{ display: 'flex', gap: 12, padding: '12px 16px', borderBottom: '1px solid #F8FAFC', cursor: 'pointer', background: n.read ? '#FFFFFF' : '#F8FAFF', transition: 'background 0.15s' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFC')}
-                    onMouseLeave={e => (e.currentTarget.style.background = n.read ? '#FFFFFF' : '#F8FAFF')}
-                  >
-                    <div style={{ width: 34, height: 34, borderRadius: 10, background: n.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <Icon size={14} style={{ color: n.color }} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, fontWeight: n.read ? 500 : 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif', marginBottom: 2 }}>{n.text}</div>
-                      <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>{n.sub}</div>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-                      <span style={{ fontSize: 10, color: '#CBD5E1', fontFamily: 'Tajawal, sans-serif', whiteSpace: 'nowrap' }}>{n.time}</span>
-                      {!n.read && <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#4F46E5' }} />}
-                    </div>
-                  </div>
-                )
-              })}
-              <div style={{ padding: '10px 16px', textAlign: 'center' }}>
-                <span style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>الإشعارات المباشرة ستكون نشطة بعد التفعيل</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* User menu */}
-        <div ref={menuRef} style={{ position: 'relative', flexShrink: 0 }}>
-          <button onClick={() => setShowMenu(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 8px', borderRadius: 8, border: '1px solid #E2E8F0', background: '#FFFFFF', cursor: 'pointer' }}>
-            <div style={{ width: 24, height: 24, borderRadius: 7, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <User size={11} style={{ color: 'white' }} />
-            </div>
-            <span className="hide-on-mobile" style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>{userName || 'مدير'}</span>
-            <ChevronDown size={12} style={{ color: '#94A3B8' }} />
-          </button>
-          {showMenu && (
-            <div style={{ position: 'absolute', top: 42, left: 0, background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '6px', minWidth: 160, boxShadow: '0 8px 24px rgba(0,0,0,0.1)', zIndex: 200, direction: 'rtl' }}>
-              <button onClick={logout} style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, color: '#DC2626', fontFamily: 'Tajawal, sans-serif' }}>
-                <LogOut size={14} /> تسجيل الخروج
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </header>
-  )
-}
+const quick: CSSProperties = {display:'flex',alignItems:'center',justifyContent:'center',gap:6,minHeight:34,borderRadius:6,border:'1px solid #e5e9f2',background:'#fafbfe',color:'#536075',font:'700 10px Cairo',cursor:'pointer'}
