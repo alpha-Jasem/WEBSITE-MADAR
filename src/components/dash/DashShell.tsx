@@ -144,11 +144,15 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
           {/* Avatar with SVG progress ring */}
           <div style={{ position: 'relative', width: 36, height: 36 }} title={`استخدام اليوم: ${maxPct}%`}>
             <svg width="36" height="36" style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}>
-              <circle cx="18" cy="18" r="15" fill="none" stroke="#E2EBF6" strokeWidth="2.5" />
+              {/* Track ring */}
+              <circle cx="18" cy="18" r="15" fill="none" stroke="#C8D5E8" strokeWidth="3" />
+              {/* Faint color ring always visible */}
+              <circle cx="18" cy="18" r="15" fill="none" stroke={ringColor} strokeWidth="3" opacity="0.18" />
+              {/* Progress arc */}
               <circle
                 cx="18" cy="18" r="15" fill="none"
                 stroke={ringColor}
-                strokeWidth="2.5"
+                strokeWidth="3"
                 strokeDasharray={`${circumference}`}
                 strokeDashoffset={`${circumference * (1 - maxPct / 100)}`}
                 strokeLinecap="round"
@@ -161,7 +165,9 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
           </div>
           <span className="dash-topbar-profile-copy">
             <strong>{profile.isOwner ? (company?.owner_name ?? 'مدير المغسلة') : profile.name}</strong>
-            <small>{profile.isOwner ? planLabel : `${profile.permissions.length} صلاحية`}</small>
+            <small style={{ color: ringColor, fontWeight: 600 }}>
+              {maxPct}% استخدام · {profile.isOwner ? planLabel : `${profile.permissions.length} صلاحية`}
+            </small>
           </span>
           <ChevronDown size={14} style={{ transform: profileOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
         </button>
