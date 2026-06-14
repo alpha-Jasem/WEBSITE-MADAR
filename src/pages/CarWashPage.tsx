@@ -461,14 +461,14 @@ export const CarWashPage = () => {
           <div className="hero-copy ml-auto w-full max-w-[580px] text-[#0D1B3E] lg:ml-0">
             <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/70 px-3.5 py-2 text-xs font-black text-[#0D1B3E] shadow-sm backdrop-blur-xl sm:px-5 sm:py-2.5 sm:text-sm" style={{ fontFamily: 'IBM Plex Sans Arabic, Cairo, sans-serif' }}>
               <span className="h-2 w-2 rounded-full bg-[#00BFFF]" />
-              واتساب + ذكاء اصطناعي للمغاسل
+              نظام تشغيل ذكي للمغاسل
             </div>
             <h1 className="mt-5 text-[2rem] font-black leading-[1.08] tracking-normal drop-shadow-[0_2px_0_rgba(255,255,255,0.85)] sm:mt-7 sm:text-6xl lg:text-7xl" style={{ fontFamily: 'IBM Plex Sans Arabic, Cairo, sans-serif' }}>
-              عميلك يرجع لوحده.
-              <span className="block text-[#008FE8]">واتساب يتابع بدلاً عنك.</span>
+              إدارة أسهل.
+              <span className="block text-[#008FE8]">تشغيل أذكى.</span>
             </h1>
             <p className="mt-3 max-w-[300px] rounded-xl border border-white/50 bg-white/50 px-3 py-2.5 text-[13px] font-bold leading-6 text-slate-800 shadow-sm backdrop-blur-md sm:mt-5 sm:max-w-xl sm:rounded-2xl sm:bg-white/75 sm:px-5 sm:py-4 sm:text-xl sm:leading-8" style={{ fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif' }}>
-              إشعار جاهزية السيارة، تذكير العميل، وطلب التقييم — كل شيء يصير تلقائياً عبر واتساب بدون موظف يتذكر.
+              منصة متكاملة لإدارة عمليات المغسلة — من استقبال السيارة وتتبع مراحل الخدمة، إلى الفوترة والتقارير المالية وتجربة العميل.
             </p>
             <div className="mt-5 flex flex-col items-start gap-2.5 sm:mt-7 sm:flex-row sm:items-center sm:gap-3">
               <Link
