@@ -56,6 +56,7 @@ const LostOpportunitiesPage = lazy(() => import('./pages/clinicOS/dashboard/AIRe
 const SmartCallsPage       = lazy(() => import('./pages/clinicOS/dashboard/AIReceptionistPages').then(m => ({ default: m.SmartCallsPage })))
 const MissedCallsPage      = lazy(() => import('./pages/clinicOS/dashboard/AIReceptionistPages').then(m => ({ default: m.MissedCallsPage })))
 const PlanUsagePage        = lazy(() => import('./pages/clinicOS/dashboard/AIReceptionistPages').then(m => ({ default: m.PlanUsagePage })))
+const PlansPage            = lazy(() => import('./pages/clinicOS/dashboard/Plans').then(m => ({ default: m.PlansPage })))
 const KnowledgeCenterPage  = lazy(() => import('./pages/clinicOS/dashboard/AIReceptionistPages').then(m => ({ default: m.KnowledgeCenterPage })))
 const DemoReviewPage       = lazy(() => import('./pages/clinicOS/DemoReview').then(m => ({ default: m.DemoReview })))
 const ClinicOSAdminPage    = lazy(() => import('./pages/clinicOS/admin/ClinicOSAdmin').then(m => ({ default: m.ClinicOSAdmin })))
@@ -108,6 +109,7 @@ function App() {
               <Route path="smart-calls" element={<SmartCallsPage />} />
               <Route path="missed-calls" element={<MissedCallsPage />} />
               <Route path="usage" element={<PlanUsagePage />} />
+              <Route path="plans" element={<PlansPage />} />
               <Route path="knowledge" element={<KnowledgeCenterPage />} />
               <Route path="appointments" element={<AppointmentsPage />} />
               <Route path="ai-booking"   element={<AIBookingPage />} />

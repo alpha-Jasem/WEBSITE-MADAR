@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, BarChart3, Bot, CalendarCheck, CheckCircle2, Clock3, Headphones,
   Lock, MessageCircle, Phone, PhoneMissed, Search, Sparkles, TrendingUp,
@@ -34,16 +34,16 @@ const Metric = ({ icon: Icon, label, value, description, tone = 'violet' }: { ic
   </div>
 }
 
-const UpgradeLocked = () => (
+const UpgradeLocked = ({ missed = false }: { missed?: boolean }) => (
   <div className="clinic-card clinic-lock">
     <div className="clinic-lock-inner">
       <div className="clinic-lock-icon"><Lock size={28}/></div>
-      <h1>المكالمات الذكية متاحة في الباقة الأعلى</h1>
+      <h1>{missed ? 'المكالمات الفائتة متاحة في الباقة الأعلى' : 'المكالمات الذكية متاحة في الباقة الأعلى'}</h1>
       <p>لا تخسر المكالمات خارج الدوام أو وقت انشغال الموظفين. الاتصال الذكي يرد على العميل، يفهم الطلب، ويحوله إلى حجز أو متابعة.</p>
       <div className="clinic-benefits">
         {['الرد على المكالمات خارج الدوام','فهم طلب العميل','تحويل المكالمة إلى حجز','إرسال ملخص للموظف','تقليل المكالمات الفائتة'].map(item => <div className="clinic-benefit" key={item}><CheckCircle2 size={14} color="#0f9f78"/> {item}</div>)}
       </div>
-      <a className="clinic-action" href={`${WHATSAPP}?text=${encodeURIComponent('مرحباً، نرغب بترقية باقتنا إلى AI Receptionist + Smart Calls.')}`} target="_blank" rel="noreferrer">ترقية عبر واتساب <ArrowLeft size={15}/></a>
+      <Link className="clinic-action" to="/clinic-os/dashboard/plans">عرض الباقات <ArrowLeft size={15}/></Link>
     </div>
   </div>
 )
@@ -115,7 +115,7 @@ export const SmartCallsPage = () => {
 
 export const MissedCallsPage = () => {
   const { packageType } = useClinicOS()
-  if (packageType !== 'ai_pro') return <div className="clinic-ai-page"><UpgradeLocked/></div>
+  if (packageType !== 'ai_pro') return <div className="clinic-ai-page"><UpgradeLocked missed/></div>
   const rows = [{phone:'055 710 4832',time:'أمس 8:42 م',contact:'تم التواصل',method:'اتصال ذكي',result:'تم الحجز',booked:'نعم'},{phone:'050 881 2940',time:'أمس 9:18 م',contact:'تم التواصل',method:'واتساب',result:'بانتظار الرد',booked:'لا'},{phone:'053 244 7105',time:'اليوم 7:16 ص',contact:'يحتاج متابعة',method:'لم يبدأ',result:'فرصة جديدة',booked:'لا'}]
   return <div className="clinic-ai-page"><PageHeader title="المكالمات الفائتة" subtitle="المكالمة الفائتة ليست مجرد اتصال ضائع؛ قد تكون حجزاً ذهب إلى عيادة أخرى."/><div className="clinic-kpi-grid"><Metric icon={PhoneMissed} label="المكالمات الفائتة" value="18" description="هذا الشهر" tone="rose"/><Metric icon={Phone} label="تم إنقاذها" value="11" description="تم التواصل معها" tone="mint"/><Metric icon={CalendarCheck} label="تحولت إلى حجز" value="6" description="بعد معاودة التواصل" tone="blue"/><Metric icon={TrendingUp} label="تحتاج متابعة" value="7" description="ما زالت مفتوحة" tone="amber"/><Metric icon={Sparkles} label="نسبة الإنقاذ" value="61%" description="من إجمالي المكالمات" tone="violet"/></div><div className="clinic-card clinic-section"><div className="clinic-list">{rows.map(r=><div className="clinic-list-row" key={r.phone}><strong>{r.phone}</strong><div>{r.time}</div><span className="clinic-badge">{r.contact}</span><div>{r.method}</div><span className={`clinic-badge ${r.booked==='نعم'?'success':'warning'}`}>{r.result}</span></div>)}</div></div></div>
 }
@@ -128,7 +128,7 @@ export const PlanUsagePage = () => {
   return <div className="clinic-ai-page"><PageHeader title="الباقة والاستخدام" subtitle="راقب حدود الخدمات الذكية ودورة الاشتراك من مكان واحد." action={<a className="clinic-action ghost" href={`${WHATSAPP}?text=${encodeURIComponent('مرحباً، أحتاج مساعدة بخصوص الباقة والاستخدام.')}`} target="_blank" rel="noreferrer">تواصل مع الإدارة</a>}/>
     <div className="clinic-card clinic-section"><div className="clinic-section-head"><div><h2>{plan.name}</h2><p>{plan.support}</p></div><span className="clinic-badge success">نشطة</span></div><div className="clinic-outcome-grid"><div className="clinic-mini-stat"><span>السعر السنوي</span><strong>{plan.annualPrice.toLocaleString('ar-SA')} ر.س</strong></div><div className="clinic-mini-stat"><span>رسوم التأسيس</span><strong>{plan.setupFee.toLocaleString('ar-SA')} ر.س</strong></div><div className="clinic-mini-stat"><span>دورة الاستخدام</span><strong style={{fontSize:15}}>10 يونيو - 9 يوليو</strong></div><div className="clinic-mini-stat"><span>انتهاء الاشتراك</span><strong style={{fontSize:15}}>12 يونيو 2027</strong></div></div></div>
     <div className="clinic-two-col"><div className="clinic-card clinic-section"><div className="clinic-section-head"><div><h2>استخدام هذا الشهر</h2><p>النسبة العامة تعتمد على أقرب حد للاكتمال.</p></div><strong style={{font:'800 24px Sora,Cairo'}}>{overall}%</strong></div>{metrics.map(m=>{const p=usagePercentage(m);return <div className="clinic-usage-row" key={m.key}><div className="clinic-usage-meta"><span>{m.label}</span><strong>{m.used.toLocaleString('ar-SA')} / {m.limit ? m.limit.toLocaleString('ar-SA') : 'غير مفعّل'}</strong></div><div className="clinic-progress"><span style={{width:`${p}%`,background:p>=100?'#d44b5c':p>=80?'#c77a18':'#0f9f78'}}/></div></div>})}<p className="clinic-note">استخدامك الشهري ضمن الحد المسموح.</p></div>
-    <div className="clinic-card clinic-section"><div className="clinic-section-head"><h2>{packageType==='whatsapp'?'فعّل الاتصال الذكي':'أنت على أعلى باقة'}</h2></div><p className="clinic-muted" style={{lineHeight:1.9}}>{packageType==='whatsapp'?'لا تخسر المكالمات خارج الدوام أو وقت انشغال الموظفين. الاتصال الذكي يحول المكالمات إلى حجوزات.':'الباقة الحالية تشمل واتساب، الاتصال الذكي، إنقاذ المكالمات الفائتة، والدعم الأولوي.'}</p>{packageType==='whatsapp'&&<a className="clinic-action" href={`${WHATSAPP}?text=${encodeURIComponent('مرحباً، نرغب بترقية باقتنا إلى AI Receptionist + Smart Calls.')}`} target="_blank" rel="noreferrer">ترقية عبر واتساب</a>}</div></div>
+    <div className="clinic-card clinic-section"><div className="clinic-section-head"><h2>{packageType==='whatsapp'?'فعّل الاتصال الذكي':'أنت على أعلى باقة'}</h2></div><p className="clinic-muted" style={{lineHeight:1.9}}>{packageType==='whatsapp'?'لا تخسر المكالمات خارج الدوام أو وقت انشغال الموظفين. الاتصال الذكي يحول المكالمات إلى حجوزات.':'الباقة الحالية تشمل واتساب، الاتصال الذكي، إنقاذ المكالمات الفائتة، والدعم الأولوي.'}</p>{packageType==='whatsapp'&&<Link className="clinic-action" to="/clinic-os/dashboard/plans">عرض الباقات</Link>}</div></div>
   </div>
 }
 

@@ -18,6 +18,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/clinic-os/dashboard/smart-calls': 'المكالمات الذكية',
   '/clinic-os/dashboard/missed-calls': 'المكالمات الفائتة',
   '/clinic-os/dashboard/usage': 'الباقة والاستخدام',
+  '/clinic-os/dashboard/plans': 'الباقات',
   '/clinic-os/dashboard/knowledge': 'مركز المعرفة',
   '/clinic-os/dashboard/reports': 'التقارير',
   '/clinic-os/dashboard/settings': 'الإعدادات',
