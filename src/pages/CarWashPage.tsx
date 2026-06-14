@@ -395,6 +395,134 @@ const Sub = ({ children }: { children: React.ReactNode }) => (
   <p style={{ fontSize: 16, lineHeight: 1.8, color: '#475569', fontFamily: 'IBM Plex Sans Arabic, sans-serif', margin: 0 }}>{children}</p>
 )
 
+// ─── UPSELL SECTION ──────────────────────────────────────────────────────────
+const ADDONS = [
+  { id: 'perfume',  name: 'تعطير',         price: 10,  icon: '✨', color: '#8B5CF6' },
+  { id: 'polish',   name: 'تلميع داخلي',   price: 25,  icon: '🪄', color: '#0099CC' },
+  { id: 'engine',   name: 'تنظيف مكينة',   price: 40,  icon: '⚙️', color: '#EA580C' },
+  { id: 'steam',    name: 'غسيل بخار',      price: 60,  icon: '💨', color: '#16A34A' },
+  { id: 'sub',      name: 'اشتراك شهري',   price: 120, icon: '⭐', color: '#F59E0B' },
+]
+const BASE_PRICE = 70
+
+function UpsellSection() {
+  const [selected, setSelected] = useState<Set<string>>(new Set(['perfume']))
+  const toggle = (id: string) =>
+    setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+  const addonsTotal = ADDONS.filter(a => selected.has(a.id)).reduce((s, a) => s + a.price, 0)
+  const total = BASE_PRICE + addonsTotal
+  const uplift = Math.round((addonsTotal / BASE_PRICE) * 100)
+
+  return (
+    <S bg="#FAFCFF">
+      <motion.div {...fadeUp()} style={{ textAlign: 'center', marginBottom: 48 }}>
+        <SectionLabel text="رفع قيمة الفاتورة" />
+        <H2>ارفع قيمة الفاتورة من نفس التسجيل</H2>
+        <Sub>كل عميل يدخل للتسجيل فرصة بيع إضافية — الإضافات تظهر له تلقائياً ويختار بنفسه.</Sub>
+      </motion.div>
+
+      <motion.div {...fadeUp(0.1)} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24, alignItems: 'start' }}>
+
+        {/* LEFT: service selector mockup */}
+        <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #E2EBF6', overflow: 'hidden', boxShadow: '0 4px 20px rgba(13,27,62,0.07)' }}>
+          {/* Header bar */}
+          <div style={{ background: '#0D1B3E', padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <QrCode size={15} color="#38BDF8" />
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#fff', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>شاشة تسجيل العميل</span>
+            <span style={{ marginRight: 'auto', fontSize: 11, color: 'rgba(255,255,255,0.4)', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>اختر إضافات</span>
+          </div>
+
+          {/* Base service */}
+          <div style={{ padding: '14px 18px', borderBottom: '1px solid #F1F5F9', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 34, height: 34, background: '#DBEAFE', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🚗</div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#0D1B3E', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>غسيل داخلي وخارجي</div>
+                <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>الخدمة الأساسية</div>
+              </div>
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#0D1B3E', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{BASE_PRICE} ر.س</div>
+          </div>
+
+          {/* Addon rows */}
+          <div style={{ padding: '10px 10px' }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', padding: '6px 8px', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>إضافات متاحة — اختر ما يناسبك</div>
+            {ADDONS.map(addon => {
+              const on = selected.has(addon.id)
+              return (
+                <button key={addon.id} onClick={() => toggle(addon.id)}
+                  style={{ width: '100%', background: on ? `${addon.color}08` : 'transparent', border: on ? `1.5px solid ${addon.color}30` : '1.5px solid transparent', borderRadius: 12, padding: '11px 12px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: 6, transition: 'all .18s', textAlign: 'right' }}>
+                  <div style={{ width: 36, height: 36, background: on ? `${addon.color}15` : '#F1F5F9', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, flexShrink: 0, transition: 'background .18s' }}>{addon.icon}</div>
+                  <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: on ? '#0D1B3E' : '#64748B', fontFamily: 'IBM Plex Sans Arabic, sans-serif', transition: 'color .18s' }}>{addon.name}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: on ? addon.color : '#94A3B8', fontFamily: 'IBM Plex Sans Arabic, sans-serif', minWidth: 52, textAlign: 'left', transition: 'color .18s' }}>+{addon.price} ر.س</span>
+                  <div style={{ width: 22, height: 22, borderRadius: 6, background: on ? addon.color : '#E2EBF6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background .18s' }}>
+                    {on && <Check size={13} color="#fff" />}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* RIGHT: live invoice */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #E2EBF6', overflow: 'hidden', boxShadow: '0 4px 20px rgba(13,27,62,0.07)' }}>
+            <div style={{ background: '#F8FAFC', padding: '14px 18px', borderBottom: '1px solid #E2EBF6', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <ReceiptText size={14} color="#0099CC" />
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#0D1B3E', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>معاينة الفاتورة</span>
+            </div>
+            <div style={{ padding: '16px 18px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 12, borderBottom: '1px dashed #E2EBF6', marginBottom: 12 }}>
+                <span style={{ fontSize: 13, color: '#64748B', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>غسيل داخلي وخارجي</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#0D1B3E', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{BASE_PRICE} ر.س</span>
+              </div>
+              <AnimatePresence>
+                {ADDONS.filter(a => selected.has(a.id)).map(a => (
+                  <motion.div key={a.id} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}
+                    style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <span style={{ fontSize: 13, color: '#64748B', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{a.icon} {a.name}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: a.color, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>+{a.price} ر.س</span>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+              <div style={{ borderTop: '2px solid #E2EBF6', paddingTop: 14, marginTop: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: '#0D1B3E', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>الإجمالي</span>
+                <motion.span key={total} initial={{ scale: 1.15, color: '#16A34A' }} animate={{ scale: 1, color: '#0D1B3E' }} transition={{ duration: 0.35 }}
+                  style={{ fontSize: 24, fontWeight: 700, fontFamily: 'IBM Plex Sans Arabic, sans-serif', display: 'block' }}>
+                  {total} ر.س
+                </motion.span>
+              </div>
+            </div>
+          </div>
+
+          {/* Uplift badge */}
+          <AnimatePresence>
+            {addonsTotal > 0 && (
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
+                style={{ background: 'linear-gradient(135deg, #0D1B3E 0%, #1E3A6E 100%)', borderRadius: 16, padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div style={{ width: 48, height: 48, background: 'rgba(74,222,128,0.15)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <TrendingUp size={22} color="#4ADE80" />
+                </div>
+                <div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>الفاتورة ارتفعت</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: '#4ADE80', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>+{uplift}% بدون موظف إضافي</div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div style={{ background: '#EFF6FF', borderRadius: 14, padding: '14px 16px', border: '1px solid #BFDBFE' }}>
+            <p style={{ fontSize: 13.5, fontWeight: 600, color: '#1D4ED8', margin: 0, lineHeight: 1.7, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+              الإضافات تظهر للعميل لحظة التسجيل — يختار بنفسه، الفاتورة ترتفع بدون ضغط على الموظف.
+            </p>
+          </div>
+        </div>
+
+      </motion.div>
+    </S>
+  )
+}
+
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 export const CarWashPage = () => {
   const heroImageRef = useRef<HTMLImageElement | null>(null)
@@ -675,36 +803,7 @@ export const CarWashPage = () => {
       </S>
 
       {/* ── 7. UPSELL ── */}
-      <S bg="#FAFCFF">
-        <motion.div {...fadeUp()} style={{ textAlign: 'center', marginBottom: 40 }}>
-          <SectionLabel text="رفع قيمة الفاتورة" />
-          <H2>ارفع قيمة الفاتورة من نفس التسجيل</H2>
-          <Sub>كل عميل يدخل للتسجيل فرصة بيع إضافية.</Sub>
-        </motion.div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
-          {[
-            { name: 'تعطير', price: '+10', color: '#8B5CF6' },
-            { name: 'تلميع داخلي', price: '+25', color: '#0099CC' },
-            { name: 'تنظيف مكينة', price: '+40', color: '#EA580C' },
-            { name: 'غسيل بخار', price: '+60', color: '#16A34A' },
-            { name: 'اشتراك شهري', price: 'عرض', color: '#EF4444' },
-          ].map(({ name, price, color }, i) => (
-            <motion.div key={name} {...fadeUp(i * 0.06)}
-              style={{ background: '#fff', borderRadius: 16, padding: '20px 16px', border: '1px solid #E2EBF6', textAlign: 'center', boxShadow: '0 2px 8px rgba(13,27,62,0.04)' }}>
-              <div style={{ fontSize: 20, fontWeight: 700, color, fontFamily: 'IBM Plex Sans Arabic, sans-serif', marginBottom: 6 }}>{price} ر.س</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#0D1B3E', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{name}</div>
-              <div style={{ marginTop: 10, height: 3, borderRadius: 2, background: `${color}22` }}>
-                <div style={{ height: '100%', width: '100%', background: color, borderRadius: 2, opacity: 0.4 }} />
-              </div>
-            </motion.div>
-          ))}
-        </div>
-        <motion.div {...fadeUp(0.35)} style={{ marginTop: 28, background: '#EFF6FF', borderRadius: 14, padding: '16px 20px', textAlign: 'center', border: '1px solid #BFDBFE' }}>
-          <p style={{ fontSize: 15, fontWeight: 600, color: '#1D4ED8', margin: 0, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
-            الإضافات تظهر للعميل لحظة التسجيل — يختار بنفسه، الفاتورة ترتفع بدون ضغط على الموظف.
-          </p>
-        </motion.div>
-      </S>
+      <UpsellSection />
 
       {/* ── 8. LOYALTY ── */}
       <S bg="#fff">
