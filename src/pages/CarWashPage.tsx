@@ -995,6 +995,9 @@ export const CarWashPage = () => {
 
           {/* PLAN 2 — Platinum */}
           <motion.div {...fadeUp(0.08)} style={{ borderRadius: 24, border: '1.5px solid #E2EBF6', background: '#fff', padding: '32px 28px', position: 'relative', boxShadow: '0 4px 16px rgba(13,27,62,0.06)' }}>
+            <div style={{ position: 'absolute', top: -15, right: 28, background: '#0D1B3E', color: '#fff', fontSize: 12, fontWeight: 700, padding: '5px 16px', borderRadius: 20, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+              🔥 عرض إطلاق — أول 5 مغاسل
+            </div>
             <div style={{ fontSize: 13, fontWeight: 700, color: '#64748B', marginBottom: 6, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>Platinum</div>
             <div style={{ fontSize: 15, fontWeight: 600, color: '#334155', marginBottom: 20, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
               للمغسلة الجادة بأعمق — أولوية دعم وتجهيز للتوسعة
@@ -1002,12 +1005,13 @@ export const CarWashPage = () => {
 
             {/* Price block */}
             <div style={{ background: '#F8FAFC', borderRadius: 16, padding: '18px 20px', marginBottom: 24, border: '1px solid #E2EBF6' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
                 <span style={{ fontSize: 42, fontWeight: 700, color: '#0D1B3E', fontFamily: 'IBM Plex Sans Arabic, sans-serif', lineHeight: 1 }}>1,000</span>
                 <span style={{ fontSize: 14, color: '#64748B', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>ر.س / شهر</span>
               </div>
-              <div style={{ marginTop: 6 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#64748B', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>السعر الثابت — بدون عروض مؤقتة</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 13, color: '#94A3B8', textDecoration: 'line-through', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>1,999 ر.س</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A', background: '#DCFCE7', padding: '2px 10px', borderRadius: 20, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>وفّر 999 ر.س شهرياً</span>
               </div>
             </div>
 
@@ -1030,7 +1034,7 @@ export const CarWashPage = () => {
 
         <motion.div {...fadeUp(0.2)} style={{ marginTop: 32, textAlign: 'center' }}>
           <p style={{ fontSize: 13, color: '#94A3B8', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
-            * عرض الإطلاق لأول 5 مغاسل فقط — بعد اكتمال العدد يرجع سعر Pro إلى 799 ر.س
+            * عرض الإطلاق لأول 5 مغاسل فقط — بعد اكتمال العدد ترجع الأسعار إلى 799 ر.س و 1,999 ر.س
           </p>
         </motion.div>
       </S>
