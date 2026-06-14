@@ -105,8 +105,8 @@ export const LostOpportunitiesPage = () => <div className="clinic-ai-page">
 </div>
 
 export const SmartCallsPage = () => {
-  const { packageType } = useClinicOS()
-  if (packageType !== 'ai_pro') return <div className="clinic-ai-page"><UpgradeLocked/></div>
+  const { packageType, isSubscribed } = useClinicOS()
+  if (!isSubscribed || packageType !== 'ai_pro') return <div className="clinic-ai-page"><UpgradeLocked/></div>
   return <div className="clinic-ai-page"><PageHeader title="المكالمات الذكية" subtitle="المكالمات التي استقبلها النظام، فهم طلبها، وحوّلها إلى حجز أو متابعة."/>
     <div className="clinic-kpi-grid"><Metric icon={Phone} label="عدد المكالمات" value="36" description="هذا الشهر" tone="violet"/><Metric icon={Clock3} label="الدقائق المستخدمة" value="126" description="من 300 دقيقة" tone="blue"/><Metric icon={CalendarCheck} label="تحولت إلى حجز" value="14" description="حجزاً مؤكداً" tone="mint"/><Metric icon={TrendingUp} label="تحتاج متابعة" value="7" description="فرص لم تغلق بعد" tone="amber"/><Metric icon={Headphones} label="متوسط المكالمة" value="1:31" description="دقيقة" tone="rose"/></div>
     <div className="clinic-card clinic-section"><div className="clinic-list">{DEMO_SMART_CALLS.map(row=><div className="clinic-list-row" key={row.phone} style={{gridTemplateColumns:'1fr .55fr .75fr 1.5fr .7fr'}}><div><strong>{row.name}</strong><div className="clinic-muted">{row.phone}</div></div><div>{row.duration}</div><div>{row.reason}</div><div>{row.summary}</div><span className={`clinic-badge ${row.booked?'success':'warning'}`}>{row.status}</span></div>)}</div></div>
@@ -114,8 +114,8 @@ export const SmartCallsPage = () => {
 }
 
 export const MissedCallsPage = () => {
-  const { packageType } = useClinicOS()
-  if (packageType !== 'ai_pro') return <div className="clinic-ai-page"><UpgradeLocked missed/></div>
+  const { packageType, isSubscribed } = useClinicOS()
+  if (!isSubscribed || packageType !== 'ai_pro') return <div className="clinic-ai-page"><UpgradeLocked missed/></div>
   const rows = [{phone:'055 710 4832',time:'أمس 8:42 م',contact:'تم التواصل',method:'اتصال ذكي',result:'تم الحجز',booked:'نعم'},{phone:'050 881 2940',time:'أمس 9:18 م',contact:'تم التواصل',method:'واتساب',result:'بانتظار الرد',booked:'لا'},{phone:'053 244 7105',time:'اليوم 7:16 ص',contact:'يحتاج متابعة',method:'لم يبدأ',result:'فرصة جديدة',booked:'لا'}]
   return <div className="clinic-ai-page"><PageHeader title="المكالمات الفائتة" subtitle="المكالمة الفائتة ليست مجرد اتصال ضائع؛ قد تكون حجزاً ذهب إلى عيادة أخرى."/><div className="clinic-kpi-grid"><Metric icon={PhoneMissed} label="المكالمات الفائتة" value="18" description="هذا الشهر" tone="rose"/><Metric icon={Phone} label="تم إنقاذها" value="11" description="تم التواصل معها" tone="mint"/><Metric icon={CalendarCheck} label="تحولت إلى حجز" value="6" description="بعد معاودة التواصل" tone="blue"/><Metric icon={TrendingUp} label="تحتاج متابعة" value="7" description="ما زالت مفتوحة" tone="amber"/><Metric icon={Sparkles} label="نسبة الإنقاذ" value="61%" description="من إجمالي المكالمات" tone="violet"/></div><div className="clinic-card clinic-section"><div className="clinic-list">{rows.map(r=><div className="clinic-list-row" key={r.phone}><strong>{r.phone}</strong><div>{r.time}</div><span className="clinic-badge">{r.contact}</span><div>{r.method}</div><span className={`clinic-badge ${r.booked==='نعم'?'success':'warning'}`}>{r.result}</span></div>)}</div></div></div>
 }
