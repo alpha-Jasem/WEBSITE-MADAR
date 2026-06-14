@@ -30,10 +30,10 @@ const Outcomes = () => (
         style={{ textAlign: 'center', marginBottom: 56 }}
       >
         <h2 style={{ fontSize: 36, fontWeight: 900, color: '#FFFFFF', fontFamily: 'Cairo, sans-serif', margin: '0 0 12px', lineHeight: 1.3 }}>
-          النتيجة تظهر من الأسبوع الأول
+          ما يقدمه النظام لك من اليوم الأول
         </h2>
         <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.45)', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>
-          أرقام حقيقية من عملائنا في المغاسل والعيادات
+          مصمم خصيصاً للمغاسل والعيادات السعودية
         </p>
       </motion.div>
 
@@ -55,23 +55,15 @@ const Outcomes = () => (
         ))}
       </div>
 
-      {/* Social proof strip */}
+      {/* Value strip */}
       <motion.div
         initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.4 }}
-        style={{ marginTop: 48, padding: '20px 28px', borderRadius: 14, background: 'rgba(0,191,255,0.04)', border: '1px solid rgba(0,191,255,0.12)', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}
+        style={{ marginTop: 48, padding: '24px 28px', borderRadius: 14, background: 'rgba(0,191,255,0.04)', border: '1px solid rgba(0,191,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap', textAlign: 'center' }}
       >
-        <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, #00BFFF22, #1565C033)', border: '1.5px solid rgba(0,191,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <span style={{ fontSize: 18, fontWeight: 900, color: '#00BFFF' }}>ن</span>
-        </div>
-        <div style={{ flex: 1 }}>
-          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', fontFamily: 'Tajawal, sans-serif', margin: '0 0 4px', lineHeight: 1.6 }}>
-            "كنا نرد على الرسائل يدوياً ونخسر عملاء. الحين النظام يرد ويحجز والمغسلة شغالة حتى بعد الدوام."
-          </p>
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', fontFamily: 'Cairo, sans-serif' }}>نايف العتيبي — مغسلة نخبة، جدة</span>
-        </div>
-        <div style={{ display: 'flex', gap: 2 }}>
-          {[1,2,3,4,5].map(i => <span key={i} style={{ color: '#F59E0B', fontSize: 14 }}>★</span>)}
-        </div>
+        <span style={{ fontSize: 20 }}>🚀</span>
+        <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.8)', fontFamily: 'Tajawal, sans-serif', margin: 0, lineHeight: 1.6 }}>
+          كن من أوائل المغاسل والعيادات في السعودية اللي تشغّل واتساب ذكي يرد ويحجز بدون موظف — <span style={{ color: '#00BFFF', fontWeight: 700 }}>الأماكن محدودة</span>
+        </p>
       </motion.div>
 
     </div>
@@ -83,7 +75,7 @@ export const HomePage = () => {
     <div className="min-h-screen overflow-x-hidden" style={{ background: '#050810' }}>
       <CustomCursor />
       <ScrollProgress />
-      <MadarNavbar navLinks={[{ href: '#outcomes', label: 'النتائج' }, { href: '#products', label: 'المنتجات' }, { href: '#contact', label: 'تواصل' }]} subtitle="نظام تشغيل ذكي" />
+      <MadarNavbar navLinks={[{ href: '#outcomes', label: 'النتائج' }, { href: '#products', label: 'المنتجات' }, { href: '#contact', label: 'تواصل' }]} subtitle="واتساب + ذكاء اصطناعي" />
       <main>
         <Hero />
         <Outcomes />
