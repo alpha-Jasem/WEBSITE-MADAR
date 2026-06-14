@@ -1,7 +1,7 @@
 ﻿import type React from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { AlertCircle, ChevronDown, LogOut, ShieldCheck, Sparkles, TrendingUp } from 'lucide-react'
+import { AlertCircle, ChevronDown, LogOut, ShieldCheck } from 'lucide-react'
 import { signOut, supabase } from '../../lib/supabase'
 import type { Company } from '../../types'
 import { PLAN_LABELS } from '../../lib/constants'
@@ -177,26 +177,21 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
           ))}
         </nav>
 
-        {role === 'client' && company && !isPremium && (
-          <div className="dash-upgrade-card">
-            <div className="dash-upgrade-card-head">
-              <div className="dash-upgrade-icon">
-                <TrendingUp size={16} color="rgba(255,255,255,0.9)" />
-              </div>
-              <span>{planLabel}</span>
+        {role === 'client' && (
+          <div style={{ margin: '4px 10px 8px', padding: '10px 12px', background: 'rgba(255,255,255,0.07)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', fontFamily: 'Tajawal,sans-serif' }}>استخدام اليوم</span>
+              <span style={{ fontSize: 11, fontWeight: 800, color: maxPct >= 80 ? '#F59E0B' : 'rgba(255,255,255,0.8)', fontFamily: 'Sora,sans-serif' }}>{maxPct}%</span>
             </div>
-            <strong>{plan === 'starter' ? TXT.upgradePro : TXT.upgradePremium}</strong>
-            <p>
-              {trialDaysLeft !== null
-                ? TXT.trialPrefix + trialDaysLeft + TXT.trialSuffix
-                : plan === 'starter'
-                ? TXT.starterCopy
-                : TXT.premiumCopy}
-            </p>
-            <button type="button" onClick={() => { navigate('/client/upgrade'); onClose() }}>
-              <Sparkles size={12} />
-              {plan === 'starter' ? TXT.buttonPro : TXT.buttonPremium}
-            </button>
+            <div style={{ height: 3, borderRadius: 3, background: 'rgba(255,255,255,0.12)', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${maxPct}%`, background: ringColor, borderRadius: 3, transition: 'width 0.5s ease' }} />
+            </div>
+            <div style={{ marginTop: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontFamily: 'Tajawal,sans-serif' }}>{planLabel}</span>
+              {trialDaysLeft !== null && (
+                <span style={{ fontSize: 10, color: '#F59E0B', fontFamily: 'Tajawal,sans-serif' }}>باقي {trialDaysLeft} يوم</span>
+              )}
+            </div>
           </div>
         )}
 

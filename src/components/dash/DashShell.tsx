@@ -8,6 +8,7 @@ import { MadarAgentWidget } from './MadarAgentWidget'
 import { useActiveProfile } from '../../context/ActiveProfileContext'
 import { PLAN_LABELS, MADAR_WHATSAPP_NUMBER } from '../../lib/constants'
 import { useDailyUsage } from '../../hooks/useDailyUsage'
+import { useNotifications } from '../../hooks/useNotifications'
 import { supabase } from '../../lib/supabase'
 
 interface Props {
@@ -43,8 +44,12 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
   const [pin, setPin] = useState('')
   const [pinError, setPinError] = useState(false)
   const topProfileRef = useRef<HTMLDivElement>(null)
+  const notifRef = useRef<HTMLDivElement>(null)
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [notifTab, setNotifTab] = useState<'all' | 'ops' | 'usage'>('all')
 
   const dailyUsage = useDailyUsage(role === 'client' ? companyId : null, planKey)
+  const { notifications, count: notifCount } = useNotifications(role === 'client' ? companyId : null, dailyUsage)
 
   useEffect(() => { setMenuOpen(false) }, [location.pathname])
   useEffect(() => { setProfileOpen(false); setShowStaffSwitcher(false); setSelected(null); setPin(''); setPinError(false) }, [location.pathname])
@@ -69,6 +74,9 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
         setSelected(null)
         setPin('')
         setPinError(false)
+      }
+      if (!notifRef.current?.contains(event.target as Node)) {
+        setNotifOpen(false)
       }
     }
     document.addEventListener('mousedown', close)
@@ -121,11 +129,93 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
     </div>
   )
 
+  const NOTIF_SEVERITY_COLORS: Record<string, string> = {
+    critical: '#EF4444', warning: '#F59E0B', info: '#0B63F6', success: '#10B981',
+  }
+  const NOTIF_CATEGORY_LABELS: Record<string, string> = { ops: 'تشغيل', usage: 'استخدام', finance: 'مالية', customer: 'عملاء' }
+
   const renderClientTopbarControls = () => (
     <>
-      <button type="button" className="dash-topbar-icon" aria-label="الإشعارات">
-        <Bell size={17} />
-      </button>
+      {/* Notification Bell */}
+      <div ref={notifRef} style={{ position: 'relative' }}>
+        <button
+          type="button"
+          className="dash-topbar-icon"
+          aria-label="الإشعارات"
+          onClick={() => setNotifOpen(prev => !prev)}
+          style={{ position: 'relative' }}
+        >
+          <Bell size={17} />
+          {notifCount > 0 && (
+            <span style={{
+              position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16,
+              background: '#EF4444', color: '#fff', borderRadius: 999,
+              fontSize: 9, fontWeight: 900, display: 'flex', alignItems: 'center',
+              justifyContent: 'center', padding: '0 3px', lineHeight: 1,
+              fontFamily: 'Sora, sans-serif', border: '1.5px solid #fff',
+            }}>{notifCount > 9 ? '9+' : notifCount}</span>
+          )}
+        </button>
+
+        {notifOpen && (
+          <div style={{
+            position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 200,
+            width: 320, background: '#fff', border: '1px solid #E3EAF6',
+            borderRadius: 14, boxShadow: '0 16px 48px rgba(13,27,62,.12)',
+            overflow: 'hidden', direction: 'rtl',
+          }}>
+            {/* Header */}
+            <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid #F0F4FF', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <strong style={{ fontSize: 14, fontWeight: 900, color: '#0D1B3E', fontFamily: 'Cairo,sans-serif' }}>التنبيهات</strong>
+              {notifCount > 0 && <span style={{ fontSize: 10, background: '#EF444420', color: '#EF4444', borderRadius: 999, padding: '2px 8px', fontWeight: 700, fontFamily: 'Tajawal,sans-serif' }}>{notifCount} جديد</span>}
+            </div>
+
+            {/* Tabs */}
+            <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #F0F4FF', padding: '4px 8px' }}>
+              {(['all', 'ops', 'usage'] as const).map(tab => (
+                <button key={tab} type="button" onClick={() => setNotifTab(tab)} style={{
+                  flex: 1, padding: '6px 0', border: 'none', borderRadius: 8,
+                  background: notifTab === tab ? '#F0F4FF' : 'transparent',
+                  color: notifTab === tab ? '#0B63F6' : '#64748B',
+                  fontWeight: notifTab === tab ? 800 : 600,
+                  fontSize: 11, fontFamily: 'Tajawal,sans-serif', cursor: 'pointer',
+                }}>
+                  {tab === 'all' ? 'الكل' : tab === 'ops' ? 'تشغيل' : 'استخدام'}
+                </button>
+              ))}
+            </div>
+
+            {/* Notifications list */}
+            <div style={{ maxHeight: 320, overflowY: 'auto' }}>
+              {(() => {
+                const filtered = notifications.filter(n => notifTab === 'all' || n.category === notifTab)
+                if (filtered.length === 0) return (
+                  <div style={{ padding: '28px 16px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 28, marginBottom: 8 }}>🔔</div>
+                    <p style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal,sans-serif', margin: 0 }}>لا توجد تنبيهات الآن</p>
+                  </div>
+                )
+                return filtered.map((n, i) => (
+                  <div key={n.id} style={{
+                    display: 'grid', gridTemplateColumns: '32px 1fr auto', gap: 10, alignItems: 'start',
+                    padding: '12px 14px', borderBottom: i < filtered.length - 1 ? '1px solid #F8FBFF' : 'none',
+                  }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 9, background: `${NOTIF_SEVERITY_COLORS[n.severity]}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}>
+                      {n.icon}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <strong style={{ display: 'block', fontSize: 12, color: '#0D1B3E', fontFamily: 'Tajawal,sans-serif', marginBottom: 2 }}>{n.title}</strong>
+                      <span style={{ fontSize: 11, color: '#64748B', fontFamily: 'Tajawal,sans-serif', display: 'block', lineHeight: 1.4 }}>{n.message}</span>
+                      <span style={{ fontSize: 10, color: '#94A3B8', fontFamily: 'Sora,sans-serif', marginTop: 3, display: 'block' }}>{n.time}</span>
+                    </div>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: NOTIF_SEVERITY_COLORS[n.severity], marginTop: 4, flexShrink: 0 }} />
+                  </div>
+                ))
+              })()}
+            </div>
+          </div>
+        )}
+      </div>
       <button type="button" className="dash-topbar-icon" aria-label="الرسائل">
         <MessageSquare size={17} />
       </button>

@@ -184,6 +184,11 @@ export const CarWashWorkers = () => {
   }
 
   const avatarColors = ['#6366F1', '#0EA5A5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4']
+  const totalCars = stats.reduce((s, w) => s + w.carsToday, 0)
+  const totalCommission = stats.reduce((s, w) => s + w.commissionToday, 0)
+  const topWorker = stats[0]
+  const totalRevenue = stats.reduce((s, w) => s + w.revenueToday, 0)
+  const avgTime = totalCars > 0 ? Math.round((8 * 60) / Math.max(totalCars, 1)) : 0
 
   return (
     <div className="space-y-6">
@@ -193,6 +198,27 @@ export const CarWashWorkers = () => {
         description="أداء اليوم، السيارات المنجزة، العمولات، والتنبيه عند وجود سيارات غير مربوطة بموظف."
         actions={<ClientButton onClick={openAdd}><Plus size={16} /> إضافة موظف</ClientButton>}
       />
+
+      {/* KPI Strip */}
+      {workers.length > 0 && (
+        <div dir="rtl" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
+          {[
+            { label: 'عدد الموظفين', value: String(workers.length), icon: '👥', color: '#6366F1' },
+            { label: 'السيارات المنجزة', value: String(totalCars), icon: '🚗', color: '#0284C7' },
+            { label: 'عمولات اليوم', value: `${totalCommission.toFixed(0)} ر.س`, icon: '💰', color: '#10B981' },
+            { label: 'إيراد الفريق', value: `${totalRevenue.toFixed(0)} ر.س`, icon: '📊', color: '#F59E0B' },
+            ...(topWorker ? [{ label: 'أعلى أداء', value: topWorker.workerId ? workers.find(w => w.id === topWorker.workerId)?.name?.split(' ')[0] ?? '—' : '—', icon: '🏆', color: '#EF4444' }] : []),
+          ].map(kpi => (
+            <div key={kpi.label} style={{ background: '#fff', border: '1px solid #E3EAF6', borderRadius: 14, padding: '14px 16px', boxShadow: '0 4px 14px rgba(13,27,62,.04)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal,sans-serif' }}>{kpi.label}</span>
+                <span style={{ fontSize: 18 }}>{kpi.icon}</span>
+              </div>
+              <strong style={{ fontSize: 22, fontWeight: 900, color: kpi.color, fontFamily: 'Sora,sans-serif', display: 'block', lineHeight: 1 }}>{kpi.value}</strong>
+            </div>
+          ))}
+        </div>
+      )}
 
       {unassignedDelivered > 0 && (
         <div className="flex items-start gap-3 rounded-2xl p-4" style={{ background: '#FFFBEB', border: '1px solid #FCD34D' }}>
