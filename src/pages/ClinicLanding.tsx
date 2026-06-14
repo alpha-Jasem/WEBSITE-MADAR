@@ -82,34 +82,35 @@ export const ClinicLanding = () => {
               {/* Badge */}
               <div className="inline-flex items-center gap-2 w-fit px-4 py-2 rounded-full border"
                 style={{ background: `${ACCENT}10`, borderColor: `${ACCENT}30` }}>
-                <Stethoscope size={13} style={{ color: ACCENT }} />
+                <Bot size={13} style={{ color: ACCENT }} />
                 <span className={`text-xs font-semibold ${language === 'ar' ? 'font-cairo' : 'font-work'}`} style={{ color: ACCENT }}>
-                  Clinic OS
+                  {t('واتساب + ذكاء اصطناعي للعيادات', 'WhatsApp + AI for Clinics')}
                 </span>
               </div>
 
               {/* Headline */}
               <h1 className={`text-4xl sm:text-5xl xl:text-6xl font-bold leading-[1.15] tracking-tight text-white ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>
                 {t(
-                  <><span style={{ color: ACCENT }} className="font-cairo">نورة</span> تحجز<br />وأنت مرتاح</>,
-                  <><span style={{ color: ACCENT }}>Nora</span> Books<br />While You Rest</>
+                  <>مريضك يحجز على<br /><span style={{ color: ACCENT }} className="font-cairo">واتساب ٢٤/٧</span></>,
+                  <>Your Patient Books<br /><span style={{ color: ACCENT }}>WhatsApp 24/7</span></>
                 )}
               </h1>
 
               <p className={`text-lg leading-relaxed max-w-lg ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
                 style={{ color: 'rgba(255,255,255,0.62)' }}>
                 {t(
-                  'مساعد استقبال صوتي يعمل 24/7، يحجز المواعيد بدون تعارض، ويدير المرضى من لوحة واحدة — بدون موظف إضافي.',
-                  'A voice receptionist running 24/7, books appointments without conflicts, and manages patients from one dashboard — without hiring extra staff.'
+                  'نورة — مساعد ذكي يرد على واتساب والمكالمات، يحجز الموعد بدون تعارض، ويرسل تأكيد فوري للمريض. بدون موظف استقبال إضافي.',
+                  'Nora — an AI assistant that answers WhatsApp and calls, books appointments without conflicts, and sends instant confirmation. No extra receptionist needed.'
                 )}
               </p>
 
               {/* Trust chips */}
               <div className="flex flex-wrap gap-2.5">
                 {[
-                  { ar: 'صوت عربي لهجة جدة', en: 'Jeddah dialect Arabic voice' },
+                  { ar: 'يرد على واتساب فوراً', en: 'Instant WhatsApp replies' },
                   { ar: 'حجز بدون تعارض', en: 'Zero double-booking' },
-                  { ar: 'تحديث حي للداشبورد', en: 'Live dashboard updates' },
+                  { ar: 'صوت عربي ٢٤/٧', en: 'Arabic voice 24/7' },
+                  { ar: 'تذكير تلقائي قبل الموعد', en: 'Auto appointment reminders' },
                 ].map((c, i) => (
                   <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg"
                     style={{ background: `${ACCENT}0A`, border: `1px solid ${ACCENT}22` }}>
@@ -170,6 +171,55 @@ export const ClinicLanding = () => {
             >
               <ClinicDashMockup />
             </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── WhatsApp Flow ── */}
+      <section className="relative py-20 overflow-hidden" style={{ background: '#080E1C' }}>
+        <div className="absolute top-0 inset-x-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${ACCENT}25, transparent)` }} />
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-14">
+            <div className="inline-flex items-center gap-2 w-fit px-4 py-2 rounded-full border mb-4"
+              style={{ background: `${ACCENT}10`, borderColor: `${ACCENT}30` }}>
+              <Bot size={13} style={{ color: ACCENT }} />
+              <span className={`text-xs font-semibold ${language === 'ar' ? 'font-cairo' : 'font-work'}`} style={{ color: ACCENT }}>
+                {t('رحلة المريض مع نورة', 'Patient Journey with Nora')}
+              </span>
+            </div>
+            <h2 className={`text-3xl sm:text-4xl font-bold text-white ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>
+              {t(<>من أول رسالة واتساب<br /><span style={{ color: ACCENT }}>إلى موعد مؤكد</span></>, <>From First WhatsApp<br /><span style={{ color: ACCENT }}>To Confirmed Appointment</span></>)}
+            </h2>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { step: '01', icon: Bot,      titleAr: 'المريض يواتس',     textAr: 'أي وقت — ليل أو نهار — نورة ترد خلال ثوانٍ.' },
+              { step: '02', icon: Calendar, titleAr: 'تحدد الموعد',      textAr: 'نورة تسأل عن الخدمة والدكتور والوقت المناسب.' },
+              { step: '03', icon: Shield,   titleAr: 'تأكيد فوري',       textAr: 'المريض يستلم تأكيد واتساب + تذكير قبل الموعد.' },
+              { step: '04', icon: TrendingUp, titleAr: 'داشبورد للدكتور', textAr: 'كل الحجوزات تظهر في لوحة التحكم بشكل فوري.' },
+            ].map(({ step, icon: Icon, titleAr, textAr }, i) => (
+              <motion.div key={step}
+                initial={{ opacity: 0, y: 24 }}
+                animate={featuresInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                className="relative p-6 rounded-2xl"
+                style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${ACCENT}15` }}
+              >
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+                  style={{ background: `linear-gradient(135deg, #0D2B1E, ${ACCENT})` }}>
+                  <Icon size={20} className="text-white" />
+                </div>
+                <div className="inline-flex rounded-full px-2.5 py-0.5 text-xs font-black font-sora mb-3"
+                  style={{ background: `${ACCENT}20`, color: ACCENT }}>{step}</div>
+                <h3 className={`font-bold text-white mb-2 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>
+                  {t(titleAr, titleAr)}
+                </h3>
+                <p className={`text-sm leading-relaxed ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
+                  style={{ color: 'rgba(255,255,255,0.5)' }}>
+                  {t(textAr, textAr)}
+                </p>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>

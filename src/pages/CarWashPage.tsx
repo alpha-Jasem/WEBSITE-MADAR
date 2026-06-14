@@ -50,6 +50,11 @@ const flow = [
 
 const features = [
   {
+    icon: MessageCircle,
+    title: 'واتساب تلقائي بالكامل',
+    text: 'إشعار السيارة جاهزة، فاتورة PDF، تذكير بعد ٣ أيام، وطلب تقييم Google — كل رسالة تصير وحدها.',
+  },
+  {
     icon: Monitor,
     title: 'مركز تشغيل واضح',
     text: 'كل سيارة، مرحلة، وتسليم تظهر في شاشة واحدة يفهمها الفريق بسرعة.',
@@ -63,11 +68,6 @@ const features = [
     icon: BarChart3,
     title: 'مالية يومية',
     text: 'إيراد اليوم، متوسط الفاتورة، VAT، وطرق الدفع تظهر لصاحب المغسلة مباشرة.',
-  },
-  {
-    icon: Bot,
-    title: 'دعم مدار AI',
-    text: 'مساعد متخصص يشرح الصفحة ويقترح قرارات تشغيلية داخل نطاق المغاسل.',
   },
 ]
 
@@ -227,14 +227,14 @@ export const CarWashPage = () => {
             <div className="hero-copy ml-auto w-full max-w-[580px] text-[#0D1B3E] lg:ml-0">
               <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/70 px-3.5 py-2 text-xs font-black text-[#0D1B3E] shadow-sm backdrop-blur-xl font-cairo sm:px-5 sm:py-2.5 sm:text-sm">
                 <span className="h-2 w-2 rounded-full bg-[#00BFFF]" />
-                نظام تشغيل ذكي للمغاسل
+                واتساب + ذكاء اصطناعي للمغاسل
               </div>
               <h1 className="mt-5 text-[2rem] font-black leading-[1.08] tracking-normal drop-shadow-[0_2px_0_rgba(255,255,255,0.85)] font-cairo sm:mt-7 sm:text-6xl lg:text-7xl">
-                إدارة أسهل.
-                <span className="block text-[#008FE8]">مبيعات أعلى.</span>
+                عميلك يرجع لوحده.
+                <span className="block text-[#008FE8]">واتساب يتابع بدلاً عنك.</span>
               </h1>
               <p className="mt-3 max-w-[300px] rounded-xl border border-white/50 bg-white/50 px-3 py-2.5 text-[13px] font-bold leading-6 text-slate-800 shadow-sm backdrop-blur-md font-tajawal sm:mt-5 sm:max-w-xl sm:rounded-2xl sm:bg-white/75 sm:px-5 sm:py-4 sm:text-xl sm:leading-8">
-                من استقبال السيارة إلى التسليم والدفع والتقارير، كل شيء في نظام واحد ذكي وسهل الاستخدام.
+                إشعار جاهزية السيارة، تذكير العميل، وطلب التقييم — كل شيء يصير تلقائياً عبر واتساب بدون موظف يتذكر.
               </p>
               <div className="mt-5 flex flex-col items-start gap-2.5 sm:mt-7 sm:flex-row sm:items-center sm:gap-3">
                 <Link
@@ -279,6 +279,44 @@ export const CarWashPage = () => {
                   </div>
                   <h3 className="mt-4 text-xl font-black font-cairo">{title}</h3>
                   <p className="mt-3 leading-7 text-slate-600 font-tajawal">{text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── WhatsApp Automation Section ── */}
+        <section className="bg-[#071322] py-20 text-white overflow-hidden">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-14">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-black text-[#00BFFF] font-cairo mb-4">
+                <MessageCircle size={14} />
+                واتساب تلقائي
+              </div>
+              <h2 className="text-3xl font-black leading-tight font-cairo sm:text-5xl">
+                كل رسالة تصير وحدها — بدون ما تحرك ساعدك.
+              </h2>
+              <p className="mt-5 text-lg leading-8 text-white/60 font-tajawal max-w-2xl mx-auto">
+                بمجرد ما تضغط "جاهز للتسليم"، النظام يرسل إشعار واتساب للعميل، الفاتورة، ثم تذكير ومتابعة تلقائية.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 relative">
+              <div className="absolute left-12 right-12 top-[52px] hidden h-0.5 bg-white/10 lg:block" />
+              {[
+                { icon: Car,           step: '01', title: 'السيارة جاهزة', text: 'الموظف يضغط "جاهز" — النظام يحرك الباقي تلقائياً.' },
+                { icon: MessageCircle, step: '02', title: 'إشعار فوري',     text: 'العميل يستلم رسالة واتساب: "سيارتك جاهزة + PDF الفاتورة".' },
+                { icon: TrendingUp,    step: '03', title: 'متابعة ذكية',    text: 'بعد ٣ أيام: رسالة شكر وطلب تقييم Google.' },
+                { icon: ShieldCheck,   step: '04', title: 'ولاء تلقائي',    text: 'بعد ٥ زيارات: رسالة مكافأة وعرض خاص للعميل المتكرر.' },
+              ].map(({ icon: Icon, step, title, text }) => (
+                <div key={step} className="relative rounded-[28px] border border-white/10 bg-white/5 p-6">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#00BFFF]/10 text-[#00BFFF]">
+                    <Icon size={24} />
+                  </div>
+                  <div className="mt-6 inline-flex rounded-full bg-[#00BFFF] px-3 py-1 font-sora text-xs font-black text-[#071322]">
+                    {step}
+                  </div>
+                  <h3 className="mt-4 text-xl font-black font-cairo">{title}</h3>
+                  <p className="mt-3 leading-7 text-white/60 font-tajawal">{text}</p>
                 </div>
               ))}
             </div>
