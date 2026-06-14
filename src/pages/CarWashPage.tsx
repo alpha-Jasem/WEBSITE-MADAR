@@ -949,63 +949,90 @@ export const CarWashPage = () => {
       <S id="pricing" bg="#fff">
         <motion.div {...fadeUp()} style={{ textAlign: 'center', marginBottom: 48 }}>
           <SectionLabel text="الباقات" />
-          <H2>باقات واضحة لمغسلتك</H2>
-          <Sub>اختر الباقة المناسبة وابدأ تشغيل مغسلتك خلال 24 ساعة.</Sub>
+          <H2>باقتان واضحتان — ابدأ اليوم</H2>
+          <Sub>عرض إطلاق حصري لأول 5 مغاسل فقط.</Sub>
         </motion.div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))', gap: 20 }}>
-          {[
-            {
-              name: 'Starter',
-              price: '299',
-              period: 'ر.س / شهر',
-              desc: 'للمغسلة الصغيرة التي تريد البداية بالأساسيات.',
-              recommended: false,
-              features: ['QR للتسجيل الذاتي', 'شاشة انتظار مباشرة', 'لوحة تشغيل الموظف', 'سجل العملاء الأساسي', 'إيراد يومي بسيط', 'دعم واتساب', 'تقرير أسبوعي'],
-            },
-            {
-              name: 'Pro',
-              price: '500',
-              period: 'ر.س / شهر',
-              desc: 'للمغسلة الجادة: QR، شاشة عرض، عملاء، مالية، تقارير، وواتساب تلقائي.',
-              recommended: true,
-              features: ['كل مزايا Starter', 'واتساب تلقائي بالكامل', 'فاتورة PDF تلقائية', 'برنامج الولاء', 'إضافات البيع الذكي', 'VAT وإغلاق اليوم', 'تقارير متقدمة', 'تحليل أداء الموظفين', 'مساعد مدار AI', 'دعم أولوية', 'تجربة 3 أيام مجانية', 'إعداد كامل'],
-            },
-            {
-              name: 'Premium',
-              price: '1,000',
-              period: 'ر.س / شهر',
-              desc: 'لفرع أو أكثر — إعداد مخصص وتوسعة كاملة.',
-              recommended: false,
-              features: ['كل مزايا Pro', 'دعم متعدد الفروع', 'تقارير مقارنة بين الفروع', 'مدير حساب مخصص', 'إعداد وتشغيل مخصص', 'تكاملات إضافية', 'سرعة أولوية قصوى', 'تدريب الفريق', 'حسب احتياجك', 'اتصل للتفاصيل', 'عرض سعر خاص', 'دعم 7 أيام'],
-            },
-          ].map((plan, i) => (
-            <motion.div key={plan.name} {...fadeUp(i * 0.08)}
-              style={{ borderRadius: 20, border: plan.recommended ? '2px solid #0099CC' : '1.5px solid #E2EBF6', background: plan.recommended ? '#F0F9FF' : '#fff', padding: '28px 24px', position: 'relative', boxShadow: plan.recommended ? '0 8px 32px rgba(0,153,204,0.12)' : '0 2px 8px rgba(13,27,62,0.04)' }}>
-              {plan.recommended && (
-                <div style={{ position: 'absolute', top: -14, right: 24, background: '#0099CC', color: '#fff', fontSize: 12, fontWeight: 700, padding: '4px 14px', borderRadius: 20, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
-                  الأكثر طلباً
-                </div>
-              )}
-              <div style={{ fontSize: 22, fontWeight: 700, color: '#0D1B3E', marginBottom: 4, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{plan.name}</div>
-              <p style={{ fontSize: 13, color: '#64748B', lineHeight: 1.7, margin: '0 0 20px', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{plan.desc}</p>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 20 }}>
-                <span style={{ fontSize: 36, fontWeight: 700, color: '#0D1B3E', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{plan.price}</span>
-                <span style={{ fontSize: 13, color: '#64748B', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{plan.period}</span>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24, maxWidth: 860, margin: '0 auto' }}>
+
+          {/* PLAN 1 — Pro */}
+          <motion.div {...fadeUp(0)} style={{ borderRadius: 24, border: '2px solid #0099CC', background: '#F0F9FF', padding: '32px 28px', position: 'relative', boxShadow: '0 8px 40px rgba(0,153,204,0.13)' }}>
+            <div style={{ position: 'absolute', top: -15, right: 28, background: '#0099CC', color: '#fff', fontSize: 12, fontWeight: 700, padding: '5px 16px', borderRadius: 20, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+              🔥 عرض إطلاق — أول 5 مغاسل
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#0099CC', marginBottom: 6, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>Pro</div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#334155', marginBottom: 20, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+              للمغسلة الجادة — نظام تشغيل متكامل من أول يوم
+            </div>
+
+            {/* Price block */}
+            <div style={{ background: '#fff', borderRadius: 16, padding: '18px 20px', marginBottom: 24, border: '1px solid #BFDBFE' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                <span style={{ fontSize: 42, fontWeight: 700, color: '#0D1B3E', fontFamily: 'IBM Plex Sans Arabic, sans-serif', lineHeight: 1 }}>500</span>
+                <span style={{ fontSize: 14, color: '#64748B', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>ر.س / شهر</span>
               </div>
-              <button onClick={requestDemo} style={{ width: '100%', borderRadius: 12, padding: '13px 0', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'IBM Plex Sans Arabic, sans-serif', border: 'none', background: plan.recommended ? '#0D1B3E' : '#F1F5F9', color: plan.recommended ? '#fff' : '#0D1B3E', marginBottom: 20 }}>
-                اطلب {plan.name} على واتساب
-              </button>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {plan.features.map(f => (
-                  <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Check size={14} color="#16A34A" />
-                    <span style={{ fontSize: 13, color: '#334155', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{f}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 13, color: '#94A3B8', textDecoration: 'line-through', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>799 ر.س</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A', background: '#DCFCE7', padding: '2px 10px', borderRadius: 20, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>وفّر 299 ر.س شهرياً</span>
+              </div>
+            </div>
+
+            <button onClick={requestDemo} style={{ width: '100%', borderRadius: 12, padding: '14px 0', fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'IBM Plex Sans Arabic, sans-serif', border: 'none', background: '#0D1B3E', color: '#fff', marginBottom: 24, boxShadow: '0 6px 20px rgba(13,27,62,0.2)' }}>
+              احجز Pro على واتساب
+            </button>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {['QR للتسجيل الذاتي', 'شاشة انتظار مباشرة', 'لوحة تشغيل الموظف', 'واتساب تلقائي بالكامل', 'فاتورة PDF تلقائية', 'برنامج الولاء', 'VAT وإغلاق اليوم', 'تقارير متقدمة', 'مساعد مدار AI', 'تجربة 3 أيام مجانية'].map(f => (
+                <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 20, height: 20, background: '#DBEAFE', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Check size={12} color="#0099CC" />
                   </div>
-                ))}
+                  <span style={{ fontSize: 13.5, color: '#334155', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{f}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* PLAN 2 — Platinum */}
+          <motion.div {...fadeUp(0.08)} style={{ borderRadius: 24, border: '1.5px solid #E2EBF6', background: '#fff', padding: '32px 28px', position: 'relative', boxShadow: '0 4px 16px rgba(13,27,62,0.06)' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#64748B', marginBottom: 6, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>Platinum</div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#334155', marginBottom: 20, fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+              للمغسلة الجادة بأعمق — أولوية دعم وتجهيز للتوسعة
+            </div>
+
+            {/* Price block */}
+            <div style={{ background: '#F8FAFC', borderRadius: 16, padding: '18px 20px', marginBottom: 24, border: '1px solid #E2EBF6' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 42, fontWeight: 700, color: '#0D1B3E', fontFamily: 'IBM Plex Sans Arabic, sans-serif', lineHeight: 1 }}>1,000</span>
+                <span style={{ fontSize: 14, color: '#64748B', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>ر.س / شهر</span>
               </div>
-            </motion.div>
-          ))}
+              <div style={{ marginTop: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#64748B', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>السعر الثابت — بدون عروض مؤقتة</span>
+              </div>
+            </div>
+
+            <button onClick={requestDemo} style={{ width: '100%', borderRadius: 12, padding: '14px 0', fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'IBM Plex Sans Arabic, sans-serif', border: '1.5px solid #E2EBF6', background: '#F8FAFC', color: '#0D1B3E', marginBottom: 24 }}>
+              احجز Platinum على واتساب
+            </button>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {['كل مزايا Pro', 'تحليل أداء الموظفين', 'تقارير متقدمة ومقارنة', 'دعم أولوية مباشر', 'تجهيز توسعة الفروع', 'إعداد وتشغيل مخصص', 'مدير حساب خاص', 'دعم 7 أيام'].map(f => (
+                <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 20, height: 20, background: '#F1F5F9', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Check size={12} color="#64748B" />
+                  </div>
+                  <span style={{ fontSize: 13.5, color: '#334155', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>{f}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
         </div>
+
+        <motion.div {...fadeUp(0.2)} style={{ marginTop: 32, textAlign: 'center' }}>
+          <p style={{ fontSize: 13, color: '#94A3B8', fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+            * عرض الإطلاق لأول 5 مغاسل فقط — بعد اكتمال العدد يرجع سعر Pro إلى 799 ر.س
+          </p>
+        </motion.div>
       </S>
 
       {/* ── 13. CTA SECTION ── */}
