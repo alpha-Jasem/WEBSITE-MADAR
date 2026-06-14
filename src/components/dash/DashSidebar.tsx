@@ -6,6 +6,7 @@ import { signOut, supabase } from '../../lib/supabase'
 import type { Company } from '../../types'
 import { PLAN_LABELS } from '../../lib/constants'
 import { useActiveProfile } from '../../context/ActiveProfileContext'
+import { useDailyUsage } from '../../hooks/useDailyUsage'
 
 export interface NavItem {
   to: string
@@ -69,6 +70,9 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
   const isPremium = plan === 'enterprise'
   const planColor = PLAN_COLORS[plan] ?? '#00BFFF'
   const companyId = (company as any)?.id ?? null
+  const dailyUsage = useDailyUsage(role === 'client' ? companyId : null, plan)
+  const { maxPct, ringColor } = dailyUsage
+  const circumference = 2 * Math.PI * 17
   const trialEndsAt = (company as any)?.trial_ends_at ?? company?.plan_reset_at
   const trialDaysLeft = role === 'client' && company?.status === 'trial' && trialEndsAt
     ? Math.max(0, Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
@@ -287,12 +291,32 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
             onClick={toggleDrop}
             style={role === 'client' ? { cursor: 'pointer', userSelect: 'none' } : undefined}
           >
-            <div className="dash-user-avatar">
-              {profile.isOwner ? (company?.owner_name?.[0] ?? 'A') : profile.name[0]}
-            </div>
-            <div>
+            {role === 'client' ? (
+              <div style={{ position: 'relative', width: 38, height: 38, flexShrink: 0 }}>
+                <svg width="38" height="38" style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}>
+                  <circle cx="19" cy="19" r="17" fill="none" stroke="#C8D5E8" strokeWidth="3" />
+                  <circle cx="19" cy="19" r="17" fill="none" stroke={ringColor} strokeWidth="3" opacity="0.18" />
+                  <circle cx="19" cy="19" r="17" fill="none" stroke={ringColor} strokeWidth="3"
+                    strokeDasharray={`${circumference}`}
+                    strokeDashoffset={`${circumference * (1 - maxPct / 100)}`}
+                    strokeLinecap="round"
+                    style={{ transition: 'stroke-dashoffset 0.5s ease, stroke 0.3s ease' }}
+                  />
+                </svg>
+                <div className="dash-user-avatar" style={{ width: 28, height: 28, position: 'absolute', inset: 5, fontSize: 13, lineHeight: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {profile.isOwner ? (company?.owner_name?.[0] ?? 'A') : profile.name[0]}
+                </div>
+              </div>
+            ) : (
+              <div className="dash-user-avatar">
+                {profile.isOwner ? (company?.owner_name?.[0] ?? 'A') : profile.name[0]}
+              </div>
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
               <strong>{profile.isOwner ? (company?.owner_name ?? 'Admin') : profile.name}</strong>
-              <span>{role === 'admin' ? TXT.admin : profile.isOwner ? planLabel : profile.permissions.length + ' ' + TXT.permission}</span>
+              <span style={{ color: role === 'client' ? ringColor : undefined, fontWeight: role === 'client' ? 600 : undefined }}>
+                {role === 'admin' ? TXT.admin : profile.isOwner ? `${maxPct}% · ${planLabel}` : profile.permissions.length + ' ' + TXT.permission}
+              </span>
             </div>
             {role === 'client' && (
               <ChevronDown size={15} style={{ transition: 'transform 0.2s', transform: dropOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
