@@ -10,6 +10,7 @@ import { AdminPipeline } from '../components/dashboard/admin/AdminPipeline'
 import { AdminConversations } from '../components/dashboard/admin/AdminConversations'
 import { AdminOverview } from '../components/dashboard/admin/AdminOverview'
 import { AdminAIAgents } from '../components/dashboard/admin/AdminAIAgents'
+import { AdminClinicAccounts } from '../components/dashboard/admin/AdminClinicAccounts'
 
 export const AdminDashboard = () => {
   return (
@@ -18,6 +19,7 @@ export const AdminDashboard = () => {
         <Route index element={<AdminCommandDeck />} />
         <Route path="reports" element={<AdminOverview />} />
         <Route path="companies" element={<AdminCompanies />} />
+        <Route path="accounts" element={<AdminClinicAccounts />} />
         <Route path="leads" element={<AdminLeads />} />
         <Route path="logs" element={<AdminLogs />} />
         <Route path="settings" element={<AdminSettings />} />

@@ -121,22 +121,29 @@ Deno.serve(async (req) => {
   if (action === 'clinic_clients') {
     const { data: companies, error } = await service
       .from('companies')
-      .select('id, name, owner_name, owner_email, owner_phone, city, status, clinic_plan_code, subscription_status, subscription_start_date, subscription_end_date, monthly_usage_cycle_start, monthly_usage_cycle_end, created_at')
+      .select('id, name, owner_name, owner_email, owner_phone, city, status, auth_user_id, clinic_plan_code, subscription_status, subscription_start_date, subscription_end_date, monthly_usage_cycle_start, monthly_usage_cycle_end, manual_override_status, payment_provider, last_payment_status, last_payment_at, created_at')
       .or('industry.eq.clinic,business_type.eq.clinic')
       .order('created_at', { ascending: false })
 
     if (error) return json({ error: 'clinic_clients_failed', details: error.message }, 500)
 
     const ids = (companies || []).map(company => company.id)
-    const [limitsResult, usageResult] = ids.length ? await Promise.all([
+    const [limitsResult, usageResult, auditResult] = ids.length ? await Promise.all([
       service.from('clinic_os_usage_limits').select('*').in('company_id', ids),
       service.from('clinic_os_usage').select('*').in('company_id', ids).order('cycle_start', { ascending: false }),
-    ]) : [{ data: [] }, { data: [] }]
+      service.from('clinic_os_audit_logs').select('id, company_id, actor_type, action, note, created_at').in('company_id', ids).order('created_at', { ascending: false }).limit(250),
+    ]) : [{ data: [] }, { data: [] }, { data: [] }]
 
     const limits = new Map((limitsResult.data || []).map(row => [row.company_id, row]))
     const usage = new Map<string, Record<string, unknown>>()
     for (const row of usageResult.data || []) {
       if (!usage.has(row.company_id)) usage.set(row.company_id, row)
+    }
+    const audit = new Map<string, Record<string, unknown>[]>()
+    for (const row of auditResult.data || []) {
+      const rows = audit.get(row.company_id) || []
+      if (rows.length < 10) rows.push(row)
+      audit.set(row.company_id, rows)
     }
 
     return json({
@@ -144,8 +151,24 @@ Deno.serve(async (req) => {
         ...company,
         limits: limits.get(company.id) || null,
         usage: usage.get(company.id) || null,
+        audit: audit.get(company.id) || [],
       })),
     })
+  }
+
+  if (action === 'manage_clinic_account') {
+    const companyId = String(payload.company_id || '')
+    const changes = payload.changes && typeof payload.changes === 'object' ? payload.changes : null
+    if (!companyId || !changes) return json({ error: 'invalid_account_update' }, 400)
+
+    const { data, error } = await service.rpc('admin_manage_clinic_account', {
+      p_company_id: companyId,
+      p_changes: changes,
+      p_actor_id: userData.user.id,
+    })
+
+    if (error) return json({ error: 'account_update_failed', details: error.message }, 500)
+    return json({ updated: true, account: data })
   }
 
   if (action === 'activate_clinic_subscription') {
