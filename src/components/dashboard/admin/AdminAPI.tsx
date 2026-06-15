@@ -90,7 +90,6 @@ export function AdminAPI() {
   useEffect(() => { load() }, [])
 
   const createKey = async () => {
-    if (!newKeyPerms.length) return
     setGeneratingKey(true)
     const { raw, hash, prefix } = await generateApiKey()
     const { error } = await supabase.from('api_keys').insert({
@@ -98,14 +97,14 @@ export function AdminAPI() {
       name: newKeyName.trim() || 'مفتاح API',
       key_prefix: prefix,
       key_hash: hash,
-      permissions: newKeyPerms,
+      permissions: ['read:all', 'write:all'],
       active: true,
     })
     setGeneratingKey(false)
     if (error) { alert('خطأ: ' + error.message); return }
     setRevealedKey(raw)
     setShowNewKey(false)
-    setNewKeyName('مفتاح API'); setNewKeyPerms(['read:all'])
+    setNewKeyName('مفتاح API')
     load()
   }
 
@@ -319,27 +318,14 @@ export function AdminAPI() {
               <button onClick={() => setShowNewKey(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569' }}><X size={18} /></button>
             </div>
             <div style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div>
-                <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>اسم المفتاح</label>
-                <input value={newKeyName} onChange={e => setNewKeyName(e.target.value)}
-                  style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid #E2E8F0', fontFamily: 'Tajawal, sans-serif', fontSize: 13, color: '#0F172A', outline: 'none', boxSizing: 'border-box' }} />
-              </div>
-              <div>
-                <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 8 }}>الصلاحيات</label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {PERM_OPTIONS.map(p => (
-                    <button key={p.value} onClick={() => setNewKeyPerms(prev => prev.includes(p.value) ? prev.filter(x => x !== p.value) : [...prev, p.value])}
-                      style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer', border: `1px solid ${newKeyPerms.includes(p.value) ? 'rgba(34,211,238,0.4)' : '#E2E8F0'}`, background: newKeyPerms.includes(p.value) ? 'rgba(34,211,238,0.1)' : '#F8FAFC', color: newKeyPerms.includes(p.value) ? '#0099CC' : '#64748B' }}>
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <input value={newKeyName} onChange={e => setNewKeyName(e.target.value)}
+                placeholder="اسم المفتاح"
+                style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #E2E8F0', fontFamily: 'Cairo, sans-serif', fontSize: 14, color: '#0F172A', outline: 'none', boxSizing: 'border-box' }} />
               <div style={{ display: 'flex', gap: 10 }}>
-                <button onClick={createKey} disabled={generatingKey || !newKeyPerms.length}
+                <button onClick={createKey} disabled={generatingKey}
                   style={{ flex: 1, padding: 11, borderRadius: 12, border: 'none', cursor: generatingKey ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, #22D3EE, #06B6D4)', color: '#FFF', fontFamily: 'Cairo, sans-serif', fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                   {generatingKey ? <Loader2 size={15} style={{ animation: 'spin 0.8s linear infinite' }} /> : <Key size={15} />}
-                  {generatingKey ? 'جاري التوليد...' : 'توليد المفتاح'}
+                  {generatingKey ? 'جاري التوليد...' : 'توليد'}
                 </button>
                 <button onClick={() => setShowNewKey(false)} style={{ padding: '11px 18px', borderRadius: 12, border: '1px solid #E2E8F0', background: 'transparent', color: '#64748B', cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', fontSize: 13 }}>إلغاء</button>
               </div>
