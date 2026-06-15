@@ -40,28 +40,30 @@ export function useDailyUsage(companyId: string | null, plan: string = 'starter'
     if (!companyId) return
 
     const today = new Date().toISOString().slice(0, 10)
+    const from = `${today}T00:00:00`
+    const to   = `${today}T23:59:59`
 
-    const [queueResult, notifResult] = await Promise.all([
+    const [carsResult, logsResult] = await Promise.all([
       supabase
         .from('cw_queue')
-        .select('id, source, status', { count: 'exact', head: false })
-        .eq('company_id', companyId)
-        .gte('created_at', `${today}T00:00:00`)
-        .lt('created_at', `${today}T23:59:59`),
-      supabase
-        .from('cw_notifications')
         .select('id', { count: 'exact', head: false })
         .eq('company_id', companyId)
-        .eq('type', 'ready')
-        .gte('created_at', `${today}T00:00:00`)
-        .lt('created_at', `${today}T23:59:59`),
+        .gte('created_at', from)
+        .lt('created_at', to),
+      supabase
+        .from('cw_audit_logs')
+        .select('action', { count: 'exact', head: false })
+        .eq('company_id', companyId)
+        .in('action', ['self_checkin_approved', 'car_created', 'car_updated', 'car_delivered'])
+        .gte('created_at', from)
+        .lt('created_at', to),
     ])
 
-    const rows = (queueResult.data ?? []) as Array<{ source?: string; status?: string }>
-    const cars = rows.length
-    const qr = rows.filter(r => r.source === 'self_checkin' || r.source === 'qr').length
-    const screenUpdates = rows.filter(r => r.status && r.status !== 'received').length
-    const whatsapp = (notifResult.data ?? []).length
+    const cars = (carsResult.data ?? []).length
+    const logs = (logsResult.data ?? []) as Array<{ action: string }>
+    const qr = logs.filter(r => r.action === 'self_checkin_approved').length
+    const screenUpdates = logs.filter(r => r.action === 'car_created' || r.action === 'car_updated').length
+    const whatsapp = logs.filter(r => r.action === 'car_delivered').length
 
     setUsage({ cars, qr, screenUpdates, whatsapp })
   }
