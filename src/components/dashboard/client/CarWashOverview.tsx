@@ -31,7 +31,7 @@ type CWWorker = {
   fixed_salary?: number | null
 }
 type CWServiceLite = { id: string; name: string; active: boolean }
-type CWExpenseLite = { amount: number; expense_date: string }
+type CWExpenseLite = { amount: number; expense_date: string; category?: string | null }
 type CWQueueOverviewItem = {
   id: string
   created_at: string
@@ -263,7 +263,7 @@ export function CarWashOverview() {
             .gte('created_at', todayStart.toISOString())
             .order('created_at', { ascending: true }),
           supabase.from('cw_services').select('id, name, active').eq('company_id', companyId).order('created_at', { ascending: true }),
-          supabase.from('cw_expenses').select('amount, expense_date').eq('company_id', companyId).gte('expense_date', expenseFrom).lte('expense_date', expenseTo),
+          supabase.from('cw_expenses').select('amount, expense_date, category').eq('company_id', companyId).gte('expense_date', expenseFrom).lte('expense_date', expenseTo),
         ])
         if (e1) throw new Error(e1.message)
         setVisits((v as CWVisit[]) || [])
@@ -305,8 +305,10 @@ export function CarWashOverview() {
       unassigned: activeQueue.filter(item => !item.worker_id).length,
     }
     const monthVisits = visits.filter(v => v.created_at.startsWith(thisMonthStr)).length
-    const revenue = visits.reduce((sum, v) => sum + (v.subtotal ?? v.price ?? 0), 0)
-    const totalExpenses = expenses.reduce((sum, item) => sum + Number(item.amount || 0), 0)
+    const periodCashIn = expenses.filter(e => e.category === 'cash_in').reduce((s, e) => s + Number(e.amount || 0), 0)
+    const periodCashOut = expenses.filter(e => e.category === 'cash_out').reduce((s, e) => s + Number(e.amount || 0), 0)
+    const revenue = visits.reduce((sum, v) => sum + (v.subtotal ?? v.price ?? 0), 0) + periodCashIn - periodCashOut
+    const totalExpenses = expenses.filter(e => e.category !== 'cash_in' && e.category !== 'cash_out').reduce((sum, item) => sum + Number(item.amount || 0), 0)
     const workersMap = Object.fromEntries(workers.map(worker => [worker.id, worker]))
     const workerCost = visits.reduce((sum, visit) => {
       const worker = visit.worker_id ? workersMap[visit.worker_id] : null
@@ -389,11 +391,17 @@ export function CarWashOverview() {
 
     // Trend: today vs yesterday
     const yesterdayStr = new Date(now.getTime() - 86400000).toISOString().slice(0, 10)
-    const todayRevenue = visits.filter(v => v.created_at.startsWith(todayStr)).reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0)
-    const yesterdayRevenue = visits.filter(v => v.created_at.startsWith(yesterdayStr)).reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0)
+    const todaySalesRevenue = visits.filter(v => v.created_at.startsWith(todayStr)).reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0)
+    const todayCashIn = expenses.filter(e => e.expense_date === todayStr && e.category === 'cash_in').reduce((s, e) => s + Number(e.amount), 0)
+    const todayCashOut = expenses.filter(e => e.expense_date === todayStr && e.category === 'cash_out').reduce((s, e) => s + Number(e.amount), 0)
+    const todayRevenue = todaySalesRevenue + todayCashIn - todayCashOut
+    const yesterdaySalesRevenue = visits.filter(v => v.created_at.startsWith(yesterdayStr)).reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0)
+    const yesterdayCashIn = expenses.filter(e => e.expense_date === yesterdayStr && e.category === 'cash_in').reduce((s, e) => s + Number(e.amount), 0)
+    const yesterdayCashOut = expenses.filter(e => e.expense_date === yesterdayStr && e.category === 'cash_out').reduce((s, e) => s + Number(e.amount), 0)
+    const yesterdayRevenue = yesterdaySalesRevenue + yesterdayCashIn - yesterdayCashOut
     const yesterdayVisitsCount = visits.filter(v => v.created_at.startsWith(yesterdayStr)).length
-    const todayExpenses = expenses.filter(e => e.expense_date === todayStr).reduce((s, e) => s + Number(e.amount), 0)
-    const yesterdayExpenses = expenses.filter(e => e.expense_date === yesterdayStr).reduce((s, e) => s + Number(e.amount), 0)
+    const todayExpenses = expenses.filter(e => e.expense_date === todayStr && e.category !== 'cash_in' && e.category !== 'cash_out').reduce((s, e) => s + Number(e.amount), 0)
+    const yesterdayExpenses = expenses.filter(e => e.expense_date === yesterdayStr && e.category !== 'cash_in' && e.category !== 'cash_out').reduce((s, e) => s + Number(e.amount), 0)
     const todayNetProfit = todayRevenue - todayExpenses
     const yesterdayNetProfit = yesterdayRevenue - yesterdayExpenses
     const todayAvgInvoice = todayVisits > 0 ? Math.round(todayRevenue / todayVisits) : 0
@@ -412,8 +420,15 @@ export function CarWashOverview() {
     const todayStr = now.toISOString().slice(0, 10)
     const yesterdayStr = new Date(now.getTime() - 86400000).toISOString().slice(0, 10)
     const makeRevenue = (items: CWVisit[]) => items.reduce((s, v) => s + (v.subtotal ?? v.price ?? 0), 0)
+    const cashAdj = (dateStr: string) => {
+      const cin  = expenses.filter(e => e.expense_date === dateStr && e.category === 'cash_in').reduce((s, e) => s + Number(e.amount), 0)
+      const cout = expenses.filter(e => e.expense_date === dateStr && e.category === 'cash_out').reduce((s, e) => s + Number(e.amount), 0)
+      return cin - cout
+    }
     if (chartPeriod === 'today' || chartPeriod === 'yesterday') {
       const target = chartPeriod === 'today' ? todayStr : yesterdayStr
+      const adj = cashAdj(target)
+      const nowHour = chartPeriod === 'today' ? now.getHours() : 23
       return Array.from({ length: 12 }, (_, i) => {
         const h = i * 2
         const dayVisits = visits.filter(v => {
@@ -422,7 +437,9 @@ export function CarWashOverview() {
           return vh === h || vh === h + 1
         })
         const label = h < 12 ? `${h || 12}:00 ص` : `${h === 12 ? 12 : h - 12}:00 م`
-        return { label, revenue: makeRevenue(dayVisits), visits: dayVisits.length }
+        // distribute cash adjustment into the last (current/EOD) hour bucket
+        const isLastBucket = h >= nowHour - 1 && i === Array.from({ length: 12 }, (_, j) => j * 2).filter(hh => hh <= nowHour).length - 1
+        return { label, revenue: makeRevenue(dayVisits) + (isLastBucket ? adj : 0), visits: dayVisits.length }
       })
     }
     const numDays = chartPeriod === '7days' ? 7 : 30
@@ -433,11 +450,11 @@ export function CarWashOverview() {
       const dayVisits = visits.filter(v => v.created_at.startsWith(key))
       return {
         label: d.toLocaleDateString('ar-SA', { day: 'numeric', month: 'short' }),
-        revenue: makeRevenue(dayVisits),
+        revenue: makeRevenue(dayVisits) + cashAdj(key),
         visits: dayVisits.length,
       }
     })
-  }, [visits, chartPeriod])
+  }, [visits, expenses, chartPeriod])
 
   const alerts = useMemo(() => {
     const now = new Date()
