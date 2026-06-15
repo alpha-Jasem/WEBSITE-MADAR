@@ -573,7 +573,7 @@ export function CarWashLeads() {
       {/* Campaign Modal */}
       {showCampaign && (
         <div onClick={e => e.target === e.currentTarget && setShowCampaign(false)}
-          style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div role="dialog" aria-modal="true" aria-label="WhatsApp campaign" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: 20, width: '100%', maxWidth: 460, overflow: 'hidden' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid #E2E8F0' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -613,7 +613,7 @@ export function CarWashLeads() {
       {/* Add Customer Modal */}
       {showAddModal && (
         <div onClick={e => e.target === e.currentTarget && setShowAddModal(false)}
-          style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div role="dialog" aria-modal="true" aria-label="Add customer" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: 20, width: '100%', maxWidth: 400, overflow: 'hidden' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid #E2E8F0' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -656,7 +656,7 @@ export function CarWashLeads() {
       {/* Edit Customer Modal */}
       {editTarget && (
         <div onClick={e => e.target === e.currentTarget && setEditTarget(null)}
-          style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div role="dialog" aria-modal="true" aria-label="Edit customer" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: 20, width: '100%', maxWidth: 400, overflow: 'hidden' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid #E2E8F0' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -694,7 +694,7 @@ export function CarWashLeads() {
       {/* Delete Confirm Modal */}
       {deleteTarget && (
         <div onClick={e => e.target === e.currentTarget && setDeleteTarget(null)}
-          style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div role="dialog" aria-modal="true" aria-label="Delete customer confirmation" style={{ background: '#FFFFFF', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 20, width: '100%', maxWidth: 380, overflow: 'hidden' }}>
             <div style={{ padding: '24px 22px', textAlign: 'center' }} dir="rtl">
               <div style={{ width: 52, height: 52, borderRadius: 14, background: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
@@ -720,7 +720,7 @@ export function CarWashLeads() {
       {/* Visit History Modal */}
       {historyCustomer && (
         <div onClick={e => e.target === e.currentTarget && setHistoryCustomer(null)}
-          style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div role="dialog" aria-modal="true" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 20, width: '100%', maxWidth: 480, maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 60px rgba(15,23,42,0.15)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid #E2E8F0' }}>
               <div>
