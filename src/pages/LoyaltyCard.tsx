@@ -56,21 +56,11 @@ export const LoyaltyCard = () => {
   useEffect(() => {
     if (!customerId) return
     const load = async () => {
-      const { data: cust } = await supabase
-        .from('cw_customers')
-        .select('name, phone, loyalty_count, free_washes_available, total_visits, company_id')
-        .eq('id', customerId)
-        .maybeSingle()
-      if (!cust) { setNotFound(true); setLoading(false); return }
+      const { data } = await supabase.rpc('get_loyalty_card', { p_customer_id: customerId })
+      if (!data) { setNotFound(true); setLoading(false); return }
 
-      const { data: co } = await supabase
-        .from('companies')
-        .select('name, logo_url, cw_automations')
-        .eq('id', (cust as any).company_id)
-        .maybeSingle()
-
-      const loyaltyTarget = (co as any)?.cw_automations?.loyalty?.target || 5
-      const companyId = (cust as any).company_id
+      const cust = data as any
+      const companyId = cust.company_id
 
       setCard({
         name: cust.name || 'عميل',
@@ -78,9 +68,9 @@ export const LoyaltyCard = () => {
         loyalty_count: cust.loyalty_count || 0,
         free_washes_available: cust.free_washes_available || 0,
         total_visits: cust.total_visits || 0,
-        company_name: (co as any)?.name || 'مغسلة مادار',
-        company_logo: (co as any)?.logo_url || null,
-        loyalty_target: loyaltyTarget,
+        company_name: cust.company_name || 'مغسلة مادار',
+        company_logo: cust.company_logo || null,
+        loyalty_target: cust.loyalty_target || 5,
         company_id: companyId,
       })
 
