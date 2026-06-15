@@ -533,10 +533,10 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
           {children}
         </main>
       </div>
-      {role !== 'client' && (
+      {(role !== 'client' || planKey === 'growth' || planKey === 'enterprise') && (
         <MadarAIAssistant
           role={role}
-          companyId={null}
+          companyId={companyId}
           pageTitle={pageTitle}
         />
       )}
