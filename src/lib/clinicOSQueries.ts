@@ -281,6 +281,7 @@ export async function saveClinicKnowledgeItem(input: {
   type: string
   title: string
   content: string
+  metadata?: Record<string, unknown>
 }) {
   const { id, ...values } = input
   const payload = { ...values, is_active: true, updated_at: new Date().toISOString() }
