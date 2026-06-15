@@ -101,6 +101,8 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
   const [qrWaitMinutes, setQrWaitMinutes] = useState(10)
   const [savingQr, setSavingQr] = useState(false)
   const [qrSaved, setQrSaved] = useState(false)
+  const [generatingToken, setGeneratingToken] = useState(false)
+  const [localCheckinToken, setLocalCheckinToken] = useState('')
 
   const [loading, setLoading] = useState(true)
 
@@ -282,6 +284,16 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
     setSavingQr(false)
     setQrSaved(true)
     setTimeout(() => setQrSaved(false), 2500)
+  }
+
+  const generateCheckinToken = async () => {
+    if (!companyId) return
+    setGeneratingToken(true)
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
+    const token = Array.from({ length: 24 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+    const { error } = await supabase.from('companies').update({ public_checkin_token: token } as any).eq('id', companyId)
+    if (!error) setLocalCheckinToken(token)
+    setGeneratingToken(false)
   }
 
   useEffect(() => {
@@ -660,7 +672,10 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
 
       {/* QR Tab */}
       {tab === 'qr' && (() => {
-        const checkinUrl = getSelfCheckinUrl(company as any)
+        const effectiveCompany = localCheckinToken
+          ? { ...(company as any), public_checkin_token: localCheckinToken }
+          : company
+        const checkinUrl = getSelfCheckinUrl(effectiveCompany as any)
         const qrSrc = checkinUrl
           ? `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=14&data=${encodeURIComponent(checkinUrl)}`
           : ''
@@ -725,8 +740,19 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
                   </div>
                 </>
               ) : (
-                <div style={{ padding: '20px', color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', fontSize: 13 }}>
-                  الرابط غير متاح — تأكد من تفعيل التسجيل الذاتي في الإعدادات.
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '20px 0' }}>
+                  <QrCode size={40} color="#CBD5E1" />
+                  <p style={{ margin: 0, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', fontSize: 13, textAlign: 'center' }}>
+                    لا يوجد رمز QR بعد — أنشئ رمزاً لتفعيل التسجيل الذاتي
+                  </p>
+                  <button
+                    onClick={generateCheckinToken}
+                    disabled={generatingToken}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 28px', borderRadius: 14, border: 'none', cursor: generatingToken ? 'wait' : 'pointer', background: 'linear-gradient(135deg, #0099CC, #22D3EE)', color: '#fff', fontFamily: 'Cairo, sans-serif', fontSize: 14, fontWeight: 700, boxShadow: '0 4px 14px rgba(0,153,204,0.3)' }}
+                  >
+                    {generatingToken ? <Loader2 size={15} style={{ animation: 'spin 0.8s linear infinite' }} /> : <QrCode size={15} />}
+                    {generatingToken ? 'جاري الإنشاء...' : 'إنشاء رمز QR'}
+                  </button>
                 </div>
               )}
             </div>
