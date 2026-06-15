@@ -160,7 +160,7 @@ export const CarWashDailyClosing = () => {
 
     const totalExpenses = regularExpenses.reduce((s, e) => s + e.amount, 0)
     const totalWorkerCost = commissions + salaries
-    const netProfit = subtotalSales - totalExpenses - totalWorkerCost
+    const netProfit = subtotalSales + totalCashIn - totalCashOut - totalExpenses - totalWorkerCost
 
     setPreview({
       totalCars: visitList.length,
@@ -438,6 +438,8 @@ export const CarWashDailyClosing = () => {
             {displayData.worker_commissions > 0 && <SummaryRow label="عمولات الموظفين" value={`${displayData.worker_commissions.toFixed(2)} ر.س`} color="#F59E0B" />}
             {displayData.worker_salaries > 0 && <SummaryRow label="رواتب يومية (حصة)" value={`${displayData.worker_salaries.toFixed(2)} ر.س`} color="#F59E0B" />}
             {displayData.free_washes_count > 0 && <SummaryRow label={`غسلات مجانية (${displayData.free_washes_count})`} value={`خصم ${displayData.loyalty_discount_amount.toFixed(2)} ر.س`} color="#F97316" />}
+            {preview && preview.totalCashIn > 0 && <SummaryRow label="إضافات الصندوق" value={`+${preview.totalCashIn.toFixed(2)} ر.س`} color="#059669" />}
+            {preview && preview.totalCashOut > 0 && <SummaryRow label="سحوبات الصندوق" value={`-${preview.totalCashOut.toFixed(2)} ر.س`} color="#DC2626" />}
             <div className="py-2" />
             <div className="flex items-center justify-between py-3 px-4 rounded-xl mt-2"
               style={{ background: displayData.net_profit >= 0 ? 'rgba(99,102,241,0.12)' : 'rgba(239,68,68,0.12)', border: `1px solid ${displayData.net_profit >= 0 ? 'rgba(99,102,241,0.3)' : 'rgba(239,68,68,0.3)'}` }}>
@@ -528,14 +530,14 @@ export const CarWashDailyClosing = () => {
               </p>
 
               {/* Type toggle */}
-              <div style={{ display: 'flex', gap: 0, borderRadius: 10, overflow: 'hidden', border: '1px solid #E5E7EB', marginBottom: 18 }}>
+              <div style={{ display: 'flex', gap: 0, borderRadius: 10, overflow: 'hidden', border: `1px solid ${cashType === 'cash_out' ? '#FCA5A5' : '#A7F3D0'}`, marginBottom: 18 }}>
                 {([
-                  { key: 'cash_in',  label: 'إضافة' },
-                  { key: 'cash_out', label: 'سحب'   },
+                  { key: 'cash_in',  label: '↑ إضافة', activeColor: '#059669' },
+                  { key: 'cash_out', label: '↓ سحب',   activeColor: '#DC2626' },
                 ] as const).map(t => (
                   <button key={t.key} onClick={() => setCashType(t.key)}
                     style={{ flex: 1, padding: '11px 0', border: 'none', cursor: 'pointer', fontSize: 14, fontFamily: 'Cairo, sans-serif', fontWeight: 700, transition: 'all 0.15s',
-                      background: cashType === t.key ? '#0EA5A5' : '#F9FAFB',
+                      background: cashType === t.key ? t.activeColor : '#F9FAFB',
                       color: cashType === t.key ? '#FFFFFF' : '#374151' }}>
                     {t.label}
                   </button>
@@ -586,10 +588,10 @@ export const CarWashDailyClosing = () => {
                 onClick={saveCashMovement}
                 disabled={!cashAmount || Number(cashAmount) <= 0 || savingCash}
                 style={{ width: '100%', padding: '12px 0', borderRadius: 10, border: 'none', cursor: (!cashAmount || Number(cashAmount) <= 0) ? 'not-allowed' : 'pointer', fontSize: 14, fontFamily: 'Cairo, sans-serif', fontWeight: 900,
-                  background: (!cashAmount || Number(cashAmount) <= 0) ? '#E5E7EB' : '#0EA5A5',
+                  background: (!cashAmount || Number(cashAmount) <= 0) ? '#E5E7EB' : cashType === 'cash_out' ? '#DC2626' : '#059669',
                   color: (!cashAmount || Number(cashAmount) <= 0) ? '#9CA3AF' : '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                 {savingCash ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : null}
-                {!cashAmount || Number(cashAmount) <= 0 ? 'لا يوجد مبلغ مضاف' : `${cashType === 'cash_in' ? 'إضافة' : 'سحب'} ${Number(cashAmount).toFixed(2)} ر.س`}
+                {!cashAmount || Number(cashAmount) <= 0 ? 'لا يوجد مبلغ مضاف' : `${cashType === 'cash_in' ? '↑ إضافة' : '↓ سحب'} ${Number(cashAmount).toFixed(2)} ر.س`}
               </button>
             </div>
           </div>
