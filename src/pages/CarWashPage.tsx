@@ -88,8 +88,11 @@ function Navbar() {
           ))}
         </nav>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button onClick={requestDemo} style={{ background: '#0D1B3E', color: '#fff', border: 'none', borderRadius: 10, padding: '9px 20px', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Link to="/login" style={{ fontSize: 13, fontWeight: 600, color: '#0D1B3E', padding: '8px 14px', borderRadius: 10, border: '1px solid #E2EBF6', background: '#fff', textDecoration: 'none', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif', whiteSpace: 'nowrap' }}>
+            تسجيل الدخول
+          </Link>
+          <button onClick={requestDemo} style={{ background: '#0D1B3E', color: '#fff', border: 'none', borderRadius: 10, padding: '9px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif', whiteSpace: 'nowrap' }} className="hidden-mobile">
             اطلب تجربة
           </button>
           <button onClick={() => setOpen(true)} className="show-mobile" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
@@ -118,9 +121,14 @@ function Navbar() {
                   style={{ fontSize: 15, fontWeight: 500, color: '#0D1B3E', padding: '11px 12px', borderRadius: 10, textDecoration: 'none', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif' }}
                 >{l.label}</a>
               ))}
-              <button onClick={() => { setOpen(false); requestDemo() }} style={{ marginTop: 'auto', background: '#0D1B3E', color: '#fff', border: 'none', borderRadius: 12, padding: '13px 20px', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif' }}>
-                اطلب تجربة الآن
-              </button>
+              <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <Link to="/login" onClick={() => setOpen(false)} style={{ display: 'block', textAlign: 'center', background: '#F1F5F9', color: '#0D1B3E', border: '1px solid #E2EBF6', borderRadius: 12, padding: '13px 20px', fontSize: 14, fontWeight: 700, textDecoration: 'none', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif' }}>
+                  تسجيل الدخول
+                </Link>
+                <button onClick={() => { setOpen(false); requestDemo() }} style={{ background: '#0D1B3E', color: '#fff', border: 'none', borderRadius: 12, padding: '13px 20px', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif' }}>
+                  اطلب تجربة الآن
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
