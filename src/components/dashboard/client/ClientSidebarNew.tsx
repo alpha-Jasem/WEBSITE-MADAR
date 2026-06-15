@@ -1,5 +1,5 @@
 ﻿import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Zap, Users2, BarChart3, Settings, LogOut, ChevronRight, Calendar, MessageSquare, Wrench, Car, Stethoscope } from 'lucide-react'
+import { LayoutDashboard, Zap, Users2, BarChart3, Settings, LogOut, ChevronRight, Calendar, MessageSquare, Wrench, Car, Stethoscope, CreditCard } from 'lucide-react'
 import { signOut } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 
@@ -37,6 +37,7 @@ export const ClientSidebarNew = () => {
     { to: '/client/appointments',  icon: Calendar,        label: 'المواعيد',             end: false, show: !isCarWash },
     { to: '/client/conversations', icon: MessageSquare,   label: 'المحادثات الحية',      end: false, show: whatsappEnabled },
     { to: '/client/automations',   icon: Zap,             label: 'واتساب',               end: false, show: whatsappEnabled },
+    { to: '/client/leads',         icon: CreditCard,      label: 'العملاء والولاء',       end: false, show: isCarWash },
     { to: '/client/leads',         icon: Users2,          label: 'العملاء المحتملون',     end: false, show: !isCarWash },
     { to: '/client/reports',       icon: BarChart3,       label: 'التقارير',             end: false, show: true },
     { to: '/client/settings',      icon: Settings,        label: 'الإعدادات',            end: false, show: true },
