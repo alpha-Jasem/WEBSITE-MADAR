@@ -235,13 +235,13 @@ export const CarWashQueue = () => {
     custSearchTimer.current = setTimeout(async () => {
       if (!companyId) return
       setCustSearching(true)
-      const { data } = await supabase
-        .from('cw_customers')
-        .select('id, name, phone')
-        .eq('company_id', companyId)
-        .or(`name.ilike.%${q}%,phone.ilike.%${q}%`)
-        .limit(6)
-      setCustResults((data || []) as { id: string; name: string | null; phone: string }[])
+      const [byName, byPhone] = await Promise.all([
+        supabase.from('cw_customers').select('id, name, phone').eq('company_id', companyId).ilike('name', `%${q}%`).limit(6),
+        supabase.from('cw_customers').select('id, name, phone').eq('company_id', companyId).ilike('phone', `%${q}%`).limit(6),
+      ])
+      const seen = new Set<string>()
+      const merged = [...(byName.data || []), ...(byPhone.data || [])].filter(r => seen.has(r.id) ? false : (seen.add(r.id), true)).slice(0, 6)
+      setCustResults(merged as { id: string; name: string | null; phone: string }[])
       setCustSearching(false)
     }, 300)
   }

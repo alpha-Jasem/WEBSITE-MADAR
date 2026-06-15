@@ -145,7 +145,9 @@ export const ClientSettings = () => {
     if (!companyId) return
     setGeneratingToken(true)
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
-    const token = Array.from({ length: 24 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+    const bytes = new Uint8Array(24)
+    crypto.getRandomValues(bytes)
+    const token = Array.from(bytes, b => chars[b % chars.length]).join('')
     const { error } = await supabase.from('companies').update({ public_checkin_token: token } as any).eq('id', companyId)
     if (!error) setLocalCheckinToken(token)
     setGeneratingToken(false)
