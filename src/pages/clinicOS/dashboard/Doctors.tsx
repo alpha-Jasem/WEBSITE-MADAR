@@ -3,13 +3,11 @@ import { UserCheck, Calendar, Clock, Plus, X, ChevronLeft, AlertTriangle } from 
 import { motion, AnimatePresence } from 'framer-motion'
 import { StatCard } from '../../../components/clinicOS/ui/StatCard'
 import { StatusBadge } from '../../../components/clinicOS/ui/StatusBadge'
-import { useClinicDoctors, useClinicTodayAppointments, createDoctor, updateDoctor, toggleDoctorAvailability } from '../../../lib/clinicOSQueries'
+import { useClinicDoctors, useClinicTodayAppointments, createDoctor, toggleDoctorAvailability } from '../../../lib/clinicOSQueries'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 import { useToast } from '../../../lib/useToast'
 import type { Doctor } from '../../../types/clinicOS'
 import { useNavigate } from 'react-router-dom'
-
-const DAYS = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة']
 
 const ABSENCE_REASONS = ['مرض', 'إجازة', 'حالة طارئة', 'اجتماع', 'أخرى']
 
@@ -22,12 +20,6 @@ export const Doctors = () => {
 
   const [selected, setSelected] = useState<Doctor | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
-  const [showScheduleModal, setShowScheduleModal] = useState(false)
-  const [scheduleDoc, setScheduleDoc] = useState<Doctor | null>(null)
-  const [workDays, setWorkDays] = useState<boolean[]>([true, true, true, true, true, true, false])
-  const [workStart, setWorkStart] = useState('09:00')
-  const [workEnd, setWorkEnd] = useState('17:00')
-  const [savingSched, setSavingSched] = useState(false)
   const [newDoc, setNewDoc] = useState({ name: '', specialty: '', max_appointments_per_day: 12, emergency_slots_per_day: 2 })
   const [saving, setSaving] = useState(false)
 
@@ -37,28 +29,6 @@ export const Doctors = () => {
   const [absenceReason, setAbsenceReason] = useState('مرض')
   const [absenceCustom, setAbsenceCustom] = useState('')
   const [togglingId, setTogglingId] = useState<string | null>(null)
-
-  const openScheduleModal = (doc: Doctor) => {
-    setScheduleDoc(doc)
-    const wh = (doc as Doctor & { working_hours?: { days?: boolean[]; start?: string; end?: string } }).working_hours
-    setWorkDays((wh as any)?.days || [true, true, true, true, true, true, false])
-    setWorkStart((wh as any)?.start || '09:00')
-    setWorkEnd((wh as any)?.end || '17:00')
-    setShowScheduleModal(true)
-  }
-
-  const handleSaveSchedule = async () => {
-    if (!scheduleDoc) return
-    if (isDemo) { showToast('لا يمكن التعديل في وضع التجربة', 'info'); return }
-    setSavingSched(true)
-    try {
-      await updateDoctor(scheduleDoc.id, { working_hours: { days: workDays, start: workStart, end: workEnd } } as Partial<Doctor>)
-      showToast('تم حفظ جدول الطبيب', 'success')
-      setShowScheduleModal(false)
-      refetch()
-    } catch { showToast('حدث خطأ أثناء الحفظ', 'error') }
-    finally { setSavingSched(false) }
-  }
 
   const handleAddDoctor = async () => {
     if (!newDoc.name.trim() || !newDoc.specialty.trim()) {
@@ -284,7 +254,7 @@ export const Doctors = () => {
               </div>
             ))}
             <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
-              <button onClick={() => openScheduleModal(selected)} style={{ flex: 1, padding: '9px', borderRadius: 8, background: '#4F46E5', color: 'white', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>تعديل الجدول</button>
+              <button onClick={() => navigate(`/clinic-os/dashboard/knowledge?section=doctors&doctor=${selected.id}`)} style={{ flex: 1, padding: '9px', borderRadius: 8, background: '#4F46E5', color: 'white', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>تعديل جدول الحجز</button>
               <button onClick={() => navigate(`/clinic-os/dashboard/appointments?doctor=${encodeURIComponent(selected.name)}`)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '9px', borderRadius: 8, background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>
                 <ChevronLeft size={12} /> مواعيده
               </button>
@@ -391,52 +361,6 @@ export const Doctors = () => {
         )}
       </AnimatePresence>
 
-      {/* Schedule Modal */}
-      <AnimatePresence>
-        {showScheduleModal && scheduleDoc && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', direction: 'rtl' }}>
-            <motion.div initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }}
-              style={{ background: '#FFFFFF', borderRadius: 16, padding: '28px', width: 460, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <h2 style={{ fontSize: 17, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif', margin: 0 }}>جدول {scheduleDoc.name}</h2>
-                <button onClick={() => setShowScheduleModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
-              </div>
-              <div style={{ marginBottom: 18 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#334155', fontFamily: 'Cairo, sans-serif', marginBottom: 10 }}>أيام العمل</div>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {DAYS.map((day, i) => (
-                    <button key={day} type="button" onClick={() => setWorkDays(p => p.map((v, j) => j === i ? !v : v))}
-                      style={{ padding: '6px 12px', borderRadius: 8, border: `1px solid ${workDays[i] ? '#4F46E5' : '#E2E8F0'}`, background: workDays[i] ? '#EEF2FF' : '#F8FAFC', color: workDays[i] ? '#4F46E5' : '#94A3B8', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>
-                      {day}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 20 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                  <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', fontFamily: 'Cairo, sans-serif' }}>وقت البداية</label>
-                  <input type="time" value={workStart} onChange={e => setWorkStart(e.target.value)}
-                    style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                  <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', fontFamily: 'Cairo, sans-serif' }}>وقت الانتهاء</label>
-                  <input type="time" value={workEnd} onChange={e => setWorkEnd(e.target.value)}
-                    style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none' }} />
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button onClick={handleSaveSchedule} disabled={savingSched}
-                  style={{ flex: 1, padding: '11px', borderRadius: 8, background: savingSched ? '#94A3B8' : '#4F46E5', color: 'white', border: 'none', fontSize: 13, fontWeight: 700, cursor: savingSched ? 'not-allowed' : 'pointer', fontFamily: 'Cairo, sans-serif' }}>
-                  {savingSched ? 'جاري الحفظ...' : 'حفظ الجدول'}
-                </button>
-                <button onClick={() => setShowScheduleModal(false)}
-                  style={{ padding: '11px 18px', borderRadius: 8, background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>إلغاء</button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   )
 }
