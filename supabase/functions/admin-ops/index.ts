@@ -127,7 +127,33 @@ Deno.serve(async (req) => {
 
     if (error) return json({ error: 'clinic_clients_failed', details: error.message }, 500)
 
-    const ids = (companies || []).map(company => company.id)
+    const authUsers: any[] = []
+    let authPage = 1
+    while (true) {
+      const { data: authData, error: authError } = await service.auth.admin.listUsers({
+        page: authPage,
+        perPage: 1000,
+      })
+      if (authError) return json({ error: 'clinic_auth_users_failed', details: authError.message }, 500)
+      authUsers.push(...(authData.users || []))
+      if ((authData.users || []).length < 1000) break
+      authPage += 1
+    }
+
+    const companyRows = companies || []
+    const companyByAuthId = new Map(companyRows.filter(company => company.auth_user_id).map(company => [company.auth_user_id, company]))
+    const companyByEmail = new Map(companyRows.filter(company => company.owner_email).map(company => [String(company.owner_email).toLowerCase(), company]))
+    const clinicAuthUsers = authUsers.filter(user => {
+      const metadata = user.user_metadata || {}
+      return metadata.account_type === 'clinic'
+        || metadata.business_type === 'clinic'
+        || companyByAuthId.has(user.id)
+        || companyByEmail.has(String(user.email || '').toLowerCase())
+    })
+    const authById = new Map(clinicAuthUsers.map(user => [user.id, user]))
+    const authByEmail = new Map(clinicAuthUsers.filter(user => user.email).map(user => [String(user.email).toLowerCase(), user]))
+
+    const ids = companyRows.map(company => company.id)
     const [limitsResult, usageResult, auditResult] = ids.length ? await Promise.all([
       service.from('clinic_os_usage_limits').select('*').in('company_id', ids),
       service.from('clinic_os_usage').select('*').in('company_id', ids).order('cycle_start', { ascending: false }),
@@ -146,13 +172,54 @@ Deno.serve(async (req) => {
       audit.set(row.company_id, rows)
     }
 
-    return json({
-      clients: (companies || []).map(company => ({
+    const completeClients = companyRows.map(company => {
+      const authUser = authById.get(company.auth_user_id) || authByEmail.get(String(company.owner_email || '').toLowerCase())
+      return {
         ...company,
+        company_id: company.id,
+        auth_user_id: company.auth_user_id || authUser?.id || null,
+        email_confirmed_at: authUser?.email_confirmed_at || null,
+        last_sign_in_at: authUser?.last_sign_in_at || null,
+        auth_created_at: authUser?.created_at || null,
+        pending_company: false,
         limits: limits.get(company.id) || null,
         usage: usage.get(company.id) || null,
         audit: audit.get(company.id) || [],
-      })),
+      }
+    })
+
+    const linkedAuthIds = new Set(completeClients.map(client => client.auth_user_id).filter(Boolean))
+    const linkedEmails = new Set(completeClients.map(client => String(client.owner_email || '').toLowerCase()).filter(Boolean))
+    const pendingClients = clinicAuthUsers
+      .filter(user => !linkedAuthIds.has(user.id) && !linkedEmails.has(String(user.email || '').toLowerCase()))
+      .map(user => {
+        const metadata = user.user_metadata || {}
+        return {
+          id: `auth:${user.id}`,
+          company_id: null,
+          auth_user_id: user.id,
+          name: metadata.clinic_name || 'حساب عيادة جديد',
+          owner_name: metadata.full_name || String(user.email || '').split('@')[0] || 'مستخدم جديد',
+          owner_email: user.email || '',
+          owner_phone: metadata.owner_phone || '',
+          city: '',
+          status: 'trial',
+          clinic_plan_code: metadata.package_type === 'ai_pro' ? 'ai_pro' : 'whatsapp',
+          subscription_status: 'trial',
+          created_at: user.created_at,
+          email_confirmed_at: user.email_confirmed_at || null,
+          last_sign_in_at: user.last_sign_in_at || null,
+          auth_created_at: user.created_at,
+          pending_company: true,
+          limits: null,
+          usage: null,
+          audit: [],
+        }
+      })
+
+    return json({
+      clients: [...completeClients, ...pendingClients]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
     })
   }
 

@@ -32,6 +32,7 @@ type AuditRow = { id: string; action: string; note?: string; actor_type: string;
 
 type ClinicAccount = {
   id: string
+  company_id?: string | null
   name: string
   owner_name?: string
   owner_email?: string
@@ -49,6 +50,9 @@ type ClinicAccount = {
   last_payment_status?: string
   last_payment_at?: string
   created_at: string
+  email_confirmed_at?: string | null
+  last_sign_in_at?: string | null
+  pending_company?: boolean
   usage?: Usage | null
   limits?: Limits | null
   audit?: AuditRow[]
@@ -157,20 +161,40 @@ export function AdminClinicAccounts() {
   const [saving, setSaving] = useState(false)
   const [resetUsage, setResetUsage] = useState(false)
 
-  const load = useCallback(async () => {
-    setLoading(true)
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true)
     setError('')
     const { data, error: invokeError } = await supabase.functions.invoke('admin-ops', {
       body: { action: 'clinic_clients' },
     })
     if (invokeError || data?.error) setError('تعذر تحميل حسابات العيادات. تحقق من صلاحية حساب الإدارة ثم أعد المحاولة.')
     else setAccounts(data?.clients || [])
-    setLoading(false)
+    if (!silent) setLoading(false)
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    load()
+    const channel = supabase
+      .channel('admin-clinic-accounts-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'companies' }, () => load(true))
+      .subscribe()
+    const timer = window.setInterval(() => load(true), 20000)
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') load(true)
+    }
+    document.addEventListener('visibilitychange', refreshWhenVisible)
+    return () => {
+      window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', refreshWhenVisible)
+      supabase.removeChannel(channel)
+    }
+  }, [load])
 
   const openAccount = (account: ClinicAccount) => {
+    if (account.pending_company || !account.company_id) {
+      setNotice('الحساب مسجل، ويجري تجهيز سجل العيادة تلقائياً. ستظهر أدوات الإدارة فور اكتمال الربط.')
+      return
+    }
     setSelected(account)
     setDraft(toDraft(account))
     setResetUsage(false)
@@ -221,7 +245,7 @@ export function AdminClinicAccounts() {
   })
 
   const save = async () => {
-    if (!selected || !draft) return
+    if (!selected || !draft || !selected.company_id) return
     if (draft.subscription_start_date && draft.subscription_end_date && draft.subscription_end_date < draft.subscription_start_date) {
       setError('تاريخ نهاية الاشتراك يجب أن يكون بعد تاريخ البداية.')
       return
@@ -230,7 +254,7 @@ export function AdminClinicAccounts() {
     setError('')
     setNotice('')
     const { data, error: invokeError } = await supabase.functions.invoke('admin-ops', {
-      body: { action: 'manage_clinic_account', company_id: selected.id, changes: { ...draft, reset_usage: resetUsage } },
+      body: { action: 'manage_clinic_account', company_id: selected.company_id, changes: { ...draft, reset_usage: resetUsage } },
     })
     if (invokeError || data?.error) {
       setError('تعذر حفظ التغييرات. لم يتم تعديل الحساب.')
@@ -251,7 +275,7 @@ export function AdminClinicAccounts() {
           <div className="sec-title">الحسابات</div>
           <div className="sec-sub">إدارة اشتراكات Clinic OS والباقات والحدود ودورات الاستخدام من مكان واحد</div>
         </div>
-        <button className="btn btn-ghost" onClick={load} disabled={loading}><RefreshCw size={15} className={loading ? 'spin' : ''}/> تحديث</button>
+        <button className="btn btn-ghost" onClick={() => load()} disabled={loading}><RefreshCw size={15} className={loading ? 'spin' : ''}/> تحديث</button>
       </div>
 
       <div className="stat-grid admin-account-stats">
@@ -262,6 +286,7 @@ export function AdminClinicAccounts() {
       </div>
 
       {error && !selected && <div className="admin-account-alert error"><AlertTriangle size={17}/>{error}</div>}
+      {notice && !selected && <div className="admin-account-alert success"><CheckCircle2 size={17}/>{notice}</div>}
 
       <div className="admin-account-toolbar">
         <label className="admin-account-search"><Search size={16}/><input value={search} onChange={e => setSearch(e.target.value)} placeholder="ابحث باسم العيادة أو البريد أو رقم الجوال..."/></label>
@@ -286,11 +311,11 @@ export function AdminClinicAccounts() {
                 return <tr key={account.id} onClick={() => openAccount(account)}>
                   <td><div className="admin-account-identity"><span>{account.name?.[0] || 'ع'}</span><div><strong>{account.name}</strong><small>{account.owner_email || account.owner_phone || 'لا توجد بيانات تواصل'}</small></div></div></td>
                   <td><strong>{planLabel[account.clinic_plan_code || 'whatsapp']}</strong><small className="admin-account-cell-note">{account.clinic_plan_code === 'ai_pro' ? 'الصوت + واتساب' : 'واتساب فقط'}</small></td>
-                  <td><span className={`badge ${statusTone[status]}`}>{statusLabel[status]}</span>{missingDates && <small className="admin-account-warning">التواريخ ناقصة</small>}</td>
+                  <td><span className={`badge ${account.pending_company ? 'amber' : statusTone[status]}`}>{account.pending_company ? 'جاري تجهيز الحساب' : statusLabel[status]}</span>{!account.pending_company && missingDates && <small className="admin-account-warning">التواريخ ناقصة</small>}<small className={`admin-account-cell-note ${account.email_confirmed_at ? '' : 'admin-account-warning'}`}>{account.email_confirmed_at ? 'البريد مؤكد' : 'بانتظار تأكيد البريد'}</small></td>
                   <td>{account.subscription_end_date ? <><strong>{days !== null && days >= 0 ? `${days} يوم` : 'منتهي'}</strong><small className="admin-account-cell-note">حتى {account.subscription_end_date}</small></> : <span className="admin-account-warning">غير محددة</span>}</td>
                   <td><div className="admin-account-usage"><div><span>{usage}%</span><small>{usage >= 80 ? 'قريب من الحد' : 'ضمن الحدود'}</small></div><div className="prog"><div className="prog-fill" style={{ width: `${Math.min(100, usage)}%`, background: usage >= 100 ? 'var(--red)' : usage >= 80 ? 'var(--amber)' : 'var(--green)' }}/></div></div></td>
                   <td><span className={`badge ${account.last_payment_status === 'paid' ? 'green' : 'gray'}`}>{account.last_payment_status === 'paid' ? 'مدفوع' : 'يدوي / معلق'}</span></td>
-                  <td><button className="admin-account-open" onClick={event => { event.stopPropagation(); openAccount(account) }}>إدارة <ChevronLeft size={15}/></button></td>
+                  <td><button className="admin-account-open" onClick={event => { event.stopPropagation(); openAccount(account) }}>{account.pending_company ? 'قيد التجهيز' : 'إدارة'} {!account.pending_company && <ChevronLeft size={15}/>}</button></td>
                 </tr>
               })}
           </tbody>

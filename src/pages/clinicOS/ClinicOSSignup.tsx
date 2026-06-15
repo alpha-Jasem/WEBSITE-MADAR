@@ -46,26 +46,24 @@ export const ClinicOSSignup = () => {
     setError('')
     try {
       // Save clinic data — AuthCallback will create the company after email confirmation
-      sessionStorage.setItem('clinic_signup', JSON.stringify({
-        clinicName: clinicName.trim(),
-        ownerName: ownerName.trim(),
-        phone: phone.trim(),
-        email: email.trim().toLowerCase(),
-        packageType: pkgParam,
-      }))
-
       const { error: signUpErr } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
         options: {
           emailRedirectTo: 'https://madar.software/auth/callback',
-          data: { full_name: ownerName.trim() },
+          data: {
+            full_name: ownerName.trim(),
+            account_type: 'clinic',
+            business_type: 'clinic',
+            clinic_name: clinicName.trim(),
+            owner_phone: phone.trim(),
+            package_type: pkgParam,
+          },
         },
       })
       if (signUpErr) throw signUpErr
       setStep('sent')
     } catch (err: unknown) {
-      sessionStorage.removeItem('clinic_signup')
       const msg = err instanceof Error ? err.message : ''
       if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already been registered')) {
         setError('هذا البريد الإلكتروني مسجّل مسبقاً. يمكنك الدخول من صفحة تسجيل الدخول.')
