@@ -49,10 +49,22 @@ function applyPlaceholders(msg: string, customer: Customer): string {
 export const CarWashCampaigns = () => {
   const { companyId, company } = useClientCompany()
 
-  const idInstance = (company as any)?.cw_automations?.green_api?.idInstance || ''
-  const apiToken   = (company as any)?.cw_automations?.green_api?.apiTokenInstance || ''
-  const apiConfigured = !!idInstance && !!apiToken
   const loyaltyThreshold: number = (company as any)?.cw_loyalty_threshold || 5
+
+  /* ── Green API — fetched fresh to avoid stale context ── */
+  const [idInstance, setIdInstance] = useState('')
+  const [apiToken, setApiToken]     = useState('')
+  const apiConfigured = !!idInstance && !!apiToken
+
+  useEffect(() => {
+    if (!companyId) return
+    supabase.from('companies').select('cw_automations, cw_loyalty_threshold').eq('id', companyId).single()
+      .then(({ data }) => {
+        const api = (data as any)?.cw_automations?.green_api
+        if (api?.idInstance)       setIdInstance(api.idInstance)
+        if (api?.apiTokenInstance) setApiToken(api.apiTokenInstance)
+      })
+  }, [companyId])
 
   /* ── customers ── */
   const [allCustomers, setAllCustomers] = useState<Customer[]>([])
@@ -347,9 +359,11 @@ export const CarWashCampaigns = () => {
                 {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                 {sending
                   ? `جاري الإرسال... ${progress}% (${results.length}/${selectedTargets.length})`
-                  : selectedIds.size > 0
-                    ? `إرسال لـ ${selectedTargets.length} عميل`
-                    : 'اختر عملاء أولاً'
+                  : !apiConfigured
+                    ? 'Green API غير مكوّن — تواصل مع الإدارة'
+                    : selectedIds.size > 0
+                      ? `إرسال لـ ${selectedTargets.length} عميل`
+                      : 'اختر عملاء أولاً'
                 }
               </button>
 
