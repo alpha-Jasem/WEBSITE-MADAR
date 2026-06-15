@@ -1,6 +1,6 @@
 ﻿import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { AlertCircle, Bell, ChevronDown, LogOut, Menu, MessageSquare, Settings, ShieldCheck, X } from 'lucide-react'
+import { AlertCircle, Bell, ChevronDown, LogOut, Menu, Settings, ShieldCheck, X } from 'lucide-react'
 import { DashSidebar, type NavItem } from './DashSidebar'
 import { useClientCompany } from '../../hooks/useClientCompany'
 import { MadarAIAssistant } from './MadarAIAssistant'
@@ -216,9 +216,6 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
           </div>
         )}
       </div>
-      <button type="button" className="dash-topbar-icon" aria-label="الرسائل">
-        <MessageSquare size={17} />
-      </button>
       <div className="dash-topbar-profile-wrap" ref={topProfileRef}>
         <button
           type="button"

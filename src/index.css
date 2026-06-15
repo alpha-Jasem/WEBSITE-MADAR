@@ -4702,12 +4702,26 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 }
 
 .dash-shell-client .dash-topbar {
+  display: flex;
+  height: 52px;
+}
+
+/* hide title+hamburger area on desktop — sidebar handles nav */
+.dash-shell-client .dash-topbar > div:first-child {
   display: none;
+}
+
+/* full topbar on mobile */
+@media (max-width: 900px) {
+  .dash-shell-client .dash-topbar > div:first-child {
+    display: flex;
+  }
 }
 
 @media (max-width: 768px) {
   .dash-shell-client .dash-topbar {
     display: flex;
+    height: 56px;
   }
 
   .dash-shell-client .dash-content {
@@ -9326,7 +9340,7 @@ p, li, input, textarea, select, button, label { line-height: 1.7; }
 
 /* 2 ── Content padding */
 .dash-shell-client .dash-content {
-  padding: 28px 30px 44px !important;
+  padding: 18px 30px 44px !important;
 }
 
 /* 3 ── كل الكروت والبانلات — حدود سيان خفيفة + ظل */
