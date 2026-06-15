@@ -151,12 +151,15 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
       ...((company.cw_automations as any) || {}),
       feature_flags: flags,
     }
+    // If upgrading to a paid plan, auto-activate the account
+    const shouldActivate = activePlan !== 'starter' && company.status === 'trial'
     const { error } = await supabase
       .from('companies')
       .update({
         plan: activePlan,
         message_limit: PLAN_CONFIG[activePlan].limit,
         cw_automations: nextAutomations,
+        ...(shouldActivate ? { status: 'active' } : {}),
         ...(company.industry === 'clinic' ? { package_type: activePackageType } : {}),
       } as any)
       .eq('id', company.id)
@@ -178,8 +181,8 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
         feature_flags: flags,
       },
     })
-    setFeedback('تم حفظ إعدادات الشركة')
-    setTimeout(() => setFeedback(''), 1600)
+    setFeedback(shouldActivate ? '✅ تم الترقية وتفعيل الحساب!' : 'تم حفظ إعدادات الشركة')
+    setTimeout(() => setFeedback(''), 2500)
     onUpdated()
   }
 
