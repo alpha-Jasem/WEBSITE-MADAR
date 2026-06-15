@@ -26,6 +26,8 @@ type CWCustomer = {
   google_review_requested: boolean
   welcome_sent: boolean
   created_at: string
+  car_type: string | null
+  plate: string | null
 }
 
 const TIER_COLORS: Record<string, string> = {
@@ -88,7 +90,7 @@ function LoyaltyDots({ visits, threshold = 5 }: { visits: number; threshold?: nu
   )
 }
 
-type CRUDForm = { name: string; phone: string }
+type CRUDForm = { name: string; phone: string; car_type: string; plate: string }
 
 export function CarWashLeads() {
   const { companyId, company, loading: authLoading } = useClientCompany()
@@ -211,12 +213,12 @@ export function CarWashLeads() {
     return next
   })
 
-  const openAdd = () => { setCrudForm({ name: '', phone: '' }); setShowAddModal(true) }
+  const openAdd = () => { setCrudForm({ name: '', phone: '', car_type: '', plate: '' }); setShowAddModal(true) }
   const openEdit = (c: CWCustomer) => {
     setEditTarget(c)
     const raw = c.phone.replace(/\D/g, '')
     const displayPhone = raw.startsWith('966') ? '+' + raw : raw.startsWith('0') ? '+966' + raw.slice(1) : '+966' + raw
-    setCrudForm({ name: c.name || '', phone: displayPhone })
+    setCrudForm({ name: c.name || '', phone: displayPhone, car_type: c.car_type || '', plate: c.plate || '' })
   }
 
   const openHistory = async (c: CWCustomer) => {
@@ -288,7 +290,12 @@ export function CarWashLeads() {
     if (!editTarget || !companyId) return
     setCrudSaving(true)
     const phone = normalizePhone(crudForm.phone)
-    const { data } = await supabase.from('cw_customers').update({ name: crudForm.name.trim() || null, phone }).eq('id', editTarget.id).select('*').single()
+    const { data } = await supabase.from('cw_customers').update({
+      name: crudForm.name.trim() || null,
+      phone,
+      car_type: crudForm.car_type.trim() || null,
+      plate: crudForm.plate.trim() || null,
+    }).eq('id', editTarget.id).select('*').single()
     if (data) upsertCustomerLive(data as CWCustomer)
     setCrudSaving(false)
     setEditTarget(null)
@@ -681,6 +688,20 @@ export function CarWashLeads() {
                 <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>الاسم</label>
                 <input value={crudForm.name} onChange={e => setCrudForm(f => ({ ...f, name: e.target.value }))}
                   style={{ width: '100%', padding: '9px 14px', borderRadius: 10, background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', outline: 'none', fontFamily: 'Tajawal, sans-serif', fontSize: 13, boxSizing: 'border-box' }} />
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>نوع السيارة</label>
+                  <input value={crudForm.car_type} onChange={e => setCrudForm(f => ({ ...f, car_type: e.target.value }))}
+                    placeholder="كامري، باترول..."
+                    style={{ width: '100%', padding: '9px 14px', borderRadius: 10, background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', outline: 'none', fontFamily: 'Tajawal, sans-serif', fontSize: 13, boxSizing: 'border-box' }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>رقم اللوحة</label>
+                  <input value={crudForm.plate} onChange={e => setCrudForm(f => ({ ...f, plate: e.target.value }))}
+                    placeholder="أ ب ج 1234"
+                    style={{ width: '100%', padding: '9px 14px', borderRadius: 10, background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', outline: 'none', fontFamily: 'Tajawal, sans-serif', fontSize: 13, boxSizing: 'border-box' }} />
+                </div>
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button onClick={updateCustomer} disabled={crudSaving}
