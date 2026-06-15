@@ -177,24 +177,6 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
           ))}
         </nav>
 
-        {role === 'client' && (
-          <div style={{ margin: '4px 10px 8px', padding: '10px 12px', background: 'rgba(255,255,255,0.07)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', fontFamily: 'Tajawal,sans-serif' }}>استخدام اليوم</span>
-              <span style={{ fontSize: 11, fontWeight: 800, color: maxPct >= 80 ? '#F59E0B' : 'rgba(255,255,255,0.8)', fontFamily: 'Sora,sans-serif' }}>{maxPct}%</span>
-            </div>
-            <div style={{ height: 3, borderRadius: 3, background: 'rgba(255,255,255,0.12)', overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${maxPct}%`, background: ringColor, borderRadius: 3, transition: 'width 0.5s ease' }} />
-            </div>
-            <div style={{ marginTop: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontFamily: 'Tajawal,sans-serif' }}>{planLabel}</span>
-              {trialDaysLeft !== null && (
-                <span style={{ fontSize: 10, color: '#F59E0B', fontFamily: 'Tajawal,sans-serif' }}>باقي {trialDaysLeft} يوم</span>
-              )}
-            </div>
-          </div>
-        )}
-
         <div className="dash-sidebar-footer" ref={dropRef}>
           {role === 'client' && dropOpen && (
             <div className="dash-profile-switcher">
@@ -280,50 +262,6 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
               )}
             </div>
           )}
-
-          <div
-            className="dash-user-card"
-            onClick={toggleDrop}
-            style={role === 'client' ? { cursor: 'pointer', userSelect: 'none' } : undefined}
-          >
-            {role === 'client' ? (
-              <>
-                {/* Desktop only: ring avatar */}
-                <div className="sidebar-ring-wrap" style={{ position: 'relative', width: 38, height: 38, flexShrink: 0 }}>
-                  <svg width="38" height="38" style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}>
-                    <circle cx="19" cy="19" r="17" fill="none" stroke="#C8D5E8" strokeWidth="3" />
-                    <circle cx="19" cy="19" r="17" fill="none" stroke={ringColor} strokeWidth="3" opacity="0.18" />
-                    <circle cx="19" cy="19" r="17" fill="none" stroke={ringColor} strokeWidth="3"
-                      strokeDasharray={`${circumference}`}
-                      strokeDashoffset={`${circumference * (1 - maxPct / 100)}`}
-                      strokeLinecap="round"
-                      style={{ transition: 'stroke-dashoffset 0.5s ease, stroke 0.3s ease' }}
-                    />
-                  </svg>
-                  <div className="dash-user-avatar" style={{ width: 28, height: 28, position: 'absolute', inset: 5, fontSize: 13, lineHeight: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {profile.isOwner ? (company?.owner_name?.[0] ?? 'A') : profile.name[0]}
-                  </div>
-                </div>
-                {/* Mobile only: plain avatar */}
-                <div className="sidebar-plain-avatar dash-user-avatar">
-                  {profile.isOwner ? (company?.owner_name?.[0] ?? 'A') : profile.name[0]}
-                </div>
-              </>
-            ) : (
-              <div className="dash-user-avatar">
-                {profile.isOwner ? (company?.owner_name?.[0] ?? 'A') : profile.name[0]}
-              </div>
-            )}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <strong>{profile.isOwner ? (company?.owner_name ?? 'Admin') : profile.name}</strong>
-              <span style={{ color: role === 'client' ? ringColor : undefined, fontWeight: role === 'client' ? 600 : undefined }}>
-                {role === 'admin' ? TXT.admin : profile.isOwner ? `${maxPct}% · ${planLabel}` : profile.permissions.length + ' ' + TXT.permission}
-              </span>
-            </div>
-            {role === 'client' && (
-              <ChevronDown size={15} style={{ transition: 'transform 0.2s', transform: dropOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
-            )}
-          </div>
 
           <button
             type="button"

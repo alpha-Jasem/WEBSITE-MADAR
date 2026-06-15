@@ -111,7 +111,7 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
   }
 
   const { maxPct, ringColor, carsPct, qrPct, screenPct, whatsappPct, cars, qr, screenUpdates, whatsapp, limits, topMetric } = dailyUsage
-  const circumference = 2 * Math.PI * 15
+  const circumference = 2 * Math.PI * 17
   const letter = profile.isOwner ? (company?.owner_name?.[0] ?? 'م') : profile.name[0]
 
   const getStatusMessage = () => {
@@ -229,15 +229,15 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
           }}
         >
           {/* Avatar with SVG progress ring */}
-          <div style={{ position: 'relative', width: 36, height: 36 }} title={`استخدام اليوم: ${maxPct}%`}>
-            <svg width="36" height="36" style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}>
+          <div style={{ position: 'relative', width: 38, height: 38 }} title={`استخدام اليوم: ${maxPct}%`}>
+            <svg width="38" height="38" style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}>
               {/* Track ring */}
-              <circle cx="18" cy="18" r="15" fill="none" stroke="#C8D5E8" strokeWidth="3" />
+              <circle cx="19" cy="19" r="17" fill="none" stroke="#C8D5E8" strokeWidth="3" />
               {/* Faint color ring always visible */}
-              <circle cx="18" cy="18" r="15" fill="none" stroke={ringColor} strokeWidth="3" opacity="0.18" />
+              <circle cx="19" cy="19" r="17" fill="none" stroke={ringColor} strokeWidth="3" opacity="0.18" />
               {/* Progress arc */}
               <circle
-                cx="18" cy="18" r="15" fill="none"
+                cx="19" cy="19" r="17" fill="none"
                 stroke={ringColor}
                 strokeWidth="3"
                 strokeDasharray={`${circumference}`}
@@ -246,7 +246,7 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
                 style={{ transition: 'stroke-dashoffset 0.5s ease, stroke 0.3s ease' }}
               />
             </svg>
-            <span className="dash-user-avatar dash-topbar-avatar" style={{ width: 28, height: 28, position: 'absolute', inset: 4, fontSize: 13, lineHeight: '28px' }}>
+            <span className="dash-user-avatar dash-topbar-avatar" style={{ width: 28, height: 28, position: 'absolute', inset: 5, fontSize: 13, lineHeight: '28px' }}>
               {letter}
             </span>
           </div>
