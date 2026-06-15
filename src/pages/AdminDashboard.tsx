@@ -11,6 +11,7 @@ import { AdminConversations } from '../components/dashboard/admin/AdminConversat
 import { AdminOverview } from '../components/dashboard/admin/AdminOverview'
 import { AdminAIAgents } from '../components/dashboard/admin/AdminAIAgents'
 import { AdminClinicAccounts } from '../components/dashboard/admin/AdminClinicAccounts'
+import { AdminCarWashAccounts } from '../components/dashboard/admin/AdminCarWashAccounts'
 
 export const AdminDashboard = () => {
   return (
@@ -20,6 +21,7 @@ export const AdminDashboard = () => {
         <Route path="reports" element={<AdminOverview />} />
         <Route path="companies" element={<AdminCompanies />} />
         <Route path="accounts" element={<AdminClinicAccounts />} />
+        <Route path="cw-accounts" element={<AdminCarWashAccounts />} />
         <Route path="leads" element={<AdminLeads />} />
         <Route path="logs" element={<AdminLogs />} />
         <Route path="settings" element={<AdminSettings />} />

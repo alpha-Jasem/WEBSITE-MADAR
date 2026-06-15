@@ -9,7 +9,8 @@ const NAV = [
     { id: 'reports', label: 'التقارير', to: '/admin/reports' },
   ]},
   { group: 'إدارة العملاء', items: [
-    { id: 'accounts', label: 'الحسابات', to: '/admin/accounts' },
+    { id: 'cw-accounts', label: 'حسابات المغاسل 🚗', to: '/admin/cw-accounts' },
+    { id: 'accounts', label: 'حسابات العيادات 🏥', to: '/admin/accounts' },
     { id: 'companies', label: 'الشركات', to: '/admin/companies', badge: 0 },
     { id: 'leads', label: 'العملاء المحتملون', to: '/admin/leads' },
     { id: 'pipeline', label: 'خط المبيعات', to: '/admin/pipeline' },
@@ -29,7 +30,8 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
   '/admin': { title: 'نظرة عامة', sub: 'ملخّص أداء منصة مدار' },
   '/admin/reports': { title: 'التقارير', sub: 'تحليلات الأداء والإيرادات' },
   '/admin/companies': { title: 'الشركات', sub: 'إدارة حسابات العملاء والباقات' },
-  '/admin/accounts': { title: 'الحسابات', sub: 'تحكم باشتراكات Clinic OS وحدود الاستخدام' },
+  '/admin/accounts': { title: 'حسابات العيادات', sub: 'تحكم باشتراكات Clinic OS وحدود الاستخدام' },
+  '/admin/cw-accounts': { title: 'حسابات المغاسل', sub: 'إدارة باقات وصلاحيات Car Wash OS' },
   '/admin/leads': { title: 'العملاء المحتملون', sub: 'متابعة وتحويل الليدز' },
   '/admin/pipeline': { title: 'خط المبيعات', sub: 'لوحة المراحل البيعية' },
   '/admin/conversations': { title: 'المحادثات', sub: 'محادثات واتساب الواردة' },
@@ -275,6 +277,7 @@ function NavIcon({ id }: { id: string }) {
     case 'reports': return <svg {...s} viewBox="0 0 24 24" {...p}><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
     case 'companies': return <svg {...s} viewBox="0 0 24 24" {...p}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     case 'accounts': return <svg {...s} viewBox="0 0 24 24" {...p}><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/><path d="M17.5 3.5 19 5l3-3"/></svg>
+    case 'cw-accounts': return <svg {...s} viewBox="0 0 24 24" {...p}><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h6l3 5v3h-9V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
     case 'leads': return <svg {...s} viewBox="0 0 24 24" {...p}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
     case 'pipeline': return <svg {...s} viewBox="0 0 24 24" {...p}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
     case 'chats': return <svg {...s} viewBox="0 0 24 24" {...p}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
