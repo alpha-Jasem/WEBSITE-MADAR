@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useLayoutEffect } from 'react'
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion'
-import { ArrowRight, Play, Sparkles, Zap, Shield, TrendingUp, Stethoscope } from 'lucide-react'
+import { ArrowRight, UserPlus, Sparkles, Zap, Shield, TrendingUp, Stethoscope } from 'lucide-react'
 import { useLanguage } from '../../context/LanguageContext'
 import { openWhatsAppChat } from '../../lib/whatsapp'
 import { useTextScramble } from '../../hooks/useTextScramble'
@@ -360,16 +360,16 @@ export const Hero = () => {
                 <ArrowRight size={16} className={language === 'ar' ? 'rotate-180' : ''} />
               </motion.button>
 
-              <motion.button
-                whileHover={{ scale: 1.02, borderColor: 'rgba(255,255,255,0.2)' }}
+              <motion.a
+                href="/trial"
+                whileHover={{ scale: 1.02, borderColor: 'rgba(16,185,129,0.4)' }}
                 whileTap={{ scale: 0.97 }}
-                onClick={() => window.open('https://noor-clinic-dashboard.netlify.app', '_blank', 'noopener,noreferrer')}
                 className={`flex items-center justify-center gap-2 px-7 py-4 rounded-xl font-medium text-base cursor-pointer border transition-all ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
-                style={{ borderColor: 'rgba(0,0,0,0.1)', color: '#334155', background: 'rgba(0,0,0,0.04)' }}
+                style={{ borderColor: 'rgba(16,185,129,0.25)', color: '#059669', background: 'rgba(16,185,129,0.06)', textDecoration: 'none' }}
               >
-                <Play size={14} style={{ color: '#00BFFF' }} />
-                <span>{t('شاهد الداشبورد', 'View Dashboard')}</span>
-              </motion.button>
+                <UserPlus size={14} style={{ color: '#10B981' }} />
+                <span>{t('سجّل معنا مجاناً', 'Register Free')}</span>
+              </motion.a>
             </motion.div>
 
             {/* Stats */}
