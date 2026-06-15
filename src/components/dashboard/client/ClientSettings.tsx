@@ -85,6 +85,8 @@ export const ClientSettings = () => {
   const [editingId, setEditingId]       = useState<string | null>(null)
   const [ownerPin, setOwnerPin]         = useState('')
   const [savingOwnerPin, setSavingOwnerPin] = useState(false)
+  const [generatingToken, setGeneratingToken] = useState(false)
+  const [localCheckinToken, setLocalCheckinToken] = useState('')
 
   // ── Load company data ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -131,10 +133,23 @@ export const ClientSettings = () => {
     ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/inbound-lead?token=${company.webhook_token}`
     : ''
 
-  const checkinUrl    = getSelfCheckinUrl(company as any)
+  const effectiveCompany = localCheckinToken
+    ? { ...(company as any), public_checkin_token: localCheckinToken }
+    : company
+  const checkinUrl    = getSelfCheckinUrl(effectiveCompany as any)
   const checkinQrUrl  = checkinUrl
     ? `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=12&data=${encodeURIComponent(checkinUrl)}`
     : ''
+
+  const generateCheckinToken = async () => {
+    if (!companyId) return
+    setGeneratingToken(true)
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
+    const token = Array.from({ length: 24 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+    const { error } = await supabase.from('companies').update({ public_checkin_token: token } as any).eq('id', companyId)
+    if (!error) setLocalCheckinToken(token)
+    setGeneratingToken(false)
+  }
 
   const saveMapsUrl = async () => {
     if (!companyId || !mapsUrl) return
@@ -512,7 +527,19 @@ export const ClientSettings = () => {
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-slate-500 font-tajawal">لم يتم إنشاء token عام لهذه المغسلة بعد. أنشئه من لوحة الإدارة.</p>
+                <div className="flex flex-col items-center gap-3 py-4">
+                  <QrCode size={40} className="text-slate-300" />
+                  <p className="text-sm text-slate-500 font-tajawal text-center">لا يوجد رمز QR بعد — أنشئ رمزاً لتفعيل التسجيل الذاتي</p>
+                  <button
+                    onClick={generateCheckinToken}
+                    disabled={generatingToken}
+                    className="inline-flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm font-bold font-cairo text-white"
+                    style={{ background: 'linear-gradient(135deg,#0099CC,#22D3EE)', boxShadow: '0 4px 14px rgba(0,153,204,0.3)', cursor: generatingToken ? 'wait' : 'pointer' }}
+                  >
+                    {generatingToken ? <Loader2 size={15} className="animate-spin" /> : <QrCode size={15} />}
+                    {generatingToken ? 'جاري الإنشاء...' : 'إنشاء رمز QR'}
+                  </button>
+                </div>
               )}
             </div>
           </FeatureLock>
