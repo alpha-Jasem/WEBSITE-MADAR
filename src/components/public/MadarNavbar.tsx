@@ -118,8 +118,14 @@ export const MadarNavbar = ({ navLinks, subtitle = 'نظام تشغيل ذكي' 
                 </a>
               ))}
               <Link
+                to="/login"
+                className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-center font-black text-[#0D1B3E]"
+              >
+                تسجيل الدخول
+              </Link>
+              <Link
                 to="/trial"
-                className="mt-4 rounded-2xl bg-[#007BFF] px-4 py-4 text-center font-black text-white"
+                className="rounded-2xl bg-[#007BFF] px-4 py-4 text-center font-black text-white"
               >
                 ابدأ تجربة 3 أيام
               </Link>
