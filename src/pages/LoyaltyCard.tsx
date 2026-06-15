@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import QRCode from 'qrcode'
 import { supabase } from '../lib/supabase'
 
 interface CardData {
@@ -34,6 +35,7 @@ export const LoyaltyCard = () => {
   const [queue, setQueue] = useState<QueueItem | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const [qrDataUrl, setQrDataUrl] = useState<string>('')
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
   const fetchQueue = async (phone: string, companyId: string) => {
@@ -83,6 +85,10 @@ export const LoyaltyCard = () => {
       })
 
       await fetchQueue(cust.phone, companyId)
+
+      QRCode.toDataURL(cust.phone, { width: 180, margin: 1, color: { dark: '#0D1B3E', light: '#ffffff' } })
+        .then(setQrDataUrl).catch(() => {})
+
       setLoading(false)
 
       // Real-time subscription
@@ -131,7 +137,6 @@ export const LoyaltyCard = () => {
     : card.loyalty_count % card.loyalty_target
   const hasFreeWash = card.free_washes_available > 0
   const remaining = card.loyalty_target - stamps
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=8&data=${encodeURIComponent(card.phone)}`
   const queueStatus = queue ? STATUS_MAP[queue.status] : null
 
   return (
@@ -240,7 +245,7 @@ export const LoyaltyCard = () => {
 
               {/* QR */}
               <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:6, padding:'12px 0', borderTop:'1px dashed #E2E8F0', borderBottom:'1px dashed #E2E8F0', marginBottom:14 }}>
-                <img src={qrUrl} alt="QR" style={{ width:110, height:110, borderRadius:10 }} />
+                {qrDataUrl && <img src={qrDataUrl} alt="QR" style={{ width:110, height:110, borderRadius:10 }} />}
                 <p style={{ fontSize:10, color:'#CBD5E1', letterSpacing:.5 }} dir="ltr">{card.phone}</p>
               </div>
 
