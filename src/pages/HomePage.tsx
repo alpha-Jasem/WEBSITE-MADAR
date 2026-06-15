@@ -9,6 +9,83 @@ import { Hero }          from '../components/public/Hero'
 import { ProductsSection } from '../components/public/ProductsSection'
 import { LeadForm }      from '../components/public/LeadForm'
 import { Footer }        from '../components/public/Footer'
+import { Check } from 'lucide-react'
+
+const PHONE = '966546666005'
+const openWhatsApp = (msg: string) => window.open(`https://wa.me/${PHONE}?text=${encodeURIComponent(msg)}`, '_blank')
+
+const clinicPlans = [
+  {
+    name: 'Clinic Core',
+    label: 'لبداية تشغيل مرتبة',
+    description: 'الأساس اليومي الذي يجمع فريق العيادة في نظام واحد واضح.',
+    features: ['المواعيد والتقويم', 'ملفات المرضى', 'الأطباء والخدمات', 'التقارير والصلاحيات'],
+    featured: false,
+  },
+  {
+    name: 'Clinic AI',
+    label: 'للتشغيل والنمو الذكي',
+    description: 'كل ما في Core، مع قنوات ذكية تقلل العمل اليدوي وتسرّع الاستجابة.',
+    features: ['كل مزايا Clinic Core', 'تأكيدات وتذكيرات واتساب', 'حجز ذكي ومساعد AI', 'تكاملات حسب احتياج العيادة'],
+    featured: true,
+  },
+]
+
+const ClinicPlans = () => (
+  <section id="plans" style={{ background: '#050810', padding: '80px 24px', direction: 'rtl' }}>
+    <div style={{ maxWidth: 860, margin: '0 auto' }}>
+      <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(16,185,129,0.3), transparent)', marginBottom: 64 }} />
+      <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+        style={{ textAlign: 'center', marginBottom: 48 }}>
+        <span style={{ display: 'inline-block', padding: '6px 16px', borderRadius: 99, background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)', color: '#10B981', fontSize: 12, fontWeight: 700, fontFamily: 'Cairo, sans-serif', marginBottom: 16 }}>
+          Clinic OS — الباقات
+        </span>
+        <h2 style={{ fontSize: 34, fontWeight: 900, color: '#fff', fontFamily: 'Cairo, sans-serif', margin: '0 0 12px', lineHeight: 1.3 }}>
+          باقتان واضحتان لعيادتك
+        </h2>
+        <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.45)', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>
+          نحدد السعر بعد معرفة عدد الأطباء والفروع والتكاملات المطلوبة — جلسة التعريف مجانية
+        </p>
+      </motion.div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
+        {clinicPlans.map((plan, i) => (
+          <motion.div key={plan.name} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+            style={{ borderRadius: 20, padding: '28px 24px', position: 'relative', overflow: 'hidden',
+              background: plan.featured ? 'linear-gradient(135deg, rgba(16,185,129,0.12), rgba(6,182,212,0.08))' : 'rgba(255,255,255,0.03)',
+              border: `1px solid ${plan.featured ? 'rgba(16,185,129,0.35)' : 'rgba(255,255,255,0.08)'}` }}>
+            {plan.featured && (
+              <span style={{ position: 'absolute', top: 16, left: 16, padding: '4px 12px', borderRadius: 99, background: '#10B981', color: '#fff', fontSize: 11, fontWeight: 700, fontFamily: 'Cairo, sans-serif' }}>
+                الأكثر تكاملاً
+              </span>
+            )}
+            <small style={{ display: 'block', color: plan.featured ? '#10B981' : 'rgba(255,255,255,0.4)', fontSize: 12, fontFamily: 'Tajawal, sans-serif', marginBottom: 6 }}>{plan.label}</small>
+            <h3 style={{ fontSize: 22, fontWeight: 900, color: '#fff', fontFamily: 'Cairo, sans-serif', margin: '0 0 10px' }}>{plan.name}</h3>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.7, margin: '0 0 20px' }}>{plan.description}</p>
+            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {plan.features.map(f => (
+                <li key={f} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: 'rgba(255,255,255,0.75)', fontFamily: 'Tajawal, sans-serif' }}>
+                  <Check size={14} color={plan.featured ? '#10B981' : '#6B7A99'} style={{ flexShrink: 0 }} />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <button onClick={() => openWhatsApp(`مرحباً، أريد عرضاً مناسباً لباقة ${plan.name} لعيادتي.`)}
+              style={{ width: '100%', padding: '12px', borderRadius: 12, border: 'none', cursor: 'pointer', fontFamily: 'Cairo, sans-serif', fontSize: 14, fontWeight: 700,
+                background: plan.featured ? 'linear-gradient(135deg,#10B981,#059669)' : 'rgba(255,255,255,0.07)',
+                color: plan.featured ? '#fff' : 'rgba(255,255,255,0.7)' }}>
+              اطلب عرض عيادتك
+            </button>
+          </motion.div>
+        ))}
+      </div>
+
+      <p style={{ textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.3)', fontFamily: 'Tajawal, sans-serif', marginTop: 28 }}>
+        جلسة التعريف مجانية، والعرض يوضح الإعداد والتشغيل والدعم قبل أي التزام.
+      </p>
+    </div>
+  </section>
+)
 
 const stats = [
   { value: '3×',      ar: 'زيادة الحجوزات',         en: 'More bookings' },
@@ -80,6 +157,7 @@ export const HomePage = () => {
         <Hero />
         <Outcomes />
         <ProductsSection />
+        <ClinicPlans />
         <LeadForm />
       </main>
       <Footer />

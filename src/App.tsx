@@ -7,8 +7,6 @@ import { ClinicOSProvider } from './context/ClinicOSContext'
 import { ProtectedRoute } from './components/shared/ProtectedRoute'
 import { ErrorBoundary, reloadForFreshAssets } from './components/shared/ErrorBoundary'
 import { HomePage } from './pages/HomePage'
-import { ClinicLanding } from './pages/ClinicLanding'
-import { ClinicOSLanding } from './pages/ClinicOSLanding'
 import { Login } from './pages/Login'
 import { ForgotPassword } from './pages/ForgotPassword'
 import { ResetPassword } from './pages/ResetPassword'
@@ -77,8 +75,8 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/car-wash" element={<Navigate to="/" replace />} />
-            <Route path="/clinic" element={<ClinicLanding />} />
-            <Route path="/clinic-os" element={<ClinicOSLanding />} />
+            <Route path="/clinic" element={<Navigate to="/" replace />} />
+            <Route path="/clinic-os" element={<Navigate to="/clinic-os/login" replace />} />
 
             {/* ── ClinicOS Auth & Onboarding ── */}
             <Route path="/clinic-os/login"    element={<ClinicOSLoginPage />} />
