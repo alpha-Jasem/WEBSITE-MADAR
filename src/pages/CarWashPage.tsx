@@ -92,9 +92,9 @@ function Navbar() {
           <Link to="/login" style={{ fontSize: 13, fontWeight: 600, color: '#0D1B3E', padding: '8px 14px', borderRadius: 10, border: '1px solid #E2EBF6', background: '#fff', textDecoration: 'none', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif', whiteSpace: 'nowrap' }}>
             تسجيل الدخول
           </Link>
-          <button onClick={requestDemo} style={{ background: '#0D1B3E', color: '#fff', border: 'none', borderRadius: 10, padding: '9px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif', whiteSpace: 'nowrap' }} className="hidden-mobile">
-            اطلب تجربة
-          </button>
+          <Link to="/trial" style={{ background: '#0D1B3E', color: '#fff', borderRadius: 10, padding: '9px 16px', fontSize: 13, fontWeight: 700, textDecoration: 'none', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif', whiteSpace: 'nowrap' }} className="hidden-mobile">
+            تجربة 3 أيام مجانية
+          </Link>
           <button onClick={() => setOpen(true)} className="show-mobile" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
             <Menu size={22} color="#0D1B3E" />
           </button>
@@ -125,9 +125,9 @@ function Navbar() {
                 <Link to="/login" onClick={() => setOpen(false)} style={{ display: 'block', textAlign: 'center', background: '#F1F5F9', color: '#0D1B3E', border: '1px solid #E2EBF6', borderRadius: 12, padding: '13px 20px', fontSize: 14, fontWeight: 700, textDecoration: 'none', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif' }}>
                   تسجيل الدخول
                 </Link>
-                <button onClick={() => { setOpen(false); requestDemo() }} style={{ background: '#0D1B3E', color: '#fff', border: 'none', borderRadius: 12, padding: '13px 20px', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif' }}>
-                  اطلب تجربة الآن
-                </button>
+                <Link to="/trial" onClick={() => setOpen(false)} style={{ display: 'block', textAlign: 'center', background: '#0D1B3E', color: '#fff', borderRadius: 12, padding: '13px 20px', fontSize: 14, fontWeight: 700, textDecoration: 'none', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif' }}>
+                  تجربة 3 أيام مجانية
+                </Link>
               </div>
             </motion.div>
           </motion.div>
@@ -1057,9 +1057,9 @@ export const CarWashPage = () => {
             ابدأ تجربة 3 أيام مجانية — نجهز لك الحساب، نشرح النظام، ونكون معك من أول يوم.
           </p>
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button onClick={requestDemo} style={{ background: '#38BDF8', color: '#0D1B3E', border: 'none', borderRadius: 12, padding: '14px 32px', fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'IBM Plex Sans Arabic, sans-serif', boxShadow: '0 8px 24px rgba(56,189,248,0.3)' }}>
-              اطلب تجربة الآن
-            </button>
+            <Link to="/trial" style={{ background: '#38BDF8', color: '#0D1B3E', borderRadius: 12, padding: '14px 32px', fontSize: 15, fontWeight: 700, textDecoration: 'none', fontFamily: 'IBM Plex Sans Arabic, sans-serif', boxShadow: '0 8px 24px rgba(56,189,248,0.3)' }}>
+              ابدأ تجربة 3 أيام مجانية
+            </Link>
             <button onClick={requestDemo} style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', border: '1.5px solid rgba(255,255,255,0.2)', borderRadius: 12, padding: '14px 28px', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'IBM Plex Sans Arabic, sans-serif', display: 'flex', alignItems: 'center', gap: 8 }}>
               <MessageCircle size={18} />
               تواصل عبر واتساب
