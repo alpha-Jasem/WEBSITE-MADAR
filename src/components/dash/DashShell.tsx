@@ -8,6 +8,7 @@ import { MadarAgentWidget } from './MadarAgentWidget'
 import { useActiveProfile } from '../../context/ActiveProfileContext'
 import { PLAN_LABELS, MADAR_WHATSAPP_NUMBER } from '../../lib/constants'
 import { useDailyUsage } from '../../hooks/useDailyUsage'
+import { useMonthlyUsage } from '../../hooks/useMonthlyUsage'
 import { useNotifications } from '../../hooks/useNotifications'
 import { supabase } from '../../lib/supabase'
 
@@ -49,6 +50,7 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
   const [notifTab, setNotifTab] = useState<'all' | 'ops' | 'usage'>('all')
 
   const dailyUsage = useDailyUsage(role === 'client' ? companyId : null, planKey)
+  const monthlyUsage = useMonthlyUsage(role === 'client' ? companyId : null, planKey)
   const { notifications, count: notifCount } = useNotifications(role === 'client' ? companyId : null, dailyUsage)
 
   useEffect(() => { setMenuOpen(false) }, [location.pathname])
@@ -328,7 +330,32 @@ export const DashShell = ({ navItems, role = 'admin', pageTitle, children, topba
               <p style={{ fontSize: 11, color: '#475569', margin: 0, lineHeight: 1.5 }}>{statusMsg.text}</p>
             </div>
 
-            {/* Section 4: Quick actions */}
+            {/* Section 4: Monthly usage */}
+            {role === 'client' && (
+              <div style={{ padding: '12px 16px', borderBottom: '1px solid #EEF2F8' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: '#475569' }}>الاستخدام الشهري</span>
+                  <span style={{ fontSize: 10, color: '#94A3B8' }}>
+                    {new Date().toLocaleDateString('ar-SA', { month: 'long', year: 'numeric' })}
+                  </span>
+                </div>
+                {[
+                  { label: 'السيارات', val: monthlyUsage.cars, limit: monthlyUsage.limits.cars, pct: monthlyUsage.carsPct },
+                  { label: 'واتساب',   val: monthlyUsage.whatsapp, limit: monthlyUsage.limits.whatsapp, pct: monthlyUsage.whatsappPct },
+                ].map(({ label, val, limit, pct }) => {
+                  const c = getRingColorLocal(pct)
+                  return (
+                    <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                      <span style={{ fontSize: 11, color: '#475569', width: 52, textAlign: 'right', flexShrink: 0 }}>{label}</span>
+                      <MiniBar pct={pct} color={c} />
+                      <span style={{ fontSize: 10, color: '#94A3B8', width: 52, textAlign: 'left', flexShrink: 0 }}>{val.toLocaleString('en-US')}/{limit.toLocaleString('en-US')}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Section 5: Quick actions */}
             <div style={{ padding: '8px 0' }}>
               <button type="button" onClick={() => { navigate('/client/settings'); setProfileOpen(false) }}
                 style={{ width: '100%', padding: '9px 16px', display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#0D1B3E', textAlign: 'right' }}>

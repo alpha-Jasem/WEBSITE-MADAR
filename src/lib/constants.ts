@@ -17,3 +17,9 @@ export const DAILY_LIMITS: Record<string, { cars: number; qr: number; screenUpda
   growth:     { cars: 100, qr: 75,  screenUpdates: 300, whatsapp: 100 },
   enterprise: { cars: 300, qr: 200, screenUpdates: 1000, whatsapp: 300 },
 }
+
+export const MONTHLY_LIMITS: Record<string, { cars: number; whatsapp: number }> = {
+  starter:    { cars: 1_000,  whatsapp: 500  },
+  growth:     { cars: 3_000,  whatsapp: 2_000 },
+  enterprise: { cars: 9_000,  whatsapp: 8_000 },
+}
