@@ -9,7 +9,7 @@ import { Hero }          from '../components/public/Hero'
 import { ProductsSection } from '../components/public/ProductsSection'
 import { LeadForm }      from '../components/public/LeadForm'
 import { Footer }        from '../components/public/Footer'
-import { Check } from 'lucide-react'
+import { Check, Phone, Clock, CalendarX, Moon, AlertCircle, Wallet } from 'lucide-react'
 
 const PHONE = '966546666005'
 const openWhatsApp = (msg: string) => window.open(`https://wa.me/${PHONE}?text=${encodeURIComponent(msg)}`, '_blank')
@@ -88,11 +88,115 @@ const ClinicPlans = () => (
   </section>
 )
 
+/* ── Pain Section ── */
+const painPoints = [
+  { icon: Phone,      title: 'مكالمة فايتة = مريض راح',      desc: 'كل مكالمة ما تُرد عليها، المريض يتصل بعيادة ثانية — ولا يرجع.' },
+  { icon: AlertCircle, title: 'الاستقبال مشغول دايماً',      desc: 'لما يكون عندك مرضى بالداخل، مين يرد على الجوال والواتساب؟' },
+  { icon: CalendarX,  title: '3 من 10 مرضى ما يحضرون',      desc: 'بدون تذكير مسبق، الـ no-show يكلّفك وقتاً فاضياً وكراسي فارغة.' },
+  { icon: Moon,       title: 'بعد الدوام لا استقبال',         desc: 'المريض يبحث عن موعد الساعة 10 مساءً — ما يلقى أحد يرد.' },
+  { icon: Clock,      title: 'فوضى الحجز اليدوي',            desc: 'تعارض مواعيد، بيانات ناقصة، وأخطاء يصعب تتبعها.' },
+  { icon: Wallet,     title: 'تكلفة الاستقبال التقليدي',     desc: 'راتب + تدريب + إجازات + أخطاء بشرية — ويشتغل 8 ساعات فقط.' },
+]
+
+const PainSection = () => (
+  <section style={{ background: '#FFFFFF', padding: '80px 24px', direction: 'rtl' }}>
+    <div style={{ maxWidth: 920, margin: '0 auto' }}>
+      <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+        style={{ textAlign: 'center', marginBottom: 48 }}>
+        <span style={{ display: 'inline-block', padding: '6px 16px', borderRadius: 99, background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.18)', color: '#DC2626', fontSize: 12, fontWeight: 700, fontFamily: 'Cairo, sans-serif', marginBottom: 16 }}>
+          المشاكل اليومية
+        </span>
+        <h2 style={{ fontSize: 32, fontWeight: 900, color: '#0D1B3E', fontFamily: 'Cairo, sans-serif', margin: '0 0 12px', lineHeight: 1.3 }}>
+          كل يوم في العيادة، نفس المشاكل
+        </h2>
+        <p style={{ fontSize: 15, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>
+          الاستقبال التقليدي له حدود — مساعد الاستقبال AI ما له
+        </p>
+      </motion.div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
+        {painPoints.map((p, i) => {
+          const Icon = p.icon
+          return (
+            <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.07 }}
+              style={{ padding: '22px', borderRadius: 16, background: '#FEF9F9', border: '1px solid rgba(239,68,68,0.1)' }}>
+              <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(239,68,68,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                <Icon size={18} color="#DC2626" />
+              </div>
+              <h3 style={{ fontSize: 14, fontWeight: 800, color: '#0D1B3E', fontFamily: 'Cairo, sans-serif', margin: '0 0 6px' }}>{p.title}</h3>
+              <p style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.7, margin: 0 }}>{p.desc}</p>
+            </motion.div>
+          )
+        })}
+      </div>
+
+      <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.3 }}
+        style={{ marginTop: 32, padding: '20px 28px', borderRadius: 14, background: 'rgba(13,27,62,0.03)', border: '1px solid rgba(13,27,62,0.08)', textAlign: 'center' }}>
+        <p style={{ fontSize: 15, color: '#0D1B3E', fontFamily: 'Cairo, sans-serif', margin: 0, fontWeight: 700 }}>
+          مساعد الاستقبال AI يحل هذه المشاكل الستة — تلقائياً، بدون توظيف أحد
+        </p>
+      </motion.div>
+    </div>
+  </section>
+)
+
+/* ── How It Works ── */
+const steps = [
+  { num: '١', title: 'المريض يتصل أو يرسل واتساب', desc: 'في أي وقت، أي يوم — المساعد متاح دائماً.' },
+  { num: '٢', title: 'AI يرد فوراً ويفهم الطلب',   desc: 'يتعرف على نوع الخدمة، الدكتور المطلوب، والوقت المناسب.' },
+  { num: '٣', title: 'يحجز الموعد مباشرة',          desc: 'يضبط الموعد في النظام ويرسل تأكيداً للمريض على الفور.' },
+  { num: '٤', title: 'تذكير تلقائي قبل الموعد',     desc: 'رسالة واتساب قبل 24 ساعة وأخرى قبل ساعتين — no-show ينخفض.' },
+]
+
+const HowItWorks = () => (
+  <section id="how" style={{ background: '#F8FAFF', padding: '80px 24px', direction: 'rtl' }}>
+    <div style={{ maxWidth: 860, margin: '0 auto' }}>
+      <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+        style={{ textAlign: 'center', marginBottom: 56 }}>
+        <span style={{ display: 'inline-block', padding: '6px 16px', borderRadius: 99, background: 'rgba(0,153,204,0.08)', border: '1px solid rgba(0,153,204,0.2)', color: '#0099CC', fontSize: 12, fontWeight: 700, fontFamily: 'Cairo, sans-serif', marginBottom: 16 }}>
+          كيف يعمل
+        </span>
+        <h2 style={{ fontSize: 32, fontWeight: 900, color: '#0D1B3E', fontFamily: 'Cairo, sans-serif', margin: '0 0 12px', lineHeight: 1.3 }}>
+          من أول رسالة إلى تأكيد الموعد — كله تلقائي
+        </h2>
+        <p style={{ fontSize: 15, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>
+          إعداد مرة واحدة — يشتغل كل يوم بدون تدخل
+        </p>
+      </motion.div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 0, position: 'relative' }}>
+        {steps.map((s, i) => (
+          <motion.div key={i} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+            style={{ padding: '28px 20px', textAlign: 'center', position: 'relative' }}>
+            <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'linear-gradient(135deg,#0D1B3E,#0099CC)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: '0 8px 24px rgba(0,153,204,0.25)' }}>
+              <span style={{ fontSize: 20, fontWeight: 900, color: '#fff', fontFamily: 'Cairo, sans-serif' }}>{s.num}</span>
+            </div>
+            {i < steps.length - 1 && (
+              <div style={{ position: 'absolute', top: 54, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg,rgba(0,153,204,0.3),rgba(0,153,204,0.1))', display: 'none' }} className="hidden md:block" />
+            )}
+            <h3 style={{ fontSize: 14, fontWeight: 800, color: '#0D1B3E', fontFamily: 'Cairo, sans-serif', margin: '0 0 8px', lineHeight: 1.4 }}>{s.title}</h3>
+            <p style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.7, margin: 0 }}>{s.desc}</p>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Flow bar */}
+      <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.5 }}
+        style={{ marginTop: 40, padding: '16px 24px', borderRadius: 12, background: 'rgba(0,153,204,0.05)', border: '1px solid rgba(0,153,204,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, flexWrap: 'wrap', direction: 'rtl' }}>
+        {['مكالمة/واتساب', '←', 'رد AI', '←', 'حجز تلقائي', '←', 'تأكيد', '←', 'تذكير', '←', 'مريض يحضر ✓'].map((item, i) => (
+          <span key={i} style={{ fontSize: 13, fontFamily: item === '←' ? 'monospace' : 'Cairo, sans-serif', color: item === '←' ? '#CBD5E1' : item.includes('✓') ? '#059669' : '#0D1B3E', fontWeight: item === '←' ? 400 : 700 }}>{item}</span>
+        ))}
+      </motion.div>
+    </div>
+  </section>
+)
+
+/* ── Stats ── */
 const stats = [
-  { value: '3×',      ar: 'زيادة الحجوزات',         en: 'More bookings' },
-  { value: '< ثانية', ar: 'وقت الرد على العميل',     en: 'Response time' },
-  { value: '80%',     ar: 'تقليل المواعيد الفائتة',  en: 'Fewer no-shows' },
-  { value: '24/7',    ar: 'تشغيل بدون موظف إضافي',   en: 'No extra staff' },
+  { value: '80%',     ar: 'تقليل المواعيد الفائتة',   en: 'Fewer no-shows' },
+  { value: '< ثانية', ar: 'وقت الرد على المريض',      en: 'Response time' },
+  { value: '3×',      ar: 'سرعة تأكيد الموعد',        en: 'Faster confirmations' },
+  { value: '24/7',    ar: 'استقبال بدون انقطاع',      en: 'Non-stop reception' },
 ]
 
 const Outcomes = () => (
@@ -108,10 +212,10 @@ const Outcomes = () => (
         style={{ textAlign: 'center', marginBottom: 56 }}
       >
         <h2 style={{ fontSize: 36, fontWeight: 900, color: '#0D1B3E', fontFamily: 'Cairo, sans-serif', margin: '0 0 12px', lineHeight: 1.3 }}>
-          ما يقدمه النظام لك من اليوم الأول
+          النتائج من أول أسبوع
         </h2>
         <p style={{ fontSize: 16, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: 0 }}>
-          مصمم خصيصاً للعيادات السعودية
+          أرقام من عيادات تشغّل مساعد الاستقبال AI
         </p>
       </motion.div>
 
@@ -140,7 +244,7 @@ const Outcomes = () => (
       >
         <span style={{ fontSize: 20 }}>🚀</span>
         <p style={{ fontSize: 15, color: '#334155', fontFamily: 'Tajawal, sans-serif', margin: 0, lineHeight: 1.6 }}>
-          كن من أوائل العيادات في السعودية اللي تشغّل واتساب ذكي يرد ويحجز بدون موظف — <span style={{ color: '#0099CC', fontWeight: 700 }}>الأماكن محدودة</span>
+          لا مكالمة تضيع، لا موعد يُنسى — مساعد الاستقبال AI يشتغل وأنت نايم — <span style={{ color: '#0099CC', fontWeight: 700 }}>الأماكن محدودة</span>
         </p>
       </motion.div>
 
@@ -153,9 +257,11 @@ export const HomePage = () => {
     <div className="min-h-screen overflow-x-hidden" style={{ background: '#FFFFFF' }}>
       <CustomCursor />
       <ScrollProgress />
-      <MadarNavbar navLinks={[{ href: '#outcomes', label: 'النتائج' }, { href: '#products', label: 'المنتجات' }, { href: '#contact', label: 'تواصل' }]} subtitle="Clinic OS للعيادات" />
+      <MadarNavbar navLinks={[{ href: '#how', label: 'كيف يعمل' }, { href: '#outcomes', label: 'النتائج' }, { href: '#plans', label: 'الباقات' }, { href: '#contact', label: 'تواصل' }]} subtitle="مساعد استقبال AI للعيادات" />
       <main>
         <Hero />
+        <PainSection />
+        <HowItWorks />
         <Outcomes />
         <ProductsSection />
         <ClinicPlans />

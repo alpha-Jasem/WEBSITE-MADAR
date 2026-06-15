@@ -232,20 +232,20 @@ export const Hero = () => {
   const opacity = useTransform(scrollY, [0, 400], [1, 0])
   const heroRef = useRef(null)
   const heroInView = useInView(heroRef, { once: true })
-  const headlineAr = useTextScramble('حوّل رسائل ومكالمات شركتك', heroInView, 0.3)
-  const headlineAr2 = useTextScramble('إلى موظف مبيعات', heroInView, 0.6)
-  const headlineAr3 = useTextScramble('يعمل 24/7', heroInView, 0.9)
+  const headlineAr = useTextScramble('مساعد استقبال AI', heroInView, 0.3)
+  const headlineAr2 = useTextScramble('يرد، يحجز، ويذكّر', heroInView, 0.6)
+  const headlineAr3 = useTextScramble('24/7 بدون موظف إضافي', heroInView, 0.9)
 
   const trustPoints = [
-    { icon: Zap,       ar: 'رد وحجز خلال ثواني',        en: 'Replies and books in seconds' },
-    { icon: TrendingUp, ar: 'متابعة تلقائية للمهتمين',  en: 'Automatic lead follow-up' },
-    { icon: Shield,    ar: 'تشغيل بدون تعقيد',           en: 'Launched without complexity' },
+    { icon: Zap,       ar: 'رد فوري على كل مكالمة وواتساب', en: 'Instant reply to every call & WhatsApp' },
+    { icon: TrendingUp, ar: 'حجز وتأكيد تلقائي',            en: 'Automatic booking & confirmation' },
+    { icon: Shield,    ar: 'تذكير ذكي يقلل الـ no-show',    en: 'Smart reminders cut no-shows' },
   ]
 
   const stats = [
-    { val: 10, suffix: 'x', ar: 'أسرع في الرد عن موظف', en: 'Faster than a human agent' },
-    { val: 68, suffix: '%', ar: 'زيادة معدل التقييمات', en: 'More reviews collected' },
-    { val: 24, suffix: '/7', ar: 'تغطية بدون موظف إضافي', en: 'Coverage without extra staff' },
+    { val: 80, suffix: '%', ar: 'تقليل المواعيد الفائتة', en: 'Fewer no-shows' },
+    { val: 3,  suffix: 'x', ar: 'سرعة تأكيد الموعد',     en: 'Faster appointment confirmation' },
+    { val: 24, suffix: '/7', ar: 'استقبال نشط دون انقطاع', en: 'Non-stop reception' },
   ]
 
   return (
@@ -278,13 +278,13 @@ export const Hero = () => {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="inline-flex items-center gap-2 w-fit px-4 py-2 rounded-full border"
               style={{
-                background: 'rgba(0,191,255,0.08)',
-                borderColor: 'rgba(0,191,255,0.3)',
+                background: 'rgba(16,185,129,0.08)',
+                borderColor: 'rgba(16,185,129,0.3)',
               }}
             >
-              <Sparkles size={13} style={{ color: '#00BFFF' }} />
-              <span className={`text-xs font-medium ${language === 'ar' ? 'font-cairo' : 'font-work'}`} style={{ color: '#0099CC' }}>
-                {t('مساعد AI يرد على واتساب والمكالمات', 'AI Assistant for WhatsApp and Calls')}
+              <Sparkles size={13} style={{ color: '#10B981' }} />
+              <span className={`text-xs font-medium ${language === 'ar' ? 'font-cairo' : 'font-work'}`} style={{ color: '#059669' }}>
+                {t('مساعد استقبال AI للعيادات', 'AI Receptionist for Clinics')}
               </span>
             </motion.div>
 
@@ -316,8 +316,8 @@ export const Hero = () => {
               className={`text-base sm:text-lg leading-relaxed max-w-lg ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: '#475569' }}
             >
               {t(
-                'نركّب لك مساعد AI يرد على واتساب والمكالمات، يحجز المواعيد، يتابع المهتمين، ويحوّل كل تواصل يومي إلى حجوزات ومبيعات من لوحة واحدة — بدون توظيف موظف جديد.',
-                'We install an AI assistant that handles WhatsApp and phone calls, books appointments, follows up with leads, and turns daily conversations into bookings and sales from one dashboard — without hiring another employee.'
+                'نركّب لعيادتك مساعد استقبال AI يرد على كل مكالمة وواتساب، يحجز المواعيد مباشرة، ويرسل تذكيرات تلقائية تقلل الـ no-show — بدون موظف إضافي، ولا مكالمة تضيع.',
+                'We set up an AI receptionist for your clinic that answers every call and WhatsApp, books appointments directly, and sends automatic reminders to cut no-shows — no extra staff, no missed calls.'
               )}
             </motion.p>
 
@@ -356,7 +356,7 @@ export const Hero = () => {
                 className={`flex items-center justify-center gap-2.5 px-6 py-3.5 sm:px-7 sm:py-4 rounded-xl text-white font-semibold text-base cursor-pointer ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
                 style={{ background: 'linear-gradient(135deg, #0D1B3E 0%, #0099CC 100%)', boxShadow: '0 4px 24px rgba(0,153,204,0.35)' }}
               >
-                <span>{t('احصل على خطة نمو مجانية', 'Get a Free Growth Plan')}</span>
+                <span>{t('جرّب مساعد الاستقبال مجاناً', 'Try the AI Receptionist Free')}</span>
                 <ArrowRight size={16} className={language === 'ar' ? 'rotate-180' : ''} />
               </motion.button>
 
