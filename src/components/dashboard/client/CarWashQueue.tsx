@@ -448,7 +448,7 @@ export const CarWashQueue = () => {
     setDeliveryError('')
     const item = deliverModal
     const isMembershipPayment = false
-    const editedPrice = item.is_free_wash ? 0 : Math.max(0, parseFloat(editPrice) || item.price)
+    const editedPrice = item.is_free_wash ? 0 : Math.max(0, item.price)
     const editedDiscount = Math.max(0, parseFloat(editDiscount) || 0)
     const priceAfterDiscount = Math.max(0, editedPrice - editedDiscount)
     const price = priceAfterDiscount
@@ -498,7 +498,7 @@ export const CarWashQueue = () => {
       total_amount: vat.total_amount,
       price: editedPrice,
       discount_amount: editedDiscount,
-      service_name: editServiceName || item.service_name,
+      service_name: item.service_name,
       delivered_at: now,
     }
 
@@ -513,7 +513,7 @@ export const CarWashQueue = () => {
     const { error: visitError } = await supabase.from('cw_visits').insert({
       company_id: item.company_id,
       customer_id: customer?.id || null,
-      service_name: editServiceName || item.service_name,
+      service_name: item.service_name,
       service_id: item.service_id || null,
       price: editedPrice,
       subtotal: vat.subtotal,
@@ -1302,7 +1302,7 @@ export const CarWashQueue = () => {
 
       {/* Delivery / payment modal — real invoice style */}
       {deliverModal && (() => {
-        const rawPrice = deliverModal.is_free_wash ? 0 : Math.max(0, parseFloat(editPrice) || 0)
+        const rawPrice = deliverModal.is_free_wash ? 0 : Math.max(0, deliverModal.price)
         const rawDiscount = Math.max(0, parseFloat(editDiscount) || 0)
         const netPrice = Math.max(0, rawPrice - rawDiscount)
         const vat = calcVAT(netPrice, company?.tax_enabled ?? true, company?.vat_rate || 15, company?.price_includes_vat !== false)
@@ -1324,26 +1324,27 @@ export const CarWashQueue = () => {
               {/* Scrollable body */}
               <div style={{ overflowY: 'auto', flex: 1 }}>
 
-                {/* Edit fields — light card */}
+                {/* Invoice info + discount */}
                 {!deliverModal.is_free_wash && (
                   <div style={{ padding: '14px 20px', background: '#F8FAFF', borderBottom: '1px solid #EEF2F8' }} dir="rtl">
-                    <p style={{ fontSize: 11, fontWeight: 700, color: '#64748B', fontFamily: 'Tajawal,sans-serif', marginBottom: 10 }}>✏️ تعديل الفاتورة</p>
-                    <div style={{ marginBottom: 8 }}>
-                      <label style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal,sans-serif', display: 'block', marginBottom: 4 }}>اسم الخدمة</label>
-                      <input dir="rtl" value={editServiceName} onChange={e => setEditServiceName(e.target.value)}
-                        style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 13, fontFamily: 'Tajawal,sans-serif', color: '#0D1B3E', outline: 'none', background: '#fff', boxSizing: 'border-box' }} />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                      <div>
+                        <p style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal,sans-serif', margin: '0 0 4px' }}>اسم الخدمة</p>
+                        <div style={{ padding: '8px 12px', borderRadius: 8, border: '1.5px solid #E2E8F0', fontSize: 13, fontFamily: 'Tajawal,sans-serif', color: '#0D1B3E', background: '#F1F5F9' }}>
+                          {deliverModal.service_name}
+                        </div>
+                      </div>
+                      <div>
+                        <p style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal,sans-serif', margin: '0 0 4px' }}>السعر (ر.س)</p>
+                        <div style={{ padding: '8px 12px', borderRadius: 8, border: '1.5px solid #E2E8F0', fontSize: 13, fontFamily: 'Cairo,sans-serif', color: '#0D1B3E', background: '#F1F5F9', direction: 'ltr' }}>
+                          {deliverModal.price}
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                      <div>
-                        <label style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal,sans-serif', display: 'block', marginBottom: 4 }}>السعر (ر.س)</label>
-                        <input dir="ltr" type="number" min="0" step="0.01" value={editPrice} onChange={e => setEditPrice(e.target.value)}
-                          style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 13, fontFamily: 'Cairo,sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box' }} />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal,sans-serif', display: 'block', marginBottom: 4 }}>خصم (ر.س)</label>
-                        <input dir="ltr" type="number" min="0" step="0.01" value={editDiscount} onChange={e => setEditDiscount(e.target.value)}
-                          style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 13, fontFamily: 'Cairo,sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box' }} />
-                      </div>
+                    <div>
+                      <label style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal,sans-serif', display: 'block', marginBottom: 4 }}>خصم (ر.س)</label>
+                      <input dir="ltr" type="number" min="0" step="0.01" value={editDiscount} onChange={e => setEditDiscount(e.target.value)}
+                        style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 13, fontFamily: 'Cairo,sans-serif', outline: 'none', background: '#fff', boxSizing: 'border-box' }} />
                     </div>
                   </div>
                 )}
