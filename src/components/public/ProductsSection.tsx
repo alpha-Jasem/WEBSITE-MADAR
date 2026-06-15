@@ -1,37 +1,10 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
-import { Car, Stethoscope, ArrowLeft, ArrowRight, Check, Clock, Zap } from 'lucide-react'
+import { Stethoscope, ArrowLeft, ArrowRight, Check, Clock, Zap } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useLanguage } from '../../context/LanguageContext'
 
 const products = [
-  {
-    id: 'car-wash',
-    href: '/car-wash',
-    icon: Car,
-    accent: '#00BFFF',
-    glow: 'rgba(0,191,255,0.18)',
-    gradient: 'linear-gradient(135deg, #0D1B3E 0%, #00BFFF 100%)',
-    badge: null,
-    ar: {
-      tag: 'Car Wash OS',
-      name: 'نظام تشغيل المغسلة',
-      tagline: 'من الطابور للتقييم — كل شيء في مكان واحد',
-      features: ['طابور ذكي لحظي', 'واتساب آلي 11 workflow', 'ولاء وإغلاق يومي'],
-      metric: { value: '٤٠+', label: 'دقيقة توفير يومي' },
-      cta: 'اكتشف Car Wash OS',
-      ctaEn: 'Explore Car Wash OS',
-    },
-    en: {
-      tag: 'Car Wash OS',
-      name: 'Car Wash Operating System',
-      tagline: 'From Queue to Review — Everything in One Place',
-      features: ['Live smart queue', '11 WhatsApp workflows', 'Loyalty + daily closing'],
-      metric: { value: '40+', label: 'Minutes saved daily' },
-      cta: 'Explore Car Wash OS',
-      ctaEn: 'Explore Car Wash OS',
-    },
-  },
   {
     id: 'clinic',
     href: '/clinic-os',
@@ -109,7 +82,7 @@ export const ProductsSection = () => {
         </motion.div>
 
         {/* Product cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-3xl mx-auto">
+        <div className="grid grid-cols-1 gap-5 max-w-xl mx-auto">
           {products.map((p, i) => {
             const Icon = p.icon
             const content = language === 'ar' ? p.ar : p.en
