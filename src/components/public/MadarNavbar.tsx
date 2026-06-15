@@ -67,7 +67,7 @@ export const MadarNavbar = ({ navLinks, subtitle = 'نظام تشغيل ذكي' 
           <div className="flex items-center gap-2">
             <Link
               to="/login"
-              className={`hidden rounded-2xl px-4 py-3 text-sm font-black shadow-sm font-cairo sm:inline-flex ${
+              className={`inline-flex rounded-2xl px-3 py-2.5 text-xs font-black shadow-sm font-cairo sm:px-4 sm:py-3 sm:text-sm ${
                 scrolled ? 'border border-sky-100 bg-white text-[#0D1B3E]' : 'border border-sky-100 bg-white/78 text-[#0D1B3E]'
               }`}
             >
@@ -75,10 +75,11 @@ export const MadarNavbar = ({ navLinks, subtitle = 'نظام تشغيل ذكي' 
             </Link>
             <Link
               to="/trial"
-              className="hidden items-center gap-2 rounded-2xl bg-[#007BFF] px-5 py-3 text-sm font-black text-white shadow-[0_18px_38px_rgba(0,123,255,0.28)] font-cairo sm:inline-flex"
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-[#007BFF] px-3 py-2.5 text-xs font-black text-white shadow-[0_18px_38px_rgba(0,123,255,0.28)] font-cairo sm:gap-2 sm:px-5 sm:py-3 sm:text-sm"
             >
               ابدأ تجربتك
-              <ChevronLeft size={16} />
+              <ChevronLeft size={14} className="sm:hidden" />
+              <ChevronLeft size={16} className="hidden sm:inline" />
             </Link>
             <button
               onClick={() => setMobileMenu(true)}
