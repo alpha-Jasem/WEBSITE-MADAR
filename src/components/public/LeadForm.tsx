@@ -113,8 +113,8 @@ export const LeadForm = () => {
                 desc: t('نبدأ النقاش من رسالة أو مكالمة', 'Start from one message or call'),
               },
             ].map((item) => (
-              <div key={item.title} className="rounded-2xl border border-white/8 bg-white/[0.02] p-4">
-                <p className={`text-sm font-semibold text-white mb-1 ${language === 'ar' ? 'font-cairo' : 'font-outfit'}`}>{item.title}</p>
+              <div key={item.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p className={`text-sm font-semibold text-[#0D1B3E] mb-1 ${language === 'ar' ? 'font-cairo' : 'font-outfit'}`}>{item.title}</p>
                 <p className={`text-xs text-slate-500 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>{item.desc}</p>
               </div>
             ))}
@@ -129,7 +129,7 @@ export const LeadForm = () => {
               <div className="w-20 h-20 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center mx-auto mb-6">
                 <CheckCircle size={36} className="text-emerald-400" />
               </div>
-              <h3 className={`text-2xl font-bold text-white mb-3 ${language === 'ar' ? 'font-cairo' : 'font-outfit'}`}>
+              <h3 className={`text-2xl font-bold text-[#0D1B3E] mb-3 ${language === 'ar' ? 'font-cairo' : 'font-outfit'}`}>
                 {t('وصلتنا الرسالة. الخطوة التالية تشخيص النمو', 'Received. Next Step: Growth Diagnosis')}
               </h3>
               <p className={`text-slate-400 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
@@ -149,7 +149,7 @@ export const LeadForm = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
                 {/* Name */}
                 <div>
-                  <label className={`block text-sm font-medium text-slate-300 mb-1.5 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
+                  <label className={`block text-sm font-medium text-slate-600 mb-1.5 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
                     <User size={13} className="inline me-1.5 opacity-60" />
                     {t('الاسم الكامل', 'Full Name')} <span className="text-red-400">*</span>
                   </label>
@@ -158,8 +158,8 @@ export const LeadForm = () => {
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     placeholder={t('أدخل اسمك الكامل', 'Enter your full name')}
-                    className={`w-full bg-navy-800/60 border rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none transition-all text-sm ${
-                      errors.name ? 'border-red-500/60 focus:border-red-400' : 'border-white/10 focus:border-primary-500/60'
+                    className={`w-full bg-white border rounded-xl px-4 py-3 text-[#0D1B3E] placeholder:text-slate-400 focus:outline-none transition-all text-sm ${
+                      errors.name ? 'border-red-500/60 focus:border-red-400' : 'border-slate-200 focus:border-sky-400'
                     } ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
                   />
                   {errors.name && <p className="text-xs text-red-400 mt-1">{errors.name}</p>}
@@ -167,7 +167,7 @@ export const LeadForm = () => {
 
                 {/* Email */}
                 <div>
-                  <label className={`block text-sm font-medium text-slate-300 mb-1.5 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
+                  <label className={`block text-sm font-medium text-slate-600 mb-1.5 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
                     <Mail size={13} className="inline me-1.5 opacity-60" />
                     {t('البريد الإلكتروني', 'Email Address')} <span className="text-red-400">*</span>
                   </label>
@@ -176,8 +176,8 @@ export const LeadForm = () => {
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
                     placeholder="email@example.com"
-                    className={`w-full bg-navy-800/60 border rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none transition-all text-sm ${
-                      errors.email ? 'border-red-500/60 focus:border-red-400' : 'border-white/10 focus:border-primary-500/60'
+                    className={`w-full bg-white border rounded-xl px-4 py-3 text-[#0D1B3E] placeholder:text-slate-400 focus:outline-none transition-all text-sm ${
+                      errors.email ? 'border-red-500/60 focus:border-red-400' : 'border-slate-200 focus:border-sky-400'
                     } font-work`}
                     dir="ltr"
                   />
@@ -186,7 +186,7 @@ export const LeadForm = () => {
 
                 {/* Phone */}
                 <div>
-                  <label className={`block text-sm font-medium text-slate-300 mb-1.5 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
+                  <label className={`block text-sm font-medium text-slate-600 mb-1.5 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
                     <Phone size={13} className="inline me-1.5 opacity-60" />
                     {t('رقم الجوال (واتساب)', 'WhatsApp Number')} <span className="text-red-400">*</span>
                   </label>
@@ -195,8 +195,8 @@ export const LeadForm = () => {
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
                     placeholder="05XXXXXXXX"
-                    className={`w-full bg-navy-800/60 border rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none transition-all text-sm font-work ${
-                      errors.phone ? 'border-red-500/60 focus:border-red-400' : 'border-white/10 focus:border-primary-500/60'
+                    className={`w-full bg-white border rounded-xl px-4 py-3 text-[#0D1B3E] placeholder:text-slate-400 focus:outline-none transition-all text-sm font-work ${
+                      errors.phone ? 'border-red-500/60 focus:border-red-400' : 'border-slate-200 focus:border-sky-400'
                     }`}
                     dir="ltr"
                   />
@@ -205,22 +205,22 @@ export const LeadForm = () => {
 
                 {/* Service */}
                 <div>
-                  <label className={`block text-sm font-medium text-slate-300 mb-1.5 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
+                  <label className={`block text-sm font-medium text-slate-600 mb-1.5 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
                     <Briefcase size={13} className="inline me-1.5 opacity-60" />
                     {t('ما النتيجة التي تريدها؟', 'What outcome do you want?')} <span className="text-red-400">*</span>
                   </label>
                   <select
                     value={form.service}
                     onChange={(e) => setForm({ ...form, service: e.target.value })}
-                    className={`w-full bg-navy-800/60 border rounded-xl px-4 py-3 text-white focus:outline-none transition-all text-sm cursor-pointer ${
-                      errors.service ? 'border-red-500/60' : 'border-white/10 focus:border-primary-500/60'
+                    className={`w-full bg-white border rounded-xl px-4 py-3 text-[#0D1B3E] focus:outline-none transition-all text-sm cursor-pointer ${
+                      errors.service ? 'border-red-500/60' : 'border-slate-200 focus:border-sky-400'
                     } ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
                   >
-                    <option value="" className="bg-navy-800">
+                    <option value="" className="bg-white">
                       {t('اختر الهدف...', 'Select outcome...')}
                     </option>
                     {opts.map((opt) => (
-                      <option key={opt.value} value={opt.value} className="bg-navy-800">
+                      <option key={opt.value} value={opt.value} className="bg-white">
                         {opt.label}
                       </option>
                     ))}
@@ -231,7 +231,7 @@ export const LeadForm = () => {
 
               {/* Message */}
               <div className="mb-6">
-                <label className={`block text-sm font-medium text-slate-300 mb-1.5 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
+                <label className={`block text-sm font-medium text-slate-600 mb-1.5 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
                   <MessageSquare size={13} className="inline me-1.5 opacity-60" />
                   {t('صف الوضع الحالي باختصار', 'Briefly Describe the Current Situation')}
                   <span className={`text-slate-600 text-xs ms-1 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
@@ -243,7 +243,7 @@ export const LeadForm = () => {
                   onChange={(e) => setForm({ ...form, message: e.target.value })}
                   placeholder={t('مثال: عندنا واتساب واتصالات كثيرة ونحتاج رد وحجز ومتابعة تلقائية...', 'Example: We receive many WhatsApp inquiries and calls and need replies, booking, and automatic follow-up...')}
                   rows={4}
-                  className={`w-full bg-navy-800/60 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-primary-500/60 transition-all resize-none text-sm ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
+                  className={`w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-[#0D1B3E] placeholder:text-slate-400 focus:outline-none focus:border-sky-400 transition-all resize-none text-sm ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
                 />
               </div>
 

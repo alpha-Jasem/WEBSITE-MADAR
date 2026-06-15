@@ -68,12 +68,12 @@ export const ProductsSection = () => {
 
   return (
     <section id="products" ref={ref} className="relative py-20 sm:py-28 overflow-hidden"
-      style={{ background: 'linear-gradient(180deg, #05060A 0%, #080E1C 100%)' }}>
+      style={{ background: '#F1F5F9' }}>
 
       <div className="absolute inset-0 pointer-events-none"
-        style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
+        style={{ backgroundImage: 'linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
       <div className="absolute top-0 inset-x-0 h-px"
-        style={{ background: 'linear-gradient(90deg, transparent, rgba(0,191,255,0.3), rgba(16,185,129,0.2), rgba(245,158,11,0.2), transparent)' }} />
+        style={{ background: 'linear-gradient(90deg, transparent, rgba(0,191,255,0.3), rgba(16,185,129,0.2), transparent)' }} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
@@ -93,14 +93,14 @@ export const ProductsSection = () => {
             </span>
           </div>
           <h2 className={`text-3xl sm:text-5xl font-bold mb-4 ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}
-            style={{ color: 'white' }}>
+            style={{ color: '#0D1B3E' }}>
             {t(
               <><span className="gradient-text-blue">نظام تشغيل</span> مخصص لعملك<br />لا أداة عامة</>,
               <>A Dedicated <span className="gradient-text-blue">Operating System</span><br />Not a Generic Tool</>
             )}
           </h2>
           <p className={`text-base sm:text-lg max-w-xl mx-auto ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
-            style={{ color: 'rgba(255,255,255,0.5)' }}>
+            style={{ color: '#64748B' }}>
             {t(
               'كل منتج مبني خصيصاً لقطاعه — نفس البنية التحتية، لكن workflow وبيانات ولوحة تحكم مختلفة.',
               'Each product is purpose-built for its sector — same infrastructure, but different workflows, data, and dashboard.'
@@ -126,9 +126,10 @@ export const ProductsSection = () => {
                 whileHover={!isComingSoon ? { y: -6, boxShadow: `0 24px 60px ${p.glow}` } : {}}
                 className={`relative flex flex-col gap-5 p-6 rounded-2xl overflow-hidden h-full ${isComingSoon ? 'opacity-60' : ''}`}
                 style={{
-                  background: 'rgba(255,255,255,0.03)',
-                  border: `1px solid rgba(255,255,255,0.08)`,
+                  background: '#FFFFFF',
+                  border: `1px solid rgba(0,0,0,0.08)`,
                   transition: 'box-shadow 0.25s ease, transform 0.25s ease',
+                  boxShadow: '0 2px 12px rgba(13,27,62,0.06)',
                 }}
               >
                 {/* Top accent bar */}
@@ -156,11 +157,11 @@ export const ProductsSection = () => {
 
                 {/* Name + tagline */}
                 <div>
-                  <h3 className={`text-lg font-bold mb-1 text-white ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>
+                  <h3 className={`text-lg font-bold mb-1 text-[#0D1B3E] ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>
                     {content.name}
                   </h3>
                   <p className={`text-xs leading-relaxed ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
-                    style={{ color: 'rgba(255,255,255,0.5)' }}>
+                    style={{ color: '#64748B' }}>
                     {content.tagline}
                   </p>
                 </div>
@@ -174,7 +175,7 @@ export const ProductsSection = () => {
                         <Check size={9} style={{ color: p.accent }} strokeWidth={3} />
                       </div>
                       <span className={`text-xs ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
-                        style={{ color: 'rgba(255,255,255,0.6)' }}>
+                        style={{ color: '#475569' }}>
                         {f}
                       </span>
                     </div>
@@ -191,7 +192,7 @@ export const ProductsSection = () => {
                       {content.metric.value}
                     </span>
                     <span className={`text-[10px] ms-1.5 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
-                      style={{ color: 'rgba(255,255,255,0.4)' }}>
+                      style={{ color: '#94A3B8' }}>
                       {content.metric.label}
                     </span>
                   </div>
@@ -231,7 +232,7 @@ export const ProductsSection = () => {
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.8, duration: 0.5 }}
           className={`text-center text-sm mt-10 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
-          style={{ color: 'rgba(255,255,255,0.25)' }}
+          style={{ color: '#94A3B8' }}
         >
           {t(
             'كل منتج مبني، مختبر، وشغّال في الإنتاج — مو نموذج تجريبي',

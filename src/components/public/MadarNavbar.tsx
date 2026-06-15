@@ -41,8 +41,8 @@ export const MadarNavbar = ({ navLinks, subtitle = 'نظام تشغيل ذكي' 
           >
             <img src="/logo-main.png" alt="Madar.software" className="h-11 w-auto object-contain" />
             <div>
-              <p className="font-sora text-lg font-black leading-none">
-                Madar<span className="text-[#00BFFF]"> OS</span>
+              <p className="font-sora text-lg font-black leading-none text-[#0D1B3E]">
+                Madar<span className="text-[#00BFFF]">.software</span>
               </p>
               <p className="mt-1 text-[11px] font-bold text-slate-500 font-tajawal">{subtitle}</p>
             </div>

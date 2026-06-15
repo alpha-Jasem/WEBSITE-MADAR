@@ -78,8 +78,8 @@ export const Footer = () => {
                     onClick={() => scrollTo(link.href)}
                     className={`text-sm transition-colors cursor-pointer ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}
                     style={{ color: 'rgba(255,255,255,0.55)' }}
-                    onMouseEnter={e => (e.currentTarget.style.color = '#0D1B3E')}
-                    onMouseLeave={e => (e.currentTarget.style.color = '#3B5280')}
+                    onMouseEnter={e => (e.currentTarget.style.color = '#00BFFF')}
+                    onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.55)')}
                   >
                     {language === 'ar' ? link.ar : link.en}
                   </button>

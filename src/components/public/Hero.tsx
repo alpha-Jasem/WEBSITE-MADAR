@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useLayoutEffect } from 'react'
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion'
-import { ArrowRight, Play, Sparkles, Zap, Shield, TrendingUp, Car, Stethoscope } from 'lucide-react'
+import { ArrowRight, Play, Sparkles, Zap, Shield, TrendingUp, Stethoscope } from 'lucide-react'
 import { useLanguage } from '../../context/LanguageContext'
 import { openWhatsAppChat } from '../../lib/whatsapp'
 import { useTextScramble } from '../../hooks/useTextScramble'
@@ -10,21 +10,6 @@ import { DottedSurface } from '../ui/dotted-surface'
 type Msg = { from: 'user' | 'ai'; text: string; delay: number }
 
 const industries = [
-  {
-    id: 'car-wash',
-    icon: Car,
-    labelAr: 'المغسلة',
-    labelEn: 'Car Wash',
-    color: '#00BFFF',
-    msgs: [
-      { from: 'user', text: 'الغسيل خلص؟', delay: 0.2 },
-      { from: 'ai',   text: 'نعم! سيارتك جاهزة 🚗✨\nتم إرسال فاتورتك على واتساب.', delay: 0.9 },
-      { from: 'user', text: 'وصلتني الفاتورة، شكراً', delay: 1.6 },
-      { from: 'ai',   text: 'الشكر لك! 🙏\nهل تودّ تقييمنا على قوقل؟ يساعدنا كثيراً ⭐', delay: 2.3 },
-      { from: 'user', text: 'طبعاً', delay: 3.0 },
-      { from: 'ai',   text: 'جزاك الله خيراً! تفضل رابط التقييم 🔗\nmadar.software/review', delay: 3.7 },
-    ] as Msg[],
-  },
   {
     id: 'clinic',
     icon: Stethoscope,
@@ -83,25 +68,27 @@ const WaChatMockup = ({ language, t }: { language: string; t: (ar: string, en: s
 
   return (
     <div className="w-full max-w-[340px]">
-      {/* Industry tabs */}
-      <div className="flex gap-2 mb-3">
-        {industries.map((ind, i) => {
-          const Icon = ind.icon
-          return (
-            <button
-              key={ind.id}
-              onClick={() => setActive(i)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer border"
-              style={active === i
-                ? { background: ind.color + '22', borderColor: ind.color + '70', color: ind.color }
-                : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.45)' }}
-            >
-              <Icon size={11} />
-              {language === 'ar' ? ind.labelAr : ind.labelEn}
-            </button>
-          )
-        })}
-      </div>
+      {/* Industry tabs — shown only when more than one industry */}
+      {industries.length > 1 && (
+        <div className="flex gap-2 mb-3">
+          {industries.map((ind, i) => {
+            const Icon = ind.icon
+            return (
+              <button
+                key={ind.id}
+                onClick={() => setActive(i)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer border"
+                style={active === i
+                  ? { background: ind.color + '22', borderColor: ind.color + '70', color: ind.color }
+                  : { background: 'rgba(0,0,0,0.04)', borderColor: 'rgba(0,0,0,0.1)', color: '#94A3B8' }}
+              >
+                <Icon size={11} />
+                {language === 'ar' ? ind.labelAr : ind.labelEn}
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       {/* Phone frame */}
       <div
@@ -204,7 +191,7 @@ const WaChatMockup = ({ language, t }: { language: string; t: (ar: string, en: s
         style={{ background: 'rgba(0,191,255,0.08)', borderColor: 'rgba(0,191,255,0.25)' }}
       >
         <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-        <span className={`text-[10px] ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.55)' }}>
+        <span className={`text-[10px] ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: '#64748B' }}>
           {t('يرد خلال ثانية واحدة', 'Replies within 1 second')}
         </span>
       </motion.div>
@@ -266,22 +253,16 @@ export const Hero = () => {
 
       {/* Background */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <DottedSurface className="opacity-20" />
-
-        {/* Big Quantix-style aurora at top center */}
+        {/* Subtle aurora on light bg */}
         <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[600px] pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse at top, rgba(0,191,255,0.22) 0%, rgba(0,153,204,0.1) 35%, transparent 70%)', filter: 'blur(40px)' }} />
+          style={{ background: 'radial-gradient(ellipse at top, rgba(0,191,255,0.10) 0%, rgba(0,153,204,0.04) 35%, transparent 70%)', filter: 'blur(40px)' }} />
 
         {/* Secondary glow right */}
         <div className="absolute top-1/3 right-0 w-[500px] h-[500px] pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse, rgba(0,191,255,0.08) 0%, transparent 65%)', filter: 'blur(60px)' }} />
+          style={{ background: 'radial-gradient(ellipse, rgba(0,191,255,0.04) 0%, transparent 65%)', filter: 'blur(60px)' }} />
 
         {/* Grid pattern */}
-        <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(rgba(0,191,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,191,255,0.04) 1px, transparent 1px)', backgroundSize: '64px 64px' }} />
-
-        {/* Top gradient bar */}
-        <div className="absolute top-0 inset-x-0 h-px"
-          style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(0,191,255,0.6) 50%, transparent 100%)' }} />
+        <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px)', backgroundSize: '64px 64px' }} />
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
@@ -314,7 +295,7 @@ export const Hero = () => {
               transition={{ duration: 0.7, delay: 0.2 }}
               className="space-y-2"
             >
-              <h1 className={`text-4xl sm:text-5xl xl:text-6xl font-bold leading-[1.15] tracking-tight text-white ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>
+              <h1 className={`text-4xl sm:text-5xl xl:text-6xl font-bold leading-[1.15] tracking-tight text-[#0D1B3E] ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>
                 {language === 'ar' ? (
                   <>
                     {headlineAr}<br />
@@ -332,7 +313,7 @@ export const Hero = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.35 }}
-              className={`text-base sm:text-lg leading-relaxed max-w-lg ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.62)' }}
+              className={`text-base sm:text-lg leading-relaxed max-w-lg ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: '#475569' }}
             >
               {t(
                 'نركّب لك مساعد AI يرد على واتساب والمكالمات، يحجز المواعيد، يتابع المهتمين، ويحوّل كل تواصل يومي إلى حجوزات ومبيعات من لوحة واحدة — بدون توظيف موظف جديد.',
@@ -354,7 +335,7 @@ export const Hero = () => {
                   style={{ background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.22)' }}
                 >
                   <Icon size={13} style={{ color: '#00BFFF' }} />
-                  <span className={`text-xs ${language === 'ar' ? 'font-cairo' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.75)' }}>
+                  <span className={`text-xs ${language === 'ar' ? 'font-cairo' : 'font-work'}`} style={{ color: '#334155' }}>
                     {language === 'ar' ? ar : en}
                   </span>
                 </div>
@@ -384,7 +365,7 @@ export const Hero = () => {
                 whileTap={{ scale: 0.97 }}
                 onClick={() => window.open('https://noor-clinic-dashboard.netlify.app', '_blank', 'noopener,noreferrer')}
                 className={`flex items-center justify-center gap-2 px-7 py-4 rounded-xl font-medium text-base cursor-pointer border transition-all ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
-                style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)', background: 'rgba(255,255,255,0.04)' }}
+                style={{ borderColor: 'rgba(0,0,0,0.1)', color: '#334155', background: 'rgba(0,0,0,0.04)' }}
               >
                 <Play size={14} style={{ color: '#00BFFF' }} />
                 <span>{t('شاهد الداشبورد', 'View Dashboard')}</span>
@@ -400,10 +381,10 @@ export const Hero = () => {
             >
               {stats.map(({ val, suffix, ar, en }, i) => (
                 <div key={i} className="flex flex-col gap-0.5">
-                  <span className={`text-2xl font-bold text-white ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>
+                  <span className={`text-2xl font-bold text-[#0D1B3E] ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>
                     <Counter to={val} suffix={suffix} />
                   </span>
-                  <span className={`text-xs ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  <span className={`text-xs ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: '#94A3B8' }}>
                     {language === 'ar' ? ar : en}
                   </span>
                 </div>
