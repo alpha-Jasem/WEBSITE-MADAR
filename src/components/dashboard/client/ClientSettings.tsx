@@ -10,6 +10,7 @@ import { usePlanGate } from '../../../hooks/usePlanGate'
 import { FeatureLock } from '../../dash/FeatureLock'
 import { CarWashLaunchChecklist } from './CarWashLaunchChecklist'
 import { ClientPageHeader } from './ClientUI'
+import { useDailyUsage } from '../../../hooks/useDailyUsage'
 
 type SettingsTab = 'account' | 'carwash' | 'finance' | 'print' | 'team'
 
@@ -27,6 +28,7 @@ const CW_PAGES = [
 
 export const ClientSettings = () => {
   const { company, companyId } = useClientCompany()
+  const dailyUsage = useDailyUsage(companyId, company?.plan ?? 'starter')
   const [tab, setTab] = useState<SettingsTab>('account')
 
   const template = getClientIndustryTemplate(company?.business_type, company?.industry)
@@ -337,33 +339,55 @@ export const ClientSettings = () => {
                 </div>
               ))}
 
-              {/* Messages usage bar */}
+              {/* Usage — matches sidebar ring */}
               {(() => {
-                const used  = company.messages_used  ?? 0
-                const limit = company.message_limit  ?? 2000
+                const used      = company.messages_used  || 0
+                const limit     = company.message_limit  || 0
                 const remaining = Math.max(0, limit - used)
-                const pct   = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0
-                const barColor = pct >= 95 ? '#EF4444' : pct >= 85 ? '#F59E0B' : '#0EA5E9'
+                const msgPct    = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0
+                const { maxPct, ringColor, cars, whatsapp, limits } = dailyUsage
+                const circumference = 2 * Math.PI * 17
                 return (
-                  <div className="pt-3">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs text-slate-500 font-tajawal">المتبقي من الباقة</span>
-                      <span className="text-xs font-bold font-work" style={{ color: barColor }}>
-                        {remaining.toLocaleString('ar-SA')} رسالة
-                      </span>
+                  <div className="pt-3 space-y-3">
+                    {/* Mini ring + daily stat — matches sidebar */}
+                    <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                      <svg width="40" height="40" style={{ flexShrink: 0, transform: 'rotate(-90deg)' }}>
+                        <circle cx="20" cy="20" r="17" fill="none" stroke="#E2E8F0" strokeWidth="3" />
+                        <circle cx="20" cy="20" r="17" fill="none" stroke={ringColor} strokeWidth="3"
+                          strokeDasharray={`${circumference}`}
+                          strokeDashoffset={`${circumference * (1 - maxPct / 100)}`}
+                          strokeLinecap="round"
+                          style={{ transition: 'stroke-dashoffset 0.5s ease' }} />
+                      </svg>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-slate-500 font-tajawal">نشاط اليوم</span>
+                          <span className="text-xs font-bold font-sora" style={{ color: ringColor }}>{maxPct}%</span>
+                        </div>
+                        <div className="text-[11px] text-slate-400 font-tajawal mt-0.5">
+                          {cars} سيارة · {whatsapp} رسالة واتساب (من {limits.cars} / {limits.whatsapp})
+                        </div>
+                      </div>
                     </div>
-                    <div className="h-2 rounded-full overflow-hidden mb-1" style={{ background: '#E2E8F0' }}>
-                      <div className="h-full rounded-full transition-all duration-700"
-                        style={{ width: `${pct}%`, background: barColor }} />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] text-slate-400 font-tajawal">
-                        {used.toLocaleString('ar-SA')} مستخدمة
-                      </span>
-                      <span className="text-[11px] text-slate-400 font-tajawal">
-                        من {limit.toLocaleString('ar-SA')} ({pct}%)
-                      </span>
-                    </div>
+                    {/* Monthly quota bar */}
+                    {limit > 0 && (
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xs text-slate-500 font-tajawal">رسائل الشهر</span>
+                          <span className="text-xs font-bold font-sora" style={{ color: msgPct >= 85 ? '#EF4444' : '#0EA5E9' }}>
+                            {remaining.toLocaleString('en-US')} متبقية
+                          </span>
+                        </div>
+                        <div className="h-2 rounded-full overflow-hidden mb-1" style={{ background: '#E2E8F0' }}>
+                          <div className="h-full rounded-full transition-all duration-700"
+                            style={{ width: `${msgPct}%`, background: msgPct >= 85 ? '#EF4444' : '#0EA5E9' }} />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] text-slate-400 font-tajawal">{used.toLocaleString('en-US')} مستخدمة</span>
+                          <span className="text-[11px] text-slate-400 font-tajawal">من {limit.toLocaleString('en-US')} ({msgPct}%)</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )
               })()}

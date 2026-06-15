@@ -211,7 +211,12 @@ export function CarWashLeads() {
   })
 
   const openAdd = () => { setCrudForm({ name: '', phone: '' }); setShowAddModal(true) }
-  const openEdit = (c: CWCustomer) => { setEditTarget(c); setCrudForm({ name: c.name || '', phone: c.phone }); }
+  const openEdit = (c: CWCustomer) => {
+    setEditTarget(c)
+    const raw = c.phone.replace(/\D/g, '')
+    const displayPhone = raw.startsWith('966') ? '+' + raw : raw.startsWith('0') ? '+966' + raw.slice(1) : '+966' + raw
+    setCrudForm({ name: c.name || '', phone: displayPhone })
+  }
 
   const openHistory = async (c: CWCustomer) => {
     setHistoryCustomer(c)
