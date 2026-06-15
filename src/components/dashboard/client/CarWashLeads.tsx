@@ -719,40 +719,51 @@ export function CarWashLeads() {
 
       {/* Visit History Modal */}
       {historyCustomer && (
-        <div onClick={e => e.target === e.currentTarget && setHistoryCustomer(null)}
-          style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div role="dialog" aria-modal="true" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 20, width: '100%', maxWidth: 480, maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 60px rgba(15,23,42,0.15)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid #E2E8F0' }}>
+        <div
+          onClick={e => e.target === e.currentTarget && setHistoryCustomer(null)}
+          className="fixed inset-0 flex items-center justify-center p-4"
+          style={{ zIndex: 9999, background: 'rgba(0,0,0,0.7)' }}
+          dir="rtl"
+        >
+          <div role="dialog" aria-modal="true" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 20, width: '100%', maxWidth: 500, maxHeight: '80vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 25px 60px rgba(0,0,0,0.4)' }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid #E2E8F0', flexShrink: 0 }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>سجل الزيارات</h3>
-                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>{historyCustomer.name || historyCustomer.phone} — {historyCustomer.total_visits} زيارة</p>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>سجل الزيارات</h3>
+                <p style={{ margin: '3px 0 0', fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>
+                  {historyCustomer.name || historyCustomer.phone} — {historyCustomer.total_visits} زيارة
+                </p>
               </div>
-              <button onClick={() => setHistoryCustomer(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
+              <button onClick={() => setHistoryCustomer(null)} style={{ background: '#F1F5F9', border: 'none', borderRadius: 10, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748B' }}>
+                <X size={16} />
+              </button>
             </div>
-            <div style={{ overflowY: 'auto', flex: 1, padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }} dir="rtl">
+
+            {/* Visit list */}
+            <div style={{ overflowY: 'auto', flex: 1, padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               {historyLoading ? (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 120, gap: 8 }}>
                   <Loader2 size={18} style={{ animation: 'spin 0.8s linear infinite', color: '#6366F1' }} />
                   <span style={{ color: '#64748B', fontFamily: 'Tajawal, sans-serif', fontSize: 13 }}>جاري التحميل...</span>
                 </div>
               ) : historyVisits.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '32px 0', color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', fontSize: 13 }}>لا توجد زيارات مسجّلة</div>
+                <div style={{ textAlign: 'center', padding: '40px 0', color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', fontSize: 13 }}>لا توجد زيارات مسجّلة</div>
               ) : historyVisits.map((v, i) => (
-                <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: i === 0 ? 'rgba(99,102,241,0.04)' : '#F8FAFC', borderRadius: 12, border: '1px solid #E2E8F0' }}>
-                  <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Car size={15} color="#6366F1" />
+                <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px', background: i === 0 ? 'rgba(99,102,241,0.05)' : '#F8FAFC', borderRadius: 14, border: `1px solid ${i === 0 ? 'rgba(99,102,241,0.15)' : '#E2E8F0'}` }}>
+                  <div style={{ width: 38, height: 38, borderRadius: 11, background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Car size={16} color="#6366F1" />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#0F172A', fontFamily: 'Cairo, sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>
                       {v.service_name || 'خدمة مغسلة'}
                     </p>
-                    <p style={{ margin: '2px 0 0', fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>
+                    <p style={{ margin: '3px 0 0', fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>
                       {new Date(v.created_at).toLocaleDateString('ar-SA', { year: 'numeric', month: 'short', day: 'numeric' })}
                     </p>
                   </div>
                   <div style={{ textAlign: 'left', flexShrink: 0 }}>
-                    <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#10B981', fontFamily: 'Sora, sans-serif' }}>{v.total_amount ? `${Number(v.total_amount).toFixed(0)} ر.س` : '—'}</p>
-                    <p style={{ margin: '2px 0 0', fontSize: 10, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>{v.payment_method || ''}</p>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#10B981', fontFamily: 'Sora, sans-serif' }}>{v.total_amount ? `${Number(v.total_amount).toFixed(0)} ر.س` : '—'}</p>
+                    <p style={{ margin: '3px 0 0', fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>{v.payment_method || ''}</p>
                   </div>
                 </div>
               ))}
