@@ -30,6 +30,7 @@ const ClientPortal      = lazy(() => import('./pages/ClientPortal').then(m => ({
 const SolarEngine       = lazy(() => import('./pages/SolarEngine').then(m => ({ default: m.SolarEngine })))
 const SelfCheckIn       = lazy(() => import('./pages/SelfCheckIn').then(m => ({ default: m.SelfCheckIn })))
 const CarWashStatus     = lazy(() => import('./pages/CarWashStatus').then(m => ({ default: m.CarWashStatus })))
+const LoyaltyCard       = lazy(() => import('./pages/LoyaltyCard').then(m => ({ default: m.LoyaltyCard })))
 
 // ClinicOS
 const ClinicOSLoginPage    = lazy(() => import('./pages/clinicOS/ClinicOSLogin').then(m => ({ default: m.ClinicOSLogin })))
@@ -127,6 +128,7 @@ function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/trial" element={<TrialSignup />} />
             <Route path="/checkin/:token" element={<SelfCheckIn />} />
+            <Route path="/card/:customerId" element={<LoyaltyCard />} />
             <Route path="/status/:token/:queueId" element={<CarWashStatus />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route
