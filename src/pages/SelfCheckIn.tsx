@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { CheckCircle2, CreditCard, ExternalLink, Loader2, MessageCircle, Phone, RefreshCw, ShieldCheck, Sparkles, UserRound, WalletCards } from 'lucide-react'
+import { CheckCircle2, CreditCard, ExternalLink, Loader2, MessageCircle, RefreshCw, ShieldCheck, Sparkles, UserRound, WalletCards } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { calcVAT } from '../lib/vatUtils'
 import { normalizePhone } from '../lib/phoneUtils'
@@ -184,6 +184,7 @@ export function SelfCheckIn() {
   const [submitting, setSubmitting] = useState(false)
   const [ticketCode, setTicketCode] = useState('')
   const [queueId, setQueueId] = useState('')
+  const [loyaltyCustomerId, setLoyaltyCustomerId] = useState('')
   const [approvalPending, setApprovalPending] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [purchaseMode, setPurchaseMode] = useState<'single' | 'membership'>('single')
@@ -474,6 +475,12 @@ export function SelfCheckIn() {
       setTicketCode(edgeResult.ticket_code)
       setQueueId(edgeResult.queue_id)
       setApprovalPending(!!edgeResult.approval_pending)
+      if (edgeResult.customer_id) setLoyaltyCustomerId(edgeResult.customer_id)
+      else {
+        const phone = normalizePhone(form.phone)
+        supabase.from('cw_customers').select('id').eq('company_id', company.id).eq('phone', phone).maybeSingle()
+          .then(({ data }) => { if (data?.id) setLoyaltyCustomerId(data.id) })
+      }
       setSubmitting(false)
       return
     }
@@ -502,15 +509,17 @@ export function SelfCheckIn() {
       .maybeSingle()
 
     if (existingCustomer?.id) {
+      setLoyaltyCustomerId(existingCustomer.id)
       await supabase.from('cw_customers').update({ name: customerName || knownCustomer?.name || null }).eq('id', existingCustomer.id)
     } else {
-      await supabase.from('cw_customers').insert({
+      const { data: newCust } = await supabase.from('cw_customers').insert({
         company_id: company.id,
         phone,
         name: customerName,
         total_visits: 0,
         welcome_sent: true,
-      })
+      }).select('id').single()
+      if (newCust?.id) setLoyaltyCustomerId(newCust.id)
       fireRegistration({
         phone,
         customer_name: customerName,
@@ -605,6 +614,12 @@ export function SelfCheckIn() {
             <ExternalLink size={16} />
             متابعة الحالة Live
           </Link>
+          {loyaltyCustomerId && (
+            <Link className="self-checkin-status-link" to={`/card/${loyaltyCustomerId}`} style={{ marginTop: 8, background: 'linear-gradient(135deg,#0D1B3E,#1e3a5f)', color: '#fff', border: 'none' }}>
+              <WalletCards size={16} />
+              بطاقة الولاء الخاصة بك
+            </Link>
+          )}
           <img className="self-checkin-mini-qr" src={qrUrl(statusUrl, 150)} alt="QR" />
         </section>
       </main>
