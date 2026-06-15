@@ -237,6 +237,12 @@ export function SelfCheckIn() {
   const goToDetails = async () => {
     if (!company || checkingPhone) return
     setSubmitError('')
+    const firstName = sanitizeNameText(form.first_name).trim()
+    const lastName = sanitizeNameText(form.last_name).trim()
+    if (!firstName || !lastName) {
+      setSubmitError('أدخل الاسم الأول والاسم الأخير.')
+      return
+    }
     if (!isValidSaudiMobile(form.phone)) {
       setSubmitError('اكتب رقم جوال سعودي صحيح مثل 05XXXXXXXX.')
       return
@@ -245,14 +251,8 @@ export function SelfCheckIn() {
     setCheckingPhone(true)
     const edgeResult = await callCheckinFunction({ action: 'lookup_customer', token, phone })
     const customer = edgeResult?.customer as KnownCustomer | null
-    if (customer?.id) {
-      const nm = splitName(customer.name)
-      setKnownCustomer(customer)
-      setForm(f => ({ ...f, phone, first_name: nm.first, last_name: nm.last }))
-    } else {
-      setKnownCustomer(null)
-      setForm(f => ({ ...f, phone, first_name: '', last_name: '' }))
-    }
+    setKnownCustomer(customer?.id ? customer : null)
+    setForm(f => ({ ...f, phone }))
     setCheckingPhone(false)
     setStep('details')
   }
@@ -286,12 +286,8 @@ export function SelfCheckIn() {
     const lastName = sanitizeNameText(form.last_name).trim()
     const customerName = [firstName, lastName].filter(Boolean).join(' ').trim()
 
-    if (!isValidSaudiMobile(form.phone)) {
-      setSubmitError('اكتب رقم جوال سعودي صحيح مثل 05XXXXXXXX.')
-      return
-    }
-    if (!knownCustomer && (!firstName || !lastName)) {
-      setSubmitError('للعميل الجديد اكتب الاسم الأول والاسم الأخير.')
+    if (!firstName && !lastName && !knownCustomer?.name) {
+      setSubmitError('أدخل الاسم.')
       return
     }
 
@@ -489,13 +485,29 @@ export function SelfCheckIn() {
         <form className="self-checkin-card" onSubmit={submit}>
           <div className="self-checkin-form-head">
             <span>{step === 'phone' ? 'الخطوة 1 من 2' : 'الخطوة 2 من 2'}</span>
-            <strong>{step === 'phone' ? 'ابدأ برقم الجوال' : knownCustomer ? 'أهلًا بعودتك' : 'بيانات سريعة'}</strong>
+            <strong>{step === 'phone' ? 'بياناتك' : 'اختر الخدمة'}</strong>
           </div>
 
           {step === 'phone' ? (
             <>
+              <div className="self-checkin-two">
+                <label>
+                  الاسم الأول
+                  <input value={form.first_name} onChange={e => setForm({ ...form, first_name: sanitizeNameText(e.target.value) })} required type="text" placeholder="مثال: أحمد" autoFocus />
+                </label>
+                <label>
+                  الاسم الأخير
+                  <input value={form.last_name} onChange={e => setForm({ ...form, last_name: sanitizeNameText(e.target.value) })} required type="text" placeholder="مثال: الحربي" />
+                </label>
+              </div>
+
               <label>
-                رقم الجوال السعودي
+                رقم اللوحة <span className="self-checkin-optional">اختياري</span>
+                <input value={form.plate} onChange={e => setForm({ ...form, plate: e.target.value.replace(/[^\p{L}\d\s-]/gu, '').toUpperCase().slice(0, 12) })} placeholder="مثال: ABC 1234" />
+              </label>
+
+              <label>
+                رقم الجوال
                 <input
                   value={form.phone}
                   onChange={e => setForm({ ...form, phone: sanitizeDigits(e.target.value, 12) })}
@@ -505,21 +517,22 @@ export function SelfCheckIn() {
                   dir="ltr"
                 />
               </label>
+
               {submitError && <p className="self-checkin-error">{submitError}</p>}
               <button type="button" onClick={goToDetails} disabled={checkingPhone}>
                 {checkingPhone ? <Loader2 className="animate-spin" size={18} /> : <UserRound size={18} />}
-                {checkingPhone ? 'جاري التحقق...' : 'متابعة'}
+                {checkingPhone ? 'جاري...' : 'التالي — اختيار الخدمة'}
               </button>
             </>
           ) : (
             <>
-              <div className={`self-checkin-customer ${knownCustomer ? 'known' : ''}`}>
+              <div className="self-checkin-customer known">
                 <UserRound size={18} />
                 <div>
-                  <strong>{knownCustomer ? (knownCustomer.name || 'عميل سابق') : 'عميل جديد'}</strong>
-                  <span>{knownCustomer ? `${knownCustomer.total_visits || 0} زيارة سابقة` : 'نحتاج الاسم فقط لأول مرة'}</span>
+                  <strong>{[form.first_name, form.last_name].filter(Boolean).join(' ') || knownCustomer?.name || 'عميل'}</strong>
+                  <span>{form.phone}{form.plate ? ` · ${form.plate}` : ''}</span>
                 </div>
-                <button type="button" onClick={() => { setStep('phone'); setSubmitError('') }}>تغيير الرقم</button>
+                <button type="button" onClick={() => { setStep('phone'); setSubmitError('') }}>تعديل</button>
               </div>
 
               {knownCustomer && (hasActiveMembership || walletBalance > 0 || Number(knownCustomer.free_washes_available || 0) > 0) && (
@@ -528,14 +541,14 @@ export function SelfCheckIn() {
                     <div>
                       <WalletCards size={17} />
                       <span>اشتراك نشط</span>
-                      <strong>{knownCustomer.active_membership?.plan_name || 'باقة شهرية'} - {knownCustomer.active_membership?.remaining_washes || 0} غسلات متبقية</strong>
+                      <strong>{knownCustomer.active_membership?.plan_name || 'باقة شهرية'} · {knownCustomer.active_membership?.remaining_washes || 0} غسلات متبقية</strong>
                     </div>
                   )}
                   {walletBalance > 0 && (
                     <div>
                       <CreditCard size={17} />
                       <span>رصيد المحفظة</span>
-                      <strong>{money(walletBalance)} ر.س{walletCoversSelectedService ? ' يكفي للخدمة المختارة' : ''}</strong>
+                      <strong>{money(walletBalance)} ر.س</strong>
                     </div>
                   )}
                   {Number(knownCustomer.free_washes_available || 0) > 0 && (
@@ -545,118 +558,66 @@ export function SelfCheckIn() {
                       <strong>{knownCustomer.free_washes_available} غسلة مجانية متاحة</strong>
                     </div>
                   )}
-                  <p>سيظهر رقمك مباشرة للفريق، ويتم الخصم من الاشتراك أو المحفظة عند التسليم إذا كانت الميزة مفعلة في المغسلة.</p>
                 </div>
               )}
-
-              {!knownCustomer && (
-                <div className="self-checkin-two">
-                  <label>
-                    الاسم الأول
-                    <input value={form.first_name} onChange={e => setForm({ ...form, first_name: sanitizeNameText(e.target.value) })} required type="text" placeholder="مثال: أحمد" />
-                  </label>
-                  <label>
-                    الاسم الأخير
-                    <input value={form.last_name} onChange={e => setForm({ ...form, last_name: sanitizeNameText(e.target.value) })} required type="text" placeholder="مثال: الحربي" />
-                  </label>
-                </div>
-              )}
-
-              <label>
-                لوحة السيارة <span className="self-checkin-optional">اختياري</span>
-                <input value={form.plate} onChange={e => setForm({ ...form, plate: e.target.value.replace(/[^\p{L}\d\s-]/gu, '').toUpperCase().slice(0, 12) })} placeholder="إذا كانت سهلة عليك" />
-              </label>
 
               {membershipFeatureEnabled && membershipPlans.length > 0 && (
-                <div className="self-checkin-choice">
-                  <div className="self-checkin-service-head">
-                    <strong>اختر طريقة البداية</strong>
-                    <span>غسلة اليوم أو اشتراك شهري</span>
-                  </div>
-                  <div className="self-checkin-mode-tabs" role="tablist" aria-label="طريقة الشراء">
-                    <button type="button" className={purchaseMode === 'single' ? 'active' : ''} onClick={() => setPurchaseMode('single')}>
-                      <CreditCard size={17} />
-                      غسلة واحدة
-                    </button>
-                    <button type="button" className={purchaseMode === 'membership' ? 'active' : ''} onClick={() => setPurchaseMode('membership')}>
-                      <WalletCards size={17} />
-                      اشتراك شهري
-                    </button>
-                  </div>
+                <div className="self-checkin-mode-tabs" role="tablist">
+                  <button type="button" className={purchaseMode === 'single' ? 'active' : ''} onClick={() => setPurchaseMode('single')}>
+                    <CreditCard size={17} /> غسلة واحدة
+                  </button>
+                  <button type="button" className={purchaseMode === 'membership' ? 'active' : ''} onClick={() => setPurchaseMode('membership')}>
+                    <WalletCards size={17} /> اشتراك شهري
+                  </button>
                 </div>
               )}
 
               <div>
                 <div className="self-checkin-service-head">
                   <strong>{purchaseMode === 'membership' ? 'اختر باقة الاشتراك' : 'اختر الخدمة'}</strong>
-                  <span>{purchaseMode === 'membership' ? `${membershipPlans.length} باقات متاحة` : `${services.length} خدمات متاحة`}</span>
+                  <span>{purchaseMode === 'membership' ? `${membershipPlans.length} باقات` : `${services.length} خدمات`}</span>
                 </div>
                 {purchaseMode === 'membership' ? (
                   <div className="self-checkin-memberships">
-                    {membershipPlans.map(plan => {
-                      const active = selectedPlanId === plan.id
-                      return (
-                        <button
-                          key={plan.id}
-                          type="button"
-                          className={active ? 'active' : ''}
-                          onClick={() => setSelectedPlanId(plan.id)}
-                        >
-                          <span>{plan.name}</span>
-                          <strong>{Number(plan.price || 0).toFixed(0)} ر.س / شهر</strong>
-                          <small>{plan.washes_per_month} غسلات شهرية</small>
-                        </button>
-                      )
-                    })}
+                    {membershipPlans.map(plan => (
+                      <button key={plan.id} type="button" className={selectedPlanId === plan.id ? 'active' : ''} onClick={() => setSelectedPlanId(plan.id)}>
+                        <span>{plan.name}</span>
+                        <strong>{Number(plan.price || 0).toFixed(0)} ر.س / شهر</strong>
+                        <small>{plan.washes_per_month} غسلات شهرية</small>
+                      </button>
+                    ))}
                   </div>
                 ) : (
-                <div className="self-checkin-services">
-                  {services.map(service => {
-                    const active = form.service_ids.includes(service.id)
-                    return (
-                      <button
-                        key={service.id}
-                        type="button"
-                        className={active ? 'active' : ''}
-                        onClick={() => toggleService(service)}
-                      >
+                  <div className="self-checkin-services">
+                    {services.map(service => (
+                      <button key={service.id} type="button" className={form.service_ids.includes(service.id) ? 'active' : ''} onClick={() => toggleService(service)}>
                         <span>{service.name}</span>
                         <strong>{Number(service.price || 0).toFixed(0)} ر.س</strong>
                       </button>
-                    )
-                  })}
-                </div>
+                    ))}
+                  </div>
                 )}
               </div>
-
-              {purchaseMode === 'membership' && selectedPlan && (
-                <div className="self-checkin-price membership">
-                  <span>الاشتراك المختار</span>
-                  <strong>{Number(selectedPlan.price || 0).toFixed(2)} ر.س</strong>
-                  <small>{selectedPlan.washes_per_month} غسلات شهريا. الدفع الإلكتروني سيظهر في الخطوة التالية.</small>
-                </div>
-              )}
 
               {purchaseMode === 'single' && selectedServices.length > 0 && (
                 <div className="self-checkin-price">
                   <span>الإجمالي</span>
                   <strong>{vat.total_amount.toFixed(2)} ر.س</strong>
                   <small>{selectedServiceName}</small>
-                  {company.tax_enabled && <small>حسب إعدادات ضريبة VAT في المغسلة</small>}
                 </div>
               )}
 
               {submitError && <p className="self-checkin-error">{submitError}</p>}
 
               {purchaseMode === 'membership' ? (
-                <button type="button" disabled={!selectedPlan} onClick={() => setSubmitError('اختيار الباقة جاهز. الخطوة التالية ستكون ربط الدفع الإلكتروني حتى يشتري العميل الاشتراك مباشرة من الجوال.')}>
+                <button type="button" disabled={!selectedPlan} onClick={() => setSubmitError('اختيار الباقة جاهز. الخطوة التالية ستكون ربط الدفع الإلكتروني.')}>
                   اختيار الباقة والمتابعة للدفع
                 </button>
               ) : (
-              <button type="submit" disabled={submitting || services.length === 0 || selectedServices.length === 0}>
-                {submitting ? <Loader2 className="animate-spin" size={18} /> : null}
-                تسجيل السيارة وإصدار الرقم
-              </button>
+                <button type="submit" disabled={submitting || selectedServices.length === 0}>
+                  {submitting ? <Loader2 className="animate-spin" size={18} /> : null}
+                  تسجيل السيارة وإصدار الرقم
+                </button>
               )}
             </>
           )}
