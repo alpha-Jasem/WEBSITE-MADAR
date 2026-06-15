@@ -46,7 +46,8 @@ Deno.serve(async (req: Request) => {
     return json({ error: 'unauthorized', hint: 'API key is invalid or revoked' }, 401)
   }
 
-  const companyId = keyRow.company_id as string
+  const companyId = keyRow.company_id as string | null
+  const isAdminKey = companyId === null
   const perms = (keyRow.permissions ?? []) as string[]
   const canRead = perms.includes('read:all') || perms.includes('read:customers') || perms.includes('read:visits')
   const canWrite = perms.includes('write:all') || perms.includes('write:visits') || perms.includes('write:customers')
@@ -66,7 +67,8 @@ Deno.serve(async (req: Request) => {
     return json({
       api: 'Madar OS REST API',
       version: '1.0',
-      company_id: companyId,
+      scope: isAdminKey ? 'admin' : 'company',
+      company_id: companyId ?? 'all',
       permissions: perms,
       endpoints: [
         'GET /customers', 'GET /customers/:id',
@@ -85,10 +87,10 @@ Deno.serve(async (req: Request) => {
     const limit = Math.min(Number(url.searchParams.get('limit') ?? 200), 1000)
     const search = url.searchParams.get('search') ?? ''
     let q = db.from('cw_customers')
-      .select('id,name,phone,total_visits,loyalty_tier,last_visit_at,created_at,car_type,plate')
-      .eq('company_id', companyId)
+      .select('id,name,phone,total_visits,loyalty_tier,last_visit_at,created_at,car_type,plate,company_id')
       .order('last_visit_at', { ascending: false })
       .limit(limit)
+    if (!isAdminKey) q = q.eq('company_id', companyId!)
     if (search) q = q.or(`name.ilike.%${search}%,phone.ilike.%${search}%`)
     const { data, error } = await q
     if (error) return json({ error: error.message }, 500)
@@ -99,13 +101,15 @@ Deno.serve(async (req: Request) => {
   const custMatch = path.match(/^\/customers\/([^/]+)$/)
   if (custMatch && method === 'GET') {
     if (!canRead) return json({ error: 'forbidden' }, 403)
-    const { data: cust } = await db.from('cw_customers')
-      .select('*').eq('id', custMatch[1]).eq('company_id', companyId).single()
+    let custQ = db.from('cw_customers').select('*').eq('id', custMatch[1])
+    if (!isAdminKey) custQ = custQ.eq('company_id', companyId!)
+    const { data: cust } = await custQ.single()
     if (!cust) return json({ error: 'not_found' }, 404)
-    const { data: visits } = await db.from('cw_visits')
+    let visitsQ = db.from('cw_visits')
       .select('id,service_name,total_amount,payment_method,created_at')
-      .eq('company_id', companyId).eq('phone', cust.phone)
-      .order('created_at', { ascending: false }).limit(30)
+      .eq('phone', cust.phone).order('created_at', { ascending: false }).limit(30)
+    if (!isAdminKey) visitsQ = visitsQ.eq('company_id', companyId!)
+    const { data: visits } = await visitsQ
     return json({ data: { ...cust, visits: visits ?? [] } })
   }
 
@@ -114,13 +118,15 @@ Deno.serve(async (req: Request) => {
     if (!canWrite) return json({ error: 'forbidden' }, 403)
     const body = await req.json().catch(() => ({}))
     if (!body.phone) return json({ error: 'phone is required' }, 400)
+    if (isAdminKey && !body.company_id) return json({ error: 'company_id is required for admin keys' }, 400)
+    const targetCompany = isAdminKey ? body.company_id : companyId!
     const phone = String(body.phone).replace(/\D/g, '')
     const normalizedPhone = phone.startsWith('966') ? phone : phone.startsWith('0') ? `966${phone.slice(1)}` : `966${phone}`
     const { data: existing } = await db.from('cw_customers')
-      .select('id').eq('company_id', companyId).eq('phone', normalizedPhone).maybeSingle()
+      .select('id').eq('company_id', targetCompany).eq('phone', normalizedPhone).maybeSingle()
     if (existing) return json({ error: 'customer_exists', id: existing.id }, 409)
     const { data, error } = await db.from('cw_customers').insert({
-      company_id: companyId,
+      company_id: targetCompany,
       phone: normalizedPhone,
       name: body.name ?? null,
       total_visits: 0,
@@ -134,13 +140,13 @@ Deno.serve(async (req: Request) => {
   if (path === '/visits' && method === 'GET') {
     if (!canRead) return json({ error: 'forbidden' }, 403)
     const limit = Math.min(Number(url.searchParams.get('limit') ?? 100), 1000)
-    const from = url.searchParams.get('from') // YYYY-MM-DD
+    const from = url.searchParams.get('from')
     const to   = url.searchParams.get('to')
     let q = db.from('cw_visits')
-      .select('id,customer_name,phone,plate,service_name,total_amount,subtotal,vat_amount,payment_method,created_at,worker_id')
-      .eq('company_id', companyId)
+      .select('id,customer_name,phone,plate,service_name,total_amount,subtotal,vat_amount,payment_method,created_at,worker_id,company_id')
       .order('created_at', { ascending: false })
       .limit(limit)
+    if (!isAdminKey) q = q.eq('company_id', companyId!)
     if (from) q = q.gte('created_at', from)
     if (to)   q = q.lte('created_at', to + 'T23:59:59')
     const { data, error } = await q
@@ -155,8 +161,9 @@ Deno.serve(async (req: Request) => {
     if (!body.service_name || !body.total_amount) {
       return json({ error: 'service_name and total_amount are required' }, 400)
     }
+    if (isAdminKey && !body.company_id) return json({ error: 'company_id is required for admin keys' }, 400)
     const { data, error } = await db.from('cw_visits').insert({
-      company_id: companyId,
+      company_id: isAdminKey ? body.company_id : companyId!,
       customer_name: body.customer_name ?? null,
       phone: body.phone ?? null,
       plate: body.plate ?? null,
@@ -175,11 +182,12 @@ Deno.serve(async (req: Request) => {
   // ── GET /queue
   if (path === '/queue' && method === 'GET') {
     if (!canRead) return json({ error: 'forbidden' }, 403)
-    const { data, error } = await db.from('cw_queue')
-      .select('id,customer_name,phone,plate,car_type,service_name,status,created_at,delivered_at')
-      .eq('company_id', companyId)
+    let q = db.from('cw_queue')
+      .select('id,customer_name,phone,plate,car_type,service_name,status,created_at,delivered_at,company_id')
       .not('status', 'in', '("delivered","cancelled")')
       .order('created_at')
+    if (!isAdminKey) q = q.eq('company_id', companyId!)
+    const { data, error } = await q
     if (error) return json({ error: error.message }, 500)
     return json({ data, count: data?.length ?? 0 })
   }
@@ -213,10 +221,11 @@ Deno.serve(async (req: Request) => {
     } else {
       fromDate = now.toISOString().slice(0, 10)
     }
-    const { data: visits } = await db.from('cw_visits')
-      .select('total_amount,payment_method,is_free_wash')
-      .eq('company_id', companyId)
+    let rq = db.from('cw_visits')
+      .select('total_amount,payment_method,is_free_wash,company_id')
       .gte('created_at', fromDate)
+    if (!isAdminKey) rq = rq.eq('company_id', companyId!)
+    const { data: visits } = await rq
     const revenue = (visits ?? []).reduce((s, v) => s + Number(v.total_amount || 0), 0)
     const byPayment: Record<string, number> = {}
     for (const v of visits ?? []) {

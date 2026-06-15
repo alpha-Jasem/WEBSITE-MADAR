@@ -57,13 +57,11 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string
 export function AdminAPI() {
   const [apiKeys, setApiKeys]     = useState<ApiKey[]>([])
   const [webhooks, setWebhooks]   = useState<WebhookEndpoint[]>([])
-  const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading]     = useState(true)
   const [activeTab, setActiveTab] = useState<'keys' | 'webhooks'>('keys')
 
   // New key form
   const [showNewKey, setShowNewKey]       = useState(false)
-  const [newKeyCompany, setNewKeyCompany] = useState('')
   const [newKeyName, setNewKeyName]       = useState('مفتاح API')
   const [newKeyPerms, setNewKeyPerms]     = useState<string[]>(['read:all'])
   const [generatingKey, setGeneratingKey] = useState(false)
@@ -72,7 +70,6 @@ export function AdminAPI() {
 
   // New webhook form
   const [showNewWebhook, setShowNewWebhook]         = useState(false)
-  const [newWhCompany, setNewWhCompany]             = useState('')
   const [newWhUrl, setNewWhUrl]                     = useState('')
   const [newWhEvents, setNewWhEvents]               = useState<string[]>(['visit.created'])
   const [savingWebhook, setSavingWebhook]           = useState(false)
@@ -81,25 +78,23 @@ export function AdminAPI() {
 
   const load = async () => {
     setLoading(true)
-    const [keysRes, webhooksRes, companiesRes] = await Promise.all([
+    const [keysRes, webhooksRes] = await Promise.all([
       supabase.from('api_keys').select('*, company:companies(name)').order('created_at', { ascending: false }),
       supabase.from('webhook_endpoints').select('*, company:companies(name)').order('created_at', { ascending: false }),
-      supabase.from('companies').select('id, name').eq('status', 'active').order('name').limit(200),
     ])
     setApiKeys((keysRes.data ?? []) as ApiKey[])
     setWebhooks((webhooksRes.data ?? []) as WebhookEndpoint[])
-    setCompanies((companiesRes.data ?? []) as Company[])
     setLoading(false)
   }
 
   useEffect(() => { load() }, [])
 
   const createKey = async () => {
-    if (!newKeyCompany || !newKeyPerms.length) return
+    if (!newKeyPerms.length) return
     setGeneratingKey(true)
     const { raw, hash, prefix } = await generateApiKey()
     const { error } = await supabase.from('api_keys').insert({
-      company_id: newKeyCompany,
+      company_id: null,
       name: newKeyName.trim() || 'مفتاح API',
       key_prefix: prefix,
       key_hash: hash,
@@ -110,7 +105,7 @@ export function AdminAPI() {
     if (error) { alert('خطأ: ' + error.message); return }
     setRevealedKey(raw)
     setShowNewKey(false)
-    setNewKeyCompany(''); setNewKeyName('مفتاح API'); setNewKeyPerms(['read:all'])
+    setNewKeyName('مفتاح API'); setNewKeyPerms(['read:all'])
     load()
   }
 
@@ -129,17 +124,17 @@ export function AdminAPI() {
   }
 
   const createWebhook = async () => {
-    if (!newWhCompany || !newWhUrl.trim()) return
+    if (!newWhUrl.trim()) return
     setSavingWebhook(true)
     const { error } = await supabase.from('webhook_endpoints').insert({
-      company_id: newWhCompany,
+      company_id: null,
       url: newWhUrl.trim(),
       events: newWhEvents,
     })
     setSavingWebhook(false)
     if (error) { alert('خطأ: ' + error.message); return }
     setShowNewWebhook(false)
-    setNewWhCompany(''); setNewWhUrl(''); setNewWhEvents(['visit.created'])
+    setNewWhUrl(''); setNewWhEvents(['visit.created'])
     load()
   }
 
@@ -325,14 +320,6 @@ export function AdminAPI() {
             </div>
             <div style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>الشركة *</label>
-                <select value={newKeyCompany} onChange={e => setNewKeyCompany(e.target.value)}
-                  style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid #E2E8F0', fontFamily: 'Tajawal, sans-serif', fontSize: 13, color: '#0F172A', outline: 'none', background: '#FFF' }}>
-                  <option value="">اختر شركة...</option>
-                  {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-              <div>
                 <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>اسم المفتاح</label>
                 <input value={newKeyName} onChange={e => setNewKeyName(e.target.value)}
                   style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid #E2E8F0', fontFamily: 'Tajawal, sans-serif', fontSize: 13, color: '#0F172A', outline: 'none', boxSizing: 'border-box' }} />
@@ -349,8 +336,8 @@ export function AdminAPI() {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
-                <button onClick={createKey} disabled={generatingKey || !newKeyCompany || !newKeyPerms.length}
-                  style={{ flex: 1, padding: 11, borderRadius: 12, border: 'none', cursor: generatingKey || !newKeyCompany ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, #22D3EE, #06B6D4)', color: '#FFF', fontFamily: 'Cairo, sans-serif', fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: !newKeyCompany ? 0.5 : 1 }}>
+                <button onClick={createKey} disabled={generatingKey || !newKeyPerms.length}
+                  style={{ flex: 1, padding: 11, borderRadius: 12, border: 'none', cursor: generatingKey ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, #22D3EE, #06B6D4)', color: '#FFF', fontFamily: 'Cairo, sans-serif', fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                   {generatingKey ? <Loader2 size={15} style={{ animation: 'spin 0.8s linear infinite' }} /> : <Key size={15} />}
                   {generatingKey ? 'جاري التوليد...' : 'توليد المفتاح'}
                 </button>
@@ -402,14 +389,6 @@ export function AdminAPI() {
             </div>
             <div style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>الشركة *</label>
-                <select value={newWhCompany} onChange={e => setNewWhCompany(e.target.value)}
-                  style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid #E2E8F0', fontFamily: 'Tajawal, sans-serif', fontSize: 13, color: '#0F172A', outline: 'none', background: '#FFF' }}>
-                  <option value="">اختر شركة...</option>
-                  {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-              <div>
                 <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>Webhook URL *</label>
                 <input value={newWhUrl} onChange={e => setNewWhUrl(e.target.value)} dir="ltr"
                   placeholder="https://your-platform.com/webhooks/madar"
@@ -427,8 +406,8 @@ export function AdminAPI() {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
-                <button onClick={createWebhook} disabled={savingWebhook || !newWhCompany || !newWhUrl.trim()}
-                  style={{ flex: 1, padding: 11, borderRadius: 12, border: 'none', cursor: savingWebhook || !newWhCompany || !newWhUrl.trim() ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, #6366F1, #818CF8)', color: '#FFF', fontFamily: 'Cairo, sans-serif', fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: !newWhCompany || !newWhUrl.trim() ? 0.5 : 1 }}>
+                <button onClick={createWebhook} disabled={savingWebhook || !newWhUrl.trim()}
+                  style={{ flex: 1, padding: 11, borderRadius: 12, border: 'none', cursor: savingWebhook || !newWhUrl.trim() ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, #6366F1, #818CF8)', color: '#FFF', fontFamily: 'Cairo, sans-serif', fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: !newWhUrl.trim() ? 0.5 : 1 }}>
                   {savingWebhook ? <Loader2 size={15} style={{ animation: 'spin 0.8s linear infinite' }} /> : <Globe size={15} />}
                   {savingWebhook ? 'جاري الحفظ...' : 'إضافة Webhook'}
                 </button>
