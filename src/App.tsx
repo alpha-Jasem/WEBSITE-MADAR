@@ -7,7 +7,6 @@ import { ClinicOSProvider } from './context/ClinicOSContext'
 import { ProtectedRoute } from './components/shared/ProtectedRoute'
 import { ErrorBoundary, reloadForFreshAssets } from './components/shared/ErrorBoundary'
 import { HomePage } from './pages/HomePage'
-import { CarWashPage } from './pages/CarWashPage'
 import { ClinicLanding } from './pages/ClinicLanding'
 import { ClinicOSLanding } from './pages/ClinicOSLanding'
 import { Login } from './pages/Login'
@@ -28,9 +27,6 @@ function ScrollToTop() {
 const AdminDashboard    = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
 const ClientPortal      = lazy(() => import('./pages/ClientPortal').then(m => ({ default: m.ClientPortal })))
 const SolarEngine       = lazy(() => import('./pages/SolarEngine').then(m => ({ default: m.SolarEngine })))
-const SelfCheckIn       = lazy(() => import('./pages/SelfCheckIn').then(m => ({ default: m.SelfCheckIn })))
-const CarWashStatus     = lazy(() => import('./pages/CarWashStatus').then(m => ({ default: m.CarWashStatus })))
-const LoyaltyCard       = lazy(() => import('./pages/LoyaltyCard').then(m => ({ default: m.LoyaltyCard })))
 
 // ClinicOS
 const ClinicOSLoginPage    = lazy(() => import('./pages/clinicOS/ClinicOSLogin').then(m => ({ default: m.ClinicOSLogin })))
@@ -80,7 +76,7 @@ function App() {
         <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/car-wash" element={<CarWashPage />} />
+            <Route path="/car-wash" element={<Navigate to="/" replace />} />
             <Route path="/clinic" element={<ClinicLanding />} />
             <Route path="/clinic-os" element={<ClinicOSLanding />} />
 
@@ -127,9 +123,6 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/trial" element={<TrialSignup />} />
-            <Route path="/checkin/:token" element={<SelfCheckIn />} />
-            <Route path="/card/:customerId" element={<LoyaltyCard />} />
-            <Route path="/status/:token/:queueId" element={<CarWashStatus />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route
               path="/admin/*"

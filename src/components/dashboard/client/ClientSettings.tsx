@@ -8,7 +8,6 @@ import { PLAN_LABELS } from '../../../lib/constants'
 import { getSelfCheckinSettings, getSelfCheckinUrl } from '../../../lib/selfCheckin'
 import { usePlanGate } from '../../../hooks/usePlanGate'
 import { FeatureLock } from '../../dash/FeatureLock'
-import { CarWashLaunchChecklist } from './CarWashLaunchChecklist'
 import { ClientPageHeader } from './ClientUI'
 import { generateApiKey } from '../../../lib/apiKeys'
 type SettingsTab = 'account' | 'carwash' | 'finance' | 'print' | 'team' | 'api'
@@ -125,16 +124,6 @@ export const ClientSettings = () => {
     setPrintLogoUrl(inv.logo_url || '')
   }, [company])
 
-  useEffect(() => {
-    if (!companyId || !isCarWash) return
-    Promise.all([
-      supabase.from('cw_services').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('active', true),
-      supabase.from('cw_workers').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('active', true),
-    ]).then(([services, workers]) => {
-      setServiceCount(services.count || 0)
-      setWorkerCount(workers.count || 0)
-    })
-  }, [companyId, isCarWash])
 
   useEffect(() => {
     if (tab === 'team' && !teamLoaded) loadTeam()
@@ -599,8 +588,6 @@ export const ClientSettings = () => {
             </div>
           </FeatureLock>
 
-          {/* Launch checklist */}
-          <CarWashLaunchChecklist compact />
         </div>
       )}
 

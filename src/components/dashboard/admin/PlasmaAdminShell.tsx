@@ -9,7 +9,6 @@ const NAV = [
     { id: 'reports', label: 'التقارير', to: '/admin/reports' },
   ]},
   { group: 'إدارة العملاء', items: [
-    { id: 'cw-accounts', label: 'حسابات المغاسل 🚗', to: '/admin/cw-accounts' },
     { id: 'accounts', label: 'حسابات العيادات 🏥', to: '/admin/accounts' },
     { id: 'companies', label: 'الشركات', to: '/admin/companies', badge: 0 },
     { id: 'leads', label: 'العملاء المحتملون', to: '/admin/leads' },
@@ -32,7 +31,6 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
   '/admin/reports': { title: 'التقارير', sub: 'تحليلات الأداء والإيرادات' },
   '/admin/companies': { title: 'الشركات', sub: 'إدارة حسابات العملاء والباقات' },
   '/admin/accounts': { title: 'حسابات العيادات', sub: 'تحكم باشتراكات Clinic OS وحدود الاستخدام' },
-  '/admin/cw-accounts': { title: 'حسابات المغاسل', sub: 'إدارة باقات وصلاحيات Car Wash OS' },
   '/admin/leads': { title: 'العملاء المحتملون', sub: 'متابعة وتحويل الليدز' },
   '/admin/pipeline': { title: 'خط المبيعات', sub: 'لوحة المراحل البيعية' },
   '/admin/conversations': { title: 'المحادثات', sub: 'محادثات واتساب الواردة' },
