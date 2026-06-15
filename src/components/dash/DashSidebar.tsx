@@ -1,8 +1,8 @@
 ﻿import type React from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { AlertCircle, ChevronDown, LogOut, ShieldCheck } from 'lucide-react'
-import { signOut, supabase } from '../../lib/supabase'
+import { AlertCircle, ChevronDown, ShieldCheck } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
 import type { Company } from '../../types'
 import { PLAN_LABELS } from '../../lib/constants'
 import { useActiveProfile } from '../../context/ActiveProfileContext'
@@ -263,17 +263,6 @@ export const DashSidebar = ({ navItems, open, onClose, role = 'admin', company }
             </div>
           )}
 
-          <button
-            type="button"
-            className="dash-logout-btn"
-            onClick={async () => {
-              await signOut()
-              navigate('/login')
-            }}
-          >
-            <LogOut size={15} />
-            {TXT.logout}
-          </button>
         </div>
       </aside>
     </>
