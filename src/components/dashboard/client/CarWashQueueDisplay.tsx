@@ -33,10 +33,10 @@ function displayCode(items: DisplayCar[], item: DisplayCar) {
 function minutesSince(value: string) {
   const mins = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 60000))
   if (mins < 1) return 'الآن'
-  if (mins < 60) return `${mins.toLocaleString('ar-SA')} د`
+  if (mins < 60) return `${mins} د`
   const hours = Math.floor(mins / 60)
   const rest = mins % 60
-  return `${hours.toLocaleString('ar-SA')} س ${rest.toLocaleString('ar-SA')} د`
+  return `${hours} س ${rest} د`
 }
 
 function currentTime() {
@@ -131,7 +131,7 @@ export function CarWashQueueDisplay() {
         </div>
         <div className="cw-display-counter">
           <small>جاهزة الآن</small>
-          <strong>{groups.ready.length.toLocaleString('ar-SA')}</strong>
+          <strong>{groups.ready.length}</strong>
         </div>
       </section>
 
