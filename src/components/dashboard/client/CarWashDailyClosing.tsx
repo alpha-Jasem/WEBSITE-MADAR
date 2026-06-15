@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Loader2, ClipboardCheck, CheckCircle, Download, FileDown, ChevronDown, Plus, X, Wallet } from 'lucide-react'
+import { Loader2, ClipboardCheck, CheckCircle, Download, FileDown, ChevronDown, Plus, X, Wallet, TrendingDown } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { logAudit } from '../../../lib/auditLog'
@@ -24,7 +24,24 @@ interface CashMovement {
   created_at: string
 }
 
+interface RegularExpense {
+  id: string
+  amount: number
+  category: string
+  description: string | null
+}
+
 const QUICK_AMOUNTS = [500, 100, 50, 10, 5, 1, 0.5]
+
+const EXP_CATEGORIES = [
+  { value: 'tools',       label: 'أدوات ومواد'  },
+  { value: 'electricity', label: 'كهرباء وماء'  },
+  { value: 'rent',        label: 'إيجار'         },
+  { value: 'salary',      label: 'رواتب'         },
+  { value: 'marketing',   label: 'تسويق'         },
+  { value: 'maintenance', label: 'صيانة'         },
+  { value: 'other',       label: 'أخرى'          },
+]
 
 export const CarWashDailyClosing = () => {
   const { companyId, company, loading: authLoading } = useClientCompany()
@@ -42,6 +59,15 @@ export const CarWashDailyClosing = () => {
   const [cashAmount, setCashAmount] = useState('')
   const [cashNotes, setCashNotes] = useState('')
   const [savingCash, setSavingCash] = useState(false)
+
+  /* ── expenses state ── */
+  const [todayExpenses, setTodayExpenses] = useState<RegularExpense[]>([])
+  const [showExpModal, setShowExpModal] = useState(false)
+  const [expCategory, setExpCategory] = useState('other')
+  const [expAmount, setExpAmount] = useState('')
+  const [expDesc, setExpDesc] = useState('')
+  const [savingExp, setSavingExp] = useState(false)
+  const [deletingExp, setDeletingExp] = useState<string | null>(null)
 
   const [preview, setPreview] = useState<{
     totalCars: number
@@ -127,6 +153,9 @@ export const CarWashDailyClosing = () => {
         .map(e => ({ id: e.id, type: e.category as 'cash_in' | 'cash_out', amount: e.amount, description: e.description, created_at: e.created_at }))
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     )
+    setTodayExpenses(
+      regularExpenses.map(e => ({ id: e.id, amount: e.amount, category: e.category, description: e.description }))
+    )
 
     // Calculate preview
     const visitList = visits || []
@@ -201,6 +230,33 @@ export const CarWashDailyClosing = () => {
     setShowCashModal(false)
     setCashAmount('')
     setCashNotes('')
+    await loadData()
+  }
+
+  /* ── save expense ── */
+  const saveExpense = async () => {
+    if (!companyId || !expAmount || Number(expAmount) <= 0 || savingExp) return
+    setSavingExp(true)
+    const { error } = await supabase.from('cw_expenses').insert({
+      company_id: companyId,
+      amount: Number(expAmount),
+      category: expCategory,
+      description: expDesc.trim() || null,
+      expense_date: today,
+    })
+    setSavingExp(false)
+    if (error) { alert('خطأ في الحفظ: ' + error.message); return }
+    setShowExpModal(false)
+    setExpAmount('')
+    setExpDesc('')
+    setExpCategory('other')
+    await loadData()
+  }
+
+  const deleteExpense = async (id: string) => {
+    setDeletingExp(id)
+    await supabase.from('cw_expenses').delete().eq('id', id)
+    setDeletingExp(null)
     await loadData()
   }
 
@@ -418,6 +474,60 @@ export const CarWashDailyClosing = () => {
         )}
       </div>
 
+      {/* ── Expenses Section ── */}
+      <div className="rounded-2xl overflow-hidden" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+        <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid #E2E8F0', background: '#FAFAFA' }}>
+          <div className="flex items-center gap-2">
+            <TrendingDown size={15} className="text-red-400" />
+            <p className="text-sm font-bold text-slate-900 font-cairo">مصاريف اليوم</p>
+            {todayExpenses.length > 0 && (
+              <span className="text-xs text-slate-500 font-tajawal">
+                ({todayExpenses.length} بند — <span style={{ color: '#EF4444', fontWeight: 700 }}>{todayExpenses.reduce((s, e) => s + e.amount, 0).toFixed(2)} ر.س</span>)
+              </span>
+            )}
+          </div>
+          {!todayClosing && (
+            <button
+              onClick={() => { setExpAmount(''); setExpDesc(''); setExpCategory('other'); setShowExpModal(true) }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-cairo font-bold text-white"
+              style={{ background: '#EF4444', border: 'none', cursor: 'pointer' }}
+            >
+              <Plus size={13} /> إضافة مصروف
+            </button>
+          )}
+        </div>
+
+        {todayExpenses.length === 0 ? (
+          <div className="px-5 py-5 text-center text-slate-400 font-tajawal text-sm">
+            لا توجد مصاريف اليوم — استخدم الزر أعلاه لتسجيل مصروف
+          </div>
+        ) : (
+          <div className="divide-y" style={{ divideColor: '#F0F0F0' }}>
+            {todayExpenses.map(e => (
+              <div key={e.id} className="flex items-center justify-between px-5 py-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full font-cairo" style={{ background: '#FEF2F2', color: '#EF4444' }}>
+                    {EXP_CATEGORIES.find(c => c.value === e.category)?.label || e.category}
+                  </span>
+                  {e.description && <span className="text-xs text-slate-500 font-tajawal">{e.description}</span>}
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="font-bold text-sm font-sora" style={{ color: '#EF4444' }}>
+                    -{e.amount.toFixed(2)} ر.س
+                  </span>
+                  {!todayClosing && (
+                    <button onClick={() => deleteExpense(e.id)} disabled={deletingExp === e.id}
+                      className="p-1 rounded-lg text-slate-400 hover:text-red-400 transition-colors">
+                      {deletingExp === e.id ? <Loader2 size={12} className="animate-spin" /> : <X size={12} />}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Summary card */}
       {displayData && (
         <ClientPanel icon={ClipboardCheck} title="ملخص اليوم" description="الأرقام النهائية قبل اعتماد إغلاق الوردية.">
@@ -592,6 +702,90 @@ export const CarWashDailyClosing = () => {
                   color: (!cashAmount || Number(cashAmount) <= 0) ? '#9CA3AF' : '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                 {savingCash ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : null}
                 {!cashAmount || Number(cashAmount) <= 0 ? 'لا يوجد مبلغ مضاف' : `${cashType === 'cash_in' ? '↑ إضافة' : '↓ سحب'} ${Number(cashAmount).toFixed(2)} ر.س`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Expense Modal ── */}
+      {showExpModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={() => setShowExpModal(false)}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(10,20,40,0.5)', backdropFilter: 'blur(3px)' }} />
+          <div style={{ position: 'relative', width: 480, maxWidth: '95vw', background: '#FFFFFF', borderRadius: 18, boxShadow: '0 24px 60px rgba(0,0,0,0.15)', overflow: 'hidden' }}
+            onClick={e => e.stopPropagation()}>
+
+            <div style={{ padding: '18px 20px', borderBottom: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h2 style={{ margin: 0, fontSize: 17, fontWeight: 900, fontFamily: 'Cairo, sans-serif', color: '#111827' }} dir="rtl">إضافة مصروف</h2>
+              <button onClick={() => setShowExpModal(false)}
+                style={{ width: 32, height: 32, borderRadius: 7, border: '1px solid #E5E7EB', background: '#F9FAFB', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF' }}>
+                <X size={14} />
+              </button>
+            </div>
+
+            <div style={{ padding: '18px 20px 24px' }} dir="rtl">
+              {/* Category */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#6B7280', fontFamily: 'Tajawal, sans-serif', marginBottom: 8 }}>الفئة</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+                  {EXP_CATEGORIES.map(c => (
+                    <button key={c.value} onClick={() => setExpCategory(c.value)}
+                      style={{ padding: '8px 4px', borderRadius: 8, border: `1px solid ${expCategory === c.value ? '#EF4444' : '#E5E7EB'}`, background: expCategory === c.value ? '#FEF2F2' : '#F9FAFB', color: expCategory === c.value ? '#EF4444' : '#6B7280', fontSize: 11.5, fontFamily: 'Tajawal, sans-serif', fontWeight: expCategory === c.value ? 700 : 400, cursor: 'pointer', transition: 'all 0.12s' }}>
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Amount */}
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#6B7280', fontFamily: 'Tajawal, sans-serif', marginBottom: 5 }}>المبلغ</label>
+                <input
+                  type="number" min="0" step="0.5"
+                  value={expAmount}
+                  onChange={e => setExpAmount(e.target.value)}
+                  inputMode="decimal"
+                  placeholder="0.00"
+                  dir="ltr"
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: '1px solid #E5E7EB', fontSize: 16, fontFamily: 'monospace', outline: 'none', textAlign: 'center', boxSizing: 'border-box' }}
+                  onFocus={e => (e.target.style.borderColor = '#EF4444')}
+                  onBlur={e  => (e.target.style.borderColor = '#E5E7EB')}
+                />
+              </div>
+
+              {/* Quick amounts */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 7, marginBottom: 14 }}>
+                {QUICK_AMOUNTS.map(amt => (
+                  <button key={amt}
+                    onClick={() => setExpAmount(p => String(Number(p || 0) + amt))}
+                    style={{ padding: '8px 0', borderRadius: 8, border: '1px solid #FCA5A5', background: '#FEF2F2', color: '#EF4444', fontSize: 12.5, fontFamily: 'monospace', fontWeight: 700, cursor: 'pointer' }}>
+                    {amt} ريال
+                  </button>
+                ))}
+              </div>
+
+              {/* Notes */}
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#6B7280', fontFamily: 'Tajawal, sans-serif', marginBottom: 5 }}>وصف (اختياري)</label>
+                <textarea
+                  value={expDesc}
+                  onChange={e => setExpDesc(e.target.value)}
+                  placeholder="تفاصيل المصروف..."
+                  rows={2}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid #E5E7EB', fontSize: 13, fontFamily: 'Tajawal, sans-serif', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              {/* Save button */}
+              <button
+                onClick={saveExpense}
+                disabled={!expAmount || Number(expAmount) <= 0 || savingExp}
+                style={{ width: '100%', padding: '12px 0', borderRadius: 10, border: 'none', cursor: (!expAmount || Number(expAmount) <= 0) ? 'not-allowed' : 'pointer', fontSize: 14, fontFamily: 'Cairo, sans-serif', fontWeight: 900,
+                  background: (!expAmount || Number(expAmount) <= 0) ? '#E5E7EB' : '#EF4444',
+                  color: (!expAmount || Number(expAmount) <= 0) ? '#9CA3AF' : '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                {savingExp ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : null}
+                {!expAmount || Number(expAmount) <= 0 ? 'أدخل المبلغ' : `تسجيل مصروف ${Number(expAmount).toFixed(2)} ر.س`}
               </button>
             </div>
           </div>
