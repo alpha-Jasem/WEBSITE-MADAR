@@ -133,12 +133,17 @@ function ExpensesTab({ companyId, company, can, planLabel }: { companyId: string
                     <tr key={e.id} style={{ background: i % 2 === 0 ? '#FFFFFF' : '#FAFAFA', borderBottom: '1px solid #F1F5F9' }}>
                       <td className="px-4 py-3 text-slate-600 font-tajawal text-xs">{e.expense_date || today}</td>
                       <td className="px-4 py-3">
-                        <span className="px-2 py-1 rounded-lg text-xs font-bold font-tajawal" style={{ background: '#F1F5F9', color: '#475569' }}>
+                        <span className="px-2 py-1 rounded-lg text-xs font-bold font-tajawal" style={{
+                          background: e.category === 'cash_in' ? '#DCFCE7' : e.category === 'cash_out' ? '#FEE2E2' : '#F1F5F9',
+                          color: e.category === 'cash_in' ? '#16A34A' : e.category === 'cash_out' ? '#DC2626' : '#475569'
+                        }}>
                           {CATEGORIES.find(c => c.value === e.category)?.label || e.category}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-slate-700 font-tajawal">{e.description || '—'}</td>
-                      <td className="px-4 py-3 font-black font-sora" style={{ color: '#EF4444' }}>{e.amount.toFixed(0)} ر.س</td>
+                      <td className="px-4 py-3 font-black font-sora" style={{ color: e.category === 'cash_in' ? '#16A34A' : '#EF4444' }}>
+                        {e.category === 'cash_in' ? '+' : ''}{e.amount.toFixed(0)} ر.س
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2 justify-end">
                           <button onClick={() => { setEditingExpense(e); setForm({ amount: String(e.amount), category: e.category, description: e.description || '' }); setShowForm(true) }} className="p-1.5 rounded-lg hover:bg-indigo-50 text-slate-400 hover:text-indigo-500 transition-colors">
