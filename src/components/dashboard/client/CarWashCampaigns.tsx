@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { Loader2, Send, Users, MessageSquare, CheckCircle2, XCircle, Settings, ChevronDown, ChevronUp, AlertCircle, Clock } from 'lucide-react'
+import { Loader2, Send, Users, MessageSquare, CheckCircle2, XCircle, Clock, AlertCircle, Star } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { ClientPageHeader, ClientPanel, ClientButton } from './ClientUI'
@@ -10,6 +10,7 @@ interface Customer {
   phone: string
   total_visits: number
   last_visit_at: string | null
+  loyalty_count: number
 }
 
 interface SendResult {
@@ -20,10 +21,11 @@ interface SendResult {
 }
 
 const FILTERS = [
-  { key: 'all',    label: 'كل العملاء' },
-  { key: 'inactive30',  label: 'لم يزوروا منذ 30 يوم' },
-  { key: 'inactive60',  label: 'لم يزوروا منذ 60 يوم' },
-  { key: 'inactive90',  label: 'لم يزوروا منذ 90 يوم' },
+  { key: 'all',           label: 'كل العملاء' },
+  { key: 'inactive30',   label: 'لم يزوروا 30 يوم' },
+  { key: 'inactive60',   label: 'لم يزوروا 60 يوم' },
+  { key: 'inactive90',   label: 'لم يزوروا 90 يوم' },
+  { key: 'loyalty_almost', label: '⭐ باقي غسلة واحدة' },
 ]
 
 const PLACEHOLDERS = [
@@ -47,17 +49,16 @@ function applyPlaceholders(msg: string, customer: Customer): string {
 export const CarWashCampaigns = () => {
   const { companyId, company } = useClientCompany()
 
-  /* ── Green API settings ── */
-  const [showApiSettings, setShowApiSettings] = useState(false)
-  const [idInstance, setIdInstance] = useState('')
-  const [apiToken, setApiToken] = useState('')
-  const [savingApi, setSavingApi] = useState(false)
-  const [apiSaved, setApiSaved] = useState(false)
+  const idInstance = (company as any)?.cw_automations?.green_api?.idInstance || ''
+  const apiToken   = (company as any)?.cw_automations?.green_api?.apiTokenInstance || ''
+  const apiConfigured = !!idInstance && !!apiToken
+  const loyaltyThreshold: number = (company as any)?.cw_loyalty_threshold || 5
 
   /* ── customers ── */
-  const [customers, setCustomers] = useState<Customer[]>([])
+  const [allCustomers, setAllCustomers] = useState<Customer[]>([])
   const [filter, setFilter] = useState('all')
   const [loadingCustomers, setLoadingCustomers] = useState(true)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   /* ── message composer ── */
   const [message, setMessage] = useState('السلام عليكم {name}،\nنشتاق لزيارتك في مغسلتنا! 🚗✨\nزورنا واستمتع بخدمة متميزة.')
@@ -70,57 +71,61 @@ export const CarWashCampaigns = () => {
   const [showResults, setShowResults] = useState(false)
   const abortRef = useRef(false)
 
-  /* load API settings from cw_automations */
-  useEffect(() => {
-    if (!company) return
-    const api = (company as any)?.cw_automations?.green_api
-    if (api?.idInstance) { setIdInstance(api.idInstance); setApiToken(api.apiTokenInstance || '') }
-  }, [company])
-
-  /* load customers */
+  /* load all customers once */
   useEffect(() => {
     if (!companyId) return
     loadCustomers()
-  }, [companyId, filter])
+  }, [companyId])
 
   const loadCustomers = async () => {
     if (!companyId) return
     setLoadingCustomers(true)
-    let query = supabase
+    const { data } = await supabase
       .from('cw_customers')
-      .select('id, name, phone, total_visits, last_visit_at')
+      .select('id, name, phone, total_visits, last_visit_at, loyalty_count')
       .eq('company_id', companyId)
       .order('last_visit_at', { ascending: false })
-
-    const now = new Date()
-    if (filter === 'inactive30') {
-      const cutoff = new Date(now.getTime() - 30 * 86400000).toISOString()
-      query = query.or(`last_visit_at.lt.${cutoff},last_visit_at.is.null`)
-    } else if (filter === 'inactive60') {
-      const cutoff = new Date(now.getTime() - 60 * 86400000).toISOString()
-      query = query.or(`last_visit_at.lt.${cutoff},last_visit_at.is.null`)
-    } else if (filter === 'inactive90') {
-      const cutoff = new Date(now.getTime() - 90 * 86400000).toISOString()
-      query = query.or(`last_visit_at.lt.${cutoff},last_visit_at.is.null`)
-    }
-
-    const { data } = await query
-    setCustomers((data || []) as Customer[])
+    setAllCustomers((data || []) as Customer[])
     setLoadingCustomers(false)
   }
 
-  const saveApiSettings = async () => {
-    if (!companyId || !idInstance || !apiToken) return
-    setSavingApi(true)
-    const existing = (company as any)?.cw_automations || {}
-    await supabase.from('companies').update({
-      cw_automations: { ...existing, green_api: { idInstance, apiTokenInstance: apiToken } }
-    }).eq('id', companyId)
-    setSavingApi(false)
-    setApiSaved(true)
-    setTimeout(() => setApiSaved(false), 2500)
-    setShowApiSettings(false)
+  /* filtered view */
+  const filteredCustomers = (() => {
+    const now = Date.now()
+    if (filter === 'inactive30') {
+      const cut = now - 30 * 86400000
+      return allCustomers.filter(c => !c.last_visit_at || new Date(c.last_visit_at).getTime() < cut)
+    }
+    if (filter === 'inactive60') {
+      const cut = now - 60 * 86400000
+      return allCustomers.filter(c => !c.last_visit_at || new Date(c.last_visit_at).getTime() < cut)
+    }
+    if (filter === 'inactive90') {
+      const cut = now - 90 * 86400000
+      return allCustomers.filter(c => !c.last_visit_at || new Date(c.last_visit_at).getTime() < cut)
+    }
+    if (filter === 'loyalty_almost') {
+      return allCustomers.filter(c => {
+        const count = c.loyalty_count || 0
+        const rem = loyaltyThreshold - (count % loyaltyThreshold)
+        return rem === 1
+      })
+    }
+    return allCustomers
+  })()
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }
+
+  const selectAll = () => setSelectedIds(new Set(filteredCustomers.map(c => c.id)))
+  const deselectAll = () => setSelectedIds(new Set())
+  const allSelected = filteredCustomers.length > 0 && filteredCustomers.every(c => selectedIds.has(c.id))
 
   const insertTag = (tag: string) => {
     const el = msgRef.current
@@ -133,9 +138,10 @@ export const CarWashCampaigns = () => {
   }
 
   const startCampaign = async () => {
-    if (!idInstance || !apiToken) { setShowApiSettings(true); return }
+    if (!apiConfigured) { alert('لم يتم إعداد Green API بعد. تواصل مع الإدارة.'); return }
     if (!message.trim()) { alert('اكتب الرسالة أولاً'); return }
-    if (customers.length === 0) { alert('لا يوجد عملاء لإرسال لهم'); return }
+    const targets = filteredCustomers.filter(c => selectedIds.has(c.id))
+    if (targets.length === 0) { alert('اختر عملاء أولاً'); return }
 
     setSending(true)
     abortRef.current = false
@@ -143,23 +149,18 @@ export const CarWashCampaigns = () => {
     setProgress(0)
     setShowResults(true)
 
-    const list = [...customers]
     const newResults: SendResult[] = []
 
-    for (let i = 0; i < list.length; i++) {
+    for (let i = 0; i < targets.length; i++) {
       if (abortRef.current) break
-      const c = list[i]
+      const c = targets[i]
       const chatId = formatPhone(c.phone)
       const text = applyPlaceholders(message, c)
 
       try {
         const res = await fetch(
           `https://api.green-api.com/waInstance${idInstance}/sendMessage/${apiToken}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chatId, message: text }),
-          }
+          { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chatId, message: text }) }
         )
         if (res.ok) {
           newResults.push({ phone: c.phone, name: c.name, status: 'success' })
@@ -172,10 +173,9 @@ export const CarWashCampaigns = () => {
       }
 
       setResults([...newResults])
-      setProgress(Math.round(((i + 1) / list.length) * 100))
+      setProgress(Math.round(((i + 1) / targets.length) * 100))
 
-      /* تأخير 1.2 ثانية بين الرسائل لتجنب الحظر */
-      if (i < list.length - 1 && !abortRef.current) {
+      if (i < targets.length - 1 && !abortRef.current) {
         await new Promise(r => setTimeout(r, 1200))
       }
     }
@@ -183,9 +183,9 @@ export const CarWashCampaigns = () => {
     setSending(false)
   }
 
+  const selectedTargets = filteredCustomers.filter(c => selectedIds.has(c.id))
   const successCount = results.filter(r => r.status === 'success').length
   const errorCount   = results.filter(r => r.status === 'error').length
-  const apiConfigured = !!idInstance && !!apiToken
 
   return (
     <div className="space-y-5">
@@ -194,77 +194,35 @@ export const CarWashCampaigns = () => {
         title="حملات واتساب"
         description="أرسل رسائل واتساب مخصصة لعملاء المغسلة مباشرة من هنا."
         actions={(
-          <button
-            onClick={() => setShowApiSettings(v => !v)}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-cairo font-bold transition-all"
-            style={{ background: apiConfigured ? '#ECFDF5' : '#FEF3C7', color: apiConfigured ? '#059669' : '#D97706', border: `1px solid ${apiConfigured ? '#A7F3D0' : '#FDE68A'}` }}
-          >
-            <Settings size={13} />
-            {apiConfigured ? 'Green API متصل ✓' : 'إعداد Green API'}
-          </button>
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-cairo font-bold"
+            style={{ background: apiConfigured ? '#ECFDF5' : '#FEF3C7', color: apiConfigured ? '#059669' : '#D97706', border: `1px solid ${apiConfigured ? '#A7F3D0' : '#FDE68A'}` }}>
+            {apiConfigured ? 'Green API متصل ✓' : '⚠ Green API غير مكوّن'}
+          </div>
         )}
       />
 
-      {/* Green API Settings panel */}
-      {showApiSettings && (
-        <ClientPanel icon={Settings} title="إعدادات Green API" description="أدخل بيانات حسابك في Green API لتفعيل الإرسال.">
-          <div className="p-5 space-y-4">
-            <div>
-              <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">idInstance</label>
-              <input
-                value={idInstance}
-                onChange={e => setIdInstance(e.target.value.trim())}
-                placeholder="مثال: 7105..."
-                dir="ltr"
-                className="w-full px-4 py-2.5 rounded-xl text-sm font-sora text-slate-900 outline-none"
-                style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }}
-              />
-            </div>
-            <div>
-              <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">apiTokenInstance</label>
-              <input
-                value={apiToken}
-                onChange={e => setApiToken(e.target.value.trim())}
-                placeholder="مفتاح التوثيق..."
-                dir="ltr"
-                type="password"
-                className="w-full px-4 py-2.5 rounded-xl text-sm font-sora text-slate-900 outline-none"
-                style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }}
-              />
-            </div>
-            <div className="flex gap-3">
-              <ClientButton tone="secondary" onClick={() => setShowApiSettings(false)}>إلغاء</ClientButton>
-              <ClientButton onClick={saveApiSettings} disabled={savingApi || !idInstance || !apiToken}>
-                {savingApi ? <Loader2 size={14} className="animate-spin" /> : null}
-                {apiSaved ? 'تم الحفظ ✓' : 'حفظ الإعدادات'}
-              </ClientButton>
-            </div>
-          </div>
-        </ClientPanel>
-      )}
-
-      {/* Warning if API not configured */}
-      {!apiConfigured && !showApiSettings && (
+      {!apiConfigured && (
         <div className="flex items-start gap-3 p-4 rounded-2xl" style={{ background: '#FEF3C7', border: '1px solid #FDE68A' }}>
           <AlertCircle size={18} className="text-amber-500 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-bold text-amber-700 font-cairo">Green API غير مكوّن</p>
-            <p className="text-xs text-amber-600 font-tajawal mt-0.5">اضغط على زر "إعداد Green API" في الأعلى وأدخل بيانات حسابك.</p>
+            <p className="text-xs text-amber-600 font-tajawal mt-0.5">تواصل مع الإدارة لإعداد بيانات Green API الخاصة بمغسلتك.</p>
           </div>
         </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
-        {/* Left: Customers + Filter */}
+        {/* Left: Customer selection */}
         <div className="space-y-4">
-          <ClientPanel icon={Users} title="المستلمون" description="اختر الشريحة المستهدفة من عملائك.">
+          <ClientPanel icon={Users} title="المستلمون" description="فلتر ثم اختر العملاء الذين سيستقبلون الرسالة.">
             <div className="p-5 space-y-4">
-              {/* Filter */}
-              <div className="grid grid-cols-2 gap-2">
+
+              {/* Filter chips */}
+              <div className="flex flex-wrap gap-2">
                 {FILTERS.map(f => (
-                  <button key={f.key} onClick={() => setFilter(f.key)}
-                    className="py-2 px-3 rounded-xl text-xs font-tajawal font-bold transition-all text-right"
+                  <button key={f.key} onClick={() => { setFilter(f.key); setSelectedIds(new Set()) }}
+                    className="py-1.5 px-3 rounded-xl text-xs font-tajawal font-bold transition-all"
                     style={{
                       background: filter === f.key ? 'rgba(34,211,238,0.12)' : '#F8FAFC',
                       border: `1px solid ${filter === f.key ? '#22D3EE' : '#E2E8F0'}`,
@@ -275,34 +233,63 @@ export const CarWashCampaigns = () => {
                 ))}
               </div>
 
-              {/* Count */}
-              {loadingCustomers ? (
-                <div className="flex justify-center py-4"><Loader2 size={18} className="animate-spin text-slate-400" /></div>
-              ) : (
-                <div className="rounded-xl p-4 text-center" style={{ background: 'rgba(34,211,238,0.06)', border: '1px solid rgba(34,211,238,0.2)' }}>
-                  <p className="text-3xl font-black font-sora" style={{ color: '#0891B2' }}>{customers.length}</p>
-                  <p className="text-xs text-slate-500 font-tajawal mt-1">عميل سيستقبل الرسالة</p>
+              {/* Select all / deselect */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-400 font-tajawal">
+                  {loadingCustomers ? 'جارٍ التحميل...' : `${filteredCustomers.length} عميل`}
+                </span>
+                {filteredCustomers.length > 0 && (
+                  <button
+                    onClick={allSelected ? deselectAll : selectAll}
+                    className="text-xs font-bold font-cairo px-3 py-1.5 rounded-lg transition-all"
+                    style={{ background: allSelected ? '#FEF2F2' : '#EFF6FF', color: allSelected ? '#DC2626' : '#2563EB', border: `1px solid ${allSelected ? '#FCA5A5' : '#BFDBFE'}` }}>
+                    {allSelected ? 'إلغاء تحديد الكل' : 'تحديد الكل'}
+                  </button>
+                )}
+              </div>
+
+              {/* Selected count badge */}
+              {selectedIds.size > 0 && (
+                <div className="rounded-xl px-4 py-2 text-center" style={{ background: 'rgba(34,211,238,0.08)', border: '1px solid rgba(34,211,238,0.25)' }}>
+                  <span className="text-sm font-black font-sora" style={{ color: '#0891B2' }}>{selectedTargets.length}</span>
+                  <span className="text-xs text-slate-500 font-tajawal mr-1.5">عميل محدد للإرسال</span>
                 </div>
               )}
 
-              {/* Customer list preview */}
-              {customers.length > 0 && (
-                <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2E8F0', maxHeight: 240, overflowY: 'auto' }}>
-                  {customers.slice(0, 50).map((c, i) => (
-                    <div key={c.id} className="flex items-center justify-between px-4 py-2.5"
-                      style={{ borderBottom: i < customers.slice(0, 50).length - 1 ? '1px solid #F1F5F9' : 'none', background: i % 2 === 0 ? '#FFFFFF' : '#FAFAFA' }}>
-                      <div>
-                        <p className="text-sm font-bold text-slate-800 font-cairo">{c.name || 'غير محدد'}</p>
-                        <p className="text-xs text-slate-400 font-tajawal" dir="ltr">{c.phone}</p>
-                      </div>
-                      <span className="text-xs text-slate-400 font-tajawal">{c.total_visits} زيارة</span>
-                    </div>
-                  ))}
-                  {customers.length > 50 && (
-                    <div className="px-4 py-2 text-center text-xs text-slate-400 font-tajawal" style={{ background: '#F8FAFC' }}>
-                      + {customers.length - 50} عميل آخر
-                    </div>
-                  )}
+              {/* Customer list with checkboxes */}
+              {loadingCustomers ? (
+                <div className="flex justify-center py-6"><Loader2 size={20} className="animate-spin text-slate-400" /></div>
+              ) : filteredCustomers.length === 0 ? (
+                <p className="text-center text-sm text-slate-400 font-tajawal py-4">لا يوجد عملاء في هذه الشريحة</p>
+              ) : (
+                <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2E8F0', maxHeight: 340, overflowY: 'auto' }}>
+                  {filteredCustomers.map((c, i) => {
+                    const checked = selectedIds.has(c.id)
+                    const rem = loyaltyThreshold - ((c.loyalty_count || 0) % loyaltyThreshold)
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => toggleSelect(c.id)}
+                        className="flex items-center w-full gap-3 px-4 py-2.5 text-right transition-colors"
+                        style={{
+                          borderBottom: i < filteredCustomers.length - 1 ? '1px solid #F1F5F9' : 'none',
+                          background: checked ? 'rgba(14,165,233,0.06)' : i % 2 === 0 ? '#FFFFFF' : '#FAFAFA',
+                        }}>
+                        <div className="flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center"
+                          style={{ background: checked ? '#0EA5E9' : '#FFFFFF', border: `1.5px solid ${checked ? '#0EA5E9' : '#CBD5E1'}` }}>
+                          {checked && <svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                        </div>
+                        <div className="min-w-0 flex-1 text-right">
+                          <p className="text-sm font-bold text-slate-800 font-cairo truncate">{c.name || 'غير محدد'}</p>
+                          <p className="text-xs text-slate-400 font-tajawal" dir="ltr">{c.phone}</p>
+                        </div>
+                        <div className="flex-shrink-0 text-left">
+                          <span className="text-xs text-slate-400 font-tajawal block">{c.total_visits} زيارة</span>
+                          {rem === 1 && <span className="text-[10px] font-bold" style={{ color: '#F59E0B' }}><Star size={9} className="inline mb-0.5" /> غسلة مجانية</span>}
+                        </div>
+                      </button>
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -325,7 +312,6 @@ export const CarWashCampaigns = () => {
                 ))}
               </div>
 
-              {/* Message textarea */}
               <textarea
                 ref={msgRef}
                 value={message}
@@ -338,32 +324,32 @@ export const CarWashCampaigns = () => {
               />
 
               {/* Preview */}
-              {customers.length > 0 && message && (
+              {filteredCustomers.length > 0 && message && (
                 <div className="rounded-xl p-4" style={{ background: '#ECFDF5', border: '1px solid #A7F3D0' }}>
                   <p className="text-xs text-slate-500 font-tajawal mb-2">معاينة للعميل الأول:</p>
                   <p className="text-sm font-tajawal text-slate-800 whitespace-pre-wrap">
-                    {applyPlaceholders(message, customers[0])}
+                    {applyPlaceholders(message, filteredCustomers[0])}
                   </p>
                 </div>
               )}
 
-              {/* Delay note */}
               <div className="flex items-center gap-2 text-xs text-slate-400 font-tajawal">
                 <Clock size={12} />
                 تأخير 1.2 ثانية بين كل رسالة لتجنب الحظر
               </div>
 
-              {/* Send button */}
               <button
                 onClick={startCampaign}
-                disabled={sending || customers.length === 0 || !message.trim()}
+                disabled={sending || selectedIds.size === 0 || !message.trim() || !apiConfigured}
                 className="w-full py-3.5 rounded-xl text-sm font-black font-cairo text-white flex items-center justify-center gap-2 transition-all disabled:opacity-50"
                 style={{ background: sending ? '#0891B2' : 'linear-gradient(135deg, #0EA5E9, #0891B2)' }}
               >
                 {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                 {sending
-                  ? `جاري الإرسال... ${progress}% (${results.length}/${customers.length})`
-                  : `إرسال لـ ${customers.length} عميل`
+                  ? `جاري الإرسال... ${progress}% (${results.length}/${selectedTargets.length})`
+                  : selectedIds.size > 0
+                    ? `إرسال لـ ${selectedTargets.length} عميل`
+                    : 'اختر عملاء أولاً'
                 }
               </button>
 
@@ -380,14 +366,13 @@ export const CarWashCampaigns = () => {
         </div>
       </div>
 
-      {/* Progress bar */}
+      {/* Progress + Results */}
       {(sending || (results.length > 0 && showResults)) && (
         <ClientPanel icon={Send} title="نتائج الإرسال" description={`${successCount} نجح · ${errorCount} فشل · ${results.length} إجمالي`}>
           <div className="p-5 space-y-4">
-            {/* Progress bar */}
             <div>
               <div className="flex justify-between text-xs text-slate-400 font-tajawal mb-1.5">
-                <span>{results.length} من {customers.length}</span>
+                <span>{results.length} من {selectedTargets.length}</span>
                 <span>{progress}%</span>
               </div>
               <div className="h-2.5 rounded-full" style={{ background: '#E2E8F0' }}>
@@ -396,52 +381,31 @@ export const CarWashCampaigns = () => {
               </div>
             </div>
 
-            {/* Summary chips */}
             <div className="flex gap-3">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl" style={{ background: '#ECFDF5', border: '1px solid #A7F3D0' }}>
-                <CheckCircle2 size={13} className="text-emerald-500" />
-                <span className="text-xs font-bold font-sora text-emerald-600">{successCount} نجح</span>
+              <div className="flex-1 rounded-2xl p-3 text-center" style={{ background: '#ECFDF5', border: '1px solid #A7F3D0' }}>
+                <p className="text-xl font-black font-sora text-emerald-600">{successCount}</p>
+                <p className="text-xs text-slate-500 font-tajawal mt-0.5">نجح</p>
               </div>
-              {errorCount > 0 && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl" style={{ background: '#FEF2F2', border: '1px solid #FCA5A5' }}>
-                  <XCircle size={13} className="text-red-400" />
-                  <span className="text-xs font-bold font-sora text-red-500">{errorCount} فشل</span>
-                </div>
-              )}
-              {!sending && results.length === customers.length && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl" style={{ background: '#F0FDF4', border: '1px solid #86EFAC' }}>
-                  <CheckCircle2 size={13} className="text-green-500" />
-                  <span className="text-xs font-bold font-cairo text-green-600">اكتملت الحملة</span>
-                </div>
-              )}
+              <div className="flex-1 rounded-2xl p-3 text-center" style={{ background: '#FEF2F2', border: '1px solid #FECACA' }}>
+                <p className="text-xl font-black font-sora text-red-600">{errorCount}</p>
+                <p className="text-xs text-slate-500 font-tajawal mt-0.5">فشل</p>
+              </div>
             </div>
 
-            {/* Result list */}
-            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2E8F0', maxHeight: 300, overflowY: 'auto' }}>
-              {results.slice().reverse().map((r, i) => (
-                <div key={i} className="flex items-center justify-between px-4 py-2.5"
+            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2E8F0', maxHeight: 220, overflowY: 'auto' }}>
+              {results.map((r, i) => (
+                <div key={i} className="flex items-center gap-3 px-4 py-2.5"
                   style={{ borderBottom: i < results.length - 1 ? '1px solid #F1F5F9' : 'none', background: i % 2 === 0 ? '#FFFFFF' : '#FAFAFA' }}>
-                  <div className="flex items-center gap-2">
-                    {r.status === 'success'
-                      ? <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" />
-                      : <XCircle size={13} className="text-red-400 flex-shrink-0" />
-                    }
-                    <div>
-                      <p className="text-xs font-bold text-slate-800 font-cairo">{r.name || 'غير محدد'}</p>
-                      {r.error && <p className="text-xs text-red-400 font-tajawal">{r.error}</p>}
-                    </div>
+                  {r.status === 'success'
+                    ? <CheckCircle2 size={15} className="text-emerald-500 flex-shrink-0" />
+                    : <XCircle size={15} className="text-red-500 flex-shrink-0" />}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-slate-800 font-cairo truncate">{r.name || r.phone}</p>
+                    {r.error && <p className="text-xs text-red-500 font-tajawal truncate">{r.error}</p>}
                   </div>
-                  <span className="text-xs text-slate-400 font-tajawal" dir="ltr">{r.phone}</span>
                 </div>
               ))}
             </div>
-
-            <button
-              onClick={() => { setResults([]); setProgress(0); setShowResults(false) }}
-              disabled={sending}
-              className="text-xs text-slate-400 font-tajawal hover:text-slate-600 transition-colors disabled:opacity-40">
-              مسح النتائج
-            </button>
           </div>
         </ClientPanel>
       )}

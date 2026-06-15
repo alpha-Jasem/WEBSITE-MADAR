@@ -63,6 +63,7 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
 
   // Loyalty
   const [loyaltyThreshold, setLoyaltyThreshold] = useState(5)
+  const [loyaltyFreeServiceId, setLoyaltyFreeServiceId] = useState('')
   const [reviewUrl, setReviewUrl] = useState('')
   const [savingLoyalty, setSavingLoyalty] = useState(false)
   const [loyaltySaved, setLoyaltySaved] = useState(false)
@@ -121,6 +122,7 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
         const c = co as any
         if (c.cw_hours) setHours(c.cw_hours)
         if (c.cw_loyalty_threshold) setLoyaltyThreshold(c.cw_loyalty_threshold)
+        if (c.cw_automations?.loyalty?.free_service_id) setLoyaltyFreeServiceId(c.cw_automations.loyalty.free_service_id)
         if (c.google_maps_url) setReviewUrl(c.google_maps_url)
         setTaxEnabled(!!c.tax_enabled)
         setVatRate(SAUDI_VAT_RATE)
@@ -209,7 +211,14 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
   const saveLoyalty = async () => {
     if (!companyId) return
     setSavingLoyalty(true)
-    await supabase.from('companies').update({ cw_loyalty_threshold: loyaltyThreshold, google_maps_url: reviewUrl, cw_monthly_target: monthlyTarget } as any).eq('id', companyId)
+    const { data: coData } = await supabase.from('companies').select('cw_automations').eq('id', companyId).single()
+    const existingAuto = (coData as any)?.cw_automations || {}
+    await supabase.from('companies').update({
+      cw_loyalty_threshold: loyaltyThreshold,
+      google_maps_url: reviewUrl,
+      cw_monthly_target: monthlyTarget,
+      cw_automations: { ...existingAuto, loyalty: { ...existingAuto.loyalty, free_service_id: loyaltyFreeServiceId } },
+    } as any).eq('id', companyId)
     setSavingLoyalty(false)
     setLoyaltySaved(true)
     setTimeout(() => setLoyaltySaved(false), 3000)
@@ -456,6 +465,29 @@ export function CarWashSetup({ title = 'إعداد المغسلة', description 
               </div>
             </div>
           </div>
+          <div style={SECTION_STYLE}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <Star size={15} color="#F59E0B" />
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>نوع الخدمة المجانية</span>
+            </div>
+            <p style={{ fontSize: 12, color: '#475569', fontFamily: 'Tajawal, sans-serif', marginBottom: 12 }}>
+              اختر الخدمة التي يحصل عليها العميل مجاناً عند اكتمال نقاط الولاء.
+            </p>
+            {services.length === 0 ? (
+              <p style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>لا توجد خدمات — أضف خدمات أولاً من تبويب الخدمات.</p>
+            ) : (
+              <select
+                value={loyaltyFreeServiceId}
+                onChange={e => setLoyaltyFreeServiceId(e.target.value)}
+                style={{ width: '100%', background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: 10, padding: '10px 12px', color: '#0F172A', fontSize: 13, fontFamily: 'Cairo, sans-serif', outline: 'none', cursor: 'pointer' }}>
+                <option value="">— اختر الخدمة المجانية —</option>
+                {services.map(s => (
+                  <option key={s.id} value={s.id}>{s.name} — {s.price} ر.س</option>
+                ))}
+              </select>
+            )}
+          </div>
+
           <div style={SECTION_STYLE}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
               <MapPin size={15} color="#22D3EE" />

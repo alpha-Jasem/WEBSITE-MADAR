@@ -18,6 +18,7 @@ import {
   ToggleRight,
   Zap,
   X,
+  MessageCircle,
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { logAudit } from '../../../lib/auditLog'
@@ -111,6 +112,24 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
       cash_pos: stored.cash_pos ?? true,
     }
   })
+
+  // Green API (car_wash only)
+  const [gwIdInstance, setGwIdInstance] = useState(() => (company.cw_automations as any)?.green_api?.idInstance || '')
+  const [gwApiToken, setGwApiToken] = useState(() => (company.cw_automations as any)?.green_api?.apiTokenInstance || '')
+  const [savingGreenApi, setSavingGreenApi] = useState(false)
+  const [greenApiSaved, setGreenApiSaved] = useState(false)
+
+  const saveGreenApi = async () => {
+    setSavingGreenApi(true)
+    const existing = (company.cw_automations as any) || {}
+    await supabase.from('companies').update({
+      cw_automations: { ...existing, green_api: { idInstance: gwIdInstance.trim(), apiTokenInstance: gwApiToken.trim() } }
+    } as any).eq('id', company.id)
+    setSavingGreenApi(false)
+    setGreenApiSaved(true)
+    setTimeout(() => setGreenApiSaved(false), 2500)
+    onUpdated()
+  }
 
   const plan = PLAN_CONFIG[company.plan]
   const checkinUrl = getSelfCheckinUrl(company as any)
@@ -349,6 +368,58 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
                     لا يوجد public check-in token أو webhook token. جهّز الرابط قبل طباعة QR للعميل.
                   </p>
                 )}
+              </section>
+            )}
+
+            {company.business_type === 'car_wash' && (
+              <section className="rounded-3xl bg-white p-5" style={{ border: '1px solid #E2E8F0' }}>
+                <div className="mb-4 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <MessageCircle size={16} className="text-green-600" />
+                    <h3 className="text-sm font-bold text-slate-900 font-cairo">إعدادات Green API (واتساب)</h3>
+                  </div>
+                  {gwIdInstance && gwApiToken && (
+                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 font-tajawal">متصل ✓</span>
+                  )}
+                </div>
+                <p className="mb-4 text-xs text-slate-500 font-tajawal leading-6">
+                  هذه الإعدادات تمكّن المغسلة من إرسال حملات واتساب للعملاء. يتم تخزينها بأمان ولا يستطيع العميل تعديلها.
+                </p>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">idInstance</label>
+                    <input
+                      value={gwIdInstance}
+                      onChange={e => setGwIdInstance(e.target.value)}
+                      placeholder="7105XXXXXXXX"
+                      dir="ltr"
+                      className="w-full px-4 py-2.5 rounded-xl text-sm font-mono text-slate-900 outline-none"
+                      style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">apiTokenInstance</label>
+                    <input
+                      value={gwApiToken}
+                      onChange={e => setGwApiToken(e.target.value)}
+                      placeholder="مفتاح التوثيق..."
+                      dir="ltr"
+                      type="password"
+                      className="w-full px-4 py-2.5 rounded-xl text-sm font-mono text-slate-900 outline-none"
+                      style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={saveGreenApi}
+                    disabled={savingGreenApi || !gwIdInstance || !gwApiToken}
+                    className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold font-cairo text-white disabled:opacity-50"
+                    style={{ background: 'linear-gradient(135deg, #10B981, #059669)' }}
+                  >
+                    {savingGreenApi ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                    {greenApiSaved ? 'تم الحفظ ✓' : 'حفظ إعدادات Green API'}
+                  </button>
+                </div>
               </section>
             )}
 
