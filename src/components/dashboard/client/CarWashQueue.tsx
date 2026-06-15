@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Plus, X, Loader2, Clock, ChevronRight, Car, Pencil, Check, Gift, ChevronDown, ChevronUp, Receipt, AlertTriangle, RefreshCw } from 'lucide-react'
+import { Plus, X, Loader2, Clock, ChevronRight, Car, Pencil, Check, Gift, ChevronDown, ChevronUp, Receipt, AlertTriangle, RefreshCw, ScanLine } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { calcVAT } from '../../../lib/vatUtils'
@@ -124,6 +124,10 @@ export const CarWashQueue = () => {
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null)
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
   const custSearchTimer = useRef<ReturnType<typeof setTimeout>>()
+  const [showScanner, setShowScanner] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const loadItems = async (cid: string) => {
     const todayStart = new Date()
@@ -244,6 +248,45 @@ export const CarWashQueue = () => {
       setCustResults(merged as { id: string; name: string | null; phone: string }[])
       setCustSearching(false)
     }, 300)
+  }
+
+  const stopScanner = () => {
+    if (scanIntervalRef.current) clearInterval(scanIntervalRef.current)
+    streamRef.current?.getTracks().forEach(t => t.stop())
+    streamRef.current = null
+    setShowScanner(false)
+  }
+
+  const onQRDetected = async (phone: string) => {
+    stopScanner()
+    setCustSearchQ(phone)
+    if (!companyId) return
+    setCustSearching(true)
+    const { data } = await supabase.from('cw_customers').select('id, name, phone').eq('company_id', companyId).ilike('phone', `%${phone}%`).limit(6)
+    const results = (data || []) as { id: string; name: string | null; phone: string }[]
+    setCustResults(results)
+    setCustSearching(false)
+    if (results.length === 1) selectCustomer(results[0])
+  }
+
+  const startScanner = async () => {
+    setShowScanner(true)
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      streamRef.current = stream
+      setTimeout(() => {
+        if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play() }
+      }, 100)
+      if (!('BarcodeDetector' in window)) return
+      const detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] })
+      scanIntervalRef.current = setInterval(async () => {
+        if (!videoRef.current || videoRef.current.readyState < 2) return
+        try {
+          const codes = await detector.detect(videoRef.current)
+          if (codes.length > 0) onQRDetected(codes[0].rawValue)
+        } catch {}
+      }, 300)
+    } catch { stopScanner() }
   }
 
   const selectCustomer = (c: { id: string; name: string | null; phone: string }) => {
@@ -1033,15 +1076,24 @@ export const CarWashQueue = () => {
                           </div>
                         ) : (
                           <>
-                            <div className="relative">
+                            <div className="relative flex gap-2">
                               <input
                                 value={custSearchQ}
                                 onChange={e => handleCustSearch(e.target.value)}
                                 placeholder="ابحث بالاسم أو الجوال..."
-                                className="w-full px-4 py-2.5 rounded-xl text-sm font-tajawal text-slate-900 placeholder-slate-400 outline-none focus:border-sky-400"
+                                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-tajawal text-slate-900 placeholder-slate-400 outline-none focus:border-sky-400"
                                 style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }}
                               />
-                              {custSearching && <Loader2 size={14} className="animate-spin absolute left-3 top-3 text-slate-400" />}
+                              <button
+                                type="button"
+                                onClick={startScanner}
+                                title="مسح بطاقة العميل"
+                                className="flex items-center justify-center rounded-xl px-3 flex-shrink-0"
+                                style={{ background: 'linear-gradient(135deg,#0099CC,#22D3EE)', color: '#fff', border: 'none', cursor: 'pointer', minWidth: 42 }}
+                              >
+                                <ScanLine size={18} />
+                              </button>
+                              {custSearching && <Loader2 size={14} className="animate-spin absolute left-14 top-3 text-slate-400" />}
                             </div>
                             {custResults.length > 0 && (
                               <div className="mt-1 rounded-xl overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
@@ -1297,6 +1349,31 @@ export const CarWashQueue = () => {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* QR Scanner modal */}
+      {showScanner && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: '#000', display: 'flex', flexDirection: 'column' }} dir="rtl">
+          <div style={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
+            <video ref={videoRef} playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: 220, height: 220, border: '3px solid #22D3EE', borderRadius: 18, boxShadow: '0 0 0 9999px rgba(0,0,0,0.5)' }} />
+              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 220, height: 3, background: 'rgba(34,211,238,0.6)', animation: 'scanLine 2s linear infinite' }} />
+            </div>
+            <p style={{ position: 'absolute', bottom: 20, width: '100%', textAlign: 'center', color: 'rgba(255,255,255,0.8)', fontSize: 13, fontFamily: 'Tajawal,sans-serif' }}>
+              وجّه الكاميرا نحو QR الموجود على بطاقة العميل
+            </p>
+          </div>
+          <div style={{ padding: '20px 24px', background: '#111', display: 'flex', gap: 12 }}>
+            {'BarcodeDetector' in window ? null : (
+              <p style={{ fontSize: 12, color: '#F97316', fontFamily: 'Tajawal,sans-serif', flex: 1 }}>المتصفح لا يدعم المسح التلقائي — أدخل الرقم يدوياً</p>
+            )}
+            <button onClick={stopScanner} style={{ flex: 1, padding: '14px', borderRadius: 14, background: '#EF4444', color: '#fff', border: 'none', fontSize: 15, fontWeight: 700, fontFamily: 'Cairo,sans-serif', cursor: 'pointer' }}>
+              إلغاء
+            </button>
+          </div>
+          <style>{`@keyframes scanLine { 0%,100%{transform:translate(-50%,-110px)} 50%{transform:translate(-50%,110px)} }`}</style>
         </div>
       )}
 
