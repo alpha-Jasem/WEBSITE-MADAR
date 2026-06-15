@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState, useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { AlertTriangle, BarChart3, Calendar, Car, CheckCircle2, CreditCard, Droplets, LayoutDashboard, Loader2, MessageSquare, Monitor, Settings, ShieldCheck, Sparkles, Users2, WalletCards, Wrench, Zap, Wallet } from 'lucide-react'
+import { AlertTriangle, BarChart3, Calendar, Car, CheckCircle2, CreditCard, Droplets, LayoutDashboard, Loader2, MessageSquare, Monitor, Settings, ShieldCheck, Sparkles, Users2, WalletCards, Wrench, Zap, Wallet, Megaphone } from 'lucide-react'
 import { DashShell } from '../components/dash/DashShell'
 import type { NavItem } from '../components/dash/DashSidebar'
 import { useClientCompany } from '../hooks/useClientCompany'
@@ -22,6 +22,7 @@ const CarWashFinance     = lazy(() => import('../components/dashboard/client/Car
 const CarWashDailyClosing = lazy(() => import('../components/dashboard/client/CarWashDailyClosing').then(m => ({ default: m.CarWashDailyClosing })))
 const CarWashMemberships = lazy(() => import('../components/dashboard/client/CarWashMemberships').then(m => ({ default: m.CarWashMemberships })))
 const CarWashSeedDemo    = lazy(() => import('../components/dashboard/client/CarWashSeedDemo').then(m => ({ default: m.CarWashSeedDemo })))
+const CarWashCampaigns   = lazy(() => import('../components/dashboard/client/CarWashCampaigns').then(m => ({ default: m.CarWashCampaigns })))
 const ClientAutomations  = lazy(() => import('../components/dashboard/client/ClientAutomations').then(m => ({ default: m.ClientAutomations })))
 const CarWashAutomations = lazy(() => import('../components/dashboard/client/CarWashAutomations').then(m => ({ default: m.CarWashAutomations })))
 const ClientLeads        = lazy(() => import('../components/dashboard/client/ClientLeads').then(m => ({ default: m.ClientLeads })))
@@ -50,10 +51,11 @@ function buildNavItems(template: ReturnType<typeof getClientIndustryTemplate>): 
       { to: '/client/queue-display', icon: Monitor,        label: 'شاشة العرض'  },
       { to: '/client/leads',         icon: Users2,         label: 'العملاء'      },
       { to: '/client/memberships',   icon: WalletCards,    label: 'الاشتراكات'  },
-      { to: '/client/finance',       icon: Wallet,         label: 'المالية'      },
-      { to: '/client/reports',       icon: BarChart3,      label: 'التقارير'     },
-      { to: '/client/workers',       icon: Users2,         label: 'الموظفون'     },
-      { to: '/client/settings',      icon: Settings,       label: 'الإعدادات'    },
+      { to: '/client/finance',        icon: Wallet,         label: 'المالية'      },
+      { to: '/client/reports',        icon: BarChart3,      label: 'التقارير'     },
+      { to: '/client/campaigns',      icon: Megaphone,      label: 'الحملات'      },
+      { to: '/client/workers',        icon: Users2,         label: 'الموظفون'     },
+      { to: '/client/settings',       icon: Settings,       label: 'الإعدادات'    },
     ]
   }
 
@@ -306,6 +308,7 @@ export const ClientPortal = () => {
             <Route path="automations" element={canAccess('/client/automations') ? (isCarWash ? <CarWashAutomations /> : <ClientAutomations />) : fallback} />
             <Route path="leads" element={canAccess('/client/leads') ? (isCarWash ? <CarWashLeads /> : <ClientLeads />) : fallback} />
             <Route path="memberships" element={isCarWash ? <CarWashMemberships /> : fallback} />
+            <Route path="campaigns" element={isCarWash ? <CarWashCampaigns /> : fallback} />
             <Route path="reports" element={canAccess('/client/reports') ? (isCarWash ? <CarWashReports /> : <ClientReports />) : fallback} />
             <Route path="upgrade" element={<PricingPage />} />
             <Route path="settings" element={canAccess('/client/settings') ? <ClientSettings /> : fallback} />
