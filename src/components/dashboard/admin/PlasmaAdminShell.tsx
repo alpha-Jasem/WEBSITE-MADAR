@@ -23,6 +23,7 @@ const NAV = [
   ]},
   { group: 'النظام', items: [
     { id: 'settings', label: 'الإعدادات', to: '/admin/settings' },
+    { id: 'api', label: 'API & التكاملات', to: '/admin/api' },
   ]},
 ]
 
@@ -39,6 +40,7 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
   '/admin/n8n': { title: 'n8n Workflows', sub: 'أتمتة العمليات' },
   '/admin/logs': { title: 'السجلات', sub: 'سجلّ كل العمليات' },
   '/admin/settings': { title: 'الإعدادات', sub: 'إعدادات النظام' },
+  '/admin/api': { title: 'API & التكاملات', sub: 'مفاتيح API والـ Webhooks' },
 }
 
 const NOTIFS = [

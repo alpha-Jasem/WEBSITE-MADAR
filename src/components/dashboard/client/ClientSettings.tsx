@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { User, Shield, Link2, Copy, Check, Mail, Loader2, MapPin, Save, Users, Plus, Trash2, Eye, EyeOff, QrCode, ExternalLink, Image as ImageIcon, Building2, Car, FileText } from 'lucide-react'
+import { User, Shield, Link2, Copy, Check, Mail, Loader2, MapPin, Save, Users, Plus, Trash2, Eye, EyeOff, QrCode, ExternalLink, Image as ImageIcon, Building2, Car, FileText, Key, RefreshCw, Webhook } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
@@ -10,7 +10,8 @@ import { usePlanGate } from '../../../hooks/usePlanGate'
 import { FeatureLock } from '../../dash/FeatureLock'
 import { CarWashLaunchChecklist } from './CarWashLaunchChecklist'
 import { ClientPageHeader } from './ClientUI'
-type SettingsTab = 'account' | 'carwash' | 'finance' | 'print' | 'team'
+import { generateApiKey } from '../../../lib/apiKeys'
+type SettingsTab = 'account' | 'carwash' | 'finance' | 'print' | 'team' | 'api'
 
 const CW_PAGES = [
   { path: '/client',               label: 'الرئيسية'      },
@@ -88,6 +89,18 @@ export const ClientSettings = () => {
   const [generatingToken, setGeneratingToken] = useState(false)
   const [localCheckinToken, setLocalCheckinToken] = useState('')
 
+  // ── API tab ────────────────────────────────────────────────────────────────
+  interface ApiKeyRow { id: string; name: string; key_prefix: string; permissions: string[]; active: boolean; last_used_at: string | null; created_at: string }
+  interface WebhookRow { id: string; url: string; events: string[]; active: boolean; last_triggered_at: string | null }
+  const [apiKeys, setApiKeys]           = useState<ApiKeyRow[]>([])
+  const [webhooks, setWebhooks]         = useState<WebhookRow[]>([])
+  const [apiLoaded, setApiLoaded]       = useState(false)
+  const [generatingApiKey, setGeneratingApiKey] = useState(false)
+  const [newRawKey, setNewRawKey]       = useState('')
+  const [copiedApiKey, setCopiedApiKey] = useState(false)
+  const [newWebhookUrl, setNewWebhookUrl] = useState('')
+  const [addingWebhook, setAddingWebhook] = useState(false)
+
   // ── Load company data ──────────────────────────────────────────────────────
   useEffect(() => {
     if (!company) return
@@ -126,7 +139,46 @@ export const ClientSettings = () => {
   useEffect(() => {
     if (tab === 'team' && !teamLoaded) loadTeam()
     if (tab === 'team') setOwnerPin(String(((company as any)?.cw_automations || {})?.owner_pin || ''))
+    if (tab === 'api' && !apiLoaded) loadApiData()
   }, [tab])
+
+  const loadApiData = async () => {
+    if (!companyId) return
+    const [keysRes, webhooksRes] = await Promise.all([
+      supabase.from('api_keys').select('id,name,key_prefix,permissions,active,last_used_at,created_at').eq('company_id', companyId).order('created_at', { ascending: false }),
+      supabase.from('webhook_endpoints').select('id,url,events,active,last_triggered_at').eq('company_id', companyId).order('created_at', { ascending: false }),
+    ])
+    setApiKeys((keysRes.data || []) as ApiKeyRow[])
+    setWebhooks((webhooksRes.data || []) as WebhookRow[])
+    setApiLoaded(true)
+  }
+
+  const handleGenerateApiKey = async () => {
+    if (!companyId) return
+    setGeneratingApiKey(true)
+    const { raw, hash, prefix } = await generateApiKey()
+    const { error } = await supabase.from('api_keys').insert({ company_id: companyId, name: 'مفتاح API', key_prefix: prefix, key_hash: hash, permissions: ['read:all'] })
+    if (!error) { setNewRawKey(raw); setApiLoaded(false); loadApiData() }
+    setGeneratingApiKey(false)
+  }
+
+  const revokeApiKey = async (id: string) => {
+    await supabase.from('api_keys').update({ active: false }).eq('id', id).eq('company_id', companyId)
+    loadApiData()
+  }
+
+  const addWebhook = async () => {
+    if (!companyId || !newWebhookUrl.trim()) return
+    setAddingWebhook(true)
+    await supabase.from('webhook_endpoints').insert({ company_id: companyId, url: newWebhookUrl.trim(), events: ['visit.created'] })
+    setNewWebhookUrl(''); setApiLoaded(false); loadApiData()
+    setAddingWebhook(false)
+  }
+
+  const deleteWebhook = async (id: string) => {
+    await supabase.from('webhook_endpoints').delete().eq('id', id).eq('company_id', companyId)
+    loadApiData()
+  }
 
   // ── Actions ────────────────────────────────────────────────────────────────
   const webhookUrl = companyId && company?.webhook_token
@@ -303,6 +355,7 @@ export const ClientSettings = () => {
     { key: 'carwash', label: 'المغسلة',  icon: Car       },
     { key: 'print',   label: 'الطباعة',  icon: FileText  },
     { key: 'team',    label: 'الفريق',   icon: Users     },
+    { key: 'api',     label: 'API',      icon: Key       },
   ]
 
   const panelStyle = { background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 18, padding: '20px 22px' }
@@ -902,6 +955,105 @@ export const ClientSettings = () => {
                 )}
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* ═══ TAB: API ════════════════════════════════════════════════════════ */}
+      {isCarWash && tab === 'api' && (
+        <div className="space-y-5" dir="rtl">
+          {/* Base URL */}
+          <div style={panelStyle}>
+            <p style={{ margin: 0, fontSize: 12, color: '#64748B', fontFamily: 'Cairo, sans-serif', marginBottom: 6 }}>Base URL للـ API</p>
+            <code style={{ display: 'block', background: '#0F172A', color: '#22D3EE', padding: '10px 14px', borderRadius: 10, fontSize: 12, direction: 'ltr', wordBreak: 'break-all' }}>
+              {import.meta.env.VITE_SUPABASE_URL}/functions/v1/madar-api
+            </code>
+          </div>
+
+          {/* New raw key display */}
+          {newRawKey && (
+            <div style={{ ...panelStyle, background: '#022c22', border: '1px solid #065f46' }}>
+              <p style={{ margin: '0 0 8px', fontSize: 13, color: '#34d399', fontFamily: 'Cairo, sans-serif', fontWeight: 700 }}>⚠️ احفظ المفتاح الآن — لن يظهر مرة ثانية</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <code style={{ flex: 1, background: '#0F172A', color: '#6ee7b7', padding: '10px 14px', borderRadius: 10, fontSize: 12, direction: 'ltr', wordBreak: 'break-all' }}>{newRawKey}</code>
+                <button onClick={() => { navigator.clipboard.writeText(newRawKey); setCopiedApiKey(true); setTimeout(() => setCopiedApiKey(false), 2000) }}
+                  style={{ padding: '8px 14px', borderRadius: 10, border: 'none', cursor: 'pointer', background: copiedApiKey ? '#065f46' : '#1e3a2e', color: copiedApiKey ? '#34d399' : '#6ee7b7', fontFamily: 'Cairo, sans-serif', fontSize: 12, fontWeight: 700 }}>
+                  {copiedApiKey ? <Check size={14} /> : <Copy size={14} />}
+                </button>
+              </div>
+              <button onClick={() => setNewRawKey('')} style={{ marginTop: 8, background: 'transparent', border: 'none', color: '#6ee7b7', cursor: 'pointer', fontSize: 12, fontFamily: 'Cairo, sans-serif' }}>إخفاء</button>
+            </div>
+          )}
+
+          {/* API Keys list */}
+          <div style={panelStyle}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Key size={16} color="#22D3EE" />
+                <span style={{ fontSize: 14, fontWeight: 700, fontFamily: 'Cairo, sans-serif', color: '#0F172A' }}>مفاتيح API</span>
+              </div>
+              <button onClick={handleGenerateApiKey} disabled={generatingApiKey}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 10, border: 'none', cursor: 'pointer', background: 'rgba(34,211,238,0.1)', color: '#22D3EE', fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: 700 }}>
+                {generatingApiKey ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                توليد مفتاح جديد
+              </button>
+            </div>
+            {apiKeys.length === 0 ? (
+              <p style={{ color: '#94A3B8', fontSize: 13, textAlign: 'center', padding: '20px 0', fontFamily: 'Cairo, sans-serif' }}>لا توجد مفاتيح API بعد</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {apiKeys.map(k => (
+                  <div key={k.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, background: k.active ? '#F8FAFC' : '#FEF2F2', border: `1px solid ${k.active ? '#E2E8F0' : '#FEE2E2'}` }}>
+                    <code style={{ flex: 1, fontSize: 12, direction: 'ltr', color: k.active ? '#0F172A' : '#DC2626' }}>{k.key_prefix}</code>
+                    <span style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Cairo, sans-serif' }}>
+                      {k.last_used_at ? `آخر استخدام: ${new Date(k.last_used_at).toLocaleDateString('en-SA')}` : 'لم يُستخدم'}
+                    </span>
+                    <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontFamily: 'Cairo, sans-serif', background: k.active ? 'rgba(16,185,129,0.1)' : 'rgba(220,38,38,0.1)', color: k.active ? '#059669' : '#DC2626' }}>
+                      {k.active ? 'نشط' : 'ملغى'}
+                    </span>
+                    {k.active && (
+                      <button onClick={() => revokeApiKey(k.id)} style={{ padding: '4px 10px', borderRadius: 8, border: '1px solid #FEE2E2', cursor: 'pointer', background: '#FEF2F2', color: '#DC2626', fontSize: 11, fontFamily: 'Cairo, sans-serif' }}>
+                        إلغاء
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Webhooks */}
+          <div style={panelStyle}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+              <Webhook size={16} color="#22D3EE" />
+              <span style={{ fontSize: 14, fontWeight: 700, fontFamily: 'Cairo, sans-serif', color: '#0F172A' }}>Webhooks</span>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+              <input value={newWebhookUrl} onChange={e => setNewWebhookUrl(e.target.value)}
+                placeholder="https://your-platform.com/webhook"
+                style={{ flex: 1, padding: '8px 12px', borderRadius: 10, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: 'Cairo, sans-serif', direction: 'ltr' }} />
+              <button onClick={addWebhook} disabled={addingWebhook || !newWebhookUrl.trim()}
+                style={{ padding: '8px 16px', borderRadius: 10, border: 'none', cursor: 'pointer', background: 'rgba(34,211,238,0.1)', color: '#22D3EE', fontFamily: 'Cairo, sans-serif', fontSize: 13, fontWeight: 700 }}>
+                {addingWebhook ? <Loader2 size={14} className="animate-spin" /> : 'إضافة'}
+              </button>
+            </div>
+            {webhooks.length === 0 ? (
+              <p style={{ color: '#94A3B8', fontSize: 13, textAlign: 'center', padding: '12px 0', fontFamily: 'Cairo, sans-serif' }}>لا توجد Webhooks مسجلة</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {webhooks.map(w => (
+                  <div key={w.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                    <code style={{ flex: 1, fontSize: 12, direction: 'ltr', wordBreak: 'break-all', color: '#0F172A' }}>{w.url}</code>
+                    <span style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Cairo, sans-serif', whiteSpace: 'nowrap' }}>
+                      {w.events.join(', ')}
+                    </span>
+                    <button onClick={() => deleteWebhook(w.id)} style={{ padding: '4px 8px', borderRadius: 8, border: '1px solid #FEE2E2', cursor: 'pointer', background: '#FEF2F2', color: '#DC2626' }}>
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
