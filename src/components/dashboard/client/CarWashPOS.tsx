@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import { Search, Plus, X, User, RefreshCw, Trash2, ShoppingCart, Loader2, Receipt, Copy, FileDown, Printer } from 'lucide-react'
+import { Search, Plus, X, User, RefreshCw, Trash2, ShoppingCart, Loader2, Receipt, Copy, FileDown, Printer, ChevronRight, ChevronLeft } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { calcVAT } from '../../../lib/vatUtils'
 import { useClientCompany } from '../../../hooks/useClientCompany'
@@ -75,6 +75,7 @@ export function CarWashPOS() {
   /* ── invoice list filters ── */
   const [invSearch,    setInvSearch]    = useState('')
   const [invPayFilter, setInvPayFilter] = useState('all')
+  const [invMonth,     setInvMonth]     = useState(() => new Date().toISOString().slice(0, 7)) // YYYY-MM
 
   /* ── customer picker ── */
   const [showCust,    setShowCust]    = useState(false)
@@ -110,11 +111,10 @@ export function CarWashPOS() {
   const loadInvoices = useCallback(async () => {
     if (!companyId) return
     setInvLoading(true)
-    const since = new Date(); since.setDate(since.getDate() - 30)
     const { data } = await supabase.from('cw_visits')
       .select('id,customer_name,service_name,payment_method,total_amount,subtotal,vat_amount,created_at,plate,phone')
-      .eq('company_id', companyId).gte('created_at', since.toISOString())
-      .order('created_at', { ascending: false }).limit(200)
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false }).limit(2000)
     setInvoices(data || [])
     setInvLoading(false)
   }, [companyId])
@@ -137,8 +137,30 @@ export function CarWashPOS() {
     const invNo = `INV-${new Date(inv.created_at).toISOString().slice(0,10).replace(/-/g,'')}-${inv.id.slice(0,6).toUpperCase()}`
     const matchSearch = !q || [invNo, inv.customer_name, inv.phone, inv.service_name].some(v => String(v || '').toLowerCase().includes(q))
     const matchPay = invPayFilter === 'all' || (inv.payment_method || 'cash') === invPayFilter
-    return matchSearch && matchPay
-  }), [invoices, invSearch, invPayFilter])
+    const matchMonth = inv.created_at?.slice(0, 7) === invMonth
+    return matchSearch && matchPay && matchMonth
+  }), [invoices, invSearch, invPayFilter, invMonth])
+
+  /* all months that have data — for navigation */
+  const availableMonths = useMemo(() => {
+    const set = new Set(invoices.map((inv: any) => inv.created_at?.slice(0, 7)).filter(Boolean))
+    return Array.from(set).sort().reverse() as string[]
+  }, [invoices])
+
+  const monthLabel = (ym: string) => {
+    const [y, m] = ym.split('-')
+    const d = new Date(Number(y), Number(m) - 1, 1)
+    return d.toLocaleDateString('ar-SA', { month: 'long', year: 'numeric' })
+  }
+
+  const goMonth = (dir: 1 | -1) => {
+    const idx = availableMonths.indexOf(invMonth)
+    const next = availableMonths[idx + dir]
+    if (next) setInvMonth(next)
+  }
+
+  const monthTotal  = filteredInvoices.reduce((s: number, inv: any) => s + Number(inv.total_amount || 0), 0)
+  const monthCount  = filteredInvoices.length
   const invoicePayMethods = useMemo(() => Array.from(new Set(invoices.map((inv: any) => inv.payment_method || 'cash'))), [invoices])
 
   /* ── cart ops ── */
@@ -610,14 +632,30 @@ export function CarWashPOS() {
 
           {/* Header */}
           <div style={{ padding: '14px 18px', borderBottom: '1px solid #E5E7EB', background: '#FFFFFF' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <div>
                 <p style={{ margin: 0, fontSize: 15, fontWeight: 900, fontFamily: 'Cairo, sans-serif', color: '#111827' }}>فواتير المبيعات</p>
                 <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6B7280', fontFamily: 'Tajawal, sans-serif' }}>
-                  سجل قابل للتدقيق لكل زيارة مسجلة — آخر 30 يوم ({invoices.length} فاتورة)
+                  سجل قابل للتدقيق — {monthCount} فاتورة · {monthTotal.toFixed(2)} ر.س
                 </p>
               </div>
-              <div style={{ display: 'flex', gap: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {/* Month navigator */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 1, background: '#F1F5F9', borderRadius: 9, padding: '3px 4px', border: '1px solid #E2E8F0' }}>
+                  <button
+                    onClick={() => goMonth(1)}
+                    disabled={availableMonths.indexOf(invMonth) >= availableMonths.length - 1}
+                    style={{ width: 26, height: 26, borderRadius: 7, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B', opacity: availableMonths.indexOf(invMonth) >= availableMonths.length - 1 ? 0.3 : 1 }}
+                  ><ChevronRight size={14} /></button>
+                  <span style={{ fontSize: 12, fontFamily: 'Cairo, sans-serif', fontWeight: 700, color: '#0F172A', padding: '0 6px', whiteSpace: 'nowrap' }}>
+                    {monthLabel(invMonth)}
+                  </span>
+                  <button
+                    onClick={() => goMonth(-1)}
+                    disabled={availableMonths.indexOf(invMonth) === 0}
+                    style={{ width: 26, height: 26, borderRadius: 7, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B', opacity: availableMonths.indexOf(invMonth) === 0 ? 0.3 : 1 }}
+                  ><ChevronLeft size={14} /></button>
+                </div>
                 <button onClick={loadInvoices} style={{ ...actionBtn(), gap: 5 }}><RefreshCw size={13} /> تحديث</button>
                 <button onClick={exportInvoicesCSV} style={{ ...actionBtn(), gap: 5 }}><FileDown size={13} /> تصدير</button>
               </div>
@@ -656,9 +694,29 @@ export function CarWashPOS() {
             ) : filteredInvoices.length === 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 10, color: '#9CA3AF' }}>
                 <Receipt size={40} strokeWidth={1} />
-                <p style={{ margin: 0, fontFamily: 'Tajawal, sans-serif', fontSize: 13 }}>لا توجد فواتير مطابقة</p>
+                <p style={{ margin: 0, fontFamily: 'Tajawal, sans-serif', fontSize: 13 }}>لا توجد فواتير في {monthLabel(invMonth)}</p>
+                {availableMonths.length > 0 && (
+                  <p style={{ margin: 0, fontFamily: 'Tajawal, sans-serif', fontSize: 12, color: '#CBD5E1' }}>
+                    الأشهر المتاحة: {availableMonths.slice(0, 6).map(m => monthLabel(m)).join(' · ')}
+                  </p>
+                )}
               </div>
             ) : (
+              <>
+              {/* Monthly summary bar */}
+              <div style={{ display: 'flex', gap: 1, padding: '10px 18px', background: '#F8FBFF', borderBottom: '1px solid #E5E7EB' }}>
+                {[
+                  { label: 'إجمالي الشهر', value: `${monthTotal.toFixed(2)} ر.س`, color: '#059669' },
+                  { label: 'عدد الفواتير', value: String(monthCount), color: '#0EA5E9' },
+                  { label: 'متوسط الفاتورة', value: monthCount > 0 ? `${(monthTotal / monthCount).toFixed(2)} ر.س` : '—', color: '#7C3AED' },
+                  { label: 'ضريبة VAT', value: `${filteredInvoices.reduce((s: number, inv: any) => s + Number(inv.vat_amount || 0), 0).toFixed(2)} ر.س`, color: '#F59E0B' },
+                ].map(item => (
+                  <div key={item.label} style={{ flex: 1, background: '#FFFFFF', borderRadius: 8, padding: '8px 12px', border: '1px solid #E2E8F0', textAlign: 'center' }}>
+                    <p style={{ margin: 0, fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>{item.label}</p>
+                    <p style={{ margin: '3px 0 0', fontSize: 14, fontWeight: 900, color: item.color, fontFamily: 'Sora, sans-serif' }}>{item.value}</p>
+                  </div>
+                ))}
+              </div>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', minWidth: 820, borderCollapse: 'collapse', fontSize: 12.5, textAlign: 'right', background: '#FFFFFF' }}>
                   <thead>
@@ -716,6 +774,7 @@ export function CarWashPOS() {
                   </tbody>
                 </table>
               </div>
+              </>
             )}
             {filteredInvoices.length > 0 && (
               <p style={{ padding: '8px 16px', fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', textAlign: 'center' }}>
