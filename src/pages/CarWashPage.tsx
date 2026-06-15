@@ -67,6 +67,7 @@ function Navbar() {
     { href: '#faq', label: 'تواصل معنا' },
   ]
   return (
+    <>
     <header style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(18px)', borderBottom: '1px solid #E2EBF6', boxShadow: '0 1px 12px rgba(13,27,62,0.06)' }}>
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
         {/* Logo */}
@@ -101,39 +102,6 @@ function Navbar() {
         </div>
       </div>
 
-      {/* Mobile drawer */}
-      <AnimatePresence>
-        {open && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(7,19,34,0.75)' }}
-            onClick={() => setOpen(false)}
-          >
-            <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-              onClick={e => e.stopPropagation()}
-              style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 300, background: '#fff', padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 6, overflowY: 'auto' }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <button onClick={() => setOpen(false)} style={{ background: '#F1F5F9', border: 'none', borderRadius: 10, padding: 10, cursor: 'pointer', display: 'flex' }}><X size={18} color="#0D1B3E" /></button>
-                <span style={{ fontSize: 16, fontWeight: 700, color: '#0D1B3E', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif' }}>القائمة</span>
-              </div>
-              {links.map(l => (
-                <a key={l.href} href={l.href} onClick={() => setOpen(false)}
-                  style={{ fontSize: 15, fontWeight: 600, color: '#0D1B3E', padding: '13px 16px', borderRadius: 12, textDecoration: 'none', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif', background: '#F8FAFF' }}
-                >{l.label}</a>
-              ))}
-              <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <Link to="/login" onClick={() => setOpen(false)} style={{ display: 'block', textAlign: 'center', background: '#F1F5F9', color: '#0D1B3E', border: '1px solid #E2EBF6', borderRadius: 12, padding: '13px 20px', fontSize: 14, fontWeight: 700, textDecoration: 'none', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif' }}>
-                  تسجيل الدخول
-                </Link>
-                <Link to="/trial" onClick={() => setOpen(false)} style={{ display: 'block', textAlign: 'center', background: '#0D1B3E', color: '#fff', borderRadius: 12, padding: '13px 20px', fontSize: 14, fontWeight: 700, textDecoration: 'none', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif' }}>
-                  تجربة 3 أيام مجانية
-                </Link>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; }
@@ -145,6 +113,29 @@ function Navbar() {
         }
       `}</style>
     </header>
+
+    {/* Mobile drawer — outside header to avoid backdropFilter stacking context */}
+    {open && (
+      <>
+        <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(7,19,34,0.78)' }} />
+        <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 10000, width: 300, background: '#ffffff', display: 'flex', flexDirection: 'column', gap: 6, padding: '20px 16px', overflowY: 'auto', boxShadow: '-6px 0 32px rgba(0,0,0,0.25)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <button onClick={() => setOpen(false)} style={{ background: '#F1F5F9', border: 'none', borderRadius: 10, padding: 10, cursor: 'pointer', display: 'flex' }}><X size={18} color="#0D1B3E" /></button>
+            <span style={{ fontSize: 16, fontWeight: 700, color: '#0D1B3E', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif' }}>القائمة</span>
+          </div>
+          {links.map(l => (
+            <a key={l.href} href={l.href} onClick={() => setOpen(false)}
+              style={{ fontSize: 15, fontWeight: 600, color: '#0D1B3E', padding: '13px 16px', borderRadius: 12, textDecoration: 'none', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif', background: '#F8FAFF', display: 'block' }}
+            >{l.label}</a>
+          ))}
+          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 16, borderTop: '1px solid #E2E8F0' }}>
+            <Link to="/login" onClick={() => setOpen(false)} style={{ display: 'block', textAlign: 'center', background: '#F1F5F9', color: '#0D1B3E', border: '1px solid #E2E8F0', borderRadius: 12, padding: '13px', fontSize: 14, fontWeight: 700, textDecoration: 'none', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif' }}>تسجيل الدخول</Link>
+            <Link to="/trial" onClick={() => setOpen(false)} style={{ display: 'block', textAlign: 'center', background: '#0D1B3E', color: '#fff', borderRadius: 12, padding: '13px', fontSize: 14, fontWeight: 700, textDecoration: 'none', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif' }}>تجربة 3 أيام مجانية</Link>
+          </div>
+        </div>
+      </>
+    )}
+    </>
   )
 }
 
