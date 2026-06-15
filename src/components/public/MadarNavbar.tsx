@@ -31,19 +31,13 @@ export const MadarNavbar = ({ navLinks, subtitle = 'نظام تشغيل ذكي' 
   return (
     <>
       <header
-        className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
-          scrolled
-            ? 'border-b border-sky-100 bg-white/94 shadow-[0_18px_45px_rgba(13,27,62,0.08)] backdrop-blur-xl'
-            : 'bg-transparent'
-        }`}
+        className="fixed inset-x-0 top-0 z-50 transition-all duration-500 border-b border-sky-100/60 bg-white/92 shadow-[0_4px_24px_rgba(13,27,62,0.07)] backdrop-blur-xl"
       >
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Logo */}
           <Link
             to="/"
-            className={`flex items-center gap-3 rounded-2xl px-3 py-2 transition ${
-              scrolled ? 'bg-transparent' : 'bg-white/72 shadow-sm backdrop-blur-xl'
-            }`}
+            className="flex items-center gap-3 rounded-2xl px-3 py-2 transition"
           >
             <img src="/logo-main.png" alt="Madar.software" className="h-11 w-auto object-contain" />
             <div>
@@ -56,9 +50,7 @@ export const MadarNavbar = ({ navLinks, subtitle = 'نظام تشغيل ذكي' 
 
           {/* Desktop nav links */}
           <nav
-            className={`hidden items-center gap-1 rounded-2xl px-2 py-2 text-sm font-black font-cairo lg:flex ${
-              scrolled ? 'bg-slate-50 text-slate-700' : 'bg-white/72 text-[#0D1B3E] shadow-sm backdrop-blur-xl'
-            }`}
+            className="hidden items-center gap-1 rounded-2xl px-2 py-2 text-sm font-black font-cairo lg:flex bg-slate-50 text-slate-700"
           >
             {navLinks.map((link) => (
               <a
@@ -75,9 +67,7 @@ export const MadarNavbar = ({ navLinks, subtitle = 'نظام تشغيل ذكي' 
           <div className="hidden lg:flex items-center gap-2">
             <Link
               to="/login"
-              className={`inline-flex rounded-2xl px-4 py-3 text-sm font-black shadow-sm font-cairo ${
-                scrolled ? 'border border-sky-100 bg-white text-[#0D1B3E]' : 'border border-sky-100 bg-white/78 text-[#0D1B3E]'
-              }`}
+              className="inline-flex rounded-2xl px-4 py-3 text-sm font-black shadow-sm font-cairo border border-sky-100 bg-white text-[#0D1B3E]"
             >
               تسجيل الدخول
             </Link>
@@ -93,9 +83,7 @@ export const MadarNavbar = ({ navLinks, subtitle = 'نظام تشغيل ذكي' 
           {/* Mobile: hamburger only */}
           <button
             onClick={() => setMobileMenu(true)}
-            className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl lg:hidden border ${
-              scrolled ? 'bg-slate-100 text-[#0D1B3E] border-slate-200' : 'bg-white/72 text-[#0D1B3E] border-sky-100'
-            }`}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl lg:hidden border bg-slate-100 text-[#0D1B3E] border-slate-200"
             aria-label="فتح القائمة"
           >
             <Menu size={20} />
