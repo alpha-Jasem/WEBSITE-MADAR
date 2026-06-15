@@ -5,6 +5,7 @@ import { supabase } from '../../../lib/supabase'
 import { useClientCompany } from '../../../hooks/useClientCompany'
 import { usePlanGate } from '../../../hooks/usePlanGate'
 import { ClientButton, ClientPageHeader } from './ClientUI'
+import { normalizePhone } from '../../../lib/phoneUtils'
 
 const N8N_BASE             = 'https://keepcalm.app.n8n.cloud/webhook'
 const N8N_REGISTER_WEBHOOK = `${N8N_BASE}/cw-registration`
@@ -235,8 +236,7 @@ export function CarWashLeads() {
   const addCustomer = async () => {
     if (!companyId || !crudForm.phone.trim()) return
     setCrudSaving(true)
-    const raw = crudForm.phone.replace(/\D/g, '')
-    const phone = raw.startsWith('966') ? raw : raw.startsWith('0') ? `966${raw.slice(1)}` : `966${raw}`
+    const phone = normalizePhone(crudForm.phone)
     const { data: existing } = await supabase.from('cw_customers').select('id').eq('company_id', companyId).eq('phone', phone).maybeSingle()
     if (existing) {
       setCrudSaving(false)
@@ -287,8 +287,7 @@ export function CarWashLeads() {
   const updateCustomer = async () => {
     if (!editTarget || !companyId) return
     setCrudSaving(true)
-    const raw = crudForm.phone.replace(/\D/g, '')
-    const phone = raw.startsWith('966') ? raw : raw.startsWith('0') ? `966${raw.slice(1)}` : `966${raw}`
+    const phone = normalizePhone(crudForm.phone)
     const { data } = await supabase.from('cw_customers').update({ name: crudForm.name.trim() || null, phone }).eq('id', editTarget.id).select('*').single()
     if (data) upsertCustomerLive(data as CWCustomer)
     setCrudSaving(false)

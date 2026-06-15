@@ -9,6 +9,7 @@ import { downloadCSV, formatDateForCSV } from '../../../lib/exportUtils'
 import { CarWashInvoicePrint, type InvoiceData } from './CarWashInvoicePrint'
 import { CarWashDailyClosing } from './CarWashDailyClosing'
 import { sendCWInvoice } from '../../../lib/n8nCarWash'
+import { normalizePhone } from '../../../lib/phoneUtils'
 
 type POSTab = 'pos' | 'invoices' | 'closing'
 type PM    = 'cash' | 'mada' | 'visa'
@@ -281,7 +282,7 @@ export function CarWashPOS() {
     if (!companyId || !newCust.name.trim() || !newCust.phone.trim()) return
     setSavingCust(true)
     const { data } = await supabase.from('cw_customers').insert({
-      company_id: companyId, name: newCust.name.trim(), phone: newCust.phone.trim(),
+      company_id: companyId, name: newCust.name.trim(), phone: normalizePhone(newCust.phone.trim()),
     }).select().single()
     setSavingCust(false)
     if (data) {

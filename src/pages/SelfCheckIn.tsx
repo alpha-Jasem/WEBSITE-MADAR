@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { CheckCircle2, CreditCard, ExternalLink, Loader2, MessageCircle, Phone, RefreshCw, ShieldCheck, Sparkles, UserRound, WalletCards } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { calcVAT } from '../lib/vatUtils'
+import { normalizePhone } from '../lib/phoneUtils'
 import { getDailyTicketCode } from '../lib/carWashTickets'
 import { canUseSelfCheckin, getSelfCheckinSettings, markSelfCheckinNotes } from '../lib/selfCheckin'
 import { sanitizeDigits, sanitizeNameText } from '../lib/formSanitizers'
@@ -61,13 +62,6 @@ const EMPTY_FORM = {
   service_ids: [] as string[],
 }
 
-function normalizePhone(value: string) {
-  const digits = value.replace(/\D/g, '')
-  if (!digits) return ''
-  if (digits.startsWith('966')) return digits
-  if (digits.startsWith('0')) return `966${digits.slice(1)}`
-  return `966${digits}`
-}
 
 function isValidSaudiMobile(value: string) {
   const digits = value.replace(/\D/g, '')
