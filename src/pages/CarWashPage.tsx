@@ -105,20 +105,20 @@ function Navbar() {
       <AnimatePresence>
         {open && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(13,27,62,0.45)', backdropFilter: 'blur(4px)' }}
+            style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(7,19,34,0.75)' }}
             onClick={() => setOpen(false)}
           >
             <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', stiffness: 320, damping: 32 }}
               onClick={e => e.stopPropagation()}
-              style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 280, background: '#fff', padding: 24, display: 'flex', flexDirection: 'column', gap: 4 }}
+              style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 300, background: '#fff', padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 6, overflowY: 'auto' }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <button onClick={() => setOpen(false)} style={{ background: '#F1F5F9', border: 'none', borderRadius: 10, padding: 10, cursor: 'pointer', display: 'flex' }}><X size={18} color="#0D1B3E" /></button>
                 <span style={{ fontSize: 16, fontWeight: 700, color: '#0D1B3E', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif' }}>القائمة</span>
-                <button onClick={() => setOpen(false)} style={{ background: '#F1F5F9', border: 'none', borderRadius: 8, padding: 8, cursor: 'pointer' }}><X size={16} /></button>
               </div>
               {links.map(l => (
                 <a key={l.href} href={l.href} onClick={() => setOpen(false)}
-                  style={{ fontSize: 15, fontWeight: 500, color: '#0D1B3E', padding: '11px 12px', borderRadius: 10, textDecoration: 'none', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif' }}
+                  style={{ fontSize: 15, fontWeight: 600, color: '#0D1B3E', padding: '13px 16px', borderRadius: 12, textDecoration: 'none', fontFamily: 'IBM Plex Sans Arabic, Tajawal, sans-serif', background: '#F8FAFF' }}
                 >{l.label}</a>
               ))}
               <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>

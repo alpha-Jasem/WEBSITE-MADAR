@@ -129,13 +129,16 @@ export const MadarNavbar = ({ navLinks, subtitle = 'نظام تشغيل ذكي' 
           >
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <img src="/logo-main.png" alt="Madar.software" style={{ height: 44, objectFit: 'contain' }} />
               <button
                 onClick={() => setMobileMenu(false)}
-                style={{ background: '#F1F5F9', border: 'none', borderRadius: 12, padding: 10, cursor: 'pointer', display: 'flex' }}
+                style={{ background: '#F1F5F9', border: 'none', borderRadius: 12, padding: 10, cursor: 'pointer', display: 'flex', flexShrink: 0 }}
               >
                 <X size={18} color="#0D1B3E" />
               </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 16, fontWeight: 900, color: '#0D1B3E', fontFamily: 'sans-serif' }}>Madar <span style={{ color: '#00BFFF' }}>OS</span></span>
+                <img src="/logo-main.png" alt="Madar" style={{ height: 36, objectFit: 'contain' }} />
+              </div>
             </div>
 
             {/* Nav links */}
