@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { CheckCircle2, CreditCard, ExternalLink, Loader2, MessageCircle, RefreshCw, ShieldCheck, Sparkles, UserRound, WalletCards } from 'lucide-react'
+import { CheckCircle2, CreditCard, ExternalLink, Loader2, Sparkles, UserRound, WalletCards } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { calcVAT } from '../lib/vatUtils'
 import { normalizePhone } from '../lib/phoneUtils'
@@ -11,9 +11,6 @@ import { MadarAgentWidget } from '../components/dash/MadarAgentWidget'
 import type { Company, CWService, Plan } from '../types'
 
 const N8N_REGISTER_WEBHOOK = 'https://keepcalm.app.n8n.cloud/webhook/cw-registration'
-const CHECKIN_SESSION_MS = 60 * 60 * 1000
-const CHECKIN_SESSION_PREFIX = 'madar_checkin_session'
-const CHECKIN_LAST_PHONE_PREFIX = 'madar_checkin_last_phone'
 
 type CheckinCompany = Pick<Company,
   'id' | 'name' | 'business_type' | 'industry' | 'status' | 'webhook_token' |
@@ -84,51 +81,6 @@ function money(value: number) {
   return value.toLocaleString('ar-SA', { maximumFractionDigits: 0 })
 }
 
-function sessionKey(token: string, phone: string) {
-  return `${CHECKIN_SESSION_PREFIX}:${token}:${phone}`
-}
-
-function lastPhoneKey(token: string) {
-  return `${CHECKIN_LAST_PHONE_PREFIX}:${token}`
-}
-
-function readCheckinSession(token: string, phone: string) {
-  try {
-    const stored = sessionStorage.getItem(sessionKey(token, phone))
-    if (!stored) return null
-    const parsed = JSON.parse(stored) as { verificationToken?: string; expiresAt?: number }
-    if (!parsed.verificationToken || !parsed.expiresAt || parsed.expiresAt <= Date.now()) {
-      sessionStorage.removeItem(sessionKey(token, phone))
-      return null
-    }
-    return parsed
-  } catch {
-    return null
-  }
-}
-
-function readLastCheckinSession(token: string) {
-  try {
-    const phone = sessionStorage.getItem(lastPhoneKey(token)) || ''
-    if (!phone) return null
-    const session = readCheckinSession(token, phone)
-    return session ? { phone, ...session } : null
-  } catch {
-    return null
-  }
-}
-
-function storeCheckinSession(token: string, phone: string, verificationToken: string) {
-  try {
-    sessionStorage.setItem(lastPhoneKey(token), phone)
-    sessionStorage.setItem(sessionKey(token, phone), JSON.stringify({
-      verificationToken,
-      expiresAt: Date.now() + CHECKIN_SESSION_MS,
-    }))
-  } catch {
-    // Best effort only. OTP still works without browser storage.
-  }
-}
 
 function fireRegistration(body: Record<string, unknown>) {
   fetch(N8N_REGISTER_WEBHOOK, {
@@ -177,7 +129,7 @@ export function SelfCheckIn() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [form, setForm] = useState(EMPTY_FORM)
-  const [step, setStep] = useState<'phone' | 'otp' | 'details'>('phone')
+  const [step, setStep] = useState<'phone' | 'details'>('phone')
   const [knownCustomer, setKnownCustomer] = useState<KnownCustomer | null>(null)
   const [checkingPhone, setCheckingPhone] = useState(false)
   const [restoredSession, setRestoredSession] = useState(false)
@@ -189,13 +141,6 @@ export function SelfCheckIn() {
   const [submitError, setSubmitError] = useState('')
   const [purchaseMode, setPurchaseMode] = useState<'single' | 'membership'>('single')
   const [selectedPlanId, setSelectedPlanId] = useState('')
-  // OTP state
-  const [sendingOtp, setSendingOtp] = useState(false)
-  const [otpInput, setOtpInput] = useState('')
-  const [verifyingOtp, setVerifyingOtp] = useState(false)
-  const [otpError, setOtpError] = useState('')
-  const [verificationToken, setVerificationToken] = useState('')
-  const [resendCooldown, setResendCooldown] = useState(0)
 
   useEffect(() => {
     const load = async () => {
@@ -289,21 +234,16 @@ export function SelfCheckIn() {
     })
   }
 
-  // Resend cooldown timer
-  useEffect(() => {
-    if (resendCooldown <= 0) return
-    const t = setTimeout(() => setResendCooldown(c => c - 1), 1000)
-    return () => clearTimeout(t)
-  }, [resendCooldown])
-
-  const continueWithVerifiedSession = async (phone: string, vtk: string, showOtpError = true) => {
-    setVerificationToken(vtk)
-    const edgeResult = await callCheckinFunction({ action: 'lookup_customer', token, phone, verification_token: vtk })
-    if (!edgeResult || edgeResult?.error) {
-      if (showOtpError) setOtpError('انتهت جلسة التحقق. اطلب رمزاً جديداً.')
-      return false
+  const goToDetails = async () => {
+    if (!company || checkingPhone) return
+    setSubmitError('')
+    if (!isValidSaudiMobile(form.phone)) {
+      setSubmitError('اكتب رقم جوال سعودي صحيح مثل 05XXXXXXXX.')
+      return
     }
-
+    const phone = normalizePhone(form.phone)
+    setCheckingPhone(true)
+    const edgeResult = await callCheckinFunction({ action: 'lookup_customer', token, phone })
     const customer = edgeResult?.customer as KnownCustomer | null
     if (customer?.id) {
       const nm = splitName(customer.name)
@@ -313,8 +253,8 @@ export function SelfCheckIn() {
       setKnownCustomer(null)
       setForm(f => ({ ...f, phone, first_name: '', last_name: '' }))
     }
+    setCheckingPhone(false)
     setStep('details')
-    return true
   }
 
   useEffect(() => {
@@ -328,18 +268,7 @@ export function SelfCheckIn() {
       setRestoredSession(true)
       return
     }
-    const saved = readLastCheckinSession(token)
-    if (!saved) {
-      setRestoredSession(true)
-      return
-    }
-
-    setCheckingPhone(true)
-    continueWithVerifiedSession(saved.phone, saved.verificationToken, false)
-      .finally(() => {
-        setCheckingPhone(false)
-        setRestoredSession(true)
-      })
+    setRestoredSession(true)
   }, [loading, company, restoredSession, ticketCode, token])
 
   useEffect(() => {
@@ -347,91 +276,6 @@ export function SelfCheckIn() {
       setSelectedPlanId(membershipPlans[0].id)
     }
   }, [membershipPlans, purchaseMode, selectedPlanId])
-
-  const sendOtp = async () => {
-    if (!company || sendingOtp || checkingPhone) return
-    setSubmitError('')
-    if (!isValidSaudiMobile(form.phone)) {
-      setSubmitError('اكتب رقم جوال سعودي صحيح مثل 05XXXXXXXX.')
-      return
-    }
-    const phone = normalizePhone(form.phone)
-    const saved = readCheckinSession(token, phone)
-    if (saved) {
-      setCheckingPhone(true)
-      const ok = await continueWithVerifiedSession(phone, saved.verificationToken)
-      setCheckingPhone(false)
-      if (ok) return
-    }
-
-    setSendingOtp(true)
-    const result = await callCheckinFunction({ action: 'send_otp', token, phone })
-    if (!result) {
-      setSubmitError('تعذر الاتصال بخدمة التحقق. حاول مرة أخرى.')
-      setSendingOtp(false)
-      return
-    }
-    if (result?.error) {
-      const msgs: Record<string, string> = {
-        rate_limit_exceeded: 'تجاوزت الحد المسموح. انتظر ساعة وحاول مجدداً.',
-        phone_otp_limit: 'طلبت رموزاً كثيرة. انتظر ساعة.',
-        self_checkin_disabled: 'التسجيل الذاتي غير مفعّل حالياً.',
-      }
-      setSubmitError(msgs[result.error] || 'تعذر إرسال الرمز. حاول مجدداً.')
-      setSendingOtp(false)
-      return
-    }
-    setOtpInput('')
-    setOtpError('')
-    setStep('otp')
-    setResendCooldown(60)
-    setSendingOtp(false)
-  }
-
-  const verifyOtp = async () => {
-    if (verifyingOtp) return
-    setOtpError('')
-    if (otpInput.length !== 4) { setOtpError('أدخل الرمز المكوّن من 4 أرقام.'); return }
-    setVerifyingOtp(true)
-    const result = await callCheckinFunction({ action: 'verify_otp', token, phone: normalizePhone(form.phone), otp: otpInput })
-    if (!result) {
-      setOtpError('تعذر الاتصال بخدمة التحقق. حاول مرة أخرى.')
-      setVerifyingOtp(false)
-      return
-    }
-    if (result?.error || !result?.verified) {
-      const msgs: Record<string, string> = {
-        otp_invalid: 'الرمز غير صحيح. تحقق من الرسالة النصية.',
-        otp_expired: 'انتهت صلاحية الرمز. اطلب رمزاً جديداً.',
-        otp_not_found: 'لم يُرسَل رمز. اطلب رمزاً جديداً.',
-      }
-      setOtpError(msgs[result?.error] || 'تعذر التحقق. حاول مجدداً.')
-      setVerifyingOtp(false)
-      return
-    }
-    const vtk: string = result.verification_token
-    const phone = normalizePhone(form.phone)
-    storeCheckinSession(token, phone, vtk)
-    setVerificationToken(vtk)
-    // Lookup customer after verified
-    const edgeResult = await callCheckinFunction({ action: 'lookup_customer', token, phone, verification_token: vtk })
-    if (!edgeResult || edgeResult?.error) {
-      setOtpError('تم التحقق من الرمز، لكن تعذر تحميل بيانات العميل. حاول مرة أخرى.')
-      setVerifyingOtp(false)
-      return
-    }
-    const customer = edgeResult?.customer as KnownCustomer | null
-    if (customer?.id) {
-      const nm = splitName(customer.name)
-      setKnownCustomer(customer)
-      setForm(f => ({ ...f, first_name: nm.first, last_name: nm.last }))
-    } else {
-      setKnownCustomer(null)
-      setForm(f => ({ ...f, first_name: '', last_name: '' }))
-    }
-    setStep('details')
-    setVerifyingOtp(false)
-  }
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -462,7 +306,6 @@ export function SelfCheckIn() {
       plate: form.plate.trim().toUpperCase() || null,
       service_id: selectedService?.id,
       service_ids: selectedServices.map(service => service.id),
-      verification_token: verificationToken,
     })
 
     if (edgeResult?.error) {
@@ -645,8 +488,8 @@ export function SelfCheckIn() {
 
         <form className="self-checkin-card" onSubmit={submit}>
           <div className="self-checkin-form-head">
-            <span>{step === 'phone' ? 'الخطوة 1 من 3' : step === 'otp' ? 'الخطوة 2 من 3' : 'الخطوة 3 من 3'}</span>
-            <strong>{step === 'phone' ? 'ابدأ برقم الجوال' : step === 'otp' ? 'تحقق من الرقم' : knownCustomer ? 'أهلًا بعودتك' : 'بيانات سريعة'}</strong>
+            <span>{step === 'phone' ? 'الخطوة 1 من 2' : 'الخطوة 2 من 2'}</span>
+            <strong>{step === 'phone' ? 'ابدأ برقم الجوال' : knownCustomer ? 'أهلًا بعودتك' : 'بيانات سريعة'}</strong>
           </div>
 
           {step === 'phone' ? (
@@ -663,49 +506,10 @@ export function SelfCheckIn() {
                 />
               </label>
               {submitError && <p className="self-checkin-error">{submitError}</p>}
-              <button type="button" onClick={sendOtp} disabled={sendingOtp}>
-                {sendingOtp ? <Loader2 className="animate-spin" size={18} /> : <MessageCircle size={18} />}
-                {sendingOtp ? 'جاري الإرسال...' : 'إرسال رمز إلى الجوال'}
+              <button type="button" onClick={goToDetails} disabled={checkingPhone}>
+                {checkingPhone ? <Loader2 className="animate-spin" size={18} /> : <UserRound size={18} />}
+                {checkingPhone ? 'جاري التحقق...' : 'متابعة'}
               </button>
-            </>
-          ) : step === 'otp' ? (
-            <>
-              <div style={{ textAlign: 'center', padding: '4px 0 8px' }}>
-                <p style={{ margin: 0, fontSize: 14, color: '#475569', fontFamily: 'Tajawal, sans-serif', lineHeight: 1.7 }}>
-                  أرسلنا رمز التحقق برسالة نصية إلى<br />
-                  <strong style={{ color: '#0F172A', fontFamily: 'Sora, sans-serif', direction: 'ltr', display: 'inline-block' }}>
-                    {form.phone}
-                  </strong>
-                </p>
-              </div>
-              <label>
-                رمز التحقق (4 أرقام)
-                <input
-                  value={otpInput}
-                  onChange={e => { setOtpInput(e.target.value.replace(/\D/g, '').slice(0, 4)); setOtpError('') }}
-                  inputMode="numeric"
-                  placeholder="0000"
-                  dir="ltr"
-                  style={{ textAlign: 'center', fontSize: 28, fontFamily: 'Sora, sans-serif', fontWeight: 700, letterSpacing: 12 }}
-                  autoFocus
-                />
-              </label>
-              {otpError && <p className="self-checkin-error">{otpError}</p>}
-              <button type="button" onClick={verifyOtp} disabled={verifyingOtp || otpInput.length !== 4}>
-                {verifyingOtp ? <Loader2 className="animate-spin" size={18} /> : <ShieldCheck size={18} />}
-                {verifyingOtp ? 'جاري التحقق...' : 'تحقق وتابع'}
-              </button>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: -4 }}>
-                <button type="button" onClick={() => { setStep('phone'); setOtpError(''); setOtpInput('') }}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif', padding: 0 }}>
-                  تغيير الرقم
-                </button>
-                <button type="button" onClick={sendOtp} disabled={resendCooldown > 0 || sendingOtp}
-                  style={{ background: 'none', border: 'none', cursor: resendCooldown > 0 ? 'default' : 'pointer', fontSize: 13, color: resendCooldown > 0 ? '#94A3B8' : '#0099CC', fontFamily: 'Tajawal, sans-serif', padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <RefreshCw size={13} />
-                  {resendCooldown > 0 ? `إعادة الإرسال (${resendCooldown}ث)` : 'إعادة إرسال الرمز'}
-                </button>
-              </div>
             </>
           ) : (
             <>
