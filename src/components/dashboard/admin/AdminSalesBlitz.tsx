@@ -17,34 +17,7 @@ interface Lead {
   created_at: string
 }
 
-const SEED: Omit<Lead, 'id' | 'created_at' | 'campaign'>[] = [
-  { clinic: 'عيادة الفردوس لطب الأسنان',      contact: 'د. فيصل العتيبي',    phone: '966501110001', segment: 'dental',  area: 'حي الروضة',     status: 'meeting_booked', notes: 'اجتماع الثلاثاء 10ص — مهتم بالباقة Pro' },
-  { clinic: 'مركز دانة لتجميل البشرة',         contact: 'د. منى الزهراني',    phone: '966501110002', segment: 'skin',    area: 'حي الزهراء',    status: 'silent',         notes: 'لا رد منذ 4 أيام — أرسل follow-up' },
-  { clinic: 'عيادة النخبة لطب الأسنان',        contact: 'د. خالد القحطاني',   phone: '966501110003', segment: 'dental',  area: 'حي السلامة',    status: 'pending',        notes: '' },
-  { clinic: 'مركز جدة التخصصي للجلدية',        contact: 'د. سارة الغامدي',    phone: '966501110004', segment: 'skin',    area: 'حي الحمراء',    status: 'pending',        notes: '' },
-  { clinic: 'عيادة الياسمين العامة',            contact: 'د. عبدالله الدوسري', phone: '966501110005', segment: 'general', area: 'حي النزهة',     status: 'pending',        notes: '' },
-  { clinic: 'عيادة الأمانة لطب الأسنان',       contact: 'د. أحمد السبيعي',    phone: '966501110006', segment: 'dental',  area: 'حي الشرفية',    status: 'pending',        notes: '' },
-  { clinic: 'مجمع البيان الطبي',                contact: 'د. نورة العمري',     phone: '966501110007', segment: 'general', area: 'حي الربوة',     status: 'pending',        notes: '' },
-  { clinic: 'عيادة الرياض لتجميل الأسنان',     contact: 'د. محمد الشهري',     phone: '966501110008', segment: 'dental',  area: 'حي العزيزية',   status: 'pending',        notes: '' },
-  { clinic: 'مركز فينوس للتجميل والبشرة',      contact: 'د. ريم الحربي',      phone: '966501110009', segment: 'skin',    area: 'حي الفيصلية',   status: 'pending',        notes: '' },
-  { clinic: 'عيادة التقوى للأسرة',              contact: 'د. عمر المالكي',     phone: '966501110010', segment: 'general', area: 'حي الصفا',      status: 'pending',        notes: '' },
-  { clinic: 'عيادة البسمة لطب الأسنان',        contact: 'د. هيفاء الجهني',    phone: '966501110011', segment: 'dental',  area: 'حي الثغر',      status: 'pending',        notes: '' },
-  { clinic: 'مركز الجودة للجلدية والتجميل',    contact: 'د. بشرى الرشيدي',    phone: '966501110012', segment: 'skin',    area: 'حي الروضة',     status: 'pending',        notes: '' },
-  { clinic: 'عيادة الخير العامة',               contact: 'د. ياسر بن علي',     phone: '966501110013', segment: 'general', area: 'حي الكندرة',    status: 'pending',        notes: '' },
-  { clinic: 'عيادة الشروق لطب الأسنان',        contact: 'د. فاطمة بن زيد',    phone: '966501110014', segment: 'dental',  area: 'حي السلامة',    status: 'pending',        notes: '' },
-  { clinic: 'مركز الزهور للعناية بالبشرة',     contact: 'د. مريم السلمي',     phone: '966501110015', segment: 'skin',    area: 'حي الزهراء',    status: 'pending',        notes: '' },
-  { clinic: 'عيادة القمة لطب الأسنان',         contact: 'د. ناصر العنزي',     phone: '966501110016', segment: 'dental',  area: 'حي الحمراء',    status: 'pending',        notes: '' },
-  { clinic: 'مجمع النور الطبي التخصصي',        contact: 'د. إيمان القرني',    phone: '966501110017', segment: 'general', area: 'حي النعيم',     status: 'pending',        notes: '' },
-  { clinic: 'عيادة الصحة الذهبية',             contact: 'د. وليد الزبيدي',    phone: '966501110018', segment: 'general', area: 'حي العزيزية',   status: 'pending',        notes: '' },
-  { clinic: 'عيادة الأنوار لتقويم الأسنان',    contact: 'د. شيماء الشمري',    phone: '966501110019', segment: 'dental',  area: 'حي الشرفية',    status: 'pending',        notes: '' },
-  { clinic: 'مركز ليلى للتجميل والليزر',       contact: 'د. ليلى بن صالح',    phone: '966501110020', segment: 'skin',    area: 'حي الربوة',     status: 'pending',        notes: '' },
-  { clinic: 'عيادة الهداية العامة',             contact: 'د. تركي المطيري',    phone: '966501110021', segment: 'general', area: 'حي الصفا',      status: 'pending',        notes: '' },
-  { clinic: 'مركز الإشراق لطب الأسنان',        contact: 'د. نادية العسيري',   phone: '966501110022', segment: 'dental',  area: 'حي الثغر',      status: 'pending',        notes: '' },
-  { clinic: 'عيادة الأوائل التخصصية',           contact: 'د. سليمان الوادعي',  phone: '966501110023', segment: 'general', area: 'حي النزهة',     status: 'pending',        notes: '' },
-  { clinic: 'مركز الفن والجمال للبشرة',        contact: 'د. أميرة الخضيري',   phone: '966501110024', segment: 'skin',    area: 'حي الكندرة',    status: 'pending',        notes: '' },
-  { clinic: 'عيادة الوطن لطب الأسنان',         contact: 'د. حمد الرويلي',     phone: '966501110025', segment: 'dental',  area: 'حي الفيصلية',   status: 'pending',        notes: '' },
-  { clinic: 'مركز بلسم الطبي',                  contact: 'د. منال الجبير',     phone: '966501110026', segment: 'general', area: 'حي الروضة',     status: 'pending',        notes: '' },
-]
+
 
 const STATUS_META: Record<Status, { label: string; color: string; bg: string; border: string }> = {
   pending:        { label: 'بانتظار التواصل', color: '#60A5FA', bg: 'rgba(96,165,250,0.1)',   border: 'rgba(96,165,250,0.2)'   },
@@ -208,16 +181,7 @@ export const AdminSalesBlitz = () => {
         .eq('campaign', 'jeddah-medical-2026')
         .order('created_at', { ascending: true })
 
-      if (data && data.length > 0) {
-        setLeads(data as Lead[])
-      } else {
-        // Seed initial data
-        const { data: seeded } = await supabase
-          .from('sales_blitz_leads')
-          .insert(SEED.map(s => ({ ...s, campaign: 'jeddah-medical-2026' })))
-          .select()
-        setLeads((seeded ?? []) as Lead[])
-      }
+      setLeads((data ?? []) as Lead[])
       setLoading(false)
     }
     load()
