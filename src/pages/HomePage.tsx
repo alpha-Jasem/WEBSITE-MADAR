@@ -54,18 +54,6 @@ const GlobalCSS = () => (
       .hp-sticky-text { display: none !important; }
     }
 
-    @media (max-width: 900px) {
-      .hp-sticky-bar {
-        left: 0 !important;
-        right: 0 !important;
-        bottom: 0 !important;
-        transform: none !important;
-        border-radius: 0 !important;
-        justify-content: center !important;
-        padding: 12px 16px !important;
-        gap: 10px !important;
-      }
-    }
   `}</style>
 )
 
@@ -601,7 +589,7 @@ const StickyBar = () => {
       style={{ position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)', zIndex: 200, background: DARK, borderRadius: 99, padding: '11px 16px 11px 20px', display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 12px 40px rgba(0,0,0,0.32)', direction: 'rtl' }}>
       <span className="hp-sticky-text" style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E', flexShrink: 0 }} />
-        <span style={{ fontFamily: 'Tajawal, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.78)', fontWeight: 500, whiteSpace: 'nowrap' }}>
+        <span style={{ fontFamily: 'Tajawal, sans-serif', fontSize: 13, color: '#fff', fontWeight: 700, whiteSpace: 'nowrap' }}>
           جاهز تبدأ؟ احجز جلسة استراتيجية مجانية.
         </span>
       </span>
