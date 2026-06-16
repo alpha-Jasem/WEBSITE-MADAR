@@ -599,7 +599,7 @@ const AiSection = () => (
               <div style={{ background: '#ECE5DD', padding: '10px 9px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {[
                   { from: 'user', text: 'وش أسعار تبييض الأسنان؟' },
-                  { from: 'ai',   text: 'أهلاً! 😊 التبييض بالليزر من 800 ريال. فيه استشارة مجانية. تبي أحجز؟' },
+                  { from: 'ai',   text: 'أهلاً! 😊 التبييض بالليزر من 800 ريال. فيه استشارة مجانية. تبي أحجز اليوم؟' },
                   { from: 'user', text: 'إيه كويس' },
                   { from: 'ai',   text: 'عندي الأحد 4:30م. يناسبك؟ ✅' },
                   { from: 'user', text: 'نعم' },
