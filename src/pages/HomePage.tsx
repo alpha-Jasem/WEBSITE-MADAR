@@ -344,7 +344,11 @@ const Hero = () => {
     <div className="hp-container" style={{ position: 'relative' }}>
       <div className="hp-hero-grid">
         <motion.div {...rv}>
-          <div className="eyebrow" style={{ marginBottom: 24 }}>نظام الاستقبال الذكي</div>
+          {/* Hero pill — exact SYC pattern */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '7px 14px 7px 12px', background: 'rgba(43,181,115,0.08)', border: '1px solid rgba(43,181,115,0.22)', borderRadius: 999, fontFamily: '"IBM Plex Mono", monospace', fontSize: 11.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.accent2, marginBottom: 22 }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.brand, boxShadow: '0 0 0 4px rgba(43,181,115,0.18)', flexShrink: 0 }} />
+            استقبال ذكي · ٢٤/٧ · بدون انقطاع
+          </div>
           <h1 style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(44px,5.4vw,78px)', fontWeight: 400, color: C.ink, lineHeight: 1.02, marginBottom: 22, letterSpacing: '-0.025em' }}>
             استقبال ذكي
             <br />
@@ -372,12 +376,12 @@ const Hero = () => {
             </button>
           </div>
 
-          {/* Stats */}
-          <div style={{ display: 'flex', gap: 40, paddingTop: 28, borderTop: `1px solid ${C.rule}` }}>
-            {[{ n: '24/7', label: 'استقبال مستمر' }, { n: '<12ث', label: 'سرعة الرد' }, { n: '80%', label: 'تقليل المكالمات الفائتة' }].map(s => (
-              <div key={s.n}>
-                <div style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 26, fontWeight: 500, color: C.ink, lineHeight: 1 }}>{s.n}</div>
-                <div style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontSize: 12, color: C.ink3, marginTop: 5 }}>{s.label}</div>
+          {/* Stats — ht-stat pattern */}
+          <div style={{ display: 'flex', paddingTop: 28, borderTop: `1px solid ${C.rule}` }}>
+            {[{ n: '24/7', label: 'استقبال مستمر' }, { n: '<12ث', label: 'سرعة الرد' }, { n: '80%', label: 'تقليل المكالمات الفائتة' }].map((s, i) => (
+              <div key={s.n} style={{ padding: '0 18px', borderRight: i > 0 ? `1px solid ${C.rule}` : 'none' }}>
+                <div style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 28, fontWeight: 400, color: C.ink, lineHeight: 1, letterSpacing: '-0.01em' }}>{s.n}</div>
+                <div style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 10.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.ink3, marginTop: 8 }}>{s.label}</div>
               </div>
             ))}
           </div>
@@ -432,6 +436,28 @@ const Hero = () => {
   )
 }
 
+/* ─── TrustStrip ─────────────────────────────────────────────────── */
+const TrustStrip = () => (
+  <div style={{ background: '#fff', borderTop: '1px solid rgba(15,27,61,0.06)', borderBottom: '1px solid rgba(15,27,61,0.06)', padding: '22px 0' }} dir="rtl">
+    <div className="hp-container">
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '20px 44px' }}>
+        {[
+          { icon: '💬', label: 'واتساب Business API' },
+          { icon: '🔐', label: 'SSL مشفّر' },
+          { icon: '🇸🇦', label: 'خوادم المملكة' },
+          { icon: '🛡️', label: 'حماية البيانات PDPL' },
+          { icon: '🤖', label: 'مدعوم بـ AI متقدم' },
+        ].map(b => (
+          <div key={b.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(43,181,115,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>{b.icon}</div>
+            <span style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontSize: 14, fontWeight: 500, color: '#0F1A15' }}>{b.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+)
+
 /* ─── Results ────────────────────────────────────────────────────── */
 const Results = () => (
   <section className="hp-section" style={{ background: C.paper }} dir="rtl">
@@ -439,7 +465,7 @@ const Results = () => (
       <div className="eyebrow" style={{ marginBottom: 28 }}>01 — النتائج</div>
       <div className="hp-2col-wide">
         <motion.div {...rv}>
-          <h2 style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(32px,3.4vw,50px)', fontWeight: 400, color: C.ink, lineHeight: 1.05, marginBottom: 18 }}>
+          <h2 style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(32px,3.4vw,50px)', fontWeight: 400, color: C.ink, lineHeight: 1.05, letterSpacing: '-0.02em', marginBottom: 18 }}>
             ماذا يحصل عملاؤنا في أول{' '}
             <span className="hero-em">30 يوم؟</span>
           </h2>
@@ -480,7 +506,7 @@ const Method = () => (
   <section id="method" className="hp-section" style={{ background: C.paper2 }} dir="rtl">
     <div className="hp-container">
       <div className="eyebrow" style={{ marginBottom: 28 }}>02 — المنهجية</div>
-      <motion.h2 {...rv} style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(32px,3.4vw,50px)', fontWeight: 400, color: C.ink, lineHeight: 1.05, marginBottom: 56, maxWidth: 520 }}>
+      <motion.h2 {...rv} style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(32px,3.4vw,50px)', fontWeight: 400, color: C.ink, lineHeight: 1.05, letterSpacing: '-0.02em', marginBottom: 56, maxWidth: 520 }}>
         أربعة أنظمة،{' '}
         <span className="hero-em">عيادة واحدة.</span>
       </motion.h2>
@@ -526,7 +552,7 @@ const AiSection = () => (
 
       <div className="hp-2col-wide">
         <motion.div {...rv}>
-          <h2 style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(32px,3.4vw,50px)', fontWeight: 400, color: C.onDark, lineHeight: 1.05, marginBottom: 20 }}>
+          <h2 style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(32px,3.4vw,50px)', fontWeight: 400, color: C.onDark, lineHeight: 1.05, letterSpacing: '-0.02em', marginBottom: 20 }}>
             موظف الاستقبال الذي لا ينام{' '}
             <span style={{ fontStyle: 'italic', color: C.gold }}> ولا يطلب علاوة.</span>
           </h2>
@@ -597,7 +623,7 @@ const Process = () => (
   <section id="process" className="hp-section" style={{ background: C.paper }} dir="rtl">
     <div className="hp-container hp-divider" style={{ paddingTop: 72 }}>
       <div className="eyebrow" style={{ marginBottom: 28 }}>05 — العملية</div>
-      <motion.h2 {...rv} style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(32px,3.4vw,50px)', fontWeight: 400, color: C.ink, lineHeight: 1.05, marginBottom: 64, maxWidth: 500 }}>
+      <motion.h2 {...rv} style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(32px,3.4vw,50px)', fontWeight: 400, color: C.ink, lineHeight: 1.05, letterSpacing: '-0.02em', marginBottom: 64, maxWidth: 500 }}>
         ثلاثون يوماً إلى نظام{' '}
         <span className="hero-em">يعمل بالكامل.</span>
       </motion.h2>
@@ -634,7 +660,7 @@ const Programs = () => (
   <section id="programs" className="hp-section" style={{ background: C.paper2 }} dir="rtl">
     <div className="hp-container">
       <div className="eyebrow" style={{ marginBottom: 28 }}>06 — البرامج</div>
-      <motion.h2 {...rv} style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(32px,3.4vw,50px)', fontWeight: 400, color: C.ink, lineHeight: 1.05, marginBottom: 48 }}>
+      <motion.h2 {...rv} style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(32px,3.4vw,50px)', fontWeight: 400, color: C.ink, lineHeight: 1.05, letterSpacing: '-0.02em', marginBottom: 48 }}>
         طريقتان للبدء.{' '}
         <span className="hero-em">وجهة واحدة.</span>
       </motion.h2>
@@ -730,7 +756,7 @@ const FinalCTA = () => (
     <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.025) 1px, transparent 0)', backgroundSize: '28px 28px', opacity: 0.5, pointerEvents: 'none' }} />
     <div className="hp-container-narrow" style={{ position: 'relative' }}>
       <div className="eyebrow" style={{ marginBottom: 24, color: C.onDark2, justifyContent: 'center' }}>ابدأ الآن</div>
-      <motion.h2 {...rv} style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(32px,3.4vw,50px)', fontWeight: 400, color: C.onDark, lineHeight: 1.05, marginBottom: 18 }}>
+      <motion.h2 {...rv} style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(32px,3.4vw,50px)', fontWeight: 400, color: C.onDark, lineHeight: 1.05, letterSpacing: '-0.02em', marginBottom: 18 }}>
         احجز محادثة 30 دقيقة{' '}
         <span style={{ fontStyle: 'italic', color: C.gold }}>تستحق وقتك.</span>
       </motion.h2>
@@ -773,6 +799,7 @@ export const HomePage = () => (
     <Navbar />
     <main>
       <Hero />
+      <TrustStrip />
       <Results />
       <Method />
       <AiSection />
