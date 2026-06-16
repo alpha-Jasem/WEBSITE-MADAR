@@ -260,6 +260,12 @@ const GlobalCSS = () => (
     .hp-feature-item:hover { background: rgba(37,99,235,0.05); }
     .hp-feature-item-dark:hover { background: rgba(255,255,255,0.04); }
 
+    /* Typing indicator */
+    @keyframes typing {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-4px); opacity: 1; }
+    }
+
     /* Timeline step hover */
     .hp-timeline-step { transition: opacity 0.2s ease; }
     .hp-4timeline:hover .hp-timeline-step { opacity: 0.5; }
@@ -472,21 +478,37 @@ const Hero = () => {
                   <div style={{ color: '#A8D5A2', fontSize: 10, fontFamily: '"IBM Plex Sans Arabic", sans-serif' }}>● متصل الآن</div>
                 </div>
               </div>
-              <div style={{ background: '#ECE5DD', padding: '10px 9px', display: 'flex', flexDirection: 'column', gap: 7 }}>
+              <div style={{ background: '#ECE5DD', padding: '10px 9px 10px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+                {/* Date header */}
+                <div style={{ textAlign: 'center', marginBottom: 4 }}>
+                  <span style={{ background: 'rgba(255,255,255,0.55)', borderRadius: 6, padding: '2px 10px', fontSize: 10, color: '#6B7280', fontFamily: '"IBM Plex Sans Arabic", sans-serif' }}>اليوم</span>
+                </div>
                 {[
-                  { from: 'user', text: 'أبي أحجز موعد تنظيف أسنان' },
-                  { from: 'ai',   text: 'أهلاً! 😊 متى يناسبك؟ عندنا الثلاثاء والأربعاء.' },
-                  { from: 'user', text: 'الأربعاء عصراً' },
-                  { from: 'ai',   text: 'ممتاز ✅ عندي 4:30م. اسمك ورقم جوالك؟' },
-                  { from: 'user', text: 'سارة — 0551234567' },
-                  { from: 'ai',   text: 'تم الحجز يا سارة 🎉 ستصلك رسالة تذكير.' },
+                  { from: 'user', text: 'أبي أحجز موعد تنظيف أسنان', time: '9:41 ص' },
+                  { from: 'ai',   text: 'أهلاً! 😊 متى يناسبك؟ عندنا الثلاثاء والأربعاء.', time: '9:41 ص' },
+                  { from: 'user', text: 'الأربعاء عصراً', time: '9:42 ص' },
+                  { from: 'ai',   text: 'ممتاز ✅ عندي 4:30م. اسمك ورقم جوالك؟', time: '9:42 ص' },
+                  { from: 'user', text: 'سارة — 0551234567', time: '9:43 ص' },
+                  { from: 'ai',   text: 'تم الحجز يا سارة 🎉 ستصلك رسالة تذكير.', time: '9:43 ص' },
                 ].map((m, i) => (
                   <div key={i} className="hp-hero-chat-msg" style={{ display: 'flex', justifyContent: m.from === 'user' ? 'flex-start' : 'flex-end' }}>
-                    <div style={{ background: m.from === 'user' ? '#fff' : '#DCF8C6', padding: '6px 10px', borderRadius: 8, maxWidth: 200, fontSize: 11, fontFamily: '"IBM Plex Sans Arabic", sans-serif', color: '#1a1a1a', lineHeight: 1.5 }}>
-                      {m.text}
+                    <div style={{ background: m.from === 'user' ? '#fff' : '#DCF8C6', padding: '5px 8px 4px', borderRadius: m.from === 'user' ? '8px 8px 8px 2px' : '8px 8px 2px 8px', maxWidth: 210, fontSize: 11.5, fontFamily: '"IBM Plex Sans Arabic", sans-serif', color: '#1a1a1a', lineHeight: 1.5 }}>
+                      <div>{m.text}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 3, marginTop: 2 }}>
+                        <span style={{ fontSize: 9.5, color: '#8B9EA8' }}>{m.time}</span>
+                        {m.from === 'user' && <span style={{ fontSize: 11, color: '#53BDEB', lineHeight: 1 }}>✓✓</span>}
+                      </div>
                     </div>
                   </div>
                 ))}
+                {/* Typing indicator */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 2 }}>
+                  <div style={{ background: '#DCF8C6', padding: '7px 12px', borderRadius: '8px 8px 2px 8px', display: 'flex', gap: 3, alignItems: 'center' }}>
+                    <span className="hp-typing-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: '#8B9EA8', display: 'inline-block', animation: 'typing 1.2s ease infinite' }} />
+                    <span className="hp-typing-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: '#8B9EA8', display: 'inline-block', animation: 'typing 1.2s ease 0.2s infinite' }} />
+                    <span className="hp-typing-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: '#8B9EA8', display: 'inline-block', animation: 'typing 1.2s ease 0.4s infinite' }} />
+                  </div>
+                </div>
               </div>
             </div>
             {/* Floating stat cards — hidden on mobile */}
