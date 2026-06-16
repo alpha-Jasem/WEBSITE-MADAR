@@ -1,8 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Suspense, lazy, useEffect } from 'react'
 import { LanguageProvider } from './context/LanguageContext'
-import { ClientCompanyProvider } from './context/ClientCompanyContext'
-import { ActiveProfileProvider } from './context/ActiveProfileContext'
 import { ClinicOSProvider } from './context/ClinicOSContext'
 import { ProtectedRoute } from './components/shared/ProtectedRoute'
 import { ErrorBoundary, reloadForFreshAssets } from './components/shared/ErrorBoundary'
@@ -24,7 +22,6 @@ function ScrollToTop() {
 }
 
 const AdminDashboard    = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
-const ClientPortal      = lazy(() => import('./pages/ClientPortal').then(m => ({ default: m.ClientPortal })))
 const SolarEngine       = lazy(() => import('./pages/SolarEngine').then(m => ({ default: m.SolarEngine })))
 
 // ClinicOS
@@ -131,18 +128,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/client/*"
-              element={
-                <ProtectedRoute requiredRole="client">
-                  <ClientCompanyProvider>
-                    <ActiveProfileProvider>
-                      <ClientPortal />
-                    </ActiveProfileProvider>
-                  </ClientCompanyProvider>
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/client/*" element={<Navigate to="/clinic-os/dashboard" replace />} />
             <Route
               path="/solar/*"
               element={
