@@ -91,7 +91,10 @@ Deno.serve(async (req: Request) => {
       .order('last_visit_at', { ascending: false })
       .limit(limit)
     if (!isAdminKey) q = q.eq('company_id', companyId!)
-    if (search) q = q.or(`name.ilike.%${search}%,phone.ilike.%${search}%`)
+    if (search) {
+      const safe = search.replace(/[(),]/g, ' ').slice(0, 64)
+      q = q.or(`name.ilike.%${safe}%,phone.ilike.%${safe}%`)
+    }
     const { data, error } = await q
     if (error) return json({ error: error.message }, 500)
     return json({ data, count: data?.length ?? 0 })
@@ -246,6 +249,7 @@ Deno.serve(async (req: Request) => {
 
   // ── GET /webhooks
   if (path === '/webhooks' && method === 'GET') {
+    if (!canRead) return json({ error: 'forbidden' }, 403)
     const { data } = await db.from('webhook_endpoints')
       .select('id,url,events,active,last_triggered_at,created_at')
       .eq('company_id', companyId).order('created_at')
@@ -254,8 +258,17 @@ Deno.serve(async (req: Request) => {
 
   // ── POST /webhooks
   if (path === '/webhooks' && method === 'POST') {
+    if (!canWrite) return json({ error: 'forbidden' }, 403)
     const body = await req.json().catch(() => ({}))
     if (!body.url) return json({ error: 'url is required' }, 400)
+    // Reject non-https or private/loopback URLs to prevent SSRF
+    try {
+      const u = new URL(body.url)
+      if (u.protocol !== 'https:') return json({ error: 'webhook url must use https' }, 400)
+      if (/^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.)/.test(u.hostname)) {
+        return json({ error: 'webhook url must be a public https endpoint' }, 400)
+      }
+    } catch { return json({ error: 'invalid url' }, 400) }
     const validEvents = ['visit.created', 'queue.status_changed', 'daily.closed', 'customer.created']
     const events = Array.isArray(body.events) ? body.events.filter((e: string) => validEvents.includes(e)) : ['visit.created']
     const { data, error } = await db.from('webhook_endpoints').insert({
@@ -271,6 +284,7 @@ Deno.serve(async (req: Request) => {
   // ── DELETE /webhooks/:id
   const webhookMatch = path.match(/^\/webhooks\/([^/]+)$/)
   if (webhookMatch && method === 'DELETE') {
+    if (!canWrite) return json({ error: 'forbidden' }, 403)
     await db.from('webhook_endpoints').delete().eq('id', webhookMatch[1]).eq('company_id', companyId)
     return json({ success: true })
   }
