@@ -2,14 +2,14 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  ArrowLeft, Building2, Car, CheckCircle2, Eye, EyeOff,
+  ArrowLeft, Building2, CheckCircle2, Eye, EyeOff,
   Loader2, Lock, Mail, MapPin, Phone, ShieldCheck, Stethoscope, User,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { sanitizeDigits, sanitizeNameText } from '../lib/formSanitizers'
 
 type Step = 'details' | 'otp'
-type BusinessType = 'car_wash' | 'clinic'
+type BusinessType = 'clinic'
 
 const FIELD_CLASS =
   'w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 pr-11 text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-[#00BFFF] focus:ring-4 focus:ring-sky-400/15 font-tajawal'
@@ -42,12 +42,6 @@ function getErrorMessage(error: unknown) {
 }
 
 const SIDEBAR_CONTENT = {
-  car_wash: {
-    badge: 'مدار OS للمغاسل',
-    heading: 'ابدأ تشغيل مغسلتك اليوم. بدون إعدادات معقدة.',
-    body: 'شاشة تشغيل واضحة لكل سيارة من الاستقبال للتسليم — مع مالية، تقارير، وواتساب تلقائي.',
-    features: ['QR تسجيل ذاتي وتتبع السيارات', 'حسابات مالية مع VAT وتقارير فورية', 'رمز تحقق آمن على بريدك الإلكتروني'],
-  },
   clinic: {
     badge: 'مدار OS للعيادات',
     heading: 'عيادتك تستحق نظاماً يحجز ويذكّر ويتابع بدلاً عنك.',
@@ -67,7 +61,7 @@ export function TrialSignup() {
   const [showPass, setShowPass] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [form, setForm] = useState({
-    business_type: 'car_wash' as BusinessType,
+    business_type: 'clinic' as BusinessType,
     company_name: '',
     owner_name: '',
     city: '',
@@ -86,12 +80,10 @@ export function TrialSignup() {
     if (otp.length < 8) autoSubmittedRef.current = false
   }, [otp])
 
-  const sidebar = SIDEBAR_CONTENT[form.business_type]
-  const accentColor = form.business_type === 'clinic' ? '#7C3AED' : '#00BFFF'
-  const accentDark  = form.business_type === 'clinic' ? '#5B21B6' : '#1565C0'
-  const gradientBg  = form.business_type === 'clinic'
-    ? 'radial-gradient(circle at 22% 18%, rgba(124,58,237,0.28), transparent 34%), radial-gradient(circle at 88% 78%, rgba(139,92,246,0.22), transparent 38%)'
-    : 'radial-gradient(circle at 22% 18%, rgba(0,191,255,0.28), transparent 34%), radial-gradient(circle at 88% 78%, rgba(21,101,192,0.34), transparent 38%)'
+  const sidebar = SIDEBAR_CONTENT.clinic
+  const accentColor = '#7C3AED'
+  const accentDark  = '#5B21B6'
+  const gradientBg  = 'radial-gradient(circle at 22% 18%, rgba(124,58,237,0.28), transparent 34%), radial-gradient(circle at 88% 78%, rgba(139,92,246,0.22), transparent 38%)'
 
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setError('')
@@ -260,17 +252,9 @@ export function TrialSignup() {
             </div>
           </Link>
 
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={form.business_type}
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -14 }}
-              transition={{ duration: 0.3 }}
-              className="relative max-w-md"
-            >
+          <div className="relative max-w-md">
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-tajawal text-sky-100">
-                {form.business_type === 'clinic' ? <Stethoscope size={13} /> : <Car size={13} />}
+                <Stethoscope size={13} />
                 {sidebar.badge}
               </div>
               <h1 className="font-cairo text-4xl font-bold leading-[1.25] text-white">
@@ -279,26 +263,16 @@ export function TrialSignup() {
               <p className="mt-5 font-tajawal text-base leading-8 text-sky-50/70">
                 {sidebar.body}
               </p>
-            </motion.div>
-          </AnimatePresence>
+            </div>
 
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={form.business_type + '-features'}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="relative grid gap-3"
-            >
-              {sidebar.features.map(item => (
-                <div key={item} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/10 px-4 py-3">
-                  <CheckCircle2 size={17} className="text-sky-300 shrink-0" />
-                  <span className="font-tajawal text-sm text-white/80">{item}</span>
-                </div>
-              ))}
-            </motion.div>
-          </AnimatePresence>
+          <div className="relative grid gap-3">
+            {sidebar.features.map(item => (
+              <div key={item} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/10 px-4 py-3">
+                <CheckCircle2 size={17} className="text-sky-300 shrink-0" />
+                <span className="font-tajawal text-sm text-white/80">{item}</span>
+              </div>
+            ))}
+          </div>
         </aside>
 
         {/* ── Right Form ── */}
@@ -324,7 +298,7 @@ export function TrialSignup() {
                 أنشئ حسابك الآن
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-500 font-tajawal">
-                اختر مجالك، أدخل بياناتك، وادخل لوحة التشغيل فور التحقق من بريدك.
+                أدخل بياناتك وادخل لوحة التشغيل فور التحقق من بريدك.
               </p>
             </div>
 
@@ -361,37 +335,7 @@ export function TrialSignup() {
                     exit={{ opacity: 0, x: -12 }}
                     transition={{ duration: 0.22 }}
                   >
-                    {/* Business type selector */}
-                    <div>
-                      <label className="mb-2 block text-sm font-bold text-slate-700 font-tajawal">نوع النشاط *</label>
-                      <div className="grid grid-cols-2 gap-3">
-                        {([
-                          { type: 'car_wash' as BusinessType, icon: Car,         label: 'مغسلة سيارات', sub: 'مغاسل، ديتيلنج' },
-                          { type: 'clinic'   as BusinessType, icon: Stethoscope, label: 'عيادة',        sub: 'طب أسنان، عام' },
-                        ]).map(({ type, icon: Icon, label, sub }) => (
-                          <button
-                            key={type}
-                            type="button"
-                            onClick={() => setForm(f => ({ ...f, business_type: type }))}
-                            className="flex flex-col items-center gap-2 rounded-2xl border-2 p-4 text-center transition-all"
-                            style={{
-                              borderColor: form.business_type === type ? accentColor : '#E2E8F0',
-                              background: form.business_type === type ? `${accentColor}10` : '#FAFAFA',
-                            }}
-                          >
-                            <div className="grid h-10 w-10 place-items-center rounded-xl" style={{ background: form.business_type === type ? `${accentColor}20` : '#F1F5F9' }}>
-                              <Icon size={20} style={{ color: form.business_type === type ? accentColor : '#94A3B8' }} />
-                            </div>
-                            <div>
-                              <p className="text-sm font-bold font-cairo" style={{ color: form.business_type === type ? '#0F172A' : '#64748B' }}>{label}</p>
-                              <p className="text-[11px] font-tajawal text-slate-400">{sub}</p>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <Field icon={Building2} label="اسم المنشأة *"      value={form.company_name}     onChange={set('company_name')}     placeholder={form.business_type === 'clinic' ? 'مثال: عيادة نور للأسنان' : 'مثال: مغسلة النجمة'} />
+                    <Field icon={Building2} label="اسم المنشأة *"      value={form.company_name}     onChange={set('company_name')}     placeholder="مثال: عيادة نور للأسنان" />
                     <Field icon={User}      label="اسم المالك *"        value={form.owner_name}       onChange={set('owner_name')}       placeholder="الاسم الأول والأخير" />
                     <Field icon={MapPin}    label="المدينة"              value={form.city}             onChange={set('city')}             placeholder="جدة، الرياض، الدمام..." />
                     <Field icon={Phone}     label="رقم الجوال"           value={form.phone}            onChange={set('phone')}            placeholder="05xxxxxxxx" dir="ltr" inputMode="tel" />

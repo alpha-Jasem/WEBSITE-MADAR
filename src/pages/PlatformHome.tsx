@@ -4,9 +4,9 @@ import { motion, useInView, AnimatePresence } from 'framer-motion'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import {
-  Car, Stethoscope, Bot, Zap, Phone, MessageCircle,
+  Stethoscope, Bot, Zap, Phone, MessageCircle,
   ArrowLeft, CheckCircle2, TrendingUp, Clock,
-  X, Send, Sparkles, BarChart2, Users, ChevronLeft,
+  X, Send, Sparkles, BarChart2, Users,
 } from 'lucide-react'
 import { Navbar } from '../components/public/Navbar'
 import { Footer } from '../components/public/Footer'
@@ -65,7 +65,7 @@ function DashMockup() {
       }}>
         {/* Topbar */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-          <span style={{ color: MUTED, fontSize: 11, fontFamily: 'Cairo, sans-serif', letterSpacing: '0.05em' }}>مدار OS · لوحة التحكم</span>
+          <span style={{ color: MUTED, fontSize: 11, fontFamily: 'Cairo, sans-serif', letterSpacing: '0.05em' }}>Clinic OS · لوحة التحكم</span>
           <div style={{ display: 'flex', gap: 5 }}>
             {['#EF4444', '#F59E0B', '#22C55E'].map((c, i) => (
               <div key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: c, opacity: 0.7 }} />
@@ -90,12 +90,12 @@ function DashMockup() {
           ))}
         </div>
 
-        {/* Queue list */}
+        {/* Appointments list */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
           {[
-            { car: 'تويوتا كامري', badge: 'يُغسل', time: '٨ دق', color: CW },
-            { car: 'لكسوس LX ٥٧٠', badge: 'جاهز', time: '٠ دق', color: CL },
-            { car: 'نيسان باترول', badge: 'انتظار', time: '١٢ دق', color: GOLD },
+            { patient: 'أ. محمد العمري',  badge: 'قيد الانتظار', time: '٩:٠٠', color: CW },
+            { patient: 'أ. سارة الحربي',  badge: 'مكتمل',        time: '٩:٣٠', color: CL },
+            { patient: 'أ. خالد المطيري', badge: 'قادم',          time: '١٠:٠٠', color: GOLD },
           ].map((item, i) => (
             <motion.div key={i}
               initial={{ opacity: 0, x: 14 }}
@@ -107,8 +107,8 @@ function DashMockup() {
                 borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.04)' : 'none',
               }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Car size={12} color="rgba(255,255,255,0.25)" />
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.65)', fontFamily: 'Tajawal, sans-serif' }}>{item.car}</span>
+                <Stethoscope size={12} color="rgba(255,255,255,0.25)" />
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.65)', fontFamily: 'Tajawal, sans-serif' }}>{item.patient}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', fontFamily: 'Cairo, sans-serif' }}>{item.time}</span>
@@ -321,13 +321,13 @@ export const PlatformHome = () => {
   ]
 
   const steps = [
-    { num: '١', title: 'اختر نظامك',   body: 'مغسلة سيارات أو عيادة — نظام مبني خصيصاً لقطاعك ومتطلباته.', color: CW },
+    { num: '١', title: 'سجّل عيادتك',  body: 'نظام Clinic OS مبني خصيصاً للعيادات ومتطلباتها الكاملة.', color: CW },
     { num: '٢', title: 'نجهزه معك',    body: 'فريقنا يعدّ الحساب، يدخل بياناتك، ويجري اختبار تشغيل حقيقي.',  color: GOLD },
     { num: '٣', title: 'يشتغل بدونك',  body: 'الذكاء الاصطناعي يعمل ٢٤/٧ — حجز وتأكيد وإشعارات وتقارير.',    color: CL },
   ]
 
   const proof = [
-    { value: 40, suffix: 'دق',  label: 'توفير يومي في المغاسل', color: CW   },
+    { value: 40, suffix: 'دق',  label: 'توفير يومي لكل عيادة',  color: CW   },
     { value: 78, suffix: '٪',   label: 'نسبة تحويل مكالمات AI', color: CL   },
     { value: 24, suffix: '/٧',  label: 'ذكاء لا ينام أبداً',    color: GOLD },
     { value: 48, suffix: 'س',   label: 'إعداد وتشغيل كامل',     color: '#A78BFA' },
@@ -464,8 +464,8 @@ export const PlatformHome = () => {
               transition={{ duration: 0.65, delay: 0.5 }}
               style={{ fontSize: 15, color: MUTED, maxWidth: 480, lineHeight: 1.75, margin: '0 0 24px', fontFamily: 'Tajawal, sans-serif' }}>
               {t(
-                'مدار OS يدير مغسلتك أو عيادتك بالكامل — حجز، إشعارات، مالية، وعملاء — ٢٤/٧ بدون توقف.',
-                'Madar OS fully manages your car wash or clinic — bookings, notifications, finance, and customers — 24/7 without stopping.'
+                'مدار OS يدير عيادتك بالكامل — حجز، إشعارات، تذكيرات، وتقارير — ٢٤/٧ بدون توقف.',
+                'Madar OS fully manages your clinic — bookings, notifications, reminders, and reports — 24/7 without stopping.'
               )}
             </motion.p>
 
@@ -486,7 +486,7 @@ export const PlatformHome = () => {
                   display: 'flex', alignItems: 'center', gap: 6,
                   boxShadow: `0 4px 20px rgba(212,168,83,0.2)`,
                 }}>
-                {t('اكتشف المنتجات', 'Explore Products')}
+                {t('اكتشف Clinic OS', 'Explore Clinic OS')}
                 <ArrowLeft size={14} />
               </motion.button>
               <motion.button
@@ -549,74 +549,20 @@ export const PlatformHome = () => {
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <FadeUp style={{ textAlign: 'center', marginBottom: 36 }}>
             <span style={{ fontSize: 10, fontWeight: 700, color: GOLD, letterSpacing: '0.18em', fontFamily: 'Cairo, sans-serif', display: 'block', marginBottom: 14, textTransform: 'uppercase' }}>
-              {t('قطاعاتنا', 'Our Sectors')}
+              {t('منتجنا', 'Our Product')}
             </span>
             <h2 style={{ fontSize: 'clamp(1.9rem,3.8vw,3rem)', fontWeight: 900, color: TEXT, fontFamily: 'Cairo, sans-serif', margin: '0 0 12px', lineHeight: 1.12 }}>
-              {t('اختر نظامك المتخصص', 'Choose Your Specialized System')}
+              {t('Clinic OS — نظام العيادات الذكي', 'Clinic OS — The Smart Clinic System')}
             </h2>
             <p style={{ color: MUTED, fontSize: 15, fontFamily: 'Tajawal, sans-serif', maxWidth: 440, margin: '0 auto' }}>
-              {t('نظام مبني لقطاعك تحديداً — لا حلول عامة، لا تكييف اضطراري', 'Built for your exact sector — no generic solutions, no forced adaptation')}
+              {t('نظام مبني للعيادات تحديداً — لا حلول عامة، لا تكييف اضطراري', 'Built specifically for clinics — no generic solutions, no forced adaptation')}
             </p>
           </FadeUp>
 
           <div className="prod-grid" style={{ display: 'flex', gap: 20 }}>
 
-            {/* ── Car Wash ──────────────────────────────────────────── */}
-            <FadeUp delay={0.06} style={{ flex: 1 }}>
-              <div className="card-hover" style={{
-                background: CARD, border: `1px solid ${BORDER}`,
-                borderRadius: 22, padding: 30, position: 'relative', overflow: 'hidden',
-                boxShadow: '0 4px 30px rgba(0,0,0,0.25)',
-                height: '100%', boxSizing: 'border-box',
-              }}>
-                {/* Top accent */}
-                <div style={{ position: 'absolute', top: 0, insetInlineStart: 0, insetInlineEnd: 0, height: 2, background: `linear-gradient(90deg, transparent, ${CW}55, transparent)` }} />
-                {/* Icon */}
-                <div style={{ width: 50, height: 50, borderRadius: 15, background: `rgba(56,189,248,0.09)`, border: `1px solid rgba(56,189,248,0.18)`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
-                  <Car size={21} color={CW} />
-                </div>
-                <div style={{ fontSize: 9, fontWeight: 700, color: CW, letterSpacing: '0.15em', fontFamily: 'Cairo, sans-serif', marginBottom: 12, textTransform: 'uppercase' }}>
-                  Car Wash OS
-                </div>
-                <h3 style={{ fontSize: 20, fontWeight: 900, color: TEXT, fontFamily: 'Cairo, sans-serif', margin: '0 0 10px', lineHeight: 1.2 }}>
-                  {t('نظام تشغيل المغاسل', 'Car Wash Operating System')}
-                </h3>
-                <p style={{ color: MUTED, fontSize: 13, fontFamily: 'Tajawal, sans-serif', lineHeight: 1.8, margin: '0 0 22px' }}>
-                  {t(
-                    'لوحة تشغيل كاملة: استقبال سيارات بـ QR، إدارة قائمة الانتظار، إشعارات واتساب، ولاء العملاء، ومالية يومية مع VAT.',
-                    'Complete dashboard: QR car intake, queue management, WhatsApp notifications, loyalty program, and daily finance with VAT.'
-                  )}
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 26 }}>
-                  {[
-                    t('استقبال سيارات بـ QR الذاتي', 'QR self-check-in for cars'),
-                    t('شاشة عرض Live للعملاء', 'Live customer status screen'),
-                    t('إغلاق يومي + تقارير VAT', 'Daily close + VAT reports'),
-                    t('برنامج ولاء تلقائي', 'Automated loyalty program'),
-                    t('واتساب تلقائي للتسليم', 'Auto WhatsApp at handoff'),
-                  ].map((f, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                      <CheckCircle2 size={12} color={CW} />
-                      <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', fontFamily: 'Tajawal, sans-serif' }}>{f}</span>
-                    </div>
-                  ))}
-                </div>
-                <Link to="/car-wash" style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                  padding: '10px 22px', borderRadius: 11, width: '100%',
-                  background: `rgba(56,189,248,0.09)`, border: `1px solid rgba(56,189,248,0.22)`,
-                  color: CW, fontSize: 12, fontWeight: 700, fontFamily: 'Cairo, sans-serif',
-                  textDecoration: 'none', transition: 'background 0.2s', boxSizing: 'border-box',
-                }}
-                  onMouseEnter={e => (e.currentTarget.style.background = `rgba(56,189,248,0.17)`)}
-                  onMouseLeave={e => (e.currentTarget.style.background = `rgba(56,189,248,0.09)`)}>
-                  {t('اعرف أكثر', 'Learn More')} <ChevronLeft size={13} />
-                </Link>
-              </div>
-            </FadeUp>
-
             {/* ── Clinic ────────────────────────────────────────────── */}
-            <FadeUp delay={0.13} style={{ flex: 1 }}>
+            <FadeUp delay={0.06} style={{ flex: 1 }}>
               <div className="card-hover" style={{
                 background: CARD, border: `1px solid ${BORDER}`,
                 borderRadius: 22, padding: 30, position: 'relative', overflow: 'hidden',
@@ -662,7 +608,7 @@ export const PlatformHome = () => {
                 }}
                   onMouseEnter={e => (e.currentTarget.style.background = `rgba(52,211,153,0.17)`)}
                   onMouseLeave={e => (e.currentTarget.style.background = `rgba(52,211,153,0.09)`)}>
-                  {t('اعرف أكثر', 'Learn More')} <ChevronLeft size={13} />
+                  {t('اعرف أكثر', 'Learn More')}
                 </Link>
               </div>
             </FadeUp>
