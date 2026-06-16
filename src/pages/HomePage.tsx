@@ -237,7 +237,9 @@ const GlobalCSS = () => (
       .hp-section { padding: 56px 0; }
       .hp-container { padding: 0 20px; }
       .hp-container-narrow { padding: 0 20px; }
-      .hp-sticky { display: none; }
+      .hp-sticky-text { display: none; }
+      .hp-sticky-btn-text { display: none; }
+      .hp-sticky-btn-short { display: block !important; }
     }
     @media (max-width: 480px) {
       .hp-4col { grid-template-columns: 1fr; }
@@ -760,7 +762,8 @@ const StickyBar = () => {
         className="hp-sticky-btn"
         onClick={() => wa('مرحباً، أريد حجز جلسة استراتيجية')}
       >
-        احجز الآن ←
+        <span className="hp-sticky-btn-text">احجز الآن ←</span>
+        <span className="hp-sticky-btn-short" style={{ display: 'none' }}>احجز استشارة ←</span>
       </button>
       <button className="hp-sticky-close" onClick={() => setGone(true)}>×</button>
     </motion.div>
