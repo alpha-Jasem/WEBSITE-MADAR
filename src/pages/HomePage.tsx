@@ -555,12 +555,25 @@ const Hero = () => {
 }
 
 /* ─── TrustStrip ─────────────────────────────────────────────────── */
+const WaIcon = () => (
+  <svg viewBox="0 0 32 32" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M16 2C8.268 2 2 8.268 2 16c0 2.444.658 4.733 1.806 6.7L2 30l7.494-1.772A13.94 13.94 0 0 0 16 30c7.732 0 14-6.268 14-14S23.732 2 16 2Z" fill="#25D366"/>
+    <path d="M22.5 19.394c-.306-.153-1.81-.894-2.09-.994-.28-.1-.484-.153-.687.153-.204.306-.789.994-.967 1.198-.178.204-.356.229-.662.076-.306-.153-1.291-.476-2.459-1.517-.909-.81-1.523-1.811-1.701-2.117-.178-.306-.019-.471.134-.623.137-.137.306-.357.459-.536.153-.178.204-.306.306-.51.102-.204.051-.382-.026-.536-.076-.153-.687-1.657-.941-2.27-.248-.595-.5-.514-.687-.524-.178-.009-.382-.011-.586-.011-.204 0-.535.076-.815.382-.28.306-1.07 1.046-1.07 2.55 0 1.504 1.096 2.958 1.249 3.162.153.204 2.157 3.294 5.228 4.622.731.315 1.301.503 1.746.644.734.233 1.402.2 1.929.121.588-.088 1.81-.74 2.066-1.455.255-.714.255-1.327.178-1.455-.076-.127-.28-.204-.586-.357Z" fill="#fff"/>
+  </svg>
+)
+
 const TrustStrip = () => (
   <div style={{ background: '#fff', borderTop: '1px solid rgba(15,27,61,0.06)', borderBottom: '1px solid rgba(15,27,61,0.06)', padding: '22px 0' }} dir="rtl">
     <div className="hp-container">
       <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '20px 44px' }}>
+        {/* WhatsApp — SVG icon */}
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(37,211,102,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <WaIcon />
+          </div>
+          <span style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontSize: 14, fontWeight: 500, color: '#0F1A15' }}>واتساب Business API</span>
+        </div>
         {[
-          { icon: '💬', label: 'واتساب Business API' },
           { icon: '🔐', label: 'SSL مشفّر' },
           { icon: '🇸🇦', label: 'خوادم المملكة' },
           { icon: '🛡️', label: 'حماية البيانات PDPL' },
