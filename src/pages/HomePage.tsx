@@ -168,61 +168,53 @@ const GlobalCSS = () => (
       transform: translateY(0);
     }
 
-    /* Sticky sidebar */
+    /* Sticky thin strip */
     .hp-sticky {
       position: fixed;
       left: 0; top: 50%;
       transform: translateY(-50%);
       z-index: 200;
       background: ${C.dark};
-      border-radius: 0 12px 12px 0;
-      padding: 16px 14px 16px 16px;
-      display: flex; flex-direction: column; align-items: flex-start; gap: 12px;
-      box-shadow: 4px 0 28px rgba(0,0,0,0.22);
-      direction: rtl; text-align: right;
-      min-width: 160px;
+      border-radius: 0 8px 8px 0;
+      width: 34px;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 14px 0 10px;
+      gap: 10px;
+      box-shadow: 3px 0 20px rgba(0,0,0,0.20);
+      cursor: pointer;
+      transition: width 0.25s ease, padding 0.25s ease;
+      overflow: hidden;
     }
+    .hp-sticky:hover { width: 36px; }
     .hp-sticky-pulse {
-      width: 7px; height: 7px; border-radius: 50%;
+      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
       background: ${C.brand};
       animation: pulse-ring 1.8s ease-out infinite;
-      flex-shrink: 0;
     }
     @keyframes pulse-ring {
       0%   { box-shadow: 0 0 0 0 rgba(43,181,115,0.55); }
-      70%  { box-shadow: 0 0 0 7px rgba(43,181,115,0); }
+      70%  { box-shadow: 0 0 0 6px rgba(43,181,115,0); }
       100% { box-shadow: 0 0 0 0 rgba(43,181,115,0); }
     }
-    .hp-sticky-header {
-      display: flex; align-items: center; justify-content: space-between;
-      width: 100%; gap: 8px;
-    }
     .hp-sticky-text {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      transform: rotate(180deg);
       font-family: 'IBM Plex Sans Arabic', sans-serif;
-      font-size: 12px; font-weight: 500;
-      color: ${C.onDark2};
-      line-height: 1.6;
-    }
-    .hp-sticky-btn {
-      background: ${C.gold};
-      color: #fff;
-      border: none; border-radius: 6px;
-      font-family: 'IBM Plex Sans Arabic', sans-serif;
-      font-size: 12px; font-weight: 600;
-      padding: 8px 12px;
-      cursor: pointer;
+      font-size: 11px; font-weight: 600;
+      color: ${C.onDark};
       white-space: nowrap;
-      width: 100%;
-      text-align: center;
-      transition: background 0.2s;
+      letter-spacing: 0.04em;
     }
-    .hp-sticky-btn:hover { background: ${C.gold2}; }
     .hp-sticky-close {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
       background: none; border: none; cursor: pointer;
-      color: ${C.onDark2}; font-size: 14px; line-height: 1;
-      opacity: 0.45; padding: 0; transition: opacity 0.2s; flex-shrink: 0;
+      color: ${C.onDark2}; font-size: 13px;
+      opacity: 0.4; padding: 0; transition: opacity 0.2s;
+      line-height: 1;
     }
-    .hp-sticky-close:hover { opacity: 0.9; }
+    .hp-sticky-close:hover { opacity: 0.85; }
 
     /* Mobile */
     @media (max-width: 900px) {
@@ -237,7 +229,7 @@ const GlobalCSS = () => (
       .hp-section { padding: 56px 0; }
       .hp-container { padding: 0 20px; }
       .hp-container-narrow { padding: 0 20px; }
-      .hp-sticky { min-width: 140px; padding: 12px 12px 12px 14px; }
+      .hp-sticky { width: 30px; }
     }
     @media (max-width: 480px) {
       .hp-4col { grid-template-columns: 1fr; }
@@ -754,20 +746,11 @@ const StickyBar = () => {
       animate={{ x: 0, opacity: 1 }}
       transition={{ delay: 2.5, duration: 0.45, ease: [0.2, 0.8, 0.2, 1] }}
     >
-      <div className="hp-sticky-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <div className="hp-sticky-pulse" />
-          <span className="hp-sticky-text">جاهز تبدأ؟</span>
-        </div>
-        <button className="hp-sticky-close" onClick={() => setGone(true)}>×</button>
-      </div>
-      <span className="hp-sticky-text">احجز جلسة استراتيجية مجانية.</span>
-      <button
-        className="hp-sticky-btn"
-        onClick={() => wa('مرحباً، أريد حجز جلسة استراتيجية')}
-      >
-        احجز استشارة ←
-      </button>
+      <div className="hp-sticky-pulse" />
+      <span className="hp-sticky-text" onClick={() => wa('مرحباً، أريد حجز جلسة استراتيجية')}>
+        احجز استشارة مجانية
+      </span>
+      <button className="hp-sticky-close" onClick={e => { e.stopPropagation(); setGone(true) }}>×</button>
     </motion.div>
   )
 }
