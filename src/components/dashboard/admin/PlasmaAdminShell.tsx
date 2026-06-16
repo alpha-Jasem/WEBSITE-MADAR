@@ -13,6 +13,7 @@ const NAV = [
     { id: 'companies', label: 'الشركات', to: '/admin/companies', badge: 0 },
     { id: 'leads', label: 'العملاء المحتملون', to: '/admin/leads' },
     { id: 'pipeline', label: 'خط المبيعات', to: '/admin/pipeline' },
+    { id: 'sales-blitz', label: '⚡ Sales Blitz جدة', to: '/admin/sales-blitz' },
     { id: 'chats', label: 'المحادثات', to: '/admin/conversations', badge: 0 },
   ]},
   { group: 'الأتمتة والتشغيل', items: [
@@ -33,6 +34,7 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
   '/admin/accounts': { title: 'حسابات العيادات', sub: 'تحكم باشتراكات Clinic OS وحدود الاستخدام' },
   '/admin/leads': { title: 'العملاء المحتملون', sub: 'متابعة وتحويل الليدز' },
   '/admin/pipeline': { title: 'خط المبيعات', sub: 'لوحة المراحل البيعية' },
+  '/admin/sales-blitz': { title: 'Sales Blitz — جدة الطبية', sub: '26 عيادة مستهدفة في جدة' },
   '/admin/conversations': { title: 'المحادثات', sub: 'محادثات واتساب الواردة' },
   '/admin/ai-agents': { title: 'وكلاء AI', sub: 'الوكلاء الصوتيون الأذكياء' },
   '/admin/n8n': { title: 'n8n Workflows', sub: 'أتمتة العمليات' },
