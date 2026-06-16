@@ -32,6 +32,8 @@ const C = {
 }
 
 const rv = { initial: { opacity: 0, y: 20 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true }, transition: { duration: 0.55 } }
+// Hero elements are visible on mount — use animate directly, not whileInView
+const ha = { initial: { opacity: 0, y: 18 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.6 } }
 
 /* ─── Global CSS ─────────────────────────────────────────────────── */
 const GlobalCSS = () => (
@@ -267,20 +269,42 @@ const GlobalCSS = () => (
     @media (max-width: 900px) {
       .hp-nav-links { display: none !important; }
       .hp-hamburger { display: flex !important; }
-      .hp-hero-grid { grid-template-columns: 1fr; gap: 0; }
-      .hp-hero-phone { display: none; }
+      /* Hero: compact on mobile */
+      .hp-hero-section { padding-top: 96px !important; padding-bottom: 48px !important; }
+      .hp-hero-grid { grid-template-columns: 1fr; gap: 32px; }
+      .hp-hero-phone { display: flex; }
+      .hp-hero-float { display: none !important; }
+      /* Show only first 4 hero chat messages on mobile */
+      .hp-hero-chat-msg:nth-child(n+5) { display: none; }
+      .hp-hero-phone-inner { width: 100% !important; max-width: 300px; margin: 0 auto; }
+      /* 2col */
       .hp-2col { grid-template-columns: 1fr; }
       .hp-2col-wide { grid-template-columns: 1fr; gap: 36px; }
-      .hp-4col { grid-template-columns: 1fr 1fr; }
-      .hp-4timeline { grid-template-columns: 1fr 1fr; gap: 28px; }
-      .hp-section { padding: 56px 0; }
+      /* 4col */
+      .hp-4col { grid-template-columns: 1fr 1fr; gap: 0; }
+      .hp-4col > div { padding: 20px 14px !important; }
+      /* Timeline: 1 col, vertical border guide */
+      .hp-4timeline { grid-template-columns: 1fr; gap: 0; }
+      .hp-timeline-connector { display: none; }
+      .hp-timeline-step {
+        border-top: none !important;
+        border-right: 2px solid ${C.rule2};
+        padding: 0 18px 32px !important;
+        margin-right: 8px;
+      }
+      .hp-timeline-step:first-child { border-right-color: ${C.brand}; }
+      .hp-tl-dot { display: none; }
+      /* Section padding */
+      .hp-section { padding: 52px 0; }
       .hp-container { padding: 0 20px; }
       .hp-container-narrow { padding: 0 20px; }
       .hp-sticky { width: 30px; }
+      /* AI section buttons — stack vertically */
+      .hp-ai-btns { flex-direction: column !important; }
+      .hp-ai-btns .btn { width: 100%; justify-content: center; }
     }
     @media (max-width: 480px) {
       .hp-4col { grid-template-columns: 1fr; }
-      .hp-4timeline { grid-template-columns: 1fr; }
     }
   `}</style>
 )
@@ -379,7 +403,7 @@ const Hero = () => {
   }, [])
 
   return (
-  <section className="hp-section" style={{ background: C.paper, paddingTop: 130, position: 'relative', overflow: 'hidden' }} dir="rtl">
+  <section className="hp-section hp-hero-section" style={{ background: C.paper, paddingTop: 130, position: 'relative', overflow: 'hidden' }} dir="rtl">
     {/* Exact SYC hero bg: radial + glows + grain */}
     <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 50% at 90% 10%, rgba(37,99,235,0.07), transparent 60%), radial-gradient(ellipse 50% 40% at 5% 80%, rgba(30,58,110,0.04), transparent 60%)`, pointerEvents: 'none' }} />
     {/* Green glow */}
@@ -391,7 +415,7 @@ const Hero = () => {
 
     <div className="hp-container" style={{ position: 'relative' }}>
       <div className="hp-hero-grid">
-        <motion.div {...rv}>
+        <motion.div {...ha}>
           {/* Hero pill — exact SYC pattern */}
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '7px 14px 7px 12px', background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.22)', borderRadius: 999, fontFamily: '"IBM Plex Mono", monospace', fontSize: 11.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.accent2, marginBottom: 22 }}>
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.brand, boxShadow: '0 0 0 4px rgba(37,99,235,0.18)', flexShrink: 0 }} />
@@ -436,8 +460,8 @@ const Hero = () => {
         </motion.div>
 
         {/* Phone mockup */}
-        <motion.div {...rv} transition={{ delay: 0.15 }} className="hp-hero-phone">
-          <div style={{ position: 'relative', width: 310 }}>
+        <motion.div {...ha} transition={{ delay: 0.2 }} className="hp-hero-phone">
+          <div className="hp-hero-phone-inner" style={{ position: 'relative', width: 310 }}>
             <div style={{ background: '#fff', borderRadius: 24, boxShadow: `0 24px 64px rgba(12,26,46,0.14), 0 2px 8px rgba(12,26,46,0.08)`, overflow: 'hidden', border: `1.5px solid ${C.rule}` }}>
               <div style={{ background: '#075E54', padding: '13px 14px', display: 'flex', alignItems: 'center', gap: 9 }}>
                 <div style={{ width: 34, height: 34, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -457,7 +481,7 @@ const Hero = () => {
                   { from: 'user', text: 'سارة — 0551234567' },
                   { from: 'ai',   text: 'تم الحجز يا سارة 🎉 ستصلك رسالة تذكير.' },
                 ].map((m, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: m.from === 'user' ? 'flex-start' : 'flex-end' }}>
+                  <div key={i} className="hp-hero-chat-msg" style={{ display: 'flex', justifyContent: m.from === 'user' ? 'flex-start' : 'flex-end' }}>
                     <div style={{ background: m.from === 'user' ? '#fff' : '#DCF8C6', padding: '6px 10px', borderRadius: 8, maxWidth: 200, fontSize: 11, fontFamily: '"IBM Plex Sans Arabic", sans-serif', color: '#1a1a1a', lineHeight: 1.5 }}>
                       {m.text}
                     </div>
@@ -465,13 +489,13 @@ const Hero = () => {
                 ))}
               </div>
             </div>
-            {/* Floating stat card */}
-            <div style={{ position: 'absolute', top: -18, left: -48, background: '#fff', borderRadius: 10, padding: '11px 15px', boxShadow: `0 6px 24px rgba(12,26,46,0.12)`, border: `1px solid ${C.rule}`, fontFamily: '"IBM Plex Sans Arabic", sans-serif', minWidth: 130 }}>
+            {/* Floating stat cards — hidden on mobile */}
+            <div className="hp-hero-float" style={{ position: 'absolute', top: -18, left: -48, background: '#fff', borderRadius: 10, padding: '11px 15px', boxShadow: `0 6px 24px rgba(12,26,46,0.12)`, border: `1px solid ${C.rule}`, fontFamily: '"IBM Plex Sans Arabic", sans-serif', minWidth: 130 }}>
               <div style={{ color: C.ink3, fontSize: 10, marginBottom: 3 }}>اليوم</div>
               <div style={{ fontFamily: '"Noto Serif Arabic", serif', fontWeight: 600, fontSize: 22, color: C.ink }}>14</div>
               <div style={{ color: C.accent2, fontWeight: 600, fontSize: 12 }}>موعد محجوز</div>
             </div>
-            <div style={{ position: 'absolute', bottom: 48, right: -48, background: C.accent, borderRadius: 10, padding: '11px 15px', boxShadow: `0 6px 24px rgba(12,26,46,0.18)`, fontFamily: '"IBM Plex Sans Arabic", sans-serif', minWidth: 140 }}>
+            <div className="hp-hero-float" style={{ position: 'absolute', bottom: 48, right: -48, background: C.accent, borderRadius: 10, padding: '11px 15px', boxShadow: `0 6px 24px rgba(12,26,46,0.18)`, fontFamily: '"IBM Plex Sans Arabic", sans-serif', minWidth: 140 }}>
               <div style={{ color: C.onDark2, fontSize: 10, marginBottom: 3 }}>مكالمات فائتة</div>
               <div style={{ fontFamily: '"Noto Serif Arabic", serif', fontWeight: 600, fontSize: 22, color: C.onDark }}>0</div>
               <div style={{ color: C.brand, fontWeight: 600, fontSize: 11 }}>كل شيء تحت السيطرة ✓</div>
@@ -625,7 +649,7 @@ const AiSection = () => (
               </div>
             ))}
           </div>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <div className="hp-ai-btns" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <button className="btn btn-on-dark" onClick={() => wa('مرحباً، أريد رؤية مساعد الاستقبال AI بشكل عملي')}>شوف كيف يعمل ←</button>
             <button className="btn" style={{ background: 'transparent', border: `1px solid ${C.onDarkRule}`, color: C.onDark2 }}
               onClick={() => wa('مرحباً، أريد تجربة المساعد AI مباشرة')}>تجربة مباشرة</button>
@@ -680,7 +704,7 @@ const Process = () => (
 
       <div style={{ position: 'relative' }}>
         {/* Timeline connector line */}
-        <div style={{ position: 'absolute', top: 0, right: 0, left: 0, height: 2, background: `linear-gradient(to left, ${C.rule}, ${C.brand} 50%, ${C.rule})`, opacity: 0.5, pointerEvents: 'none' }} />
+        <div className="hp-timeline-connector" style={{ position: 'absolute', top: 0, right: 0, left: 0, height: 2, background: `linear-gradient(to left, ${C.rule}, ${C.brand} 50%, ${C.rule})`, opacity: 0.5, pointerEvents: 'none' }} />
         <div className="hp-4timeline">
           {[
             { w: '01', phase: 'التأسيس', dot: C.brand,  items: ['جلسة تعريفية كاملة', 'ربط واتساب Business', 'تدريب المساعد', 'إعداد نظام الحجز'] },
@@ -689,7 +713,7 @@ const Process = () => (
             { w: '04+',phase: 'التحسين',dot: C.ink3,   items: ['تقارير أسبوعية', 'استراتيجية النمو', 'إضافة ميزات', 'دعم مستمر'] },
           ].map(({ w, phase, dot, items }) => (
             <motion.div key={w} {...rv} className="hp-timeline-step" style={{ paddingTop: 8, borderTop: `2px solid ${C.rule}`, position: 'relative' }}>
-              <div style={{ width: 10, height: 10, borderRadius: '50%', background: dot, position: 'absolute', top: -6, right: 0, border: `2px solid ${C.paper}` }} />
+              <div className="hp-tl-dot" style={{ width: 10, height: 10, borderRadius: '50%', background: dot, position: 'absolute', top: -6, right: 0, border: `2px solid ${C.paper}` }} />
               <div style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 10, color: C.ink3, letterSpacing: '0.1em', marginBottom: 16, marginTop: 20 }}>
                 WEEK {w} · {phase.toUpperCase()}
               </div>
@@ -749,7 +773,8 @@ const Programs = () => (
               </div>
             ))}
           </div>
-          <button className="btn btn-gold" onClick={() => wa('مرحباً، أريد الاستفسار عن برنامج النمو الكامل لعيادتي')}>
+          <button className="btn" style={{ background: C.brand, color: '#fff', borderColor: C.brand, width: '100%', justifyContent: 'center' }}
+            onClick={() => wa('مرحباً، أريد الاستفسار عن برنامج النمو الكامل لعيادتي')}>
             احجز جلسة اكتشاف ←
           </button>
         </motion.div>
