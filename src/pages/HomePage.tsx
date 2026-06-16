@@ -305,14 +305,21 @@ const Pricing = () => (
                 </li>
               ))}
             </ul>
-            <button
-              onClick={() => openWhatsApp(`مرحباً، أريد عرضاً لباقة ${plan.name} لعيادتي.`)}
-              style={{ width:'100%',padding:'12px',borderRadius:12,border:'none',cursor:'pointer',fontFamily:'Cairo, sans-serif',fontSize:14,fontWeight:700,
-                background: plan.featured ? 'linear-gradient(135deg,#0099CC,#007BFF)' : 'rgba(13,27,62,0.06)',
-                color: plan.featured ? '#fff' : '#0D1B3E',
-                boxShadow: plan.featured ? '0 4px 16px rgba(0,153,204,0.3)' : 'none' }}>
-              {plan.cta}
-            </button>
+            {plan.featured ? (
+              <Link to="/trial"
+                style={{ display:'block',width:'100%',padding:'12px',borderRadius:12,textAlign:'center',textDecoration:'none',fontFamily:'Cairo, sans-serif',fontSize:14,fontWeight:700,
+                  background:'linear-gradient(135deg,#0099CC,#007BFF)',color:'#fff',
+                  boxShadow:'0 4px 16px rgba(0,153,204,0.3)' }}>
+                {plan.cta}
+              </Link>
+            ) : (
+              <button
+                onClick={() => openWhatsApp(`مرحباً، أريد عرضاً لباقة ${plan.name} لعيادتي.`)}
+                style={{ width:'100%',padding:'12px',borderRadius:12,border:'none',cursor:'pointer',fontFamily:'Cairo, sans-serif',fontSize:14,fontWeight:700,
+                  background:'rgba(13,27,62,0.06)',color:'#0D1B3E' }}>
+                {plan.cta}
+              </button>
+            )}
           </motion.div>
         ))}
       </div>
