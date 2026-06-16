@@ -517,7 +517,7 @@ const Hero = () => {
               <div style={{ fontFamily: '"Noto Serif Arabic", serif', fontWeight: 600, fontSize: 22, color: C.ink }}>14</div>
               <div style={{ color: C.accent2, fontWeight: 600, fontSize: 12 }}>موعد محجوز</div>
             </div>
-            <div className="hp-hero-float" style={{ position: 'absolute', bottom: 48, right: -48, background: C.accent, borderRadius: 10, padding: '11px 15px', boxShadow: `0 6px 24px rgba(12,26,46,0.18)`, fontFamily: '"IBM Plex Sans Arabic", sans-serif', minWidth: 140 }}>
+            <div className="hp-hero-float" style={{ position: 'absolute', bottom: -24, right: -48, background: C.accent, borderRadius: 10, padding: '11px 15px', boxShadow: `0 6px 24px rgba(12,26,46,0.18)`, fontFamily: '"IBM Plex Sans Arabic", sans-serif', minWidth: 140 }}>
               <div style={{ color: C.onDark2, fontSize: 10, marginBottom: 3 }}>مكالمات فائتة</div>
               <div style={{ fontFamily: '"Noto Serif Arabic", serif', fontWeight: 600, fontSize: 22, color: C.onDark }}>0</div>
               <div style={{ color: C.brand, fontWeight: 600, fontSize: 11 }}>كل شيء تحت السيطرة ✓</div>
