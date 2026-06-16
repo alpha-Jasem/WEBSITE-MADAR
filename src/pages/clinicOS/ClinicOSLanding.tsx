@@ -121,7 +121,7 @@ export const ClinicOSLanding = () => {
           <img src="/logo-main.png" alt="مدار" /><span><b>Clinic OS</b><small>من مدار</small></span>
         </button>
         <nav className={menuOpen ? 'open' : ''}>{navItems.map(([id, label]) => <button key={id} onClick={() => go(id)}>{label}</button>)}</nav>
-        <div className="clinic-nav-actions"><button className="text-button" onClick={() => navigate('/clinic-os/login')}>تسجيل الدخول</button><button className="nav-cta" onClick={() => navigate('/clinic-os/signup')}>إنشاء حساب</button></div>
+        <div className="clinic-nav-actions"><button className="text-button" onClick={() => navigate('/clinic-os/login')}>تسجيل الدخول</button><button className="nav-cta" onClick={() => navigate('/trial')}>إنشاء حساب</button></div>
         <button className="clinic-menu-button" onClick={() => setMenuOpen(v => !v)} aria-label="القائمة">{menuOpen ? <X /> : <Menu />}</button>
       </header>
 
@@ -133,7 +133,7 @@ export const ClinicOSLanding = () => {
             <span className="clinic-eyebrow"><Sparkles size={15} /> نظام تشغيل يومي للعيادات</span>
             <h1>عيادتك تعمل بوضوح،<br /><em>حتى في أكثر الأيام ازدحاماً.</em></h1>
             <p>من المواعيد والمرضى إلى الأطباء والتذكيرات والتقارير، Clinic OS يجمع تشغيل العيادة في مكان واحد.</p>
-            <div className="clinic-hero-buttons"><button className="primary-button" onClick={() => navigate('/clinic-os/demo')}>جرّب الداشبورد <ArrowLeft size={17} /></button><button className="secondary-button" onClick={() => navigate('/clinic-os/signup')}>إنشاء حساب عيادة</button></div>
+            <div className="clinic-hero-buttons"><button className="primary-button" onClick={() => navigate('/clinic-os/demo')}>جرّب الداشبورد <ArrowLeft size={17} /></button><button className="secondary-button" onClick={() => navigate('/trial')}>إنشاء حساب عيادة</button></div>
             <div className="clinic-live-strip"><span><i /> 12 موعد اليوم</span><span>9 مؤكدة</span><span>2 بانتظار التأكيد</span></div>
           </motion.div>
           <button className="clinic-scroll-cue" onClick={() => go('product')}><span>اكتشف النظام</span><ChevronDown /></button>
@@ -156,7 +156,7 @@ export const ClinicOSLanding = () => {
         </section>
 
         <section className="clinic-decision-section">
-          <motion.div className="decision-copy" {...reveal}><span>ابدأ بالأساس، ثم توسّع</span><h2>نجهز العيادة على تشغيلها الحقيقي</h2><p>ابدأ بإدارة المواعيد والمرضى والأطباء والتقارير. ثم فعّل الحجز الذكي والتكاملات عندما تحتاجها.</p><div><button className="primary-button" onClick={() => navigate('/clinic-os/signup')}>ابدأ إعداد العيادة <ArrowLeft size={17} /></button><button className="whatsapp-button" onClick={openWhatsApp}><Phone size={17} /> تحدث معنا</button></div></motion.div>
+          <motion.div className="decision-copy" {...reveal}><span>ابدأ بالأساس، ثم توسّع</span><h2>نجهز العيادة على تشغيلها الحقيقي</h2><p>ابدأ بإدارة المواعيد والمرضى والأطباء والتقارير. ثم فعّل الحجز الذكي والتكاملات عندما تحتاجها.</p><div><button className="primary-button" onClick={() => navigate('/trial')}>ابدأ إعداد العيادة <ArrowLeft size={17} /></button><button className="whatsapp-button" onClick={openWhatsApp}><Phone size={17} /> تحدث معنا</button></div></motion.div>
           <motion.div className="decision-list" {...reveal}>{['إعداد الحساب والبيانات الأساسية', 'تجربة واجهة التشغيل قبل القرار', 'تفعيل المزايا حسب احتياج العيادة', 'دعم واضح أثناء التجهيز'].map((text, index) => <div key={text}><span>{index + 1}</span><b>{text}</b><Check /></div>)}</motion.div>
         </section>
 
@@ -165,7 +165,7 @@ export const ClinicOSLanding = () => {
           <div className="faq-list">{faqs.map(([q, a], index) => <article className={openFaq === index ? 'open' : ''} key={q}><button onClick={() => setOpenFaq(openFaq === index ? null : index)}><b>{q}</b><ChevronDown /></button><div><p>{a}</p></div></article>)}</div>
         </section>
 
-        <section className="clinic-final-cta"><motion.div {...reveal}><span>Clinic OS من مدار</span><h2>شاهد يوم عيادتك من شاشة واحدة.</h2><p>جرّب الداشبورد، ثم أنشئ حساب العيادة عندما تكون جاهزاً.</p><div><button onClick={() => navigate('/clinic-os/demo')}>فتح الديمو</button><button onClick={() => navigate('/clinic-os/signup')}>إنشاء حساب</button></div></motion.div></section>
+        <section className="clinic-final-cta"><motion.div {...reveal}><span>Clinic OS من مدار</span><h2>شاهد يوم عيادتك من شاشة واحدة.</h2><p>جرّب الداشبورد، ثم أنشئ حساب العيادة عندما تكون جاهزاً.</p><div><button onClick={() => navigate('/clinic-os/demo')}>فتح الديمو</button><button onClick={() => navigate('/trial')}>إنشاء حساب</button></div></motion.div></section>
       </main>
 
       <footer className="clinic-public-footer"><div><img src="/logo-main.png" alt="مدار" /><p>منصة عربية لتنظيم تشغيل العيادات بوضوح.</p></div><nav><button onClick={() => navigate('/clinic-os/demo')}>الديمو</button><button onClick={() => navigate('/clinic-os/login')}>تسجيل الدخول</button><button onClick={openWhatsApp}>واتساب</button></nav><small>© 2026 مدار. جميع الحقوق محفوظة.</small></footer>

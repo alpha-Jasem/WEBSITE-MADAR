@@ -77,7 +77,7 @@ export const ClinicOSLogin = () => {
             <button className="clinic-login-submit" type="submit" disabled={loading}>{loading ? 'جاري الدخول...' : <>دخول لوحة العيادة <ArrowLeft /></>}</button>
           </form>
 
-          <div className="clinic-login-signup">ليس لديك حساب؟ <button onClick={() => navigate('/clinic-os/signup')}>أنشئ حساب عيادة</button></div>
+          <div className="clinic-login-signup">ليس لديك حساب؟ <button onClick={() => navigate('/trial')}>أنشئ حساب عيادة</button></div>
         </motion.div>
       </section>
     </main>

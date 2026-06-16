@@ -7,7 +7,6 @@ import { WhatsAppButton }   from '../components/shared/WhatsAppButton'
 import { CustomCursor }     from '../components/shared/CustomCursor'
 import { MadarNavbar }      from '../components/public/MadarNavbar'
 import { Hero }             from '../components/public/Hero'
-import { LeadForm }         from '../components/public/LeadForm'
 import { Footer }           from '../components/public/Footer'
 
 const PHONE = '966546666005'
