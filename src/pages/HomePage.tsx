@@ -51,7 +51,20 @@ const GlobalCSS = () => (
     @media (max-width: 480px) {
       .hp-4col      { grid-template-columns: 1fr; }
       .hp-4timeline { grid-template-columns: 1fr; }
-      .hp-sticky-text { display: none; }
+      .hp-sticky-text { display: none !important; }
+    }
+
+    @media (max-width: 900px) {
+      .hp-sticky-bar {
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        transform: none !important;
+        border-radius: 0 !important;
+        justify-content: center !important;
+        padding: 12px 16px !important;
+        gap: 10px !important;
+      }
     }
   `}</style>
 )
@@ -584,7 +597,7 @@ const StickyBar = () => {
   const [gone, setGone] = useState(false)
   if (gone) return null
   return (
-    <motion.div initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 2.5, duration: 0.45 }}
+    <motion.div className="hp-sticky-bar" initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 2.5, duration: 0.45 }}
       style={{ position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)', zIndex: 200, background: DARK, borderRadius: 99, padding: '11px 16px 11px 20px', display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 12px 40px rgba(0,0,0,0.32)', direction: 'rtl' }}>
       <span className="hp-sticky-text" style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E', flexShrink: 0 }} />
