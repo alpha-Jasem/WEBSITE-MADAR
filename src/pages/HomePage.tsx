@@ -305,7 +305,7 @@ const Navbar = () => {
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <img src="/logo-main.png" alt="مدار" style={{ height: 36, width: 'auto' }} />
-          <span style={{ fontFamily: '"Noto Serif Arabic", serif', fontWeight: 500, fontSize: 18, color: C.accentInk, letterSpacing: '-0.01em' }}>مدار</span>
+          <span style={{ fontFamily: '"IBM Plex Mono", monospace', fontWeight: 500, fontSize: 15, color: C.accentInk, letterSpacing: '-0.01em' }}>madar.software</span>
         </div>
 
         {/* Desktop links */}
