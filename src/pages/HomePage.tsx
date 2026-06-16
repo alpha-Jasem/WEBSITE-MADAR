@@ -363,7 +363,7 @@ const Hero = () => {
             .
           </h1>
           <p style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontSize: 18, color: C.ink2, lineHeight: 1.75, marginBottom: 34, maxWidth: 440 }}>
-            نبني ونشغّل نظاماً يستقبل مرضاك على واتساب، يحجز المواعيد، ويُذكّرهم تلقائياً — بدون موظف استقبال إضافي.
+            نبني ونشغّل نظاماً يستقبل عملائك على واتساب، يحجز المواعيد، ويُذكّرهم تلقائياً — بدون موظف استقبال إضافي.
           </p>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', marginBottom: 48 }}>
             <button className="btn btn-primary" style={{ fontSize: 16, padding: '15px 26px' }}
