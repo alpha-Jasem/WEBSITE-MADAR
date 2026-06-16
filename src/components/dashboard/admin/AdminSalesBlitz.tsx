@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import { supabase } from '../../../lib/supabase'
 
 type Segment = 'dental' | 'skin' | 'general'
-type Status  = 'meeting_booked' | 'silent' | 'pending' | 'won' | 'lost'
+type Status  = 'meeting_booked' | 'silent' | 'pending' | 'won' | 'lost' | 'contacted'
 
 interface Lead {
   id: string
@@ -47,11 +47,12 @@ const SEED: Omit<Lead, 'id' | 'created_at' | 'campaign'>[] = [
 ]
 
 const STATUS_META: Record<Status, { label: string; color: string; bg: string; border: string }> = {
-  meeting_booked: { label: 'اجتماع محجوز', color: '#10B981', bg: 'rgba(16,185,129,0.12)',  border: 'rgba(16,185,129,0.3)' },
-  silent:         { label: 'لا يرد',        color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
-  pending:        { label: 'بانتظار التواصل', color: '#60A5FA', bg: 'rgba(96,165,250,0.1)', border: 'rgba(96,165,250,0.2)' },
-  won:            { label: 'تم الإغلاق ✓',  color: '#A78BFA', bg: 'rgba(167,139,250,0.12)',border: 'rgba(167,139,250,0.3)'},
-  lost:           { label: 'خسرنا',         color: '#F87171', bg: 'rgba(248,113,113,0.1)', border: 'rgba(248,113,113,0.2)'},
+  pending:        { label: 'بانتظار التواصل', color: '#60A5FA', bg: 'rgba(96,165,250,0.1)',   border: 'rgba(96,165,250,0.2)'   },
+  contacted:      { label: 'تم التواصل',      color: '#38BDF8', bg: 'rgba(56,189,248,0.1)',   border: 'rgba(56,189,248,0.25)'  },
+  meeting_booked: { label: 'اجتماع محجوز',    color: '#10B981', bg: 'rgba(16,185,129,0.12)',  border: 'rgba(16,185,129,0.3)'   },
+  silent:         { label: 'لا يرد',           color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)'   },
+  won:            { label: 'تم الإغلاق ✓',    color: '#A78BFA', bg: 'rgba(167,139,250,0.12)',border: 'rgba(167,139,250,0.3)'  },
+  lost:           { label: 'خسرنا',            color: '#F87171', bg: 'rgba(248,113,113,0.1)', border: 'rgba(248,113,113,0.2)'  },
 }
 
 const SEG_LABELS: Record<string, string> = { all: 'الكل', dental: 'أسنان', skin: 'جلدية / تجميل', general: 'عامة' }
@@ -62,6 +63,32 @@ function waMsg(lead: Lead) {
   const name = lead.contact.replace('د. ', '')
   const text = `مرحباً د. ${name}، أنا جاسم من مادار — نظام الاستقبال الذكي للعيادات على واتساب. هل لديك دقيقتان أشارككم كيف نساعد عيادة ${lead.clinic} على حجز المواعيد تلقائياً؟`
   window.open(`https://wa.me/${lead.phone.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`, '_blank')
+}
+
+/* ── Generic inline editable single-line cell ── */
+const InlineCell = ({ value, field, leadId, onSave, placeholder = '—', mono = false }: {
+  value: string; field: string; leadId: string; placeholder?: string; mono?: boolean
+  onSave: (id: string, field: string, val: string) => void
+}) => {
+  const [editing, setEditing] = useState(false)
+  const [val, setVal] = useState(value)
+  const ref = useRef<HTMLInputElement>(null)
+  useEffect(() => { if (editing) ref.current?.focus() }, [editing])
+  const save = () => { setEditing(false); if (val.trim() && val !== value) { onSave(leadId, field, val.trim()) } else { setVal(value) } }
+  if (editing) return (
+    <input ref={ref} value={val} onChange={e => setVal(e.target.value)}
+      onBlur={save}
+      onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') { setVal(value); setEditing(false) } }}
+      style={{ width: '100%', minWidth: 110, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(96,165,250,0.4)', borderRadius: 6, padding: '4px 8px', color: 'var(--ink)', fontSize: 13, fontFamily: mono ? 'var(--mono)' : 'inherit', outline: 'none' }} />
+  )
+  return (
+    <div onClick={() => setEditing(true)} title="اضغط للتعديل"
+      style={{ fontSize: 13, color: 'var(--ink)', cursor: 'text', fontFamily: mono ? 'var(--mono)' : 'inherit', padding: '2px 4px', borderRadius: 4, transition: 'background .12s', whiteSpace: 'nowrap' }}
+      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+      onMouseLeave={e => (e.currentTarget.style.background = '')}>
+      {val || <span style={{ color: 'rgba(255,255,255,0.2)' }}>{placeholder}</span>}
+    </div>
+  )
 }
 
 /* ── Inline editable notes cell ── */
@@ -204,11 +231,13 @@ export const AdminSalesBlitz = () => {
     setSaving(null)
   }
 
-  /* Update notes */
-  const updateNotes = async (id: string, notes: string) => {
-    setLeads(l => l.map(x => x.id === id ? { ...x, notes } : x))
-    await supabase.from('sales_blitz_leads').update({ notes, updated_at: new Date().toISOString() }).eq('id', id)
+  /* Update any text field (notes, clinic, phone, contact) */
+  const updateField = async (id: string, field: string, value: string) => {
+    setLeads(l => l.map(x => x.id === id ? { ...x, [field]: value } : x))
+    await supabase.from('sales_blitz_leads').update({ [field]: value, updated_at: new Date().toISOString() }).eq('id', id)
   }
+
+  const updateNotes = (id: string, notes: string) => updateField(id, 'notes', notes)
 
   /* Add new lead */
   const addLead = async (form: typeof EMPTY_FORM) => {
@@ -232,11 +261,12 @@ export const AdminSalesBlitz = () => {
   }), [leads, search, seg, statusFilter])
 
   const kpi = {
-    total:   leads.length,
-    meeting: leads.filter(l => l.status === 'meeting_booked').length,
-    silent:  leads.filter(l => l.status === 'silent').length,
-    pending: leads.filter(l => l.status === 'pending').length,
-    won:     leads.filter(l => l.status === 'won').length,
+    total:     leads.length,
+    pending:   leads.filter(l => l.status === 'pending').length,
+    contacted: leads.filter(l => l.status === 'contacted').length,
+    meeting:   leads.filter(l => l.status === 'meeting_booked').length,
+    silent:    leads.filter(l => l.status === 'silent').length,
+    won:       leads.filter(l => l.status === 'won').length,
   }
 
   if (loading) return <div className="page fade-in" style={{ color: 'var(--ink-3)', padding: 40 }}>جاري التحميل...</div>
@@ -259,13 +289,14 @@ export const AdminSalesBlitz = () => {
       </div>
 
       {/* KPI */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 12, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 12, marginBottom: 20 }}>
         {[
-          { label: 'إجمالي',         value: kpi.total,   color: '#60A5FA', f: 'all'            },
-          { label: 'اجتماع محجوز',   value: kpi.meeting, color: '#10B981', f: 'meeting_booked' },
-          { label: 'لا يرد',         value: kpi.silent,  color: '#F59E0B', f: 'silent'         },
-          { label: 'بانتظار التواصل',value: kpi.pending, color: '#94A3B8', f: 'pending'        },
-          { label: 'تم الإغلاق',     value: kpi.won,     color: '#A78BFA', f: 'won'            },
+          { label: 'إجمالي',         value: kpi.total,     color: '#60A5FA', f: 'all'            },
+          { label: 'بانتظار التواصل',value: kpi.pending,   color: '#94A3B8', f: 'pending'        },
+          { label: 'تم التواصل',     value: kpi.contacted, color: '#38BDF8', f: 'contacted'      },
+          { label: 'اجتماع محجوز',   value: kpi.meeting,   color: '#10B981', f: 'meeting_booked' },
+          { label: 'لا يرد',         value: kpi.silent,    color: '#F59E0B', f: 'silent'         },
+          { label: 'تم الإغلاق',     value: kpi.won,       color: '#A78BFA', f: 'won'            },
         ].map(k => (
           <div key={k.label} className="card card-pad" onClick={() => setStatus(k.f as 'all' | Status)}
             style={{ cursor: 'pointer', borderBottom: `3px solid ${k.color}`, transition: 'transform .15s', background: statusFilter === k.f ? 'rgba(255,255,255,0.05)' : undefined }}
@@ -298,7 +329,7 @@ export const AdminSalesBlitz = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.03)' }}>
-                {['#', 'العيادة', 'الطبيب', 'الحي', 'التخصص', 'الحالة', 'الملاحظات', 'إجراءات'].map(h => (
+                {['#', 'العيادة', 'الطبيب', 'الجوال', 'الحي', 'التخصص', 'الحالة', 'الملاحظات', 'إجراءات'].map(h => (
                   <th key={h} style={{ padding: '10px 14px', textAlign: 'right', fontSize: 11, color: 'var(--ink-3)', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
@@ -312,8 +343,15 @@ export const AdminSalesBlitz = () => {
                     onMouseLeave={e => (e.currentTarget.style.background = '')}>
 
                     <td style={{ padding: '10px 14px', color: 'var(--ink-3)', fontFamily: 'var(--mono)', fontSize: 11 }}>{idx + 1}</td>
-                    <td style={{ padding: '10px 14px', fontWeight: 600, color: 'var(--ink)', whiteSpace: 'nowrap' }}>{lead.clinic}</td>
-                    <td style={{ padding: '10px 14px', color: 'var(--ink-3)', whiteSpace: 'nowrap' }}>{lead.contact}</td>
+                    <td style={{ padding: '10px 14px', fontWeight: 600 }}>
+                      <InlineCell value={lead.clinic} field="clinic" leadId={lead.id} onSave={updateField} placeholder="اسم العيادة" />
+                    </td>
+                    <td style={{ padding: '10px 14px' }}>
+                      <InlineCell value={lead.contact} field="contact" leadId={lead.id} onSave={updateField} placeholder="د. ..." />
+                    </td>
+                    <td style={{ padding: '8px 14px' }}>
+                      <InlineCell value={lead.phone} field="phone" leadId={lead.id} onSave={updateField} placeholder="9665XXXXXXXX" mono />
+                    </td>
                     <td style={{ padding: '10px 14px', color: 'var(--ink-3)', fontSize: 12 }}>{lead.area}</td>
 
                     <td style={{ padding: '10px 14px' }}>
@@ -369,7 +407,7 @@ export const AdminSalesBlitz = () => {
                 )
               })}
               {filtered.length === 0 && (
-                <tr><td colSpan={8} style={{ padding: 48, textAlign: 'center', color: 'var(--ink-3)' }}>لا توجد نتائج</td></tr>
+                <tr><td colSpan={9} style={{ padding: 48, textAlign: 'center', color: 'var(--ink-3)' }}>لا توجد نتائج</td></tr>
               )}
             </tbody>
           </table>
