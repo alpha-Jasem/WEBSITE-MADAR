@@ -378,7 +378,7 @@ const Hero = () => {
 
           {/* Stats — ht-stat pattern */}
           <div style={{ display: 'flex', paddingTop: 28, borderTop: `1px solid ${C.rule}` }}>
-            {[{ n: '24/7', label: 'استقبال مستمر' }, { n: '<12ث', label: 'سرعة الرد' }, { n: '80%', label: 'تقليل المكالمات الفائتة' }].map((s, i) => (
+            {[{ n: '24/7', label: 'استقبال مستمر' }, { n: '<5ث', label: 'سرعة الرد' }, { n: '80%', label: 'تقليل المكالمات الفائتة' }].map((s, i) => (
               <div key={s.n} style={{ padding: '0 18px', borderRight: i > 0 ? `1px solid ${C.rule}` : 'none' }}>
                 <div style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 28, fontWeight: 400, color: C.ink, lineHeight: 1, letterSpacing: '-0.01em' }}>{s.n}</div>
                 <div style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 10.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.ink3, marginTop: 8 }}>{s.label}</div>
