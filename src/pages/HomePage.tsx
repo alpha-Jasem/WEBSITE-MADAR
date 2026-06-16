@@ -304,8 +304,11 @@ const Navbar = () => {
       <div className="hp-container hp-nav-inner">
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <img src="/logo-main.png" alt="مدار" style={{ height: 36, width: 'auto' }} />
-          <span style={{ fontFamily: '"IBM Plex Mono", monospace', fontWeight: 500, fontSize: 15, color: C.accentInk, letterSpacing: '-0.01em' }}>madar.software</span>
+          <img src="/logo-main.png" alt="مدار" style={{ height: 32, width: 'auto' }} />
+          <span style={{ fontFamily: 'Sora, sans-serif', fontSize: 14, fontWeight: 600, letterSpacing: '-0.3px', lineHeight: 1 }}>
+            <span style={{ color: C.accentInk }}>Madar</span>
+            <span style={{ color: C.brand }}>.software</span>
+          </span>
         </div>
 
         {/* Desktop links */}
