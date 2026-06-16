@@ -9,26 +9,26 @@ const wa = (msg = 'مرحباً، أريد معرفة المزيد عن نظام
   window.open(`https://wa.me/${PHONE}?text=${encodeURIComponent(msg)}`, '_blank')
 
 const C = {
-  paper:     '#FBFAF7',
-  paper2:    '#F4F1EA',
-  paper3:    '#ECE7DB',
-  ink:       '#0F1A15',
-  ink2:      '#44524C',
-  ink3:      '#5E6A64',
-  rule:      '#E4DFD2',
-  rule2:     '#D6CFBD',
-  brand:     '#2BB573',
-  accent:    '#0F3D2E',
-  accent2:   '#1B6347',
-  accentInk: '#07241B',
-  gold:      '#BE9434',
-  gold2:     '#8A6A22',
-  goldTint:  '#F5EBC8',
-  dark:      '#0A1B14',
-  dark2:     '#0F261D',
-  onDark:    '#EDE7D8',
-  onDark2:   '#C2D0C7',
-  onDarkRule:'#1F3329',
+  paper:     '#F4F5F8',
+  paper2:    '#EEF0F5',
+  paper3:    '#E4E8F0',
+  ink:       '#1B2740',
+  ink2:      '#3D4F6A',
+  ink3:      '#5A6880',
+  rule:      '#DDE2EC',
+  rule2:     '#C8D0DF',
+  brand:     '#2563EB',
+  accent:    '#1E3A6E',
+  accent2:   '#1A4FA0',
+  accentInk: '#0D2452',
+  gold:      '#8899B4',
+  gold2:     '#5F7290',
+  goldTint:  '#E8ECF5',
+  dark:      '#0C1A2E',
+  dark2:     '#111F38',
+  onDark:    '#E8EEF8',
+  onDark2:   '#A8BACC',
+  onDarkRule:'#1A2E4A',
 }
 
 const rv = { initial: { opacity: 0, y: 20 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true }, transition: { duration: 0.55 } }
@@ -78,7 +78,7 @@ const GlobalCSS = () => (
     .btn-primary { background: ${C.accent}; color: ${C.paper}; border-color: ${C.accent}; }
     .btn-primary:hover { background: ${C.accentInk}; }
     .btn-ghost { background: transparent; color: ${C.accentInk}; border-color: ${C.rule2}; }
-    .btn-ghost:hover { border-color: ${C.accent}; background: rgba(15,61,46,0.04); }
+    .btn-ghost:hover { border-color: ${C.accent}; background: rgba(30,58,110,0.04); }
     .btn-on-dark { background: ${C.onDark}; color: ${C.accentInk}; border-color: ${C.onDark}; }
     .btn-on-dark:hover { background: #fff; }
     .btn-gold { background: ${C.gold}; color: #fff; border-color: ${C.gold}; }
@@ -155,7 +155,7 @@ const GlobalCSS = () => (
       position: absolute;
       left: 0; top: 0;
       font-style: italic;
-      background: linear-gradient(90deg, ${C.gold2}, ${C.gold} 60%, #d8b24a);
+      background: linear-gradient(90deg, #1E3A6E, #2563EB 60%, #60A5FA);
       -webkit-background-clip: text; background-clip: text;
       -webkit-text-fill-color: transparent;
       white-space: nowrap;
@@ -192,9 +192,9 @@ const GlobalCSS = () => (
       animation: pulse-ring 1.8s ease-out infinite;
     }
     @keyframes pulse-ring {
-      0%   { box-shadow: 0 0 0 0 rgba(43,181,115,0.55); }
-      70%  { box-shadow: 0 0 0 6px rgba(43,181,115,0); }
-      100% { box-shadow: 0 0 0 0 rgba(43,181,115,0); }
+      0%   { box-shadow: 0 0 0 0 rgba(37,99,235,0.55); }
+      70%  { box-shadow: 0 0 0 6px rgba(37,99,235,0); }
+      100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); }
     }
     .hp-sticky-text {
       writing-mode: vertical-rl;
@@ -223,7 +223,7 @@ const GlobalCSS = () => (
     }
     .hp-card:hover {
       transform: translateY(-3px);
-      box-shadow: 0 16px 48px rgba(10,27,20,0.11);
+      box-shadow: 0 16px 48px rgba(12,26,46,0.11);
     }
     .hp-card-dark:hover {
       transform: translateY(-3px);
@@ -255,7 +255,7 @@ const GlobalCSS = () => (
       padding: 6px 8px;
       transition: background 0.15s ease;
     }
-    .hp-feature-item:hover { background: rgba(43,181,115,0.05); }
+    .hp-feature-item:hover { background: rgba(37,99,235,0.05); }
     .hp-feature-item-dark:hover { background: rgba(255,255,255,0.04); }
 
     /* Timeline step hover */
@@ -304,10 +304,8 @@ const Navbar = () => {
       <div className="hp-container hp-nav-inner">
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 8, background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Bot size={17} color={C.paper} />
-          </div>
-          <span style={{ fontFamily: '"Noto Serif Arabic", serif', fontWeight: 500, fontSize: 18, color: C.accentInk, letterSpacing: '-0.01em' }}>مدار AI</span>
+          <img src="/logo-main.png" alt="مدار" style={{ height: 36, width: 'auto' }} />
+          <span style={{ fontFamily: '"Noto Serif Arabic", serif', fontWeight: 500, fontSize: 18, color: C.accentInk, letterSpacing: '-0.01em' }}>مدار</span>
         </div>
 
         {/* Desktop links */}
@@ -380,20 +378,20 @@ const Hero = () => {
   return (
   <section className="hp-section" style={{ background: C.paper, paddingTop: 130, position: 'relative', overflow: 'hidden' }} dir="rtl">
     {/* Exact SYC hero bg: radial + glows + grain */}
-    <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 50% at 90% 10%, rgba(43,181,115,0.07), transparent 60%), radial-gradient(ellipse 50% 40% at 5% 80%, rgba(15,61,46,0.04), transparent 60%)`, pointerEvents: 'none' }} />
+    <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 50% at 90% 10%, rgba(37,99,235,0.07), transparent 60%), radial-gradient(ellipse 50% 40% at 5% 80%, rgba(30,58,110,0.04), transparent 60%)`, pointerEvents: 'none' }} />
     {/* Green glow */}
-    <div style={{ position: 'absolute', width: 620, height: 620, top: -180, right: -120, borderRadius: '50%', background: 'radial-gradient(circle, rgba(43,181,115,0.28), transparent 70%)', filter: 'blur(80px)', opacity: 0.55, pointerEvents: 'none' }} />
+    <div style={{ position: 'absolute', width: 620, height: 620, top: -180, right: -120, borderRadius: '50%', background: 'radial-gradient(circle, rgba(37,99,235,0.22), transparent 70%)', filter: 'blur(80px)', opacity: 0.55, pointerEvents: 'none' }} />
     {/* Gold glow */}
-    <div style={{ position: 'absolute', width: 520, height: 520, bottom: -200, left: -120, borderRadius: '50%', background: 'radial-gradient(circle, rgba(190,148,52,0.16), transparent 70%)', filter: 'blur(80px)', opacity: 0.55, pointerEvents: 'none' }} />
+    <div style={{ position: 'absolute', width: 520, height: 520, bottom: -200, left: -120, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,152,180,0.18), transparent 70%)', filter: 'blur(80px)', opacity: 0.55, pointerEvents: 'none' }} />
     {/* Grain texture */}
-    <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(15,61,46,0.05) 1px, transparent 0)', backgroundSize: '26px 26px', opacity: 0.5, pointerEvents: 'none' }} />
+    <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(30,58,110,0.04) 1px, transparent 0)', backgroundSize: '26px 26px', opacity: 0.5, pointerEvents: 'none' }} />
 
     <div className="hp-container" style={{ position: 'relative' }}>
       <div className="hp-hero-grid">
         <motion.div {...rv}>
           {/* Hero pill — exact SYC pattern */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '7px 14px 7px 12px', background: 'rgba(43,181,115,0.08)', border: '1px solid rgba(43,181,115,0.22)', borderRadius: 999, fontFamily: '"IBM Plex Mono", monospace', fontSize: 11.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.accent2, marginBottom: 22 }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.brand, boxShadow: '0 0 0 4px rgba(43,181,115,0.18)', flexShrink: 0 }} />
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '7px 14px 7px 12px', background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.22)', borderRadius: 999, fontFamily: '"IBM Plex Mono", monospace', fontSize: 11.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.accent2, marginBottom: 22 }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.brand, boxShadow: '0 0 0 4px rgba(37,99,235,0.18)', flexShrink: 0 }} />
             استقبال ذكي · ٢٤/٧ · بدون انقطاع
           </div>
           <h1 style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(44px,5.4vw,78px)', fontWeight: 400, color: C.ink, lineHeight: 1.02, marginBottom: 22, letterSpacing: '-0.025em' }}>
@@ -437,7 +435,7 @@ const Hero = () => {
         {/* Phone mockup */}
         <motion.div {...rv} transition={{ delay: 0.15 }} className="hp-hero-phone">
           <div style={{ position: 'relative', width: 310 }}>
-            <div style={{ background: '#fff', borderRadius: 24, boxShadow: `0 24px 64px rgba(10,27,20,0.14), 0 2px 8px rgba(10,27,20,0.08)`, overflow: 'hidden', border: `1.5px solid ${C.rule}` }}>
+            <div style={{ background: '#fff', borderRadius: 24, boxShadow: `0 24px 64px rgba(12,26,46,0.14), 0 2px 8px rgba(12,26,46,0.08)`, overflow: 'hidden', border: `1.5px solid ${C.rule}` }}>
               <div style={{ background: '#075E54', padding: '13px 14px', display: 'flex', alignItems: 'center', gap: 9 }}>
                 <div style={{ width: 34, height: 34, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Bot size={15} color={C.paper} />
@@ -465,12 +463,12 @@ const Hero = () => {
               </div>
             </div>
             {/* Floating stat card */}
-            <div style={{ position: 'absolute', top: -18, left: -48, background: '#fff', borderRadius: 10, padding: '11px 15px', boxShadow: `0 6px 24px rgba(10,27,20,0.12)`, border: `1px solid ${C.rule}`, fontFamily: '"IBM Plex Sans Arabic", sans-serif', minWidth: 130 }}>
+            <div style={{ position: 'absolute', top: -18, left: -48, background: '#fff', borderRadius: 10, padding: '11px 15px', boxShadow: `0 6px 24px rgba(12,26,46,0.12)`, border: `1px solid ${C.rule}`, fontFamily: '"IBM Plex Sans Arabic", sans-serif', minWidth: 130 }}>
               <div style={{ color: C.ink3, fontSize: 10, marginBottom: 3 }}>اليوم</div>
               <div style={{ fontFamily: '"Noto Serif Arabic", serif', fontWeight: 600, fontSize: 22, color: C.ink }}>14</div>
               <div style={{ color: C.accent2, fontWeight: 600, fontSize: 12 }}>موعد محجوز</div>
             </div>
-            <div style={{ position: 'absolute', bottom: 48, right: -48, background: C.accent, borderRadius: 10, padding: '11px 15px', boxShadow: `0 6px 24px rgba(10,27,20,0.18)`, fontFamily: '"IBM Plex Sans Arabic", sans-serif', minWidth: 140 }}>
+            <div style={{ position: 'absolute', bottom: 48, right: -48, background: C.accent, borderRadius: 10, padding: '11px 15px', boxShadow: `0 6px 24px rgba(12,26,46,0.18)`, fontFamily: '"IBM Plex Sans Arabic", sans-serif', minWidth: 140 }}>
               <div style={{ color: C.onDark2, fontSize: 10, marginBottom: 3 }}>مكالمات فائتة</div>
               <div style={{ fontFamily: '"Noto Serif Arabic", serif', fontWeight: 600, fontSize: 22, color: C.onDark }}>0</div>
               <div style={{ color: C.brand, fontWeight: 600, fontSize: 11 }}>كل شيء تحت السيطرة ✓</div>
@@ -496,7 +494,7 @@ const TrustStrip = () => (
           { icon: '🤖', label: 'مدعوم بـ AI متقدم' },
         ].map(b => (
           <div key={b.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(43,181,115,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>{b.icon}</div>
+            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(37,99,235,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>{b.icon}</div>
             <span style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontSize: 14, fontWeight: 500, color: '#0F1A15' }}>{b.label}</span>
           </div>
         ))}
@@ -568,7 +566,7 @@ const Method = () => (
           <motion.div key={n} {...rv} transition={{ delay: idx * 0.08 }}
             style={{ padding: '32px 24px', borderRight: `1px solid ${C.rule}` }}>
             <div style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 11, color: C.ink3, letterSpacing: '0.1em', marginBottom: 20 }}>{n}</div>
-            <div style={{ width: 40, height: 40, borderRadius: 8, background: `rgba(15,61,46,0.08)`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 8, background: `rgba(37,99,235,0.08)`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
               <Icon size={18} color={C.accent} />
             </div>
             <h3 style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 17, fontWeight: 500, color: C.ink, marginBottom: 16, lineHeight: 1.3 }}>{title}</h3>
@@ -590,7 +588,7 @@ const Method = () => (
 const AiSection = () => (
   <section id="ai" className="hp-section" style={{ background: C.dark, position: 'relative', overflow: 'hidden' }} dir="rtl">
     {/* SYC ai-band::before radial overlays */}
-    <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 70% 50% at 80% 20%, rgba(43,181,115,0.08), transparent 60%), radial-gradient(ellipse 50% 40% at 10% 90%, rgba(43,181,115,0.04), transparent 60%)', pointerEvents: 'none' }} />
+    <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 70% 50% at 80% 20%, rgba(37,99,235,0.08), transparent 60%), radial-gradient(ellipse 50% 40% at 10% 90%, rgba(37,99,235,0.04), transparent 60%)', pointerEvents: 'none' }} />
     <div className="hp-container" style={{ position: 'relative' }}>
       <div className="eyebrow" style={{ marginBottom: 28, color: C.onDark2 }}>
         <span style={{ background: C.onDark2, display: 'inline-block', width: 22, height: 1, marginLeft: 10 }} />
@@ -614,7 +612,7 @@ const AiSection = () => (
               { icon: Phone,    label: 'يقلل المكالمات',       desc: '80% من الأسئلة تُحل عبر واتساب بدون مكالمة' },
             ].map(({ icon: Icon, label, desc }) => (
               <div key={label} className="hp-feature-item hp-feature-item-dark" style={{ display: 'flex', gap: 14 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 8, background: `rgba(190,148,52,0.15)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: `rgba(37,99,235,0.12)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Icon size={15} color={C.gold} />
                 </div>
                 <div>
@@ -803,7 +801,7 @@ const FAQ = () => {
 const FinalCTA = () => (
   <section style={{ background: C.dark, padding: '110px 0 70px', textAlign: 'center', position: 'relative', overflow: 'hidden', isolation: 'isolate' }} dir="rtl">
     {/* SYC cta-final::before radial + ::after grain */}
-    <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 40% at 50% 100%, rgba(43,181,115,0.14), transparent 65%), radial-gradient(ellipse 50% 40% at 90% 0%, rgba(43,181,115,0.06), transparent 60%)', pointerEvents: 'none' }} />
+    <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 40% at 50% 100%, rgba(37,99,235,0.14), transparent 65%), radial-gradient(ellipse 50% 40% at 90% 0%, rgba(37,99,235,0.06), transparent 60%)', pointerEvents: 'none' }} />
     <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.025) 1px, transparent 0)', backgroundSize: '28px 28px', opacity: 0.5, pointerEvents: 'none' }} />
     <div className="hp-container-narrow" style={{ position: 'relative' }}>
       <div className="eyebrow" style={{ marginBottom: 24, color: C.onDark2, justifyContent: 'center' }}>ابدأ الآن</div>
