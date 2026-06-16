@@ -127,7 +127,7 @@ export const Login = () => {
       // 4. If session exists, redirect. If email confirmation needed, show success.
       if (authData.session) {
         localStorage.setItem('madar_signup_business_type', 'clinic')
-        navigate('/clinic-os/dashboard', { replace: true })
+        navigate('/clinic-os/dashboard?welcome=1', { replace: true })
       } else {
         setSignupDone(true)
       }

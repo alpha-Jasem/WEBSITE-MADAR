@@ -196,7 +196,8 @@ export function TrialSignup() {
       if (pwErr) console.warn('Password update failed (non-fatal):', pwErr.message)
 
       const ALLOWED = ['/client', '/clinic-os/dashboard']
-      const safeRedirect = ALLOWED.includes(result.redirect_to) ? result.redirect_to : '/client'
+      const base = ALLOWED.includes(result.redirect_to) ? result.redirect_to : '/client'
+      const safeRedirect = base === '/clinic-os/dashboard' ? `${base}?welcome=1` : base
       navigate(safeRedirect, { replace: true })
     } catch (err: any) {
       const message = errorCode(err?.message) ?? getErrorMessage(err)
