@@ -39,7 +39,7 @@ export const ClinicOSLogin = () => {
   return (
     <main className="clinic-login" dir="rtl">
       <section className="clinic-login-brand">
-        <button className="clinic-login-logo" onClick={() => navigate('/clinic-os')}>
+        <button className="clinic-login-logo" onClick={() => navigate('/')}>
           <img src="/logo-main.png" alt="Madar.software" />
           <span><strong>Madar.software</strong><small>Clinic OS للعيادات</small></span>
         </button>
@@ -57,7 +57,7 @@ export const ClinicOSLogin = () => {
 
       <section className="clinic-login-panel">
         <motion.div className="clinic-login-card" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
-          <button className="clinic-login-back" onClick={() => navigate('/clinic-os')}><ArrowLeft /> العودة للموقع</button>
+          <button className="clinic-login-back" onClick={() => navigate('/')}><ArrowLeft /> العودة للموقع</button>
           <span className="clinic-login-label">تسجيل الدخول</span>
           <h2>مرحباً بعودتك</h2>
           <p>أدخل بيانات حساب العيادة للوصول إلى لوحة التشغيل.</p>

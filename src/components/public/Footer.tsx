@@ -5,21 +5,20 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 
 const navLinks = [
-  { ar: 'الرئيسية',    en: 'Home',         href: '#hero' },
-  { ar: 'الخدمات',     en: 'Services',     href: '#services' },
-  { ar: 'كيف يعمل',   en: 'How It Works',  href: '#how-it-works' },
-  { ar: 'أعمالنا',     en: 'Case Studies', href: '#case-studies' },
-  { ar: 'القطاعات',   en: 'Industries',   href: '#industries' },
-  { ar: 'داشبورد العيادات', en: 'Clinic Dashboard', href: 'https://noor-clinic-dashboard.netlify.app' },
+  { ar: 'الرئيسية',       en: 'Home',           href: '#hero' },
+  { ar: 'لوحة التحكم',    en: 'Dashboard',      href: '#dashboard' },
+  { ar: 'المقارنة',       en: 'Comparison',     href: '#compare' },
+  { ar: 'الباقات',        en: 'Plans',          href: '#plans' },
+  { ar: 'تسجيل الدخول',  en: 'Login',          href: '/login' },
 ]
 
 const services = [
-  { ar: 'موظف مبيعات AI للرسائل والمكالمات', en: 'AI Sales Agent for Messages and Calls' },
-  { ar: 'مسار التواصل إلى الحجز',     en: 'Contact-to-Booking Flow' },
-  { ar: 'حجوزات وتذكيرات تلقائية',    en: 'Automatic Booking and Reminders' },
-  { ar: 'CRM يعرف من تتابع',          en: 'CRM Follow-Up Engine' },
-  { ar: 'اقتراحات حملات لزيادة الإيراد', en: 'Revenue Campaign Suggestions' },
-  { ar: 'لوحات وبوابات متصلة',        en: 'Connected Dashboards and Portals' },
+  { ar: 'مساعد استقبال AI على واتساب', en: 'AI Receptionist on WhatsApp' },
+  { ar: 'إدارة المواعيد والحجوزات',    en: 'Appointment & Booking Management' },
+  { ar: 'تذكيرات تلقائية للمرضى',     en: 'Automated Patient Reminders' },
+  { ar: 'CRM المرضى والمتابعة',        en: 'Patient CRM & Follow-Up' },
+  { ar: 'تقارير العيادة وإحصاءات AI', en: 'Clinic Reports & AI Analytics' },
+  { ar: 'لوحة تشغيل يومية للعيادة',  en: 'Daily Clinic Operations Dashboard' },
 ]
 
 export const Footer = () => {
@@ -27,8 +26,8 @@ export const Footer = () => {
   const year = 2026
 
   const scrollTo = (href: string) => {
-    if (href.startsWith('http')) {
-      window.open(href, '_blank', 'noopener,noreferrer')
+    if (href.startsWith('/')) {
+      window.location.href = href
       return
     }
     document.querySelector(href)?.scrollIntoView({ behavior: 'smooth' })
@@ -57,8 +56,8 @@ export const Footer = () => {
             </div>
             <p className={`text-sm leading-relaxed mb-5 max-w-xs ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.55)' }}>
               {t(
-                'نحوّل رسائل ومكالمات شركتك إلى نظام يرد، يحجز، يتابع، ويكشف أين تزيد المبيعات.',
-                'We turn your company messages and calls into a system that replies, books, follows up, and shows where sales can grow.'
+                'نظام عربي متكامل لتشغيل العيادات — مساعد استقبال AI، إدارة المواعيد، ومتابعة المرضى.',
+                'A complete Arabic system for clinics — AI receptionist, appointment management, and patient follow-up.'
               )}
             </p>
             <p className={`text-xs italic ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.35)' }}>
@@ -134,16 +133,16 @@ export const Footer = () => {
               </li>
             </ul>
 
-            <motion.button
+            <motion.a
+              href="/trial"
               whileHover={{ scale: 1.02, boxShadow: '0 0 25px rgba(0,191,255,0.35)' }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => openWhatsAppChat()}
-              className={`mt-5 flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
-              style={{ background: 'linear-gradient(135deg, #0D1B3E, #00BFFF)', boxShadow: '0 0 20px rgba(0,191,255,0.2)' }}
+              className={`mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer ${language === 'ar' ? 'font-cairo' : 'font-work'}`}
+              style={{ background: 'linear-gradient(135deg, #0D1B3E, #00BFFF)', boxShadow: '0 0 20px rgba(0,191,255,0.2)', textDecoration: 'none' }}
             >
-              {t('احصل على خريطة نمو', 'Get a Growth Map')}
+              {t('ابدأ تجربتك المجانية', 'Start Free Trial')}
               <ArrowUpRight size={14} />
-            </motion.button>
+            </motion.a>
           </div>
         </div>
 
