@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
-import { BarChart3, Calendar, LayoutDashboard, Loader2, MessageSquare, Settings, Users2, Wrench, Zap } from 'lucide-react'
+import { BarChart3, Calendar, LayoutDashboard, Loader2, MessageSquare, Settings, Users2, Zap } from 'lucide-react'
 import { DashShell } from '../components/dash/DashShell'
 import type { NavItem } from '../components/dash/DashSidebar'
 import { useClientCompany } from '../hooks/useClientCompany'
@@ -8,7 +8,6 @@ import { LoadingScreen } from '../components/shared/LoadingScreen'
 
 const ClinicOverview     = lazy(() => import('../components/dashboard/client/ClinicOverview').then(m => ({ default: m.ClinicOverview })))
 const ClientOverview     = lazy(() => import('../components/dashboard/client/ClientOverview').then(m => ({ default: m.ClientOverview })))
-const ClientSetup        = lazy(() => import('../components/dashboard/client/ClientSetup').then(m => ({ default: m.ClientSetup })))
 const ClientAppointments = lazy(() => import('../components/dashboard/client/ClientAppointments').then(m => ({ default: m.ClientAppointments })))
 const ClientConversations = lazy(() => import('../components/dashboard/client/ClientConversations').then(m => ({ default: m.ClientConversations })))
 const ClientAutomations  = lazy(() => import('../components/dashboard/client/ClientAutomations').then(m => ({ default: m.ClientAutomations })))
@@ -19,7 +18,6 @@ const PricingPage        = lazy(() => import('../components/dashboard/client/Pri
 
 const NAV_ITEMS: NavItem[] = [
   { to: '/client',               icon: LayoutDashboard, label: 'نظرة عامة',          end: true },
-  { to: '/client/setup',         icon: Wrench,          label: 'إعداد النظام'         },
   { to: '/client/appointments',  icon: Calendar,        label: 'المواعيد'             },
   { to: '/client/conversations', icon: MessageSquare,   label: 'المحادثات'            },
   { to: '/client/automations',   icon: Zap,             label: 'الأتمتة'              },
@@ -55,7 +53,6 @@ export const ClientPortal = () => {
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route index element={isClinic ? <ClinicOverview /> : <ClientOverview />} />
-          <Route path="setup"         element={<ClientSetup />} />
           <Route path="appointments"  element={<ClientAppointments />} />
           <Route path="conversations" element={<ClientConversations />} />
           <Route path="automations"   element={<ClientAutomations />} />
