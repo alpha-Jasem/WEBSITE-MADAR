@@ -76,7 +76,10 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
         setIsDemo(demoRoute)
         const { data: authData } = await supabase.auth.getUser()
         const user = authData?.user
-        if (!user) return
+        if (!user) {
+          if (!demoRoute) navigate('/clinic-os/login', { replace: true })
+          return
+        }
         setUserEmail(user.email || '')
 
         const [companyRes, userRes] = await Promise.allSettled([
