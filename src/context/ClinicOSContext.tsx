@@ -77,7 +77,7 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
         const { data: authData } = await supabase.auth.getUser()
         const user = authData?.user
         if (!user) {
-          if (!demoRoute) navigate('/clinic-os/login', { replace: true })
+          if (!demoRoute) navigate(`/clinic-os/login?redirect=${encodeURIComponent(location.pathname)}`, { replace: true })
           return
         }
         setUserEmail(user.email || '')

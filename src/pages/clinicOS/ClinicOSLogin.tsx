@@ -1,5 +1,5 @@
-import { FormEvent, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { FormEvent, useMemo, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Check, Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
@@ -7,6 +7,11 @@ import './clinic-os-login.css'
 
 export const ClinicOSLogin = () => {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const redirectTo = useMemo(() => {
+    const r = searchParams.get('redirect')
+    return r?.startsWith('/clinic-os/') ? r : '/clinic-os/dashboard'
+  }, [searchParams])
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -33,7 +38,7 @@ export const ClinicOSLogin = () => {
       return
     }
 
-    navigate('/clinic-os/dashboard', { replace: true })
+    navigate(redirectTo, { replace: true })
   }
 
   return (
