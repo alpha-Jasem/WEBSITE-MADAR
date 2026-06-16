@@ -142,34 +142,30 @@ const GlobalCSS = () => (
       margin-top: -8px;
     }
 
-    /* Rotating hero word — exact SYC hero-rot pattern */
+    /* Rotating hero word — exact SYC values from site.css + JS */
     .hero-rot {
       display: inline-block;
       position: relative;
-      overflow: hidden;
-      vertical-align: bottom;
-      min-width: var(--rot-width, 120px);
-      transition: min-width 0.4s ease;
+      vertical-align: baseline;
+      height: 1.04em;
+      min-width: 5.2ch;
+      transition: min-width 0.3s ease;
     }
     .hero-rot-word {
-      display: block;
-      font-style: italic;
-      color: ${C.accent2};
       position: absolute;
-      top: 0; right: 0;
+      left: 0; top: 0;
+      font-style: italic;
+      background: linear-gradient(90deg, ${C.gold2}, ${C.gold} 60%, #d8b24a);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
       white-space: nowrap;
       opacity: 0;
-      transform: translateY(110%);
-      transition: opacity 0.38s ease, transform 0.38s ease;
+      transform: translateY(0.25em);
+      transition: opacity .45s ease, transform .55s cubic-bezier(.2,.8,.2,1);
     }
     .hero-rot-word.is-active {
-      position: relative;
       opacity: 1;
       transform: translateY(0);
-    }
-    .hero-rot-word.is-out {
-      opacity: 0;
-      transform: translateY(-110%);
     }
 
     /* Sticky bar */
@@ -277,25 +273,32 @@ const ROT_WORDS = ['الأسنان', 'العظام', 'العيون', 'الجلد
 
 const Hero = () => {
   const [activeIdx, setActiveIdx] = useState(0)
-  const [outIdx, setOutIdx] = useState<number | null>(null)
-  const spanRef = useRef<HTMLSpanElement>(null)
+  const rotRef = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
+    // Exact SYC logic: fitActiveWord + setInterval 2200ms
+    const fitActiveWord = () => {
+      if (!rotRef.current) return
+      const words = rotRef.current.querySelectorAll<HTMLElement>('.hero-rot-word')
+      const active = words[activeIdx]
+      if (active) rotRef.current.style.minWidth = active.offsetWidth + 'px'
+    }
+    fitActiveWord()
+    window.addEventListener('resize', fitActiveWord)
+
+    let i = activeIdx
     const timer = setInterval(() => {
-      setActiveIdx(prev => {
-        const next = (prev + 1) % ROT_WORDS.length
-        setOutIdx(prev)
-        setTimeout(() => setOutIdx(null), 400)
-        // Update container width to match new word
-        if (spanRef.current) {
-          const spans = spanRef.current.querySelectorAll('.hero-rot-word')
-          const nextSpan = spans[next] as HTMLElement
-          if (nextSpan) spanRef.current.style.setProperty('--rot-width', nextSpan.offsetWidth + 'px')
-        }
-        return next
-      })
-    }, 2800)
-    return () => clearInterval(timer)
+      i = (i + 1) % ROT_WORDS.length
+      setActiveIdx(i)
+      // fit width after state updates
+      setTimeout(() => {
+        if (!rotRef.current) return
+        const words = rotRef.current.querySelectorAll<HTMLElement>('.hero-rot-word')
+        if (words[i]) rotRef.current.style.minWidth = words[i].offsetWidth + 'px'
+      }, 50)
+    }, 2200)
+
+    return () => { clearInterval(timer); window.removeEventListener('resize', fitActiveWord) }
   }, [])
 
   return (
@@ -311,12 +314,9 @@ const Hero = () => {
             استقبال ذكي
             <br />
             لعيادة{' '}
-            <span className="hero-rot" ref={spanRef} aria-live="polite">
+            <span className="hero-rot" ref={rotRef} aria-live="polite">
               {ROT_WORDS.map((word, i) => (
-                <span
-                  key={word}
-                  className={`hero-rot-word${i === activeIdx ? ' is-active' : i === outIdx ? ' is-out' : ''}`}
-                >
+                <span key={word} className={`hero-rot-word${i === activeIdx ? ' is-active' : ''}`}>
                   {word}
                 </span>
               ))}
