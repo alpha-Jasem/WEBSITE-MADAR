@@ -602,6 +602,8 @@ const AiSection = () => (
                   { from: 'ai',   text: 'أهلاً! 😊 التبييض بالليزر من 800 ريال. فيه استشارة مجانية. تبي أحجز؟' },
                   { from: 'user', text: 'إيه كويس' },
                   { from: 'ai',   text: 'عندي الأحد 4:30م. يناسبك؟ ✅' },
+                  { from: 'user', text: 'نعم' },
+                  { from: 'ai',   text: 'تم الحجز 🎉 ستصلك رسالة تأكيد.' },
                 ].map((m, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: m.from === 'user' ? 'flex-start' : 'flex-end' }}>
                     <div style={{ background: m.from === 'user' ? '#fff' : '#DCF8C6', padding: '6px 9px', borderRadius: 8, maxWidth: 200, fontSize: 11, fontFamily: '"IBM Plex Sans Arabic", sans-serif', color: '#1a1a1a', lineHeight: 1.5 }}>
