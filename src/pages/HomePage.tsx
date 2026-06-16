@@ -51,7 +51,19 @@ const GlobalCSS = () => (
     @media (max-width: 480px) {
       .hp-4col      { grid-template-columns: 1fr; }
       .hp-4timeline { grid-template-columns: 1fr; }
-      .hp-sticky-text { display: none !important; }
+    }
+
+    @media (max-width: 900px) {
+      .hp-sticky-bar {
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        transform: none !important;
+        border-radius: 0 !important;
+        justify-content: space-between !important;
+        padding: 14px 20px !important;
+        width: 100% !important;
+      }
     }
 
   `}</style>
