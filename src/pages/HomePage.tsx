@@ -383,7 +383,6 @@ const Hero = () => {
   const rotRef = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
-    // Exact SYC logic: fitActiveWord + setInterval 2200ms
     const fitActiveWord = () => {
       if (!rotRef.current) return
       const words = rotRef.current.querySelectorAll<HTMLElement>('.hero-rot-word')
@@ -397,7 +396,6 @@ const Hero = () => {
     const timer = setInterval(() => {
       i = (i + 1) % ROT_WORDS.length
       setActiveIdx(i)
-      // fit width after state updates
       setTimeout(() => {
         if (!rotRef.current) return
         const words = rotRef.current.querySelectorAll<HTMLElement>('.hero-rot-word')
@@ -409,42 +407,43 @@ const Hero = () => {
   }, [])
 
   return (
-  <section className="hp-section hp-hero-section" style={{ background: C.paper, paddingTop: 130, position: 'relative', overflow: 'hidden' }} dir="rtl">
-    {/* Exact SYC hero bg: radial + glows + grain */}
-    <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 50% at 90% 10%, rgba(37,99,235,0.07), transparent 60%), radial-gradient(ellipse 50% 40% at 5% 80%, rgba(30,58,110,0.04), transparent 60%)`, pointerEvents: 'none' }} />
-    {/* Green glow */}
-    <div style={{ position: 'absolute', width: 620, height: 620, top: -180, right: -120, borderRadius: '50%', background: 'radial-gradient(circle, rgba(37,99,235,0.22), transparent 70%)', filter: 'blur(80px)', opacity: 0.55, pointerEvents: 'none' }} />
-    {/* Gold glow */}
-    <div style={{ position: 'absolute', width: 520, height: 520, bottom: -200, left: -120, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,152,180,0.18), transparent 70%)', filter: 'blur(80px)', opacity: 0.55, pointerEvents: 'none' }} />
-    {/* Grain texture */}
-    <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(30,58,110,0.04) 1px, transparent 0)', backgroundSize: '26px 26px', opacity: 0.5, pointerEvents: 'none' }} />
+  <section className="hp-section hp-hero-section" style={{ background: C.paper, paddingTop: 130, paddingBottom: 80, position: 'relative', overflow: 'hidden' }} dir="rtl">
+    {/* Background glows */}
+    <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 50% at 90% 10%, rgba(37,99,235,0.06), transparent 60%), radial-gradient(ellipse 50% 40% at 5% 80%, rgba(30,58,110,0.04), transparent 60%)`, pointerEvents: 'none' }} />
+    <div style={{ position: 'absolute', width: 600, height: 600, top: -180, right: -100, borderRadius: '50%', background: 'radial-gradient(circle, rgba(37,99,235,0.18), transparent 70%)', filter: 'blur(80px)', opacity: 0.5, pointerEvents: 'none' }} />
 
     <div className="hp-container" style={{ position: 'relative' }}>
       <div className="hp-hero-grid">
-        <motion.div {...ha}>
-          {/* Hero pill — exact SYC pattern */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '7px 14px 7px 12px', background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.22)', borderRadius: 999, fontFamily: '"IBM Plex Mono", monospace', fontSize: 11.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.accent2, marginBottom: 22 }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.brand, boxShadow: '0 0 0 4px rgba(37,99,235,0.18)', flexShrink: 0 }} />
-            استقبال ذكي · ٢٤/٧ · بدون انقطاع
+
+        {/* ── Text side ── */}
+        <motion.div {...ha} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          {/* Social proof pill — prominent like SYC */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px 6px 10px', background: 'rgba(37,99,235,0.07)', border: '1px solid rgba(37,99,235,0.18)', borderRadius: 999, marginBottom: 28, alignSelf: 'flex-start' }}>
+            <span style={{ fontSize: 13 }}>⭐</span>
+            <span style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 11, letterSpacing: '0.13em', textTransform: 'uppercase', color: C.accent2 }}>
+              5.0 · من أصحاب عيادات موثّقين
+            </span>
           </div>
-          <h1 style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(44px,5.4vw,78px)', fontWeight: 400, color: C.ink, lineHeight: 1.02, marginBottom: 22, letterSpacing: '-0.025em' }}>
+
+          <h1 style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(48px,5.6vw,82px)', fontWeight: 400, color: C.ink, lineHeight: 1.0, marginBottom: 24, letterSpacing: '-0.025em' }}>
             استقبال ذكي
             <br />
             لعيادة{' '}
             <span className="hero-rot" ref={rotRef} aria-live="polite">
               {ROT_WORDS.map((word, i) => (
-                <span key={word} className={`hero-rot-word${i === activeIdx ? ' is-active' : ''}`}>
-                  {word}
-                </span>
+                <span key={word} className={`hero-rot-word${i === activeIdx ? ' is-active' : ''}`}>{word}</span>
               ))}
             </span>
             .
           </h1>
-          <p style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontSize: 18, color: C.ink2, lineHeight: 1.75, marginBottom: 34, maxWidth: 440 }}>
-            نبني ونشغّل نظاماً يستقبل عملائك على واتساب، يحجز المواعيد، ويُذكّرهم تلقائياً — بدون موظف استقبال إضافي.
+
+          <p style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontSize: 18, color: C.ink2, lineHeight: 1.75, marginBottom: 38, maxWidth: 420 }}>
+            نظام يستقبل عملائك على واتساب، يحجز المواعيد، ويُذكّرهم تلقائياً — بدون موظف استقبال إضافي.
           </p>
+
+          {/* Single primary CTA */}
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', marginBottom: 48 }}>
-            <button className="btn btn-primary" style={{ fontSize: 16, padding: '15px 26px' }}
+            <button className="btn btn-primary" style={{ fontSize: 16, padding: '15px 28px' }}
               onClick={() => wa('مرحباً، أريد حجز جلسة مجانية لمناقشة نظام الاستقبال الذكي لعيادتي')}>
               احجز جلسة مجانية 30 دقيقة ←
             </button>
@@ -454,74 +453,101 @@ const Hero = () => {
             </button>
           </div>
 
-          {/* Stats — ht-stat pattern */}
+          {/* Stats */}
           <div style={{ display: 'flex', paddingTop: 28, borderTop: `1px solid ${C.rule}` }}>
-            {[{ n: '24/7', label: 'استقبال مستمر' }, { n: '<5ث', label: 'سرعة الرد' }, { n: '80%', label: 'تقليل المكالمات الفائتة' }].map((s, i) => (
-              <div key={s.n} style={{ padding: '0 18px', borderRight: i > 0 ? `1px solid ${C.rule}` : 'none' }}>
-                <div style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 28, fontWeight: 400, color: C.ink, lineHeight: 1, letterSpacing: '-0.01em' }}>{s.n}</div>
-                <div style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 10.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.ink3, marginTop: 8 }}>{s.label}</div>
+            {[
+              { n: '80%', label: 'تقليل المكالمات الفائتة' },
+              { n: '<5ث', label: 'سرعة الرد' },
+              { n: '24/7', label: 'استقبال مستمر' },
+            ].map((s, i) => (
+              <div key={s.n} style={{ padding: '0 20px', borderRight: i > 0 ? `1px solid ${C.rule}` : 'none' }}>
+                <div style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 30, fontWeight: 400, color: C.ink, lineHeight: 1 }}>{s.n}</div>
+                <div style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 10, letterSpacing: '0.11em', textTransform: 'uppercase', color: C.ink3, marginTop: 8 }}>{s.label}</div>
               </div>
             ))}
           </div>
         </motion.div>
 
-        {/* Phone mockup */}
-        <motion.div {...ha} transition={{ delay: 0.2 }} className="hp-hero-phone">
-          <div className="hp-hero-phone-inner" style={{ position: 'relative', width: 310 }}>
-            <div style={{ background: '#fff', borderRadius: 24, boxShadow: `0 24px 64px rgba(12,26,46,0.14), 0 2px 8px rgba(12,26,46,0.08)`, overflow: 'hidden', border: `1.5px solid ${C.rule}` }}>
-              <div style={{ background: '#075E54', padding: '13px 14px', display: 'flex', alignItems: 'center', gap: 9 }}>
-                <div style={{ width: 34, height: 34, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Bot size={15} color={C.paper} />
-                </div>
-                <div>
-                  <div style={{ color: '#fff', fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontWeight: 600, fontSize: 12 }}>مساعد عيادة د. أحمد</div>
-                  <div style={{ color: '#A8D5A2', fontSize: 10, fontFamily: '"IBM Plex Sans Arabic", sans-serif' }}>● متصل الآن</div>
-                </div>
+        {/* ── Visual side: dark card ── */}
+        <motion.div {...ha} transition={{ delay: 0.18 }} className="hp-hero-phone">
+          <div className="hp-hero-phone-inner" style={{ position: 'relative', width: '100%', maxWidth: 420 }}>
+
+            {/* Dark card — the main visual container */}
+            <div style={{
+              background: C.dark,
+              borderRadius: 20,
+              padding: '28px 24px 24px',
+              boxShadow: '0 40px 100px rgba(12,26,46,0.28), 0 4px 16px rgba(12,26,46,0.14)',
+              position: 'relative',
+              overflow: 'hidden',
+            }}>
+              {/* Inner glow on dark card */}
+              <div style={{ position: 'absolute', top: -80, left: -80, width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(37,99,235,0.28), transparent 70%)', pointerEvents: 'none' }} />
+
+              {/* Badge top-right on card */}
+              <div style={{ position: 'absolute', top: 16, left: 16, background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 6, zIndex: 2 }}>
+                <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#4ADE80', boxShadow: '0 0 0 3px rgba(74,222,128,0.25)' }} />
+                <span style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>مساعد متصل الآن</span>
               </div>
-              <div style={{ background: '#ECE5DD', padding: '10px 9px 10px', display: 'flex', flexDirection: 'column', gap: 5 }}>
-                {/* Date header */}
-                <div style={{ textAlign: 'center', marginBottom: 4 }}>
-                  <span style={{ background: 'rgba(255,255,255,0.55)', borderRadius: 6, padding: '2px 10px', fontSize: 10, color: '#6B7280', fontFamily: '"IBM Plex Sans Arabic", sans-serif' }}>اليوم</span>
+
+              {/* WhatsApp chat inside card */}
+              <div style={{ borderRadius: 14, overflow: 'hidden', position: 'relative', zIndex: 1, marginTop: 8 }}>
+                {/* WA header */}
+                <div style={{ background: '#075E54', padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 9 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Bot size={14} color={C.paper} />
+                  </div>
+                  <div>
+                    <div style={{ color: '#fff', fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontWeight: 600, fontSize: 12 }}>مساعد عيادة د. أحمد</div>
+                    <div style={{ color: '#A8D5A2', fontSize: 10, fontFamily: '"IBM Plex Sans Arabic", sans-serif' }}>● متصل الآن</div>
+                  </div>
                 </div>
-                {[
-                  { from: 'user', text: 'أبي أحجز موعد تنظيف أسنان', time: '9:41 ص' },
-                  { from: 'ai',   text: 'أهلاً! 😊 متى يناسبك؟ عندنا الثلاثاء والأربعاء.', time: '9:41 ص' },
-                  { from: 'user', text: 'الأربعاء عصراً', time: '9:42 ص' },
-                  { from: 'ai',   text: 'ممتاز ✅ عندي 4:30م. اسمك ورقم جوالك؟', time: '9:42 ص' },
-                  { from: 'user', text: 'سارة — 0551234567', time: '9:43 ص' },
-                  { from: 'ai',   text: 'تم الحجز يا سارة 🎉 ستصلك رسالة تذكير.', time: '9:43 ص' },
-                ].map((m, i) => (
-                  <div key={i} className="hp-hero-chat-msg" style={{ display: 'flex', justifyContent: m.from === 'user' ? 'flex-start' : 'flex-end' }}>
-                    <div style={{ background: m.from === 'user' ? '#fff' : '#DCF8C6', padding: '5px 8px 4px', borderRadius: m.from === 'user' ? '8px 8px 8px 2px' : '8px 8px 2px 8px', maxWidth: 210, fontSize: 11.5, fontFamily: '"IBM Plex Sans Arabic", sans-serif', color: '#1a1a1a', lineHeight: 1.5 }}>
-                      <div>{m.text}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 3, marginTop: 2 }}>
-                        <span style={{ fontSize: 9.5, color: '#8B9EA8' }}>{m.time}</span>
-                        {m.from === 'user' && <span style={{ fontSize: 11, color: '#53BDEB', lineHeight: 1 }}>✓✓</span>}
+                {/* Chat body */}
+                <div style={{ background: '#ECE5DD', padding: '10px 9px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  <div style={{ textAlign: 'center', marginBottom: 4 }}>
+                    <span style={{ background: 'rgba(255,255,255,0.55)', borderRadius: 6, padding: '2px 10px', fontSize: 10, color: '#6B7280', fontFamily: '"IBM Plex Sans Arabic", sans-serif' }}>اليوم</span>
+                  </div>
+                  {[
+                    { from: 'user', text: 'أبي أحجز موعد تنظيف أسنان', time: '9:41 ص' },
+                    { from: 'ai',   text: 'أهلاً! 😊 متى يناسبك؟ عندنا الثلاثاء والأربعاء.', time: '9:41 ص' },
+                    { from: 'user', text: 'الأربعاء عصراً', time: '9:42 ص' },
+                    { from: 'ai',   text: 'ممتاز ✅ عندي 4:30م. اسمك ورقم جوالك؟', time: '9:42 ص' },
+                    { from: 'user', text: 'سارة — 0551234567', time: '9:43 ص' },
+                    { from: 'ai',   text: 'تم الحجز يا سارة 🎉 ستصلك رسالة تذكير.', time: '9:43 ص' },
+                  ].map((m, i) => (
+                    <div key={i} className="hp-hero-chat-msg" style={{ display: 'flex', justifyContent: m.from === 'user' ? 'flex-start' : 'flex-end' }}>
+                      <div style={{ background: m.from === 'user' ? '#fff' : '#DCF8C6', padding: '5px 8px 4px', borderRadius: m.from === 'user' ? '8px 8px 8px 2px' : '8px 8px 2px 8px', maxWidth: '75%', fontSize: 11.5, fontFamily: '"IBM Plex Sans Arabic", sans-serif', color: '#1a1a1a', lineHeight: 1.5 }}>
+                        <div>{m.text}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 3, marginTop: 2 }}>
+                          <span style={{ fontSize: 9.5, color: '#8B9EA8' }}>{m.time}</span>
+                          {m.from === 'user' && <span style={{ fontSize: 11, color: '#53BDEB', lineHeight: 1 }}>✓✓</span>}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-                {/* Typing indicator */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 2 }}>
-                  <div style={{ background: '#DCF8C6', padding: '7px 12px', borderRadius: '8px 8px 2px 8px', display: 'flex', gap: 3, alignItems: 'center' }}>
-                    <span className="hp-typing-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: '#8B9EA8', display: 'inline-block', animation: 'typing 1.2s ease infinite' }} />
-                    <span className="hp-typing-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: '#8B9EA8', display: 'inline-block', animation: 'typing 1.2s ease 0.2s infinite' }} />
-                    <span className="hp-typing-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: '#8B9EA8', display: 'inline-block', animation: 'typing 1.2s ease 0.4s infinite' }} />
+                  ))}
+                  {/* Typing indicator */}
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 2 }}>
+                    <div style={{ background: '#DCF8C6', padding: '7px 12px', borderRadius: '8px 8px 2px 8px', display: 'flex', gap: 3, alignItems: 'center' }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#8B9EA8', display: 'inline-block', animation: 'typing 1.2s ease infinite' }} />
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#8B9EA8', display: 'inline-block', animation: 'typing 1.2s ease 0.2s infinite' }} />
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#8B9EA8', display: 'inline-block', animation: 'typing 1.2s ease 0.4s infinite' }} />
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-            {/* Floating stat cards — hidden on mobile */}
-            <div className="hp-hero-float" style={{ position: 'absolute', top: -18, left: -48, background: '#fff', borderRadius: 10, padding: '11px 15px', boxShadow: `0 6px 24px rgba(12,26,46,0.12)`, border: `1px solid ${C.rule}`, fontFamily: '"IBM Plex Sans Arabic", sans-serif', minWidth: 130 }}>
-              <div style={{ color: C.ink3, fontSize: 10, marginBottom: 3 }}>اليوم</div>
-              <div style={{ fontFamily: '"Noto Serif Arabic", serif', fontWeight: 600, fontSize: 22, color: C.ink }}>14</div>
-              <div style={{ color: C.accent2, fontWeight: 600, fontSize: 12 }}>موعد محجوز</div>
+
+            {/* Badge bottom — outside the dark card, anchored cleanly */}
+            <div className="hp-hero-float" style={{ position: 'absolute', bottom: -18, right: -20, background: '#fff', borderRadius: 12, padding: '10px 16px', boxShadow: '0 8px 28px rgba(12,26,46,0.14)', border: `1px solid ${C.rule}`, fontFamily: '"IBM Plex Sans Arabic", sans-serif', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(37,99,235,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Calendar size={16} color={C.accent2} />
+              </div>
+              <div>
+                <div style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 18, fontWeight: 600, color: C.ink, lineHeight: 1 }}>14 موعد</div>
+                <div style={{ fontSize: 10.5, color: C.ink3, marginTop: 2, fontFamily: '"IBM Plex Mono", monospace', letterSpacing: '0.06em' }}>محجوز اليوم</div>
+              </div>
             </div>
-            <div className="hp-hero-float" style={{ position: 'absolute', bottom: -24, right: -48, background: C.accent, borderRadius: 10, padding: '11px 15px', boxShadow: `0 6px 24px rgba(12,26,46,0.18)`, fontFamily: '"IBM Plex Sans Arabic", sans-serif', minWidth: 140 }}>
-              <div style={{ color: C.onDark2, fontSize: 10, marginBottom: 3 }}>مكالمات فائتة</div>
-              <div style={{ fontFamily: '"Noto Serif Arabic", serif', fontWeight: 600, fontSize: 22, color: C.onDark }}>0</div>
-              <div style={{ color: C.brand, fontWeight: 600, fontSize: 11 }}>كل شيء تحت السيطرة ✓</div>
-            </div>
+
           </div>
         </motion.div>
       </div>
