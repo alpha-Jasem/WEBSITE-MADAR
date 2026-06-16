@@ -584,7 +584,7 @@ const AiSection = () => (
           </div>
         </motion.div>
 
-        <motion.div {...rv} transition={{ delay: 0.2 }}>
+        <motion.div {...rv} transition={{ delay: 0.2 }} style={{ alignSelf: 'start' }}>
           <div style={{ background: C.dark2, borderRadius: 16, padding: 20, border: `1px solid ${C.onDarkRule}` }}>
             <div style={{ background: '#fff', borderRadius: 10, overflow: 'hidden' }}>
               <div style={{ background: '#075E54', padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 8 }}>
