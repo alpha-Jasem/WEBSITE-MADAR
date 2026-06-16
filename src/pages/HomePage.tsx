@@ -66,8 +66,25 @@ const DashboardPreview = () => (
           </div>
         </div>
 
+        {/* Mobile fallback — stats only */}
+        <div className="sm:hidden" style={{ padding:16,direction:'rtl',background:'#F8FAFF' }}>
+          <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:8 }}>
+            {[
+              { label:'مواعيد اليوم', value:'14', color:'#0099CC' },
+              { label:'مرضى جدد',    value:'3',  color:'#10B981' },
+              { label:'مؤكدة',       value:'11', color:'#7C3AED' },
+              { label:'no-show',     value:'0',  color:'#F59E0B' },
+            ].map(s=>(
+              <div key={s.label} style={{ background:'#fff',borderRadius:10,padding:'12px 10px',border:'1px solid rgba(0,0,0,0.07)' }}>
+                <div style={{ fontSize:20,fontWeight:900,color:s.color,fontFamily:'Cairo, sans-serif' }}>{s.value}</div>
+                <div style={{ fontSize:9,color:'#64748B',fontFamily:'Tajawal, sans-serif',marginTop:2 }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Body */}
-        <div style={{ display:'flex', height:420, direction:'rtl' }}>
+        <div className="hidden sm:flex" style={{ height:420, direction:'rtl' }}>
           {/* Sidebar */}
           <div style={{ width:180, background:'#0D1B3E', padding:'16px 0', flexShrink:0 }}>
             <div style={{ padding:'0 14px 16px', borderBottom:'1px solid rgba(255,255,255,0.07)' }}>
@@ -194,7 +211,7 @@ const PainSolution = () => (
         </p>
       </motion.div>
 
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Before */}
         <motion.div initial={{ opacity:0,x:20 }} whileInView={{ opacity:1,x:0 }} viewport={{ once:true }}
           style={{ borderRadius:16,padding:'24px',background:'#FEF2F2',border:'1px solid rgba(239,68,68,0.12)' }}>
