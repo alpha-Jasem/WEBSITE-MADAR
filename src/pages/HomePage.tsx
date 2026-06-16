@@ -470,7 +470,7 @@ const Hero = () => {
 
         {/* ── Visual side: dark card ── */}
         <motion.div {...ha} transition={{ delay: 0.18 }} className="hp-hero-phone">
-          <div className="hp-hero-phone-inner" style={{ position: 'relative', width: '100%', maxWidth: 420 }}>
+          <div className="hp-hero-phone-inner" style={{ position: 'relative', width: '100%', maxWidth: 420, paddingBottom: 44, paddingLeft: 28 }}>
 
             {/* Dark card — the main visual container */}
             <div style={{
@@ -537,14 +537,14 @@ const Hero = () => {
               </div>
             </div>
 
-            {/* Badge bottom — outside the dark card, anchored cleanly */}
-            <div className="hp-hero-float" style={{ position: 'absolute', bottom: -18, right: -20, background: '#fff', borderRadius: 12, padding: '10px 16px', boxShadow: '0 8px 28px rgba(12,26,46,0.14)', border: `1px solid ${C.rule}`, fontFamily: '"IBM Plex Sans Arabic", sans-serif', display: 'flex', alignItems: 'center', gap: 10 }}>
+            {/* Badge bottom — floats clearly below-right of the dark card */}
+            <div className="hp-hero-float" style={{ position: 'absolute', bottom: 0, left: 0, background: '#fff', borderRadius: 14, padding: '12px 18px', boxShadow: '0 12px 36px rgba(12,26,46,0.16)', border: `1px solid ${C.rule}`, fontFamily: '"IBM Plex Sans Arabic", sans-serif', display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(37,99,235,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Calendar size={16} color={C.accent2} />
               </div>
               <div>
-                <div style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 18, fontWeight: 600, color: C.ink, lineHeight: 1 }}>14 موعد</div>
-                <div style={{ fontSize: 10.5, color: C.ink3, marginTop: 2, fontFamily: '"IBM Plex Mono", monospace', letterSpacing: '0.06em' }}>محجوز اليوم</div>
+                <div style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 20, fontWeight: 600, color: C.ink, lineHeight: 1 }}>14 موعد</div>
+                <div style={{ fontSize: 11, color: C.ink3, marginTop: 3, fontFamily: '"IBM Plex Mono", monospace', letterSpacing: '0.06em', textTransform: 'uppercase' }}>محجوز اليوم</div>
               </div>
             </div>
 
