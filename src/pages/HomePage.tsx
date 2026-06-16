@@ -39,8 +39,8 @@ const GlobalCSS = () => (
     @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+Arabic:wght@300;400;500;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { font-size: 16px; }
-    body { background: ${C.paper}; color: ${C.ink}; }
+    html { font-size: 17px; scroll-behavior: smooth; overflow-x: clip; }
+    body { background: ${C.paper}; color: ${C.ink}; font-size: 17px; line-height: 1.55; overflow-x: clip; }
 
     .hp-container { max-width: 1240px; margin: 0 auto; padding: 0 28px; }
     .hp-container-narrow { max-width: 980px; margin: 0 auto; padding: 0 28px; }
@@ -107,8 +107,8 @@ const GlobalCSS = () => (
     .hp-hamburger { display: none !important; }
 
     /* Sections */
-    .hp-section { padding: 88px 0; }
-    .hp-section-sm { padding: 64px 0; }
+    .hp-section { padding: 80px 0; }
+    .hp-section-sm { padding: 56px 0; }
     .hp-divider { border-top: 1px solid ${C.rule}; }
 
     /* Hero */
@@ -332,14 +332,20 @@ const Hero = () => {
 
   return (
   <section className="hp-section" style={{ background: C.paper, paddingTop: 130, position: 'relative', overflow: 'hidden' }} dir="rtl">
-    {/* Background radial gradient — exact SYC pattern */}
-    <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 50% at 10% 10%, rgba(43,181,115,0.07), transparent 60%), radial-gradient(ellipse 50% 40% at 95% 80%, rgba(15,61,46,0.04), transparent 60%)`, pointerEvents: 'none' }} />
+    {/* Exact SYC hero bg: radial + glows + grain */}
+    <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 50% at 90% 10%, rgba(43,181,115,0.07), transparent 60%), radial-gradient(ellipse 50% 40% at 5% 80%, rgba(15,61,46,0.04), transparent 60%)`, pointerEvents: 'none' }} />
+    {/* Green glow */}
+    <div style={{ position: 'absolute', width: 620, height: 620, top: -180, right: -120, borderRadius: '50%', background: 'radial-gradient(circle, rgba(43,181,115,0.28), transparent 70%)', filter: 'blur(80px)', opacity: 0.55, pointerEvents: 'none' }} />
+    {/* Gold glow */}
+    <div style={{ position: 'absolute', width: 520, height: 520, bottom: -200, left: -120, borderRadius: '50%', background: 'radial-gradient(circle, rgba(190,148,52,0.16), transparent 70%)', filter: 'blur(80px)', opacity: 0.55, pointerEvents: 'none' }} />
+    {/* Grain texture */}
+    <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(15,61,46,0.05) 1px, transparent 0)', backgroundSize: '26px 26px', opacity: 0.5, pointerEvents: 'none' }} />
 
     <div className="hp-container" style={{ position: 'relative' }}>
       <div className="hp-hero-grid">
         <motion.div {...rv}>
           <div className="eyebrow" style={{ marginBottom: 24 }}>نظام الاستقبال الذكي</div>
-          <h1 style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(34px,5vw,60px)', fontWeight: 400, color: C.ink, lineHeight: 1.18, marginBottom: 22, letterSpacing: '-0.025em' }}>
+          <h1 style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(44px,5.4vw,78px)', fontWeight: 400, color: C.ink, lineHeight: 1.02, marginBottom: 22, letterSpacing: '-0.025em' }}>
             استقبال ذكي
             <br />
             لعيادة{' '}
@@ -433,7 +439,7 @@ const Results = () => (
       <div className="eyebrow" style={{ marginBottom: 28 }}>01 — النتائج</div>
       <div className="hp-2col-wide">
         <motion.div {...rv}>
-          <h2 style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(24px,3vw,38px)', fontWeight: 400, color: C.ink, lineHeight: 1.3, marginBottom: 18 }}>
+          <h2 style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(32px,3.4vw,50px)', fontWeight: 400, color: C.ink, lineHeight: 1.05, marginBottom: 18 }}>
             ماذا يحصل عملاؤنا في أول{' '}
             <span className="hero-em">30 يوم؟</span>
           </h2>
@@ -474,7 +480,7 @@ const Method = () => (
   <section id="method" className="hp-section" style={{ background: C.paper2 }} dir="rtl">
     <div className="hp-container">
       <div className="eyebrow" style={{ marginBottom: 28 }}>02 — المنهجية</div>
-      <motion.h2 {...rv} style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(26px,3.5vw,44px)', fontWeight: 400, color: C.ink, lineHeight: 1.25, marginBottom: 56, maxWidth: 520 }}>
+      <motion.h2 {...rv} style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(32px,3.4vw,50px)', fontWeight: 400, color: C.ink, lineHeight: 1.05, marginBottom: 56, maxWidth: 520 }}>
         أربعة أنظمة،{' '}
         <span className="hero-em">عيادة واحدة.</span>
       </motion.h2>
@@ -509,8 +515,10 @@ const Method = () => (
 
 /* ─── AI Section (dark) ──────────────────────────────────────────── */
 const AiSection = () => (
-  <section id="ai" className="hp-section" style={{ background: C.dark }} dir="rtl">
-    <div className="hp-container">
+  <section id="ai" className="hp-section" style={{ background: C.dark, position: 'relative', overflow: 'hidden' }} dir="rtl">
+    {/* SYC ai-band::before radial overlays */}
+    <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 70% 50% at 80% 20%, rgba(43,181,115,0.08), transparent 60%), radial-gradient(ellipse 50% 40% at 10% 90%, rgba(43,181,115,0.04), transparent 60%)', pointerEvents: 'none' }} />
+    <div className="hp-container" style={{ position: 'relative' }}>
       <div className="eyebrow" style={{ marginBottom: 28, color: C.onDark2 }}>
         <span style={{ background: C.onDark2, display: 'inline-block', width: 22, height: 1, marginLeft: 10 }} />
         03 — المساعد AI
@@ -518,7 +526,7 @@ const AiSection = () => (
 
       <div className="hp-2col-wide">
         <motion.div {...rv}>
-          <h2 style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(26px,3.5vw,44px)', fontWeight: 400, color: C.onDark, lineHeight: 1.25, marginBottom: 20 }}>
+          <h2 style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(32px,3.4vw,50px)', fontWeight: 400, color: C.onDark, lineHeight: 1.05, marginBottom: 20 }}>
             موظف الاستقبال الذي لا ينام{' '}
             <span style={{ fontStyle: 'italic', color: C.gold }}> ولا يطلب علاوة.</span>
           </h2>
@@ -589,7 +597,7 @@ const Process = () => (
   <section id="process" className="hp-section" style={{ background: C.paper }} dir="rtl">
     <div className="hp-container hp-divider" style={{ paddingTop: 72 }}>
       <div className="eyebrow" style={{ marginBottom: 28 }}>05 — العملية</div>
-      <motion.h2 {...rv} style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(24px,3.5vw,44px)', fontWeight: 400, color: C.ink, lineHeight: 1.3, marginBottom: 64, maxWidth: 500 }}>
+      <motion.h2 {...rv} style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(32px,3.4vw,50px)', fontWeight: 400, color: C.ink, lineHeight: 1.05, marginBottom: 64, maxWidth: 500 }}>
         ثلاثون يوماً إلى نظام{' '}
         <span className="hero-em">يعمل بالكامل.</span>
       </motion.h2>
@@ -626,7 +634,7 @@ const Programs = () => (
   <section id="programs" className="hp-section" style={{ background: C.paper2 }} dir="rtl">
     <div className="hp-container">
       <div className="eyebrow" style={{ marginBottom: 28 }}>06 — البرامج</div>
-      <motion.h2 {...rv} style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(24px,3.5vw,44px)', fontWeight: 400, color: C.ink, lineHeight: 1.3, marginBottom: 48 }}>
+      <motion.h2 {...rv} style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(32px,3.4vw,50px)', fontWeight: 400, color: C.ink, lineHeight: 1.05, marginBottom: 48 }}>
         طريقتان للبدء.{' '}
         <span className="hero-em">وجهة واحدة.</span>
       </motion.h2>
@@ -716,10 +724,13 @@ const FAQ = () => {
 
 /* ─── Final CTA ──────────────────────────────────────────────────── */
 const FinalCTA = () => (
-  <section style={{ background: C.dark, padding: '88px 0', textAlign: 'center' }} dir="rtl">
-    <div className="hp-container-narrow">
+  <section style={{ background: C.dark, padding: '110px 0 70px', textAlign: 'center', position: 'relative', overflow: 'hidden', isolation: 'isolate' }} dir="rtl">
+    {/* SYC cta-final::before radial + ::after grain */}
+    <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 40% at 50% 100%, rgba(43,181,115,0.14), transparent 65%), radial-gradient(ellipse 50% 40% at 90% 0%, rgba(43,181,115,0.06), transparent 60%)', pointerEvents: 'none' }} />
+    <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.025) 1px, transparent 0)', backgroundSize: '28px 28px', opacity: 0.5, pointerEvents: 'none' }} />
+    <div className="hp-container-narrow" style={{ position: 'relative' }}>
       <div className="eyebrow" style={{ marginBottom: 24, color: C.onDark2, justifyContent: 'center' }}>ابدأ الآن</div>
-      <motion.h2 {...rv} style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(26px,4vw,48px)', fontWeight: 400, color: C.onDark, lineHeight: 1.25, marginBottom: 18 }}>
+      <motion.h2 {...rv} style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(32px,3.4vw,50px)', fontWeight: 400, color: C.onDark, lineHeight: 1.05, marginBottom: 18 }}>
         احجز محادثة 30 دقيقة{' '}
         <span style={{ fontStyle: 'italic', color: C.gold }}>تستحق وقتك.</span>
       </motion.h2>
