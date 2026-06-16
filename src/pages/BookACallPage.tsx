@@ -146,7 +146,7 @@ export const BookACallPage = () => {
               </div>
               <div>
                 <label style={{ fontSize: 12, fontWeight: 600, color: C.ink2, display: 'block', marginBottom: 6 }}>اسم منشأتك ونوعها</label>
-                <input className="bc-form-input" placeholder="مغسلة نايف - الرياض / عيادة الابتسامة" value={biz} onChange={e => setBiz(e.target.value)} />
+                <input className="bc-form-input" placeholder="عيادة الابتسامة - الرياض" value={biz} onChange={e => setBiz(e.target.value)} />
               </div>
             </div>
 
@@ -202,7 +202,7 @@ export const BookACallPage = () => {
                 </div>
                 <div>
                   <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: C.onDark }}>نايف العتيبي</p>
-                  <p style={{ margin: 0, fontSize: 12, color: C.onDark2 }}>صاحب مغسلة · الرياض</p>
+                  <p style={{ margin: 0, fontSize: 12, color: C.onDark2 }}>طبيب أسنان · الرياض</p>
                 </div>
               </div>
             </div>
