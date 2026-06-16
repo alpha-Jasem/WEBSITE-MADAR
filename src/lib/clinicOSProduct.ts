@@ -11,14 +11,14 @@ export interface UsageMetric {
 
 export const CLINIC_PLANS = {
   whatsapp: {
-    name: 'WhatsApp AI Receptionist',
+    name: 'واتساب AI',
     annualPrice: 15000,
     setupFee: 4000,
     support: 'الدعم والصيانة الأساسية مشمولة',
     limits: { whatsapp: 1500, ai_messages: 3000, smart_calls: 0, reminders: 500 },
   },
   ai_pro: {
-    name: 'AI Receptionist + Smart Calls',
+    name: 'AI Pro',
     annualPrice: 27000,
     setupFee: 5000,
     support: 'الدعم والصيانة الأولوية مشمولة',

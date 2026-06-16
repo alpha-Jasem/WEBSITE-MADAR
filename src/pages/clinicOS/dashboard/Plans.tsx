@@ -26,7 +26,7 @@ export const PlansPage = () => {
   const currentIsWhatsapp = isSubscribed && packageType === 'whatsapp'
   const currentIsPro = isSubscribed && packageType === 'ai_pro'
   const requested = confirming ? CLINIC_PLANS[confirming] : null
-  const requestedName = confirming === 'whatsapp' ? 'WhatsApp AI Receptionist' : 'AI Receptionist + Smart Calls'
+  const requestedName = confirming === 'whatsapp' ? 'واتساب AI' : 'AI Pro (واتساب + اتصال ذكي)'
 
   const sendRequest = () => {
     if (!confirming || !requested) return
