@@ -14,6 +14,7 @@ import { TrialSignup } from './pages/TrialSignup'
 import { AuthCallback } from './pages/AuthCallback'
 import { Privacy } from './pages/Privacy'
 import { Terms } from './pages/Terms'
+import { BookACallPage } from './pages/BookACallPage'
 // Note: ClinicOSProvider wraps only /clinic-os/dashboard/* routes (protected)
 
 function ScrollToTop() {
@@ -152,6 +153,7 @@ function App() {
             />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/book-a-call" element={<BookACallPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>

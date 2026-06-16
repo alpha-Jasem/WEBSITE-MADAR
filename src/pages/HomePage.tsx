@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, ChevronDown, MessageCircle, Calendar, BarChart3, Clock, Phone, Bot, Zap, Menu, X } from 'lucide-react'
 import { Footer } from '../components/public/Footer'
@@ -142,6 +142,36 @@ const GlobalCSS = () => (
       margin-top: -8px;
     }
 
+    /* Rotating hero word — exact SYC hero-rot pattern */
+    .hero-rot {
+      display: inline-block;
+      position: relative;
+      overflow: hidden;
+      vertical-align: bottom;
+      min-width: var(--rot-width, 120px);
+      transition: min-width 0.4s ease;
+    }
+    .hero-rot-word {
+      display: block;
+      font-style: italic;
+      color: ${C.accent2};
+      position: absolute;
+      top: 0; right: 0;
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateY(110%);
+      transition: opacity 0.38s ease, transform 0.38s ease;
+    }
+    .hero-rot-word.is-active {
+      position: relative;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .hero-rot-word.is-out {
+      opacity: 0;
+      transform: translateY(-110%);
+    }
+
     /* Sticky bar */
     .hp-sticky {
       position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
@@ -243,7 +273,32 @@ const Navbar = () => {
 }
 
 /* ─── Hero ───────────────────────────────────────────────────────── */
-const Hero = () => (
+const ROT_WORDS = ['الأسنان', 'العظام', 'العيون', 'الجلدية', 'الأطفال']
+
+const Hero = () => {
+  const [activeIdx, setActiveIdx] = useState(0)
+  const [outIdx, setOutIdx] = useState<number | null>(null)
+  const spanRef = useRef<HTMLSpanElement>(null)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveIdx(prev => {
+        const next = (prev + 1) % ROT_WORDS.length
+        setOutIdx(prev)
+        setTimeout(() => setOutIdx(null), 400)
+        // Update container width to match new word
+        if (spanRef.current) {
+          const spans = spanRef.current.querySelectorAll('.hero-rot-word')
+          const nextSpan = spans[next] as HTMLElement
+          if (nextSpan) spanRef.current.style.setProperty('--rot-width', nextSpan.offsetWidth + 'px')
+        }
+        return next
+      })
+    }, 2800)
+    return () => clearInterval(timer)
+  }, [])
+
+  return (
   <section className="hp-section" style={{ background: C.paper, paddingTop: 130, position: 'relative', overflow: 'hidden' }} dir="rtl">
     {/* Background radial gradient — exact SYC pattern */}
     <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 50% at 10% 10%, rgba(43,181,115,0.07), transparent 60%), radial-gradient(ellipse 50% 40% at 95% 80%, rgba(15,61,46,0.04), transparent 60%)`, pointerEvents: 'none' }} />
@@ -255,7 +310,18 @@ const Hero = () => (
           <h1 style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(34px,5vw,60px)', fontWeight: 400, color: C.ink, lineHeight: 1.18, marginBottom: 22, letterSpacing: '-0.025em' }}>
             استقبال ذكي
             <br />
-            <span className="hero-em">لعيادة الأسنان.</span>
+            لعيادة{' '}
+            <span className="hero-rot" ref={spanRef} aria-live="polite">
+              {ROT_WORDS.map((word, i) => (
+                <span
+                  key={word}
+                  className={`hero-rot-word${i === activeIdx ? ' is-active' : i === outIdx ? ' is-out' : ''}`}
+                >
+                  {word}
+                </span>
+              ))}
+            </span>
+            .
           </h1>
           <p style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontSize: 18, color: C.ink2, lineHeight: 1.75, marginBottom: 34, maxWidth: 440 }}>
             نبني ونشغّل نظاماً يستقبل مرضاك على واتساب، يحجز المواعيد، ويُذكّرهم تلقائياً — بدون موظف استقبال إضافي.
@@ -328,7 +394,8 @@ const Hero = () => (
       </div>
     </div>
   </section>
-)
+  )
+}
 
 /* ─── Results ────────────────────────────────────────────────────── */
 const Results = () => (
