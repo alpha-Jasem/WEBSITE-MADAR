@@ -716,48 +716,81 @@ const AiSection = () => (
         </motion.div>
 
         <motion.div {...rv} transition={{ delay: 0.2 }} style={{ alignSelf: 'start' }}>
-          <div style={{ background: C.dark2, borderRadius: 16, padding: 20, border: `1px solid ${C.onDarkRule}` }}>
-            <div style={{ background: '#fff', borderRadius: 10, overflow: 'hidden' }}>
-              <div style={{ background: '#075E54', padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 30, height: 30, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Bot size={13} color={C.paper} />
+          {/* AI System Interface — professional dashboard mockup */}
+          <div style={{ background: '#070F1E', borderRadius: 16, border: '1px solid rgba(255,255,255,0.07)', overflow: 'hidden', fontFamily: '"IBM Plex Sans Arabic", sans-serif' }}>
+
+            {/* Top bar */}
+            <div style={{ background: '#0B1628', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#4ADE80', boxShadow: '0 0 0 3px rgba(74,222,128,0.2)' }} />
+                <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: 11, letterSpacing: '0.08em', fontFamily: '"IBM Plex Mono", monospace' }}>MADAR AI · نشط</span>
+              </div>
+              <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 10, fontFamily: '"IBM Plex Mono", monospace' }}>14:14</span>
+            </div>
+
+            {/* Caller info strip */}
+            <div style={{ background: 'rgba(37,99,235,0.07)', borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(37,99,235,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Phone size={14} color="#60A5FA" />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ color: '#fff', fontSize: 13, fontWeight: 600, marginBottom: 1 }}>محمد العمري</div>
+                <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10, fontFamily: '"IBM Plex Mono", monospace' }}>0551234567 · آخر زيارة: 14 مارس</div>
+              </div>
+              <div style={{ background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.22)', borderRadius: 6, padding: '3px 9px' }}>
+                <span style={{ color: '#4ADE80', fontSize: 10, fontFamily: '"IBM Plex Mono", monospace' }}>● واردة</span>
+              </div>
+            </div>
+
+            {/* Transcript */}
+            <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[
+                { role: 'ai',   text: 'أهلاً بك في عيادة د. أحمد! كيف أقدر أساعدك؟',           time: '14:10' },
+                { role: 'user', text: 'أبي أحجز موعد كشف أسنان',                               time: '14:11' },
+                { role: 'ai',   text: 'عندنا الأربعاء 5م أو الخميس 10ص. أيهما يناسبك؟',        time: '14:11' },
+                { role: 'user', text: 'الأربعاء',                                               time: '14:12' },
+                { role: 'ai',   text: 'تم تأكيد موعدك الأربعاء 5م ✓ ستصلك رسالة تذكير.',       time: '14:12' },
+              ].map((m, i) => (
+                <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', flexDirection: m.role === 'user' ? 'row-reverse' : 'row' }}>
+                  <div style={{ width: 24, height: 24, borderRadius: 6, background: m.role === 'ai' ? 'rgba(37,99,235,0.18)' : 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+                    {m.role === 'ai' ? <Bot size={12} color="#60A5FA" /> : <span style={{ fontSize: 10 }}>👤</span>}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 9, marginBottom: 3, fontFamily: '"IBM Plex Mono", monospace', textAlign: m.role === 'user' ? 'left' : 'right' }}>
+                      {m.role === 'ai' ? 'MADAR AI' : 'عميل'} · {m.time}
+                    </div>
+                    <div style={{
+                      background: m.role === 'ai' ? 'rgba(37,99,235,0.1)' : 'rgba(255,255,255,0.05)',
+                      border: `1px solid ${m.role === 'ai' ? 'rgba(37,99,235,0.2)' : 'rgba(255,255,255,0.07)'}`,
+                      borderRadius: m.role === 'ai' ? '4px 12px 12px 12px' : '12px 4px 12px 12px',
+                      padding: '8px 12px',
+                      color: m.role === 'ai' ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.6)',
+                      fontSize: 12.5, lineHeight: 1.6,
+                    }}>{m.text}</div>
+                  </div>
                 </div>
-                <div>
-                  <div style={{ color: '#fff', fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontWeight: 600, fontSize: 12 }}>مساعد عيادة د. أحمد</div>
-                  <div style={{ color: '#A8D5A2', fontSize: 9 }}>● يرد خلال ثوانٍ</div>
+              ))}
+
+              {/* Typing */}
+              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                <div style={{ width: 24, height: 24, borderRadius: 6, background: 'rgba(37,99,235,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Bot size={12} color="#60A5FA" />
+                </div>
+                <div style={{ background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)', borderRadius: '4px 12px 12px 12px', padding: '10px 14px', display: 'flex', gap: 4, alignItems: 'center' }}>
+                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#60A5FA', display: 'inline-block', animation: 'typing 1.2s ease infinite' }} />
+                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#60A5FA', display: 'inline-block', animation: 'typing 1.2s ease 0.2s infinite' }} />
+                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#60A5FA', display: 'inline-block', animation: 'typing 1.2s ease 0.4s infinite' }} />
                 </div>
               </div>
-              <div style={{ background: '#ECE5DD', padding: '10px 9px 10px', display: 'flex', flexDirection: 'column', gap: 5 }}>
-                {/* Date header */}
-                <div style={{ textAlign: 'center', marginBottom: 4 }}>
-                  <span style={{ background: 'rgba(255,255,255,0.55)', borderRadius: 6, padding: '2px 10px', fontSize: 10, color: '#6B7280', fontFamily: '"IBM Plex Sans Arabic", sans-serif' }}>اليوم</span>
-                </div>
-                {[
-                  { from: 'user', text: 'وش أسعار تبييض الأسنان؟',                                          time: '2:10 م' },
-                  { from: 'ai',   text: 'أهلاً! 😊 التبييض بالليزر من 800 ريال. فيه استشارة مجانية. تبي أحجز اليوم؟', time: '2:10 م' },
-                  { from: 'user', text: 'إيه كويس',                                                          time: '2:11 م' },
-                  { from: 'ai',   text: 'عندي الأحد 4:30م. يناسبك؟ ✅',                                     time: '2:11 م' },
-                  { from: 'user', text: 'نعم',                                                               time: '2:12 م' },
-                  { from: 'ai',   text: 'تم الحجز 🎉 ستصلك رسالة تأكيد.',                                   time: '2:12 م' },
-                ].map((m, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: m.from === 'user' ? 'flex-start' : 'flex-end' }}>
-                    <div style={{ background: m.from === 'user' ? '#fff' : '#DCF8C6', padding: '5px 8px 4px', borderRadius: m.from === 'user' ? '8px 8px 8px 2px' : '8px 8px 2px 8px', maxWidth: '75%', fontSize: 11.5, fontFamily: '"IBM Plex Sans Arabic", sans-serif', color: '#1a1a1a', lineHeight: 1.5 }}>
-                      <div>{m.text}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 3, marginTop: 2 }}>
-                        <span style={{ fontSize: 9.5, color: '#8B9EA8' }}>{m.time}</span>
-                        {m.from === 'user' && <span style={{ fontSize: 11, color: '#53BDEB', lineHeight: 1 }}>✓✓</span>}
-                      </div>
-                    </div>
-                  </div>
+            </div>
+
+            {/* AI Actions footer */}
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '10px 16px' }}>
+              <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: 9, marginBottom: 7, fontFamily: '"IBM Plex Mono", monospace', letterSpacing: '0.1em' }}>AI ACTIONS</div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {['✓ تأكيد الموعد', '📩 إرسال تذكير', '📋 عرض السجل'].map(tag => (
+                  <span key={tag} style={{ background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)', borderRadius: 20, padding: '4px 11px', fontSize: 11, color: '#60A5FA', cursor: 'default' }}>{tag}</span>
                 ))}
-                {/* Typing indicator */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 2 }}>
-                  <div style={{ background: '#DCF8C6', padding: '7px 12px', borderRadius: '8px 8px 2px 8px', display: 'flex', gap: 3, alignItems: 'center' }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#8B9EA8', display: 'inline-block', animation: 'typing 1.2s ease infinite' }} />
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#8B9EA8', display: 'inline-block', animation: 'typing 1.2s ease 0.2s infinite' }} />
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#8B9EA8', display: 'inline-block', animation: 'typing 1.2s ease 0.4s infinite' }} />
-                  </div>
-                </div>
               </div>
             </div>
           </div>
