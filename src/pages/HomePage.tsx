@@ -727,21 +727,37 @@ const AiSection = () => (
                   <div style={{ color: '#A8D5A2', fontSize: 9 }}>● يرد خلال ثوانٍ</div>
                 </div>
               </div>
-              <div style={{ background: '#ECE5DD', padding: '10px 9px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ background: '#ECE5DD', padding: '10px 9px 10px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+                {/* Date header */}
+                <div style={{ textAlign: 'center', marginBottom: 4 }}>
+                  <span style={{ background: 'rgba(255,255,255,0.55)', borderRadius: 6, padding: '2px 10px', fontSize: 10, color: '#6B7280', fontFamily: '"IBM Plex Sans Arabic", sans-serif' }}>اليوم</span>
+                </div>
                 {[
-                  { from: 'user', text: 'وش أسعار تبييض الأسنان؟' },
-                  { from: 'ai',   text: 'أهلاً! 😊 التبييض بالليزر من 800 ريال. فيه استشارة مجانية. تبي أحجز اليوم؟' },
-                  { from: 'user', text: 'إيه كويس' },
-                  { from: 'ai',   text: 'عندي الأحد 4:30م. يناسبك؟ ✅' },
-                  { from: 'user', text: 'نعم' },
-                  { from: 'ai',   text: 'تم الحجز 🎉 ستصلك رسالة تأكيد.' },
+                  { from: 'user', text: 'وش أسعار تبييض الأسنان؟',                                          time: '2:10 م' },
+                  { from: 'ai',   text: 'أهلاً! 😊 التبييض بالليزر من 800 ريال. فيه استشارة مجانية. تبي أحجز اليوم؟', time: '2:10 م' },
+                  { from: 'user', text: 'إيه كويس',                                                          time: '2:11 م' },
+                  { from: 'ai',   text: 'عندي الأحد 4:30م. يناسبك؟ ✅',                                     time: '2:11 م' },
+                  { from: 'user', text: 'نعم',                                                               time: '2:12 م' },
+                  { from: 'ai',   text: 'تم الحجز 🎉 ستصلك رسالة تأكيد.',                                   time: '2:12 م' },
                 ].map((m, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: m.from === 'user' ? 'flex-start' : 'flex-end' }}>
-                    <div style={{ background: m.from === 'user' ? '#fff' : '#DCF8C6', padding: '6px 9px', borderRadius: 8, maxWidth: 200, fontSize: 11, fontFamily: '"IBM Plex Sans Arabic", sans-serif', color: '#1a1a1a', lineHeight: 1.5 }}>
-                      {m.text}
+                    <div style={{ background: m.from === 'user' ? '#fff' : '#DCF8C6', padding: '5px 8px 4px', borderRadius: m.from === 'user' ? '8px 8px 8px 2px' : '8px 8px 2px 8px', maxWidth: '75%', fontSize: 11.5, fontFamily: '"IBM Plex Sans Arabic", sans-serif', color: '#1a1a1a', lineHeight: 1.5 }}>
+                      <div>{m.text}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 3, marginTop: 2 }}>
+                        <span style={{ fontSize: 9.5, color: '#8B9EA8' }}>{m.time}</span>
+                        {m.from === 'user' && <span style={{ fontSize: 11, color: '#53BDEB', lineHeight: 1 }}>✓✓</span>}
+                      </div>
                     </div>
                   </div>
                 ))}
+                {/* Typing indicator */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 2 }}>
+                  <div style={{ background: '#DCF8C6', padding: '7px 12px', borderRadius: '8px 8px 2px 8px', display: 'flex', gap: 3, alignItems: 'center' }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#8B9EA8', display: 'inline-block', animation: 'typing 1.2s ease infinite' }} />
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#8B9EA8', display: 'inline-block', animation: 'typing 1.2s ease 0.2s infinite' }} />
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#8B9EA8', display: 'inline-block', animation: 'typing 1.2s ease 0.4s infinite' }} />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
