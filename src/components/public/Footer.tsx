@@ -15,8 +15,8 @@ const navLinks = [
 const services = [
   { ar: 'مساعد استقبال AI على واتساب', en: 'AI Receptionist on WhatsApp' },
   { ar: 'إدارة المواعيد والحجوزات',    en: 'Appointment & Booking Management' },
-  { ar: 'تذكيرات تلقائية للمرضى',     en: 'Automated Patient Reminders' },
-  { ar: 'CRM المرضى والمتابعة',        en: 'Patient CRM & Follow-Up' },
+  { ar: 'تذكيرات تلقائية للعملاء',     en: 'Automated Reminders' },
+  { ar: 'CRM العملاء والمتابعة',        en: 'Client CRM & Follow-Up' },
   { ar: 'تقارير العيادة وإحصاءات AI', en: 'Clinic Reports & AI Analytics' },
   { ar: 'لوحة تشغيل يومية للعيادة',  en: 'Daily Clinic Operations Dashboard' },
 ]
@@ -56,8 +56,8 @@ export const Footer = () => {
             </div>
             <p className={`text-sm leading-relaxed mb-5 max-w-xs ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.55)' }}>
               {t(
-                'نظام عربي متكامل لتشغيل العيادات — مساعد استقبال AI، إدارة المواعيد، ومتابعة المرضى.',
-                'A complete Arabic system for clinics — AI receptionist, appointment management, and patient follow-up.'
+                'نظام عربي متكامل لتشغيل العيادات — مساعد استقبال AI، إدارة المواعيد، ومتابعة العملاء.',
+                'A complete Arabic system for clinics — AI receptionist, appointment management, and client follow-up.'
               )}
             </p>
             <p className={`text-xs italic ${language === 'ar' ? 'font-tajawal' : 'font-work'}`} style={{ color: 'rgba(255,255,255,0.35)' }}>
