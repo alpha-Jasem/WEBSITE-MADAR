@@ -216,6 +216,53 @@ const GlobalCSS = () => (
     }
     .hp-sticky-close:hover { opacity: 0.85; }
 
+    /* Card hover lift */
+    .hp-card {
+      transition: transform 0.22s ease, box-shadow 0.22s ease;
+      cursor: default;
+    }
+    .hp-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 48px rgba(10,27,20,0.11);
+    }
+    .hp-card-dark:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 20px 56px rgba(0,0,0,0.32);
+    }
+
+    /* Nav link underline slide */
+    .hp-nav-link { position: relative; }
+    .hp-nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: -2px; right: 0; left: 0;
+      height: 1px;
+      background: ${C.accent};
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 0.2s ease;
+    }
+    .hp-nav-link:hover::after { transform: scaleX(1); }
+
+    /* Button lift on hover */
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+
+    /* Feature list item hover */
+    .hp-feature-item {
+      border-radius: 6px;
+      margin: 0 -8px;
+      padding: 6px 8px;
+      transition: background 0.15s ease;
+    }
+    .hp-feature-item:hover { background: rgba(43,181,115,0.05); }
+    .hp-feature-item-dark:hover { background: rgba(255,255,255,0.04); }
+
+    /* Timeline step hover */
+    .hp-timeline-step { transition: opacity 0.2s ease; }
+    .hp-4timeline:hover .hp-timeline-step { opacity: 0.5; }
+    .hp-4timeline:hover .hp-timeline-step:hover { opacity: 1; }
+
     /* Mobile */
     @media (max-width: 900px) {
       .hp-nav-links { display: none !important; }
@@ -566,7 +613,7 @@ const AiSection = () => (
               { icon: Clock,    label: 'يعمل 24 ساعة',         desc: 'حتى في الإجازات والأعياد والأوقات خارج الدوام' },
               { icon: Phone,    label: 'يقلل المكالمات',       desc: '80% من الأسئلة تُحل عبر واتساب بدون مكالمة' },
             ].map(({ icon: Icon, label, desc }) => (
-              <div key={label} style={{ display: 'flex', gap: 14 }}>
+              <div key={label} className="hp-feature-item hp-feature-item-dark" style={{ display: 'flex', gap: 14 }}>
                 <div style={{ width: 36, height: 36, borderRadius: 8, background: `rgba(190,148,52,0.15)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Icon size={15} color={C.gold} />
                 </div>
@@ -631,14 +678,16 @@ const Process = () => (
       </motion.h2>
 
       <div style={{ position: 'relative' }}>
+        {/* Timeline connector line */}
+        <div style={{ position: 'absolute', top: 0, right: 0, left: 0, height: 2, background: `linear-gradient(to left, ${C.rule}, ${C.brand} 50%, ${C.rule})`, opacity: 0.5, pointerEvents: 'none' }} />
         <div className="hp-4timeline">
           {[
-            { w: '01', phase: 'التأسيس', dot: C.accent,  items: ['جلسة تعريفية كاملة', 'ربط واتساب Business', 'تدريب المساعد', 'إعداد نظام الحجز'] },
+            { w: '01', phase: 'التأسيس', dot: C.brand,  items: ['جلسة تعريفية كاملة', 'ربط واتساب Business', 'تدريب المساعد', 'إعداد نظام الحجز'] },
             { w: '02', phase: 'البناء',  dot: C.ink3,   items: ['تخصيص ردود AI', 'ربط جدول المواعيد', 'إعداد التذكيرات', 'اختبار شامل'] },
             { w: '03', phase: 'الإطلاق',dot: C.gold,   items: ['تشغيل مباشر', 'تدريب الفريق', 'مراقبة يومية', 'تعديل وتحسين'] },
             { w: '04+',phase: 'التحسين',dot: C.ink3,   items: ['تقارير أسبوعية', 'استراتيجية النمو', 'إضافة ميزات', 'دعم مستمر'] },
           ].map(({ w, phase, dot, items }) => (
-            <motion.div key={w} {...rv} style={{ paddingTop: 8, borderTop: `2px solid ${C.rule}`, position: 'relative' }}>
+            <motion.div key={w} {...rv} className="hp-timeline-step" style={{ paddingTop: 8, borderTop: `2px solid ${C.rule}`, position: 'relative' }}>
               <div style={{ width: 10, height: 10, borderRadius: '50%', background: dot, position: 'absolute', top: -6, right: 0, border: `2px solid ${C.paper}` }} />
               <div style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 10, color: C.ink3, letterSpacing: '0.1em', marginBottom: 16, marginTop: 20 }}>
                 WEEK {w} · {phase.toUpperCase()}
@@ -668,7 +717,7 @@ const Programs = () => (
       </motion.h2>
 
       <div className="hp-2col">
-        <motion.div {...rv} style={{ background: C.paper, borderRadius: 10, padding: '36px 32px', border: `1px solid ${C.rule}` }}>
+        <motion.div {...rv} className="hp-card" style={{ background: C.paper, borderRadius: 10, padding: '36px 32px', border: `1px solid ${C.rule}` }}>
           <div style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 10, color: C.ink3, letterSpacing: '0.1em', marginBottom: 16 }}>مناسب لـ · عيادة جديدة أو مبتدئة</div>
           <h3 style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 24, fontWeight: 500, color: C.ink, marginBottom: 12 }}>البداية الذكية</h3>
           <p style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontSize: 14, color: C.ink2, lineHeight: 1.75, marginBottom: 24 }}>
@@ -686,7 +735,7 @@ const Programs = () => (
           </button>
         </motion.div>
 
-        <motion.div {...rv} transition={{ delay: 0.12 }} style={{ background: C.dark, borderRadius: 10, padding: '36px 32px' }}>
+        <motion.div {...rv} transition={{ delay: 0.12 }} className="hp-card hp-card-dark" style={{ background: C.dark, borderRadius: 10, padding: '36px 32px', borderTop: `4px solid ${C.gold}` }}>
           <div style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 10, color: C.gold, letterSpacing: '0.1em', marginBottom: 16 }}>مناسب لـ · عيادة تريد نمواً متسارعاً</div>
           <h3 style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 24, fontWeight: 500, color: C.onDark, marginBottom: 12 }}>النمو الكامل</h3>
           <p style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontSize: 14, color: C.onDark2, lineHeight: 1.75, marginBottom: 24 }}>
