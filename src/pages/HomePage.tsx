@@ -417,12 +417,10 @@ const Hero = () => {
 
         {/* ── Text side ── */}
         <motion.div {...ha} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          {/* Social proof pill — prominent like SYC */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px 6px 10px', background: 'rgba(37,99,235,0.07)', border: '1px solid rgba(37,99,235,0.18)', borderRadius: 999, marginBottom: 28, alignSelf: 'flex-start' }}>
-            <span style={{ fontSize: 13 }}>⭐</span>
-            <span style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 11, letterSpacing: '0.13em', textTransform: 'uppercase', color: C.accent2 }}>
-              5.0 · من أصحاب عيادات موثّقين
-            </span>
+          {/* Hero pill */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '7px 14px 7px 12px', background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.22)', borderRadius: 999, fontFamily: '"IBM Plex Mono", monospace', fontSize: 11.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.accent2, marginBottom: 22 }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.brand, boxShadow: '0 0 0 4px rgba(37,99,235,0.18)', flexShrink: 0 }} />
+            استقبال ذكي · ٢٤/٧ · بدون انقطاع
           </div>
 
           <h1 style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(48px,5.6vw,82px)', fontWeight: 400, color: C.ink, lineHeight: 1.0, marginBottom: 24, letterSpacing: '-0.025em' }}>
