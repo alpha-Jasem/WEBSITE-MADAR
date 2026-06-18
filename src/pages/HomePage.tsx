@@ -564,52 +564,8 @@ const WaIcon = () => (
 )
 
 const GovBadges = () => {
-  const [showCR, setShowCR] = useState(false)
-
   return (
     <>
-      {/* ── Commercial Registration Popup ── */}
-      {showCR && (
-        <div
-          onClick={() => setShowCR(false)}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 9999,
-            background: 'rgba(8,18,36,0.92)', backdropFilter: 'blur(8px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '20px',
-          }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              position: 'relative', maxWidth: 860, width: '100%',
-              borderRadius: 10, overflow: 'hidden',
-              boxShadow: '0 32px 96px rgba(0,0,0,0.7)',
-              background: '#fff',
-            }}
-          >
-            <button
-              onClick={() => setShowCR(false)}
-              style={{
-                position: 'absolute', top: 12, left: 12, zIndex: 10,
-                width: 34, height: 34, borderRadius: '50%',
-                background: 'rgba(0,0,0,0.55)', border: 'none',
-                color: '#fff', fontSize: 20, lineHeight: 1, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontFamily: 'sans-serif',
-              }}
-              aria-label="إغلاق"
-            >
-              ×
-            </button>
-            <iframe
-              src="/commercial-registration.pdf"
-              title="السجل التجاري — مؤسسة جاسم حسن زيد الطبيشي للتجارة"
-              style={{ width: '100%', height: '90vh', border: 'none', display: 'block', background: '#fff' }}
-            />
-          </div>
-        </div>
-      )}
 
       {/* ── Logos strip ── */}
       <div style={{ background: '#fff', borderTop: `1px solid ${C.rule}`, borderBottom: `1px solid ${C.rule}`, padding: '44px 0 40px' }} dir="rtl">
@@ -659,7 +615,7 @@ const GovBadges = () => {
             {/* زر السجل التجاري */}
             <div style={{ padding: '0 40px' }}>
               <button
-                onClick={() => setShowCR(true)}
+                onClick={() => window.open('/commercial-registration.pdf', '_blank')}
                 style={{
                   fontFamily: '"IBM Plex Sans Arabic", Cairo, sans-serif',
                   fontSize: 14, fontWeight: 600,
