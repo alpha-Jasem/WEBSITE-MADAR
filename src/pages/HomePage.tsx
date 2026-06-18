@@ -620,10 +620,12 @@ const GovBadges = () => {
           }}>
             ضمن المنظومة التقنية السعودية
           </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '20px 56px' }}>
-            <img src="/sdaia-logo.png"            alt="SDAIA — الهيئة السعودية للبيانات والذكاء الاصطناعي" style={{ height: 48, width: 'auto', objectFit: 'contain' }} />
-            <img src="/saudi-tech-logo.png"       alt="هيئة التقنية السعودية"        style={{ height: 44, width: 'auto', objectFit: 'contain' }} />
-            <img src="/saudi-business-center.png" alt="المركز السعودي للأعمال"        style={{ height: 44, width: 'auto', objectFit: 'contain' }} />
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '24px 48px' }}>
+            <img src="/sdaia-logo.png"            alt="SDAIA — الهيئة السعودية للبيانات والذكاء الاصطناعي" style={{ height: 44, width: 'auto', objectFit: 'contain' }} />
+            <img src="/cst-logo.svg"              alt="هيئة الاتصالات والفضاء والتقنية"  style={{ height: 40, width: 'auto', objectFit: 'contain' }} />
+            <img src="/monshaat-logo.png"         alt="منشآت — الهيئة العامة للمنشآت الصغيرة والمتوسطة" style={{ height: 44, width: 'auto', objectFit: 'contain' }} />
+            <img src="/saudi-business-center.png" alt="المركز السعودي للأعمال"        style={{ height: 40, width: 'auto', objectFit: 'contain' }} />
+            <img src="/saudi-tech-logo.png"       alt="تقنية سعودية"                  style={{ height: 44, width: 'auto', objectFit: 'contain' }} />
           </div>
         </div>
       </div>
