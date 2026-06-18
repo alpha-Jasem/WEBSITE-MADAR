@@ -1,34 +1,33 @@
-# Madar OS
+# MADAR
 
-Madar OS is an Arabic SaaS platform for operating car wash businesses in Saudi Arabia.
+MADAR is a Saudi AI-powered sales agent platform that installs a 24/7 digital employee for businesses, handling WhatsApp and phone reception, appointment booking, lead follow-up, and sales conversion.
 
 ## Product
 
-Madar OS helps car washes run daily operations from one dashboard:
+MADAR builds and deploys AI sales employees for Saudi businesses — starting with medical and dental clinics:
 
-- Car queue operations: received, in service, ready, delivered.
-- Self check-in QR for end customers.
-- Live status page and TV/display screen.
-- Customer records, loyalty, and visits.
-- Finance, VAT, daily closing, and reports.
-- Worker tracking and operational insights.
-- Madar AI assistant for client support and operational guidance.
+- AI WhatsApp receptionist: responds in under 12 seconds in Saudi Arabic dialect.
+- Automated appointment booking: checks availability and confirms directly in the schedule.
+- Patient and lead management: records, follow-up, and reminders.
+- Voice AI assistant for phone calls.
+- Dashboard: real-time overview, appointments, doctors, services, reports.
+- WhatsApp Business API integration.
+- 24/7 operation — no breaks, no sick days, no overtime.
 
 ## Commercial Position
 
-Madar OS can be sold and used before WhatsApp Business API approval. The platform already supports internal operations, QR registration, customers, finance, reports, and AI assistance. Official WhatsApp automation should be activated only after Meta approval and a connected WhatsApp Business number.
+MADAR is a full-service SaaS solution for Saudi clinics. Clients get a custom AI receptionist live within 3 weeks. Monthly subscription pricing. No long-term contracts.
 
 ## Packages
 
-- Starter: basic car wash operations.
-- Pro: QR self check-in, live display, reports, VAT, and Madar AI.
-- Premium: advanced support, deeper reports, and custom operational setup.
+- البداية الذكية (Smart Start): AI WhatsApp receptionist, appointment scheduling, basic dashboard, team training, 1-month support.
+- النمو الكامل (Full Growth): Everything in Smart Start plus AI voice calls, advanced analytics, patient recovery automation, priority support.
 
 ## Important Notes
 
-- Payments, Apple Pay, Google Pay, and digital wallet features are optional paid add-ons.
-- WhatsApp Business API depends on Meta verification.
-- The website is Arabic-first and focused on Saudi car wash operators.
+- The platform is clinics-first: dental, orthopedic, ophthalmology, dermatology, pediatric, and general medical clinics.
+- WhatsApp Business API activation requires Meta approval and a connected business number.
+- The product is Arabic-first, designed for Saudi operators.
 
 ## Contact
 

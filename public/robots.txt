@@ -1,20 +1,26 @@
-# Madar.software
-# Updated: 2026-06-03
+# MADAR — madar.software
+# Updated: 2026-06-18
 
 User-agent: *
 Allow: /
-Disallow: /admin
 Disallow: /admin/
-Disallow: /client
+Disallow: /admin
 Disallow: /client/
+Disallow: /client
 Disallow: /login
 Disallow: /forgot-password
 Disallow: /reset-password
 Disallow: /auth/
 Disallow: /checkin/
 Disallow: /status/
-Disallow: /solar
 Disallow: /solar/
+Disallow: /solar
+Disallow: /demo-review
+Disallow: /clinic-os/login
+Disallow: /clinic-os/signup
+Disallow: /clinic-os/dashboard/
+Disallow: /clinic-os/admin
+Disallow: /clinic-os/select
 
 User-agent: GPTBot
 Allow: /

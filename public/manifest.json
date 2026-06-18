@@ -1,7 +1,7 @@
 {
-  "name": "مدار OS للمغاسل",
-  "short_name": "مدار OS",
-  "description": "نظام SaaS عربي لتشغيل مغاسل السيارات: QR، لوحة تشغيل، عملاء، مالية، تقارير، ومساعد AI.",
+  "name": "MADAR",
+  "short_name": "MADAR",
+  "description": "موظف مبيعات ذكي يرد ويحجز ويتابع العملاء على مدار الساعة.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F5FAFF",
@@ -29,22 +29,22 @@
       "src": "/og-image.jpg",
       "sizes": "1200x630",
       "type": "image/jpeg",
-      "label": "مدار OS للمغاسل"
+      "label": "MADAR — موظف مبيعات ذكي"
     }
   ],
   "shortcuts": [
     {
-      "name": "ابدأ تجربة",
-      "short_name": "تجربة",
-      "description": "ابدأ تجربة مدار OS للمغاسل",
-      "url": "/trial",
+      "name": "احجز مكالمة",
+      "short_name": "مكالمة",
+      "description": "احجز جلسة مجانية مع فريق مدار",
+      "url": "/book-a-call",
       "icons": [{ "src": "/favicon-logo.png", "sizes": "96x96" }]
     },
     {
       "name": "دخول المنصة",
       "short_name": "دخول",
-      "description": "الدخول إلى لوحة مدار OS",
-      "url": "/login",
+      "description": "الدخول إلى لوحة مدار",
+      "url": "/clinic-os/login",
       "icons": [{ "src": "/favicon-logo.png", "sizes": "96x96" }]
     }
   ]
