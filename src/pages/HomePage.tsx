@@ -563,27 +563,108 @@ const WaIcon = () => (
   </svg>
 )
 
-const GovBadges = () => (
-  <div style={{ background: C.dark, borderTop: `1px solid ${C.onDarkRule}`, padding: '36px 0 32px' }} dir="rtl">
-    <div className="hp-container">
-      <p style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 10, color: C.onDark2, letterSpacing: '0.16em', textTransform: 'uppercase', textAlign: 'center', marginBottom: 28 }}>
-        ضمن المنظومة التقنية السعودية
-      </p>
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '20px 64px' }}>
-        <img
-          src="/saudinic-logo.svg"
-          alt="SDAIA — الهيئة السعودية للبيانات والذكاء الاصطناعي"
-          style={{ height: 44, width: 'auto', objectFit: 'contain', opacity: 0.9 }}
-        />
-        <img
-          src="/cst-logo.svg"
-          alt="هيئة الاتصالات والفضاء والتقنية"
-          style={{ height: 48, width: 'auto', objectFit: 'contain', opacity: 0.9, filter: 'brightness(0) invert(1)' }}
-        />
+const GovBadges = () => {
+  const [showCR, setShowCR] = useState(false)
+
+  return (
+    <>
+      {/* ── Commercial Registration Popup ── */}
+      {showCR && (
+        <div
+          onClick={() => setShowCR(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(8,18,36,0.92)', backdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '20px',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              position: 'relative', maxWidth: 700, width: '100%',
+              borderRadius: 10, overflow: 'hidden',
+              boxShadow: '0 32px 96px rgba(0,0,0,0.7)',
+            }}
+          >
+            <button
+              onClick={() => setShowCR(false)}
+              style={{
+                position: 'absolute', top: 12, left: 12, zIndex: 10,
+                width: 34, height: 34, borderRadius: '50%',
+                background: 'rgba(0,0,0,0.55)', border: 'none',
+                color: '#fff', fontSize: 20, lineHeight: 1, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: 'sans-serif',
+              }}
+              aria-label="إغلاق"
+            >
+              ×
+            </button>
+            <img
+              src="/commercial-registration.jpg"
+              alt="السجل التجاري — مؤسسة جاسم حسن زيد الطبيشي للتجارة"
+              style={{ width: '100%', display: 'block' }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ── Logos strip (light bg so SDAIA colors show correctly) ── */}
+      <div style={{ background: '#F8F9FC', borderTop: `1px solid ${C.rule}`, padding: '36px 0 28px' }} dir="rtl">
+        <div className="hp-container">
+          <p style={{
+            fontFamily: '"IBM Plex Mono", monospace', fontSize: 10,
+            color: C.ink3, letterSpacing: '0.18em', textTransform: 'uppercase',
+            textAlign: 'center', marginBottom: 28,
+          }}>
+            ضمن المنظومة التقنية السعودية
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '20px 56px' }}>
+            <img src="/sdaia-logo.png"            alt="SDAIA — الهيئة السعودية للبيانات والذكاء الاصطناعي" style={{ height: 48, width: 'auto', objectFit: 'contain' }} />
+            <img src="/saudi-tech-logo.png"       alt="هيئة التقنية السعودية"        style={{ height: 44, width: 'auto', objectFit: 'contain' }} />
+            <img src="/saudi-business-center.png" alt="المركز السعودي للأعمال"        style={{ height: 44, width: 'auto', objectFit: 'contain' }} />
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-)
+
+      {/* ── Registration numbers + CR button (dark strip) ── */}
+      <div style={{ background: C.dark, padding: '18px 0' }} dir="rtl">
+        <div className="hp-container">
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '10px 28px' }}>
+            <span style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 12, color: C.onDark2, whiteSpace: 'nowrap' }}>
+              <span style={{ opacity: 0.5, marginLeft: 6, fontSize: 10 }}>الرقم الموحد</span>7030652643
+            </span>
+            <span style={{ width: 1, height: 14, background: C.onDarkRule, display: 'inline-block' }} />
+            <span style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 12, color: C.onDark2, whiteSpace: 'nowrap' }}>
+              <span style={{ opacity: 0.5, marginLeft: 6, fontSize: 10 }}>رقم المنشأة</span>4030483621
+            </span>
+            <span style={{ width: 1, height: 14, background: C.onDarkRule, display: 'inline-block' }} />
+            <button
+              onClick={() => setShowCR(true)}
+              style={{
+                fontFamily: '"IBM Plex Sans Arabic", Cairo, sans-serif',
+                fontSize: 12, fontWeight: 500,
+                padding: '6px 16px',
+                border: `1px solid rgba(168,186,204,0.28)`,
+                borderRadius: 4,
+                background: 'transparent',
+                color: C.onDark2,
+                cursor: 'pointer',
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                transition: 'border-color 0.16s, color 0.16s',
+              }}
+              onMouseEnter={e => { const b = e.currentTarget; b.style.borderColor = 'rgba(168,186,204,0.7)'; b.style.color = '#fff' }}
+              onMouseLeave={e => { const b = e.currentTarget; b.style.borderColor = 'rgba(168,186,204,0.28)'; b.style.color = C.onDark2 }}
+            >
+              السجل التجاري
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
 
 const TrustStrip = () => (
   <div style={{ background: '#fff', borderTop: '1px solid rgba(15,27,61,0.06)', borderBottom: '1px solid rgba(15,27,61,0.06)', padding: '22px 0' }} dir="rtl">
