@@ -630,37 +630,58 @@ const GovBadges = () => {
         </div>
       </div>
 
-      {/* ── Registration numbers + CR button (dark strip) ── */}
-      <div style={{ background: C.dark, padding: '18px 0' }} dir="rtl">
+      {/* ── Registration info strip ── */}
+      <div style={{ background: C.dark, padding: '32px 0' }} dir="rtl">
         <div className="hp-container">
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '10px 28px' }}>
-            <span style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 12, color: C.onDark2, whiteSpace: 'nowrap' }}>
-              <span style={{ opacity: 0.5, marginLeft: 6, fontSize: 10 }}>الرقم الموحد</span>7030652643
-            </span>
-            <span style={{ width: 1, height: 14, background: C.onDarkRule, display: 'inline-block' }} />
-            <span style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 12, color: C.onDark2, whiteSpace: 'nowrap' }}>
-              <span style={{ opacity: 0.5, marginLeft: 6, fontSize: 10 }}>رقم المنشأة</span>4030483621
-            </span>
-            <span style={{ width: 1, height: 14, background: C.onDarkRule, display: 'inline-block' }} />
-            <button
-              onClick={() => setShowCR(true)}
-              style={{
-                fontFamily: '"IBM Plex Sans Arabic", Cairo, sans-serif',
-                fontSize: 12, fontWeight: 500,
-                padding: '6px 16px',
-                border: `1px solid rgba(168,186,204,0.28)`,
-                borderRadius: 4,
-                background: 'transparent',
-                color: C.onDark2,
-                cursor: 'pointer',
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                transition: 'border-color 0.16s, color 0.16s',
-              }}
-              onMouseEnter={e => { const b = e.currentTarget; b.style.borderColor = 'rgba(168,186,204,0.7)'; b.style.color = '#fff' }}
-              onMouseLeave={e => { const b = e.currentTarget; b.style.borderColor = 'rgba(168,186,204,0.28)'; b.style.color = C.onDark2 }}
-            >
-              السجل التجاري
-            </button>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '20px 0' }}>
+
+            {/* رقم موحد */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0 40px', borderLeft: `1px solid ${C.onDarkRule}` }}>
+              <span style={{ fontFamily: '"IBM Plex Sans Arabic", Cairo, sans-serif', fontSize: 11, color: C.onDark2, opacity: 0.55, marginBottom: 6, letterSpacing: '0.06em' }}>
+                الرقم الموحد
+              </span>
+              <span style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 22, fontWeight: 500, color: '#fff', letterSpacing: '0.06em', direction: 'ltr' }}>
+                7030652643
+              </span>
+            </div>
+
+            {/* رقم المنشأة */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0 40px', borderLeft: `1px solid ${C.onDarkRule}` }}>
+              <span style={{ fontFamily: '"IBM Plex Sans Arabic", Cairo, sans-serif', fontSize: 11, color: C.onDark2, opacity: 0.55, marginBottom: 6, letterSpacing: '0.06em' }}>
+                رقم المنشأة
+              </span>
+              <span style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 22, fontWeight: 500, color: '#fff', letterSpacing: '0.06em', direction: 'ltr' }}>
+                4030483621
+              </span>
+            </div>
+
+            {/* زر السجل التجاري */}
+            <div style={{ padding: '0 40px' }}>
+              <button
+                onClick={() => setShowCR(true)}
+                style={{
+                  fontFamily: '"IBM Plex Sans Arabic", Cairo, sans-serif',
+                  fontSize: 14, fontWeight: 600,
+                  padding: '12px 28px',
+                  border: '1.5px solid rgba(255,255,255,0.22)',
+                  borderRadius: 6,
+                  background: 'rgba(255,255,255,0.06)',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  letterSpacing: '0.02em',
+                  transition: 'background 0.18s, border-color 0.18s',
+                }}
+                onMouseEnter={e => { const b = e.currentTarget; b.style.background = 'rgba(255,255,255,0.12)'; b.style.borderColor = 'rgba(255,255,255,0.5)' }}
+                onMouseLeave={e => { const b = e.currentTarget; b.style.background = 'rgba(255,255,255,0.06)'; b.style.borderColor = 'rgba(255,255,255,0.22)' }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                </svg>
+                السجل التجاري
+              </button>
+            </div>
+
           </div>
         </div>
       </div>
