@@ -564,19 +564,22 @@ const WaIcon = () => (
 )
 
 const GovBadges = () => (
-  <div style={{ background: C.paper2, borderBottom: `1px solid ${C.rule}`, padding: '28px 0' }} dir="rtl">
+  <div style={{ background: C.dark, borderTop: `1px solid ${C.onDarkRule}`, padding: '36px 0 32px' }} dir="rtl">
     <div className="hp-container">
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '12px 56px' }}>
-        <span style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 10, color: C.ink3, letterSpacing: '0.14em', textTransform: 'uppercase', whiteSpace: 'nowrap', flexBasis: '100%', textAlign: 'center', marginBottom: 4 }}>
-          ضمن المنظومة التقنية السعودية
-        </span>
-        {[
-          { src: '/sdaia-logo.png', alt: 'SDAIA — الهيئة السعودية للبيانات والذكاء الاصطناعي', h: 42 },
-          { src: '/saudi-tech-logo.png', alt: 'Saudi Tech', h: 48 },
-          { src: '/saudi-map-logo.png', alt: 'هيئة التقنية السعودية', h: 46 },
-        ].map(({ src, alt, h }) => (
-          <img key={src} src={src} alt={alt} style={{ height: h, width: 'auto', objectFit: 'contain', opacity: 0.85, filter: 'grayscale(5%)' }} />
-        ))}
+      <p style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 10, color: C.onDark2, letterSpacing: '0.16em', textTransform: 'uppercase', textAlign: 'center', marginBottom: 28 }}>
+        ضمن المنظومة التقنية السعودية
+      </p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '20px 64px' }}>
+        <img
+          src="/saudinic-logo.svg"
+          alt="SDAIA — الهيئة السعودية للبيانات والذكاء الاصطناعي"
+          style={{ height: 44, width: 'auto', objectFit: 'contain', opacity: 0.9 }}
+        />
+        <img
+          src="/cst-logo.svg"
+          alt="هيئة الاتصالات والفضاء والتقنية"
+          style={{ height: 48, width: 'auto', objectFit: 'contain', opacity: 0.9, filter: 'brightness(0) invert(1)' }}
+        />
       </div>
     </div>
   </div>
@@ -1005,7 +1008,6 @@ export const HomePage = () => (
     <main>
       <Hero />
       <TrustStrip />
-      <GovBadges />
       <Results />
       <Method />
       <AiSection />
@@ -1013,6 +1015,7 @@ export const HomePage = () => (
       <Programs />
       <FAQ />
       <FinalCTA />
+      <GovBadges />
     </main>
     <Footer />
     <StickyBar />
