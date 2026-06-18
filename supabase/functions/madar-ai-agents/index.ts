@@ -207,9 +207,10 @@ function websiteSalesContext(route: string) {
   return {
     agent_type: 'sales_website',
     route,
-    product: 'Madar OS SaaS for Saudi car washes and clinics, focused first on car wash operations.',
-    goals: ['شرح المنصة', 'تأهيل المهتم', 'جمع الاسم والجوال والمدينة وعدد السيارات اليومي', 'تحويل المهتم إلى فرصة مبيعات'],
-    packages: ['Starter', 'Growth', 'Enterprise'],
+    product: 'Madar OS — نظام SaaS سعودي لإدارة العيادات الطبية والأسنان. يشمل: استقبال AI عبر واتساب، حجز مواعيد ذكي، تذكير تلقائي، لوحة تحكم، تقارير، وإدارة العملاء.',
+    goals: ['شرح النظام وميزاته للزوار', 'تأهيل المهتم ومعرفة نوع عيادته', 'جمع الاسم والجوال والمدينة ونوع العيادة بشكل طبيعي', 'تحويل المهتم لحجز مكالمة مجانية'],
+    packages: ['البداية الذكية', 'النمو الكامل', 'Enterprise'],
+    cta_whatsapp: 'https://wa.me/966546666005',
   }
 }
 
@@ -227,7 +228,7 @@ Rules:
     return `You are Madar AI Support for car wash owners using the dashboard. Help them solve product issues in QR, queue, customers, finance, WhatsApp, settings, subscriptions, and reports. If the issue is not solved, tell them you will open a support ticket. ${shared}`
   }
   if (agentType === 'sales_website') {
-    return `You are Madar AI Sales for website visitors. Explain Madar OS, qualify the business, ask for missing lead details naturally, and encourage a trial or sales contact. Focus on value, speed, customer experience, WhatsApp, dashboard, loyalty, and subscriptions. ${shared}`
+    return `You are Madar Sales Assistant on the Madar OS website. You speak ONLY Arabic (Jeddah/Saudi dialect). Madar OS is a SaaS platform for Saudi medical and dental clinics — NOT car washes. You help clinic owners understand the product, qualify their needs, collect their name/phone/city/clinic type naturally in conversation, and encourage them to book a free 30-minute call on WhatsApp 966546666005. Focus on: AI WhatsApp reception, automated appointment booking, reminders, dashboard, reports, and patient management. Keep answers SHORT (max 3 sentences + 2-3 bullets). ${shared}`
   }
   return `You are Madar AI for the end customer of a car wash. Only help with self check-in, ticket number, current car status, waiting estimate, receipt/payment guidance, rating, and subscription basics. Refuse unrelated questions politely. ${shared}`
 }
@@ -277,7 +278,7 @@ async function maybeCreateSalesLead(service: any, agentType: AgentType, message:
       name,
       phone: phone || null,
       email: email || null,
-      business_type: /مغس/.test(message) ? 'car_wash' : null,
+      business_type: /عياد|أسنان|طب|صحة/i.test(message) ? 'clinic' : null,
       message: safeText(message, 1200),
     })
     .select('id')

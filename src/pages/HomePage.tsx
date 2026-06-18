@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, ChevronDown, MessageCircle, Calendar, BarChart3, Clock, Phone, Bot, Zap, Menu, X } from 'lucide-react'
 import { Footer } from '../components/public/Footer'
+import { AiChatWidget } from '../components/public/AiChatWidget'
 
 /* ─── Design tokens (exact from scale-your-clinic.com CSS) ──────── */
 const PHONE = '966546666005'
@@ -562,6 +563,25 @@ const WaIcon = () => (
   </svg>
 )
 
+const GovBadges = () => (
+  <div style={{ background: C.paper2, borderBottom: `1px solid ${C.rule}`, padding: '28px 0' }} dir="rtl">
+    <div className="hp-container">
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '12px 56px' }}>
+        <span style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 10, color: C.ink3, letterSpacing: '0.14em', textTransform: 'uppercase', whiteSpace: 'nowrap', flexBasis: '100%', textAlign: 'center', marginBottom: 4 }}>
+          ضمن المنظومة التقنية السعودية
+        </span>
+        {[
+          { src: '/sdaia-logo.png', alt: 'SDAIA — الهيئة السعودية للبيانات والذكاء الاصطناعي', h: 42 },
+          { src: '/saudi-tech-logo.png', alt: 'Saudi Tech', h: 48 },
+          { src: '/saudi-map-logo.png', alt: 'هيئة التقنية السعودية', h: 46 },
+        ].map(({ src, alt, h }) => (
+          <img key={src} src={src} alt={alt} style={{ height: h, width: 'auto', objectFit: 'contain', opacity: 0.85, filter: 'grayscale(5%)' }} />
+        ))}
+      </div>
+    </div>
+  </div>
+)
+
 const TrustStrip = () => (
   <div style={{ background: '#fff', borderTop: '1px solid rgba(15,27,61,0.06)', borderBottom: '1px solid rgba(15,27,61,0.06)', padding: '22px 0' }} dir="rtl">
     <div className="hp-container">
@@ -985,6 +1005,7 @@ export const HomePage = () => (
     <main>
       <Hero />
       <TrustStrip />
+      <GovBadges />
       <Results />
       <Method />
       <AiSection />
@@ -995,5 +1016,6 @@ export const HomePage = () => (
     </main>
     <Footer />
     <StickyBar />
+    <AiChatWidget route="clinic-landing" accentColor="#2563EB" productName="Madar" />
   </>
 )
