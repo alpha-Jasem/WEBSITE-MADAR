@@ -614,8 +614,10 @@ const GovBadges = () => {
 
             {/* زر السجل التجاري */}
             <div style={{ padding: '0 40px' }}>
-              <button
-                onClick={() => window.open('/commercial-registration.pdf', '_blank')}
+              <a
+                href="/commercial-registration.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
                 style={{
                   fontFamily: '"IBM Plex Sans Arabic", Cairo, sans-serif',
                   fontSize: 14, fontWeight: 600,
@@ -627,6 +629,7 @@ const GovBadges = () => {
                   cursor: 'pointer',
                   display: 'inline-flex', alignItems: 'center', gap: 8,
                   letterSpacing: '0.02em',
+                  textDecoration: 'none',
                   transition: 'background 0.18s, border-color 0.18s',
                 }}
                 onMouseEnter={e => { const b = e.currentTarget; b.style.background = 'rgba(255,255,255,0.12)'; b.style.borderColor = 'rgba(255,255,255,0.5)' }}
@@ -636,7 +639,7 @@ const GovBadges = () => {
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
                 </svg>
                 السجل التجاري
-              </button>
+              </a>
             </div>
 
           </div>
