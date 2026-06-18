@@ -582,9 +582,10 @@ const GovBadges = () => {
           <div
             onClick={e => e.stopPropagation()}
             style={{
-              position: 'relative', maxWidth: 700, width: '100%',
+              position: 'relative', maxWidth: 860, width: '100%',
               borderRadius: 10, overflow: 'hidden',
               boxShadow: '0 32px 96px rgba(0,0,0,0.7)',
+              background: '#fff',
             }}
           >
             <button
@@ -601,10 +602,10 @@ const GovBadges = () => {
             >
               ×
             </button>
-            <img
-              src="/commercial-registration.jpg"
-              alt="السجل التجاري — مؤسسة جاسم حسن زيد الطبيشي للتجارة"
-              style={{ width: '100%', display: 'block' }}
+            <iframe
+              src="/commercial-registration.pdf"
+              title="السجل التجاري — مؤسسة جاسم حسن زيد الطبيشي للتجارة"
+              style={{ width: '100%', height: '90vh', border: 'none', display: 'block', background: '#fff' }}
             />
           </div>
         </div>
