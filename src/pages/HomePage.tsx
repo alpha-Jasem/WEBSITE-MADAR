@@ -610,22 +610,22 @@ const GovBadges = () => {
         </div>
       )}
 
-      {/* ── Logos strip (light bg so SDAIA colors show correctly) ── */}
-      <div style={{ background: '#F8F9FC', borderTop: `1px solid ${C.rule}`, padding: '36px 0 28px' }} dir="rtl">
+      {/* ── Logos strip ── */}
+      <div style={{ background: '#fff', borderTop: `1px solid ${C.rule}`, borderBottom: `1px solid ${C.rule}`, padding: '44px 0 40px' }} dir="rtl">
         <div className="hp-container">
           <p style={{
-            fontFamily: '"IBM Plex Mono", monospace', fontSize: 10,
+            fontFamily: '"IBM Plex Mono", monospace', fontSize: 11,
             color: C.ink3, letterSpacing: '0.18em', textTransform: 'uppercase',
-            textAlign: 'center', marginBottom: 28,
+            textAlign: 'center', marginBottom: 36,
           }}>
             ضمن المنظومة التقنية السعودية
           </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '24px 48px' }}>
-            <img src="/sdaia-logo.png"            alt="SDAIA — الهيئة السعودية للبيانات والذكاء الاصطناعي" style={{ height: 44, width: 'auto', objectFit: 'contain' }} />
-            <img src="/cst-logo.svg"              alt="هيئة الاتصالات والفضاء والتقنية"  style={{ height: 40, width: 'auto', objectFit: 'contain' }} />
-            <img src="/monshaat-logo.png"         alt="منشآت — الهيئة العامة للمنشآت الصغيرة والمتوسطة" style={{ height: 44, width: 'auto', objectFit: 'contain' }} />
-            <img src="/saudi-business-center.png" alt="المركز السعودي للأعمال"        style={{ height: 40, width: 'auto', objectFit: 'contain' }} />
-            <img src="/saudi-tech-logo.png"       alt="تقنية سعودية"                  style={{ height: 44, width: 'auto', objectFit: 'contain' }} />
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '32px 64px' }}>
+            <img src="/sdaia-logo.png"            alt="SDAIA" style={{ height: 64, width: 'auto', objectFit: 'contain' }} />
+            <img src="/cst-logo.svg"              alt="هيئة الاتصالات والفضاء والتقنية" style={{ height: 58, width: 'auto', objectFit: 'contain' }} />
+            <img src="/monshaat-logo.png"         alt="منشآت" style={{ height: 64, width: 'auto', objectFit: 'contain' }} />
+            <img src="/saudi-business-center.png" alt="المركز السعودي للأعمال" style={{ height: 58, width: 'auto', objectFit: 'contain' }} />
+            <img src="/saudi-tech-logo.png"       alt="تقنية سعودية" style={{ height: 64, width: 'auto', objectFit: 'contain' }} />
           </div>
         </div>
       </div>
