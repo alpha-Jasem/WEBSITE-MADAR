@@ -22,7 +22,6 @@
     "headless": true
   },
   "dependencies": {
-    "@elevenlabs/react": "^1.7.0",
     "@number-flow/react": "^0.6.0",
     "@remotion/player": "^4.0.463",
     "@splinetool/react-spline": "^4.1.0",
