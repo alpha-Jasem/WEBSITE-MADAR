@@ -24,6 +24,9 @@ export function MahaWidget() {
   }, [])
 
   return (
-    <elevenlabs-convai agent-id={AGENT_ID} />
+    <elevenlabs-convai
+      agent-id={AGENT_ID}
+      dynamic-variables={JSON.stringify({ customer_phone: 'web' })}
+    />
   )
 }
