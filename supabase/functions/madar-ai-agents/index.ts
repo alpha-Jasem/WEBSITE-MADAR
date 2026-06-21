@@ -389,7 +389,7 @@ Deno.serve(async (req) => {
     .limit(8)
 
   const history = ((historyRows || []) as any[]).reverse().map(row => `${row.role === 'user' ? 'User' : 'Assistant'}: ${safeText(row.content, 650)}`).join('\n')
-  const model = Deno.env.get('OPENAI_MODEL') || 'gpt-5-mini'
+  const model = Deno.env.get('OPENAI_MODEL') || 'gpt-4o-mini'
 
   const response = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
