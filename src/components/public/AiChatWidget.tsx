@@ -86,7 +86,7 @@ export const AiChatWidget = ({ route, accentColor, productName }: Props) => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.95 }}
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed bottom-24 right-6 z-50 w-[340px] sm:w-[380px] rounded-2xl overflow-hidden flex flex-col"
+            className="fixed bottom-36 right-6 z-50 w-[340px] sm:w-[380px] rounded-2xl overflow-hidden flex flex-col"
             style={{
               background: 'rgba(8,14,28,0.98)',
               border: `1px solid ${accentColor}30`,
@@ -210,7 +210,7 @@ export const AiChatWidget = ({ route, accentColor, productName }: Props) => {
       {/* Floating button */}
       <motion.button
         onClick={() => setIsOpen(prev => !prev)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center cursor-pointer shadow-lg"
+        className="fixed bottom-20 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center cursor-pointer shadow-lg"
         style={{ background: `linear-gradient(135deg, #0D1B3E, ${accentColor})`, boxShadow: `0 8px 24px ${accentColor}40` }}
         whileHover={{ scale: 1.1, boxShadow: `0 12px 32px ${accentColor}55` }}
         whileTap={{ scale: 0.95 }}
