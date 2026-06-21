@@ -24,6 +24,9 @@ export function MahaWidget() {
   }, [])
 
   return (
-    <elevenlabs-convai agent-id={AGENT_ID} />
+    <elevenlabs-convai
+      agent-id={AGENT_ID}
+      style={{ position: 'fixed', left: '24px', right: 'auto', bottom: '24px' } as React.CSSProperties}
+    />
   )
 }
