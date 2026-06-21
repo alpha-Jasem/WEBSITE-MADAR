@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Suspense, lazy, useEffect } from 'react'
 import { LanguageProvider } from './context/LanguageContext'
+import { MahaWidget } from './components/shared/MahaWidget'
 import { ClinicOSProvider } from './context/ClinicOSContext'
 import { ProtectedRoute } from './components/shared/ProtectedRoute'
 import { ErrorBoundary, reloadForFreshAssets } from './components/shared/ErrorBoundary'
@@ -20,6 +21,15 @@ function ScrollToTop() {
   const { pathname } = useLocation()
   useEffect(() => { window.scrollTo(0, 0) }, [pathname])
   return null
+}
+
+const WIDGET_HIDDEN_PATHS = ['/admin', '/clinic-os', '/solar', '/client', '/login', '/forgot-password', '/reset-password', '/auth']
+
+function ConvAIWidget() {
+  const { pathname } = useLocation()
+  const hidden = WIDGET_HIDDEN_PATHS.some(p => pathname.startsWith(p))
+  if (hidden) return null
+  return <MahaWidget />
 }
 
 const AdminDashboard    = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
@@ -70,6 +80,7 @@ function App() {
       <BrowserRouter>
         <ErrorBoundary>
         <ScrollToTop />
+        <ConvAIWidget />
         <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<HomePage />} />
