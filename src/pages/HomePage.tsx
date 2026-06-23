@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { motion, AnimatePresence, useScroll, useSpring, useInView } from 'framer-motion'
 import { Check, ChevronDown, MessageCircle, Calendar, BarChart3, Clock, Phone, Bot, Zap, Menu, X } from 'lucide-react'
 import { Footer } from '../components/public/Footer'
 import { AiChatWidget } from '../components/public/AiChatWidget'
@@ -36,6 +36,39 @@ const C = {
 const rv = { initial: { opacity: 0, y: 20 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true }, transition: { duration: 0.55 } }
 // Hero elements are visible on mount — use animate directly, not whileInView
 const ha = { initial: { opacity: 0, y: 18 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.6 } }
+
+/* ─── Scroll Progress Bar ─────────────────────────────────────────── */
+const ScrollProgressBar = () => {
+  const { scrollYProgress } = useScroll()
+  const scaleX = useSpring(scrollYProgress, { stiffness: 200, damping: 30 })
+  return (
+    <motion.div
+      style={{ scaleX, transformOrigin: 'left', position: 'fixed', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, #2563EB, #60A5FA, #2563EB)', zIndex: 9999, backgroundSize: '200% 100%' }}
+    />
+  )
+}
+
+/* ─── Animated Counter ────────────────────────────────────────────── */
+const AnimCounter = ({ to, suffix = '' }: { to: number; suffix?: string }) => {
+  const [val, setVal] = useState(0)
+  const ref = useRef<HTMLSpanElement>(null)
+  const inView = useInView(ref, { once: true, margin: '-60px' })
+  useEffect(() => {
+    if (!inView) return
+    let raf: number
+    const duration = 1400
+    const start = performance.now()
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / duration, 1)
+      const ease = 1 - Math.pow(1 - p, 3)
+      setVal(Math.round(ease * to))
+      if (p < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [inView, to])
+  return <span ref={ref}>{val}{suffix}</span>
+}
 
 /* ─── Global CSS ─────────────────────────────────────────────────── */
 const GlobalCSS = () => (
@@ -268,6 +301,83 @@ const GlobalCSS = () => (
       30% { transform: translateY(-4px); opacity: 1; }
     }
 
+    /* Float orbs */
+    @keyframes orb-drift-a {
+      0%,100% { transform: translate(0,0) scale(1); }
+      33%      { transform: translate(-28px,22px) scale(1.08); }
+      66%      { transform: translate(18px,-14px) scale(0.94); }
+    }
+    @keyframes orb-drift-b {
+      0%,100% { transform: translate(0,0) scale(1); }
+      40%      { transform: translate(22px,18px) scale(0.92); }
+      70%      { transform: translate(-12px,-22px) scale(1.06); }
+    }
+    @keyframes orb-drift-c {
+      0%,100% { transform: translate(0,0) scale(1); }
+      50%      { transform: translate(14px,28px) scale(1.04); }
+    }
+    .orb-a { animation: orb-drift-a 14s ease-in-out infinite; }
+    .orb-b { animation: orb-drift-b 18s ease-in-out infinite; }
+    .orb-c { animation: orb-drift-c 22s ease-in-out infinite; }
+
+    /* Shimmer button */
+    @keyframes shimmer {
+      0%   { background-position: 200% center; }
+      100% { background-position: -200% center; }
+    }
+    .btn-shimmer {
+      background-size: 200% auto !important;
+      animation: shimmer 3.5s linear infinite;
+    }
+
+    /* Glow pulse border */
+    @keyframes glow-border {
+      0%,100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); }
+      50%      { box-shadow: 0 0 0 6px rgba(37,99,235,0.18), 0 0 32px rgba(37,99,235,0.12); }
+    }
+    .glow-card { animation: glow-border 3.5s ease-in-out infinite; }
+
+    /* Floating badge pop */
+    @keyframes badge-float {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-6px); }
+    }
+    .float-badge { animation: badge-float 3s ease-in-out infinite; }
+
+    /* Number pop in */
+    @keyframes num-pop {
+      from { opacity:0; transform: scale(0.85) translateY(10px); }
+      to   { opacity:1; transform: scale(1) translateY(0); }
+    }
+    .num-pop { animation: num-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both; }
+
+    /* Horizontal scroll marquee for trust strip */
+    @keyframes marquee {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    /* Gradient text animation */
+    @keyframes grad-shift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .grad-anim {
+      background: linear-gradient(135deg, #1E3A6E, #2563EB, #60A5FA, #1E3A6E);
+      background-size: 300% 300%;
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: grad-shift 6s ease infinite;
+    }
+
+    /* Stagger children */
+    .stagger-children > * { opacity: 0; animation: num-pop 0.45s cubic-bezier(0.34,1.56,0.64,1) both; }
+    .stagger-children.is-visible > *:nth-child(1) { animation-delay: 0.05s; opacity: 1; }
+    .stagger-children.is-visible > *:nth-child(2) { animation-delay: 0.15s; opacity: 1; }
+    .stagger-children.is-visible > *:nth-child(3) { animation-delay: 0.25s; opacity: 1; }
+    .stagger-children.is-visible > *:nth-child(4) { animation-delay: 0.35s; opacity: 1; }
+
     /* Timeline step hover */
     .hp-timeline-step { transition: opacity 0.2s ease; }
     .hp-4timeline:hover .hp-timeline-step { opacity: 0.5; }
@@ -429,19 +539,26 @@ const Hero = () => {
   return (
   <section className="hp-section hp-hero-section" style={{ background: C.paper, paddingTop: 130, paddingBottom: 80, position: 'relative', overflow: 'hidden' }} dir={dir}>
     <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 50% at 90% 10%, rgba(37,99,235,0.06), transparent 60%), radial-gradient(ellipse 50% 40% at 5% 80%, rgba(30,58,110,0.04), transparent 60%)`, pointerEvents: 'none' }} />
-    <div style={{ position: 'absolute', width: 600, height: 600, top: -180, right: -100, borderRadius: '50%', background: 'radial-gradient(circle, rgba(37,99,235,0.18), transparent 70%)', filter: 'blur(80px)', opacity: 0.5, pointerEvents: 'none' }} />
+    {/* Animated orbs */}
+    <div className="orb-a" style={{ position: 'absolute', width: 640, height: 640, top: -200, right: -80, borderRadius: '50%', background: 'radial-gradient(circle, rgba(37,99,235,0.16), transparent 70%)', filter: 'blur(80px)', opacity: 0.55, pointerEvents: 'none' }} />
+    <div className="orb-b" style={{ position: 'absolute', width: 420, height: 420, bottom: -100, left: '15%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(30,58,110,0.12), transparent 70%)', filter: 'blur(60px)', opacity: 0.4, pointerEvents: 'none' }} />
+    <div className="orb-c" style={{ position: 'absolute', width: 280, height: 280, top: '30%', left: '5%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(37,99,235,0.08), transparent 70%)', filter: 'blur(40px)', opacity: 0.35, pointerEvents: 'none' }} />
 
     <div className="hp-container" style={{ position: 'relative' }}>
       <div className="hp-hero-grid">
 
         {/* ── Text side ── */}
-        <motion.div {...ha} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '7px 14px 7px 12px', background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.22)', borderRadius: 999, fontFamily: '"IBM Plex Mono", monospace', fontSize: 11.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.accent2, marginBottom: 22 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.05 }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '7px 14px 7px 12px', background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.22)', borderRadius: 999, fontFamily: '"IBM Plex Mono", monospace', fontSize: 11.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.accent2, marginBottom: 22, width: 'fit-content' }}>
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.brand, boxShadow: '0 0 0 4px rgba(37,99,235,0.18)', flexShrink: 0 }} />
             {t('استقبال ذكي · ٢٤/٧ · بدون انقطاع', 'Smart Reception · 24/7 · Always On')}
-          </div>
+          </motion.div>
 
-          <h1 style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(48px,5.6vw,82px)', fontWeight: 400, color: C.ink, lineHeight: 1.0, marginBottom: 24, letterSpacing: '-0.025em' }}>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.15 }}
+            style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(48px,5.6vw,82px)', fontWeight: 400, color: C.ink, lineHeight: 1.0, marginBottom: 24, letterSpacing: '-0.025em' }}>
             {t('استقبال ذكي', 'Smart Reception')}
             <br />
             {t('لعيادة', 'for a')}{' '}
@@ -451,39 +568,54 @@ const Hero = () => {
               ))}
             </span>
             {t('', ' Clinic')}.
-          </h1>
+          </motion.h1>
 
-          <p style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontSize: 18, color: C.ink2, lineHeight: 1.75, marginBottom: 38, maxWidth: 420 }}>
+          <motion.p
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.28 }}
+            style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontSize: 18, color: C.ink2, lineHeight: 1.75, marginBottom: 38, maxWidth: 420 }}>
             {t(
               'نظام يستقبل عملائك على واتساب، يحجز المواعيد، ويُذكّرهم تلقائياً — بدون موظف استقبال إضافي.',
               'An AI system that handles patient inquiries on WhatsApp, books appointments, and sends automatic reminders — no extra receptionist needed.'
             )}
-          </p>
+          </motion.p>
 
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', marginBottom: 48 }}>
-            <button className="btn btn-primary" style={{ fontSize: 16, padding: '15px 28px' }}
+            <motion.button
+              whileHover={{ scale: 1.03, boxShadow: '0 8px 32px rgba(37,99,235,0.35)' }}
+              whileTap={{ scale: 0.97 }}
+              className="btn btn-shimmer"
+              style={{ fontSize: 16, padding: '15px 28px', background: 'linear-gradient(90deg, #1E3A6E, #2563EB, #60A5FA, #2563EB, #1E3A6E)', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}
               onClick={() => wa('مرحباً، أريد حجز جلسة مجانية لمناقشة نظام الاستقبال الذكي لعيادتي')}>
               {t('احجز جلسة مجانية 30 دقيقة ←', 'Book a Free 30-Min Session →')}
-            </button>
-            <button className="btn btn-ghost"
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02, borderColor: C.accent }}
+              whileTap={{ scale: 0.98 }}
+              className="btn btn-ghost"
               onClick={() => document.querySelector('#method')?.scrollIntoView({ behavior: 'smooth' })}>
               {t('كيف يعمل النظام', 'How It Works')}
-            </button>
+            </motion.button>
           </div>
 
           <div style={{ display: 'flex', paddingTop: 28, borderTop: `1px solid ${C.rule}` }}>
             {[
-              { n: '80%',  label: t('تقليل المكالمات الفائتة', 'Fewer Missed Calls') },
-              { n: language === 'ar' ? '<5ث' : '<5s', label: t('سرعة الرد', 'Response Speed') },
-              { n: '24/7', label: t('استقبال مستمر', 'Always On') },
+              { to: 80, suffix: '%', label: t('تقليل المكالمات الفائتة', 'Fewer Missed Calls') },
+              { to: 5,  suffix: language === 'ar' ? 'ث' : 's', prefix: '<', label: t('سرعة الرد', 'Response Speed') },
+              { to: 24, suffix: '/7', label: t('استقبال مستمر', 'Always On') },
             ].map((s, i) => (
-              <div key={i} style={{ padding: '0 20px', borderRight: i > 0 && dir === 'rtl' ? `1px solid ${C.rule}` : 'none', borderLeft: i > 0 && dir === 'ltr' ? `1px solid ${C.rule}` : 'none' }}>
-                <div style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 30, fontWeight: 400, color: C.ink, lineHeight: 1 }}>{s.n}</div>
+              <motion.div key={i}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 + i * 0.12, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                style={{ padding: '0 20px', borderRight: i > 0 && dir === 'rtl' ? `1px solid ${C.rule}` : 'none', borderLeft: i > 0 && dir === 'ltr' ? `1px solid ${C.rule}` : 'none' }}>
+                <div style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 30, fontWeight: 400, color: C.accent2, lineHeight: 1 }}>
+                  {(s as any).prefix || ''}<AnimCounter to={s.to} suffix={s.suffix} />
+                </div>
                 <div style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 10, letterSpacing: '0.11em', textTransform: 'uppercase', color: C.ink3, marginTop: 8 }}>{s.label}</div>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </motion.div>
+        </div>
 
         {/* ── Visual side: dark card ── */}
         <motion.div {...ha} transition={{ delay: 0.18 }} className="hp-hero-phone">
@@ -543,7 +675,12 @@ const Hero = () => {
                 </div>
               </div>
             </div>
-            <div className="hp-hero-float" style={{ position: 'absolute', bottom: 0, left: 0, background: '#fff', borderRadius: 14, padding: '12px 18px', boxShadow: '0 12px 36px rgba(12,26,46,0.16)', border: `1px solid ${C.rule}`, fontFamily: '"IBM Plex Sans Arabic", sans-serif', display: 'flex', alignItems: 'center', gap: 12 }}>
+            {/* Floating stat card — bottom left */}
+            <motion.div className="hp-hero-float float-badge"
+              initial={{ opacity: 0, x: -20, y: 10 }}
+              animate={{ opacity: 1, x: 0, y: 0 }}
+              transition={{ delay: 1.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              style={{ position: 'absolute', bottom: 0, left: 0, background: '#fff', borderRadius: 14, padding: '12px 18px', boxShadow: '0 12px 36px rgba(12,26,46,0.16)', border: `1px solid ${C.rule}`, fontFamily: '"IBM Plex Sans Arabic", sans-serif', display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(37,99,235,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Calendar size={16} color={C.accent2} />
               </div>
@@ -551,7 +688,21 @@ const Hero = () => {
                 <div style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 20, fontWeight: 600, color: C.ink, lineHeight: 1 }}>{t('14 موعد', '14 Appts')}</div>
                 <div style={{ fontSize: 11, color: C.ink3, marginTop: 3, fontFamily: '"IBM Plex Mono", monospace', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{t('محجوز اليوم', 'Booked Today')}</div>
               </div>
-            </div>
+            </motion.div>
+            {/* Floating notification — top right */}
+            <motion.div className="hp-hero-float"
+              initial={{ opacity: 0, x: 20, y: -10 }}
+              animate={{ opacity: 1, x: 0, y: 0 }}
+              transition={{ delay: 1.5, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              style={{ position: 'absolute', top: -18, right: -12, background: '#fff', borderRadius: 12, padding: '10px 14px', boxShadow: '0 8px 28px rgba(12,26,46,0.14)', border: `1px solid ${C.rule}`, display: 'flex', alignItems: 'center', gap: 10, maxWidth: 210 }}>
+              <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(34,197,94,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Check size={14} color="#16a34a" strokeWidth={2.5} />
+              </div>
+              <div>
+                <div style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontSize: 11, fontWeight: 600, color: C.ink }}>{t('تم تأكيد الموعد', 'Appointment Confirmed')}</div>
+                <div style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 9, color: C.ink3, marginTop: 2, letterSpacing: '0.04em' }}>{t('سارة — الثلاثاء 4:30م', 'Sara — Tue 4:30 PM')}</div>
+              </div>
+            </motion.div>
           </div>
         </motion.div>
       </div>
@@ -694,9 +845,9 @@ const Results = () => {
     t('ما الذي يجعل النتائج ممكنة', 'What makes these results possible'),
   ]
   const metrics = [
-    { metric: '+40%', label: t('زيادة في المواعيد المحجوزة', 'Increase in Booked Appointments'), sub: t('متوسط أول 60 يوم', 'Average first 60 days') },
-    { metric: '0',    label: t('مكالمات فائتة خارج الدوام',  'Missed Calls After Hours'),        sub: t('المساعد يعمل 24/7', 'AI runs 24/7') },
-    { metric: t('3 أسابيع', '3 Weeks'), label: t('للإطلاق الكامل', 'To Full Launch'),            sub: t('من التعاقد حتى التشغيل', 'From contract to go-live') },
+    { to: 40, prefix: '+', suffix: '%', label: t('زيادة في المواعيد المحجوزة', 'Increase in Booked Appointments'), sub: t('متوسط أول 60 يوم', 'Average first 60 days') },
+    { to: 0,  prefix: '',  suffix: '',  label: t('مكالمات فائتة خارج الدوام',  'Missed Calls After Hours'),        sub: t('المساعد يعمل 24/7', 'AI runs 24/7') },
+    { to: 3,  prefix: '',  suffix: language === 'ar' ? ' أسابيع' : ' Weeks', label: t('للإطلاق الكامل', 'To Full Launch'), sub: t('من التعاقد حتى التشغيل', 'From contract to go-live') },
   ]
   return (
     <section className="hp-section" style={{ background: C.paper }} dir={dir}>
@@ -726,12 +877,19 @@ const Results = () => {
           </motion.div>
 
           <motion.div {...rv} transition={{ delay: 0.15 }}>
-            {metrics.map(({ metric, label, sub }) => (
-              <div key={label as string} style={{ padding: '22px 0', borderBottom: `1px solid ${C.rule}` }}>
-                <div style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 34, fontWeight: 400, color: C.accent2, lineHeight: 1 }}>{metric}</div>
+            {metrics.map(({ to, prefix, suffix, label, sub }, idx) => (
+              <motion.div key={label as string}
+                initial={{ opacity: 0, x: dir === 'rtl' ? 20 : -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.12, duration: 0.5 }}
+                style={{ padding: '22px 0', borderBottom: `1px solid ${C.rule}` }}>
+                <div style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 34, fontWeight: 400, color: C.accent2, lineHeight: 1 }}>
+                  {prefix}<AnimCounter to={to} suffix={suffix} />
+                </div>
                 <div style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontWeight: 600, fontSize: 15, color: C.ink, margin: '6px 0 3px' }}>{label}</div>
                 <div style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontSize: 13, color: C.ink3 }}>{sub}</div>
-              </div>
+              </motion.div>
             ))}
           </motion.div>
         </div>
@@ -759,8 +917,13 @@ const Method = () => {
         </motion.h2>
         <div className="hp-4col" style={{ borderTop: `1px solid ${C.rule}` }}>
           {cards.map(({ icon: Icon, n, title, items }, idx) => (
-            <motion.div key={n} {...rv} transition={{ delay: idx * 0.08 }}
-              style={{ padding: '32px 24px', borderRight: dir === 'rtl' ? `1px solid ${C.rule}` : 'none', borderLeft: dir === 'ltr' ? `1px solid ${C.rule}` : 'none' }}>
+            <motion.div key={n}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-40px' }}
+              transition={{ delay: idx * 0.1, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+              whileHover={{ backgroundColor: `${C.paper}`, boxShadow: `inset 0 0 0 1px ${C.rule2}` }}
+              style={{ padding: '32px 24px', borderRight: dir === 'rtl' ? `1px solid ${C.rule}` : 'none', borderLeft: dir === 'ltr' ? `1px solid ${C.rule}` : 'none', transition: 'background 0.2s' }}>
               <div style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 11, color: C.ink3, letterSpacing: '0.1em', marginBottom: 20 }}>{n}</div>
               <div style={{ width: 40, height: 40, borderRadius: 8, background: `rgba(37,99,235,0.08)`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
                 <Icon size={18} color={C.accent} />
@@ -833,7 +996,7 @@ const AiSection = () => {
 
         <motion.div {...rv} transition={{ delay: 0.2 }} style={{ alignSelf: 'start' }}>
           {/* AI System Interface — professional dashboard mockup */}
-          <div style={{ background: '#070F1E', borderRadius: 16, border: '1px solid rgba(255,255,255,0.07)', overflow: 'hidden', fontFamily: '"IBM Plex Sans Arabic", sans-serif' }}>
+          <div className="glow-card" style={{ background: '#070F1E', borderRadius: 16, border: '1px solid rgba(37,99,235,0.25)', overflow: 'hidden', fontFamily: '"IBM Plex Sans Arabic", sans-serif' }}>
 
             {/* Top bar */}
             <div style={{ background: '#0B1628', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -990,7 +1153,8 @@ const Programs = () => {
             </button>
           </motion.div>
 
-          <motion.div {...rv} transition={{ delay: 0.12 }} className="hp-card hp-card-dark" style={{ background: C.dark, borderRadius: 10, padding: '36px 32px', borderTop: `4px solid ${C.gold}` }}>
+          <motion.div {...rv} transition={{ delay: 0.12 }} className="hp-card hp-card-dark glow-card" style={{ background: C.dark, borderRadius: 10, padding: '36px 32px', borderTop: `4px solid ${C.brand}`, position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(37,99,235,0.15), transparent 70%)', pointerEvents: 'none' }} />
             <div style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 10, color: C.gold, letterSpacing: '0.1em', marginBottom: 16 }}>{t('مناسب لـ · عيادة تريد نمواً متسارعاً', 'Best for · Clinics pursuing fast growth')}</div>
             <h3 style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 24, fontWeight: 500, color: C.onDark, marginBottom: 12 }}>{t('النمو الكامل', 'Full Growth')}</h3>
             <p style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontSize: 14, color: C.onDark2, lineHeight: 1.75, marginBottom: 24 }}>
@@ -1072,11 +1236,15 @@ const FinalCTA = () => {
       <motion.p {...rv} style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontSize: 17, color: C.onDark2, lineHeight: 1.8, marginBottom: 36 }}>
         {t('نفهم وضع عيادتك الآن، ونعطيك خطة واضحة — بدون أي التزام.', "We understand your clinic's current situation and give you a clear plan — with no commitment.")}
       </motion.p>
-      <button className="btn btn-on-dark" style={{ fontSize: 16, padding: '15px 30px' }}
+      <motion.button
+        whileHover={{ scale: 1.04, boxShadow: '0 0 48px rgba(255,255,255,0.25)' }}
+        whileTap={{ scale: 0.97 }}
+        className="btn btn-on-dark"
+        style={{ fontSize: 16, padding: '15px 30px', display: 'inline-flex', alignItems: 'center', gap: 8 }}
         onClick={() => wa('مرحباً، أريد حجز جلسة تعريفية مجانية 30 دقيقة')}>
         <MessageCircle size={17} />
         {t('احجز جلسة مجانية ←', 'Book a Free Session →')}
-      </button>
+      </motion.button>
     </div>
   </section>
   )
@@ -1107,6 +1275,7 @@ const StickyBar = () => {
 export const HomePage = () => (
   <>
     <GlobalCSS />
+    <ScrollProgressBar />
     <Navbar />
     <main>
       <Hero />
