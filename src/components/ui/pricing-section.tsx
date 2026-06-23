@@ -1,7 +1,6 @@
 "use client";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { TimelineContent } from "@/components/ui/timeline-animation";
-import NumberFlow from "@number-flow/react";
 import { Car, CheckCheck, BarChart3, Zap, Users, Sparkles, ArrowLeft, Tag } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRef, useState } from "react";
@@ -220,7 +219,7 @@ export default function PricingSection() {
                     <div className="flex items-baseline gap-1 justify-end">
                       <span className="text-slate-400 font-tajawal text-sm">/{isYearly ? "سنة" : "شهر"}</span>
                       <span className="text-slate-900 font-black font-cairo" style={{ fontSize: 42 }}>
-                        <NumberFlow value={displayPrice} />
+                        {displayPrice.toLocaleString('ar-SA')}
                       </span>
                       <span className="text-xl font-bold text-slate-600">ر.س</span>
                     </div>

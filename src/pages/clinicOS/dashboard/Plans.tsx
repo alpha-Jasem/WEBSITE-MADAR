@@ -1,5 +1,4 @@
 import { useState, type ReactNode } from 'react'
-import NumberFlow from '@number-flow/react'
 import { motion } from 'framer-motion'
 import { Bot, Check, CheckCheck, Eye, Headphones, MessageCircle, Phone, ShieldCheck, Sparkles, X } from 'lucide-react'
 import { useClinicOS } from '../../../context/ClinicOSContext'
@@ -55,7 +54,7 @@ export const PlansPage = () => {
 const PlanCard=({index,icon:Icon,name,kicker,description,annual,setup,features,current,highlighted,badge,footer}:{index:number;icon:typeof MessageCircle;name:string;kicker:string;description:string;annual:number;setup:number;features:string[];current:boolean;highlighted?:boolean;badge?:string;footer?:ReactNode})=><motion.article initial={{opacity:0,y:18}} animate={{opacity:1,y:0}} transition={{duration:.42,delay:index*.08}} className={`clinic-plan-card ${highlighted?'featured':''} ${current?'current':''}`}>
   {highlighted&&<div className="clinic-plan-popular"><Sparkles size={13}/>{badge}</div>}
   <div className="clinic-plan-topline"><div className="clinic-plan-icon"><Icon size={21}/></div>{current&&<span className="clinic-badge success">الباقة الحالية</span>}</div>
-  <div className="clinic-plan-price"><strong><NumberFlow value={annual} locales="en-US"/></strong><span>ر.س / سنة</span></div>
+  <div className="clinic-plan-price"><strong>{annual.toLocaleString('en-US')}</strong><span>ر.س / سنة</span></div>
   <small className="clinic-plan-kicker">{kicker}</small><h2>{name}</h2><p>{description}</p>
   <div className="clinic-plan-setup"><span>رسوم تأسيس لمرة واحدة</span><strong>{setup.toLocaleString('en-US')} ر.س</strong></div>
   <div className="clinic-plan-includes"><strong>{annual===0?'يشمل الحساب المجاني:':'تشمل الباقة:'}</strong><ul>{features.map(feature=><li key={feature}><span><CheckCheck size={14}/></span><em>{feature}</em></li>)}</ul></div>
