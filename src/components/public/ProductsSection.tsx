@@ -16,8 +16,8 @@ const products = [
     ar: {
       tag: 'Clinic OS',
       name: 'نظام تشغيل العيادة',
-      tagline: 'نورة تحجز، تذكّر، وتدير — وأنت مرتاح',
-      features: ['مساعد صوتي (نورة) 24/7', 'حجز بدون تعارض', 'داشبورد + Google Calendar'],
+      tagline: 'مها تحجز، تذكّر، وتدير — وأنت مرتاح',
+      features: ['مساعد صوتي (مها) 24/7', 'حجز بدون تعارض', 'داشبورد + Google Calendar'],
       metric: { value: '٧٨٪', label: 'نسبة تحويل المرضى' },
       cta: 'اكتشف Clinic OS',
       ctaEn: 'Explore Clinic OS',
@@ -25,8 +25,8 @@ const products = [
     en: {
       tag: 'Clinic OS',
       name: 'Clinic Operating System',
-      tagline: 'Nora Books, Reminds, and Manages — You Rest',
-      features: ['Voice agent (Nora) 24/7', 'Zero double-booking', 'Dashboard + Google Calendar'],
+      tagline: 'Maha Books, Reminds, and Manages — You Rest',
+      features: ['Voice agent (Maha) 24/7', 'Zero double-booking', 'Dashboard + Google Calendar'],
       metric: { value: '78%', label: 'Patient conversion rate' },
       cta: 'Explore Clinic OS',
       ctaEn: 'Explore Clinic OS',

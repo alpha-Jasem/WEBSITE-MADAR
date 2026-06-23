@@ -25,7 +25,7 @@ export const AiChatWidget = ({ route, accentColor, productName }: Props) => {
   // Greeting on first open
   useEffect(() => {
     if (isOpen && messages.length === 0) {
-      const greet = `أهلاً! أنا مساعد مدار لـ Clinic OS 🦷\nأقدر أشرح لك كيف تشتغل نورة وباقي مميزات النظام. وش تبي تعرف؟`
+      const greet = `أهلاً! أنا مساعد مدار لـ Clinic OS 🦷\nأقدر أشرح لك كيف تشتغل مها وباقي مميزات النظام. وش تبي تعرف؟`
       setMessages([{ role: 'assistant', content: greet }])
     }
   }, [isOpen, messages.length, route])

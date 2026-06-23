@@ -195,7 +195,7 @@ export const DEMO_AI_CALLS: AICallLog[] = [
   {
     id: 'call-001', clinic_id: 'demo-clinic-001', patient_name: 'ليلى الغامدي', phone: '0506789012', call_time: TODAY + 'T08:10:00Z', duration_seconds: 87, intent: 'book_appointment', result: 'booked', status: 'completed',
     transcript: [
-      { speaker: 'agent', text: 'أهلاً وسهلاً، عيادات نور للأسنان، أنا نورة كيف أقدر أساعدك؟', time: '00:00' },
+      { speaker: 'agent', text: 'أهلاً وسهلاً، عيادات نور للأسنان، أنا مها كيف أقدر أساعدك؟', time: '00:00' },
       { speaker: 'patient', text: 'أبغى أحجز موعد كشف عام لليوم إذا في وقت متاح', time: '00:05' },
       { speaker: 'agent', text: 'بكل سرور! أي وقت يناسبك؟ عندنا وقت متاح الساعة 4 عصراً مع الدكتورة سارة', time: '00:12' },
       { speaker: 'patient', text: 'تمام الساعة 4 زين', time: '00:18' },

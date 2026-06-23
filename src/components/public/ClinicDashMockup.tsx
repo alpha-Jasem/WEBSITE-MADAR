@@ -8,7 +8,7 @@ const kpis = [
   { icon: Calendar,   value: '١٨',  label: 'موعد اليوم',  color: EM,         bg: '#ECFDF5', border: '#A7F3D0' },
   { icon: UserPlus,   value: '٦',   label: 'مرضى جدد',    color: CY,         bg: '#EFF9FF', border: '#BAE6FD' },
   { icon: CheckCircle,value: '٩٤٪', label: 'نسبة الحضور', color: '#8B5CF6',  bg: '#F5F3FF', border: '#DDD6FE' },
-  { icon: Bot,        value: '٤١',  label: 'رد نورة',     color: '#F59E0B',  bg: '#FFFBEB', border: '#FDE68A' },
+  { icon: Bot,        value: '٤١',  label: 'رد مها',      color: '#F59E0B',  bg: '#FFFBEB', border: '#FDE68A' },
 ]
 
 const appointments = [
@@ -175,7 +175,7 @@ export const ClinicDashMockup = ({ compact = false }: { compact?: boolean }) => 
             <Bot size={14} className="text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold" style={{ color: '#92400E' }}>نورة — متصلة الآن</p>
+            <p className="text-[10px] font-bold" style={{ color: '#92400E' }}>مها — متصلة الآن</p>
             <p className="text-[9px]" style={{ color: '#B45309' }}>ردت على ٤١ استفسار اليوم · ٧٨٪ تحويل</p>
           </div>
           <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#4ADE80' }} />

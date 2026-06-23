@@ -37,8 +37,8 @@ const cases = [
       { icon: DollarSign,  before: { ar: '٠', en: '0' }, after: { ar: '24/7', en: '24/7' }, label: { ar: 'ساعات الاستقبال الإضافية المغطاة', en: 'Extra Reception Coverage' }, color: '#1565C0' },
     ],
     testimony: {
-      ar: '"نورة تستقبل الحجوزات بالليل والعطل وأنا مرتاح. الداشبورد يعطيني كل شيء في مكان واحد."',
-      en: '"Noura handles bookings at night and during holidays while I stay relaxed. The dashboard gives me everything in one place."',
+      ar: '"مها تستقبل الحجوزات بالليل والعطل وأنا مرتاح. الداشبورد يعطيني كل شيء في مكان واحد."',
+      en: '"Maha handles bookings at night and during holidays while I stay relaxed. The dashboard gives me everything in one place."',
     },
     author: { ar: 'إدارة عيادات نور — جدة', en: 'Noor Dental Clinics Management — Jeddah' },
   },

@@ -37,7 +37,7 @@ const scenes = [
     tag     : { ar: 'Clinic OS', en: 'Clinic OS' },
     num     : { ar: '٧٨٪', en: '78%' },
     headline: { ar: 'من كل اتصال يصير موعد — حتى وأنت نايم', en: 'Every Call Becomes a Booking — Even While You Sleep' },
-    sub     : { ar: 'نورة تستقبل بالليل والعطل. تتحقق من جدول الدكتور. تحجز وترسل تأكيد. بدون تعارض.', en: 'Nora answers nights and weekends. Checks the schedule. Books and sends confirmation. Zero conflicts.' },
+    sub     : { ar: 'مها تستقبل بالليل والعطل. تتحقق من جدول الدكتور. تحجز وترسل تأكيد. بدون تعارض.', en: 'Maha answers nights and weekends. Checks the schedule. Books and sends confirmation. Zero conflicts.' },
     stats   : [
       { icon: Users,       val:{ ar:'٧٨٪', en:'78%'  }, lbl:{ ar:'معدل تحويل المتصلين',        en:'caller-to-patient rate'       }, bad: false },
       { icon: Clock,       val:{ ar:'٠',   en:'0'    }, lbl:{ ar:'تعارض في الحجز أبداً',       en:'double-bookings ever'         }, bad: false },
@@ -297,7 +297,7 @@ export const StickyOutcomes = () => {
                           style={{ color: 'rgba(255,255,255,0.5)' }}>
                           {active === 1
                             ? t('تشغيل فوري — فريقنا يجهّز كل شيء في ٤٨ ساعة', 'Instant activation — our team sets everything up in 48 hours')
-                            : t('نورة تشتغل من اليوم الأول — لا موظف إضافي', 'Nora works from day one — no extra staff')
+                            : t('مها تشتغل من اليوم الأول — لا موظف إضافي', 'Maha works from day one — no extra staff')
                           }
                         </p>
                       </div>

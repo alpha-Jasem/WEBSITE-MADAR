@@ -350,7 +350,7 @@ export const ClinicOverview = () => {
               </div>
               <div>
                 <p style={{ margin: 0, fontSize: 13, fontWeight: 900, color:'#92400E', fontFamily:'Cairo, sans-serif' }}>
-                  نورة — المساعد الذكي
+                  مها — المساعد الذكي
                 </p>
                 <div style={{ display:'flex', alignItems:'center', gap: 4, marginTop: 2 }}>
                   <div style={{ width: 6, height: 6, borderRadius: '50%', background:'#4ADE80' }} />
