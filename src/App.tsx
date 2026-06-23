@@ -22,6 +22,15 @@ function ScrollToTop() {
   return null
 }
 
+// Strip ?fresh= from URL without reload
+if (typeof window !== 'undefined') {
+  const url = new URL(window.location.href)
+  if (url.searchParams.has('fresh')) {
+    url.searchParams.delete('fresh')
+    window.history.replaceState(null, '', url.pathname + (url.search || '') + url.hash)
+  }
+}
+
 
 const AdminDashboard    = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
 const SolarEngine       = lazy(() => import('./pages/SolarEngine').then(m => ({ default: m.SolarEngine })))
