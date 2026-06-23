@@ -26,7 +26,7 @@ function ScrollToTop() {
 const WIDGET_HIDDEN_PATHS = ['/admin', '/clinic-os', '/solar', '/client', '/login', '/forgot-password', '/reset-password', '/auth']
 
 function ConvAIWidget() {
-  return null
+  return <MahaWidget />
 }
 
 const AdminDashboard    = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
