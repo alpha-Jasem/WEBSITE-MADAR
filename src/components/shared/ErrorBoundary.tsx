@@ -21,9 +21,7 @@ export function reloadForFreshAssets(reason = 'chunk') {
   const lastReload = Number(sessionStorage.getItem(key) || 0)
   if (Date.now() - lastReload < 8000) return
   sessionStorage.setItem(key, String(Date.now()))
-  const url = new URL(window.location.href)
-  url.searchParams.set('fresh', String(Date.now()))
-  window.location.replace(url.toString())
+  window.location.reload()
 }
 
 function recoverFromRuntimeError(error: Error) {
@@ -34,9 +32,7 @@ function recoverFromRuntimeError(error: Error) {
   if (Date.now() - lastReload < 30000) return false
 
   sessionStorage.setItem(key, String(Date.now()))
-  const url = new URL(window.location.href)
-  url.searchParams.set('fresh', String(Date.now()))
-  window.location.replace(url.toString())
+  window.location.reload()
   return true
 }
 
