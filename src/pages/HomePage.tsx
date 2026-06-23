@@ -1287,9 +1287,7 @@ export const HomePage = () => (
       <Programs />
       <FAQ />
       <FinalCTA />
-      <GovBadges />
     </main>
-    <Footer />
     <StickyBar />
     <AiChatWidget route="clinic-landing" accentColor="#2563EB" productName="Madar" />
   </>
