@@ -838,7 +838,7 @@ const TrustStrip = () => {
 
 /* ─── Results ────────────────────────────────────────────────────── */
 const Results = () => {
-  const { t, dir } = useLanguage()
+  const { t, dir, language } = useLanguage()
   const checkItems = [
     t('أرقام حقيقية من عيادات مشابهة', 'Real numbers from similar clinics'),
     t('خطة مخصصة لعيادتك', 'A plan tailored to your clinic'),
