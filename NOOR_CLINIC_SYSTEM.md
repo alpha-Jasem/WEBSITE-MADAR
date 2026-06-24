@@ -1,6 +1,6 @@
 # 🦷 نظام عيادات نور للأسنان — التوثيق الكامل
 
-> منصة حجز ذكية كاملة: مساعد صوتي/واتساب (نورة) → n8n → Supabase + Google Calendar → داشبورد إدارة.
+> منصة حجز ذكية كاملة: مساعد استقبال واتساب (مها) → n8n → Supabase + Google Calendar → داشبورد إدارة.
 > آخر تحديث: 2026-06-02
 
 ---
@@ -9,7 +9,7 @@
 
 ```
                           ┌──────────────────────────┐
-   المريض (واتساب/مكالمة) │   ElevenLabs Agent (نورة) │
+   المريض (واتساب/مكالمة) │   ElevenLabs Agent (مها)  │
         │                 │   7 tools → n8n webhook   │
         ▼                 └────────────┬─────────────┘
                                        │ POST /clinic-tools
@@ -60,10 +60,10 @@
 
 ---
 
-## 3) ElevenLabs Agent (نورة)
+## 3) ElevenLabs Agent (مها)
 
 ### الإعداد
-- **First Message:** `هلا وغلا! أنا نورة من عيادات نور للأسنان. وش أقدر أساعدك فيه اليوم؟`
+- **First Message:** `""` (فارغ — مها تبدأ بالرد على رسالة العميل مباشرة، لا ترسل رسالة افتراضية)
 - **System Prompt:** إنجليزي (أدق للـ LLM) — يحدد الهوية، الأطباء، الخدمات، قواعد الحجز.
 - **Override prompt = ON** على كل نودات الـ Workflow (مهم: بدونه يستخدم الـ system prompt بدل نص النود).
 - **كل الـ edges** فيها Transition type = **LLM Condition** (forward + backward).
@@ -79,7 +79,7 @@
 | `delete_appointment` | `cancel_appointment` | appointment_id |
 | `update_appointment` | `cancel_appointment` | appointment_id (ثم book_event بالوقت الجديد) |
 
-> **مهم:** الجوال يُملأ تلقائياً من `{{customer_phone}}` — نورة ما تسأل عنه.
+> **مهم:** الجوال يُملأ تلقائياً من `{{customer_phone}}` — مها ما تسأل عنه.
 > **صيغة الوقت:** datetime بصيغة 24 ساعة (`15:00` = 3 مساءً). الـ n8n يطبّعها لو جت بأي شكل.
 
 ---
@@ -168,7 +168,7 @@ Get Appt for Cancel → يقرأ google_calendar_event_id
 | 📈 التقارير | 4 رسوم: حجوزات 14 يوم، الخدمات، الأطباء، الحالات |
 
 ### مميزات
-- 🔄 **تحديث حي** (Supabase Realtime) — حجوزات نورة تظهر فوراً.
+- 🔄 **تحديث حي** (Supabase Realtime) — حجوزات مها تظهر فوراً.
 - 🗑️ **زر الإلغاء يمر عبر n8n** → يُحذف من Google Calendar أيضاً (متزامن).
 - ✅ **زر الإكمال** → تحديث مباشر في Supabase.
 
@@ -196,7 +196,7 @@ Get Appt for Cancel → يقرأ google_calendar_event_id
 
 ```
 1. مريض يكتب "أبغا أحجز موعد" بواتساب
-2. نورة → client_lookup (تعرفه بالرقم تلقائياً)
+2. مها → client_lookup (تعرفه بالرقم تلقائياً)
 3. إذا جديد → new_client (تسجيله)
 4. تسأل عن الخدمة → Service Classifier
 5. تسأل عن الدكتور والتاريخ → check_availability (تعرض أقرب الأوقات)
@@ -209,7 +209,7 @@ Get Appt for Cancel → يقرأ google_calendar_event_id
 
 ## 9) ما تم إنجازه (ملخص)
 
-- ✅ نورة تستقبل واتساب/مكالمات بلهجة جدة
+- ✅ مها تستقبل واتساب/مكالمات بلهجة جدة
 - ✅ كل الـ tools محوّلة من Calendly إلى n8n + Supabase
 - ✅ Supabase = مصدر الحقيقة، Calendar = مرآة مرنة
 - ✅ event_id يُحفظ → الإلغاء/التعديل يتزامن مع التقويم

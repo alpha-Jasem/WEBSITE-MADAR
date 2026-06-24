@@ -14,7 +14,7 @@ _آخر تحديث: 2026-06-01_
 | **Backend / DB** | Supabase | project `aacnqiuwrpzgxhzdavaq` (jasem-workflow) |
 | **Automation** | n8n | `keepcalm.app.n8n.cloud` |
 | **WhatsApp** | Meta Business API | Phone ID متعدد حسب المنتج |
-| **Voice AI** | ElevenLabs Agents | للعيادات (Nora) |
+| **Voice AI** | ElevenLabs Agents | للعيادات (مها — Maha) |
 | **Booking** | Calendly | للعيادات |
 | **AI Models** | Claude Haiku / GPT-4o-mini | حسب المهمة |
 
@@ -54,7 +54,7 @@ _آخر تحديث: 2026-06-01_
 ---
 
 ### 🦷 المنتج 2 — العيادات الطبية (مربوط ElevenLabs) ✅ تم بناؤه
-مساعد استقبال صوتي/واتساب (Nora) يحجز عبر Calendly.
+مساعد استقبال واتساب (مها — Maha) يحجز عبر Supabase + n8n.
 
 **التفاصيل الكاملة:** → [ELEVENLABS_DENTAL_AGENT.md](ELEVENLABS_DENTAL_AGENT.md)
 

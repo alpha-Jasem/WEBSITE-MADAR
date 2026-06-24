@@ -20,7 +20,7 @@ export const ClinicOSTopbar = ({ pageTitle, onMenuToggle, showMenuBtn }: Props) 
   const usage = isSubscribed || isDemo ? getOverallUsage(packageType, metrics) : 0
   const plan = CLINIC_PLANS[packageType]
   const notifications = [
-    ...todayAppointments.filter(a => a.status === 'pending' || a.status === 'needs_review').slice(0, 2).map(a => `موعد ${a.patient_name || 'مريض'} يحتاج ${a.status === 'pending' ? 'تأكيداً' : 'مراجعة'}`),
+    ...todayAppointments.filter(a => a.status === 'pending' || a.status === 'needs_review').slice(0, 2).map(a => `موعد ${a.patient_name || 'عميل'} يحتاج ${a.status === 'pending' ? 'تأكيداً' : 'مراجعة'}`),
     ...opportunities.filter(o => o.status !== 'closed').slice(0, 2).map(o => `فرصة متابعة: ${o.customer_name || o.customer_phone}`),
     ...messages.filter(m => m.status === 'failed').slice(0, 1).map(m => `تعذر إرسال رسالة إلى ${m.recipient_name || m.recipient_phone}`),
   ]

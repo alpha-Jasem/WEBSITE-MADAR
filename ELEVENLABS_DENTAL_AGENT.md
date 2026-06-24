@@ -56,7 +56,7 @@ FAQ = يُجاب من Knowledge Base في أي لحظة (مو node)
 
 ### greeting (Greeting)
 ```
-Greet the patient warmly in Jeddah dialect Arabic. Introduce yourself as Nora from Noor Dental Clinics. Ask for the patient's name and what they need help with today. Do not ask whether they are a new or existing patient.
+Greet the patient warmly in Jeddah dialect Arabic. Introduce yourself as Maha from Noor Dental Clinics. Ask for the patient's name and what they need help with today. Do not ask whether they are a new or existing patient.
 ```
 
 ### 🔧 tool_cl_silent (Silent Client Lookup)
@@ -239,7 +239,7 @@ questions_and_answers[0].answer = "National ID: <id> | Phone: {{customer_phone}}
 - ❌ تسجيل المكالمات في Supabase/n8n — **Calendly نفسه هو السجل** (كل حجز = اسم + جوال + هوية)
 - ❌ سكربت تأهيل مفصّل — اكتفينا بالمختصر
 - ❌ event types منفصلة لكل دكتور — حساب Calendly واحد، إيميل الدكتور كـ invitee يكفي
-- ❌ VAPI — تم حذفه نهائياً
+- ❌ VAPI — تم الاستغناء عنه، المنصة الحالية هي ElevenLabs فقط
 
 ---
 

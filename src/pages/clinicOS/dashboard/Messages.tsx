@@ -202,7 +202,7 @@ export const Messages = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-                {['المريض', 'النوع', 'الوقت', 'الحالة'].map(h => (
+                {['العميل', 'النوع', 'الوقت', 'الحالة'].map(h => (
                   <th key={h} style={{ padding: '12px 16px', textAlign: 'right', fontSize: 12, fontWeight: 700, color: '#64748B', fontFamily: 'Cairo, sans-serif' }}>{h}</th>
                 ))}
               </tr>

@@ -12,7 +12,7 @@ import { useClinicOS } from '../../../context/ClinicOSContext'
 import type { Appointment } from '../../../types/clinicOS'
 
 function exportAppointmentsCSV(rows: Appointment[]) {
-  const headers = ['المريض', 'الجوال', 'الطبيب', 'الخدمة', 'التاريخ', 'الوقت', 'الحالة', 'المصدر']
+  const headers = ['العميل', 'الجوال', 'الطبيب', 'الخدمة', 'التاريخ', 'الوقت', 'الحالة', 'المصدر']
   const lines = [
     headers.join(','),
     ...rows.map(a => [
@@ -111,7 +111,7 @@ export const Appointments = () => {
 
   const handleSavePatient = async () => {
     if (!editPatient) return
-    if (!editName.trim()) { setEditError('يجب إدخال اسم المريض'); return }
+    if (!editName.trim()) { setEditError('يجب إدخال اسم العميل'); return }
     if (!editPhone.trim()) { setEditError('يجب إدخال رقم الجوال'); return }
     setEditSaving(true)
     try {
@@ -198,7 +198,7 @@ export const Appointments = () => {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-                    {['الوقت', 'المريض', 'الطبيب', 'الخدمة', 'المصدر', 'الحالة', 'واتساب', 'إجراء'].map(h => (
+                    {['الوقت', 'العميل', 'الطبيب', 'الخدمة', 'المصدر', 'الحالة', 'واتساب', 'إجراء'].map(h => (
                       <th key={h} style={{ padding: '12px 16px', textAlign: 'right', fontSize: 12, fontWeight: 700, color: '#64748B', fontFamily: 'Cairo, sans-serif', whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
@@ -234,7 +234,7 @@ export const Appointments = () => {
                           {!['completed','cancelled','no_show'].includes(appt.status) && <button onClick={() => handleCancel(appt.id)} style={{ padding: '4px 10px', borderRadius: 6, background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}>إلغاء</button>}
                           <button
                             onClick={() => openEditPatient(appt)}
-                            title="تعديل بيانات المريض"
+                            title="تعديل بيانات العميل"
                             style={{
                               padding: '4px 8px', borderRadius: 6, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
                               background: (!appt.patient_name || appt.patient_name === 'Unknown') ? '#FFF7ED' : '#F8FAFC',
@@ -353,7 +353,7 @@ export const Appointments = () => {
               {/* Header */}
               <div style={{ padding: '18px 20px', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 15, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>تعديل بيانات المريض</h3>
+                  <h3 style={{ margin: 0, fontSize: 15, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>تعديل بيانات العميل</h3>
                   <p style={{ margin: '2px 0 0', fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>{editPatient.service_name} · {editPatient.start_time}</p>
                 </div>
                 <button onClick={() => setEditPatient(null)} style={{ width: 30, height: 30, borderRadius: 8, background: '#F8FAFC', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>

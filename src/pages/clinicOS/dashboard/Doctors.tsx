@@ -77,7 +77,7 @@ export const Doctors = () => {
     setShowAbsenceModal(false)
     try {
       await toggleDoctorAvailability(absenceDoc.id, false, reason)
-      showToast(`${absenceDoc.name} علّمناه غائباً — نورا لن تقبل حجوزات له`, 'success')
+      showToast(`${absenceDoc.name} علّمناه غائباً — مها لن تقبل حجوزات له`, 'success')
       if (selected?.id === absenceDoc.id) setSelected({ ...selected, is_available: false, unavailable_reason: reason })
       refetch()
     } catch { showToast('حدث خطأ', 'error') }
@@ -105,7 +105,7 @@ export const Doctors = () => {
           style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 12 }}>
           <AlertTriangle size={16} color="#C2410C" />
           <span style={{ fontSize: 13, color: '#C2410C', fontFamily: 'Cairo, sans-serif', fontWeight: 600 }}>
-            {unavailableCount} {unavailableCount === 1 ? 'طبيب غائب اليوم' : 'أطباء غائبون اليوم'} — نورا لن تقبل حجوزات عليهم تلقائياً
+            {unavailableCount} {unavailableCount === 1 ? 'طبيب غائب اليوم' : 'أطباء غائبون اليوم'} — مها لن تقبل حجوزات عليهم تلقائياً
           </span>
         </motion.div>
       )}
@@ -125,7 +125,7 @@ export const Doctors = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-                {['الطبيب', 'التخصص', 'الحالة', 'مواعيد اليوم', 'أقصى/يوم', 'التالي المتاح', 'توفر نورا', ''].map(h => (
+                {['الطبيب', 'التخصص', 'الحالة', 'مواعيد اليوم', 'أقصى/يوم', 'التالي المتاح', 'توفر مها', ''].map(h => (
                   <th key={h} style={{ padding: '12px 16px', textAlign: 'right', fontSize: 12, fontWeight: 700, color: '#64748B', fontFamily: 'Cairo, sans-serif' }}>{h}</th>
                 ))}
               </tr>
@@ -217,7 +217,7 @@ export const Doctors = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: selected.is_available ? 0 : 6 }}>
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 700, color: selected.is_available ? '#059669' : '#C2410C', fontFamily: 'Cairo, sans-serif' }}>
-                    {selected.is_available ? '● متاح لنورا' : '⚫ غائب — نورا محظورة'}
+                    {selected.is_available ? '● متاح لمها' : '⚫ غائب — مها محظورة'}
                   </div>
                   {!selected.is_available && selected.unavailable_reason && (
                     <div style={{ fontSize: 11, color: '#92400E', fontFamily: 'Tajawal, sans-serif', marginTop: 2 }}>{selected.unavailable_reason}</div>
@@ -276,7 +276,7 @@ export const Doctors = () => {
               </div>
 
               <p style={{ fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif', margin: '0 0 18px 0', lineHeight: 1.6 }}>
-                بعد التأكيد، نورا لن تقبل أي حجز جديد مع هذا الطبيب، وستخبر المريض بأنه غير متاح اليوم.
+                بعد التأكيد، مها لن تقبل أي حجز جديد مع هذا الطبيب، وستخبر العميل بأنه غير متاح اليوم.
               </p>
 
               <div style={{ marginBottom: 16 }}>

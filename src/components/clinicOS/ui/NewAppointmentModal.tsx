@@ -131,7 +131,7 @@ export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props)
     }
   }
 
-  const STEP_LABEL = ['', 'المريض', 'الخدمة', 'الطبيب', 'الوقت', 'تأكيد']
+  const STEP_LABEL = ['', 'العميل', 'الخدمة', 'الطبيب', 'الوقت', 'تأكيد']
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', direction: 'rtl' }}>
@@ -166,13 +166,13 @@ export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props)
 
               {/* Search existing */}
               <div>
-                <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', fontFamily: 'Cairo, sans-serif', display: 'block', marginBottom: 6 }}>ابحث عن مريض موجود</label>
+                <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', fontFamily: 'Cairo, sans-serif', display: 'block', marginBottom: 6 }}>ابحث عن عميل موجود</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '9px 12px' }}>
                   <Search size={14} style={{ color: '#94A3B8' }} />
                   <input
                     value={patientSearch}
                     onChange={e => { setPatientSearch(e.target.value); setSelectedPatient(null); setStep1Error(null) }}
-                    placeholder="اسم المريض أو رقم الجوال..."
+                    placeholder="اسم العميل أو رقم الجوال..."
                     style={{ border: 'none', background: 'transparent', fontSize: 13, color: '#334155', fontFamily: 'Tajawal, sans-serif', outline: 'none', width: '100%', direction: 'rtl' }}
                   />
                 </div>
@@ -201,7 +201,7 @@ export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props)
                 <div style={{ padding: '12px 14px', borderRadius: 8, background: '#EEF2FF', border: '1px solid #C7D2FE', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <CheckCircle size={15} style={{ color: '#4F46E5' }} />
-                    <span style={{ fontSize: 13, color: '#4F46E5', fontWeight: 700, fontFamily: 'Cairo, sans-serif' }}>مريض موجود: {selectedPatient.name}</span>
+                    <span style={{ fontSize: 13, color: '#4F46E5', fontWeight: 700, fontFamily: 'Cairo, sans-serif' }}>عميل موجود: {selectedPatient.name}</span>
                   </div>
                   <button onClick={() => { setSelectedPatient(null); setPatientSearch('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', display: 'flex', alignItems: 'center', padding: 2 }}>
                     <X size={14} />
@@ -213,7 +213,7 @@ export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props)
               {!selectedPatient && (
                 <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: 14 }}>
                   <p style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif', marginBottom: 10, fontWeight: 600 }}>
-                    {patientSearch.length > 1 && filteredPatients.length === 0 ? 'المريض غير موجود — أدخل بياناته:' : 'أو أضف مريض جديد'}
+                    {patientSearch.length > 1 && filteredPatients.length === 0 ? 'العميل غير موجود — أدخل بياناته:' : 'أو أضف عميل جديد'}
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {/* Name — required */}
@@ -233,7 +233,7 @@ export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props)
                         }}
                       />
                       {step1Error && !newPatient.name.trim() && (
-                        <span style={{ fontSize: 11, color: '#EF4444', fontFamily: 'Tajawal, sans-serif' }}>يجب إدخال اسم المريض</span>
+                        <span style={{ fontSize: 11, color: '#EF4444', fontFamily: 'Tajawal, sans-serif' }}>يجب إدخال اسم العميل</span>
                       )}
                     </div>
                     {/* Phone — required */}
@@ -346,7 +346,7 @@ export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props)
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ padding: '16px', borderRadius: 10, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                 {[
-                  ['المريض', selectedPatient?.name || newPatient.name],
+                  ['العميل', selectedPatient?.name || newPatient.name],
                   ['الطبيب', selectedDoctor.name],
                   ['الخدمة', selectedService.name],
                   ['التاريخ', appointmentDate],
@@ -362,7 +362,7 @@ export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props)
               </div>
               <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
                 <input type="checkbox" checked={sendWhatsApp} onChange={e => setSendWhatsApp(e.target.checked)} style={{ width: 16, height: 16 }} />
-                <span style={{ fontSize: 13, color: '#334155', fontFamily: 'Tajawal, sans-serif' }}>إرسال تأكيد واتساب للمريض</span>
+                <span style={{ fontSize: 13, color: '#334155', fontFamily: 'Tajawal, sans-serif' }}>إرسال تأكيد واتساب للعميل</span>
               </label>
               {selectedService.requires_approval && (
                 <div style={{ padding: '10px 14px', borderRadius: 8, background: '#FFF7ED', border: '1px solid #FED7AA', display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -392,11 +392,11 @@ export const NewAppointmentModal = ({ onClose, onCreated, selectedDate }: Props)
                 if (step === 1) {
                   if (!selectedPatient) {
                     if (!newPatient.name.trim() && !newPatient.phone.trim()) {
-                      setStep1Error('يجب إدخال اسم المريض ورقم الجوال')
+                      setStep1Error('يجب إدخال اسم العميل ورقم الجوال')
                       return
                     }
                     if (!newPatient.name.trim()) {
-                      setStep1Error('يجب إدخال اسم المريض')
+                      setStep1Error('يجب إدخال اسم العميل')
                       return
                     }
                     if (!newPatient.phone.trim()) {
