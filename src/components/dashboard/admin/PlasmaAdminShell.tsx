@@ -44,9 +44,9 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
 }
 
 const NOTIFS = [
-  { id: 1, text: 'شركة جديدة سجّلت: مغسلة الوطن', time: 'منذ 5 دقائق', unread: true },
+  { id: 1, text: 'عيادة جديدة انضمت: عيادة السلامة للأسنان', time: 'منذ 5 دقائق', unread: true },
   { id: 2, text: 'تحديث n8n: Workflow الرسائل نشط', time: 'منذ 22 دقيقة', unread: true },
-  { id: 3, text: 'تم تجديد اشتراك: مغسلة النخبة', time: 'منذ ساعة', unread: true },
+  { id: 3, text: 'تم تجديد اشتراك: عيادة النور الطبية', time: 'منذ ساعة', unread: true },
   { id: 4, text: 'تقرير شهري جاهز للتحميل', time: 'أمس', unread: false },
 ]
 
@@ -149,6 +149,20 @@ export function PlasmaAdminShell({ children }: Props) {
 
   const meta = PAGE_META[location.pathname] ?? { title: 'مدار', sub: '' }
 
+  const [clock, setClock] = useState(() => {
+    const now = new Date()
+    return now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', hour12: true })
+  })
+
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date()
+      setClock(now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', hour12: true }))
+    }
+    const id = setInterval(tick, 30000)
+    return () => clearInterval(id)
+  }, [])
+
   useEffect(() => {
     document.body.classList.add('plasma-admin')
     return () => document.body.classList.remove('plasma-admin')
@@ -188,6 +202,7 @@ export function PlasmaAdminShell({ children }: Props) {
             <div className="topbar-sub">{meta.sub}</div>
           </div>
           <div className="topbar-spacer" />
+          <div className="tb-clock">{clock}</div>
           <div className="tb-search">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             <input placeholder="بحث سريع..." />
