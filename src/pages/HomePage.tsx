@@ -82,7 +82,7 @@ const GlobalCSS = () => (
     .hp-container { max-width: 1240px; margin: 0 auto; padding: 0 28px; }
     .hp-container-narrow { max-width: 980px; margin: 0 auto; padding: 0 28px; }
 
-    /* Eyebrow labels — exact SYC pattern */
+    /* Eyebrow labels — editorial with accent border */
     .eyebrow {
       font-family: 'IBM Plex Mono', monospace;
       font-size: 11px;
@@ -92,6 +92,8 @@ const GlobalCSS = () => (
       display: inline-flex;
       align-items: center;
       gap: 10px;
+      border-inline-start: 3px solid ${C.brand};
+      padding-inline-start: 10px;
     }
     .eyebrow::after {
       content: "";
@@ -124,14 +126,15 @@ const GlobalCSS = () => (
     /* Nav */
     .hp-nav {
       position: fixed; top: 0; right: 0; left: 0; z-index: 100;
-      background: rgba(251,250,247,0.88);
-      backdrop-filter: saturate(140%) blur(14px);
-      -webkit-backdrop-filter: saturate(140%) blur(14px);
+      background: rgba(251,250,247,0.92);
+      backdrop-filter: saturate(160%) blur(18px);
+      -webkit-backdrop-filter: saturate(160%) blur(18px);
       border-bottom: 1px solid ${C.rule};
+      box-shadow: 0 1px 0 rgba(255,255,255,0.9), 0 4px 20px rgba(12,26,46,0.06);
     }
     .hp-nav-inner {
       display: flex; align-items: center; justify-content: space-between;
-      height: 66px;
+      height: 72px;
     }
     .hp-nav-links { display: flex; gap: 30px; align-items: center; }
     .hp-nav-link {
@@ -192,13 +195,15 @@ const GlobalCSS = () => (
       position: absolute;
       left: 0; top: 0;
       font-style: italic;
-      background: linear-gradient(90deg, #1E3A6E, #2563EB 60%, #60A5FA);
+      background: linear-gradient(90deg, #60A5FA, #2563EB 40%, #93C5FD 80%, #60A5FA);
+      background-size: 200% 100%;
       -webkit-background-clip: text; background-clip: text;
       -webkit-text-fill-color: transparent;
       white-space: nowrap;
       opacity: 0;
       transform: translateY(0.25em);
       transition: opacity .45s ease, transform .55s cubic-bezier(.2,.8,.2,1);
+      animation: shimmer 3s linear infinite;
     }
     .hero-rot-word.is-active {
       opacity: 1;
@@ -225,13 +230,13 @@ const GlobalCSS = () => (
     .hp-sticky:hover { width: 36px; }
     .hp-sticky-pulse {
       width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
-      background: ${C.brand};
+      background: #60A5FA;
       animation: pulse-ring 1.8s ease-out infinite;
     }
     @keyframes pulse-ring {
-      0%   { box-shadow: 0 0 0 0 rgba(37,99,235,0.55); }
-      70%  { box-shadow: 0 0 0 6px rgba(37,99,235,0); }
-      100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); }
+      0%   { box-shadow: 0 0 0 0 rgba(96,165,250,0.7); }
+      70%  { box-shadow: 0 0 0 8px rgba(96,165,250,0); }
+      100% { box-shadow: 0 0 0 0 rgba(96,165,250,0); }
     }
     .hp-sticky-text {
       writing-mode: vertical-rl;
@@ -260,11 +265,11 @@ const GlobalCSS = () => (
     }
     .hp-card:hover {
       transform: translateY(-3px);
-      box-shadow: 0 16px 48px rgba(12,26,46,0.11);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 4px 24px rgba(37,99,235,0.08), 0 16px 48px rgba(12,26,46,0.13), 0 0 0 1px rgba(37,99,235,0.2);
     }
     .hp-card-dark:hover {
       transform: translateY(-3px);
-      box-shadow: 0 20px 56px rgba(0,0,0,0.32);
+      box-shadow: 0 20px 56px rgba(0,0,0,0.4), 0 0 0 1px rgba(37,99,235,0.35), 0 0 40px rgba(37,99,235,0.12);
     }
 
     /* Nav link underline slide */
@@ -537,12 +542,14 @@ const Hero = () => {
   }, [])
 
   return (
-  <section className="hp-section hp-hero-section" style={{ background: C.paper, paddingTop: 130, paddingBottom: 80, position: 'relative', overflow: 'hidden' }} dir={dir}>
-    <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 50% at 90% 10%, rgba(37,99,235,0.06), transparent 60%), radial-gradient(ellipse 50% 40% at 5% 80%, rgba(30,58,110,0.04), transparent 60%)`, pointerEvents: 'none' }} />
-    {/* Animated orbs */}
-    <div className="orb-a" style={{ position: 'absolute', width: 640, height: 640, top: -200, right: -80, borderRadius: '50%', background: 'radial-gradient(circle, rgba(37,99,235,0.16), transparent 70%)', filter: 'blur(80px)', opacity: 0.55, pointerEvents: 'none' }} />
-    <div className="orb-b" style={{ position: 'absolute', width: 420, height: 420, bottom: -100, left: '15%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(30,58,110,0.12), transparent 70%)', filter: 'blur(60px)', opacity: 0.4, pointerEvents: 'none' }} />
-    <div className="orb-c" style={{ position: 'absolute', width: 280, height: 280, top: '30%', left: '5%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(37,99,235,0.08), transparent 70%)', filter: 'blur(40px)', opacity: 0.35, pointerEvents: 'none' }} />
+  <section className="hp-section hp-hero-section" style={{ background: C.dark, paddingTop: 130, paddingBottom: 80, position: 'relative', overflow: 'hidden' }} dir={dir}>
+    {/* Animated dot grid */}
+    <div style={{ position: 'absolute', inset: 0, backgroundImage: `radial-gradient(circle, rgba(37,99,235,0.2) 1px, transparent 1px)`, backgroundSize: '28px 28px', opacity: 0.3, pointerEvents: 'none' }} />
+    <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 70% 60% at 60% 20%, rgba(37,99,235,0.1), transparent 65%), radial-gradient(ellipse 50% 40% at 5% 80%, rgba(30,58,110,0.2), transparent 60%)`, pointerEvents: 'none' }} />
+    {/* Animated orbs — vivid on dark bg */}
+    <div className="orb-a" style={{ position: 'absolute', width: 700, height: 700, top: -200, right: -60, borderRadius: '50%', background: 'radial-gradient(circle, rgba(37,99,235,0.22), transparent 70%)', filter: 'blur(80px)', opacity: 0.8, pointerEvents: 'none' }} />
+    <div className="orb-b" style={{ position: 'absolute', width: 420, height: 420, bottom: -100, left: '15%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(37,99,235,0.16), transparent 70%)', filter: 'blur(60px)', opacity: 0.6, pointerEvents: 'none' }} />
+    <div className="orb-c" style={{ position: 'absolute', width: 300, height: 300, top: '30%', left: '5%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(96,165,250,0.1), transparent 70%)', filter: 'blur(40px)', opacity: 0.5, pointerEvents: 'none' }} />
 
     <div className="hp-container" style={{ position: 'relative' }}>
       <div className="hp-hero-grid">
@@ -551,14 +558,14 @@ const Hero = () => {
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <motion.div
             initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.05 }}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '7px 14px 7px 12px', background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.22)', borderRadius: 999, fontFamily: '"IBM Plex Mono", monospace', fontSize: 11.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.accent2, marginBottom: 22, width: 'fit-content' }}>
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '7px 14px 7px 12px', background: 'rgba(37,99,235,0.18)', border: '1px solid rgba(96,165,250,0.3)', borderRadius: 999, fontFamily: '"IBM Plex Mono", monospace', fontSize: 11.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#93C5FD', marginBottom: 22, width: 'fit-content' }}>
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.brand, boxShadow: '0 0 0 4px rgba(37,99,235,0.18)', flexShrink: 0 }} />
             {t('استقبال ذكي · ٢٤/٧ · بدون انقطاع', 'Smart Reception · 24/7 · Always On')}
           </motion.div>
 
           <motion.h1
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.15 }}
-            style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(48px,5.6vw,82px)', fontWeight: 400, color: C.ink, lineHeight: 1.0, marginBottom: 24, letterSpacing: '-0.025em' }}>
+            style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(48px,5.6vw,82px)', fontWeight: 400, color: C.onDark, lineHeight: 1.0, marginBottom: 24, letterSpacing: '-0.025em' }}>
             {t('استقبال ذكي', 'Smart Reception')}
             <br />
             {t('لعيادة', 'for a')}{' '}
@@ -572,7 +579,7 @@ const Hero = () => {
 
           <motion.p
             initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.28 }}
-            style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontSize: 18, color: C.ink2, lineHeight: 1.75, marginBottom: 38, maxWidth: 420 }}>
+            style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontSize: 18, color: C.onDark2, lineHeight: 1.75, marginBottom: 38, maxWidth: 420 }}>
             {t(
               'نظام يستقبل عملائك على واتساب، يحجز المواعيد، ويُذكّرهم تلقائياً — بدون موظف استقبال إضافي.',
               'An AI system that handles patient inquiries on WhatsApp, books appointments, and sends automatic reminders — no extra receptionist needed.'
@@ -589,15 +596,16 @@ const Hero = () => {
               {t('احجز جلسة مجانية 30 دقيقة ←', 'Book a Free 30-Min Session →')}
             </motion.button>
             <motion.button
-              whileHover={{ scale: 1.02, borderColor: C.accent }}
+              whileHover={{ scale: 1.02, borderColor: '#60A5FA' }}
               whileTap={{ scale: 0.98 }}
-              className="btn btn-ghost"
+              className="btn"
+              style={{ background: 'transparent', color: C.onDark, borderColor: C.onDarkRule }}
               onClick={() => document.querySelector('#method')?.scrollIntoView({ behavior: 'smooth' })}>
               {t('كيف يعمل النظام', 'How It Works')}
             </motion.button>
           </div>
 
-          <div style={{ display: 'flex', paddingTop: 28, borderTop: `1px solid ${C.rule}` }}>
+          <div style={{ display: 'flex', paddingTop: 28, borderTop: `1px solid ${C.onDarkRule}` }}>
             {[
               { to: 80, suffix: '%', label: t('تقليل المكالمات الفائتة', 'Fewer Missed Calls') },
               { to: 5,  suffix: language === 'ar' ? 'ث' : 's', prefix: '<', label: t('سرعة الرد', 'Response Speed') },
@@ -607,11 +615,11 @@ const Hero = () => {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7 + i * 0.12, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                style={{ padding: '0 20px', borderRight: i > 0 && dir === 'rtl' ? `1px solid ${C.rule}` : 'none', borderLeft: i > 0 && dir === 'ltr' ? `1px solid ${C.rule}` : 'none' }}>
-                <div style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 30, fontWeight: 400, color: C.accent2, lineHeight: 1 }}>
+                style={{ padding: '0 20px', borderRight: i > 0 && dir === 'rtl' ? `1px solid ${C.onDarkRule}` : 'none', borderLeft: i > 0 && dir === 'ltr' ? `1px solid ${C.onDarkRule}` : 'none' }}>
+                <div style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 30, fontWeight: 400, color: '#60A5FA', lineHeight: 1 }}>
                   {(s as any).prefix || ''}<AnimCounter to={s.to} suffix={s.suffix} />
                 </div>
-                <div style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 10, letterSpacing: '0.11em', textTransform: 'uppercase', color: C.ink3, marginTop: 8 }}>{s.label}</div>
+                <div style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 10, letterSpacing: '0.11em', textTransform: 'uppercase', color: C.gold2, marginTop: 8 }}>{s.label}</div>
               </motion.div>
             ))}
           </div>
@@ -620,7 +628,7 @@ const Hero = () => {
         {/* ── Visual side: dark card ── */}
         <motion.div {...ha} transition={{ delay: 0.18 }} className="hp-hero-phone">
           <div className="hp-hero-phone-inner" style={{ position: 'relative', width: '100%', maxWidth: 420, paddingBottom: 44, paddingLeft: 28 }}>
-            <div style={{ background: C.dark, borderRadius: 20, padding: '28px 24px 24px', boxShadow: '0 40px 100px rgba(12,26,46,0.28), 0 4px 16px rgba(12,26,46,0.14)', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ background: '#0B1830', borderRadius: 20, padding: '28px 24px 24px', boxShadow: '0 0 60px rgba(37,99,235,0.18), 0 20px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(37,99,235,0.25)', position: 'relative', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', top: -80, left: -80, width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(37,99,235,0.28), transparent 70%)', pointerEvents: 'none' }} />
               <div style={{ position: 'absolute', top: 16, left: 16, background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 6, zIndex: 2 }}>
                 <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#4ADE80', boxShadow: '0 0 0 3px rgba(74,222,128,0.25)' }} />
@@ -1225,8 +1233,10 @@ const FinalCTA = () => {
   const { t, dir } = useLanguage()
   return (
   <section style={{ background: C.dark, padding: '110px 0 70px', textAlign: 'center', position: 'relative', overflow: 'hidden', isolation: 'isolate' }} dir={dir}>
-    <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 40% at 50% 100%, rgba(37,99,235,0.14), transparent 65%), radial-gradient(ellipse 50% 40% at 90% 0%, rgba(37,99,235,0.06), transparent 60%)', pointerEvents: 'none' }} />
-    <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.025) 1px, transparent 0)', backgroundSize: '28px 28px', opacity: 0.5, pointerEvents: 'none' }} />
+    {/* Top accent gradient line */}
+    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, transparent 10%, ${C.brand} 35%, #60A5FA 65%, transparent 90%)`, pointerEvents: 'none' }} />
+    <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(37,99,235,0.25), transparent 60%), radial-gradient(ellipse 50% 40% at 90% 100%, rgba(37,99,235,0.08), transparent 60%)', pointerEvents: 'none' }} />
+    <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0)', backgroundSize: '28px 28px', opacity: 0.6, pointerEvents: 'none' }} />
     <div className="hp-container-narrow" style={{ position: 'relative' }}>
       <div className="eyebrow" style={{ marginBottom: 24, color: C.onDark2, justifyContent: 'center' }}>{t('ابدأ الآن', 'Start Now')}</div>
       <motion.h2 {...rv} style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(32px,3.4vw,50px)', fontWeight: 400, color: C.onDark, lineHeight: 1.05, letterSpacing: '-0.02em', marginBottom: 18 }}>
