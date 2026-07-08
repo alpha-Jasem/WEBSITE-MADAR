@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { openWhatsAppChat } from '../../lib/whatsapp'
 
-const AGENT_ID = 'agent_6901kgxmt4pbfmy84gp7xx3tbsvk'
+const AGENT_ID = 'agent_9401kx1trv3denbt13dxv1gqv91w'
 
 const HIDDEN_PATHS = ['/admin', '/clinic-os/dashboard', '/solar', '/client', '/login', '/forgot-password', '/reset-password']
 

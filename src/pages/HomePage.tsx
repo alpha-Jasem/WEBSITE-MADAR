@@ -6,7 +6,7 @@ import { Footer } from '../components/public/Footer'
 import { AiChatWidget } from '../components/public/AiChatWidget'
 import { useLanguage } from '../context/LanguageContext'
 
-const MAHA_AGENT_ID = 'agent_6901kgxmt4pbfmy84gp7xx3tbsvk'
+const MAHA_AGENT_ID = 'agent_9401kx1trv3denbt13dxv1gqv91w'
 
 /* ─── Design tokens (exact from scale-your-clinic.com CSS) ──────── */
 const PHONE = '966546666005'
