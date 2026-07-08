@@ -162,7 +162,7 @@ function MahaWidgetUI({ pathname }: { pathname: string }) {
   const isSpeaking   = conversation.isSpeaking
 
   const statusColor = isConnected ? (isSpeaking ? '#0ea5e9' : '#22c55e') : isConnecting ? '#f59e0b' : '#94a3b8'
-  const statusText  = isConnected ? (isSpeaking ? 'مها تتكلم...' : 'مها تستمع') : isConnecting ? 'جاري الاتصال...' : 'مها — مساعدة مدار OS'
+  const statusText  = isConnected ? (isSpeaking ? 'أحمد يتكلم...' : 'أحمد يستمع') : isConnecting ? 'جاري الاتصال...' : 'أحمد — مساعد مدار OS'
 
   return (
     <div dir="rtl" onMouseMove={signalActivity}
@@ -189,7 +189,7 @@ function MahaWidgetUI({ pathname }: { pathname: string }) {
               transition: 'box-shadow 0.3s',
             }}>🤖</div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>مها</div>
+              <div style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>أحمد</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor, flexShrink: 0, boxShadow: isConnected ? `0 0 8px ${statusColor}` : 'none' }} />
                 <div style={{ color: '#94a3b8', fontSize: 12 }}>{statusText}</div>
@@ -209,7 +209,7 @@ function MahaWidgetUI({ pathname }: { pathname: string }) {
               </div>
               <div style={{ width: 1, height: 40, background: '#e2e8f0' }} />
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 1 }}>
-                <div style={{ fontSize: 10, color: '#94a3b8' }}>🔊 مها</div>
+                <div style={{ fontSize: 10, color: '#94a3b8' }}>🔊 أحمد</div>
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 36 }}>
                   {outputBars.map((h, i) => <WaveBar key={i} height={h} delay={i * 10} />)}
                 </div>
@@ -221,7 +221,7 @@ function MahaWidgetUI({ pathname }: { pathname: string }) {
           <div ref={transcriptRef} style={{ flex: 1, maxHeight: 200, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8, background: '#f8fafc' }}>
             {messages.length === 0 ? (
               <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: 13, padding: '20px 0' }}>
-                {isConnected ? 'ابدأ الحديث مع مها...' : 'اضغط "ابدأ المحادثة" للتحدث مع مها'}
+                {isConnected ? 'ابدأ الحديث مع أحمد...' : 'اضغط "ابدأ المحادثة" للتحدث مع أحمد'}
               </div>
             ) : (
               messages.slice(-8).map(m => (
@@ -307,7 +307,7 @@ function MahaWidgetUI({ pathname }: { pathname: string }) {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontSize: 24, transition: 'all 0.3s', position: 'relative',
         animation: isConnected && isSpeaking ? 'maha-pulse 1.5s ease-out infinite' : 'none',
-      }} title="تحدث مع مها">
+      }} title="تحدث مع أحمد">
         {isConnected ? '🎙️' : '🤖'}
         {isConnected && (
           <div style={{ position: 'absolute', top: 2, right: 2, width: 12, height: 12, borderRadius: '50%', background: isSpeaking ? '#0ea5e9' : '#22c55e', border: '2px solid #fff', boxShadow: `0 0 6px ${isSpeaking ? '#0ea5e9' : '#22c55e'}` }} />

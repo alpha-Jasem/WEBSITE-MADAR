@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence, useScroll, useSpring, useInView } from 'framer-motion'
-import { Check, ChevronDown, MessageCircle, Calendar, BarChart3, Clock, Phone, Bot, Zap, Menu, X } from 'lucide-react'
+import { Check, ChevronDown, MessageCircle, Calendar, BarChart3, Clock, Phone, Bot, Zap, Menu, X, Mic, PhoneCall } from 'lucide-react'
+import { ConversationProvider, useConversation } from '@elevenlabs/react'
 import { Footer } from '../components/public/Footer'
 import { AiChatWidget } from '../components/public/AiChatWidget'
 import { useLanguage } from '../context/LanguageContext'
+
+const MAHA_AGENT_ID = 'agent_6901kgxmt4pbfmy84gp7xx3tbsvk'
 
 /* ─── Design tokens (exact from scale-your-clinic.com CSS) ──────── */
 const PHONE = '966546666005'
@@ -162,6 +165,70 @@ const GlobalCSS = () => (
     /* Grids */
     .hp-4col { display: grid; grid-template-columns: repeat(4,1fr); gap: 0; }
     .hp-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+    /* Try Maha — voice orb */
+    .tm-wrap {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: stretch;
+      border: 1px solid ${C.onDarkRule};
+      border-radius: 6px;
+      overflow: hidden;
+      background: linear-gradient(180deg, ${C.dark2} 0%, ${C.dark} 100%);
+    }
+    .tm-col { padding: 56px 44px; display: flex; flex-direction: column; justify-content: center; }
+    .tm-rule { width: 1px; background: ${C.onDarkRule}; position: relative; }
+    .tm-or {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      width: 40px; height: 40px; border-radius: 50%;
+      background: ${C.dark};
+      border: 1px solid ${C.onDarkRule};
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: ${C.onDark2};
+      z-index: 2;
+    }
+    .tm-orb-stage { display: flex; flex-direction: column; align-items: center; gap: 22px; text-align: center; }
+    .tm-orb-btn {
+      position: relative;
+      width: 132px; height: 132px;
+      border-radius: 50%;
+      border: none; cursor: pointer;
+      background: radial-gradient(circle at 32% 28%, #3B7BFF, ${C.brand} 55%, ${C.accentInk} 100%);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 0 1px rgba(96,165,250,0.25), 0 18px 50px -10px rgba(37,99,235,0.55);
+      transition: transform .25s ease;
+    }
+    .tm-orb-btn:hover { transform: scale(1.035); }
+    .tm-orb-btn:active { transform: scale(0.97); }
+    .tm-ring {
+      position: absolute; inset: 0; border-radius: 50%;
+      border: 1px solid rgba(96,165,250,0.55);
+      pointer-events: none;
+    }
+    .tm-ring--1 { animation: tm-pulse 2.6s ease-out infinite; }
+    .tm-ring--2 { animation: tm-pulse 2.6s ease-out infinite 0.85s; }
+    .tm-ring--3 { animation: tm-pulse 2.6s ease-out infinite 1.7s; }
+    @keyframes tm-pulse {
+      0%   { transform: scale(1);    opacity: 0.55; }
+      100% { transform: scale(2.05); opacity: 0; }
+    }
+    .tm-orb-btn.is-live { animation: tm-live-pulse 1.4s ease-in-out infinite; }
+    @keyframes tm-live-pulse {
+      0%, 100% { box-shadow: 0 0 0 1px rgba(96,165,250,0.35), 0 18px 50px -10px rgba(37,99,235,0.7), 0 0 0 0 rgba(96,165,250,0.5); }
+      50%      { box-shadow: 0 0 0 1px rgba(96,165,250,0.5), 0 18px 60px -6px rgba(37,99,235,0.85), 0 0 0 14px rgba(96,165,250,0); }
+    }
+    .tm-bars { position: absolute; bottom: -34px; left: 50%; transform: translateX(-50%); display: flex; align-items: flex-end; gap: 3px; height: 20px; }
+    .tm-bar { width: 3px; border-radius: 2px; background: #60A5FA; transition: height .09s ease; }
+    .tm-status { font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.05em; color: ${C.onDark2}; min-height: 16px; }
+    .tm-status.is-live { color: #60A5FA; }
+    .tm-hint { font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 13px; color: ${C.onDark2}; max-width: 240px; line-height: 1.6; }
+
+    @media (max-width: 900px) {
+      .tm-wrap { grid-template-columns: 1fr; }
+      .tm-rule { width: auto; height: 1px; }
+      .tm-col { padding: 40px 28px; }
+    }
     .hp-2col-wide { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
     .hp-4timeline { display: grid; grid-template-columns: repeat(4,1fr); gap: 40px; }
 
@@ -844,6 +911,132 @@ const TrustStrip = () => {
   )
 }
 
+/* ─── Try Maha — live voice demo ─────────────────────────────────── */
+const TryMahaOrb = () => {
+  const { t } = useLanguage()
+  const [bars, setBars] = useState([0, 0, 0, 0, 0])
+  const rafRef = useRef<number | null>(null)
+  const [permissionDenied, setPermissionDenied] = useState(false)
+
+  const conversation = useConversation({
+    onError: () => setPermissionDenied(true),
+  })
+
+  const isConnecting = conversation.status === 'connecting'
+  const isConnected  = conversation.status === 'connected'
+  const isSpeaking   = conversation.isSpeaking
+
+  useEffect(() => {
+    if (!isConnected) {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      setBars([0, 0, 0, 0, 0])
+      return
+    }
+    const tick = () => {
+      const vol = isSpeaking ? conversation.getOutputVolume() : conversation.getInputVolume()
+      setBars(b => b.map((_, i) => Math.min(1, vol * (0.7 + Math.random() * 0.5) * (i % 2 === 0 ? 1 : 1.3))))
+      rafRef.current = requestAnimationFrame(tick)
+    }
+    rafRef.current = requestAnimationFrame(tick)
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConnected, isSpeaking])
+
+  const handleClick = async () => {
+    if (isConnected) { await conversation.endSession(); return }
+    setPermissionDenied(false)
+    try { await navigator.mediaDevices.getUserMedia({ audio: true }) }
+    catch { setPermissionDenied(true); return }
+    await conversation.startSession({
+      agentId: MAHA_AGENT_ID,
+      connectionType: 'webrtc',
+      overrides: { agent: { firstMessage: 'هلا وغلا! أنا أحمد، جربتني الحين من موقع مدار — وش تبي تسألني؟' } },
+    })
+  }
+
+  const statusLabel = isConnected
+    ? (isSpeaking ? t('أحمد يتكلم...', 'Ahmad is speaking...') : t('أنا أستمع...', "I'm listening..."))
+    : isConnecting
+      ? t('جاري الاتصال...', 'Connecting...')
+      : t('اضغط لبدء المحادثة', 'Tap to start talking')
+
+  return (
+    <div className="tm-orb-stage">
+      <div style={{ position: 'relative' }}>
+        {!isConnected && !isConnecting && (
+          <>
+            <span className="tm-ring tm-ring--1" />
+            <span className="tm-ring tm-ring--2" />
+            <span className="tm-ring tm-ring--3" />
+          </>
+        )}
+        <button className={`tm-orb-btn${isConnected ? ' is-live' : ''}`} onClick={handleClick} aria-label="Talk to Ahmad">
+          <Mic size={40} color="#fff" strokeWidth={1.6} />
+        </button>
+        {isConnected && (
+          <div className="tm-bars">
+            {bars.map((h, i) => (
+              <span key={i} className="tm-bar" style={{ height: Math.max(4, h * 20 + 4) }} />
+            ))}
+          </div>
+        )}
+      </div>
+      <div className={`tm-status${isConnected ? ' is-live' : ''}`}>{statusLabel}</div>
+      <p className="tm-hint">
+        {t('محادثة صوتية حقيقية مع أحمد — نفس المساعد اللي يرد على عملائك.', 'A real voice conversation with Ahmad — the same assistant that answers your patients.')}
+      </p>
+      {permissionDenied && (
+        <div style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontSize: 12, color: '#F0A6A6', maxWidth: 240 }}>
+          {t('يرجى السماح بالوصول للميكروفون من إعدادات المتصفح', 'Please allow microphone access in your browser settings')}
+        </div>
+      )}
+    </div>
+  )
+}
+
+const TryMaha = () => {
+  const { t, dir } = useLanguage()
+  return (
+    <section className="hp-section" style={{ background: C.dark }} dir={dir}>
+      <div className="hp-container">
+        <div className="eyebrow" style={{ marginBottom: 28, borderInlineStartColor: '#60A5FA', color: '#8FB4F5' }}>
+          {t('جرّب أحمد الآن', 'Try Ahmad Now')}
+        </div>
+        <motion.h2 {...rv} style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 'clamp(28px,3vw,44px)', fontWeight: 400, color: C.onDark, lineHeight: 1.1, letterSpacing: '-0.02em', marginBottom: 44, maxWidth: 620 }}>
+          {t('كلّم مساعدك الصوتي', 'Talk to your voice assistant')}{' '}
+          <span className="hero-em" style={{ color: '#60A5FA' }}>{t('قبل ما توظفه.', 'before you hire him.')}</span>
+        </motion.h2>
+
+        <motion.div {...rv} transition={{ delay: 0.1 }} className="tm-wrap">
+          <div className="tm-col" style={{ order: dir === 'rtl' ? 2 : 1 }}>
+            <ConversationProvider>
+              <TryMahaOrb />
+            </ConversationProvider>
+          </div>
+
+          <div className="tm-rule"><span className="tm-or">{t('أو', 'OR')}</span></div>
+
+          <div className="tm-col" style={{ order: dir === 'rtl' ? 1 : 2 }}>
+            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(37,99,235,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
+              <PhoneCall size={18} color="#60A5FA" />
+            </div>
+            <h3 style={{ fontFamily: '"Noto Serif Arabic", serif', fontSize: 22, fontWeight: 500, color: C.onDark, marginBottom: 10 }}>
+              {t('تفضّل مكالمة سريعة؟', 'Prefer a quick call?')}
+            </h3>
+            <p style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontSize: 14, color: C.onDark2, lineHeight: 1.8, marginBottom: 26, maxWidth: 320 }}>
+              {t('تواصل معنا مباشرة عبر واتساب لمناقشة تجربة أحمد لعيادتك.', 'Reach us directly on WhatsApp to discuss bringing Ahmad to your clinic.')}
+            </p>
+            <button className="btn btn-primary" style={{ alignSelf: 'flex-start' }}
+              onClick={() => wa('مرحباً، جربت أحمد بالموقع وأبغى أعرف أكثر عن تركيبه لعيادتي')}>
+              {t('تواصل واتساب ←', 'Chat on WhatsApp →')}
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  )
+}
+
 /* ─── Results ────────────────────────────────────────────────────── */
 const Results = () => {
   const { t, dir, language } = useLanguage()
@@ -1290,6 +1483,7 @@ export const HomePage = () => (
     <main>
       <Hero />
       <TrustStrip />
+      <TryMaha />
       <Results />
       <Method />
       <AiSection />
