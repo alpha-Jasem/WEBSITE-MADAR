@@ -4,7 +4,6 @@ import { LanguageProvider } from './context/LanguageContext'
 import { ClinicOSProvider } from './context/ClinicOSContext'
 import { ProtectedRoute } from './components/shared/ProtectedRoute'
 import { ErrorBoundary, reloadForFreshAssets } from './components/shared/ErrorBoundary'
-import { MahaWidget } from './components/shared/MahaWidget'
 import { HomePage } from './pages/HomePage'
 import { Login } from './pages/Login'
 import { ForgotPassword } from './pages/ForgotPassword'
@@ -155,7 +154,6 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
-        <MahaWidget />
         </ErrorBoundary>
       </BrowserRouter>
     </LanguageProvider>
