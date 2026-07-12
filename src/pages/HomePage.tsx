@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence, useScroll, useSpring, useInView } from 'framer-motion'
 import { Check, ChevronDown, MessageCircle, Calendar, BarChart3, Clock, Phone, Bot, Zap, Menu, X } from 'lucide-react'
 import { Footer } from '../components/public/Footer'
-import { AiChatWidget } from '../components/public/AiChatWidget'
 import { useLanguage } from '../context/LanguageContext'
 
 /* ─── Design tokens (exact from scale-your-clinic.com CSS) ──────── */
@@ -1302,6 +1301,5 @@ export const HomePage = () => (
     </main>
     <Footer />
     <StickyBar />
-    <AiChatWidget route="clinic-landing" accentColor="#2563EB" productName="Madar" />
   </>
 )
