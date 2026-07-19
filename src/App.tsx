@@ -5,6 +5,8 @@ import { ClinicOSProvider } from './context/ClinicOSContext'
 import { ProtectedRoute } from './components/shared/ProtectedRoute'
 import { ErrorBoundary, reloadForFreshAssets } from './components/shared/ErrorBoundary'
 import { HomePage } from './pages/HomePage'
+import { ClinicAILanding } from './pages/ClinicAILanding'
+import { Lumora } from './pages/Lumora'
 import { Login } from './pages/Login'
 import { ForgotPassword } from './pages/ForgotPassword'
 import { ResetPassword } from './pages/ResetPassword'
@@ -83,6 +85,8 @@ function App() {
         <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/clinic-ai" element={<ClinicAILanding />} />
+            <Route path="/lumora" element={<Lumora />} />
             <Route path="/car-wash" element={<Navigate to="/" replace />} />
             <Route path="/clinic" element={<Navigate to="/" replace />} />
             <Route path="/clinic-os" element={<Navigate to="/clinic-os/login" replace />} />

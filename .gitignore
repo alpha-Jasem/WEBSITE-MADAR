@@ -16,3 +16,31 @@ dist/
 WEBSITE-MADAR/
 
 dashboard Madar.ai/
+
+# Sensitive local config — real API keys/tokens, must never be pushed
+.mcp.json
+
+# n8n workflow scratch dumps / local exports
+a1.json
+a2.json
+d1.json
+d2.json
+d3.json
+d4.json
+d5.json
+d6.json
+act_lookup.json
+deactivate_router_result.json
+
+# local debug scripts
+_spaceshot.cjs
+
+# orphaned/unused media from earlier design iterations
+public/clinic-ai-hero-bg.png
+public/clinic-ai-hero.mp4
+public/clinic-ai-orb-1.png
+logo/
+
+# Claude Code skills (local tooling, not site content)
+.agents/
+skills-lock.json

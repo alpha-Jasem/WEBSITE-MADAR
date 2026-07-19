@@ -730,87 +730,24 @@ const WaIcon = () => (
 const GovBadges = () => {
   const { t, dir } = useLanguage()
   return (
-    <>
-
-      {/* ── Logos strip ── */}
-      <div style={{ background: '#fff', borderTop: `1px solid ${C.rule}`, borderBottom: `1px solid ${C.rule}`, padding: '44px 0 40px' }} dir={dir}>
-        <div className="hp-container">
-          <p style={{
-            fontFamily: '"IBM Plex Mono", monospace', fontSize: 11,
-            color: C.ink3, letterSpacing: '0.18em', textTransform: 'uppercase',
-            textAlign: 'center', marginBottom: 36,
-          }}>
-            {t('ضمن المنظومة التقنية السعودية', 'Within the Saudi Tech Ecosystem')}
-          </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '32px 64px' }}>
-            <img src="/sdaia-logo.png"            alt="SDAIA" style={{ height: 64, width: 'auto', objectFit: 'contain' }} />
-            <img src="/cst-logo.svg"              alt="هيئة الاتصالات والفضاء والتقنية" style={{ height: 58, width: 'auto', objectFit: 'contain' }} />
-            <img src="/monshaat-logo.png"         alt="منشآت" style={{ height: 64, width: 'auto', objectFit: 'contain' }} />
-            <img src="/saudi-business-center.png" alt="المركز السعودي للأعمال" style={{ height: 58, width: 'auto', objectFit: 'contain' }} />
-            <img src="/saudi-tech-logo.png"       alt="تقنية سعودية" style={{ height: 64, width: 'auto', objectFit: 'contain' }} />
-          </div>
+    <div style={{ background: '#fff', borderTop: `1px solid ${C.rule}`, borderBottom: `1px solid ${C.rule}`, padding: '44px 0 40px' }} dir={dir}>
+      <div className="hp-container">
+        <p style={{
+          fontFamily: '"IBM Plex Mono", monospace', fontSize: 11,
+          color: C.ink3, letterSpacing: '0.18em', textTransform: 'uppercase',
+          textAlign: 'center', marginBottom: 36,
+        }}>
+          {t('ضمن المنظومة التقنية السعودية', 'Within the Saudi Tech Ecosystem')}
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '32px 64px' }}>
+          <img src="/sdaia-logo.png"            alt="SDAIA" style={{ height: 64, width: 'auto', objectFit: 'contain' }} />
+          <img src="/cst-logo.svg"              alt="هيئة الاتصالات والفضاء والتقنية" style={{ height: 58, width: 'auto', objectFit: 'contain' }} />
+          <img src="/monshaat-logo.png"         alt="منشآت" style={{ height: 64, width: 'auto', objectFit: 'contain' }} />
+          <img src="/saudi-business-center.png" alt="المركز السعودي للأعمال" style={{ height: 58, width: 'auto', objectFit: 'contain' }} />
+          <img src="/saudi-tech-logo.png"       alt="تقنية سعودية" style={{ height: 64, width: 'auto', objectFit: 'contain' }} />
         </div>
       </div>
-
-      {/* ── Registration info strip ── */}
-      <div style={{ background: C.dark, padding: '32px 0' }} dir={dir}>
-        <div className="hp-container">
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '20px 0' }}>
-
-            {/* رقم موحد */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0 40px', borderLeft: `1px solid ${C.onDarkRule}` }}>
-              <span style={{ fontFamily: '"IBM Plex Sans Arabic", Cairo, sans-serif', fontSize: 11, color: C.onDark2, opacity: 0.55, marginBottom: 6, letterSpacing: '0.06em' }}>
-                {t('الرقم الموحد', 'Unified Number')}
-              </span>
-              <span style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 22, fontWeight: 500, color: '#fff', letterSpacing: '0.06em', direction: 'ltr' }}>
-                7030652643
-              </span>
-            </div>
-
-            {/* رقم المنشأة */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0 40px', borderLeft: `1px solid ${C.onDarkRule}` }}>
-              <span style={{ fontFamily: '"IBM Plex Sans Arabic", Cairo, sans-serif', fontSize: 11, color: C.onDark2, opacity: 0.55, marginBottom: 6, letterSpacing: '0.06em' }}>
-                {t('رقم المنشأة', 'Entity Number')}
-              </span>
-              <span style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: 22, fontWeight: 500, color: '#fff', letterSpacing: '0.06em', direction: 'ltr' }}>
-                4030483621
-              </span>
-            </div>
-
-            {/* زر السجل التجاري */}
-            <div style={{ padding: '0 40px' }}>
-              <a
-                href="/commercial-registration.pdf"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  fontFamily: '"IBM Plex Sans Arabic", Cairo, sans-serif',
-                  fontSize: 14, fontWeight: 600,
-                  padding: '12px 28px',
-                  border: '1.5px solid rgba(255,255,255,0.22)',
-                  borderRadius: 6,
-                  background: 'rgba(255,255,255,0.06)',
-                  color: '#fff',
-                  cursor: 'pointer',
-                  display: 'inline-flex', alignItems: 'center', gap: 8,
-                  letterSpacing: '0.02em',
-                  textDecoration: 'none',
-                  transition: 'background 0.18s, border-color 0.18s',
-                }}
-                onMouseEnter={e => { const b = e.currentTarget; b.style.background = 'rgba(255,255,255,0.12)'; b.style.borderColor = 'rgba(255,255,255,0.5)' }}
-                onMouseLeave={e => { const b = e.currentTarget; b.style.background = 'rgba(255,255,255,0.06)'; b.style.borderColor = 'rgba(255,255,255,0.22)' }}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-                </svg>
-                {t('السجل التجاري', 'Commercial Registration')}
-              </a>
-            </div>
-
-          </div>
-        </div>
-      </div>
-    </>
+    </div>
   )
 }
 

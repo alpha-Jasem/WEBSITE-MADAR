@@ -110,11 +110,11 @@ export const Footer = () => {
             </h4>
             <ul className="space-y-3">
               <li>
-                <a href="mailto:info@madar.software"
+                <a href="mailto:Jasemaltubaishi@gmail.com"
                   className="flex items-center gap-2.5 text-sm transition-colors group"
                   style={{ color: 'rgba(255,255,255,0.55)' }}>
                   <Mail size={13} style={{ color: '#00BFFF' }} className="flex-shrink-0" />
-                  <span className="font-work">info@madar.software</span>
+                  <span className="font-work">Jasemaltubaishi@gmail.com</span>
                 </a>
               </li>
               <li>
