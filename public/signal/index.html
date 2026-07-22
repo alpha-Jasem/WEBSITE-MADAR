@@ -115,12 +115,11 @@
   #ecosystem{background:#081120;padding:70px 0 90px;text-align:center}
   #ecosystem .eco-label{font-size:13px;font-weight:500;letter-spacing:.06em;color:var(--ink2);margin-bottom:38px}
   .eco-row{display:flex;align-items:center;justify-content:center;gap:26px;flex-wrap:wrap}
-  .eco-badge{height:118px;width:180px;border-radius:16px;border:1px solid rgba(255,255,255,.08);
-    background:rgba(255,255,255,.03);display:flex;align-items:center;justify-content:center;padding:22px;
-    transition:border-color .3s ease,background .3s ease}
-  .eco-badge:hover{border-color:rgba(79,163,255,.35);background:rgba(79,163,255,.05)}
-  .eco-badge img{max-height:100%;max-width:100%;object-fit:contain;filter:brightness(0) invert(1);opacity:.82;transition:opacity .3s ease}
-  .eco-badge:hover img{opacity:1}
+  .eco-badge{height:118px;width:180px;border-radius:16px;border:1px solid rgba(255,255,255,.1);
+    background:#fff;display:flex;align-items:center;justify-content:center;padding:22px;
+    transition:transform .35s cubic-bezier(.16,1,.3,1),box-shadow .35s ease}
+  .eco-badge:hover{transform:translateY(-4px);box-shadow:0 20px 44px -18px rgba(79,163,255,.5)}
+  .eco-badge img{max-height:100%;max-width:100%;object-fit:contain}
   .eco-badge .eco-fallback{font-family:var(--body);font-size:13px;font-weight:600;color:var(--ink2);line-height:1.5}
 
   .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1)}
@@ -720,11 +719,11 @@
     <div class="wrap">
       <div class="eco-label">ضمن المنظومة التقنية السعودية</div>
       <div class="eco-row reveal">
-        <div class="eco-badge"><img src="logos/saudi-made.png" alt="صنع في السعودية" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'eco-fallback',textContent:'صنع في السعودية'}))"></div>
-        <div class="eco-badge"><img src="logos/monshaat.png" alt="منشآت" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'eco-fallback',textContent:'منشآت'}))"></div>
-        <div class="eco-badge"><img src="logos/saudi-business-center.png" alt="المركز السعودي للأعمال" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'eco-fallback',textContent:'المركز السعودي للأعمال'}))"></div>
-        <div class="eco-badge"><img src="logos/cst.png" alt="هيئة الاتصالات والفضاء والتقنية" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'eco-fallback',textContent:'هيئة الاتصالات والفضاء والتقنية (CST)'}))"></div>
-        <div class="eco-badge"><img src="logos/sdaia.png" alt="سدايا" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'eco-fallback',textContent:'سدايا (SDAIA)'}))"></div>
+        <div class="eco-badge"><img src="logos/sdaia-logo.svg" alt="SDAIA"></div>
+        <div class="eco-badge"><img src="logos/cst-logo.svg" alt="هيئة الاتصالات والفضاء والتقنية"></div>
+        <div class="eco-badge"><img src="logos/monshaat-logo.png" alt="منشآت"></div>
+        <div class="eco-badge"><img src="logos/saudi-business-center.png" alt="المركز السعودي للأعمال"></div>
+        <div class="eco-badge"><img src="logos/saudi-tech-logo.png" alt="صنع في السعودية"></div>
       </div>
     </div>
   </section>
