@@ -1,3 +1,5 @@
+# Root now serves THE SIGNAL cinematic film (new official landing). ! = force over the SPA shell
+/                /signal/index.html   200!
 /sitemap.xml /sitemap.xml 200
 /robots.txt /robots.txt 200
 /* /index.html 200
