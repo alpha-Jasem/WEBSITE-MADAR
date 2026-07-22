@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مدار — الإشارة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Arabic:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0C1A2E; --seam:#050505; --ink:#EAF1FB; --ink2:#9FB2CC;
+    --accent:#4FA3FF; --accent2:#60A5FA;
+    --display:'Noto Serif Arabic',serif; --body:'IBM Plex Sans Arabic',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scrollbar-width:thin;scrollbar-color:rgba(96,165,250,.35) transparent}
+  body{background:#000;color:var(--ink);font-family:var(--body);overflow-x:hidden}
+  img{max-width:100%}
+
+  /* ── Loader ── */
+  #loader{position:fixed;inset:0;z-index:100;background:#000;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:26px;transition:opacity .8s ease}
+  #loader.done{opacity:0;pointer-events:none}
+  #loader .mark{font-family:var(--display);font-size:34px;color:#fff;letter-spacing:.02em}
+  #loader .bar{width:210px;height:2px;background:rgba(255,255,255,.12);border-radius:2px;overflow:hidden}
+  #loader .bar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#A78BFA);
+    border-radius:2px;transition:width .25s ease}
+  #loader .pct{font-size:12px;color:var(--ink2);font-weight:300;letter-spacing:.14em}
+
+  /* ── Fixed header ── */
+  header{position:fixed;top:0;inset-inline:0;z-index:50;display:flex;align-items:center;
+    justify-content:space-between;padding:18px 30px;color:#fff;transition:color .5s ease}
+  header.on-light{color:#0C1A2E}
+  .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:currentColor}
+  .brand img{height:30px;width:auto;display:block}
+  .brand span{font-family:var(--display);font-size:19px}
+  .brand .wordmark{font-family:var(--body);font-weight:700;font-size:19px;letter-spacing:-.01em}
+  .brand .wordmark b{font-weight:700;color:var(--accent2)}
+  .readout{display:flex;align-items:center;gap:12px;font-size:11.5px;letter-spacing:.14em;color:currentColor;opacity:.85}
+  .readout .ch{font-weight:500;min-width:64px;text-align:left}
+  .readout .track{width:110px;height:2px;background:currentColor;opacity:.25;border-radius:2px;position:relative}
+  .readout .track i{position:absolute;top:0;right:0;height:100%;width:0%;background:var(--accent);opacity:1;border-radius:2px}
+
+  /* ── Film stage ── */
+  #film-scroll{height:850vh;position:relative}
+  #stage{position:sticky;top:0;height:100vh;overflow:hidden;background:#000}
+  #film,#ambient{position:absolute;inset:0;width:100%;height:100%;display:block}
+  #grain{position:absolute;inset:0;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E")}
+  #vignette{position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(ellipse 82% 72% at 50% 46%,transparent 58%,rgba(0,0,0,.5) 100%)}
+  #handoff{position:absolute;inset-inline:0;bottom:0;height:38vh;pointer-events:none;opacity:0;
+    background:linear-gradient(180deg,transparent, var(--seam))}
+
+  /* ── Beats ── */
+  .beat{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:0 24px;opacity:0;pointer-events:none;will-change:transform,opacity}
+  .beat h1{font-family:var(--display);font-weight:500;font-size:clamp(40px,6.4vw,84px);line-height:1.18;
+    color:#fff;text-shadow:0 2px 40px rgba(0,0,0,.6);max-width:900px}
+  .beat h2{font-family:var(--display);font-weight:500;font-size:clamp(26px,3.6vw,46px);line-height:1.5;
+    color:#fff;text-shadow:0 2px 34px rgba(0,0,0,.65);max-width:760px}
+  .beat p{font-size:clamp(14px,1.6vw,18px);font-weight:300;color:rgba(255,255,255,.85);margin-top:18px;
+    text-shadow:0 1px 20px rgba(0,0,0,.7);max-width:520px;line-height:1.9}
+  .beat .cta{pointer-events:auto;margin-top:34px;display:inline-flex;align-items:center;gap:10px;
+    font-family:var(--body);font-size:15px;font-weight:500;color:#fff;text-decoration:none;
+    padding:14px 30px;border-radius:999px;border:1px solid rgba(255,255,255,.28);
+    background:rgba(255,255,255,.07);backdrop-filter:blur(10px);transition:background .3s ease,border-color .3s ease}
+  .beat .cta:hover{background:rgba(79,163,255,.22);border-color:rgba(79,163,255,.6)}
+
+  /* ── After-film content ── */
+  #after{position:relative;background:linear-gradient(180deg,var(--seam) 0%, var(--navy) 26%, #081120 100%)}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+  #after section{padding:120px 0}
+  .eyebrow{font-size:11.5px;letter-spacing:.18em;color:var(--accent2);margin-bottom:18px;font-weight:500}
+  #after h3{font-family:var(--display);font-weight:500;font-size:clamp(28px,3.6vw,46px);line-height:1.4;
+    color:var(--ink);max-width:760px}
+  #after .lede{font-size:16.5px;font-weight:300;color:var(--ink2);line-height:2;max-width:640px;margin-top:22px}
+  .caps{margin-top:64px;display:flex;flex-direction:column}
+  .cap{display:grid;grid-template-columns:64px 1fr 1.2fr;gap:26px;align-items:start;
+    padding:34px 0;border-top:1px solid rgba(255,255,255,.09)}
+  .cap:last-child{border-bottom:1px solid rgba(255,255,255,.09)}
+  .cap .n{font-family:var(--display);font-size:30px;color:rgba(96,165,250,.5)}
+  .cap h4{font-size:19px;font-weight:700;color:var(--ink);line-height:1.6}
+  .cap p{font-size:14.5px;font-weight:300;color:var(--ink2);line-height:1.95}
+  #cta-final{text-align:center}
+  #cta-final h3{margin:0 auto}
+  .btn-final{display:inline-flex;align-items:center;gap:10px;margin-top:40px;font-family:var(--body);
+    font-size:15.5px;font-weight:700;color:#071120;text-decoration:none;padding:17px 38px;border-radius:999px;
+    background:linear-gradient(90deg,var(--accent),#7C8CF8);box-shadow:0 20px 50px -16px rgba(79,163,255,.55);
+    transition:transform .3s cubic-bezier(.16,1,.3,1)}
+  .btn-final:hover{transform:translateY(-2px)}
+  footer{position:relative;background:#050810;border-top:1px solid rgba(255,255,255,.07);padding:72px 0 32px}
+  footer::before{content:'';position:absolute;top:0;inset-inline:0;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(79,163,255,.4),transparent)}
+  .foot-grid{display:grid;grid-template-columns:1.5fr 1fr 1.2fr 1fr;gap:40px;margin-bottom:52px}
+  .foot-brand .wordmark{font-family:var(--body);font-weight:700;font-size:20px;letter-spacing:-.01em;color:#fff}
+  .foot-brand .wordmark b{color:var(--accent2)}
+  .foot-brand .flogo{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .foot-brand .flogo img{height:32px;width:auto}
+  .foot-brand p{font-size:13.5px;color:rgba(255,255,255,.55);line-height:1.85;max-width:32ch;margin-bottom:14px}
+  .foot-brand .quote{font-size:12.5px;font-style:italic;color:rgba(255,255,255,.4);line-height:1.7}
+  .foot-col h4{font-size:12.5px;font-weight:700;color:#fff;margin-bottom:18px;letter-spacing:.02em}
+  .foot-col a,.foot-col .fitem{display:flex;align-items:center;gap:9px;font-size:13.5px;color:rgba(255,255,255,.55);
+    text-decoration:none;margin-bottom:12px;line-height:1.5;transition:color .25s ease}
+  .foot-col a:hover{color:var(--accent2)}
+  .foot-col svg{width:15px;height:15px;color:var(--accent2);flex-shrink:0}
+  .foot-bottom{display:flex;align-items:center;justify-content:space-between;gap:14px;padding-top:26px;
+    border-top:1px solid rgba(255,255,255,.06);font-size:12px;color:rgba(255,255,255,.38);flex-wrap:wrap}
+  .foot-bottom .flinks{display:flex;gap:18px}
+  .foot-bottom a{color:rgba(255,255,255,.38);text-decoration:none;transition:color .25s ease}
+  .foot-bottom a:hover{color:rgba(255,255,255,.7)}
+
+  /* ── Saudi ecosystem trust band ── */
+  #ecosystem{background:#081120;padding:70px 0 90px;text-align:center}
+  #ecosystem .eco-label{font-size:13px;font-weight:500;letter-spacing:.06em;color:var(--ink2);margin-bottom:38px}
+  .eco-row{display:flex;align-items:center;justify-content:center;gap:26px;flex-wrap:wrap}
+  .eco-badge{height:118px;width:180px;border-radius:16px;border:1px solid rgba(255,255,255,.08);
+    background:rgba(255,255,255,.03);display:flex;align-items:center;justify-content:center;padding:22px;
+    transition:border-color .3s ease,background .3s ease}
+  .eco-badge:hover{border-color:rgba(79,163,255,.35);background:rgba(79,163,255,.05)}
+  .eco-badge img{max-height:100%;max-width:100%;object-fit:contain;filter:brightness(0) invert(1);opacity:.82;transition:opacity .3s ease}
+  .eco-badge:hover img{opacity:1}
+  .eco-badge .eco-fallback{font-family:var(--body);font-size:13px;font-weight:600;color:var(--ink2);line-height:1.5}
+
+  .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1)}
+  .reveal.in{opacity:1;transform:none}
+
+  /* ── Section 2 — ليلة في عيادتك (scroll-scrubbed night) ── */
+  #night{position:relative;height:300vh;background:#081120}
+  .night-stage{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;overflow:hidden;padding:0 24px}
+  .night-stage::before{content:'';position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(ellipse 70% 55% at 50% 40%,rgba(79,163,255,.08),transparent 70%)}
+  .night-head{position:relative;text-align:center;margin-bottom:44px;z-index:2}
+  .night-head .eyebrow{margin-bottom:14px}
+  .night-head h3{font-family:var(--display);font-weight:500;font-size:clamp(24px,3.2vw,40px);color:var(--ink);line-height:1.35}
+  .clock{display:inline-flex;align-items:center;gap:10px;margin-top:20px;font-family:var(--body);
+    font-weight:600;font-size:15px;letter-spacing:.06em;color:var(--accent2);
+    padding:8px 20px;border:1px solid rgba(96,165,250,.28);border-radius:999px;background:rgba(96,165,250,.06)}
+  .clock .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+  .night-split{position:relative;z-index:2;display:grid;grid-template-columns:1fr 1fr;gap:20px;
+    width:100%;max-width:920px}
+  .ncol{border-radius:16px;padding:32px 28px;min-height:290px;border:1px solid rgba(255,255,255,.08);
+    display:flex;flex-direction:column}
+  .ncol.without{background:linear-gradient(180deg,rgba(30,15,18,.7),rgba(20,10,12,.5))}
+  .ncol.with{background:linear-gradient(180deg,rgba(12,26,46,.75),rgba(8,17,32,.6));
+    border-color:rgba(79,163,255,.28);box-shadow:0 30px 80px -40px rgba(79,163,255,.45)}
+  .ncol .tag{font-size:12.5px;font-weight:700;letter-spacing:.08em;margin-bottom:6px}
+  .ncol.without .tag{color:#E8917F}
+  .ncol.with .tag{color:var(--accent2)}
+  .ncol .sub{font-size:12.5px;color:var(--ink2);font-weight:300;margin-bottom:26px;line-height:1.6}
+  .ncol .big{font-family:var(--display);font-weight:600;font-size:clamp(48px,7vw,76px);line-height:1;
+    font-variant-numeric:tabular-nums}
+  .ncol.without .big{color:#E8917F}
+  .ncol.with .big{color:var(--ink);text-shadow:0 0 30px rgba(79,163,255,.4)}
+  .ncol .biglabel{font-size:13px;color:var(--ink2);font-weight:300;margin-top:8px}
+  .ncol .foot{margin-top:auto;font-size:12.5px;font-weight:400;line-height:1.7}
+  .ncol.without .foot{color:rgba(232,145,127,.75)}
+  .ncol.with .foot{color:rgba(96,165,250,.85)}
+  .cal{margin-top:22px;display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .cal i{aspect-ratio:1;border-radius:5px;background:rgba(255,255,255,.05);transition:background .5s ease,box-shadow .5s ease,transform .5s cubic-bezier(.16,1,.3,1)}
+  .cal i.on{background:linear-gradient(135deg,var(--accent),#7C8CF8);box-shadow:0 4px 14px -3px rgba(79,163,255,.7);transform:scale(1.04)}
+  .miss{margin-top:22px;display:flex;flex-direction:column;gap:7px}
+  .miss span{height:9px;border-radius:5px;background:rgba(232,145,127,.14);transition:background .4s ease}
+  .miss span.lost{background:linear-gradient(90deg,rgba(232,145,127,.55),rgba(232,145,127,.15))}
+
+  /* ── Section 3 — نظام مدار (bento) ── */
+  #system{background:linear-gradient(180deg,#081120,#060d18)}
+  .sys-head{margin-bottom:56px}
+  .bento{display:grid;grid-template-columns:repeat(6,1fr);grid-auto-rows:180px;gap:16px}
+  .tile{position:relative;border-radius:18px;border:1px solid rgba(255,255,255,.08);padding:26px;
+    overflow:hidden;background:rgba(255,255,255,.02);display:flex;flex-direction:column;
+    justify-content:flex-end;transition:transform .5s cubic-bezier(.16,1,.3,1),border-color .5s ease}
+  .tile:hover{transform:translateY(-4px);border-color:rgba(79,163,255,.35)}
+  .tile .ico{position:absolute;top:24px;inset-inline-start:26px;width:40px;height:40px;border-radius:11px;
+    display:flex;align-items:center;justify-content:center;color:var(--accent2);
+    background:rgba(79,163,255,.1);border:1px solid rgba(79,163,255,.2)}
+  .tile .ico svg{width:21px;height:21px}
+  .tile h4{font-size:19px;font-weight:700;color:var(--ink);margin-bottom:8px;line-height:1.4}
+  .tile p{font-size:13.5px;font-weight:300;color:var(--ink2);line-height:1.7;max-width:34ch}
+  .tile.hero{grid-column:span 4;grid-row:span 2;justify-content:center;
+    background:radial-gradient(ellipse 90% 80% at 30% 30%,rgba(79,163,255,.16),transparent 65%),rgba(12,26,46,.5);
+    border-color:rgba(79,163,255,.25)}
+  .tile.hero h4{font-family:var(--display);font-weight:500;font-size:clamp(24px,2.8vw,34px)}
+  .tile.hero p{font-size:15.5px;max-width:40ch;margin-top:4px}
+  .tile.hero .wavebadge{position:absolute;top:26px;inset-inline-start:26px;display:flex;align-items:center;gap:9px;
+    font-size:12px;font-weight:600;color:var(--accent2);letter-spacing:.05em}
+  .tile.hero .wavebadge .lv{display:inline-flex;gap:3px;align-items:flex-end;height:16px}
+  .tile.hero .wavebadge .lv b{width:3px;border-radius:2px;background:var(--accent);animation:eq 1.1s ease-in-out infinite}
+  .tile.hero .wavebadge .lv b:nth-child(2){animation-delay:.15s}
+  .tile.hero .wavebadge .lv b:nth-child(3){animation-delay:.3s}
+  .tile.hero .wavebadge .lv b:nth-child(4){animation-delay:.45s}
+  @keyframes eq{0%,100%{height:4px}50%{height:16px}}
+  .tile.wide{grid-column:span 2}
+  .tile.reg{grid-column:span 2}
+  .tile .metric{position:absolute;bottom:24px;inset-inline-end:26px;font-family:var(--display);
+    font-weight:600;font-size:26px;color:var(--accent2);font-variant-numeric:tabular-nums}
+
+  /* ── Section 4 — التكامل (hub) ── */
+  #connect{background:linear-gradient(180deg,#060d18,#081120)}
+  .connect-head{text-align:center;margin-bottom:20px}
+  .connect-head .eyebrow{margin-bottom:14px}
+  .connect-head h3{margin:0 auto}
+  .connect-head .lede{margin:22px auto 0;text-align:center}
+  .hub{position:relative;width:min(560px,92vw);aspect-ratio:1;margin:36px auto 0}
+  .hub-lines{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .hub-lines line{stroke:rgba(96,165,250,.22);stroke-width:.4}
+  .hub-lines line.flow{stroke:var(--accent);stroke-width:.7;stroke-dasharray:3 60;
+    animation:flow 3.2s linear infinite;opacity:.9}
+  @keyframes flow{to{stroke-dashoffset:-63}}
+  .hub-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;
+    width:118px;height:118px;border-radius:50%;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:6px;
+    background:radial-gradient(circle at 50% 40%,rgba(79,163,255,.28),rgba(12,26,46,.9));
+    border:1px solid rgba(79,163,255,.5);box-shadow:0 0 60px -10px rgba(79,163,255,.65),inset 0 0 30px rgba(79,163,255,.2)}
+  .hub-center img{height:34px;width:auto}
+  .hub-center span{font-family:var(--display);font-size:17px;color:#fff}
+  .hub-center::after{content:'';position:absolute;inset:-8px;border-radius:50%;
+    border:1px solid rgba(79,163,255,.25);animation:halo 3s ease-in-out infinite}
+  @keyframes halo{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.08);opacity:.15}}
+  .node{position:absolute;transform:translate(-50%,-50%);z-index:2;width:74px;height:74px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;background:rgba(12,20,34,.85);
+    border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(4px);
+    transition:transform .4s cubic-bezier(.16,1,.3,1),border-color .4s ease,box-shadow .4s ease}
+  .node:hover{transform:translate(-50%,-50%) scale(1.1);border-color:rgba(79,163,255,.55);
+    box-shadow:0 0 30px -6px rgba(79,163,255,.6)}
+  .node .ilogo{width:34px;height:34px;background:rgba(234,241,251,.82);
+    -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;
+    -webkit-mask-size:contain;mask-size:contain;transition:background .3s ease}
+  .node:hover .ilogo{background:#fff}
+  .connect-note{text-align:center;margin-top:34px;font-size:13.5px;color:var(--ink2);font-weight:300;letter-spacing:.02em}
+  .connect-note b{color:var(--accent2);font-weight:600}
+  /* logo grid fallback (mobile) */
+  .lgrid{display:none}
+
+  /* ── Nav bar (content mode) ── */
+  .nav-links{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    display:flex;align-items:center;gap:28px;opacity:0;visibility:hidden;transition:opacity .45s ease}
+  .nav-links a{font-family:var(--body);font-size:14px;font-weight:500;color:currentColor;text-decoration:none;
+    opacity:.78;transition:opacity .25s ease}
+  .nav-links a:hover{opacity:1}
+  .hdr-end{position:relative;display:flex;align-items:center}
+  .nav-cta{position:absolute;inset-inline-end:0;top:50%;transform:translateY(-50%);white-space:nowrap;
+    font-family:var(--body);font-size:13.5px;font-weight:600;color:#071120;background:var(--accent);
+    padding:9px 18px;border-radius:999px;text-decoration:none;opacity:0;visibility:hidden;
+    transition:opacity .45s ease,transform .3s ease}
+  .nav-cta:hover{transform:translateY(-50%) translateY(-1px)}
+  #hdr.content{background:rgba(6,13,24,.82);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.06)}
+  #hdr.content .readout{opacity:0;visibility:hidden}
+  #hdr.content .nav-links,#hdr.content .nav-cta{opacity:1;visibility:visible}
+  /* at the very top (hero): show full nav, hide chapter readout */
+  #hdr.at-top .readout{opacity:0;visibility:hidden}
+  #hdr.at-top .nav-links,#hdr.at-top .nav-cta{opacity:1;visibility:visible}
+
+  /* scroll cue (hero only) */
+  .scroll-cue{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);z-index:6;
+    display:flex;flex-direction:column;align-items:center;gap:8px;color:#fff;pointer-events:none;
+    opacity:0;transition:opacity .5s ease}
+  .scroll-cue span{font-family:var(--body);font-size:11px;font-weight:500;letter-spacing:.22em}
+  .scroll-cue svg{width:20px;height:20px;animation:bob 1.8s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0);opacity:.6}50%{transform:translateY(6px);opacity:1}}
+
+  /* ── Section — اسمع مها ── */
+  #listen{background:linear-gradient(180deg,#081120,#060d18);text-align:center}
+  #listen .eyebrow{margin-bottom:16px}
+  #listen h3{margin:0 auto 18px}
+  #listen .lede{margin:0 auto}
+  .mic-wrap{position:relative;width:200px;height:200px;margin:52px auto 0;display:flex;align-items:center;justify-content:center}
+  .mic-ring{position:absolute;border-radius:50%;border:1px solid rgba(79,163,255,.35)}
+  .mic-ring.r1{inset:0;animation:pulse 3s ease-out infinite}
+  .mic-ring.r2{inset:22px;animation:pulse 3s ease-out infinite .8s}
+  .mic-ring.r3{inset:44px;animation:pulse 3s ease-out infinite 1.6s}
+  @keyframes pulse{0%{transform:scale(.85);opacity:.7}100%{transform:scale(1.25);opacity:0}}
+  .mic-core{position:relative;width:112px;height:112px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 50% 38%,rgba(79,163,255,.4),rgba(12,26,46,.95));
+    border:1px solid rgba(79,163,255,.55);box-shadow:0 0 70px -8px rgba(79,163,255,.7);color:#EAF1FB}
+  .mic-core .ic{position:absolute;width:42px;height:42px;transition:opacity .3s ease}
+  #maha-orb{cursor:pointer;outline:none}
+  #maha-orb:focus-visible .mic-core{box-shadow:0 0 0 3px rgba(79,163,255,.6),0 0 70px -8px rgba(79,163,255,.7)}
+  #maha-orb.connecting .mic-core{animation:corepulse 1s ease-in-out infinite}
+  @keyframes corepulse{0%,100%{transform:scale(1)}50%{transform:scale(.94)}}
+  #maha-orb.live .mic-core{background:radial-gradient(circle at 50% 38%,rgba(96,165,250,.55),rgba(12,26,46,.95));
+    border-color:rgba(96,165,250,.8);box-shadow:0 0 90px -6px rgba(79,163,255,.85)}
+  #maha-orb.live .ic-mic{opacity:0}
+  .eqbars{display:none;align-items:flex-end;gap:4px;height:36px}
+  #maha-orb.live .eqbars{display:flex}
+  .eqbars b{width:5px;height:8px;border-radius:3px;background:#EAF1FB}
+  #maha-orb.speaking .eqbars b{animation:eqm .9s ease-in-out infinite}
+  #maha-orb.speaking .eqbars b:nth-child(2){animation-delay:.12s}
+  #maha-orb.speaking .eqbars b:nth-child(3){animation-delay:.24s}
+  #maha-orb.speaking .eqbars b:nth-child(4){animation-delay:.36s}
+  #maha-orb.speaking .eqbars b:nth-child(5){animation-delay:.48s}
+  @keyframes eqm{0%,100%{height:8px}50%{height:34px}}
+  #maha-orb.live .mic-ring{border-color:rgba(96,165,250,.55)}
+  .maha-status{margin-top:30px;font-family:var(--body);font-size:16px;font-weight:500;color:var(--accent2);letter-spacing:.01em;min-height:24px}
+  .maha-end{margin-top:20px;display:inline-flex;align-items:center;gap:9px;cursor:pointer;
+    font-family:var(--body);font-size:14px;font-weight:600;color:#FFB4A8;
+    padding:11px 26px;border-radius:999px;border:1px solid rgba(255,120,100,.4);background:rgba(255,90,70,.08);
+    transition:background .3s ease,border-color .3s ease}
+  .maha-end:hover{background:rgba(255,90,70,.16);border-color:rgba(255,120,100,.7)}
+  .maha-end[hidden]{display:none}
+  #listen .listen-note{margin-top:22px;font-size:13px;color:var(--ink2);font-weight:300}
+
+  /* ── Section — كيف يبدأ ── */
+  #how{background:#060d18}
+  .how-head{text-align:center;margin-bottom:60px}
+  .how-head h3{margin:0 auto}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+  .step{position:relative;padding:34px 28px;border-radius:18px;border:1px solid rgba(255,255,255,.08);
+    background:rgba(255,255,255,.02);overflow:hidden}
+  .step .num{font-family:var(--display);font-size:15px;font-weight:600;color:#071120;
+    width:34px;height:34px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;margin-bottom:22px}
+  .step h4{font-size:19px;font-weight:700;color:var(--ink);margin-bottom:10px}
+  .step p{font-size:14px;font-weight:300;color:var(--ink2);line-height:1.85}
+  .step::after{content:'';position:absolute;top:0;inset-inline-start:0;width:100%;height:2px;
+    background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0;transition:opacity .5s ease}
+  .step:hover::after{opacity:1}
+
+  /* ── Section — الأسئلة (FAQ) ── */
+  #faq{background:linear-gradient(180deg,#060d18,#081120)}
+  .faq-head{text-align:center;margin-bottom:48px}
+  .faq-head h3{margin:0 auto}
+  .faq-list{max-width:780px;margin:0 auto}
+  .faq-item{border-top:1px solid rgba(255,255,255,.09)}
+  .faq-list .faq-item:last-child{border-bottom:1px solid rgba(255,255,255,.09)}
+  .faq-item summary{list-style:none;cursor:pointer;padding:26px 4px;display:flex;align-items:center;
+    justify-content:space-between;gap:16px;font-size:17px;font-weight:500;color:var(--ink);transition:color .25s ease}
+  .faq-item summary::-webkit-details-marker{display:none}
+  .faq-item summary:hover{color:var(--accent2)}
+  .faq-item summary .plus{flex-shrink:0;width:22px;height:22px;position:relative;transition:transform .35s ease}
+  .faq-item summary .plus::before,.faq-item summary .plus::after{content:'';position:absolute;background:var(--accent2);
+    inset-inline-start:50%;top:50%;transform:translate(-50%,-50%)}
+  .faq-item summary .plus::before{width:2px;height:14px}
+  .faq-item summary .plus::after{width:14px;height:2px}
+  .faq-item[open] summary .plus{transform:rotate(135deg)}
+  .faq-item .ans{padding:0 4px 26px;font-size:14.5px;font-weight:300;color:var(--ink2);line-height:1.95;max-width:66ch}
+
+  /* ── Section — تواصل (Cal.com) ── */
+  #contact{background:#081120}
+  .contact-head{text-align:center;margin-bottom:44px}
+  .contact-head .eyebrow{margin-bottom:16px}
+  .contact-head h3{font-family:var(--display);font-weight:500;font-size:clamp(28px,3.6vw,46px);color:var(--ink);line-height:1.35;margin:0 auto}
+  .contact-head p{font-size:16px;font-weight:300;color:var(--ink2);line-height:1.9;margin:20px auto 0;max-width:48ch}
+  .contact-methods{margin-top:30px;display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
+  .cmethod{display:flex;align-items:center;gap:13px;font-size:14.5px;color:var(--ink);text-decoration:none;
+    padding:14px 18px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02);
+    transition:border-color .3s ease,background .3s ease}
+  .cmethod:hover{border-color:rgba(79,163,255,.4);background:rgba(79,163,255,.06)}
+  .cmethod svg{width:19px;height:19px;color:var(--accent2);flex-shrink:0}
+  .cal-box{border-radius:20px;border:1px solid rgba(79,163,255,.2);overflow:hidden;background:rgba(12,26,46,.4);
+    min-height:560px;box-shadow:0 30px 90px -50px rgba(79,163,255,.5)}
+  .cal-box.cal-big{min-height:720px}
+  #cal-inline{width:100%;height:560px;overflow:auto;display:none}
+  .cal-big #cal-inline{height:720px}
+  .cal-fallback{display:flex;flex-direction:column;align-items:center;justify-content:center;height:560px;gap:20px;text-align:center;padding:0 24px}
+  .cal-big .cal-fallback{height:720px}
+  .cal-fallback svg{width:44px;height:44px;color:var(--accent2)}
+  .cal-fallback p{font-size:14.5px;color:var(--ink2);font-weight:300;max-width:34ch;line-height:1.8}
+  .cal-fallback a{display:inline-flex;align-items:center;gap:9px;font-size:15px;font-weight:600;color:#071120;
+    background:linear-gradient(90deg,var(--accent),#7C8CF8);padding:15px 32px;border-radius:999px;text-decoration:none}
+
+  @media (max-width:760px){
+    .readout .track{width:64px}
+    .cap{grid-template-columns:44px 1fr;}
+    .cap p{grid-column:1/3}
+    .night-split{grid-template-columns:1fr;gap:14px}
+    .ncol{min-height:auto;padding:24px 22px}
+    .bento{grid-template-columns:repeat(2,1fr);grid-auto-rows:170px}
+    .tile.hero{grid-column:span 2;grid-row:span 2}
+    .tile.wide,.tile.reg{grid-column:span 2}
+    .hub{display:none}
+    .lgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:32px}
+    .lgrid .node{position:static;transform:none;width:100%;height:74px;border-radius:14px}
+    .lgrid .node:hover{transform:scale(1.04)}
+    .nav-links{display:none}
+    .steps{grid-template-columns:1fr;gap:14px}
+    .contact-grid{grid-template-columns:1fr;gap:28px}
+    .cal-box{min-height:auto}
+    #cal-inline,.cal-fallback{height:480px}
+    .mic-wrap{width:170px;height:170px}
+    .foot-grid{grid-template-columns:1fr 1fr;gap:32px 24px}
+    .foot-brand{grid-column:1/3}
+    .foot-bottom{justify-content:center;text-align:center;flex-direction:column;gap:12px}
+    .contact-methods{flex-direction:column;align-items:stretch}
+    .eco-row{gap:14px}
+    .eco-badge{height:88px;width:calc(50% - 8px);padding:16px}
+  }
+  @media (prefers-reduced-motion: reduce){
+    #ambient{display:none}
+    .tile.hero .wavebadge .lv b{animation:none;height:10px}
+    .mic-ring{animation:none!important;opacity:.3}
+  }
+  @media (prefers-reduced-motion: reduce){
+    #ambient{display:none}
+  }
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="mark">مدار</div>
+  <div class="bar"><i id="loadbar"></i></div>
+  <div class="pct" id="loadpct">٠٪</div>
+</div>
+
+<header id="hdr">
+  <a class="brand" href="#film-scroll">
+    <img src="logo-main.png" alt="مدار" onerror="this.style.display='none'">
+    <span class="wordmark" dir="ltr">madar<b>.software</b></span>
+  </a>
+  <nav class="nav-links">
+    <a href="#listen">اسمع مها</a>
+    <a href="#system">النظام</a>
+    <a href="#connect">التكامل</a>
+    <a href="#how">كيف يبدأ</a>
+    <a href="#faq">الأسئلة</a>
+  </nav>
+  <div class="hdr-end">
+    <div class="readout">
+      <span class="ch" id="ch-label">الضجيج</span>
+      <span class="track"><i id="ch-bar"></i></span>
+    </div>
+    <a class="nav-cta" href="#contact">تواصل معنا</a>
+  </div>
+</header>
+
+<div id="film-scroll">
+  <div id="stage">
+    <canvas id="film"></canvas>
+    <canvas id="ambient"></canvas>
+    <div id="grain"></div>
+    <div id="vignette"></div>
+    <div id="handoff"></div>
+    <div class="scroll-cue" id="scroll-cue">
+      <span>انزل</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+    </div>
+
+    <div class="beat" data-in="-0.1" data-peak="0" data-out="0.115">
+      <h1>كل مكالمة<br>لها وجهة.</h1>
+      <p>قصة إشارة واحدة — من الضجيج إلى النتيجة.</p>
+    </div>
+    <div class="beat" data-in="0.15" data-peak="0.235" data-out="0.32">
+      <h2>كل خيط تشوفه… مكالمة تدور على أحد يرد.<br>آلاف منها تضيع كل ليلة.</h2>
+    </div>
+    <div class="beat" data-in="0.37" data-peak="0.455" data-out="0.54">
+      <h2>لكن إشارة واحدة عرفت طريقها.<br>عبر المدينة، إلى عيادتك.</h2>
+    </div>
+    <div class="beat" data-in="0.58" data-peak="0.665" data-out="0.75">
+      <h2>مدار يجيب قبل أن تكتمل<br>الرنة الأولى.</h2>
+    </div>
+    <div class="beat" data-in="0.845" data-peak="0.95" data-out="2">
+      <h2>كل مكالمة لها وجهة.<br>مدار يوصّلها.</h2>
+      <a class="cta" href="https://wa.me/966546666005?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%D8%8C%20%D8%A3%D8%A8%D9%8A%20%D8%A3%D8%AD%D8%AC%D8%B2%20%D8%AC%D9%84%D8%B3%D8%A9%20%D8%AA%D8%B9%D8%B1%D9%8A%D9%81%D9%8A%D8%A9%20%D8%B9%D9%86%20%D9%85%D8%AF%D8%A7%D8%B1" target="_blank" rel="noopener">احجز جلسة تعريفية ↖</a>
+    </div>
+  </div>
+</div>
+
+<div id="after">
+  <section>
+    <div class="wrap">
+      <div class="eyebrow">وش صار للتو</div>
+      <h3>الإشارة اللي تبعتها هي مكالمة عميلك الجاية.</h3>
+      <p class="lede">وكيل ذكاء اصطناعي يستقبل مكالمات ورسائل عيادتك على مدار الساعة — يرد باللهجة، يحجز بالتقويم الفعلي، ويتابع العميل قبل موعده وبعده.</p>
+      <div class="caps">
+        <div class="cap">
+          <div class="n">١</div>
+          <h4>يردّ فوراً</h4>
+          <p>على واتساب والهاتف، خلال أقل من ثانية، بأي وقت — ما فيه مكالمة تضيع بعد اليوم.</p>
+        </div>
+        <div class="cap">
+          <div class="n">٢</div>
+          <h4>يحجز بالتقويم الفعلي</h4>
+          <p>متصل بتقويم كل دكتور، يعرض الأوقات المتاحة الحقيقية فقط ويثبّت الموعد فوراً.</p>
+        </div>
+        <div class="cap">
+          <div class="n">٣</div>
+          <h4>يتابع ويذكّر</h4>
+          <p>تأكيد وتذكير تلقائي قبل كل موعد — حالات عدم الحضور تنخفض بشكل ملموس.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="listen">
+    <div class="wrap">
+      <div class="eyebrow">اسمعها بنفسك</div>
+      <h3>شفت الإشارة توصل. الحين اسمعها.</h3>
+      <p class="lede">مها ترد على مكالمة حقيقية الآن — بصوت طبيعي وبلهجتك. اضغط وابدأ المحادثة.</p>
+      <div class="mic-wrap reveal" id="maha-orb" role="button" tabindex="0" aria-label="ابدأ المحادثة مع مها">
+        <span class="mic-ring r1"></span>
+        <span class="mic-ring r2"></span>
+        <span class="mic-ring r3"></span>
+        <div class="mic-core" id="maha-core">
+          <svg class="ic ic-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
+          <span class="eqbars" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b></span>
+        </div>
+      </div>
+      <div class="maha-status" id="maha-status">اضغط للتحدث مع مها</div>
+      <button class="maha-end" id="maha-end" hidden>إنهاء المكالمة</button>
+      <div class="listen-note">محادثة صوتية مباشرة بصوت مها — قد يطلب المتصفح إذن الميكروفون.</div>
+    </div>
+  </section>
+
+  <section id="night">
+    <div class="night-stage">
+      <div class="night-head">
+        <div class="eyebrow">ليلة واحدة في عيادتك</div>
+        <h3>نفس الليلة. نفس المكالمات.<br>عيادتان مختلفتان.</h3>
+        <div class="clock"><span class="dot"></span><span id="clock-time">٨:٠٠ مساءً</span></div>
+      </div>
+      <div class="night-split">
+        <div class="ncol without">
+          <div class="tag">بدون مدار</div>
+          <div class="sub">الهاتف يرن بعد الدوام. ما فيه أحد يرد.</div>
+          <div class="big" id="miss-num">٠</div>
+          <div class="biglabel">مكالمة فائتة</div>
+          <div class="miss" id="miss-bars"></div>
+          <div class="foot">كل مكالمة فائتة = عميل راح لعيادة ثانية.</div>
+        </div>
+        <div class="ncol with">
+          <div class="tag">مع مدار</div>
+          <div class="sub">كل مكالمة تُجاب فوراً، وتتحوّل لموعد مثبّت.</div>
+          <div class="big" id="book-num">٠</div>
+          <div class="biglabel">موعد محجوز تلقائياً</div>
+          <div class="cal" id="cal-grid"></div>
+          <div class="foot">صحيت الصبح، تقويمك ممتلئ.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="system">
+    <div class="wrap">
+      <div class="sys-head">
+        <div class="eyebrow">مو بس مكالمات</div>
+        <h3>مدار نظام تشغيل كامل لعيادتك.</h3>
+        <p class="lede">المكالمة نقطة البداية — ورا كل مكالمة نظام متكامل يشتغل بصمت: يرد، يحجز، يتابع، ويحلّل.</p>
+      </div>
+      <div class="bento">
+        <div class="tile hero reveal">
+          <div class="wavebadge"><span class="lv"><b></b><b></b><b></b><b></b></span> الوكيل الصوتي</div>
+          <h4>مها ترد بصوت طبيعي، بلهجتك.</h4>
+          <p>وكيل صوتي يستقبل المكالمات على مدار الساعة، يفهم طلب العميل، ويحجز الموعد المناسب — بدون قوائم انتظار ولا "اضغط ١".</p>
+        </div>
+        <div class="tile reg reveal">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+          <h4>واتساب</h4>
+          <p>يرد على رسائل العملاء ويحجز مباشرة داخل المحادثة.</p>
+        </div>
+        <div class="tile reg reveal">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+          <h4>التقويم الفعلي</h4>
+          <p>متصل بتقويم كل دكتور — يعرض الأوقات المتاحة الحقيقية فقط.</p>
+        </div>
+        <div class="tile reg reveal">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <h4>متابعة العملاء</h4>
+          <p>تذكير قبل الموعد، ومتابعة بعده — يقلّل عدم الحضور بشكل ملموس.</p>
+        </div>
+        <div class="tile wide reveal">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+          <h4>تقييمات جوجل</h4>
+          <p>يطلب التقييم من العميل الراضي بالوقت المناسب — سمعة عيادتك ترتفع تلقائياً.</p>
+          <div class="metric">+٣٦٪</div>
+        </div>
+        <div class="tile wide reveal">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
+          <h4>لوحة تحكم واحدة</h4>
+          <p>كل مكالمة، حجز، ومتابعة — في مكان واحد، لحظة بلحظة، بلا توقّف.</p>
+          <div class="metric">٢٤/٧</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="connect">
+    <div class="wrap">
+      <div class="connect-head">
+        <div class="eyebrow">التكامل</div>
+        <h3>يتصل بأنظمتك — ما يستبدلها.</h3>
+        <p class="lede">مدار يشتغل فوق أدواتك الحالية عبر واجهات API جاهزة: واتساب، التقاويم، أنظمة الـERP والـCRM، المدفوعات، والاتصالات — كل شي متزامن لحظياً.</p>
+      </div>
+      <div class="hub reveal">
+        <svg class="hub-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <line class="flow" x1="50" y1="50" x2="50" y2="10"/>
+          <line x1="50" y1="50" x2="73.5" y2="17.6"/>
+          <line class="flow" x1="50" y1="50" x2="88" y2="37.6"/>
+          <line x1="50" y1="50" x2="88" y2="62.4"/>
+          <line class="flow" x1="50" y1="50" x2="73.5" y2="82.4"/>
+          <line x1="50" y1="50" x2="50" y2="90"/>
+          <line class="flow" x1="50" y1="50" x2="26.5" y2="82.4"/>
+          <line x1="50" y1="50" x2="12" y2="62.4"/>
+          <line class="flow" x1="50" y1="50" x2="12" y2="37.6"/>
+          <line x1="50" y1="50" x2="26.5" y2="17.6"/>
+        </svg>
+        <div class="hub-center">
+          <img src="logo-main.png" alt="مدار" onerror="this.style.display='none'">
+          <span>مدار</span>
+        </div>
+        <div class="node" style="left:50%;top:10%" title="WhatsApp"><span class="ilogo" style="-webkit-mask-image:url(logos/whatsapp.svg);mask-image:url(logos/whatsapp.svg)"></span></div>
+        <div class="node" style="left:73.5%;top:17.6%" title="Google Calendar"><span class="ilogo" style="-webkit-mask-image:url(logos/googlecalendar.svg);mask-image:url(logos/googlecalendar.svg)"></span></div>
+        <div class="node" style="left:88%;top:37.6%" title="Twilio"><span class="ilogo" style="-webkit-mask-image:url(logos/twilio.svg);mask-image:url(logos/twilio.svg)"></span></div>
+        <div class="node" style="left:88%;top:62.4%" title="Stripe"><span class="ilogo" style="-webkit-mask-image:url(logos/stripe.svg);mask-image:url(logos/stripe.svg)"></span></div>
+        <div class="node" style="left:73.5%;top:82.4%" title="Salesforce"><span class="ilogo" style="-webkit-mask-image:url(logos/salesforce.svg);mask-image:url(logos/salesforce.svg)"></span></div>
+        <div class="node" style="left:50%;top:90%" title="HubSpot"><span class="ilogo" style="-webkit-mask-image:url(logos/hubspot.svg);mask-image:url(logos/hubspot.svg)"></span></div>
+        <div class="node" style="left:26.5%;top:82.4%" title="Zoho"><span class="ilogo" style="-webkit-mask-image:url(logos/zoho.svg);mask-image:url(logos/zoho.svg)"></span></div>
+        <div class="node" style="left:12%;top:62.4%" title="SAP"><span class="ilogo" style="-webkit-mask-image:url(logos/sap.svg);mask-image:url(logos/sap.svg)"></span></div>
+        <div class="node" style="left:12%;top:37.6%" title="Odoo ERP"><span class="ilogo" style="-webkit-mask-image:url(logos/odoo.svg);mask-image:url(logos/odoo.svg)"></span></div>
+        <div class="node" style="left:26.5%;top:17.6%" title="Google Maps"><span class="ilogo" style="-webkit-mask-image:url(logos/googlemaps.svg);mask-image:url(logos/googlemaps.svg)"></span></div>
+      </div>
+      <div class="lgrid reveal">
+        <div class="node" title="WhatsApp"><span class="ilogo" style="-webkit-mask-image:url(logos/whatsapp.svg);mask-image:url(logos/whatsapp.svg)"></span></div>
+        <div class="node" title="Google Calendar"><span class="ilogo" style="-webkit-mask-image:url(logos/googlecalendar.svg);mask-image:url(logos/googlecalendar.svg)"></span></div>
+        <div class="node" title="Twilio"><span class="ilogo" style="-webkit-mask-image:url(logos/twilio.svg);mask-image:url(logos/twilio.svg)"></span></div>
+        <div class="node" title="Stripe"><span class="ilogo" style="-webkit-mask-image:url(logos/stripe.svg);mask-image:url(logos/stripe.svg)"></span></div>
+        <div class="node" title="Salesforce"><span class="ilogo" style="-webkit-mask-image:url(logos/salesforce.svg);mask-image:url(logos/salesforce.svg)"></span></div>
+        <div class="node" title="HubSpot"><span class="ilogo" style="-webkit-mask-image:url(logos/hubspot.svg);mask-image:url(logos/hubspot.svg)"></span></div>
+        <div class="node" title="Zoho"><span class="ilogo" style="-webkit-mask-image:url(logos/zoho.svg);mask-image:url(logos/zoho.svg)"></span></div>
+        <div class="node" title="SAP"><span class="ilogo" style="-webkit-mask-image:url(logos/sap.svg);mask-image:url(logos/sap.svg)"></span></div>
+        <div class="node" title="Odoo ERP"><span class="ilogo" style="-webkit-mask-image:url(logos/odoo.svg);mask-image:url(logos/odoo.svg)"></span></div>
+      </div>
+      <div class="connect-note">تكامل جاهز مع <b>واتساب بيزنس، Google Calendar، SAP، Odoo، Zoho، Salesforce، HubSpot، Stripe، Twilio</b> والمزيد.</div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <div class="how-head">
+        <div class="eyebrow">كيف يبدأ</div>
+        <h3>مدار يشتغل في عيادتك خلال أيام، مو شهور.</h3>
+      </div>
+      <div class="steps">
+        <div class="step reveal">
+          <div class="num">١</div>
+          <h4>نربط رقمك</h4>
+          <p>نوصّل مدار برقم عيادتك وواتساب وتقويم الأطباء — بدون ما تغيّر أي شي في نظامك الحالي.</p>
+        </div>
+        <div class="step reveal">
+          <div class="num">٢</div>
+          <h4>ندرّب مها على عيادتك</h4>
+          <p>نضبط الأطباء، الخدمات، الأسعار، وأسلوب الرد بلهجتك — مها تعرف عيادتك كأنها موظفتك.</p>
+        </div>
+        <div class="step reveal">
+          <div class="num">٣</div>
+          <h4>تستقبل أول مكالمة</h4>
+          <p>من اللحظة الأولى، كل مكالمة تُجاب وتُحجز تلقائياً — وأنت تشوف كل شي في لوحة واحدة.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <div class="faq-head">
+        <div class="eyebrow">الأسئلة الشائعة</div>
+        <h3>أسئلة يسألها كل صاحب عيادة.</h3>
+      </div>
+      <div class="faq-list">
+        <details class="faq-item reveal">
+          <summary>هل مها تفهم اللهجة السعودية؟<span class="plus"></span></summary>
+          <div class="ans">نعم. مها مصمّمة أساساً للهجات الخليجية والسعودية — تفهم العميل بطريقته الطبيعية، وترد بنفس الأسلوب، مو بعربية فصحى جامدة.</div>
+        </details>
+        <details class="faq-item reveal">
+          <summary>كم ياخذ التركيب والتشغيل؟<span class="plus"></span></summary>
+          <div class="ans">أيام، مو شهور. نربط رقمك وتقويمك، ندرّب مها على عيادتك، وتشتغل. ما يحتاج تغيّر نظامك الحالي أو تشتري أجهزة.</div>
+        </details>
+        <details class="faq-item reveal">
+          <summary>ماذا لو ما فهمت مها طلب العميل؟<span class="plus"></span></summary>
+          <div class="ans">مها تسأل توضيحياً بذكاء زي أي موظف استقبال، وعند الحاجة تحوّل المكالمة أو تسجّلها لفريقك للمتابعة — ما فيه عميل يضيع.</div>
+        </details>
+        <details class="faq-item reveal">
+          <summary>هل بيانات عيادتي وعملائي آمنة؟<span class="plus"></span></summary>
+          <div class="ans">كل البيانات مشفّرة ومعزولة لكل عيادة على حدة، وما تُشارك مع أي طرف. أنت المالك الوحيد لبيانات عملائك.</div>
+        </details>
+        <details class="faq-item reveal">
+          <summary>هل يشتغل على واتساب والهاتف مع بعض؟<span class="plus"></span></summary>
+          <div class="ans">نعم. مدار يستقبل المكالمات الصوتية ورسائل واتساب في نظام واحد — ويحجز من الاثنين بنفس التقويم الفعلي.</div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="wrap">
+      <div class="contact-head">
+        <div class="eyebrow">تواصل معنا</div>
+        <h3>احجز جلسة تعريفية مجانية.</h3>
+        <p>اختر وقت يناسبك ونوريك مدار شغّال على عيادتك مباشرة — بدون التزام.</p>
+        <div class="contact-methods">
+          <a class="cmethod" href="https://wa.me/966546666005?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%D8%8C%20%D8%A3%D8%A8%D9%8A%20%D8%A3%D8%B9%D8%B1%D9%81%20%D8%A3%D9%83%D8%AB%D8%B1%20%D8%B9%D9%86%20%D9%85%D8%AF%D8%A7%D8%B1" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            واتساب: ‎+966 54 666 6005
+          </a>
+          <a class="cmethod" href="mailto:Jasemaltubaishi@gmail.com">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
+            Jasemaltubaishi@gmail.com
+          </a>
+        </div>
+      </div>
+      <div class="cal-box cal-big">
+        <div id="cal-inline"></div>
+        <div class="cal-fallback" id="cal-fallback">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 15h.01M12 15h.01M16 15h.01"/></svg>
+          <p>احجز موعدك عبر التقويم مباشرة.</p>
+          <a href="https://cal.eu/jasem-altubaishi-mvxhz5/madar-.-ai" target="_blank" rel="noopener">افتح التقويم ↗</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="cta-final">
+    <div class="wrap">
+      <h3>خلّ كل مكالمة توصل وجهتها.</h3>
+      <a class="btn-final" href="https://wa.me/966546666005?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%D8%8C%20%D8%A3%D8%A8%D9%8A%20%D8%A3%D8%AD%D8%AC%D8%B2%20%D8%AC%D9%84%D8%B3%D8%A9%20%D8%AA%D8%B9%D8%B1%D9%8A%D9%81%D9%8A%D8%A9%20%D8%B9%D9%86%20%D9%85%D8%AF%D8%A7%D8%B1" target="_blank" rel="noopener">احجز جلسة مجانية ↖</a>
+    </div>
+  </section>
+
+  <section id="ecosystem">
+    <div class="wrap">
+      <div class="eco-label">ضمن المنظومة التقنية السعودية</div>
+      <div class="eco-row reveal">
+        <div class="eco-badge"><img src="logos/saudi-made.png" alt="صنع في السعودية" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'eco-fallback',textContent:'صنع في السعودية'}))"></div>
+        <div class="eco-badge"><img src="logos/monshaat.png" alt="منشآت" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'eco-fallback',textContent:'منشآت'}))"></div>
+        <div class="eco-badge"><img src="logos/saudi-business-center.png" alt="المركز السعودي للأعمال" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'eco-fallback',textContent:'المركز السعودي للأعمال'}))"></div>
+        <div class="eco-badge"><img src="logos/cst.png" alt="هيئة الاتصالات والفضاء والتقنية" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'eco-fallback',textContent:'هيئة الاتصالات والفضاء والتقنية (CST)'}))"></div>
+        <div class="eco-badge"><img src="logos/sdaia.png" alt="سدايا" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'eco-fallback',textContent:'سدايا (SDAIA)'}))"></div>
+      </div>
+    </div>
+  </section>
+  <footer>
+    <div class="wrap">
+      <div class="foot-grid">
+        <div class="foot-brand">
+          <div class="flogo">
+            <img src="logo-main.png" alt="مدار" onerror="this.style.display='none'">
+            <span class="wordmark" dir="ltr">madar<b>.software</b></span>
+          </div>
+          <p>نظام عربي متكامل لتشغيل العيادات — وكيل استقبال صوتي، إدارة مواعيد، ومتابعة عملاء على مدار الساعة.</p>
+          <p class="quote">"لا نبيع ذكاءً اصطناعياً. نبني نتيجة تشغيلية واضحة."</p>
+        </div>
+        <div class="foot-col">
+          <h4>روابط سريعة</h4>
+          <a href="#listen">اسمع مها</a>
+          <a href="#system">النظام</a>
+          <a href="#connect">التكامل</a>
+          <a href="#how">كيف يبدأ</a>
+          <a href="#faq">الأسئلة</a>
+        </div>
+        <div class="foot-col">
+          <h4>خدماتنا</h4>
+          <div class="fitem">وكيل استقبال صوتي بالذكاء الاصطناعي</div>
+          <div class="fitem">استقبال واتساب وإدارة المحادثات</div>
+          <div class="fitem">حجز المواعيد بالتقويم الفعلي</div>
+          <div class="fitem">تذكير ومتابعة العملاء</div>
+          <div class="fitem">تقييمات جوجل ولوحة التحكم</div>
+        </div>
+        <div class="foot-col">
+          <h4>تواصل معنا</h4>
+          <a href="mailto:Jasemaltubaishi@gmail.com">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
+            Jasemaltubaishi@gmail.com
+          </a>
+          <a href="https://wa.me/966546666005" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            <span dir="ltr">+966 54 666 6005</span>
+          </a>
+          <div class="fitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            جدة، المملكة العربية السعودية
+          </div>
+        </div>
+      </div>
+      <div class="foot-bottom">
+        <span>© ٢٠٢٦ مدار (madar.software). جميع الحقوق محفوظة.</span>
+        <div class="flinks">
+          <a href="#">سياسة الخصوصية</a>
+          <a href="#">شروط الاستخدام</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var FRAME_COUNT = 361;
+  var CHAPTERS = [
+    { at: 0.00, label: 'الضجيج'   },
+    { at: 0.20, label: 'الإشارة'  },
+    { at: 0.40, label: 'الرحلة'   },
+    { at: 0.60, label: 'الإجابة'  },
+    { at: 0.80, label: 'الوجهة'   }
+  ];
+  var reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var JUMP = new URLSearchParams(location.search).get('jump');
+  if (JUMP !== null) history.scrollRestoration = 'manual';
+
+  var canvas = document.getElementById('film');
+  var ctx = canvas.getContext('2d');
+  var DPR = Math.min(devicePixelRatio || 1, 1.25);
+  function sizeCanvas(){
+    canvas.width = Math.round(innerWidth * DPR);
+    canvas.height = Math.round(innerHeight * DPR);
+  }
+  sizeCanvas();
+
+  /* ── frame loading: concurrency-capped pump ── */
+  var images = new Array(FRAME_COUNT);
+  var loaded = 0, inFlight = 0, nextIdx = 0, MAXF = 10;
+  var loadbar = document.getElementById('loadbar');
+  var loadpct = document.getElementById('loadpct');
+  var arDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+  function arNum(n){ return String(n).replace(/\d/g, function(d){ return arDigits[+d]; }); }
+  function src(i){ return 'frames/f_' + String(i + 1).padStart(4, '0') + '.jpg'; }
+  function pump(){
+    while (inFlight < MAXF && nextIdx < FRAME_COUNT){
+      (function(i){
+        var im = new Image();
+        inFlight++; nextIdx++;
+        im.onload = im.onerror = function(){
+          inFlight--; loaded++;
+          if (im.naturalWidth) images[i] = im;
+          var pc = Math.round(loaded / FRAME_COUNT * 100);
+          loadbar.style.width = pc + '%';
+          loadpct.textContent = arNum(pc) + '٪';
+          if (loaded >= FRAME_COUNT) onLoaded();
+          else pump();
+        };
+        im.src = src(i);
+      })(nextIdx);
+    }
+  }
+
+  /* ── ImageBitmap sliding window (hardened against GPU-memory crashes) ── */
+  var bitmaps = new Map(), decoding = new Set();
+  var B_AHEAD = 12, B_KEEP = 18, MAX_DECODE = 6, bmpCenter = -999;
+  var displayed = -1, ctxLost = false;
+  function ensureBitmaps(center){
+    if (ctxLost) return;
+    if (Math.abs(center - bmpCenter) < 3) return;
+    bmpCenter = center;
+    var lo = Math.max(0, center - B_AHEAD), hi = Math.min(FRAME_COUNT - 1, center + B_AHEAD);
+    for (var i = lo; i <= hi; i++){
+      if (decoding.size >= MAX_DECODE) break;                 // cap concurrent decodes
+      if (bitmaps.has(i) || decoding.has(i) || !images[i] || !images[i].complete) continue;
+      decoding.add(i);
+      (function(idx){
+        createImageBitmap(images[idx]).then(function(b){
+          decoding.delete(idx);
+          if (Math.abs(idx - bmpCenter) > B_KEEP){ try { b.close(); } catch(e){} return; }
+          bitmaps.set(idx, b);
+          if (idx === displayed) drawFrame(idx, true);
+        }).catch(function(){ decoding.delete(idx); });
+      })(i);
+    }
+    Array.from(bitmaps.keys()).forEach(function(k){
+      if ((k < center - B_KEEP || k > center + B_KEEP) && k !== displayed){  // never evict the shown frame
+        try { bitmaps.get(k).close(); } catch(e){}
+        bitmaps.delete(k);
+      }
+    });
+  }
+  function nearestFrame(idx){
+    if (images[idx] && images[idx].complete) return idx;
+    for (var d = 1; d < FRAME_COUNT; d++){
+      if (idx - d >= 0 && images[idx - d] && images[idx - d].complete) return idx - d;
+      if (idx + d < FRAME_COUNT && images[idx + d] && images[idx + d].complete) return idx + d;
+    }
+    return -1;
+  }
+  function drawFrame(idx, force){
+    if (ctxLost) return;
+    if (idx === displayed && !force) return;
+    var source = bitmaps.get(idx) || null;
+    if (!source){
+      var ni = nearestFrame(idx);
+      if (ni < 0) return;
+      source = bitmaps.get(ni) || images[ni];
+      idx = ni;
+    }
+    var cw = canvas.width, chh = canvas.height;
+    var iw = source.width || source.naturalWidth, ih = source.height || source.naturalHeight;
+    if (!iw || !ih) return;
+    var s = Math.max(cw / iw, chh / ih);
+    var dw = iw * s, dh = ih * s;
+    try {
+      ctx.drawImage(source, (cw - dw) / 2, (chh - dh) / 2, dw, dh);
+      displayed = idx;
+    } catch(e){
+      // bitmap was closed mid-use — drop it and fall back to the raw decoded <img>
+      bitmaps.delete(idx);
+      var img = images[idx];
+      if (img && img.complete){ try { ctx.drawImage(img, (cw - dw) / 2, (chh - dh) / 2, dw, dh); displayed = idx; } catch(e2){} }
+    }
+  }
+  // If the GPU/2D context is lost (memory pressure), stop drawing and rebuild on restore
+  canvas.addEventListener('contextlost', function(e){ e.preventDefault(); ctxLost = true; }, false);
+  canvas.addEventListener('contextrestored', function(){
+    ctxLost = false;
+    bitmaps.forEach(function(b){ try { b.close(); } catch(e){} });
+    bitmaps.clear(); decoding.clear(); bmpCenter = -999; displayed = -1;
+    ensureBitmaps(Math.round(currentFrame)); drawFrame(Math.round(currentFrame), true);
+  }, false);
+
+  /* ── scroll → progress ── */
+  var filmScroll = document.getElementById('film-scroll');
+  var progress = 0;
+  function computeProgress(){
+    var r = filmScroll.getBoundingClientRect();
+    progress = Math.max(0, Math.min(1, -r.top / (r.height - innerHeight)));
+    return progress;
+  }
+
+  /* ── beats ── */
+  var beats = Array.prototype.map.call(document.querySelectorAll('.beat'), function(el){
+    return { el: el, in: +el.dataset.in, peak: +el.dataset.peak, out: +el.dataset.out };
+  });
+  function beatAlpha(b, p){
+    if (p < b.in || p > b.out) return 0;
+    if (p < b.peak) return (p - b.in) / Math.max(1e-4, b.peak - b.in);
+    if (b.out > 1.5) return 1;
+    return 1 - (p - b.peak) / Math.max(1e-4, b.out - b.peak);
+  }
+
+  /* ── ambient dust layer ── */
+  var amb = document.getElementById('ambient');
+  var actx = amb.getContext('2d');
+  var motes = [], sprite = null;
+  function initAmbient(){
+    amb.width = Math.round(innerWidth * DPR); amb.height = Math.round(innerHeight * DPR);
+    sprite = document.createElement('canvas'); sprite.width = sprite.height = 32;
+    var sc = sprite.getContext('2d');
+    var g = sc.createRadialGradient(16,16,0,16,16,16);
+    g.addColorStop(0,'rgba(190,215,255,0.85)'); g.addColorStop(0.5,'rgba(150,185,255,0.25)'); g.addColorStop(1,'rgba(150,185,255,0)');
+    sc.fillStyle = g; sc.fillRect(0,0,32,32);
+    motes = [];
+    for (var i = 0; i < 46; i++){
+      motes.push({ x: Math.random(), y: Math.random(), z: 0.3 + Math.random() * 0.7,
+        vx: (Math.random() - 0.3) * 0.00009, vy: (Math.random() - 0.55) * 0.00007,
+        tw: Math.random() * Math.PI * 2 });
+    }
+  }
+  function drawAmbient(t, alpha){
+    if (alpha <= 0){ if (amb.style.display !== 'none'){ amb.style.display = 'none'; } return; }
+    if (amb.style.display === 'none') amb.style.display = '';
+    actx.clearRect(0, 0, amb.width, amb.height);
+    actx.globalCompositeOperation = 'lighter';
+    for (var i = 0; i < motes.length; i++){
+      var m = motes[i];
+      m.x += m.vx * m.z * 16; m.y += m.vy * m.z * 16;
+      if (m.x < -0.05) m.x = 1.05; if (m.x > 1.05) m.x = -0.05;
+      if (m.y < -0.05) m.y = 1.05; if (m.y > 1.05) m.y = -0.05;
+      var twinkle = 0.55 + 0.45 * Math.sin(t * 0.0011 + m.tw);
+      var s = (3 + m.z * 8) * DPR;
+      actx.globalAlpha = alpha * twinkle * m.z * 0.6;
+      actx.drawImage(sprite, m.x * amb.width - s/2, m.y * amb.height - s/2, s, s);
+    }
+    actx.globalAlpha = 1;
+    actx.globalCompositeOperation = 'source-over';
+  }
+
+  /* ── adaptive header ── */
+  var hdr = document.getElementById('hdr');
+  var lumaCanvas = document.createElement('canvas'); lumaCanvas.width = 16; lumaCanvas.height = 4;
+  var lumaCtx = lumaCanvas.getContext('2d', { willReadFrequently: true });
+  var lastLuma = 0;
+  function sampleHeader(now){
+    if (now - lastLuma < 180 || displayed < 0) return;
+    lastLuma = now;
+    try {
+      lumaCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height * 0.14, 0, 0, 16, 4);
+      var d = lumaCtx.getImageData(0, 0, 16, 4).data, sum = 0;
+      for (var i = 0; i < d.length; i += 4) sum += 0.2126*d[i] + 0.7152*d[i+1] + 0.0722*d[i+2];
+      hdr.classList.toggle('on-light', (sum / (d.length / 4)) > 138);
+    } catch(e){ /* tainted canvas under file:// — keep dark header */ }
+  }
+
+  /* ── chapter readout ── */
+  var chLabel = document.getElementById('ch-label');
+  var chBar = document.getElementById('ch-bar');
+  function updateReadout(p){
+    var c = CHAPTERS[0];
+    for (var i = CHAPTERS.length - 1; i >= 0; i--){ if (p >= CHAPTERS[i].at){ c = CHAPTERS[i]; break; } }
+    if (chLabel.textContent !== c.label) chLabel.textContent = c.label;
+    chBar.style.width = (p * 100) + '%';
+  }
+
+  /* ── handoff + grain fade ── */
+  var handoff = document.getElementById('handoff');
+  var grain = document.getElementById('grain');
+  var vignette = document.getElementById('vignette');
+
+  /* ── jank meter ── */
+  var lastT = 0, maxDelta = 0, lastLog = 0;
+  window.__jank = { max: 0, p95: 0 };
+  var deltas = [];
+
+  /* ── main tick ── */
+  var hdrEl = document.getElementById('hdr');
+  var scrollCue = document.getElementById('scroll-cue');
+  var wasTop = null;
+  var currentFrame = 0;
+  function tick(t){
+    var p = computeProgress();
+    var atTop = scrollY < 40;
+    if (atTop !== wasTop){
+      wasTop = atTop;
+      if (hdrEl) hdrEl.classList.toggle('at-top', atTop);
+      if (scrollCue) scrollCue.style.opacity = atTop ? '1' : '0';
+    }
+    var target = p * (FRAME_COUNT - 1);
+    if (reduceMotion) currentFrame = target;
+    else currentFrame += (target - currentFrame) * 0.14;
+    var idx = Math.round(currentFrame);
+    ensureBitmaps(idx);
+    drawFrame(idx, false);
+    sampleHeader(t);
+    updateReadout(p);
+
+    for (var i = 0; i < beats.length; i++){
+      var a = beatAlpha(beats[i], p);
+      var el = beats[i].el;
+      el.style.opacity = a.toFixed(3);
+      el.style.transform = 'translateY(' + ((1 - a) * 18 * (p < beats[i].peak ? 1 : -1)) + 'px)';
+      el.style.pointerEvents = (a > 0.5 && beats[i].out > 1.5) ? 'auto' : 'none';
+    }
+
+    var ramp = Math.max(0, Math.min(1, (p - 0.92) / 0.08));
+    handoff.style.opacity = ramp.toFixed(3);
+    grain.style.opacity = (0.05 * (1 - ramp)).toFixed(3);
+    vignette.style.opacity = (1 - ramp).toFixed(3);
+
+    if (!reduceMotion) drawAmbient(t, Math.max(0, 1 - p / 0.07));
+
+    if (lastT){
+      var d = t - lastT;
+      deltas.push(d); if (deltas.length > 240) deltas.shift();
+      if (d > maxDelta) maxDelta = d;
+      if (t - lastLog > 2000){
+        var sorted = deltas.slice().sort(function(a,b){return a-b;});
+        window.__jank.p95 = sorted[Math.floor(sorted.length * 0.95)] || 0;
+        window.__jank.max = maxDelta;
+        lastLog = t; maxDelta = 0;
+      }
+    }
+    lastT = t;
+    requestAnimationFrame(tick);
+  }
+
+  /* ── boot ── */
+  function onLoaded(){
+    ensureBitmaps(0);
+    var tries = 0;
+    (function waitFirst(){
+      if (bitmaps.has(0) || tries++ > 40){
+        drawFrame(0, true);
+        document.getElementById('loader').classList.add('done');
+        if (JUMP !== null){
+          scrollTo(0, +JUMP || 0);
+          computeProgress();
+          currentFrame = progress * (FRAME_COUNT - 1);
+          ensureBitmaps(Math.round(currentFrame));
+          setTimeout(function(){ drawFrame(Math.round(currentFrame), true); window.__ready = true; }, 900);
+        } else {
+          window.__ready = true;
+        }
+      } else setTimeout(waitFirst, 50);
+    })();
+  }
+
+  addEventListener('resize', function(){ sizeCanvas(); initAmbient(); drawFrame(displayed, true); });
+  initAmbient();
+  pump();
+  requestAnimationFrame(tick);
+})();
+</script>
+
+<script>
+(function(){
+  'use strict';
+  var reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var arDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+  function arNum(n){ return String(n).replace(/\d/g, function(d){ return arDigits[+d]; }); }
+
+  /* ── reveal on scroll (bento + any .reveal) ── */
+  if ('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.16, rootMargin: '0px 0px -50px 0px' });
+    Array.prototype.forEach.call(document.querySelectorAll('.reveal'), function(el, i){
+      el.style.transitionDelay = (Math.min(i,6) * 0.06) + 's';
+      io.observe(el);
+    });
+  } else {
+    Array.prototype.forEach.call(document.querySelectorAll('.reveal'), function(el){ el.classList.add('in'); });
+  }
+
+  /* ── header: switch to nav (content) mode past the film ── */
+  var hdr = document.getElementById('hdr');
+  var after = document.getElementById('after');
+  if (after && 'IntersectionObserver' in window){
+    var hio = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ hdr.classList.toggle('content', e.isIntersecting); });
+    }, { rootMargin: '-64px 0px 0px 0px', threshold: 0 });
+    hio.observe(after);
+  }
+
+  /* ── Cal.com inline embed (EU region) ── */
+  var CAL_LINK = "jasem-altubaishi-mvxhz5/madar-.-ai";
+  var CAL_ORIGIN = "https://cal.eu";
+  var CAL_EMBED_JS = "https://app.cal.eu/embed/embed.js";
+  if (CAL_LINK){
+    (function (C, A, L){ var p = function (a, ar){ a.q.push(ar); }; var d = C.document; C.Cal = C.Cal || function (){ var cal = C.Cal; var ar = arguments; if (!cal.loaded){ cal.ns = {}; cal.q = cal.q || []; d.head.appendChild(d.createElement("script")).src = A; cal.loaded = true; } if (ar[0] === L){ var api = function (){ p(api, arguments); }; var namespace = ar[1]; api.q = api.q || []; if (typeof namespace === "string"){ cal.ns[namespace] = cal.ns[namespace] || api; p(cal.ns[namespace], ar); p(cal, ["initNamespace", namespace]); } else p(cal, ar); return; } p(cal, ar); }; })(window, CAL_EMBED_JS, "init");
+    Cal("init", { origin: CAL_ORIGIN });
+    Cal("inline", { elementOrSelector: "#cal-inline", calLink: CAL_LINK, config: { theme: "dark", layout: "month_view" } });
+    Cal("ui", { theme: "dark", cssVarsPerTheme: { dark: { "cal-brand": "#4FA3FF" } }, hideEventTypeDetails: false });
+    Cal("floatingButton", {
+      calLink: CAL_LINK,
+      buttonText: "احجز مكالمة",
+      buttonColor: "#4FA3FF",
+      buttonTextColor: "#071120",
+      buttonPosition: "bottom-left",
+      config: { layout: "month_view", theme: "dark" }
+    });
+    var ci = document.getElementById('cal-inline'); if (ci) ci.style.display = 'block';
+    var fb = document.getElementById('cal-fallback'); if (fb) fb.style.display = 'none';
+  }
+
+  /* ── build night grids ── */
+  var CAL_CELLS = 28, MISS_BARS = 8;
+  var MAX_BOOK = 24, MAX_MISS = 19;
+  var calGrid = document.getElementById('cal-grid');
+  var calCells = [];
+  for (var i = 0; i < CAL_CELLS; i++){ var c = document.createElement('i'); calGrid.appendChild(c); calCells.push(c); }
+  var missWrap = document.getElementById('miss-bars');
+  var missBars = [];
+  for (var j = 0; j < MISS_BARS; j++){ var s = document.createElement('span'); missWrap.appendChild(s); missBars.push(s); }
+
+  var missNum = document.getElementById('miss-num');
+  var bookNum = document.getElementById('book-num');
+  var clockEl = document.getElementById('clock-time');
+  var night = document.getElementById('night');
+
+  // clock: 8:00 PM -> 7:00 AM (11 hours)
+  function clockLabel(p){
+    var totalMin = Math.round(p * 11 * 60);        // 0..660
+    var h24 = (20 + Math.floor(totalMin / 60)) % 24;
+    var mm = totalMin % 60;
+    var isAM = h24 < 12;
+    var h12 = h24 % 12; if (h12 === 0) h12 = 12;
+    var mmStr = mm < 10 ? '٠' + arNum(mm) : arNum(mm);
+    return arNum(h12) + ':' + mmStr + (isAM ? ' صباحاً' : ' مساءً');
+  }
+
+  var lastBook = -1, lastMiss = -1, active = false;
+  function renderNight(p){
+    p = Math.max(0, Math.min(1, p));
+    clockEl.textContent = clockLabel(p);
+    var book = Math.round(p * MAX_BOOK);
+    var miss = Math.round(p * MAX_MISS);
+    if (book !== lastBook){
+      bookNum.textContent = arNum(book);
+      var onCells = Math.round(p * CAL_CELLS);
+      for (var i = 0; i < CAL_CELLS; i++) calCells[i].classList.toggle('on', i < onCells);
+      lastBook = book;
+    }
+    if (miss !== lastMiss){
+      missNum.textContent = arNum(miss);
+      var lostBars = Math.min(MISS_BARS, Math.round(p * MISS_BARS));
+      for (var k = 0; k < MISS_BARS; k++) missBars[k].classList.toggle('lost', k < lostBars);
+      lastMiss = miss;
+    }
+  }
+
+  function nightProgress(){
+    var r = night.getBoundingClientRect();
+    return (-r.top) / (r.height - innerHeight);
+  }
+
+  // rAF loop only while section is near viewport
+  var raf = 0;
+  function loop(){
+    renderNight(nightProgress());
+    if (active) raf = requestAnimationFrame(loop);
+  }
+  if ('IntersectionObserver' in window){
+    var nio = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting && !active){ active = true; raf = requestAnimationFrame(loop); }
+        else if (!e.isIntersecting && active){ active = false; cancelAnimationFrame(raf); renderNight(nightProgress()); }
+      });
+    }, { rootMargin: '200px 0px 200px 0px' });
+    nio.observe(night);
+  } else {
+    renderNight(0.5);
+  }
+  renderNight(0);
+})();
+</script>
+
+<script type="module">
+(function(){
+  var orb = document.getElementById('maha-orb');
+  var core = document.getElementById('maha-core');
+  var statusEl = document.getElementById('maha-status');
+  var endBtn = document.getElementById('maha-end');
+  if (!orb) return;
+  var AGENT_ID = 'agent_6901kgxmt4pbfmy84gp7xx3tbsvk';
+  var conv = null, st = 'idle', Conversation = null;
+  var TXT = {
+    idle: 'اضغط للتحدث مع مها',
+    connecting: 'جاري الاتصال بمها…',
+    listening: 'مها تستمع — تكلّم الآن',
+    speaking: 'مها تتكلم…',
+    error: 'تعذّر الاتصال، حاول مرة ثانية'
+  };
+  function set(s){
+    st = s;
+    statusEl.textContent = TXT[s] || TXT.idle;
+    var live = (s === 'connecting' || s === 'listening' || s === 'speaking');
+    orb.classList.toggle('connecting', s === 'connecting');
+    orb.classList.toggle('live', s === 'listening' || s === 'speaking');
+    orb.classList.toggle('speaking', s === 'speaking');
+    endBtn.hidden = !live;
+  }
+  async function ensureSDK(){
+    if (Conversation) return Conversation;
+    // pin livekit-client@2.16.1 to match the project's working webrtc override
+    var m = await import('https://esm.sh/@elevenlabs/client?deps=livekit-client@2.16.1');
+    Conversation = m.Conversation;
+    return Conversation;
+  }
+  async function start(){
+    if (st !== 'idle' && st !== 'error') return;
+    set('connecting');
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      var C = await ensureSDK();
+      conv = await C.startSession({
+        agentId: AGENT_ID,
+        connectionType: 'webrtc',
+        onConnect: function(){ set('listening'); },
+        onDisconnect: function(){ conv = null; set('idle'); },
+        onError: function(e){ console.error('maha error', e); set('error'); setTimeout(function(){ if (st === 'error') set('idle'); }, 2600); },
+        onModeChange: function(m){ if (st === 'connecting') return; set(m && m.mode === 'speaking' ? 'speaking' : 'listening'); }
+      });
+    } catch (e){
+      console.error('maha start failed', e);
+      set('error'); setTimeout(function(){ if (st === 'error') set('idle'); }, 2600);
+    }
+  }
+  async function stop(){
+    if (conv){ try { await conv.endSession(); } catch(e){} conv = null; }
+    set('idle');
+  }
+  orb.addEventListener('click', function(){ if (st === 'idle' || st === 'error') start(); });
+  orb.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); if (st === 'idle' || st === 'error') start(); } });
+  endBtn.addEventListener('click', stop);
+})();
+</script>
+</body>
+</html>
