@@ -392,7 +392,26 @@
   .cal-fallback a{display:inline-flex;align-items:center;gap:9px;font-size:15px;font-weight:600;color:#071120;
     background:linear-gradient(90deg,var(--accent),#7C8CF8);padding:15px 32px;border-radius:999px;text-decoration:none}
 
+  .hamburger{display:none;flex-direction:column;justify-content:center;gap:5px;width:26px;height:20px;
+    background:none;border:none;cursor:pointer;padding:0;color:currentColor}
+  .hamburger span{display:block;width:100%;height:2px;background:currentColor;border-radius:2px;
+    transition:transform .3s ease,opacity .3s ease}
+  .hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+  .hamburger.open span:nth-child(2){opacity:0}
+  .hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+  .mobile-nav{position:fixed;inset:0;z-index:60;background:rgba(5,8,14,.97);backdrop-filter:blur(14px);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;
+    opacity:0;pointer-events:none;transition:opacity .3s ease}
+  .mobile-nav.open{opacity:1;pointer-events:auto}
+  .mobile-nav a{font-family:var(--body);font-size:21px;font-weight:500;color:#fff;text-decoration:none}
+  .mobile-nav .mobile-cta{margin-top:14px;padding:14px 30px;border-radius:999px;
+    background:linear-gradient(90deg,var(--accent),#7C8CF8);font-size:16px;color:#fff;
+    text-decoration:none;font-family:var(--body);font-weight:500}
+
   @media (max-width:760px){
+    .hamburger{display:flex}
+    .hdr-end .readout{display:none}
+    .hdr-end .nav-cta{display:none}
     .readout .track{width:64px}
     .cap{grid-template-columns:44px 1fr;}
     .cap p{grid-column:1/3}
@@ -448,8 +467,20 @@
       <span class="track"><i id="ch-bar"></i></span>
     </div>
     <a class="nav-cta" href="#contact">تواصل معنا</a>
+    <button class="hamburger" id="hamburger-btn" aria-label="القائمة" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </header>
+
+<div class="mobile-nav" id="mobile-nav">
+  <a href="#listen">اسمع مها</a>
+  <a href="#system">النظام</a>
+  <a href="#connect">التكامل</a>
+  <a href="#how">كيف يبدأ</a>
+  <a href="#faq">الأسئلة</a>
+  <a class="mobile-cta" href="#contact">تواصل معنا</a>
+</div>
 
 <div id="film-scroll">
   <div id="stage">
@@ -1133,6 +1164,25 @@
   var reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   var arDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
   function arNum(n){ return String(n).replace(/\d/g, function(d){ return arDigits[+d]; }); }
+
+  /* ── mobile hamburger menu ── */
+  var hamburgerBtn = document.getElementById('hamburger-btn');
+  var mobileNav = document.getElementById('mobile-nav');
+  if (hamburgerBtn && mobileNav) {
+    function closeMobileNav(){
+      hamburgerBtn.classList.remove('open');
+      hamburgerBtn.setAttribute('aria-expanded', 'false');
+      mobileNav.classList.remove('open');
+    }
+    hamburgerBtn.addEventListener('click', function(){
+      var isOpen = mobileNav.classList.toggle('open');
+      hamburgerBtn.classList.toggle('open', isOpen);
+      hamburgerBtn.setAttribute('aria-expanded', String(isOpen));
+    });
+    Array.prototype.forEach.call(mobileNav.querySelectorAll('a'), function(a){
+      a.addEventListener('click', closeMobileNav);
+    });
+  }
 
   /* ── reveal on scroll (bento + any .reveal) ── */
   if ('IntersectionObserver' in window){
