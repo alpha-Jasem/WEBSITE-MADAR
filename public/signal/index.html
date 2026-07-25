@@ -55,21 +55,21 @@
   .beat .cta{pointer-events:auto;margin-top:34px;display:inline-flex;align-items:center;gap:10px;
     font-family:var(--body);font-size:15px;font-weight:500;color:#fff;text-decoration:none;
     padding:14px 30px;border-radius:999px;border:1px solid rgba(255,255,255,.28);
-    background:rgba(255,255,255,.07);backdrop-filter:blur(10px);transition:background .3s ease,border-color .3s ease}
-  .beat .cta:hover{background:rgba(79,163,255,.22);border-color:rgba(79,163,255,.6)}
+    background:rgba(18,28,46,.72);transition:background .3s ease,border-color .3s ease}
+  .beat .cta:hover{background:rgba(79,163,255,.28);border-color:rgba(79,163,255,.6)}
 
   /* ── Hero (first beat): magical text + cta row ── */
   .beat.hero-beat h1{
     background:linear-gradient(100deg,#fff 0%,var(--accent2) 22%,#D8C9FF 42%,#fff 58%,var(--accent2) 78%,#fff 100%);
     background-size:220% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
-    letter-spacing:.008em;filter:drop-shadow(0 0 30px rgba(96,165,250,.4));
+    letter-spacing:.008em;
     animation:heroShimmer 7s linear infinite;
   }
   .beat.hero-beat p{color:rgba(234,241,251,.92);letter-spacing:.01em;font-weight:300}
   @keyframes heroShimmer{0%{background-position:0% center}100%{background-position:-220% center}}
   .hero-badge{pointer-events:auto;display:inline-flex;align-items:center;gap:10px;margin-bottom:26px;
     padding:6px 8px 6px 18px;border-radius:999px;border:1px solid rgba(255,255,255,.16);
-    background:rgba(255,255,255,.04);backdrop-filter:blur(8px);font-family:var(--body);font-size:13px;
+    background:rgba(16,25,42,.7);font-family:var(--body);font-size:13px;
     color:rgba(255,255,255,.78)}
   .hero-badge b{background:rgba(255,255,255,.1);color:#fff;font-weight:600;font-size:11.5px;
     padding:5px 13px;border-radius:999px;letter-spacing:.02em}
@@ -83,7 +83,7 @@
     gap:14px;margin-top:40px;flex-wrap:wrap}
   .stat-card{display:flex;flex-direction:column;align-items:center;gap:10px;min-width:168px;
     padding:20px 26px;border-radius:18px;border:1px solid rgba(255,255,255,.14);
-    background:rgba(255,255,255,.03);backdrop-filter:blur(8px)}
+    background:rgba(14,23,40,.66)}
   .stat-card svg{width:22px;height:22px;color:rgba(255,255,255,.55)}
   .stat-card b{font-family:var(--display);font-weight:500;font-size:26px;color:#fff}
   .stat-card span{font-family:var(--body);font-size:13px;color:rgba(255,255,255,.6)}
@@ -97,7 +97,7 @@
   .cta-primary:hover{transform:translateY(-2px);box-shadow:0 14px 42px rgba(79,163,255,.5)}
   .cta-secondary{display:inline-flex;align-items:center;gap:7px;font-family:var(--body);font-weight:500;
     font-size:13px;color:rgba(255,255,255,.82);text-decoration:none;padding:10px 20px;border-radius:999px;
-    border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.05);backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,.22);background:rgba(16,25,42,.7);
     transition:background .3s ease,border-color .3s ease,color .3s ease}
   .cta-secondary:hover{background:rgba(79,163,255,.18);border-color:rgba(79,163,255,.55);color:#fff}
 
