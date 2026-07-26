@@ -1327,6 +1327,11 @@
       conv = await C.startSession({
         agentId: AGENT_ID,
         connectionType: 'webrtc',
+        // The agent prompt interpolates {{customer_phone}}. A web visitor has no
+        // caller ID, and leaving it unresolved makes ElevenLabs abort with
+        // "Conversation initialization failed" a couple of seconds after the
+        // greeting plays, so pass an explicit empty value for web sessions.
+        dynamicVariables: { customer_phone: '' },
         onConnect: function(){ set('listening'); },
         onDisconnect: function(){ conv = null; set('idle'); },
         onError: function(e){ console.error('maha error', e); set('error'); setTimeout(function(){ if (st === 'error') set('idle'); }, 2600); },
