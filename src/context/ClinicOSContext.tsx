@@ -82,6 +82,15 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
           if (!demoRoute) navigate(`/clinic-os/login?redirect=${encodeURIComponent(location.pathname)}`, { replace: true })
           return
         }
+
+        if (!demoRoute) {
+          const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+          if (aal && aal.nextLevel === 'aal2' && aal.currentLevel !== 'aal2') {
+            navigate(`/clinic-os/mfa-challenge?redirect=${encodeURIComponent(location.pathname)}`, { replace: true })
+            return
+          }
+        }
+
         setUserEmail(user.email || '')
 
         const [companyRes, userRes] = await Promise.allSettled([

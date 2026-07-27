@@ -43,6 +43,7 @@ const ClinicOSSignupPage   = lazy(() => import('./pages/clinicOS/ClinicOSSignup'
 const DemoSignupPage       = lazy(() => import('./pages/clinicOS/DemoSignup').then(m => ({ default: m.DemoSignup })))
 const DemoConfirmPage      = lazy(() => import('./pages/clinicOS/DemoConfirm').then(m => ({ default: m.DemoConfirm })))
 const PackageSelectorPage  = lazy(() => import('./pages/clinicOS/PackageSelector').then(m => ({ default: m.PackageSelector })))
+const MfaChallengePage     = lazy(() => import('./pages/clinicOS/MfaChallenge').then(m => ({ default: m.MfaChallenge })))
 const DemoReviewPage       = lazy(() => import('./pages/clinicOS/DemoReview').then(m => ({ default: m.DemoReview })))
 const ClinicOSAdminPage    = lazy(() => import('./pages/clinicOS/admin/ClinicOSAdmin').then(m => ({ default: m.ClinicOSAdmin })))
 
@@ -86,6 +87,7 @@ function App() {
 
             {/* ── ClinicOS Auth & Onboarding ── */}
             <Route path="/clinic-os/login"    element={<ClinicOSLoginPage />} />
+            <Route path="/clinic-os/mfa-challenge" element={<MfaChallengePage />} />
             <Route path="/clinic-os/signup"   element={<ClinicOSSignupPage />} />
             <Route path="/clinic-os/demo"     element={<DemoSignupPage />} />
             <Route path="/clinic-os/demo/confirm" element={<DemoConfirmPage />} />

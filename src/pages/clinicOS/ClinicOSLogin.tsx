@@ -38,6 +38,12 @@ export const ClinicOSLogin = () => {
       return
     }
 
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    if (aal && aal.nextLevel === 'aal2' && aal.currentLevel !== 'aal2') {
+      navigate(`/clinic-os/mfa-challenge?redirect=${encodeURIComponent(redirectTo)}`, { replace: true })
+      return
+    }
+
     navigate(redirectTo, { replace: true })
   }
 

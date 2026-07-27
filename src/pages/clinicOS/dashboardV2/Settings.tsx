@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { Camera, Plus, Trash2, Users } from 'lucide-react'
+import { Camera, Plus, Trash2, Users, ShieldCheck, ShieldOff } from 'lucide-react'
 import { useClinicOS } from '../../../context/ClinicOSContext'
+import { supabase } from '../../../lib/supabase'
 import {
   updateClinicCompany, uploadCompanyLogo, updateClinicWorkingHours,
   useClinicStaff, addStaffMember, updateStaffMember, removeStaffMember,
@@ -41,6 +42,80 @@ export function DashboardV2Settings() {
 
   const [staffDialogOpen, setStaffDialogOpen] = useState(false)
   const [staffForm, setStaffForm] = useState({ full_name: '', role: 'staff' })
+
+  const [mfaEnabled, setMfaEnabled] = useState(false)
+  const [mfaChecking, setMfaChecking] = useState(true)
+  const [mfaDialogOpen, setMfaDialogOpen] = useState(false)
+  const [mfaEnrolling, setMfaEnrolling] = useState(false)
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null)
+  const [mfaQrCode, setMfaQrCode] = useState<string | null>(null)
+  const [mfaSecret, setMfaSecret] = useState<string | null>(null)
+  const [mfaCode, setMfaCode] = useState('')
+  const [mfaVerifying, setMfaVerifying] = useState(false)
+  const [mfaError, setMfaError] = useState('')
+
+  useEffect(() => {
+    if (isDemo) { setMfaChecking(false); return }
+    supabase.auth.mfa.listFactors().then(({ data }) => {
+      setMfaEnabled(Boolean(data?.totp?.some((f) => f.status === 'verified')))
+      setMfaChecking(false)
+    })
+  }, [isDemo])
+
+  async function startMfaEnrollment() {
+    setMfaEnrolling(true)
+    setMfaError('')
+    const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' })
+    if (error || !data) {
+      setToast('تعذّر بدء التفعيل')
+      setTimeout(() => setToast(null), 2500)
+      setMfaEnrolling(false)
+      return
+    }
+    setMfaFactorId(data.id)
+    setMfaQrCode(data.totp.qr_code)
+    setMfaSecret(data.totp.secret)
+    setMfaDialogOpen(true)
+    setMfaEnrolling(false)
+  }
+
+  async function confirmMfaEnrollment() {
+    if (!mfaFactorId || mfaCode.trim().length !== 6) {
+      setMfaError('أدخل رمز التحقق المكوّن من 6 أرقام.')
+      return
+    }
+    setMfaVerifying(true)
+    setMfaError('')
+    const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId: mfaFactorId })
+    if (challengeError || !challenge) {
+      setMfaError('تعذّر التحقق، حاول مرة أخرى.')
+      setMfaVerifying(false)
+      return
+    }
+    const { error: verifyError } = await supabase.auth.mfa.verify({ factorId: mfaFactorId, challengeId: challenge.id, code: mfaCode.trim() })
+    if (verifyError) {
+      setMfaError('رمز التحقق غير صحيح.')
+      setMfaVerifying(false)
+      return
+    }
+    setMfaEnabled(true)
+    setMfaDialogOpen(false)
+    setMfaCode('')
+    setMfaVerifying(false)
+    setToast('تم تفعيل التحقق بخطوتين')
+    setTimeout(() => setToast(null), 2500)
+  }
+
+  async function disableMfa() {
+    setMfaVerifying(true)
+    const { data } = await supabase.auth.mfa.listFactors()
+    const totp = data?.totp?.find((f) => f.status === 'verified')
+    if (totp) await supabase.auth.mfa.unenroll({ factorId: totp.id })
+    setMfaEnabled(false)
+    setMfaVerifying(false)
+    setToast('تم إيقاف التحقق بخطوتين')
+    setTimeout(() => setToast(null), 2500)
+  }
 
   useEffect(() => {
     setForm({ name: clinicName, phone: clinicPhone, email: clinicEmail, city: clinicCity })
@@ -201,6 +276,27 @@ export function DashboardV2Settings() {
       </Card>
 
       <Card style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+              {mfaEnabled ? <ShieldCheck size={16} style={{ color: 'var(--success-500)' }} /> : <ShieldOff size={16} style={{ color: 'var(--text-tertiary)' }} />}
+              الأمان — التحقق بخطوتين
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4, maxWidth: 400 }}>
+              يطلب رمزاً إضافياً من تطبيق مصادقة (Google Authenticator) عند تسجيل الدخول، حتى لو سُرقت كلمة المرور.
+            </div>
+          </div>
+          {!mfaChecking && (
+            mfaEnabled ? (
+              <Button variant="secondary" size="sm" onClick={disableMfa} disabled={mfaVerifying}>إيقاف</Button>
+            ) : (
+              <Button size="sm" onClick={startMfaEnrollment} disabled={mfaEnrolling || isDemo}>{mfaEnrolling ? 'جارِ التجهيز...' : 'تفعيل الآن'}</Button>
+            )
+          )}
+        </div>
+      </Card>
+
+      <Card style={{ marginBottom: 16 }}>
         <div style={{ fontWeight: 700, marginBottom: 14 }}>تفضيلات الذكاء الاصطناعي</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -230,6 +326,31 @@ export function DashboardV2Settings() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <Input label="الاسم الكامل" value={staffForm.full_name} onChange={(e) => setStaffForm((f) => ({ ...f, full_name: e.target.value }))} />
           <Select label="الصلاحية" options={ROLE_OPTIONS} value={staffForm.role} onChange={(e) => setStaffForm((f) => ({ ...f, role: e.target.value }))} />
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={mfaDialogOpen} title="تفعيل التحقق بخطوتين" onClose={() => setMfaDialogOpen(false)}
+        footer={<><Button variant="secondary" onClick={() => setMfaDialogOpen(false)}>إلغاء</Button><Button onClick={confirmMfaEnrollment} disabled={mfaVerifying}>{mfaVerifying ? 'جارِ التحقق...' : 'تأكيد وتفعيل'}</Button></>}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'center' }}>
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)', textAlign: 'center' }}>
+            امسح الرمز بتطبيق مصادقة (Google Authenticator، Authy، أو ما شابه) ثم أدخل الرمز المكوّن من 6 أرقام.
+          </div>
+          {mfaQrCode && (
+            <img src={mfaQrCode} alt="QR" style={{ width: 180, height: 180, border: '1px solid var(--border-default)', borderRadius: 'var(--radius-md)' }} />
+          )}
+          {mfaSecret && (
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', textAlign: 'center', wordBreak: 'break-all' }}>
+              أو أدخل هذا الرمز يدوياً: <b style={{ color: 'var(--text-secondary)' }}>{mfaSecret}</b>
+            </div>
+          )}
+          <Input
+            label="رمز التحقق" placeholder="000000" value={mfaCode}
+            onChange={(e) => { setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setMfaError('') }}
+            style={{ width: 160, textAlign: 'center' }}
+          />
+          {mfaError && <div style={{ fontSize: 12, color: 'var(--danger-500)' }}>{mfaError}</div>}
         </div>
       </Dialog>
 
