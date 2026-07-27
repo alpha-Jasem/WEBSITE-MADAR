@@ -2,6 +2,7 @@ import type {
   Clinic, Patient, Doctor, Service, Appointment,
   MessageLog, AICallLog, Waitlist, DashboardStats,
   Branch, GoogleReview, SupportTicket,
+  ReminderRule, Integration, CompanyStaff,
 } from '../types/clinicOS'
 
 const TODAY = new Date().toISOString().split('T')[0]
@@ -301,6 +302,28 @@ export const DEMO_GOOGLE_REVIEWS: GoogleReview[] = [
 export const DEMO_SUPPORT_TICKETS: SupportTicket[] = [
   { id: 'ticket-001', company_id: 'demo-clinic-001', subject: 'تقييم سلبي - الفرع الرئيسي - جدة', description: 'تقييم بنجمتين من خالد الرشيد: "انتظرت أكثر من ساعة عن موعدي المحدد بدون اعتذار."', route: 'google_review:rev-003', priority: 'normal', status: 'open', created_at: YESTERDAY, updated_at: YESTERDAY },
   { id: 'ticket-002', company_id: 'demo-clinic-001', subject: 'تقييم سلبي - فرع الياسمين - جدة', description: 'تقييم بنجمة واحدة من فيصل الزيد: "تم إلغاء موعدي بدون أي تنبيه مسبق، تجربة سيئة جداً."', route: 'google_review:rev-005', priority: 'high', status: 'open', created_at: D2, updated_at: D2 },
+]
+
+export const DEMO_REMINDER_RULES: ReminderRule[] = [
+  { id: 'rr-1', company_id: 'demo-clinic-001', rule_key: 'reminder_24h', label: 'تذكير واتساب قبل الموعد بيوم', enabled: true, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: 'rr-2', company_id: 'demo-clinic-001', rule_key: 'reminder_3h', label: 'تذكير واتساب قبل الموعد بساعتين', enabled: true, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: 'rr-3', company_id: 'demo-clinic-001', rule_key: 'call_unconfirmed', label: 'اتصال آلي بالعميل عند عدم التأكيد', enabled: false, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: 'rr-4', company_id: 'demo-clinic-001', rule_key: 'review_request', label: 'طلب تقييم Google بعد الزيارة', enabled: true, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: 'rr-5', company_id: 'demo-clinic-001', rule_key: 'no_show_alert', label: 'تنبيه للفريق عند موعد لم يُحضر', enabled: true, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+]
+
+export const DEMO_INTEGRATIONS: Integration[] = [
+  { id: 'int-1', company_id: 'demo-clinic-001', provider: 'whatsapp', name: 'WhatsApp Business', status: 'connected', connected_at: '2024-01-01T00:00:00Z', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: 'int-2', company_id: 'demo-clinic-001', provider: 'google_calendar', name: 'Google Calendar', status: 'connected', connected_at: '2024-01-01T00:00:00Z', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: 'int-3', company_id: 'demo-clinic-001', provider: 'google_business', name: 'Google Business Profile', status: 'disconnected', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: 'int-4', company_id: 'demo-clinic-001', provider: 'voip', name: 'مركز الاتصال (VoIP)', status: 'disconnected', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: 'int-5', company_id: 'demo-clinic-001', provider: 'instagram', name: 'Instagram', status: 'disconnected', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+]
+
+export const DEMO_STAFF: CompanyStaff[] = [
+  { id: 'staff-1', company_id: 'demo-clinic-001', role: 'owner', full_name: 'د. أحمد الزهراني', permissions: ['all'], created_at: '2024-01-01T00:00:00Z' },
+  { id: 'staff-2', company_id: 'demo-clinic-001', role: 'manager', full_name: 'سارة العتيبي', permissions: ['bookings', 'reviews'], created_at: '2024-01-01T00:00:00Z' },
+  { id: 'staff-3', company_id: 'demo-clinic-001', role: 'staff', full_name: 'محمد القحطاني', permissions: ['bookings'], created_at: '2024-01-01T00:00:00Z' },
 ]
 
 export function hasConflict(

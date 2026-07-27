@@ -105,7 +105,7 @@ export function DashboardV2MadarAgentUsage() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 16, marginBottom: 16 }}>
+      <div className="dv2-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 16, marginBottom: 16 }}>
         <Card>
           <div style={{ fontWeight: 700, marginBottom: 6, textAlign: 'center' }}>الاستهلاك الإجمالي</div>
           <div style={{ fontSize: 12, color: 'var(--text-tertiary)', textAlign: 'center', marginBottom: 10 }}>مرّر الفأرة للتفاصيل</div>
@@ -157,7 +157,7 @@ export function DashboardV2MadarAgentUsage() {
       </div>
 
       <Card>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+        <div className="dv2-responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
           <div>
             <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>الباقة الحالية</div>
             <div style={{ fontWeight: 700, fontSize: 15, marginTop: 4 }}>{isSubscribed ? plan.name : 'Free'}</div>

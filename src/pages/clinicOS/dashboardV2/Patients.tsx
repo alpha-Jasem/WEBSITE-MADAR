@@ -1,30 +1,56 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 import { useClinicPatients } from '../../../lib/clinicOSQueries'
 import type { Patient } from '../../../types/clinicOS'
-import { Card, Badge, Button, Dialog, Input } from '../../../components/clinicOS/v2/primitives'
+import { Card, Badge, Button, Dialog, Input, Select } from '../../../components/clinicOS/v2/primitives'
+
+const TYPE_OPTIONS = [
+  { value: 'all', label: 'كل الأنواع' },
+  { value: 'new', label: 'جديد' },
+  { value: 'returning', label: 'عائد' },
+]
+const SORT_OPTIONS = [
+  { value: 'recent', label: 'الأحدث زيارة' },
+  { value: 'visits', label: 'الأكثر زيارات' },
+  { value: 'name', label: 'الاسم (أ-ي)' },
+]
 
 export function DashboardV2Patients() {
   const { companyId, isDemo } = useClinicOS()
   const { data: patients } = useClinicPatients(companyId, isDemo)
   const [q, setQ] = useState('')
+  const [typeFilter, setTypeFilter] = useState('all')
+  const [sort, setSort] = useState('recent')
   const [selected, setSelected] = useState<Patient | null>(null)
 
   const rows = patients || []
-  const shown = rows.filter((p) => p.name.includes(q) || p.phone.includes(q))
+  const shown = useMemo(() => {
+    let filtered = rows.filter((p) => p.name.includes(q) || p.phone.includes(q))
+    if (typeFilter !== 'all') filtered = filtered.filter((p) => p.patient_type === typeFilter)
+    filtered = [...filtered]
+    if (sort === 'visits') filtered.sort((a, b) => b.total_visits - a.total_visits)
+    else if (sort === 'name') filtered.sort((a, b) => a.name.localeCompare(b.name, 'ar'))
+    else filtered.sort((a, b) => (b.last_visit_at || '').localeCompare(a.last_visit_at || ''))
+    return filtered
+  }, [rows, q, typeFilter, sort])
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={{ fontSize: 'var(--text-heading-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>العملاء</div>
-          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>{rows.length} عميل مسجل</div>
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>{shown.length} من {rows.length} عميل</div>
         </div>
-        <Input placeholder="بحث بالاسم أو الجوال" icon={<Search size={15} />} value={q} onChange={(e) => setQ(e.target.value)} style={{ width: 260 }} />
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <Input placeholder="بحث بالاسم أو الجوال" icon={<Search size={15} />} value={q} onChange={(e) => setQ(e.target.value)} style={{ width: 220 }} />
+          <Select options={TYPE_OPTIONS} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} style={{ width: 130 }} />
+          <Select options={SORT_OPTIONS} value={sort} onChange={(e) => setSort(e.target.value)} style={{ width: 150 }} />
+        </div>
       </div>
 
-      <Card style={{ padding: 0 }}>
+      <Card style={{ padding: 0, overflowX: 'auto' }}>
+        <div style={{ minWidth: 600 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '0.5fr 1.6fr 1.2fr 1fr 0.8fr 0.8fr', padding: '14px 20px', fontSize: 12, fontWeight: 700, color: 'var(--text-tertiary)', borderBottom: '1px solid var(--border-default)' }}>
           <div></div><div>الاسم</div><div>الجوال</div><div>آخر زيارة</div><div>عدد الزيارات</div><div>النوع</div>
         </div>
@@ -39,6 +65,7 @@ export function DashboardV2Patients() {
           </div>
         ))}
         {shown.length === 0 && <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-tertiary)' }}>لا يوجد عملاء مطابقون</div>}
+        </div>
       </Card>
 
       <Dialog open={!!selected} title={selected?.name || ''} onClose={() => setSelected(null)} footer={<Button onClick={() => setSelected(null)}>إغلاق</Button>}>

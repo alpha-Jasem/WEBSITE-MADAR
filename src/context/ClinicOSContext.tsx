@@ -24,6 +24,7 @@ interface ClinicOSContextValue {
   clinicPhone: string
   clinicEmail: string
   clinicCity: string
+  clinicLogoUrl: string
   clinicSettings: Record<string, unknown>
   companyId: string | null
   accountLoading: boolean
@@ -56,6 +57,7 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
   const [clinicPhone, setClinicPhone] = useState('')
   const [clinicEmail, setClinicEmail] = useState('')
   const [clinicCity, setClinicCity] = useState('')
+  const [clinicLogoUrl, setClinicLogoUrl] = useState('')
   const [clinicSettings, setClinicSettings] = useState<Record<string, unknown>>({})
   const [companyId, setCompanyId] = useState<string | null>(null)
   const [isDemo, setIsDemo] = useState(false)
@@ -83,7 +85,7 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
         setUserEmail(user.email || '')
 
         const [companyRes, userRes] = await Promise.allSettled([
-          supabase.from('companies').select('id, name, owner_phone, owner_email, city, clinic_settings, package_type, clinic_plan_code, status, subscription_status, subscription_start_date, subscription_end_date, monthly_usage_cycle_start, monthly_usage_cycle_end').eq('auth_user_id', user.id).single(),
+          supabase.from('companies').select('id, name, owner_phone, owner_email, city, logo_url, clinic_settings, package_type, clinic_plan_code, status, subscription_status, subscription_start_date, subscription_end_date, monthly_usage_cycle_start, monthly_usage_cycle_end').eq('auth_user_id', user.id).single(),
           supabase.from('users').select('full_name').eq('id', user.id).single(),
         ])
 
@@ -95,6 +97,7 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
         setClinicPhone(company?.owner_phone || '')
         setClinicEmail(company?.owner_email || user.email || '')
         setClinicCity(company?.city || '')
+        setClinicLogoUrl(company?.logo_url || '')
         setClinicSettings((company?.clinic_settings as Record<string, unknown>) || {})
         setSubscriptionStatus(company?.subscription_status || null)
         setSubscriptionStartDate(company?.subscription_start_date || null)
@@ -160,7 +163,7 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <ClinicOSContext.Provider value={{ packageType, setPackageType, clinicName, userName, userEmail, clinicPhone, clinicEmail, clinicCity, clinicSettings, companyId, accountLoading, isDemo, isSubscribed, subscriptionStatus, subscriptionStartDate, subscriptionEndDate, usageCycleStart, usageCycleEnd, usageMetrics, usageSummary, refreshAccount: load, logout }}>
+    <ClinicOSContext.Provider value={{ packageType, setPackageType, clinicName, userName, userEmail, clinicPhone, clinicEmail, clinicCity, clinicLogoUrl, clinicSettings, companyId, accountLoading, isDemo, isSubscribed, subscriptionStatus, subscriptionStartDate, subscriptionEndDate, usageCycleStart, usageCycleEnd, usageMetrics, usageSummary, refreshAccount: load, logout }}>
       <ToastProvider>
         {children}
       </ToastProvider>

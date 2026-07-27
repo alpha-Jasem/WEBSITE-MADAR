@@ -4,10 +4,12 @@ import {
   DEMO_DOCTORS, DEMO_SERVICES, DEMO_PATIENTS, DEMO_APPOINTMENTS,
   DEMO_MESSAGES, DEMO_AI_CALLS, DEMO_WAITLIST, DEMO_STATS,
   DEMO_BRANCHES, DEMO_GOOGLE_REVIEWS, DEMO_SUPPORT_TICKETS,
+  DEMO_REMINDER_RULES, DEMO_INTEGRATIONS, DEMO_STAFF,
 } from './clinicOSDemoData'
 import type {
   Doctor, Service, Patient, Appointment, MessageLog, AICallLog, Waitlist, AppointmentStatus,
   Branch, GoogleReview, SupportTicket, ReviewStatus,
+  ReminderRule, Integration, IntegrationStatus, CompanyStaff,
 } from '../types/clinicOS'
 
 // ─── Generic fetch hook ────────────────────────────────────────────────────────
@@ -691,5 +693,139 @@ export async function resolveTicket(id: string) {
     .from('ai_agent_support_tickets')
     .update({ status: 'resolved', updated_at: new Date().toISOString() })
     .eq('id', id)
+  if (error) throw error
+}
+
+// ─── Reminder Rules ─────────────────────────────────────────────────────────
+
+const DEFAULT_REMINDER_RULES: { rule_key: string; label: string }[] = [
+  { rule_key: 'reminder_24h', label: 'تذكير واتساب قبل الموعد بيوم' },
+  { rule_key: 'reminder_3h', label: 'تذكير واتساب قبل الموعد بساعتين' },
+  { rule_key: 'call_unconfirmed', label: 'اتصال آلي بالعميل عند عدم التأكيد' },
+  { rule_key: 'review_request', label: 'طلب تقييم Google بعد الزيارة' },
+  { rule_key: 'no_show_alert', label: 'تنبيه للفريق عند موعد لم يُحضر' },
+]
+
+export function useClinicReminderRules(companyId: string | null, isDemo = false) {
+  return useFetchRealtime<ReminderRule[]>(async () => {
+    if (isDemo) return DEMO_REMINDER_RULES
+    if (!companyId) return []
+    const { data, error } = await supabase
+      .from('clinic_os_reminder_rules')
+      .select('*')
+      .eq('company_id', companyId)
+    if (error) throw error
+    if ((data ?? []).length === 0) {
+      const seeded = DEFAULT_REMINDER_RULES.map((r) => ({ ...r, company_id: companyId, enabled: true }))
+      const { data: inserted, error: insertError } = await supabase
+        .from('clinic_os_reminder_rules')
+        .insert(seeded)
+        .select()
+      if (insertError) throw insertError
+      return (inserted ?? []) as ReminderRule[]
+    }
+    return data as ReminderRule[]
+  }, [companyId, isDemo], 'clinic_os_reminder_rules', companyId, isDemo)
+}
+
+export async function toggleReminderRule(id: string, enabled: boolean) {
+  const { error } = await supabase
+    .from('clinic_os_reminder_rules')
+    .update({ enabled, updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
+// ─── Integrations ───────────────────────────────────────────────────────────
+
+const DEFAULT_INTEGRATIONS: { provider: string; name: string }[] = [
+  { provider: 'whatsapp', name: 'WhatsApp Business' },
+  { provider: 'google_calendar', name: 'Google Calendar' },
+  { provider: 'google_business', name: 'Google Business Profile' },
+  { provider: 'voip', name: 'مركز الاتصال (VoIP)' },
+  { provider: 'instagram', name: 'Instagram' },
+]
+
+export function useClinicIntegrations(companyId: string | null, isDemo = false) {
+  return useFetchRealtime<Integration[]>(async () => {
+    if (isDemo) return DEMO_INTEGRATIONS
+    if (!companyId) return []
+    const { data, error } = await supabase
+      .from('clinic_os_integrations')
+      .select('*')
+      .eq('company_id', companyId)
+    if (error) throw error
+    if ((data ?? []).length === 0) {
+      const seeded = DEFAULT_INTEGRATIONS.map((i) => ({ ...i, company_id: companyId, status: 'disconnected' as IntegrationStatus }))
+      const { data: inserted, error: insertError } = await supabase
+        .from('clinic_os_integrations')
+        .insert(seeded)
+        .select()
+      if (insertError) throw insertError
+      return (inserted ?? []) as Integration[]
+    }
+    return data as Integration[]
+  }, [companyId, isDemo], 'clinic_os_integrations', companyId, isDemo)
+}
+
+export async function toggleIntegration(id: string, status: IntegrationStatus) {
+  const { error } = await supabase
+    .from('clinic_os_integrations')
+    .update({ status, connected_at: status === 'connected' ? new Date().toISOString() : null, updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
+// ─── Staff / permissions ────────────────────────────────────────────────────
+
+export function useClinicStaff(companyId: string | null, isDemo = false) {
+  return useFetchRealtime<CompanyStaff[]>(async () => {
+    if (isDemo) return DEMO_STAFF
+    if (!companyId) return []
+    const { data, error } = await supabase
+      .from('company_users')
+      .select('*')
+      .eq('company_id', companyId)
+      .order('created_at')
+    if (error) throw error
+    return (data ?? []) as CompanyStaff[]
+  }, [companyId, isDemo], 'company_users', companyId, isDemo)
+}
+
+export async function addStaffMember(input: { company_id: string; full_name: string; role: string; permissions?: string[] }) {
+  const { error } = await supabase
+    .from('company_users')
+    .insert({ company_id: input.company_id, full_name: input.full_name, role: input.role, permissions: input.permissions || [] })
+  if (error) throw error
+}
+
+export async function updateStaffMember(id: string, changes: { full_name?: string; role?: string; permissions?: string[] }) {
+  const { error } = await supabase.from('company_users').update(changes).eq('id', id)
+  if (error) throw error
+}
+
+export async function removeStaffMember(id: string) {
+  const { error } = await supabase.from('company_users').delete().eq('id', id)
+  if (error) throw error
+}
+
+// ─── Company profile (logo, working hours) ─────────────────────────────────
+
+export async function uploadCompanyLogo(companyId: string, file: File) {
+  const ext = file.name.split('.').pop() || 'png'
+  const path = `${companyId}/logo-${Date.now()}.${ext}`
+  const { error: uploadError } = await supabase.storage.from('company-assets').upload(path, file, { upsert: true })
+  if (uploadError) throw uploadError
+  const { data } = supabase.storage.from('company-assets').getPublicUrl(path)
+  const { error: updateError } = await supabase.from('companies').update({ logo_url: data.publicUrl }).eq('id', companyId)
+  if (updateError) throw updateError
+  return data.publicUrl
+}
+
+export async function updateClinicWorkingHours(companyId: string, currentSettings: Record<string, unknown>, workingHours: Record<string, unknown>) {
+  const { error } = await supabase
+    .from('companies')
+    .update({ clinic_settings: { ...currentSettings, working_hours: workingHours } })
+    .eq('id', companyId)
   if (error) throw error
 }

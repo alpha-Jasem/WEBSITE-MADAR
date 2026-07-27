@@ -1,8 +1,8 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, CalendarDays, Users, MessageSquare, Star, BarChart3,
-  Wallet, BellRing, Plug, Settings, Bell, ChevronDown, LogOut, CreditCard,
+  Wallet, BellRing, Plug, Settings, Bell, ChevronDown, LogOut, CreditCard, Menu, X,
 } from 'lucide-react'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 import { useClinicSupportTickets } from '../../../lib/clinicOSQueries'
@@ -21,8 +21,11 @@ export function DashboardV2Layout() {
   const location = useLocation()
   const { companyId, clinicName, userName, isDemo, logout } = useClinicOS()
   const [profileOpen, setProfileOpen] = useState(false)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const { data: tickets } = useClinicSupportTickets(companyId, isDemo)
   const openTicketCount = (tickets || []).filter((t) => t.status === 'open').length
+
+  useEffect(() => { setMobileNavOpen(false) }, [location.pathname])
 
   const base = '/clinic-os/dashboard'
   const NAV: NavItem[] = [
@@ -41,14 +44,36 @@ export function DashboardV2Layout() {
 
   return (
     <div className="dv2-scope" dir="rtl" style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-      <nav style={{
+      <style>{`
+        .dv2-hamburger { display: none; }
+        .dv2-backdrop { display: none; }
+        @media (max-width: 900px) {
+          .dv2-sidebar { position: fixed !important; inset-inline-start: 0; top: 0; bottom: 0; z-index: 1300;
+            transition: transform .25s var(--ease-out); transform: translateX(100%); }
+          [dir="rtl"] .dv2-sidebar { transform: translateX(100%); }
+          .dv2-sidebar.open { transform: translateX(0) !important; }
+          .dv2-backdrop.open { display: block; position: fixed; inset: 0; background: rgba(11,13,19,.5); z-index: 1200; }
+          .dv2-hamburger { display: flex !important; }
+          .dv2-header-subtitle { display: none; }
+          .dv2-main { padding: 14px !important; }
+          .dv2-responsive-grid { grid-template-columns: 1fr !important; }
+          .dv2-responsive-grid-2 { grid-template-columns: 1fr 1fr !important; }
+        }
+      `}</style>
+      {mobileNavOpen && <div className="dv2-backdrop open" onClick={() => setMobileNavOpen(false)} />}
+      <nav className={`dv2-sidebar${mobileNavOpen ? ' open' : ''}`} style={{
         width: 240, background: 'var(--gradient-dark)', height: '100%', display: 'flex',
         flexDirection: 'column', padding: '20px 14px', boxSizing: 'border-box',
         fontFamily: 'var(--font-body)', color: '#fff', flexShrink: 0,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 8px' }}>
-          <img src="/logo-main.png" alt="مدار" style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 'var(--radius-md)' }} />
-          <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16 }}>مدار</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img src="/logo-main.png" alt="مدار" style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 'var(--radius-md)' }} />
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16 }}>مدار</div>
+          </div>
+          <span className="dv2-hamburger" onClick={() => setMobileNavOpen(false)} style={{ cursor: 'pointer', color: 'rgba(255,255,255,.7)' }}>
+            <X size={20} />
+          </span>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 24, flex: 1, overflowY: 'auto' }}>
@@ -119,18 +144,23 @@ export function DashboardV2Layout() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--surface-canvas)' }}>
         <header style={{
           height: 64, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '0 24px', background: 'var(--surface-page)', borderBottom: '1px solid var(--border-default)',
+          padding: '0 16px', background: 'var(--surface-page)', borderBottom: '1px solid var(--border-default)', gap: 12,
         }}>
-          <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>
-            لوحة تحكم مدار — نسخة تجريبية جديدة
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+            <span className="dv2-hamburger" onClick={() => setMobileNavOpen(true)} style={{ cursor: 'pointer', color: 'var(--text-secondary)' }}>
+              <Menu size={20} />
+            </span>
+            <div className="dv2-header-subtitle" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              لوحة تحكم مدار — نسخة تجريبية جديدة
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
             <div style={{ position: 'relative', color: 'var(--text-secondary)', cursor: 'pointer' }}>
               <Bell size={18} />
             </div>
           </div>
         </header>
-        <main style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+        <main className="dv2-main" style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
           <Outlet />
         </main>
       </div>

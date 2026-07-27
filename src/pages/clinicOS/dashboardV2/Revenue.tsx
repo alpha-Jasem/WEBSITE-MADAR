@@ -1,7 +1,9 @@
 import { useMemo } from 'react'
+import { Download } from 'lucide-react'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 import { useClinicAppointments, useClinicServices } from '../../../lib/clinicOSQueries'
-import { Card } from '../../../components/clinicOS/v2/primitives'
+import { exportRowsToExcel } from '../../../lib/exportExcel'
+import { Card, Button } from '../../../components/clinicOS/v2/primitives'
 
 function fmt(n: number) {
   return n.toLocaleString('en-US')
@@ -59,15 +61,25 @@ export function DashboardV2Revenue() {
   const max = Math.max(1, ...revenueByMonth.map((r) => r.v))
   const maxS = Math.max(1, ...revenueByService.map(([, v]) => v))
 
+  function exportRevenue() {
+    exportRowsToExcel('الإيرادات-مدار', [
+      { name: 'الإيرادات الشهرية', rows: revenueByMonth.map((r) => ({ 'الشهر': r.m, 'الإيرادات (ر.س)': r.v })) },
+      { name: 'حسب الخدمة', rows: revenueByService.map(([label, value]) => ({ 'الخدمة': label, 'الإيرادات (ر.س)': value })) },
+    ])
+  }
+
   return (
     <div>
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 'var(--text-heading-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>الإيرادات</div>
-        <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
-          {hasPricing
-            ? `${fmt(total)} ر.س هذا الشهر${delta != null ? ` · ${delta >= 0 ? '+' : ''}${delta}% مقارنة بالشهر السابق` : ''}`
-            : 'محسوبة تلقائياً من أسعار الخدمات × الحجوزات المكتملة — أضف أسعاراً لخدماتك لتفعيلها'}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <div style={{ fontSize: 'var(--text-heading-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>الإيرادات</div>
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
+            {hasPricing
+              ? `${fmt(total)} ر.س هذا الشهر${delta != null ? ` · ${delta >= 0 ? '+' : ''}${delta}% مقارنة بالشهر السابق` : ''}`
+              : 'محسوبة تلقائياً من أسعار الخدمات × الحجوزات المكتملة — أضف أسعاراً لخدماتك لتفعيلها'}
+          </div>
         </div>
+        {hasPricing && <Button variant="secondary" onClick={exportRevenue}><Download size={15} /> تصدير Excel</Button>}
       </div>
 
       <Card style={{ marginBottom: 16 }}>

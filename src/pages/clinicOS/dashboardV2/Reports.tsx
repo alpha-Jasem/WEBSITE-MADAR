@@ -1,7 +1,9 @@
 import { useMemo } from 'react'
+import { Download } from 'lucide-react'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 import { useClinicAppointments, useClinicAICalls, useClinicMessages } from '../../../lib/clinicOSQueries'
-import { Card } from '../../../components/clinicOS/v2/primitives'
+import { exportRowsToExcel } from '../../../lib/exportExcel'
+import { Card, Button } from '../../../components/clinicOS/v2/primitives'
 
 function Bar({ label, value, max }: { label: string; value: number; max: number }) {
   return (
@@ -65,13 +67,25 @@ export function DashboardV2Reports() {
   const maxFunnel = Math.max(1, ...funnel.map((f) => f.value))
   const maxService = Math.max(1, ...services.map(([, v]) => v))
 
+  function exportReport() {
+    exportRowsToExcel('تقرير-مدار', [
+      { name: 'مسار التحويل', rows: funnel.map((f) => ({ 'المرحلة': f.label, 'العدد': f.value })) },
+      { name: 'أعلى الخدمات', rows: services.map(([label, value]) => ({ 'الخدمة': label, 'عدد الحجوزات': value })) },
+      { name: 'مصادر الحجوزات', rows: sources.map((s) => ({ 'المصدر': s.label, 'النسبة %': s.pct })) },
+      { name: 'الحجوزات التفصيلية', rows: appts.map((a) => ({ 'العميل': a.patient_name, 'الجوال': a.patient_phone, 'الخدمة': a.service_name, 'التاريخ': a.appointment_date, 'الوقت': a.start_time, 'الحالة': a.status, 'المصدر': SOURCE_LABELS[a.source] || a.source })) },
+    ])
+  }
+
   return (
     <div>
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 'var(--text-heading-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>التقارير والتحليلات</div>
-        <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>نظرة شاملة على كل بيانات {isDemo ? 'العرض التجريبي' : 'حسابك'}</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <div style={{ fontSize: 'var(--text-heading-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>التقارير والتحليلات</div>
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>نظرة شاملة على كل بيانات {isDemo ? 'العرض التجريبي' : 'حسابك'}</div>
+        </div>
+        <Button variant="secondary" onClick={exportReport}><Download size={15} /> تصدير Excel</Button>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <div className="dv2-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <Card>
           <div style={{ fontWeight: 700, marginBottom: 14 }}>مسار المحادثات إلى الحجوزات</div>
           {funnel.map((f, i) => <Bar key={i} label={f.label} value={f.value} max={maxFunnel} />)}

@@ -286,6 +286,39 @@ export interface SupportTicket {
   updated_at: string
 }
 
+export interface ReminderRule {
+  id: string
+  company_id: string
+  rule_key: string
+  label: string
+  enabled: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type IntegrationStatus = 'connected' | 'disconnected'
+
+export interface Integration {
+  id: string
+  company_id: string
+  provider: string
+  name: string
+  status: IntegrationStatus
+  connected_at?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface CompanyStaff {
+  id: string
+  company_id: string
+  auth_user_id?: string
+  role: string
+  full_name?: string
+  permissions: string[]
+  created_at: string
+}
+
 export interface DashboardStats {
   today_appointments: number
   confirmed: number
