@@ -3,9 +3,11 @@ import { supabase } from './supabase'
 import {
   DEMO_DOCTORS, DEMO_SERVICES, DEMO_PATIENTS, DEMO_APPOINTMENTS,
   DEMO_MESSAGES, DEMO_AI_CALLS, DEMO_WAITLIST, DEMO_STATS,
+  DEMO_BRANCHES, DEMO_GOOGLE_REVIEWS, DEMO_SUPPORT_TICKETS,
 } from './clinicOSDemoData'
 import type {
   Doctor, Service, Patient, Appointment, MessageLog, AICallLog, Waitlist, AppointmentStatus,
+  Branch, GoogleReview, SupportTicket, ReviewStatus,
 } from '../types/clinicOS'
 
 // ─── Generic fetch hook ────────────────────────────────────────────────────────
@@ -585,6 +587,109 @@ export async function updateAICallStatus(id: string, status: 'confirmed' | 'reje
   const { error } = await supabase
     .from('clinic_os_ai_calls')
     .update({ status, needs_review: false })
+    .eq('id', id)
+  if (error) throw error
+}
+
+// ─── Branches ─────────────────────────────────────────────────────────────────
+
+export function useClinicBranches(companyId: string | null, isDemo = false) {
+  return useFetchRealtime<Branch[]>(async () => {
+    if (isDemo) return DEMO_BRANCHES
+    if (!companyId) return []
+    const [branchesRes, settingsRes] = await Promise.all([
+      supabase.from('branches').select('*').eq('company_id', companyId).order('created_at'),
+      supabase.from('branch_settings').select('branch_id, key, value'),
+    ])
+    if (branchesRes.error) throw branchesRes.error
+    const settingsByBranch = new Map<string, Record<string, string>>()
+    for (const row of settingsRes.data ?? []) {
+      const bucket = settingsByBranch.get(row.branch_id) || {}
+      bucket[row.key] = row.value
+      settingsByBranch.set(row.branch_id, bucket)
+    }
+    return (branchesRes.data ?? []).map((row: any) => ({
+      ...row,
+      google_place_id: settingsByBranch.get(row.id)?.google_place_id,
+      google_maps_url: settingsByBranch.get(row.id)?.google_maps_url,
+    })) as Branch[]
+  }, [companyId, isDemo], 'branches', companyId, isDemo)
+}
+
+export async function createBranch(input: {
+  company_id: string
+  name: string
+  address?: string
+  phone?: string
+  google_maps_url?: string
+}) {
+  const { data: branch, error } = await supabase
+    .from('branches')
+    .insert({
+      company_id: input.company_id,
+      name: input.name,
+      name_ar: input.name,
+      address: input.address,
+      phone: input.phone,
+      industry_type: 'clinic',
+    })
+    .select()
+    .single()
+  if (error) throw error
+  if (input.google_maps_url) {
+    await supabase.from('branch_settings').insert({
+      branch_id: branch.id,
+      key: 'google_maps_url',
+      value: input.google_maps_url,
+    })
+  }
+  return branch as Branch
+}
+
+// ─── Google Reviews ───────────────────────────────────────────────────────────
+
+export function useClinicGoogleReviews(companyId: string | null, isDemo = false) {
+  return useFetchRealtime<GoogleReview[]>(async () => {
+    if (isDemo) return DEMO_GOOGLE_REVIEWS
+    if (!companyId) return []
+    const { data, error } = await supabase
+      .from('clinic_os_google_reviews')
+      .select('*')
+      .eq('company_id', companyId)
+      .order('review_date', { ascending: false })
+    if (error) throw error
+    return (data ?? []) as GoogleReview[]
+  }, [companyId, isDemo], 'clinic_os_google_reviews', companyId, isDemo)
+}
+
+export async function replyToReview(id: string, replyText: string) {
+  const { error } = await supabase
+    .from('clinic_os_google_reviews')
+    .update({ reply_text: replyText, reply_status: 'replied' as ReviewStatus, replied_by: 'human', updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
+// ─── Support Tickets (negative-review escalations, etc.) ──────────────────────
+
+export function useClinicSupportTickets(companyId: string | null, isDemo = false) {
+  return useFetchRealtime<SupportTicket[]>(async () => {
+    if (isDemo) return DEMO_SUPPORT_TICKETS
+    if (!companyId) return []
+    const { data, error } = await supabase
+      .from('ai_agent_support_tickets')
+      .select('*')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return (data ?? []) as SupportTicket[]
+  }, [companyId, isDemo], 'ai_agent_support_tickets', companyId, isDemo)
+}
+
+export async function resolveTicket(id: string) {
+  const { error } = await supabase
+    .from('ai_agent_support_tickets')
+    .update({ status: 'resolved', updated_at: new Date().toISOString() })
     .eq('id', id)
   if (error) throw error
 }

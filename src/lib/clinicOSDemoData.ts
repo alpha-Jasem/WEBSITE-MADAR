@@ -1,6 +1,7 @@
 import type {
   Clinic, Patient, Doctor, Service, Appointment,
-  MessageLog, AICallLog, Waitlist, DashboardStats
+  MessageLog, AICallLog, Waitlist, DashboardStats,
+  Branch, GoogleReview, SupportTicket,
 } from '../types/clinicOS'
 
 const TODAY = new Date().toISOString().split('T')[0]
@@ -195,7 +196,7 @@ export const DEMO_AI_CALLS: AICallLog[] = [
   {
     id: 'call-001', clinic_id: 'demo-clinic-001', patient_name: 'ليلى الغامدي', phone: '0506789012', call_time: TODAY + 'T08:10:00Z', duration_seconds: 87, intent: 'book_appointment', result: 'booked', status: 'completed',
     transcript: [
-      { speaker: 'agent', text: 'أهلاً وسهلاً، عيادات نور للأسنان، أنا مها كيف أقدر أساعدك؟', time: '00:00' },
+      { speaker: 'agent', text: 'أهلاً وسهلاً، عيادات نور للأسنان، أنا مساعد مدار الذكي كيف أقدر أساعدك؟', time: '00:00' },
       { speaker: 'patient', text: 'أبغى أحجز موعد كشف عام لليوم إذا في وقت متاح', time: '00:05' },
       { speaker: 'agent', text: 'بكل سرور! أي وقت يناسبك؟ عندنا وقت متاح الساعة 4 عصراً مع الدكتورة سارة', time: '00:12' },
       { speaker: 'patient', text: 'تمام الساعة 4 زين', time: '00:18' },
@@ -272,6 +273,34 @@ export const WEEKLY_CHART_DATA = [
   { day: 'خم', appointments: 16, completed: 0  },
   { day: 'جم', appointments: 0,  completed: 0  },
   { day: 'سب', appointments: 11, completed: 0  },
+]
+
+export const DEMO_BRANCHES: Branch[] = [
+  {
+    id: 'branch-001', company_id: 'demo-clinic-001', name: 'الفرع الرئيسي - جدة', name_ar: 'الفرع الرئيسي - جدة',
+    industry_type: 'clinic', timezone: 'Asia/Riyadh', phone: '0112345678', address: 'حي الروضة، جدة',
+    is_active: true, google_place_id: 'demo-place-001', google_maps_url: 'https://maps.google.com/?cid=demo1',
+    created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: 'branch-002', company_id: 'demo-clinic-001', name: 'فرع الياسمين - جدة', name_ar: 'فرع الياسمين - جدة',
+    industry_type: 'clinic', timezone: 'Asia/Riyadh', phone: '0112349999', address: 'حي الياسمين، جدة',
+    is_active: true, google_place_id: 'demo-place-002', google_maps_url: 'https://maps.google.com/?cid=demo2',
+    created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z',
+  },
+]
+
+export const DEMO_GOOGLE_REVIEWS: GoogleReview[] = [
+  { id: 'rev-001', branch_id: 'branch-001', company_id: 'demo-clinic-001', google_review_id: 'g1', reviewer_name: 'سارة أحمد', rating: 5, comment: 'خدمة ممتازة وفريق محترف، شكراً لكم!', review_date: TODAY, reply_text: 'شكراً لك سارة على ثقتك بنا!', reply_status: 'auto_replied', replied_by: 'ai', created_at: TODAY, updated_at: TODAY },
+  { id: 'rev-002', branch_id: 'branch-001', company_id: 'demo-clinic-001', google_review_id: 'g2', reviewer_name: 'محمد القحطاني', rating: 4, comment: 'تجربة جيدة لكن الانتظار كان طويلاً بعض الشيء.', review_date: YESTERDAY, reply_text: 'شكراً لملاحظتك، نعمل على تقليل وقت الانتظار.', reply_status: 'auto_replied', replied_by: 'ai', created_at: YESTERDAY, updated_at: YESTERDAY },
+  { id: 'rev-003', branch_id: 'branch-001', company_id: 'demo-clinic-001', google_review_id: 'g3', reviewer_name: 'خالد الرشيد', rating: 2, comment: 'انتظرت أكثر من ساعة عن موعدي المحدد بدون اعتذار.', review_date: YESTERDAY, reply_status: 'pending', created_at: YESTERDAY, updated_at: YESTERDAY },
+  { id: 'rev-004', branch_id: 'branch-002', company_id: 'demo-clinic-001', google_review_id: 'g4', reviewer_name: 'نورة الدوسري', rating: 5, comment: 'أفضل عيادة أسنان تعاملت معها.', review_date: D2, reply_text: 'يسعدنا سماع ذلك يا نورة، شكراً لك!', reply_status: 'auto_replied', replied_by: 'ai', created_at: D2, updated_at: D2 },
+  { id: 'rev-005', branch_id: 'branch-002', company_id: 'demo-clinic-001', google_review_id: 'g5', reviewer_name: 'فيصل الزيد', rating: 1, comment: 'تم إلغاء موعدي بدون أي تنبيه مسبق، تجربة سيئة جداً.', review_date: D2, reply_status: 'pending', created_at: D2, updated_at: D2 },
+]
+
+export const DEMO_SUPPORT_TICKETS: SupportTicket[] = [
+  { id: 'ticket-001', company_id: 'demo-clinic-001', subject: 'تقييم سلبي - الفرع الرئيسي - جدة', description: 'تقييم بنجمتين من خالد الرشيد: "انتظرت أكثر من ساعة عن موعدي المحدد بدون اعتذار."', route: 'google_review:rev-003', priority: 'normal', status: 'open', created_at: YESTERDAY, updated_at: YESTERDAY },
+  { id: 'ticket-002', company_id: 'demo-clinic-001', subject: 'تقييم سلبي - فرع الياسمين - جدة', description: 'تقييم بنجمة واحدة من فيصل الزيد: "تم إلغاء موعدي بدون أي تنبيه مسبق، تجربة سيئة جداً."', route: 'google_review:rev-005', priority: 'high', status: 'open', created_at: D2, updated_at: D2 },
 ]
 
 export function hasConflict(

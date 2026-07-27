@@ -43,29 +43,22 @@ const ClinicOSSignupPage   = lazy(() => import('./pages/clinicOS/ClinicOSSignup'
 const DemoSignupPage       = lazy(() => import('./pages/clinicOS/DemoSignup').then(m => ({ default: m.DemoSignup })))
 const DemoConfirmPage      = lazy(() => import('./pages/clinicOS/DemoConfirm').then(m => ({ default: m.DemoConfirm })))
 const PackageSelectorPage  = lazy(() => import('./pages/clinicOS/PackageSelector').then(m => ({ default: m.PackageSelector })))
-const ClinicOSDashLayout   = lazy(() => import('./components/clinicOS/layout/ClinicOSDashboardLayout').then(m => ({ default: m.ClinicOSDashboardLayout })))
-const DashboardOverview    = lazy(() => import('./pages/clinicOS/dashboard/DashboardOverview').then(m => ({ default: m.DashboardOverview })))
-const AppointmentsPage     = lazy(() => import('./pages/clinicOS/dashboard/Appointments').then(m => ({ default: m.Appointments })))
-const AIBookingPage        = lazy(() => import('./pages/clinicOS/dashboard/AIBooking').then(m => ({ default: m.AIBooking })))
-const PatientsPage         = lazy(() => import('./pages/clinicOS/dashboard/Patients').then(m => ({ default: m.Patients })))
-const DoctorsPage          = lazy(() => import('./pages/clinicOS/dashboard/Doctors').then(m => ({ default: m.Doctors })))
-const ServicesPage         = lazy(() => import('./pages/clinicOS/dashboard/Services').then(m => ({ default: m.Services })))
-const CalendarPageCO       = lazy(() => import('./pages/clinicOS/dashboard/CalendarPage').then(m => ({ default: m.CalendarPage })))
-const MessagesPageCO       = lazy(() => import('./pages/clinicOS/dashboard/Messages').then(m => ({ default: m.Messages })))
-const ReportsPageCO        = lazy(() => import('./pages/clinicOS/dashboard/Reports').then(m => ({ default: m.Reports })))
-const SettingsPageCO       = lazy(() => import('./pages/clinicOS/dashboard/Settings').then(m => ({ default: m.Settings })))
-const SystemValuePage      = lazy(() => import('./pages/clinicOS/dashboard/AIReceptionistPages').then(m => ({ default: m.SystemValuePage })))
-const ConversationsPage    = lazy(() => import('./pages/clinicOS/dashboard/AIReceptionistPages').then(m => ({ default: m.ConversationsPage })))
-const BookingsPage         = lazy(() => import('./pages/clinicOS/dashboard/AIReceptionistPages').then(m => ({ default: m.BookingsPage })))
-const LeadsPage            = lazy(() => import('./pages/clinicOS/dashboard/AIReceptionistPages').then(m => ({ default: m.LeadsPage })))
-const LostOpportunitiesPage = lazy(() => import('./pages/clinicOS/dashboard/AIReceptionistPages').then(m => ({ default: m.LostOpportunitiesPage })))
-const SmartCallsPage       = lazy(() => import('./pages/clinicOS/dashboard/AIReceptionistPages').then(m => ({ default: m.SmartCallsPage })))
-const MissedCallsPage      = lazy(() => import('./pages/clinicOS/dashboard/AIReceptionistPages').then(m => ({ default: m.MissedCallsPage })))
-const PlanUsagePage        = lazy(() => import('./pages/clinicOS/dashboard/AIReceptionistPages').then(m => ({ default: m.PlanUsagePage })))
-const PlansPage            = lazy(() => import('./pages/clinicOS/dashboard/Plans').then(m => ({ default: m.PlansPage })))
-const KnowledgeCenterPage  = lazy(() => import('./pages/clinicOS/dashboard/AIReceptionistPages').then(m => ({ default: m.KnowledgeCenterPage })))
 const DemoReviewPage       = lazy(() => import('./pages/clinicOS/DemoReview').then(m => ({ default: m.DemoReview })))
 const ClinicOSAdminPage    = lazy(() => import('./pages/clinicOS/admin/ClinicOSAdmin').then(m => ({ default: m.ClinicOSAdmin })))
+
+// ClinicOS Dashboard (Madar Software Design System)
+const DashboardV2Layout        = lazy(() => import('./components/clinicOS/v2/DashboardV2Layout').then(m => ({ default: m.DashboardV2Layout })))
+const DashboardV2Home          = lazy(() => import('./pages/clinicOS/dashboardV2/Home').then(m => ({ default: m.DashboardV2Home })))
+const DashboardV2Bookings      = lazy(() => import('./pages/clinicOS/dashboardV2/Bookings').then(m => ({ default: m.DashboardV2Bookings })))
+const DashboardV2Patients      = lazy(() => import('./pages/clinicOS/dashboardV2/Patients').then(m => ({ default: m.DashboardV2Patients })))
+const DashboardV2Conversations = lazy(() => import('./pages/clinicOS/dashboardV2/Conversations').then(m => ({ default: m.DashboardV2Conversations })))
+const DashboardV2Reviews       = lazy(() => import('./pages/clinicOS/dashboardV2/Reviews').then(m => ({ default: m.DashboardV2Reviews })))
+const DashboardV2Revenue       = lazy(() => import('./pages/clinicOS/dashboardV2/Revenue').then(m => ({ default: m.DashboardV2Revenue })))
+const DashboardV2Reports       = lazy(() => import('./pages/clinicOS/dashboardV2/Reports').then(m => ({ default: m.DashboardV2Reports })))
+const DashboardV2Reminders     = lazy(() => import('./pages/clinicOS/dashboardV2/Reminders').then(m => ({ default: m.DashboardV2Reminders })))
+const DashboardV2Integrations  = lazy(() => import('./pages/clinicOS/dashboardV2/Integrations').then(m => ({ default: m.DashboardV2Integrations })))
+const DashboardV2Settings      = lazy(() => import('./pages/clinicOS/dashboardV2/Settings').then(m => ({ default: m.DashboardV2Settings })))
+const DashboardV2MadarAgentUsage = lazy(() => import('./pages/clinicOS/dashboardV2/MadarAgentUsage').then(m => ({ default: m.DashboardV2MadarAgentUsage })))
 
 function App() {
   useEffect(() => {
@@ -102,32 +95,23 @@ function App() {
               <ClinicOSProvider><PackageSelectorPage /></ClinicOSProvider>
             } />
 
-            {/* ── ClinicOS Dashboard ── */}
+            {/* ── ClinicOS Dashboard (Madar Software Design System) ── */}
             <Route path="/clinic-os/dashboard/*" element={
               <ClinicOSProvider>
-                <ClinicOSDashLayout />
+                <DashboardV2Layout />
               </ClinicOSProvider>
             }>
-              <Route index          element={<DashboardOverview />} />
-              <Route path="value" element={<SystemValuePage />} />
-              <Route path="conversations" element={<ConversationsPage />} />
-              <Route path="bookings" element={<BookingsPage />} />
-              <Route path="leads" element={<LeadsPage />} />
-              <Route path="lost-opportunities" element={<LostOpportunitiesPage />} />
-              <Route path="smart-calls" element={<SmartCallsPage />} />
-              <Route path="missed-calls" element={<MissedCallsPage />} />
-              <Route path="usage" element={<PlanUsagePage />} />
-              <Route path="plans" element={<PlansPage />} />
-              <Route path="knowledge" element={<KnowledgeCenterPage />} />
-              <Route path="appointments" element={<AppointmentsPage />} />
-              <Route path="ai-booking"   element={<AIBookingPage />} />
-              <Route path="patients"     element={<PatientsPage />} />
-              <Route path="doctors"      element={<DoctorsPage />} />
-              <Route path="services"     element={<ServicesPage />} />
-              <Route path="calendar"     element={<CalendarPageCO />} />
-              <Route path="messages"     element={<MessagesPageCO />} />
-              <Route path="reports"      element={<ReportsPageCO />} />
-              <Route path="settings"     element={<SettingsPageCO />} />
+              <Route index element={<DashboardV2Home />} />
+              <Route path="bookings" element={<DashboardV2Bookings />} />
+              <Route path="patients" element={<DashboardV2Patients />} />
+              <Route path="conversations" element={<DashboardV2Conversations />} />
+              <Route path="reviews" element={<DashboardV2Reviews />} />
+              <Route path="revenue" element={<DashboardV2Revenue />} />
+              <Route path="reports" element={<DashboardV2Reports />} />
+              <Route path="plan-usage" element={<DashboardV2MadarAgentUsage />} />
+              <Route path="reminders" element={<DashboardV2Reminders />} />
+              <Route path="integrations" element={<DashboardV2Integrations />} />
+              <Route path="settings" element={<DashboardV2Settings />} />
             </Route>
             <Route path="/real-estate" element={<Navigate to="/#products" replace />} />
             <Route path="/login" element={<Login />} />

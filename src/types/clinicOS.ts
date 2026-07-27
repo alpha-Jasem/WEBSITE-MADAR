@@ -232,6 +232,60 @@ export interface ConflictAlert {
   suggested_slots?: string[]
 }
 
+export interface Branch {
+  id: string
+  company_id: string
+  name: string
+  name_ar?: string
+  industry_type: string
+  timezone: string
+  phone?: string
+  address?: string
+  address_ar?: string
+  whatsapp_phone_id?: string
+  is_active: boolean
+  google_place_id?: string
+  google_maps_url?: string
+  created_at: string
+  updated_at: string
+}
+
+export type ReviewStatus = 'pending' | 'auto_replied' | 'replied'
+export type ReviewRepliedBy = 'ai' | 'human'
+
+export interface GoogleReview {
+  id: string
+  branch_id: string
+  company_id: string
+  google_review_id?: string
+  reviewer_name: string
+  rating: number
+  comment?: string
+  review_date: string
+  reply_text?: string
+  reply_status: ReviewStatus
+  replied_by?: ReviewRepliedBy
+  created_at: string
+  updated_at: string
+}
+
+export type TicketPriority = 'low' | 'normal' | 'high'
+export type TicketStatus = 'open' | 'in_progress' | 'resolved'
+
+export interface SupportTicket {
+  id: string
+  conversation_id?: string
+  company_id: string
+  user_id?: string
+  subject: string
+  description: string
+  route: string
+  priority: TicketPriority
+  status: TicketStatus
+  created_at: string
+  updated_at: string
+}
+
 export interface DashboardStats {
   today_appointments: number
   confirmed: number

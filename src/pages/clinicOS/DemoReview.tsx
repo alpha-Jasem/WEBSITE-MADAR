@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { ShieldCheck } from 'lucide-react'
 import { useClinicOS } from '../../context/ClinicOSContext'
-import { DashboardOverview } from './dashboard/DashboardOverview'
+import { DashboardV2Home } from './dashboardV2/Home'
 import { ClinicOSAdmin } from './admin/ClinicOSAdmin'
+import '../../styles/dashboardV2Tokens.css'
 import './dashboard/clinic-ai-dashboard.css'
 
 type View = 'whatsapp' | 'ai_pro' | 'admin'
@@ -16,7 +17,7 @@ export const DemoReview = () => {
       <div style={{display:'flex',alignItems:'center',gap:9}}><ShieldCheck size={18} color="#6557d9"/><div><strong style={{display:'block',font:'900 13px Cairo'}}>مراجعة Clinic OS</strong><span style={{font:'10px Tajawal',color:'#7b8799'}}>بيانات تجريبية فقط، بدون تنفيذ أو إرسال</span></div></div>
       <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>{([['whatsapp','لوحة العميل — واتساب'],['ai_pro','لوحة العميل — الاتصال الذكي'],['admin','لوحة الإدارة']] as const).map(([id,label])=><button key={id} onClick={()=>setView(id)} style={{padding:'8px 12px',borderRadius:7,border:`1px solid ${view===id?'#6557d9':'#e5e9f2'}`,background:view===id?'#f0efff':'#fff',color:view===id?'#5146bd':'#637087',font:'800 11px Cairo',cursor:'pointer'}}>{label}</button>)}</div>
     </div>
-    <main style={{maxWidth:1480,margin:'0 auto',padding:22}}>{view==='admin'?<ClinicOSAdmin embedded/>:<DashboardOverview/>}</main>
+    <main style={{maxWidth:1480,margin:'0 auto',padding:22}}>{view==='admin'?<ClinicOSAdmin embedded/>:<div className="dv2-scope" dir="rtl" style={{background:'transparent'}}><DashboardV2Home/></div>}</main>
   </div>
 }
 

@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { AlertTriangle, Building2, CalendarClock, CheckCircle2, Loader2, RefreshCw, TrendingUp, UsersRound, Wrench } from 'lucide-react'
+import { AlertTriangle, Building2, CalendarClock, CheckCircle2, Loader2, RefreshCw, Star, TrendingUp, UsersRound, Wrench } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { CLINIC_PLANS } from '../../../lib/clinicOSProduct'
-import type { PackageType } from '../../../types/clinicOS'
+import type { PackageType, SupportTicket } from '../../../types/clinicOS'
 import '../dashboard/clinic-ai-dashboard.css'
+
+type TicketWithCompany = SupportTicket & { company?: { name: string } | null }
 
 type UsageRow = {
   whatsapp_conversations_used?: number
@@ -56,6 +58,9 @@ export const ClinicOSAdmin = ({ embedded = false }: { embedded?: boolean }) => {
   const [error, setError] = useState('')
   const [activating, setActivating] = useState<string | null>(null)
   const [selectedPlans, setSelectedPlans] = useState<Record<string, PackageType>>({})
+  const [tickets, setTickets] = useState<TicketWithCompany[]>([])
+  const [ticketsLoading, setTicketsLoading] = useState(true)
+  const [resolving, setResolving] = useState<string | null>(null)
 
   const loadClients = useCallback(async () => {
     setLoading(true)
@@ -68,7 +73,30 @@ export const ClinicOSAdmin = ({ embedded = false }: { embedded?: boolean }) => {
     setLoading(false)
   }, [])
 
+  const loadTickets = useCallback(async () => {
+    setTicketsLoading(true)
+    const { data } = await supabase
+      .from('ai_agent_support_tickets')
+      .select('*, company:companies(name)')
+      .like('route', 'google_review:%')
+      .order('created_at', { ascending: false })
+      .limit(100)
+    setTickets((data || []) as TicketWithCompany[])
+    setTicketsLoading(false)
+  }, [])
+
   useEffect(() => { loadClients() }, [loadClients])
+  useEffect(() => { loadTickets() }, [loadTickets])
+
+  const resolveTicket = async (ticketId: string) => {
+    setResolving(ticketId)
+    const { error: updateError } = await supabase
+      .from('ai_agent_support_tickets')
+      .update({ status: 'resolved' })
+      .eq('id', ticketId)
+    if (!updateError) await loadTickets()
+    setResolving(null)
+  }
 
   const activate = async (client: ClinicClient) => {
     const planCode = selectedPlans[client.id] || client.clinic_plan_code || 'whatsapp'
@@ -121,6 +149,23 @@ export const ClinicOSAdmin = ({ embedded = false }: { embedded?: boolean }) => {
           <button className="clinic-action" onClick={() => activate(client)} disabled={activating === client.id}>{activating === client.id ? <><Loader2 className="spin" size={14}/>جاري التفعيل</> : <><Wrench size={14}/>{active ? 'تحديث الباقة' : 'تفعيل الاشتراك'}</>}</button>
         </div>
       })}{!clients.length && <div className="clinic-empty-state"><Building2 size={22}/><strong>لا توجد حسابات عيادات</strong></div>}</div>}
+    </div>
+    <div className="clinic-card clinic-section" style={{ marginTop: 16 }}>
+      <div className="clinic-section-head">
+        <div><h2>تذاكر تقييمات Google السلبية</h2><p>تُرفع تلقائياً عند تقييم 3 نجوم أو أقل، بانتظار رد فريق العيادة أو تدخلكم.</p></div>
+        <button className="clinic-action secondary" onClick={loadTickets} disabled={ticketsLoading}><RefreshCw size={15}/>تحديث</button>
+      </div>
+      {ticketsLoading ? <div className="clinic-empty-state"><Loader2 className="spin" size={24}/><strong>جاري تحميل التذاكر</strong></div> :
+      <div className="clinic-list">{tickets.filter(t => t.status !== 'resolved').map(ticket => (
+        <div className="clinic-list-row" key={ticket.id} style={{ gridTemplateColumns: '1.1fr 1.8fr .6fr auto' }}>
+          <div><strong>{ticket.company?.name || 'عيادة غير معروفة'}</strong><div className="clinic-muted">{ticket.subject}</div></div>
+          <div className="clinic-muted">{ticket.description}</div>
+          <span className={`clinic-badge ${ticket.priority === 'high' ? 'danger' : 'warning'}`}>{ticket.priority === 'high' ? 'أولوية عالية' : 'عادية'}</span>
+          <button className="clinic-action" onClick={() => resolveTicket(ticket.id)} disabled={resolving === ticket.id}>
+            {resolving === ticket.id ? <><Loader2 className="spin" size={14}/>جارِ الإغلاق</> : <><CheckCircle2 size={14}/>تمت المعالجة</>}
+          </button>
+        </div>
+      ))}{!tickets.filter(t => t.status !== 'resolved').length && <div className="clinic-empty-state"><Star size={22}/><strong>لا توجد تذاكر تقييمات مفتوحة</strong></div>}</div>}
     </div>
   </div>
 
