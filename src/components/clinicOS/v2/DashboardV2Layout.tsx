@@ -225,8 +225,8 @@ export function DashboardV2Layout() {
             <span onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))} style={{ cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex' }}>
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </span>
-            <AccountMenu base={base} />
             <NotificationCenter />
+            <AccountMenu base={base} />
           </div>
         </header>
         {!isDemo && accountError && (
