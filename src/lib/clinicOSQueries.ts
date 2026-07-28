@@ -4,12 +4,12 @@ import {
   DEMO_DOCTORS, DEMO_SERVICES, DEMO_PATIENTS, DEMO_APPOINTMENTS,
   DEMO_MESSAGES, DEMO_AI_CALLS, DEMO_WAITLIST, DEMO_STATS,
   DEMO_BRANCHES, DEMO_GOOGLE_REVIEWS, DEMO_SUPPORT_TICKETS,
-  DEMO_REMINDER_RULES, DEMO_INTEGRATIONS, DEMO_STAFF,
+  DEMO_REMINDER_RULES, DEMO_INTEGRATIONS, DEMO_STAFF, DEMO_NOTIFICATIONS,
 } from './clinicOSDemoData'
 import type {
   Doctor, Service, Patient, Appointment, MessageLog, AICallLog, Waitlist, AppointmentStatus,
   Branch, GoogleReview, SupportTicket, ReviewStatus,
-  ReminderRule, Integration, IntegrationStatus, CompanyStaff,
+  ReminderRule, Integration, IntegrationStatus, CompanyStaff, ClinicNotification, NotificationSeverity,
 } from '../types/clinicOS'
 
 // ─── Generic fetch hook ────────────────────────────────────────────────────────
@@ -477,6 +477,16 @@ export async function createAppointment(data: Partial<Appointment>) {
     .select()
     .single()
   if (error) throw error
+  if (data.clinic_id) {
+    await createNotification({
+      company_id: data.clinic_id,
+      notification_type: 'new_booking',
+      title: 'حجز جديد',
+      message: `${data.patient_name || 'عميل'} حجز موعد ${data.service_name || ''} بتاريخ ${data.appointment_date}`,
+      severity: 'success',
+      route: '/clinic-os/dashboard/bookings',
+    }).catch(() => {})
+  }
   return result as Appointment
 }
 
@@ -827,5 +837,58 @@ export async function updateClinicWorkingHours(companyId: string, currentSetting
     .from('companies')
     .update({ clinic_settings: { ...currentSettings, working_hours: workingHours } })
     .eq('id', companyId)
+  if (error) throw error
+}
+
+// ─── Notifications ──────────────────────────────────────────────────────────
+
+export function useClinicNotifications(companyId: string | null, isDemo = false) {
+  return useFetchRealtime<ClinicNotification[]>(async () => {
+    if (isDemo) return DEMO_NOTIFICATIONS
+    if (!companyId) return []
+    const { data, error } = await supabase
+      .from('clinic_os_notifications')
+      .select('*')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
+      .limit(50)
+    if (error) throw error
+    return (data ?? []) as ClinicNotification[]
+  }, [companyId, isDemo], 'clinic_os_notifications', companyId, isDemo)
+}
+
+export async function createNotification(input: {
+  company_id: string
+  notification_type: string
+  title: string
+  message: string
+  severity?: NotificationSeverity
+  route?: string
+}) {
+  const { error } = await supabase.from('clinic_os_notifications').insert({
+    company_id: input.company_id,
+    notification_type: input.notification_type,
+    title: input.title,
+    message: input.message,
+    severity: input.severity || 'info',
+    route: input.route,
+  })
+  if (error) throw error
+}
+
+export async function markNotificationRead(id: string) {
+  const { error } = await supabase
+    .from('clinic_os_notifications')
+    .update({ read_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function markAllNotificationsRead(companyId: string) {
+  const { error } = await supabase
+    .from('clinic_os_notifications')
+    .update({ read_at: new Date().toISOString() })
+    .eq('company_id', companyId)
+    .is('read_at', null)
   if (error) throw error
 }

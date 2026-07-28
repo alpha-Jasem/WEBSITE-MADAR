@@ -2,7 +2,7 @@ import type {
   Clinic, Patient, Doctor, Service, Appointment,
   MessageLog, AICallLog, Waitlist, DashboardStats,
   Branch, GoogleReview, SupportTicket,
-  ReminderRule, Integration, CompanyStaff,
+  ReminderRule, Integration, CompanyStaff, ClinicNotification,
 } from '../types/clinicOS'
 
 const TODAY = new Date().toISOString().split('T')[0]
@@ -324,6 +324,12 @@ export const DEMO_STAFF: CompanyStaff[] = [
   { id: 'staff-1', company_id: 'demo-clinic-001', role: 'owner', full_name: 'د. أحمد الزهراني', permissions: ['all'], created_at: '2024-01-01T00:00:00Z' },
   { id: 'staff-2', company_id: 'demo-clinic-001', role: 'manager', full_name: 'سارة العتيبي', permissions: ['bookings', 'reviews'], created_at: '2024-01-01T00:00:00Z' },
   { id: 'staff-3', company_id: 'demo-clinic-001', role: 'staff', full_name: 'محمد القحطاني', permissions: ['bookings'], created_at: '2024-01-01T00:00:00Z' },
+]
+
+export const DEMO_NOTIFICATIONS: ClinicNotification[] = [
+  { id: 'notif-1', company_id: 'demo-clinic-001', notification_type: 'new_booking', title: 'حجز جديد', message: 'سارة أحمد حجزت موعد تنظيف أسنان الساعة 4 عصراً', severity: 'success', route: '/clinic-os/dashboard/bookings', created_at: TODAY + 'T10:40:00Z' },
+  { id: 'notif-2', company_id: 'demo-clinic-001', notification_type: 'negative_review', title: 'تقييم سلبي جديد', message: 'خالد الرشيد قيّم فرعك بنجمتين — يحتاج ردك', severity: 'warning', route: '/clinic-os/dashboard/reviews', created_at: YESTERDAY + 'T14:10:00Z' },
+  { id: 'notif-3', company_id: 'demo-clinic-001', notification_type: 'no_show', title: 'عميل لم يحضر', message: 'بدر الحربي لم يحضر موعده الساعة 1:00 ظهراً', severity: 'critical', route: '/clinic-os/dashboard/bookings', read_at: YESTERDAY + 'T16:00:00Z', created_at: YESTERDAY + 'T13:10:00Z' },
 ]
 
 export function hasConflict(

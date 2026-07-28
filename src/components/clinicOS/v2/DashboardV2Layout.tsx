@@ -2,10 +2,12 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, CalendarDays, Users, MessageSquare, Star, BarChart3,
-  Wallet, BellRing, Plug, Settings, Bell, ChevronDown, LogOut, CreditCard, Menu, X,
+  Wallet, BellRing, Plug, Settings, ChevronDown, LogOut, CreditCard, Menu, X,
 } from 'lucide-react'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 import { useClinicSupportTickets } from '../../../lib/clinicOSQueries'
+import { NotificationCenter } from './NotificationCenter'
+import { SupportChat } from './SupportChat'
 import '../../../styles/dashboardV2Tokens.css'
 
 interface NavItem {
@@ -155,15 +157,14 @@ export function DashboardV2Layout() {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
-            <div style={{ position: 'relative', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-              <Bell size={18} />
-            </div>
+            <NotificationCenter />
           </div>
         </header>
         <main className="dv2-main" style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
           <Outlet />
         </main>
       </div>
+      <SupportChat />
     </div>
   )
 }

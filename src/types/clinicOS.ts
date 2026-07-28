@@ -319,6 +319,20 @@ export interface CompanyStaff {
   created_at: string
 }
 
+export type NotificationSeverity = 'info' | 'warning' | 'critical' | 'success'
+
+export interface ClinicNotification {
+  id: string
+  company_id: string
+  notification_type: string
+  title: string
+  message: string
+  severity: NotificationSeverity
+  route?: string
+  read_at?: string
+  created_at: string
+}
+
 export interface DashboardStats {
   today_appointments: number
   confirmed: number
