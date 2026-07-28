@@ -1,6 +1,6 @@
 ﻿import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Check, Loader2, Eye, EyeOff, Building2, Car, Stethoscope, Briefcase } from 'lucide-react'
+import { X, Check, Loader2, Eye, EyeOff, Building2, Stethoscope, Briefcase } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import type { Plan, BusinessType } from '../../../types'
 
@@ -28,7 +28,6 @@ const PLANS: Array<{
 
 const BUSINESS_TYPES: Array<{ id: BusinessType; label: string; icon: typeof Building2 }> = [
   { id: 'clinic',      label: 'عيادة طبية',       icon: Stethoscope },
-  { id: 'car_wash',    label: 'مغسلة سيارات',      icon: Car },
   { id: 'real_estate', label: 'شركة عقارية',       icon: Building2 },
   { id: 'other',       label: 'أخرى',              icon: Briefcase },
 ]

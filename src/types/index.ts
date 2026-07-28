@@ -1,7 +1,7 @@
 export type Language = 'ar' | 'en'
 export type UserRole = 'admin' | 'client'
 export type Plan = 'starter' | 'growth' | 'enterprise'
-export type BusinessType = 'clinic' | 'car_wash' | 'real_estate' | 'other'
+export type BusinessType = 'clinic' | 'real_estate' | 'other'
 export type AutomationType = 'whatsapp' | 'crm' | 'ai_agent' | 'booking' | 'sales'
 export type AutomationStatus = 'active' | 'paused' | 'error' | 'building'
 export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'converted' | 'lost'
@@ -48,14 +48,7 @@ export interface Company {
   // Clinic OS
   package_type?: string
   city?: string
-  // Car wash config (JSONB columns kept for legacy compat)
-  cw_services?: unknown
-  cw_hours?: unknown
-  cw_loyalty_threshold?: number
   google_maps_url?: string
-  cw_message_templates?: Record<string, string>
-  cw_automations?: Record<string, any>
-  cw_monthly_target?: number
 }
 
 export interface Automation {

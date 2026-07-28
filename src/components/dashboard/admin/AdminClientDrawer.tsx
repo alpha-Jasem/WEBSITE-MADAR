@@ -1,28 +1,20 @@
-﻿import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
-  Building2,
   Check,
   Copy,
   CreditCard,
-  ExternalLink,
   Loader2,
   Mail,
   MessageSquare,
   Phone,
-  QrCode,
   Save,
   ShieldCheck,
   ShieldOff,
-  ToggleLeft,
-  ToggleRight,
-  Zap,
   X,
-  MessageCircle,
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { logAudit } from '../../../lib/auditLog'
-import { getSelfCheckinSettings, getSelfCheckinUrl } from '../../../lib/selfCheckin'
 import type { Company, CompanyStatus, Plan } from '../../../types'
 
 const PLAN_CONFIG: Record<Plan, { label: string; color: string; limit: number; price: string }> = {
@@ -33,7 +25,6 @@ const PLAN_CONFIG: Record<Plan, { label: string; color: string; limit: number; p
 
 const BUSINESS_LABELS: Record<string, string> = {
   clinic: 'عيادة',
-  car_wash: 'مغسلة سيارات',
   real_estate: 'عقاري',
   other: 'أخرى',
 }
@@ -43,39 +34,6 @@ const STATUS_LABELS: Record<CompanyStatus, string> = {
   trial: 'تجريبي',
   suspended: 'موقوف',
 }
-
-const FEATURE_FLAGS = [
-  {
-    key: 'self_checkin',
-    title: 'QR التسجيل الذاتي',
-    desc: 'يسمح لعميل المغسلة بتسجيل سيارته من الجوال.',
-    recommended: 'Pro',
-  },
-  {
-    key: 'wallet',
-    title: 'المحفظة الرقمية',
-    desc: 'مرحلة ثانية: رصيد العميل النهائي والخصم التلقائي.',
-    recommended: 'Add-on',
-  },
-  {
-    key: 'memberships',
-    title: 'اشتراكات العملاء الشهرية',
-    desc: 'مرحلة ثانية: باقات غسلات شهرية وتذكير واتساب.',
-    recommended: 'Add-on',
-  },
-  {
-    key: 'online_payments',
-    title: 'الدفع الإلكتروني',
-    desc: 'مرحلة ثانية: Apple Pay / Google Pay عبر مزود دفع.',
-    recommended: 'Add-on',
-  },
-  {
-    key: 'cash_pos',
-    title: 'كاش ونقطة بيع',
-    desc: 'المسار الحالي للدفع عند التسليم.',
-    recommended: 'أساسي',
-  },
-] as const
 
 function CopyBtn({ value }: { value: string }) {
   const [copied, setCopied] = useState(false)
@@ -102,55 +60,18 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
   const [feedback, setFeedback] = useState('')
   const [activePlan, setActivePlan] = useState<Plan>(company.plan)
   const [activePackageType, setActivePackageType] = useState<string>(company.package_type || 'whatsapp')
-  const [flags, setFlags] = useState<Record<string, boolean>>(() => {
-    const stored = ((company.cw_automations as any)?.feature_flags || {}) as Record<string, boolean>
-    return {
-      self_checkin: stored.self_checkin ?? Boolean(getSelfCheckinUrl(company as any)),
-      wallet: stored.wallet ?? false,
-      memberships: stored.memberships ?? false,
-      online_payments: stored.online_payments ?? false,
-      cash_pos: stored.cash_pos ?? true,
-    }
-  })
-
-  // Green API (car_wash only)
-  const [gwIdInstance, setGwIdInstance] = useState(() => (company.cw_automations as any)?.green_api?.idInstance || '')
-  const [gwApiToken, setGwApiToken] = useState(() => (company.cw_automations as any)?.green_api?.apiTokenInstance || '')
-  const [savingGreenApi, setSavingGreenApi] = useState(false)
-  const [greenApiSaved, setGreenApiSaved] = useState(false)
-
-  const saveGreenApi = async () => {
-    setSavingGreenApi(true)
-    const existing = (company.cw_automations as any) || {}
-    await supabase.from('companies').update({
-      cw_automations: { ...existing, green_api: { idInstance: gwIdInstance.trim(), apiTokenInstance: gwApiToken.trim() } }
-    } as any).eq('id', company.id)
-    setSavingGreenApi(false)
-    setGreenApiSaved(true)
-    setTimeout(() => setGreenApiSaved(false), 2500)
-    onUpdated()
-  }
 
   const plan = PLAN_CONFIG[company.plan]
-  const checkinUrl = getSelfCheckinUrl(company as any)
-  const checkinQrUrl = checkinUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=10&data=${encodeURIComponent(checkinUrl)}` : ''
-  const selfSettings = getSelfCheckinSettings(company as any)
   const messageLimit = company.message_limit || plan.limit
   const usage = messageLimit > 0 ? Math.min(100, Math.round(((company.messages_used || 0) / messageLimit) * 100)) : 0
 
   const changed = useMemo(() => {
-    const stored = ((company.cw_automations as any)?.feature_flags || {}) as Record<string, boolean>
-    const flagsChanged = FEATURE_FLAGS.some(item => (stored[item.key] ?? (item.key === 'cash_pos')) !== flags[item.key])
     const packageChanged = activePackageType !== (company.package_type || 'whatsapp')
-    return activePlan !== company.plan || flagsChanged || packageChanged
-  }, [activePlan, company, flags])
+    return activePlan !== company.plan || packageChanged
+  }, [activePlan, activePackageType, company])
 
   const save = async () => {
     setSaving(true)
-    const nextAutomations = {
-      ...((company.cw_automations as any) || {}),
-      feature_flags: flags,
-    }
     // If upgrading to a paid plan, auto-activate the account
     const shouldActivate = activePlan !== 'starter' && company.status === 'trial'
     const { error } = await supabase
@@ -158,7 +79,6 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
       .update({
         plan: activePlan,
         message_limit: PLAN_CONFIG[activePlan].limit,
-        cw_automations: nextAutomations,
         ...(shouldActivate ? { status: 'active' } : {}),
         ...(company.industry === 'clinic' ? { package_type: activePackageType } : {}),
       } as any)
@@ -172,14 +92,8 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
     logAudit(company.id, 'company_settings_updated', {
       entityType: 'company',
       entityId: company.id,
-      oldValue: {
-        plan: company.plan,
-        feature_flags: (company.cw_automations as any)?.feature_flags || {},
-      },
-      newValue: {
-        plan: activePlan,
-        feature_flags: flags,
-      },
+      oldValue: { plan: company.plan },
+      newValue: { plan: activePlan },
     })
     setFeedback(shouldActivate ? '✅ تم الترقية وتفعيل الحساب!' : 'تم حفظ إعدادات الشركة')
     setTimeout(() => setFeedback(''), 2500)
@@ -307,121 +221,6 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
                       <span className="mt-1 block text-[11px] text-slate-500 font-tajawal">{item.price} ر.س</span>
                     </button>
                   ))}
-                </div>
-              </section>
-            )}
-
-            <section className="rounded-3xl bg-white p-5" style={{ border: '1px solid #E2E8F0' }}>
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Zap size={16} className="text-blue-600" />
-                  <h3 className="text-sm font-bold text-slate-900 font-cairo">مركز الميزات المدفوعة</h3>
-                </div>
-                <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700 font-tajawal">تحكم الإدارة</span>
-              </div>
-              <div className="space-y-3">
-                {FEATURE_FLAGS.map(feature => {
-                  const enabled = Boolean(flags[feature.key])
-                  return (
-                    <button
-                      key={feature.key}
-                      type="button"
-                      onClick={() => setFlags(current => ({ ...current, [feature.key]: !enabled }))}
-                      className="flex w-full items-center gap-3 rounded-2xl p-3 text-right transition-colors hover:bg-slate-50"
-                      style={{ border: '1px solid #E2E8F0' }}
-                    >
-                      {enabled ? <ToggleRight size={25} className="text-emerald-600" /> : <ToggleLeft size={25} className="text-slate-400" />}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <strong className="text-sm text-slate-900 font-cairo">{feature.title}</strong>
-                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500 font-tajawal">{feature.recommended}</span>
-                        </div>
-                        <p className="mt-1 text-xs leading-5 text-slate-500 font-tajawal">{feature.desc}</p>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            </section>
-
-            {company.business_type === 'car_wash' && (
-              <section className="rounded-3xl bg-white p-5" style={{ border: '1px solid #E2E8F0' }}>
-                <div className="mb-4 flex items-center gap-2">
-                  <QrCode size={16} className="text-blue-600" />
-                  <h3 className="text-sm font-bold text-slate-900 font-cairo">QR التسجيل الذاتي</h3>
-                </div>
-                {checkinUrl ? (
-                  <div className="flex gap-4">
-                    <img src={checkinQrUrl} alt="QR التسجيل الذاتي" className="h-28 w-28 rounded-2xl bg-white p-2" style={{ border: '1px solid #E2E8F0' }} />
-                    <div className="min-w-0 flex-1">
-                      <code className="block break-all rounded-2xl bg-slate-50 p-3 text-[11px] text-slate-600" dir="ltr">{checkinUrl}</code>
-                      <p className="mt-2 text-xs text-slate-500 font-tajawal">
-                        {selfSettings.enabled ? 'مفعّل' : 'موقوف'} - {selfSettings.approvalRequired ? 'يتطلب اعتماد الموظف' : 'يدخل مباشرة'} - منع التكرار {selfSettings.antiSpamMinutes}د
-                      </p>
-                      <div className="mt-3 flex gap-2">
-                        <CopyBtn value={checkinUrl} />
-                        <a href={checkinUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700 font-tajawal">
-                          فتح <ExternalLink size={13} />
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="rounded-2xl bg-amber-50 p-4 text-sm leading-7 text-amber-800 font-tajawal">
-                    لا يوجد public check-in token أو webhook token. جهّز الرابط قبل طباعة QR للعميل.
-                  </p>
-                )}
-              </section>
-            )}
-
-            {company.business_type === 'car_wash' && (
-              <section className="rounded-3xl bg-white p-5" style={{ border: '1px solid #E2E8F0' }}>
-                <div className="mb-4 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <MessageCircle size={16} className="text-green-600" />
-                    <h3 className="text-sm font-bold text-slate-900 font-cairo">إعدادات Green API (واتساب)</h3>
-                  </div>
-                  {gwIdInstance && gwApiToken && (
-                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 font-tajawal">متصل ✓</span>
-                  )}
-                </div>
-                <p className="mb-4 text-xs text-slate-500 font-tajawal leading-6">
-                  هذه الإعدادات تمكّن المغسلة من إرسال حملات واتساب للعملاء. يتم تخزينها بأمان ولا يستطيع العميل تعديلها.
-                </p>
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">idInstance</label>
-                    <input
-                      value={gwIdInstance}
-                      onChange={e => setGwIdInstance(e.target.value)}
-                      placeholder="7105XXXXXXXX"
-                      dir="ltr"
-                      className="w-full px-4 py-2.5 rounded-xl text-sm font-mono text-slate-900 outline-none"
-                      style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">apiTokenInstance</label>
-                    <input
-                      value={gwApiToken}
-                      onChange={e => setGwApiToken(e.target.value)}
-                      placeholder="مفتاح التوثيق..."
-                      dir="ltr"
-                      type="password"
-                      className="w-full px-4 py-2.5 rounded-xl text-sm font-mono text-slate-900 outline-none"
-                      style={{ background: '#F8FAFC', border: '1px solid #CBD5E1' }}
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={saveGreenApi}
-                    disabled={savingGreenApi || !gwIdInstance || !gwApiToken}
-                    className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold font-cairo text-white disabled:opacity-50"
-                    style={{ background: 'linear-gradient(135deg, #10B981, #059669)' }}
-                  >
-                    {savingGreenApi ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                    {greenApiSaved ? 'تم الحفظ ✓' : 'حفظ إعدادات Green API'}
-                  </button>
                 </div>
               </section>
             )}

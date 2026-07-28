@@ -64,7 +64,7 @@ export function DashboardV2Reviews() {
   )
 
   const ticketByReviewId = useMemo(() => {
-    const map: Record<string, (typeof tickets)[number]> = {}
+    const map: Record<string, NonNullable<typeof tickets>[number]> = {}
     ;(tickets || []).forEach((t) => {
       if (t.route?.startsWith('google_review:')) map[t.route.replace('google_review:', '')] = t
     })

@@ -1,8 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
-import type { Company } from '../../../types'
 
-type AgentType = 'client_support' | 'sales_website' | 'end_customer'
+type AgentType = 'sales_website' | 'end_customer'
 
 type Conversation = {
   id: string
@@ -34,35 +33,24 @@ type SalesLead = {
 }
 
 const agentLabels: Record<AgentType, string> = {
-  client_support: 'دعم بوابة المغسلة',
   sales_website: 'مبيعات الموقع',
   end_customer: 'مساعد العميل النهائي',
 }
 
-function isEnabled(company: Company, agent: AgentType) {
-  if (agent === 'sales_website') return true
-  const agents = ((company.cw_automations as any)?.ai_agents || {}) as Record<string, boolean>
-  return agents[agent] !== false
-}
-
 export const AdminAIAgents = () => {
-  const [companies, setCompanies] = useState<Company[]>([])
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [tickets, setTickets] = useState<SupportTicket[]>([])
   const [salesLeads, setSalesLeads] = useState<SalesLead[]>([])
   const [filter, setFilter] = useState<AgentType | 'all'>('all')
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState<string | null>(null)
 
   const load = async () => {
     setLoading(true)
-    const [companiesRes, conversationsRes, ticketsRes, leadsRes] = await Promise.all([
-      supabase.from('companies').select('*').eq('business_type', 'car_wash').order('created_at', { ascending: false }).limit(120),
+    const [conversationsRes, ticketsRes, leadsRes] = await Promise.all([
       supabase.from('ai_agent_conversations').select('*, company:companies(name)').order('updated_at', { ascending: false }).limit(80),
       supabase.from('ai_agent_support_tickets').select('*, company:companies(name)').order('created_at', { ascending: false }).limit(40),
       supabase.from('ai_agent_sales_leads').select('*').order('created_at', { ascending: false }).limit(40),
     ])
-    setCompanies((companiesRes.data || []) as Company[])
     setConversations((conversationsRes.data || []) as Conversation[])
     setTickets((ticketsRes.data || []) as SupportTicket[])
     setSalesLeads((leadsRes.data || []) as SalesLead[])
@@ -75,16 +63,6 @@ export const AdminAIAgents = () => {
     if (filter === 'all') return conversations
     return conversations.filter(item => item.agent_type === filter)
   }, [conversations, filter])
-
-  const toggleAgent = async (company: Company, agent: Exclude<AgentType, 'sales_website'>) => {
-    setSaving(`${company.id}:${agent}`)
-    const current = ((company.cw_automations as any) || {}) as Record<string, any>
-    const currentAgents = (current.ai_agents || {}) as Record<string, boolean>
-    const nextAutomations = { ...current, ai_agents: { ...currentAgents, [agent]: !isEnabled(company, agent) } }
-    const { error } = await supabase.from('companies').update({ cw_automations: nextAutomations } as any).eq('id', company.id)
-    if (!error) setCompanies(prev => prev.map(item => item.id === company.id ? { ...item, cw_automations: nextAutomations } : item))
-    setSaving(null)
-  }
 
   if (loading) {
     return (
@@ -112,7 +90,6 @@ export const AdminAIAgents = () => {
           { label: 'المحادثات', value: conversations.length },
           { label: 'تذاكر الدعم المفتوحة', value: tickets.filter(t => t.status !== 'resolved').length },
           { label: 'فرص الموقع', value: salesLeads.length },
-          { label: 'مغاسل مفعّلة', value: companies.length },
         ].map((s, i) => (
           <div key={i} className="stat">
             <div className="stat-top"><div className="stat-label">{s.label}</div></div>
@@ -121,44 +98,11 @@ export const AdminAIAgents = () => {
         ))}
       </div>
 
-      <div className="card" style={{ marginBottom: 20 }}>
-        <div className="card-pad" style={{ paddingBottom: 8 }}>
-          <div className="sec-title" style={{ marginBottom: 16, fontSize: 15 }}>تفعيل الوكلاء لكل مغسلة</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
-            {companies.slice(0, 10).map(company => (
-              <div key={company.id} style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 14, background: 'rgba(255,255,255,0.03)' }}>
-                <div style={{ marginBottom: 10 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink)', marginBottom: 2 }}>{company.name}</div>
-                  <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>{company.plan} · {company.status}</div>
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {(['client_support', 'end_customer'] as const).map(agent => {
-                    const active = isEnabled(company, agent)
-                    const busy = saving === `${company.id}:${agent}`
-                    return (
-                      <button
-                        key={agent} type="button"
-                        onClick={() => toggleAgent(company, agent)}
-                        disabled={busy}
-                        className={`badge ${active ? 'green' : 'gray'}`}
-                        style={{ cursor: 'pointer', fontSize: 11, padding: '5px 10px' }}
-                      >
-                        {busy ? 'جاري…' : `${agentLabels[agent]}: ${active ? 'مفعل' : 'متوقف'}`}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
       <div className="card" style={{ marginBottom: 20, overflow: 'hidden' }}>
         <div className="row gap-3 card-pad" style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', flexWrap: 'wrap' }}>
           <span style={{ fontWeight: 700, fontSize: 14 }}>المحادثات الأخيرة</span>
           <div style={{ display: 'flex', gap: 8, marginInlineStart: 'auto', flexWrap: 'wrap' }}>
-            {(['all', 'client_support', 'sales_website', 'end_customer'] as const).map(item => (
+            {(['all', 'sales_website', 'end_customer'] as const).map(item => (
               <button key={item} className={`pill ${filter === item ? 'active' : ''}`}
                 style={{ padding: '4px 12px', fontSize: 12 }} onClick={() => setFilter(item)}>
                 {item === 'all' ? 'الكل' : agentLabels[item]}

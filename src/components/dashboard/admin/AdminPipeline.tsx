@@ -64,7 +64,7 @@ function mapDeal(row: any): Deal {
   }
 }
 
-const EMPTY_FORM: NewDealForm = { company_name: '', contact_name: '', phone: '', email: '', sector: 'مغسلة سيارات', source: 'إدخال يدوي', price_expected: '799' }
+const EMPTY_FORM: NewDealForm = { company_name: '', contact_name: '', phone: '', email: '', sector: '', source: 'إدخال يدوي', price_expected: '799' }
 
 export const AdminPipeline = () => {
   const [deals, setDeals] = useState<Deal[]>([])
@@ -113,15 +113,9 @@ export const AdminPipeline = () => {
   }, [filteredDeals])
 
   const upgradeSignals = useMemo(() => {
-    return companies.filter(c => c.business_type === 'car_wash' || c.industry === 'car_wash').map(c => {
-      const flags = ((c.cw_automations as any)?.feature_flags || {}) as Record<string, boolean>
+    return companies.map(c => {
       const msgUsage = c.message_limit ? Math.round(((c.messages_used || 0) / c.message_limit) * 100) : 0
-      const reasons = [
-        msgUsage >= 70 ? `استهلاك الرسائل ${msgUsage}%` : '',
-        !(c.public_checkin_token || c.webhook_token) ? 'QR غير جاهز' : '',
-        !flags.wallet ? 'المحفظة غير مفعلة' : '',
-        !flags.memberships ? 'الاشتراكات غير مفعلة' : '',
-      ].filter(Boolean)
+      const reasons = [msgUsage >= 70 ? `استهلاك الرسائل ${msgUsage}%` : ''].filter(Boolean)
       return { company: c, reasons, score: Math.min(100, msgUsage + reasons.length * 12 + (c.plan === 'starter' ? 18 : 0)) }
     }).filter(r => r.reasons.length > 0).sort((a, b) => b.score - a.score).slice(0, 4)
   }, [companies])
@@ -178,7 +172,7 @@ export const AdminPipeline = () => {
               <div key={signal.company.id} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 12, background: 'rgba(255,255,255,0.03)' }}>
                 <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>{signal.company.name}</div>
                 <div style={{ fontSize: 11, color: 'var(--ink-3)', marginBottom: 8 }}>{signal.reasons.slice(0, 2).join(' · ')}</div>
-                <button className="btn btn-ghost btn-sm" onClick={() => { setForm({ company_name: signal.company.name, contact_name: signal.company.owner_name || '', phone: '', email: signal.company.owner_email || '', sector: 'مغسلة سيارات', source: `فرصة ترقية: ${signal.reasons[0]}`, price_expected: signal.company.plan === 'starter' ? '799' : '1999' }); setShowCreate(true) }}>
+                <button className="btn btn-ghost btn-sm" onClick={() => { setForm({ company_name: signal.company.name, contact_name: signal.company.owner_name || '', phone: '', email: signal.company.owner_email || '', sector: signal.company.industry || '', source: `فرصة ترقية: ${signal.reasons[0]}`, price_expected: signal.company.plan === 'starter' ? '799' : '1999' }); setShowCreate(true) }}>
                   تحويل لفرصة
                 </button>
               </div>

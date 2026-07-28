@@ -3,12 +3,10 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { supabase } from '../../../lib/supabase'
 import type { Company } from '../../../types'
 
-type VisitRow = { id: string; company_id: string | null; created_at: string | null; subtotal?: number | null; total_amount?: number | null; price?: number | null }
 type LeadRow = { id: string; created_at: string | null; stage?: string | null }
 
 const dayNames = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
 function dayKey(date: Date) { return date.toISOString().slice(0, 10) }
-function formatSar(value: number) { return `${Math.round(value).toLocaleString('ar-SA')} ر.س` }
 
 function useCountUp(target: number, active: boolean, duration = 1300) {
   const [val, setVal] = useState(0)
@@ -61,14 +59,8 @@ function AnimStat({
   )
 }
 
-function trend(curr: number, prev: number): { pct: number; label: string } | null {
-  if (prev === 0) return null
-  return { pct: Math.round(((curr - prev) / prev) * 100), label: 'مقارنة بالأسبوع الماضي' }
-}
-
 export const AdminOverview = () => {
   const [companies, setCompanies] = useState<Company[]>([])
-  const [visits, setVisits] = useState<VisitRow[]>([])
   const [leads, setLeads] = useState<LeadRow[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -76,13 +68,11 @@ export const AdminOverview = () => {
     const load = async () => {
       setLoading(true)
       const since = new Date(); since.setDate(since.getDate() - 30)
-      const [companiesRes, visitsRes, leadsRes] = await Promise.all([
+      const [companiesRes, leadsRes] = await Promise.all([
         supabase.from('companies').select('*').order('created_at', { ascending: false }),
-        supabase.from('cw_visits').select('id, company_id, created_at, subtotal, total_amount, price').gte('created_at', since.toISOString()),
         supabase.from('crm_leads').select('id, created_at, stage').gte('created_at', since.toISOString()),
       ])
       setCompanies((companiesRes.data ?? []) as Company[])
-      setVisits((visitsRes.data ?? []) as VisitRow[])
       setLeads((leadsRes.data ?? []) as LeadRow[])
       setLoading(false)
     }
@@ -93,29 +83,12 @@ export const AdminOverview = () => {
     return Array.from({ length: 7 }, (_, index) => {
       const date = new Date(); date.setDate(date.getDate() - (6 - index))
       const key = dayKey(date)
-      const dayVisits = visits.filter(v => (v.created_at || '').startsWith(key))
       return {
         day: dayNames[date.getDay()],
-        revenue: Math.round(dayVisits.reduce((s, v) => s + Number(v.total_amount ?? v.subtotal ?? v.price ?? 0), 0)),
-        visits: dayVisits.length,
         leads: leads.filter(l => (l.created_at || '').startsWith(key)).length,
       }
     })
-  }, [visits, leads])
-
-  const { revenue, revenueThisWeek, revenuePrevWeek, visitsThisWeek, visitsPrevWeek } = useMemo(() => {
-    const now = new Date()
-    const d7 = new Date(now); d7.setDate(d7.getDate() - 7)
-    const d14 = new Date(now); d14.setDate(d14.getDate() - 14)
-    const thisW = visits.filter(v => v.created_at && new Date(v.created_at) >= d7)
-    const prevW = visits.filter(v => v.created_at && new Date(v.created_at) >= d14 && new Date(v.created_at) < d7)
-    const sumR = (arr: VisitRow[]) => arr.reduce((s, v) => s + Number(v.total_amount ?? v.subtotal ?? v.price ?? 0), 0)
-    return {
-      revenue: visits.reduce((s, v) => s + Number(v.total_amount ?? v.subtotal ?? v.price ?? 0), 0),
-      revenueThisWeek: sumR(thisW), revenuePrevWeek: sumR(prevW),
-      visitsThisWeek: thisW.length, visitsPrevWeek: prevW.length,
-    }
-  }, [visits])
+  }, [leads])
 
   const activeCompanies = companies.filter(c => c.status === 'active').length
   const clinicOSCount = companies.length
@@ -156,15 +129,8 @@ export const AdminOverview = () => {
       {/* Stat cards */}
       <div className="stat-grid" style={{ marginBottom: 24 }}>
         <AnimStat
-          label="إيراد 30 يوم"
-          numericValue={revenue}
-          format={formatSar}
-          delta={trend(revenueThisWeek, revenuePrevWeek)}
-        />
-        <AnimStat
-          label="زيارات مسجلة"
-          numericValue={visits.length}
-          delta={trend(visitsThisWeek, visitsPrevWeek)}
+          label="عملاء محتملون (30 يوم)"
+          numericValue={leads.length}
         />
         <div className="stat">
           <div className="stat-top"><div className="stat-label">شركات نشطة</div></div>
@@ -186,18 +152,14 @@ export const AdminOverview = () => {
       {/* Chart */}
       <div className="card card-pad chartbox" style={{ marginBottom: 20 }}>
         <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>الحركة اليومية</div>
-        <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 20 }}>آخر 7 أيام: الإيرادات، الزيارات، والعملاء المحتملون</div>
+        <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 20 }}>آخر 7 أيام: العملاء المحتملون الجدد</div>
         <div style={{ width: '100%', height: 280 }}>
           <ResponsiveContainer>
             <AreaChart data={chartData} margin={{ top: 10, right: 6, left: 0, bottom: 0 }}>
               <defs>
-                <linearGradient id="adminRevGrad" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stopColor="oklch(0.60 0.27 258)" stopOpacity={0.4} />
-                  <stop offset="100%" stopColor="oklch(0.60 0.27 258)" stopOpacity={0.02} />
-                </linearGradient>
-                <linearGradient id="adminVisitGrad" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stopColor="oklch(0.68 0.17 152)" stopOpacity={0.25} />
-                  <stop offset="100%" stopColor="oklch(0.68 0.17 152)" stopOpacity={0} />
+                <linearGradient id="adminLeadGrad" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="var(--amber)" stopOpacity={0.35} />
+                  <stop offset="100%" stopColor="var(--amber)" stopOpacity={0.02} />
                 </linearGradient>
               </defs>
               <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
@@ -207,21 +169,17 @@ export const AdminOverview = () => {
                 contentStyle={{ background: 'rgba(8,15,36,0.97)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, color: 'var(--ink)' }}
                 cursor={{ stroke: 'rgba(48,120,255,0.25)', strokeWidth: 1 }}
               />
-              <Area type="monotone" dataKey="revenue" name="الإيراد" stroke="oklch(0.60 0.27 258)" fill="url(#adminRevGrad)" strokeWidth={2.5} dot={false} activeDot={{ r: 5, fill: 'oklch(0.60 0.27 258)', strokeWidth: 0 }} />
-              <Area type="monotone" dataKey="visits" name="الزيارات" stroke="var(--green)" fill="url(#adminVisitGrad)" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: 'var(--green)', strokeWidth: 0 }} />
-              <Area type="monotone" dataKey="leads" name="العملاء المحتملون" stroke="var(--amber)" fill="transparent" strokeWidth={1.8} dot={false} activeDot={{ r: 4, fill: 'var(--amber)', strokeWidth: 0 }} strokeDasharray="4 3" />
+              <Area type="monotone" dataKey="leads" name="العملاء المحتملون" stroke="var(--amber)" fill="url(#adminLeadGrad)" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: 'var(--amber)', strokeWidth: 0 }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
         {/* Chart legend */}
         <div style={{ display: 'flex', gap: 20, marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           {[
-            { color: 'oklch(0.60 0.27 258)', label: 'الإيراد' },
-            { color: 'var(--green)', label: 'الزيارات' },
-            { color: 'var(--amber)', label: 'العملاء المحتملون', dashed: true },
+            { color: 'var(--amber)', label: 'العملاء المحتملون' },
           ].map(l => (
             <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <div style={{ width: 20, height: 2, background: l.dashed ? 'none' : l.color, borderTop: l.dashed ? `2px dashed ${l.color}` : 'none', borderRadius: 2 }} />
+              <div style={{ width: 20, height: 2, background: l.color, borderRadius: 2 }} />
               <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>{l.label}</span>
             </div>
           ))}
