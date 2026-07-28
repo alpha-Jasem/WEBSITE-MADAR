@@ -809,12 +809,17 @@ export function useClinicStaff(companyId: string | null, isDemo = false) {
   }, [companyId, isDemo], 'company_users', companyId, isDemo)
 }
 
-export async function addStaffMember(input: { company_id: string; full_name: string; role: string; permissions?: string[] }) {
-  const { error } = await supabase
-    .from('company_users')
-    .insert({ company_id: input.company_id, full_name: input.full_name, role: input.role, permissions: input.permissions || [] })
+export async function inviteStaffMember(input: { company_id: string; email: string; full_name: string; role: string }) {
+  const { data: sessionData } = await supabase.auth.getSession()
+  const token = sessionData.session?.access_token
+  if (!token) throw new Error('missing_session')
+  const { data, error } = await supabase.functions.invoke('clinic-staff-invite', {
+    body: { company_id: input.company_id, email: input.email, full_name: input.full_name, role: input.role },
+    headers: { Authorization: `Bearer ${token}` },
+  })
   if (error) throw error
-  await logAuditEvent({ company_id: input.company_id, action: 'staff.added', note: `إضافة موظف: ${input.full_name} (${input.role})` }).catch(() => {})
+  if (data?.error) throw new Error(data.error)
+  return data as { invited: boolean; auth_user_id: string }
 }
 
 export async function updateStaffMember(id: string, changes: { full_name?: string; role?: string; permissions?: string[] }) {

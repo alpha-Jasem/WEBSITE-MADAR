@@ -4,7 +4,7 @@ import { useClinicOS } from '../../../context/ClinicOSContext'
 import { supabase } from '../../../lib/supabase'
 import {
   updateClinicCompany, uploadCompanyLogo, updateClinicWorkingHours,
-  useClinicStaff, addStaffMember, updateStaffMember, removeStaffMember,
+  useClinicStaff, inviteStaffMember, updateStaffMember, removeStaffMember,
 } from '../../../lib/clinicOSQueries'
 import { Card, Button, Input, Select, Switch, Toast, Badge, Dialog, type BadgeTone } from '../../../components/clinicOS/v2/primitives'
 
@@ -22,12 +22,12 @@ const DEFAULT_HOURS: WorkingHours = Object.fromEntries(
 
 const ROLE_LABEL: Record<string, string> = { owner: 'مالك', manager: 'مدير', staff: 'موظف' }
 const ROLE_TONE: Record<string, BadgeTone> = { owner: 'brand', manager: 'success', staff: 'neutral' }
-const ROLE_OPTIONS = [{ value: 'staff', label: 'موظف' }, { value: 'manager', label: 'مدير' }, { value: 'owner', label: 'مالك' }]
+const ROLE_OPTIONS = [{ value: 'staff', label: 'موظف' }, { value: 'manager', label: 'مدير' }]
 
 export function DashboardV2Settings() {
   const {
     companyId, clinicName, clinicPhone, clinicEmail, clinicCity, clinicLogoUrl, clinicSettings,
-    isDemo, refreshAccount,
+    isDemo, isOwner, refreshAccount,
   } = useClinicOS()
   const { data: staff, refetch: refetchStaff } = useClinicStaff(companyId, isDemo)
 
@@ -41,7 +41,8 @@ export function DashboardV2Settings() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [staffDialogOpen, setStaffDialogOpen] = useState(false)
-  const [staffForm, setStaffForm] = useState({ full_name: '', role: 'staff' })
+  const [staffForm, setStaffForm] = useState({ full_name: '', email: '', role: 'staff' })
+  const [invitingStaff, setInvitingStaff] = useState(false)
 
   const [mfaEnabled, setMfaEnabled] = useState(false)
   const [mfaChecking, setMfaChecking] = useState(true)
@@ -161,20 +162,22 @@ export function DashboardV2Settings() {
   }
 
   async function addStaff() {
-    if (!staffForm.full_name.trim() || !companyId) return
+    if (!staffForm.full_name.trim() || !staffForm.email.trim() || !companyId) return
+    setInvitingStaff(true)
     try {
       if (isDemo) {
-        setToast('تمت الإضافة (عرض تجريبي)')
+        setToast('تمت الدعوة (عرض تجريبي)')
       } else {
-        await addStaffMember({ company_id: companyId, full_name: staffForm.full_name, role: staffForm.role })
+        await inviteStaffMember({ company_id: companyId, email: staffForm.email, full_name: staffForm.full_name, role: staffForm.role })
         await refetchStaff()
-        setToast('تمت إضافة الموظف')
+        setToast('تم إرسال دعوة عبر البريد الإلكتروني')
       }
       setStaffDialogOpen(false)
-      setStaffForm({ full_name: '', role: 'staff' })
+      setStaffForm({ full_name: '', email: '', role: 'staff' })
     } catch (err) {
-      setToast(err instanceof Error ? err.message : 'تعذّرت الإضافة')
+      setToast(err instanceof Error ? err.message : 'تعذّرت الدعوة')
     } finally {
+      setInvitingStaff(false)
       setTimeout(() => setToast(null), 2500)
     }
   }
@@ -259,7 +262,7 @@ export function DashboardV2Settings() {
       <Card style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}><Users size={16} /> الفريق والصلاحيات</div>
-          <Button size="sm" variant="secondary" onClick={() => setStaffDialogOpen(true)}><Plus size={14} /> إضافة موظف</Button>
+          {isOwner && <Button size="sm" variant="secondary" onClick={() => setStaffDialogOpen(true)}><Plus size={14} /> دعوة موظف</Button>}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {(staff || []).length === 0 && <div style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>لا يوجد فريق مضاف بعد</div>}
@@ -267,9 +270,14 @@ export function DashboardV2Settings() {
             <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border-default)' }}>
               <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--slate-200)', flexShrink: 0 }} />
               <div style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{s.full_name}</div>
+              {!s.auth_user_id && <Badge tone="warning">بانتظار القبول</Badge>}
               <Badge tone={ROLE_TONE[s.role] || 'neutral'}>{ROLE_LABEL[s.role] || s.role}</Badge>
-              <Select options={ROLE_OPTIONS} value={s.role} onChange={(e) => changeStaffRole(s.id, e.target.value)} style={{ width: 110 }} />
-              <span onClick={() => deleteStaff(s.id)} style={{ cursor: 'pointer', color: 'var(--danger-500)' }}><Trash2 size={15} /></span>
+              {isOwner ? (
+                <>
+                  <Select options={ROLE_OPTIONS} value={s.role} onChange={(e) => changeStaffRole(s.id, e.target.value)} style={{ width: 110 }} />
+                  <span onClick={() => deleteStaff(s.id)} style={{ cursor: 'pointer', color: 'var(--danger-500)' }}><Trash2 size={15} /></span>
+                </>
+              ) : null}
             </div>
           ))}
         </div>
@@ -320,11 +328,13 @@ export function DashboardV2Settings() {
       <Button onClick={save} disabled={saving}>{saving ? 'جارِ الحفظ...' : 'حفظ التغييرات'}</Button>
 
       <Dialog
-        open={staffDialogOpen} title="إضافة موظف" onClose={() => setStaffDialogOpen(false)}
-        footer={<><Button variant="secondary" onClick={() => setStaffDialogOpen(false)}>إلغاء</Button><Button onClick={addStaff}>إضافة</Button></>}
+        open={staffDialogOpen} title="دعوة موظف" onClose={() => setStaffDialogOpen(false)}
+        footer={<><Button variant="secondary" onClick={() => setStaffDialogOpen(false)}>إلغاء</Button><Button onClick={addStaff} disabled={invitingStaff}>{invitingStaff ? 'جارِ الإرسال...' : 'إرسال الدعوة'}</Button></>}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>سيصل للموظف بريد إلكتروني لتعيين كلمة مرور وتسجيل الدخول بحسابه الخاص.</div>
           <Input label="الاسم الكامل" value={staffForm.full_name} onChange={(e) => setStaffForm((f) => ({ ...f, full_name: e.target.value }))} />
+          <Input label="البريد الإلكتروني" type="email" value={staffForm.email} onChange={(e) => setStaffForm((f) => ({ ...f, email: e.target.value }))} />
           <Select label="الصلاحية" options={ROLE_OPTIONS} value={staffForm.role} onChange={(e) => setStaffForm((f) => ({ ...f, role: e.target.value }))} />
         </div>
       </Dialog>

@@ -8,7 +8,7 @@ import { Card, Badge } from '../../../components/clinicOS/v2/primitives'
 const nf = new Intl.NumberFormat('ar-SA')
 const POLL_MS = 60_000
 
-interface ElevenLabsUsage {
+interface AgentVoiceUsage {
   character_count: number | null
   character_limit: number | null
   next_reset_unix: number | null
@@ -59,7 +59,7 @@ export function DashboardV2MadarAgentUsage() {
     subscriptionEndDate, accountLoading,
   } = useClinicOS()
 
-  const [elevenlabs, setElevenlabs] = useState<ElevenLabsUsage | null>(null)
+  const [elevenlabs, setElevenlabs] = useState<AgentVoiceUsage | null>(null)
   const [elevenlabsLoading, setElevenlabsLoading] = useState(!isDemo)
 
   useEffect(() => {
@@ -101,7 +101,7 @@ export function DashboardV2MadarAgentUsage() {
           <Bot size={20} style={{ color: 'var(--brand-500)' }} /> Madar Agent Usage
         </div>
         <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
-          استهلاك مساعد مدار الذكي — مكالمات ElevenLabs الصوتية ورسائل واتساب/AI، بشكل حي
+          استهلاك مساعد مدار الذكي — المكالمات الصوتية ورسائل واتساب/AI، بشكل حي
         </div>
       </div>
 
@@ -136,21 +136,28 @@ export function DashboardV2MadarAgentUsage() {
           })}
 
           <div style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--border-default)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, marginBottom: 6 }}>
               <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                استهلاك ElevenLabs (حرف)
+                استهلاك المكالمات الصوتية (حرف)
                 {elevenlabsLoading && <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>(جارِ التحديث...)</span>}
               </span>
-              <span style={{ fontWeight: 700 }}>
-                {elevenlabs?.character_limit ? `${nf.format(elevenlabs.character_count || 0)} / ${nf.format(elevenlabs.character_limit)}` : 'غير متصل بعد'}
-              </span>
+              {!elevenlabsLoading && (
+                <Badge tone={elevenlabs?.character_limit ? 'success' : 'neutral'}>
+                  {elevenlabs?.character_limit ? 'متصل بمدار ايجنت' : 'جارِ الاتصال...'}
+                </Badge>
+              )}
             </div>
+            {elevenlabs?.character_limit && (
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>
+                {nf.format(elevenlabs.character_count || 0)} / {nf.format(elevenlabs.character_limit)}
+              </div>
+            )}
             {elevenlabsPercent != null ? (
               <div style={{ height: 8, background: 'var(--slate-100)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
                 <div style={{ width: `${elevenlabsPercent}%`, height: '100%', background: elevenlabsPercent >= 100 ? 'var(--danger-500)' : elevenlabsPercent >= 80 ? 'var(--warning-500)' : 'var(--brand-500)' }} />
               </div>
             ) : (
-              <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>يتطلب ربط مفتاح ElevenLabs من فريق مدار</div>
+              <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>سيبدأ العرض فور أول استخدام لمدار ايجنت</div>
             )}
           </div>
         </Card>

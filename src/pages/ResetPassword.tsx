@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 
 export const ResetPassword = () => {
   const navigate = useNavigate()
+  const isClinicOSPortal = new URLSearchParams(window.location.search).get('portal') === 'clinic-os'
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [showPass, setShowPass] = useState(false)
@@ -50,13 +51,13 @@ export const ResetPassword = () => {
       return
     }
     setDone(true)
-    window.setTimeout(() => navigate('/login', { replace: true }), 1800)
+    window.setTimeout(() => navigate(isClinicOSPortal ? '/clinic-os/login' : '/login', { replace: true }), 1800)
   }
 
   return (
     <div dir="rtl" className="min-h-screen bg-[#F0F4FA] px-4 py-8 text-slate-950">
       <div className="mx-auto flex min-h-[calc(100vh-64px)] max-w-[480px] flex-col justify-center">
-        <Link to="/login" className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-tajawal text-slate-500 shadow-sm transition-colors hover:text-slate-900">
+        <Link to={isClinicOSPortal ? '/clinic-os/login' : '/login'} className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-tajawal text-slate-500 shadow-sm transition-colors hover:text-slate-900">
           <ArrowLeft size={15} />
           العودة لتسجيل الدخول
         </Link>

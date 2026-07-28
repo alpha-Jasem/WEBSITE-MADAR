@@ -27,6 +27,8 @@ interface ClinicOSContextValue {
   clinicLogoUrl: string
   clinicSettings: Record<string, unknown>
   companyId: string | null
+  isOwner: boolean
+  staffRole: string | null
   accountLoading: boolean
   isDemo: boolean
   isSubscribed: boolean
@@ -60,6 +62,8 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
   const [clinicLogoUrl, setClinicLogoUrl] = useState('')
   const [clinicSettings, setClinicSettings] = useState<Record<string, unknown>>({})
   const [companyId, setCompanyId] = useState<string | null>(null)
+  const [isOwner, setIsOwner] = useState(false)
+  const [staffRole, setStaffRole] = useState<string | null>(null)
   const [isDemo, setIsDemo] = useState(false)
   const [accountLoading, setAccountLoading] = useState(true)
   const [isSubscribed, setIsSubscribed] = useState(false)
@@ -93,13 +97,37 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
 
         setUserEmail(user.email || '')
 
+        const companyColumns = 'id, name, owner_phone, owner_email, city, logo_url, clinic_settings, package_type, clinic_plan_code, status, subscription_status, subscription_start_date, subscription_end_date, monthly_usage_cycle_start, monthly_usage_cycle_end'
         const [companyRes, userRes] = await Promise.allSettled([
-          supabase.from('companies').select('id, name, owner_phone, owner_email, city, logo_url, clinic_settings, package_type, clinic_plan_code, status, subscription_status, subscription_start_date, subscription_end_date, monthly_usage_cycle_start, monthly_usage_cycle_end').eq('auth_user_id', user.id).single(),
+          supabase.from('companies').select(companyColumns).eq('auth_user_id', user.id).single(),
           supabase.from('users').select('full_name').eq('id', user.id).single(),
         ])
 
-        const company = companyRes.status === 'fulfilled' ? companyRes.value.data : null
+        let company = companyRes.status === 'fulfilled' ? companyRes.value.data : null
         const userRow = userRes.status === 'fulfilled' ? userRes.value.data : null
+        let ownerAccount = Boolean(company)
+        let resolvedStaffRole: string | null = null
+
+        if (!company) {
+          const { data: staffRow } = await supabase
+            .from('company_users')
+            .select('company_id, role, full_name')
+            .eq('auth_user_id', user.id)
+            .maybeSingle()
+          if (staffRow?.company_id) {
+            resolvedStaffRole = staffRow.role
+            const { data: staffCompany } = await supabase
+              .from('companies')
+              .select(companyColumns)
+              .eq('id', staffRow.company_id)
+              .single()
+            company = staffCompany
+            ownerAccount = false
+            if (staffRow.full_name) setUserName(staffRow.full_name)
+          }
+        }
+        setIsOwner(ownerAccount)
+        setStaffRole(resolvedStaffRole)
 
         if (company?.id) setCompanyId(company.id)
         if (company?.name) setClinicName(company.name)
@@ -172,7 +200,7 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <ClinicOSContext.Provider value={{ packageType, setPackageType, clinicName, userName, userEmail, clinicPhone, clinicEmail, clinicCity, clinicLogoUrl, clinicSettings, companyId, accountLoading, isDemo, isSubscribed, subscriptionStatus, subscriptionStartDate, subscriptionEndDate, usageCycleStart, usageCycleEnd, usageMetrics, usageSummary, refreshAccount: load, logout }}>
+    <ClinicOSContext.Provider value={{ packageType, setPackageType, clinicName, userName, userEmail, clinicPhone, clinicEmail, clinicCity, clinicLogoUrl, clinicSettings, companyId, isOwner, staffRole, accountLoading, isDemo, isSubscribed, subscriptionStatus, subscriptionStartDate, subscriptionEndDate, usageCycleStart, usageCycleEnd, usageMetrics, usageSummary, refreshAccount: load, logout }}>
       <ToastProvider>
         {children}
       </ToastProvider>
