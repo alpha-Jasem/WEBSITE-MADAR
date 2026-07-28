@@ -3,7 +3,8 @@ import type { PackageType } from '../types/clinicOS'
 import { supabase, signOut } from '../lib/supabase'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ToastProvider } from '../components/clinicOS/ui/Toast'
-import { CLINIC_PLANS, type UsageMetric } from '../lib/clinicOSProduct'
+import { CLINIC_PLANS, AI_RECEPTIONIST_DEMO, getUsageMetrics, type UsageMetric } from '../lib/clinicOSProduct'
+import { DEMO_CLINIC } from '../lib/clinicOSDemoData'
 
 export interface ClinicUsageSummary {
   bookings: number
@@ -30,6 +31,7 @@ interface ClinicOSContextValue {
   isOwner: boolean
   staffRole: string | null
   accountLoading: boolean
+  accountError: string | null
   isDemo: boolean
   isSubscribed: boolean
   subscriptionStatus: string | null
@@ -66,6 +68,7 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
   const [staffRole, setStaffRole] = useState<string | null>(null)
   const [isDemo, setIsDemo] = useState(false)
   const [accountLoading, setAccountLoading] = useState(true)
+  const [accountError, setAccountError] = useState<string | null>(null)
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null)
   const [subscriptionStartDate, setSubscriptionStartDate] = useState<string | null>(null)
@@ -77,22 +80,55 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
 
   const load = async () => {
       setAccountLoading(true)
+      setAccountError(null)
       try {
         const demoRoute = location.pathname.includes('/demo-review') || location.pathname.includes('/clinic-os/demo')
         setIsDemo(demoRoute)
-        const { data: authData } = await supabase.auth.getUser()
-        const user = authData?.user
-        if (!user) {
-          if (!demoRoute) navigate(`/clinic-os/login?redirect=${encodeURIComponent(location.pathname)}`, { replace: true })
+
+        if (demoRoute) {
+          setCompanyId(DEMO_CLINIC.id)
+          setClinicName(DEMO_CLINIC.name)
+          setUserName('مستخدم تجريبي')
+          setUserEmail(DEMO_CLINIC.email)
+          setClinicPhone(DEMO_CLINIC.phone)
+          setClinicEmail(DEMO_CLINIC.email)
+          setClinicCity(DEMO_CLINIC.city)
+          setClinicLogoUrl('')
+          setClinicSettings({})
+          setIsOwner(true)
+          setStaffRole(null)
+          setIsSubscribed(true)
+          setSubscriptionStatus('active')
+          const cycleStart = new Date().toISOString().slice(0, 10)
+          const cycleEnd = new Date(Date.now() + 365 * 86400000).toISOString().slice(0, 10)
+          setSubscriptionStartDate(cycleStart)
+          setSubscriptionEndDate(cycleEnd)
+          setUsageCycleStart(cycleStart)
+          setUsageCycleEnd(cycleEnd)
+          setUsageMetrics(getUsageMetrics(packageType))
+          setUsageSummary({
+            bookings: AI_RECEPTIONIST_DEMO.bookings,
+            conversations: AI_RECEPTIONIST_DEMO.conversations,
+            afterHours: AI_RECEPTIONIST_DEMO.afterHours,
+            lostOpportunities: AI_RECEPTIONIST_DEMO.lostOpportunities,
+            smartCallMinutes: AI_RECEPTIONIST_DEMO.smartCalls,
+            recoveredCalls: AI_RECEPTIONIST_DEMO.recoveredCalls,
+            humanHandoffs: AI_RECEPTIONIST_DEMO.humanHandoffs,
+          })
           return
         }
 
-        if (!demoRoute) {
-          const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
-          if (aal && aal.nextLevel === 'aal2' && aal.currentLevel !== 'aal2') {
-            navigate(`/clinic-os/mfa-challenge?redirect=${encodeURIComponent(location.pathname)}`, { replace: true })
-            return
-          }
+        const { data: authData } = await supabase.auth.getUser()
+        const user = authData?.user
+        if (!user) {
+          navigate(`/clinic-os/login?redirect=${encodeURIComponent(location.pathname)}`, { replace: true })
+          return
+        }
+
+        const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+        if (aal && aal.nextLevel === 'aal2' && aal.currentLevel !== 'aal2') {
+          navigate(`/clinic-os/mfa-challenge?redirect=${encodeURIComponent(location.pathname)}`, { replace: true })
+          return
         }
 
         setUserEmail(user.email || '')
@@ -128,6 +164,10 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
         }
         setIsOwner(ownerAccount)
         setStaffRole(resolvedStaffRole)
+
+        if (!company) {
+          setAccountError('تعذر تحميل بيانات حساب العيادة. تواصل مع فريق دعم مدار.')
+        }
 
         if (company?.id) setCompanyId(company.id)
         if (company?.name) setClinicName(company.name)
@@ -200,7 +240,7 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <ClinicOSContext.Provider value={{ packageType, setPackageType, clinicName, userName, userEmail, clinicPhone, clinicEmail, clinicCity, clinicLogoUrl, clinicSettings, companyId, isOwner, staffRole, accountLoading, isDemo, isSubscribed, subscriptionStatus, subscriptionStartDate, subscriptionEndDate, usageCycleStart, usageCycleEnd, usageMetrics, usageSummary, refreshAccount: load, logout }}>
+    <ClinicOSContext.Provider value={{ packageType, setPackageType, clinicName, userName, userEmail, clinicPhone, clinicEmail, clinicCity, clinicLogoUrl, clinicSettings, companyId, isOwner, staffRole, accountLoading, accountError, isDemo, isSubscribed, subscriptionStatus, subscriptionStartDate, subscriptionEndDate, usageCycleStart, usageCycleEnd, usageMetrics, usageSummary, refreshAccount: load, logout }}>
       <ToastProvider>
         {children}
       </ToastProvider>

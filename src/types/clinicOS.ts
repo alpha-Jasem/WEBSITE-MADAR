@@ -244,6 +244,7 @@ export interface Branch {
   address_ar?: string
   whatsapp_phone_id?: string
   is_active: boolean
+  is_favorite: boolean
   google_place_id?: string
   google_maps_url?: string
   created_at: string

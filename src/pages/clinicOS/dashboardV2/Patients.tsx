@@ -1,9 +1,14 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
 import { useClinicOS } from '../../../context/ClinicOSContext'
-import { useClinicPatients } from '../../../lib/clinicOSQueries'
+import { useClinicPatients, updatePatient } from '../../../lib/clinicOSQueries'
 import type { Patient } from '../../../types/clinicOS'
-import { Card, Badge, Button, Dialog, Input, Select } from '../../../components/clinicOS/v2/primitives'
+import { Card, Badge, Button, Dialog, Input, Select, Toast } from '../../../components/clinicOS/v2/primitives'
+
+const EDIT_TYPE_OPTIONS = [
+  { value: 'new', label: 'جديد' },
+  { value: 'returning', label: 'عائد' },
+]
 
 const TYPE_OPTIONS = [
   { value: 'all', label: 'كل الأنواع' },
@@ -18,11 +23,53 @@ const SORT_OPTIONS = [
 
 export function DashboardV2Patients() {
   const { companyId, isDemo } = useClinicOS()
-  const { data: patients } = useClinicPatients(companyId, isDemo)
+  const { data: patients, refetch } = useClinicPatients(companyId, isDemo)
   const [q, setQ] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
   const [sort, setSort] = useState('recent')
   const [selected, setSelected] = useState<Patient | null>(null)
+  const [form, setForm] = useState({ name: '', phone: '', last_visit_at: '', total_visits: 0, patient_type: 'new' as Patient['patient_type'] })
+  const [saving, setSaving] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (selected) {
+      setForm({
+        name: selected.name,
+        phone: selected.phone,
+        last_visit_at: selected.last_visit_at ? selected.last_visit_at.split('T')[0] : '',
+        total_visits: selected.total_visits,
+        patient_type: selected.patient_type,
+      })
+    }
+  }, [selected])
+
+  async function save() {
+    if (!selected) return
+    setSaving(true)
+    try {
+      if (isDemo) {
+        setToast('تم الحفظ (عرض تجريبي)')
+      } else {
+        await updatePatient(selected.id, {
+          clinic_id: companyId || undefined,
+          name: form.name,
+          phone: form.phone,
+          last_visit_at: form.last_visit_at ? new Date(form.last_visit_at).toISOString() : undefined,
+          total_visits: form.total_visits,
+          patient_type: form.patient_type,
+        })
+        await refetch()
+        setToast('تم حفظ بيانات العميل')
+      }
+      setSelected(null)
+    } catch (err) {
+      setToast(err instanceof Error ? err.message : 'تعذّر الحفظ')
+    } finally {
+      setSaving(false)
+      setTimeout(() => setToast(null), 2500)
+    }
+  }
 
   const rows = patients || []
   const shown = useMemo(() => {
@@ -68,37 +115,35 @@ export function DashboardV2Patients() {
         </div>
       </Card>
 
-      <Dialog open={!!selected} title={selected?.name || ''} onClose={() => setSelected(null)} footer={<Button onClick={() => setSelected(null)}>إغلاق</Button>}>
+      <Dialog
+        open={!!selected} title="تعديل بيانات العميل" onClose={() => setSelected(null)}
+        footer={<><Button variant="secondary" onClick={() => setSelected(null)}>إلغاء</Button><Button onClick={save} disabled={saving}>{saving ? 'جارِ الحفظ...' : 'حفظ'}</Button></>}
+      >
         {selected && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 6 }}>
-              <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--slate-200)', flexShrink: 0 }} />
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 16 }}>{selected.name}</div>
-                <div style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>{selected.phone}</div>
-              </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--slate-200)', flexShrink: 0 }} />
+              <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>مرات عدم الحضور: {selected.no_show_count}{selected.notes ? ` — ${selected.notes}` : ''}</div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-              <span style={{ color: 'var(--text-tertiary)' }}>آخر زيارة</span>
-              <span style={{ fontWeight: 600 }}>{selected.last_visit_at ? selected.last_visit_at.split('T')[0] : '—'}</span>
+            <Input label="الاسم" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+            <Input label="الجوال" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />
+            <div style={{ display: 'flex', gap: 12 }}>
+              <label style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6, fontFamily: 'var(--font-body)' }}>
+                <span style={{ fontSize: 'var(--text-body-sm)', fontWeight: 600, color: 'var(--text-secondary)' }}>آخر زيارة</span>
+                <input type="date" value={form.last_visit_at} onChange={(e) => setForm((f) => ({ ...f, last_visit_at: e.target.value }))}
+                  style={{ padding: '9px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-strong)', fontSize: 13 }} />
+              </label>
+              <Input label="عدد الزيارات" type="number" value={String(form.total_visits)} onChange={(e) => setForm((f) => ({ ...f, total_visits: Number(e.target.value) || 0 }))} style={{ flex: 1 }} />
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-              <span style={{ color: 'var(--text-tertiary)' }}>عدد الزيارات</span>
-              <span style={{ fontWeight: 600 }}>{selected.total_visits}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-              <span style={{ color: 'var(--text-tertiary)' }}>مرات عدم الحضور</span>
-              <span style={{ fontWeight: 600 }}>{selected.no_show_count}</span>
-            </div>
-            {selected.notes && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 13, marginTop: 6 }}>
-                <span style={{ color: 'var(--text-tertiary)' }}>ملاحظات</span>
-                <span>{selected.notes}</span>
-              </div>
-            )}
+            <Select label="النوع" options={EDIT_TYPE_OPTIONS} value={form.patient_type} onChange={(e) => setForm((f) => ({ ...f, patient_type: e.target.value as Patient['patient_type'] }))} />
           </div>
         )}
       </Dialog>
+      {toast && (
+        <div style={{ position: 'fixed', bottom: 24, insetInlineEnd: 24, zIndex: 1500 }}>
+          <Toast tone="success" title={toast} onClose={() => setToast(null)} />
+        </div>
+      )}
     </div>
   )
 }

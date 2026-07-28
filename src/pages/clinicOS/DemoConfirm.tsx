@@ -45,7 +45,7 @@ export const DemoConfirm = () => {
 
           <motion.button
             whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-            onClick={() => navigate('/clinic-os/demo/select')}
+            onClick={() => navigate('/clinic-os/select')}
             style={{ width: '100%', padding: '14px', borderRadius: 12, background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', color: 'white', border: 'none', fontSize: 15, fontWeight: 800, cursor: 'pointer', fontFamily: 'Cairo, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
           >
             اختر باقتك وابدأ التجربة <ArrowLeft size={16} />

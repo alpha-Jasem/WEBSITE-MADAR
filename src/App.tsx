@@ -44,7 +44,6 @@ const DemoSignupPage       = lazy(() => import('./pages/clinicOS/DemoSignup').th
 const DemoConfirmPage      = lazy(() => import('./pages/clinicOS/DemoConfirm').then(m => ({ default: m.DemoConfirm })))
 const PackageSelectorPage  = lazy(() => import('./pages/clinicOS/PackageSelector').then(m => ({ default: m.PackageSelector })))
 const MfaChallengePage     = lazy(() => import('./pages/clinicOS/MfaChallenge').then(m => ({ default: m.MfaChallenge })))
-const DemoReviewPage       = lazy(() => import('./pages/clinicOS/DemoReview').then(m => ({ default: m.DemoReview })))
 const ClinicOSAdminPage    = lazy(() => import('./pages/clinicOS/admin/ClinicOSAdmin').then(m => ({ default: m.ClinicOSAdmin })))
 
 // ClinicOS Dashboard (Madar Software Design System)
@@ -93,7 +92,7 @@ function App() {
             <Route path="/clinic-os/signup"   element={<ClinicOSSignupPage />} />
             <Route path="/clinic-os/demo"     element={<DemoSignupPage />} />
             <Route path="/clinic-os/demo/confirm" element={<DemoConfirmPage />} />
-            <Route path="/demo-review" element={<ClinicOSProvider><DemoReviewPage /></ClinicOSProvider>} />
+            <Route path="/demo-review/internal-admin" element={<ClinicOSAdminPage embedded />} />
             <Route path="/clinic-os/admin" element={<ClinicOSAdminPage />} />
             <Route path="/clinic-os/select"   element={
               <ClinicOSProvider><PackageSelectorPage /></ClinicOSProvider>
@@ -101,6 +100,26 @@ function App() {
 
             {/* ── ClinicOS Dashboard (Madar Software Design System) ── */}
             <Route path="/clinic-os/dashboard/*" element={
+              <ClinicOSProvider>
+                <DashboardV2Layout />
+              </ClinicOSProvider>
+            }>
+              <Route index element={<DashboardV2Home />} />
+              <Route path="bookings" element={<DashboardV2Bookings />} />
+              <Route path="patients" element={<DashboardV2Patients />} />
+              <Route path="conversations" element={<DashboardV2Conversations />} />
+              <Route path="reviews" element={<DashboardV2Reviews />} />
+              <Route path="revenue" element={<DashboardV2Revenue />} />
+              <Route path="reports" element={<DashboardV2Reports />} />
+              <Route path="plan-usage" element={<DashboardV2MadarAgentUsage />} />
+              <Route path="reminders" element={<DashboardV2Reminders />} />
+              <Route path="integrations" element={<DashboardV2Integrations />} />
+              <Route path="services" element={<DashboardV2Services />} />
+              <Route path="audit-log" element={<DashboardV2AuditLog />} />
+              <Route path="settings" element={<DashboardV2Settings />} />
+            </Route>
+            {/* ── ClinicOS Demo Tour (internal, unauthenticated preview with fake data) ── */}
+            <Route path="/demo-review/*" element={
               <ClinicOSProvider>
                 <DashboardV2Layout />
               </ClinicOSProvider>

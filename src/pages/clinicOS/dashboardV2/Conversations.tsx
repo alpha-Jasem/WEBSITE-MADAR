@@ -2,13 +2,22 @@ import { useState } from 'react'
 import { MessageCircle, Phone } from 'lucide-react'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 import { useClinicAICalls, useClinicMessages } from '../../../lib/clinicOSQueries'
-import { Card, Badge } from '../../../components/clinicOS/v2/primitives'
+import type { MessageLog, MessageStatus } from '../../../types/clinicOS'
+import { Card, Badge, Dialog, Button, type BadgeTone } from '../../../components/clinicOS/v2/primitives'
+
+const MSG_STATUS_LABEL: Record<MessageStatus, string> = { pending: 'قيد الإرسال', sent: 'أُرسلت', delivered: 'تم التسليم', read: 'تمت القراءة', failed: 'فشلت' }
+const MSG_STATUS_TONE: Record<MessageStatus, BadgeTone> = { pending: 'neutral', sent: 'neutral', delivered: 'success', read: 'success', failed: 'danger' }
+const MSG_TYPE_LABEL: Record<string, string> = {
+  confirmation: 'تأكيد موعد', reminder_24h: 'تذكير 24 ساعة', reminder_3h: 'تذكير 3 ساعات', reschedule: 'إعادة جدولة',
+  cancellation: 'إلغاء', follow_up: 'متابعة', review_request: 'طلب تقييم', waitlist_offer: 'عرض قائمة انتظار', manual: 'يدوي',
+}
 
 export function DashboardV2Conversations() {
   const { companyId, isDemo } = useClinicOS()
   const { data: aiCalls } = useClinicAICalls(companyId, isDemo)
   const { data: messages } = useClinicMessages(companyId, isDemo)
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [activeMessage, setActiveMessage] = useState<MessageLog | null>(null)
 
   const calls = aiCalls || []
   const msgs = messages || []
@@ -64,21 +73,49 @@ export function DashboardV2Conversations() {
         </div>
       </Card>
 
-      <Card style={{ width: 280, padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ padding: '16px 18px', fontWeight: 700, borderBottom: '1px solid var(--border-default)' }}>رسائل واتساب</div>
+      <Card style={{ width: 300, padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ padding: '16px 18px', fontWeight: 700, borderBottom: '1px solid var(--border-default)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <MessageCircle size={16} style={{ color: '#25D366' }} /> رسائل واتساب
+        </div>
         <div style={{ overflowY: 'auto', flex: 1 }}>
           {msgs.slice(0, 20).map((m) => (
-            <div key={m.id} style={{ padding: '12px 18px', borderBottom: '1px solid var(--border-default)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>{m.recipient_name}</div>
-                <MessageCircle size={13} style={{ color: '#2fbf6f' }} />
+            <div key={m.id} onClick={() => setActiveMessage(m)} style={{ padding: '12px 18px', borderBottom: '1px solid var(--border-default)', cursor: 'pointer' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, gap: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.recipient_name}</div>
+                <Badge tone={MSG_STATUS_TONE[m.status]}>{MSG_STATUS_LABEL[m.status]}</Badge>
               </div>
+              <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 4 }}>{MSG_TYPE_LABEL[m.message_type] || m.message_type}</div>
               <div style={{ fontSize: 12, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.body}</div>
             </div>
           ))}
           {msgs.length === 0 && <div style={{ padding: 24, textAlign: 'center', fontSize: 12, color: 'var(--text-tertiary)' }}>لا توجد رسائل بعد</div>}
         </div>
       </Card>
+
+      <Dialog
+        open={!!activeMessage} title={activeMessage?.recipient_name || ''} onClose={() => setActiveMessage(null)}
+        footer={<Button onClick={() => setActiveMessage(null)}>إغلاق</Button>}
+      >
+        {activeMessage && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <Badge tone={MSG_STATUS_TONE[activeMessage.status]}>{MSG_STATUS_LABEL[activeMessage.status]}</Badge>
+              <Badge tone="neutral">{MSG_TYPE_LABEL[activeMessage.message_type] || activeMessage.message_type}</Badge>
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>{activeMessage.recipient_phone}</div>
+            <div style={{ fontSize: 14, lineHeight: 1.7, background: 'var(--slate-50)', padding: 14, borderRadius: 'var(--radius-md)' }}>{activeMessage.body}</div>
+            {activeMessage.sent_at && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                <span style={{ color: 'var(--text-tertiary)' }}>وقت الإرسال</span>
+                <span style={{ fontWeight: 600 }}>{new Date(activeMessage.sent_at).toLocaleString('ar-SA')}</span>
+              </div>
+            )}
+            {activeMessage.failed_reason && (
+              <div style={{ fontSize: 12, color: 'var(--danger-500)' }}>سبب الفشل: {activeMessage.failed_reason}</div>
+            )}
+          </div>
+        )}
+      </Dialog>
     </div>
   )
 }

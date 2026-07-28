@@ -280,13 +280,13 @@ export const DEMO_BRANCHES: Branch[] = [
   {
     id: 'branch-001', company_id: 'demo-clinic-001', name: 'الفرع الرئيسي - جدة', name_ar: 'الفرع الرئيسي - جدة',
     industry_type: 'clinic', timezone: 'Asia/Riyadh', phone: '0112345678', address: 'حي الروضة، جدة',
-    is_active: true, google_place_id: 'demo-place-001', google_maps_url: 'https://maps.google.com/?cid=demo1',
+    is_active: true, is_favorite: true, google_place_id: 'demo-place-001', google_maps_url: 'https://maps.google.com/?cid=demo1',
     created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z',
   },
   {
     id: 'branch-002', company_id: 'demo-clinic-001', name: 'فرع الياسمين - جدة', name_ar: 'فرع الياسمين - جدة',
     industry_type: 'clinic', timezone: 'Asia/Riyadh', phone: '0112349999', address: 'حي الياسمين، جدة',
-    is_active: true, google_place_id: 'demo-place-002', google_maps_url: 'https://maps.google.com/?cid=demo2',
+    is_active: true, is_favorite: false, google_place_id: 'demo-place-002', google_maps_url: 'https://maps.google.com/?cid=demo2',
     created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z',
   },
 ]

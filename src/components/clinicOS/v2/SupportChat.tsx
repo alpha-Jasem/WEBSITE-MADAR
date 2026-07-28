@@ -64,8 +64,38 @@ export function SupportChat() {
 
   return (
     <div style={{ position: 'fixed', bottom: 24, left: 24, zIndex: 1400 }}>
+      <style>{`
+        @keyframes dv2-agent-pulse {
+          0%   { transform: scale(1);    opacity: .55; }
+          70%  { transform: scale(1.9);  opacity: 0; }
+          100% { transform: scale(1.9);  opacity: 0; }
+        }
+        @keyframes dv2-agent-breathe {
+          0%, 100% { transform: scale(1); }
+          50%      { transform: scale(1.05); }
+        }
+        .dv2-agent-ring {
+          position: absolute; inset: 0; border-radius: 50%;
+          background: var(--gradient-brand);
+          animation: dv2-agent-pulse 2.4s ease-out infinite;
+        }
+        .dv2-agent-ring.r2 { animation-delay: .8s; }
+        .dv2-agent-btn { animation: dv2-agent-breathe 3.2s ease-in-out infinite; }
+        .dv2-agent-btn:hover { animation-play-state: paused; }
+        @keyframes dv2-panel-in {
+          from { opacity: 0; transform: translateY(8px) scale(.97); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .dv2-chat-panel {
+          transform-origin: bottom left;
+          animation: dv2-panel-in 180ms var(--ease-out, ease) both;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .dv2-agent-ring, .dv2-agent-btn, .dv2-chat-panel { animation: none; }
+        }
+      `}</style>
       {open && (
-        <div style={{
+        <div className="dv2-chat-panel" style={{
           width: 340, height: 460, background: '#fff', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)',
           border: '1px solid var(--border-default)', display: 'flex', flexDirection: 'column', marginBottom: 12, overflow: 'hidden',
         }}>
@@ -119,15 +149,32 @@ export function SupportChat() {
           </div>
         </div>
       )}
-      <div
-        onClick={() => setOpen((v) => !v)}
-        style={{
-          width: 52, height: 52, borderRadius: '50%', background: 'var(--gradient-brand)', color: '#fff',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: 'var(--shadow-lg)',
-          marginInlineStart: 'auto',
-        }}
-      >
-        {open ? <X size={22} /> : <MessageCircle size={22} />}
+      <div style={{ position: 'relative', width: 52, height: 52, marginInlineStart: 'auto' }}>
+        {!open && (
+          <>
+            <span className="dv2-agent-ring" />
+            <span className="dv2-agent-ring r2" />
+          </>
+        )}
+        <div
+          className="dv2-agent-btn"
+          onClick={() => setOpen((v) => !v)}
+          style={{
+            position: 'relative', width: 52, height: 52, borderRadius: '50%', background: 'var(--gradient-brand)', color: '#fff',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: 'var(--shadow-lg)',
+          }}
+        >
+          {open ? <X size={22} /> : <MessageCircle size={22} />}
+          {!open && (
+            <span style={{
+              position: 'absolute', top: -2, insetInlineEnd: -2, width: 18, height: 18, borderRadius: '50%',
+              background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 0 0 2px var(--gradient-brand, var(--brand-500))',
+            }}>
+              <Sparkles size={10} style={{ color: 'var(--brand-500)' }} />
+            </span>
+          )}
+        </div>
       </div>
     </div>
   )

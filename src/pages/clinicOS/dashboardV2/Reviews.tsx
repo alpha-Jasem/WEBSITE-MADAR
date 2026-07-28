@@ -3,9 +3,9 @@ import { Star, Plus, MapPin, AlertTriangle } from 'lucide-react'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 import {
   useClinicBranches, useClinicGoogleReviews, useClinicSupportTickets,
-  createBranch, replyToReview,
+  createBranch, replyToReview, toggleBranchFavorite,
 } from '../../../lib/clinicOSQueries'
-import type { GoogleReview } from '../../../types/clinicOS'
+import type { GoogleReview, Branch } from '../../../types/clinicOS'
 import { Card, Badge, Button, Dialog, Input, Toast, type BadgeTone } from '../../../components/clinicOS/v2/primitives'
 
 function Stars({ n }: { n: number }) {
@@ -32,8 +32,32 @@ export function DashboardV2Reviews() {
   const [drafts, setDrafts] = useState<Record<string, string>>({})
   const [toast, setToast] = useState<{ title: string; description?: string } | null>(null)
 
-  const branchList = branches || []
+  const branchList = useMemo(
+    () => [...(branches || [])].sort((a, b) => Number(b.is_favorite) - Number(a.is_favorite)),
+    [branches],
+  )
   const activeBranch = activeBranchId ? branchList.find((b) => b.id === activeBranchId) : branchList[0]
+
+  const branchStats = useMemo(() => {
+    const map = new Map<string, { avg: number | null; pending: number; total: number }>()
+    for (const b of branchList) {
+      const rs = (reviews || []).filter((r) => r.branch_id === b.id)
+      const avg = rs.length ? Math.round((rs.reduce((s, r) => s + r.rating, 0) / rs.length) * 10) / 10 : null
+      const pending = rs.filter((r) => r.reply_status === 'pending').length
+      map.set(b.id, { avg, pending, total: rs.length })
+    }
+    return map
+  }, [branchList, reviews])
+
+  async function toggleFavorite(b: Branch) {
+    if (isDemo) return
+    try {
+      await toggleBranchFavorite(b.id, !b.is_favorite)
+      refetchBranches()
+    } catch {
+      // non-critical, silently ignore
+    }
+  }
   const branchReviews = useMemo(
     () => (reviews || []).filter((r) => !activeBranch || r.branch_id === activeBranch.id),
     [reviews, activeBranch],
@@ -143,18 +167,57 @@ export function DashboardV2Reviews() {
         <Button variant="secondary" onClick={() => setAddOpen(true)}><Plus size={15} /> إضافة فرع</Button>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-        {branchList.map((b) => (
-          <div key={b.id} onClick={() => setActiveBranchId(b.id)} style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 'var(--radius-full)',
-            fontSize: 13, fontWeight: 600, cursor: 'pointer',
-            background: (activeBranch?.id === b.id) ? 'var(--brand-500)' : '#fff',
-            color: (activeBranch?.id === b.id) ? '#fff' : 'var(--text-secondary)',
-            border: '1px solid ' + ((activeBranch?.id === b.id) ? 'var(--brand-500)' : 'var(--border-default)'),
-          }}>
-            <MapPin size={13} /> {b.name}
-          </div>
-        ))}
+      <div className="dv2-branch-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14, marginBottom: 24 }}>
+        {branchList.map((b) => {
+          const stats = branchStats.get(b.id)
+          const active = activeBranch?.id === b.id
+          return (
+            <div
+              key={b.id}
+              onClick={() => setActiveBranchId(b.id)}
+              style={{
+                position: 'relative', aspectRatio: '1 / 0.85', borderRadius: 'var(--radius-lg)', cursor: 'pointer',
+                padding: 18, display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                background: active ? 'var(--gradient-brand)' : '#fff',
+                border: '1px solid ' + (active ? 'transparent' : 'var(--border-default)'),
+                boxShadow: active ? 'var(--shadow-lg)' : 'var(--shadow-sm)',
+                transition: 'transform 150ms var(--ease-out, ease), box-shadow 150ms var(--ease-out, ease)',
+              }}
+            >
+              <span
+                onClick={(e) => { e.stopPropagation(); toggleFavorite(b) }}
+                style={{
+                  position: 'absolute', top: 12, insetInlineEnd: 12, cursor: 'pointer', display: 'flex',
+                  color: b.is_favorite ? 'var(--warning-500)' : (active ? 'rgba(255,255,255,.6)' : 'var(--slate-300)'),
+                }}
+              >
+                <Star size={18} fill={b.is_favorite ? 'currentColor' : 'none'} />
+              </span>
+              <div style={{
+                width: 44, height: 44, borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 17,
+                background: active ? 'rgba(255,255,255,.18)' : 'var(--brand-50)',
+                color: active ? '#fff' : 'var(--brand-600)',
+              }}>{b.name.trim()[0] || 'ف'}</div>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 14.5, color: active ? '#fff' : 'var(--text-primary)', marginBottom: 4 }}>{b.name}</div>
+                {b.address && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11.5, color: active ? 'rgba(255,255,255,.75)' : 'var(--text-tertiary)', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <MapPin size={11} /> {b.address}
+                  </div>
+                )}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: active ? '#fff' : 'var(--text-primary)' }}>
+                    {stats?.avg != null ? `${stats.avg} ★` : '—'}
+                  </span>
+                  {!!stats?.pending && (
+                    <Badge tone={active ? 'neutral' : 'warning'}>{stats.pending} بانتظار الرد</Badge>
+                  )}
+                </div>
+              </div>
+            </div>
+          )
+        })}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -167,7 +230,10 @@ export function DashboardV2Reviews() {
             <Card key={r.id}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--slate-200)', flexShrink: 0 }} />
+                  <div style={{
+                    width: 38, height: 38, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'var(--gradient-brand)', color: '#fff', fontWeight: 700, fontSize: 14,
+                  }}>{r.reviewer_name.trim()[0] || '؟'}</div>
                   <div>
                     <div style={{ fontWeight: 600, fontSize: 14 }}>{r.reviewer_name}</div>
                     <Stars n={r.rating} />

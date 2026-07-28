@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Camera, Plus, Trash2, Users, ShieldCheck, ShieldOff } from 'lucide-react'
+import { Camera, Plus, Trash2, Users, ShieldCheck, ShieldOff, Building2, Clock, Sparkles as SparklesIcon } from 'lucide-react'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 import { supabase } from '../../../lib/supabase'
 import {
@@ -24,6 +24,15 @@ const ROLE_LABEL: Record<string, string> = { owner: 'مالك', manager: 'مدي
 const ROLE_TONE: Record<string, BadgeTone> = { owner: 'brand', manager: 'success', staff: 'neutral' }
 const ROLE_OPTIONS = [{ value: 'staff', label: 'موظف' }, { value: 'manager', label: 'مدير' }]
 
+const SECTIONS = [
+  { key: 'business', label: 'بيانات العمل', icon: Building2 },
+  { key: 'hours', label: 'ساعات العمل', icon: Clock },
+  { key: 'team', label: 'الفريق والصلاحيات', icon: Users },
+  { key: 'security', label: 'الأمان', icon: ShieldCheck },
+  { key: 'ai', label: 'تفضيلات الذكاء الاصطناعي', icon: SparklesIcon },
+] as const
+type SectionKey = typeof SECTIONS[number]['key']
+
 export function DashboardV2Settings() {
   const {
     companyId, clinicName, clinicPhone, clinicEmail, clinicCity, clinicLogoUrl, clinicSettings,
@@ -40,6 +49,7 @@ export function DashboardV2Settings() {
   const [toast, setToast] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const [activeSection, setActiveSection] = useState<SectionKey>('business')
   const [staffDialogOpen, setStaffDialogOpen] = useState(false)
   const [staffForm, setStaffForm] = useState({ full_name: '', email: '', role: 'staff' })
   const [invitingStaff, setInvitingStaff] = useState(false)
@@ -194,13 +204,42 @@ export function DashboardV2Settings() {
     refetchStaff()
   }
 
+  const Rail = (
+    <div className="dv2-settings-rail" style={{ width: 220, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {SECTIONS.map((s) => {
+        const Icon = s.icon
+        const active = activeSection === s.key
+        return (
+          <div
+            key={s.key}
+            onClick={() => setActiveSection(s.key)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 'var(--radius-md)',
+              cursor: 'pointer', fontSize: 13.5, fontWeight: 600,
+              background: active ? 'var(--brand-50)' : 'transparent',
+              color: active ? 'var(--brand-700)' : 'var(--text-secondary)',
+            }}
+          >
+            <Icon size={16} /> {s.label}
+          </div>
+        )
+      })}
+    </div>
+  )
+
   return (
-    <div style={{ maxWidth: 720 }}>
+    <div style={{ maxWidth: 960 }}>
       <div style={{ marginBottom: 20 }}>
         <div style={{ fontSize: 'var(--text-heading-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>الإعدادات</div>
         <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>بيانات عملك، ساعات العمل، والفريق</div>
       </div>
 
+      <div className="dv2-settings-layout" style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+        <style>{`@media (max-width: 800px) { .dv2-settings-layout { flex-direction: column; } .dv2-settings-rail { width: 100% !important; flex-direction: row !important; overflow-x: auto; } }`}</style>
+        {Rail}
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+      {activeSection === 'business' && (
       <Card style={{ marginBottom: 16 }}>
         <div style={{ fontWeight: 700, marginBottom: 14 }}>بيانات العمل</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18 }}>
@@ -231,8 +270,11 @@ export function DashboardV2Settings() {
           </div>
           <Input label="المدينة" value={form.city} onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))} />
         </div>
+        <Button onClick={save} disabled={saving} style={{ marginTop: 18 }}>{saving ? 'جارِ الحفظ...' : 'حفظ التغييرات'}</Button>
       </Card>
+      )}
 
+      {activeSection === 'hours' && (
       <Card style={{ marginBottom: 16 }}>
         <div style={{ fontWeight: 700, marginBottom: 14 }}>ساعات العمل</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -257,8 +299,11 @@ export function DashboardV2Settings() {
             )
           })}
         </div>
+        <Button onClick={save} disabled={saving} style={{ marginTop: 18 }}>{saving ? 'جارِ الحفظ...' : 'حفظ التغييرات'}</Button>
       </Card>
+      )}
 
+      {activeSection === 'team' && (
       <Card style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}><Users size={16} /> الفريق والصلاحيات</div>
@@ -282,7 +327,9 @@ export function DashboardV2Settings() {
           ))}
         </div>
       </Card>
+      )}
 
+      {activeSection === 'security' && (
       <Card style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
@@ -303,7 +350,9 @@ export function DashboardV2Settings() {
           )}
         </div>
       </Card>
+      )}
 
+      {activeSection === 'ai' && (
       <Card style={{ marginBottom: 16 }}>
         <div style={{ fontWeight: 700, marginBottom: 14 }}>تفضيلات الذكاء الاصطناعي</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -323,9 +372,11 @@ export function DashboardV2Settings() {
             <Switch checked={prefs.sms} onChange={(v) => setPrefs((p) => ({ ...p, sms: v }))} />
           </div>
         </div>
+        <Button onClick={save} disabled={saving} style={{ marginTop: 18 }}>{saving ? 'جارِ الحفظ...' : 'حفظ التغييرات'}</Button>
       </Card>
-
-      <Button onClick={save} disabled={saving}>{saving ? 'جارِ الحفظ...' : 'حفظ التغييرات'}</Button>
+      )}
+        </div>
+      </div>
 
       <Dialog
         open={staffDialogOpen} title="دعوة موظف" onClose={() => setStaffDialogOpen(false)}

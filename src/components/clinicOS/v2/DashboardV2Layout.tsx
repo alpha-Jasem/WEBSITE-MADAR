@@ -3,11 +3,12 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, CalendarDays, Users, MessageSquare, Star, BarChart3,
   Wallet, BellRing, Plug, Settings, ChevronDown, LogOut, CreditCard, Menu, X,
-  Wrench, History, Sun, Moon,
+  Wrench, History, Sun, Moon, AlertTriangle, ShieldCheck,
 } from 'lucide-react'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 import { useClinicSupportTickets } from '../../../lib/clinicOSQueries'
 import { NotificationCenter } from './NotificationCenter'
+import { AccountMenu } from './AccountMenu'
 import { SupportChat } from './SupportChat'
 import { GlobalSearch } from './GlobalSearch'
 import { OnboardingWizard } from './OnboardingWizard'
@@ -26,7 +27,7 @@ interface NavItem {
 export function DashboardV2Layout() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { companyId, clinicName, userName, isDemo, logout } = useClinicOS()
+  const { companyId, clinicName, userName, isDemo, accountError, packageType, setPackageType, refreshAccount, logout } = useClinicOS()
   const [profileOpen, setProfileOpen] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem(THEME_KEY) as 'dark') || 'light')
@@ -36,7 +37,7 @@ export function DashboardV2Layout() {
   useEffect(() => { setMobileNavOpen(false) }, [location.pathname])
   useEffect(() => { localStorage.setItem(THEME_KEY, theme) }, [theme])
 
-  const base = '/clinic-os/dashboard'
+  const base = isDemo ? '/demo-review' : '/clinic-os/dashboard'
   const NAV: NavItem[] = [
     { label: 'الرئيسية', path: base, icon: <LayoutDashboard size={17} /> },
     { label: 'الحجوزات', path: `${base}/bookings`, icon: <CalendarDays size={17} /> },
@@ -168,12 +169,47 @@ export function DashboardV2Layout() {
             <div className="dv2-global-search" style={{ flex: 1, minWidth: 0 }}><GlobalSearch /></div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
+            {isDemo && (
+              <>
+                <div style={{ display: 'flex', background: 'var(--slate-100)', borderRadius: 'var(--radius-full)', padding: 3, gap: 2 }}>
+                  {([['whatsapp', 'واتساب'], ['ai_pro', 'AI Pro']] as const).map(([id, label]) => (
+                    <span
+                      key={id}
+                      onClick={() => setPackageType(id)}
+                      style={{
+                        padding: '5px 12px', borderRadius: 'var(--radius-full)', cursor: 'pointer', fontSize: 12, fontWeight: 700,
+                        background: packageType === id ? '#fff' : 'transparent',
+                        color: packageType === id ? 'var(--brand-600)' : 'var(--text-tertiary)',
+                        boxShadow: packageType === id ? 'var(--shadow-sm)' : 'none',
+                      }}
+                    >{label}</span>
+                  ))}
+                </div>
+                <span
+                  onClick={() => window.open('/demo-review/internal-admin', '_blank')}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 600 }}
+                >
+                  <ShieldCheck size={15} /> لوحة الإدارة
+                </span>
+              </>
+            )}
             <span onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))} style={{ cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex' }}>
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </span>
+            <AccountMenu base={base} />
             <NotificationCenter />
           </div>
         </header>
+        {!isDemo && accountError && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+            padding: '10px 20px', background: 'var(--danger-50, #FEF2F2)', borderBottom: '1px solid var(--danger-200, #FECACA)',
+            color: 'var(--danger-600, #DC2626)', fontSize: 13, fontWeight: 600, flexShrink: 0,
+          }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><AlertTriangle size={16} /> {accountError}</span>
+            <span onClick={() => refreshAccount()} style={{ cursor: 'pointer', textDecoration: 'underline', flexShrink: 0 }}>إعادة المحاولة</span>
+          </div>
+        )}
         <main className="dv2-main" style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
           <Outlet />
         </main>

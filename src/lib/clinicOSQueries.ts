@@ -133,6 +133,20 @@ export function useClinicPatients(companyId: string | null, isDemo = false) {
   }, [companyId, isDemo])
 }
 
+export async function updatePatient(id: string, data: Partial<Patient>) {
+  const { clinic_id: clinicId, total_visits, ...rest } = data
+  const payload: Record<string, unknown> = { ...rest }
+  if (total_visits != null) payload.total_appointments = total_visits
+  const { error } = await supabase
+    .from('clinic_os_patients')
+    .update(payload)
+    .eq('id', id)
+  if (error) throw error
+  if (clinicId) {
+    await logAuditEvent({ company_id: clinicId, action: 'patient.updated', note: `تحديث بيانات عميل: ${data.name || ''}` }).catch(() => {})
+  }
+}
+
 // ─── Appointments ─────────────────────────────────────────────────────────────
 
 export function useClinicAppointments(companyId: string | null, dateFilter?: string, isDemo = false) {
@@ -633,6 +647,11 @@ export function useClinicBranches(companyId: string | null, isDemo = false) {
       google_maps_url: settingsByBranch.get(row.id)?.google_maps_url,
     })) as Branch[]
   }, [companyId, isDemo], 'branches', companyId, isDemo)
+}
+
+export async function toggleBranchFavorite(id: string, isFavorite: boolean) {
+  const { error } = await supabase.from('branches').update({ is_favorite: isFavorite }).eq('id', id)
+  if (error) throw error
 }
 
 export async function createBranch(input: {

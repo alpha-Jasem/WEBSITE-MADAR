@@ -26,7 +26,7 @@ export const DemoSignup = () => {
     if (Object.keys(errs).length) { setErrors(errs); return }
     setLoading(true)
     await new Promise(r => setTimeout(r, 800))
-    navigate('/clinic-os/demo-confirm')
+    navigate('/clinic-os/demo/confirm')
   }
 
   const Field = ({ name, label, type = 'text', placeholder, maxLength }: { name: keyof typeof form, label: string, type?: string, placeholder?: string, maxLength?: number }) => (

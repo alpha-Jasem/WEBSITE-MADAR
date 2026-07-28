@@ -61,6 +61,7 @@ export function DashboardV2MadarAgentUsage() {
 
   const [elevenlabs, setElevenlabs] = useState<AgentVoiceUsage | null>(null)
   const [elevenlabsLoading, setElevenlabsLoading] = useState(!isDemo)
+  const [elevenlabsError, setElevenlabsError] = useState(false)
 
   useEffect(() => {
     if (accountLoading) return
@@ -71,9 +72,15 @@ export function DashboardV2MadarAgentUsage() {
     }
     let cancelled = false
     async function load() {
-      const { data } = await supabase.functions.invoke('clinic-usage', { body: {} })
-      if (!cancelled && data?.elevenlabs) setElevenlabs(data.elevenlabs)
-      if (!cancelled) setElevenlabsLoading(false)
+      const { data, error } = await supabase.functions.invoke('clinic-usage', { body: {} })
+      if (cancelled) return
+      if (error || !data || data.error) {
+        setElevenlabsError(true)
+      } else {
+        setElevenlabsError(false)
+        if (data.elevenlabs) setElevenlabs(data.elevenlabs)
+      }
+      setElevenlabsLoading(false)
     }
     load()
     const interval = setInterval(load, POLL_MS)
@@ -142,8 +149,8 @@ export function DashboardV2MadarAgentUsage() {
                 {elevenlabsLoading && <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>(جارِ التحديث...)</span>}
               </span>
               {!elevenlabsLoading && (
-                <Badge tone={elevenlabs?.character_limit ? 'success' : 'neutral'}>
-                  {elevenlabs?.character_limit ? 'متصل بمدار ايجنت' : 'جارِ الاتصال...'}
+                <Badge tone={elevenlabs?.character_limit ? 'success' : elevenlabsError ? 'danger' : 'neutral'}>
+                  {elevenlabs?.character_limit ? 'متصل بمدار ايجنت' : elevenlabsError ? 'تعذّر الاتصال' : 'بانتظار أول استخدام'}
                 </Badge>
               )}
             </div>
@@ -157,7 +164,9 @@ export function DashboardV2MadarAgentUsage() {
                 <div style={{ width: `${elevenlabsPercent}%`, height: '100%', background: elevenlabsPercent >= 100 ? 'var(--danger-500)' : elevenlabsPercent >= 80 ? 'var(--warning-500)' : 'var(--brand-500)' }} />
               </div>
             ) : (
-              <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>سيبدأ العرض فور أول استخدام لمدار ايجنت</div>
+              <div style={{ fontSize: 12, color: elevenlabsError ? 'var(--danger-500)' : 'var(--text-tertiary)' }}>
+                {elevenlabsError ? 'تعذّر جلب بيانات الحساب — تواصل مع فريق الدعم' : 'سيبدأ العرض فور أول استخدام لمدار ايجنت'}
+              </div>
             )}
           </div>
         </Card>
