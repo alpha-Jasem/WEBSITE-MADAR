@@ -92,10 +92,25 @@ export function DashboardV2Layout() {
         @media (prefers-reduced-motion: reduce) {
           .dv2-nav-highlight, .dv2-nav-item, .dv2-nav-item .dv2-nav-icon { transition: none; }
         }
+        .dv2-sidebar-glass {
+          position: relative;
+          background:
+            radial-gradient(120% 60% at 0% 0%, rgba(255,255,255,.14) 0%, rgba(255,255,255,0) 55%),
+            linear-gradient(165deg, rgba(37,58,153,.82) 0%, rgba(24,34,110,.88) 45%, rgba(13,18,68,.94) 100%);
+          backdrop-filter: blur(22px) saturate(160%);
+          -webkit-backdrop-filter: blur(22px) saturate(160%);
+          border-inline-end: 1px solid rgba(255,255,255,.10);
+          box-shadow: inset -1px 0 0 rgba(255,255,255,.04), 8px 0 32px rgba(10,14,50,.25);
+        }
+        .dv2-sidebar-glass::before {
+          content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+          background: linear-gradient(180deg, rgba(255,255,255,.06) 0%, rgba(255,255,255,0) 18%);
+        }
+        .dv2-sidebar-glass > * { position: relative; z-index: 1; }
       `}</style>
       {mobileNavOpen && <div className="dv2-backdrop open" onClick={() => setMobileNavOpen(false)} />}
-      <nav className={`dv2-sidebar${mobileNavOpen ? ' open' : ''}`} style={{
-        width: 240, background: 'var(--gradient-dark)', height: '100%', display: 'flex',
+      <nav className={`dv2-sidebar dv2-sidebar-glass${mobileNavOpen ? ' open' : ''}`} style={{
+        width: 240, height: '100%', display: 'flex',
         flexDirection: 'column', padding: '20px 14px', boxSizing: 'border-box',
         fontFamily: 'var(--font-body)', color: '#fff', flexShrink: 0,
       }}>
