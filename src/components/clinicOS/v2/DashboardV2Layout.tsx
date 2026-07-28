@@ -3,12 +3,17 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, CalendarDays, Users, MessageSquare, Star, BarChart3,
   Wallet, BellRing, Plug, Settings, ChevronDown, LogOut, CreditCard, Menu, X,
+  Wrench, History, Sun, Moon,
 } from 'lucide-react'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 import { useClinicSupportTickets } from '../../../lib/clinicOSQueries'
 import { NotificationCenter } from './NotificationCenter'
 import { SupportChat } from './SupportChat'
+import { GlobalSearch } from './GlobalSearch'
+import { OnboardingWizard } from './OnboardingWizard'
 import '../../../styles/dashboardV2Tokens.css'
+
+const THEME_KEY = 'dv2_theme'
 
 interface NavItem {
   label: string
@@ -24,10 +29,12 @@ export function DashboardV2Layout() {
   const { companyId, clinicName, userName, isDemo, logout } = useClinicOS()
   const [profileOpen, setProfileOpen] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem(THEME_KEY) as 'dark') || 'light')
   const { data: tickets } = useClinicSupportTickets(companyId, isDemo)
   const openTicketCount = (tickets || []).filter((t) => t.status === 'open').length
 
   useEffect(() => { setMobileNavOpen(false) }, [location.pathname])
+  useEffect(() => { localStorage.setItem(THEME_KEY, theme) }, [theme])
 
   const base = '/clinic-os/dashboard'
   const NAV: NavItem[] = [
@@ -36,16 +43,18 @@ export function DashboardV2Layout() {
     { label: 'العملاء', path: `${base}/patients`, icon: <Users size={17} /> },
     { label: 'المحادثات', path: `${base}/conversations`, icon: <MessageSquare size={17} /> },
     { label: 'AI Google Reviews', path: `${base}/reviews`, icon: <Star size={17} />, badge: openTicketCount || undefined },
+    { label: 'الخدمات', path: `${base}/services`, icon: <Wrench size={17} /> },
     { label: 'التقارير والتحليلات', path: `${base}/reports`, icon: <BarChart3 size={17} /> },
     { label: 'الإيرادات', path: `${base}/revenue`, icon: <Wallet size={17} /> },
     { label: 'Madar Agent Usage', path: `${base}/plan-usage`, icon: <CreditCard size={17} /> },
     { label: 'التذكيرات', path: `${base}/reminders`, icon: <BellRing size={17} /> },
     { label: 'التكاملات', path: `${base}/integrations`, icon: <Plug size={17} /> },
+    { label: 'سجل التدقيق', path: `${base}/audit-log`, icon: <History size={17} /> },
     { label: 'الإعدادات', path: `${base}/settings`, icon: <Settings size={17} /> },
   ]
 
   return (
-    <div className="dv2-scope" dir="rtl" style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+    <div className="dv2-scope" dir="rtl" data-theme={theme} style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
       <style>{`
         .dv2-hamburger { display: none; }
         .dv2-backdrop { display: none; }
@@ -57,6 +66,7 @@ export function DashboardV2Layout() {
           .dv2-backdrop.open { display: block; position: fixed; inset: 0; background: rgba(11,13,19,.5); z-index: 1200; }
           .dv2-hamburger { display: flex !important; }
           .dv2-header-subtitle { display: none; }
+          .dv2-global-search { display: none; }
           .dv2-main { padding: 14px !important; }
           .dv2-responsive-grid { grid-template-columns: 1fr !important; }
           .dv2-responsive-grid-2 { grid-template-columns: 1fr 1fr !important; }
@@ -152,11 +162,15 @@ export function DashboardV2Layout() {
             <span className="dv2-hamburger" onClick={() => setMobileNavOpen(true)} style={{ cursor: 'pointer', color: 'var(--text-secondary)' }}>
               <Menu size={20} />
             </span>
-            <div className="dv2-header-subtitle" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              لوحة تحكم مدار — نسخة تجريبية جديدة
+            <div className="dv2-header-subtitle" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 0 }}>
+              لوحة تحكم مدار
             </div>
+            <div className="dv2-global-search" style={{ flex: 1, minWidth: 0 }}><GlobalSearch /></div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
+            <span onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))} style={{ cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex' }}>
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </span>
             <NotificationCenter />
           </div>
         </header>
@@ -165,6 +179,7 @@ export function DashboardV2Layout() {
         </main>
       </div>
       <SupportChat />
+      <OnboardingWizard />
     </div>
   )
 }

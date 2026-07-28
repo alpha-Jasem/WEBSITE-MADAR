@@ -59,6 +59,8 @@ const DashboardV2Reports       = lazy(() => import('./pages/clinicOS/dashboardV2
 const DashboardV2Reminders     = lazy(() => import('./pages/clinicOS/dashboardV2/Reminders').then(m => ({ default: m.DashboardV2Reminders })))
 const DashboardV2Integrations  = lazy(() => import('./pages/clinicOS/dashboardV2/Integrations').then(m => ({ default: m.DashboardV2Integrations })))
 const DashboardV2Settings      = lazy(() => import('./pages/clinicOS/dashboardV2/Settings').then(m => ({ default: m.DashboardV2Settings })))
+const DashboardV2Services      = lazy(() => import('./pages/clinicOS/dashboardV2/Services').then(m => ({ default: m.DashboardV2Services })))
+const DashboardV2AuditLog      = lazy(() => import('./pages/clinicOS/dashboardV2/AuditLog').then(m => ({ default: m.DashboardV2AuditLog })))
 const DashboardV2MadarAgentUsage = lazy(() => import('./pages/clinicOS/dashboardV2/MadarAgentUsage').then(m => ({ default: m.DashboardV2MadarAgentUsage })))
 
 function App() {
@@ -113,6 +115,8 @@ function App() {
               <Route path="plan-usage" element={<DashboardV2MadarAgentUsage />} />
               <Route path="reminders" element={<DashboardV2Reminders />} />
               <Route path="integrations" element={<DashboardV2Integrations />} />
+              <Route path="services" element={<DashboardV2Services />} />
+              <Route path="audit-log" element={<DashboardV2AuditLog />} />
               <Route path="settings" element={<DashboardV2Settings />} />
             </Route>
             <Route path="/real-estate" element={<Navigate to="/#products" replace />} />

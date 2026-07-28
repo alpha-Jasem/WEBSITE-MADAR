@@ -333,6 +333,18 @@ export interface ClinicNotification {
   created_at: string
 }
 
+export interface AuditLogEntry {
+  id: string
+  company_id: string
+  actor_type: string
+  actor_id?: string
+  action: string
+  old_value?: Record<string, unknown>
+  new_value?: Record<string, unknown>
+  note?: string
+  created_at: string
+}
+
 export interface DashboardStats {
   today_appointments: number
   confirmed: number

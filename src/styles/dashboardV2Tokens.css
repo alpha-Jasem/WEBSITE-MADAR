@@ -60,3 +60,19 @@
   --font-body: var(--font-arabic);
   --font-display: var(--font-arabic);
 }
+
+/* Dark theme — same token names, reversed neutral scale. Everything already
+   styled through var(--surface-*)/var(--text-*)/var(--slate-*) re-themes for free. */
+.dv2-scope[data-theme="dark"] {
+  --slate-50:#14171f;--slate-100:#1a1e28;--slate-200:#242833;--slate-300:#333947;--slate-400:#4d5566;
+  --slate-500:#6b7385;--slate-600:#9aa1b1;--slate-700:#c2c7d1;--slate-800:#dde0e6;--slate-900:#f3f4f6;--slate-950:#ffffff;
+  --success-100:#123527;--warning-100:#3a2a10;--danger-100:#3a1815;
+  --surface-page:#0b0d13;--surface-canvas:#0f1218;--surface-card:#161a23;--surface-inverse:#ffffff;
+  --surface-sunken:#1e2330;
+  --text-on-brand:#ffffff;
+  --shadow-sm:0 1px 2px rgba(0,0,0,0.4),0 1px 1px rgba(0,0,0,0.3);
+  --shadow-md:0 4px 12px rgba(0,0,0,0.45),0 2px 4px rgba(0,0,0,0.3);
+  --shadow-lg:0 12px 32px rgba(0,0,0,0.55),0 4px 10px rgba(0,0,0,0.35);
+  --gradient-dark:linear-gradient(135deg,#1a1e28 0%,#0b0d13 100%);
+  color-scheme: dark;
+}

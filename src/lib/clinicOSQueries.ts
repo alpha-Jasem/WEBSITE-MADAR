@@ -4,12 +4,13 @@ import {
   DEMO_DOCTORS, DEMO_SERVICES, DEMO_PATIENTS, DEMO_APPOINTMENTS,
   DEMO_MESSAGES, DEMO_AI_CALLS, DEMO_WAITLIST, DEMO_STATS,
   DEMO_BRANCHES, DEMO_GOOGLE_REVIEWS, DEMO_SUPPORT_TICKETS,
-  DEMO_REMINDER_RULES, DEMO_INTEGRATIONS, DEMO_STAFF, DEMO_NOTIFICATIONS,
+  DEMO_REMINDER_RULES, DEMO_INTEGRATIONS, DEMO_STAFF, DEMO_NOTIFICATIONS, DEMO_AUDIT_LOG,
 } from './clinicOSDemoData'
 import type {
   Doctor, Service, Patient, Appointment, MessageLog, AICallLog, Waitlist, AppointmentStatus,
   Branch, GoogleReview, SupportTicket, ReviewStatus,
   ReminderRule, Integration, IntegrationStatus, CompanyStaff, ClinicNotification, NotificationSeverity,
+  AuditLogEntry,
 } from '../types/clinicOS'
 
 // ─── Generic fetch hook ────────────────────────────────────────────────────────
@@ -583,16 +584,22 @@ export async function createService(data: Partial<Service>) {
     .select()
     .single()
   if (error) throw error
+  if (data.clinic_id) {
+    await logAuditEvent({ company_id: data.clinic_id, action: 'service.created', note: `إضافة خدمة: ${data.name}` }).catch(() => {})
+  }
   return result as Service
 }
 
 export async function updateService(id: string, data: Partial<Service>) {
-  const { clinic_id: _clinicId, required_specialty: _specialty, allowed_doctor_ids: _doctorIds, ...payload } = data
+  const { clinic_id: clinicId, required_specialty: _specialty, allowed_doctor_ids: _doctorIds, ...payload } = data
   const { error } = await supabase
     .from('clinic_os_services')
     .update(payload)
     .eq('id', id)
   if (error) throw error
+  if (clinicId) {
+    await logAuditEvent({ company_id: clinicId, action: 'service.updated', note: `تحديث خدمة: ${data.name || ''}` }).catch(() => {})
+  }
 }
 
 export async function updateAICallStatus(id: string, status: 'confirmed' | 'rejected') {
@@ -807,6 +814,7 @@ export async function addStaffMember(input: { company_id: string; full_name: str
     .from('company_users')
     .insert({ company_id: input.company_id, full_name: input.full_name, role: input.role, permissions: input.permissions || [] })
   if (error) throw error
+  await logAuditEvent({ company_id: input.company_id, action: 'staff.added', note: `إضافة موظف: ${input.full_name} (${input.role})` }).catch(() => {})
 }
 
 export async function updateStaffMember(id: string, changes: { full_name?: string; role?: string; permissions?: string[] }) {
@@ -890,5 +898,42 @@ export async function markAllNotificationsRead(companyId: string) {
     .update({ read_at: new Date().toISOString() })
     .eq('company_id', companyId)
     .is('read_at', null)
+  if (error) throw error
+}
+
+// ─── Audit Log ──────────────────────────────────────────────────────────────
+
+export function useClinicAuditLog(companyId: string | null, isDemo = false) {
+  return useFetchRealtime<AuditLogEntry[]>(async () => {
+    if (isDemo) return DEMO_AUDIT_LOG
+    if (!companyId) return []
+    const { data, error } = await supabase
+      .from('clinic_os_audit_logs')
+      .select('*')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
+      .limit(200)
+    if (error) throw error
+    return (data ?? []) as AuditLogEntry[]
+  }, [companyId, isDemo], 'clinic_os_audit_logs', companyId, isDemo)
+}
+
+export async function logAuditEvent(input: {
+  company_id: string
+  action: string
+  note?: string
+  new_value?: Record<string, unknown>
+  old_value?: Record<string, unknown>
+}) {
+  const { data: userData } = await supabase.auth.getUser()
+  const { error } = await supabase.from('clinic_os_audit_logs').insert({
+    company_id: input.company_id,
+    actor_type: 'user',
+    actor_id: userData?.user?.id,
+    action: input.action,
+    note: input.note,
+    new_value: input.new_value,
+    old_value: input.old_value,
+  })
   if (error) throw error
 }

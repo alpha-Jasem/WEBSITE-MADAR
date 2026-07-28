@@ -2,7 +2,7 @@ import type {
   Clinic, Patient, Doctor, Service, Appointment,
   MessageLog, AICallLog, Waitlist, DashboardStats,
   Branch, GoogleReview, SupportTicket,
-  ReminderRule, Integration, CompanyStaff, ClinicNotification,
+  ReminderRule, Integration, CompanyStaff, ClinicNotification, AuditLogEntry,
 } from '../types/clinicOS'
 
 const TODAY = new Date().toISOString().split('T')[0]
@@ -330,6 +330,13 @@ export const DEMO_NOTIFICATIONS: ClinicNotification[] = [
   { id: 'notif-1', company_id: 'demo-clinic-001', notification_type: 'new_booking', title: 'حجز جديد', message: 'سارة أحمد حجزت موعد تنظيف أسنان الساعة 4 عصراً', severity: 'success', route: '/clinic-os/dashboard/bookings', created_at: TODAY + 'T10:40:00Z' },
   { id: 'notif-2', company_id: 'demo-clinic-001', notification_type: 'negative_review', title: 'تقييم سلبي جديد', message: 'خالد الرشيد قيّم فرعك بنجمتين — يحتاج ردك', severity: 'warning', route: '/clinic-os/dashboard/reviews', created_at: YESTERDAY + 'T14:10:00Z' },
   { id: 'notif-3', company_id: 'demo-clinic-001', notification_type: 'no_show', title: 'عميل لم يحضر', message: 'بدر الحربي لم يحضر موعده الساعة 1:00 ظهراً', severity: 'critical', route: '/clinic-os/dashboard/bookings', read_at: YESTERDAY + 'T16:00:00Z', created_at: YESTERDAY + 'T13:10:00Z' },
+]
+
+export const DEMO_AUDIT_LOG: AuditLogEntry[] = [
+  { id: 'audit-1', company_id: 'demo-clinic-001', actor_type: 'user', action: 'appointment.created', note: 'إنشاء حجز جديد لسارة أحمد', created_at: TODAY + 'T10:40:00Z' },
+  { id: 'audit-2', company_id: 'demo-clinic-001', actor_type: 'user', action: 'staff.added', note: 'إضافة موظف: محمد القحطاني (موظف)', created_at: YESTERDAY + 'T09:15:00Z' },
+  { id: 'audit-3', company_id: 'demo-clinic-001', actor_type: 'user', action: 'service.updated', note: 'تحديث سعر خدمة: تنظيف الأسنان', created_at: YESTERDAY + 'T08:30:00Z' },
+  { id: 'audit-4', company_id: 'demo-clinic-001', actor_type: 'admin', action: 'subscription.activated', note: 'تفعيل باقة AI Pro', created_at: D3 + 'T12:00:00Z' },
 ]
 
 export function hasConflict(
