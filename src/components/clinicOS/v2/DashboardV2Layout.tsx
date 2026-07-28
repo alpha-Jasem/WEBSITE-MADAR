@@ -30,6 +30,7 @@ export function DashboardV2Layout() {
   const { companyId, clinicName, userName, isDemo, accountError, packageType, setPackageType, refreshAccount, logout } = useClinicOS()
   const [profileOpen, setProfileOpen] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [hoverRect, setHoverRect] = useState<{ top: number; height: number } | null>(null)
   const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem(THEME_KEY) as 'dark') || 'light')
   const { data: tickets } = useClinicSupportTickets(companyId, isDemo)
   const openTicketCount = (tickets || []).filter((t) => t.status === 'open').length
@@ -72,6 +73,25 @@ export function DashboardV2Layout() {
           .dv2-responsive-grid { grid-template-columns: 1fr !important; }
           .dv2-responsive-grid-2 { grid-template-columns: 1fr 1fr !important; }
         }
+        .dv2-nav-highlight {
+          position: absolute; inset-inline-start: 0; inset-inline-end: 0;
+          border-radius: var(--radius-md);
+          background: linear-gradient(90deg, rgba(255,255,255,.09), rgba(255,255,255,.04));
+          border: 1px solid rgba(255,255,255,.08);
+          box-shadow: 0 2px 10px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.06);
+          pointer-events: none;
+          transition: top 220ms cubic-bezier(.22,1,.36,1), height 220ms cubic-bezier(.22,1,.36,1), opacity 160ms ease;
+          opacity: 0;
+        }
+        .dv2-nav-highlight.visible { opacity: 1; }
+        .dv2-nav-item { position: relative; transition: color 150ms ease, transform 150ms ease; }
+        .dv2-nav-item:hover { color: #fff !important; transform: translateX(-2px); }
+        [dir="rtl"] .dv2-nav-item:hover { transform: translateX(2px); }
+        .dv2-nav-item .dv2-nav-icon { transition: transform 150ms ease; }
+        .dv2-nav-item:hover .dv2-nav-icon { transform: scale(1.08); }
+        @media (prefers-reduced-motion: reduce) {
+          .dv2-nav-highlight, .dv2-nav-item, .dv2-nav-item .dv2-nav-icon { transition: none; }
+        }
       `}</style>
       {mobileNavOpen && <div className="dv2-backdrop open" onClick={() => setMobileNavOpen(false)} />}
       <nav className={`dv2-sidebar${mobileNavOpen ? ' open' : ''}`} style={{
@@ -89,13 +109,22 @@ export function DashboardV2Layout() {
           </span>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 24, flex: 1, overflowY: 'auto' }}>
+        <div
+          style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 2, marginTop: 24, flex: 1, overflowY: 'auto' }}
+          onMouseLeave={() => setHoverRect(null)}
+        >
+          <div
+            className={`dv2-nav-highlight${hoverRect ? ' visible' : ''}`}
+            style={{ top: hoverRect?.top ?? 0, height: hoverRect?.height ?? 0 }}
+          />
           {NAV.map((item) => {
             const active = location.pathname === item.path
             return (
               <div
                 key={item.path}
+                className="dv2-nav-item"
                 onClick={() => navigate(item.path)}
+                onMouseEnter={(e) => setHoverRect({ top: e.currentTarget.offsetTop, height: e.currentTarget.offsetHeight })}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
                   borderRadius: 'var(--radius-md)', cursor: 'pointer',
@@ -104,7 +133,7 @@ export function DashboardV2Layout() {
                   color: active ? '#fff' : 'rgba(255,255,255,.65)',
                 }}
               >
-                {item.icon}
+                <span className="dv2-nav-icon" style={{ display: 'flex' }}>{item.icon}</span>
                 <span style={{ flex: 1 }}>{item.label}</span>
                 {item.badge != null && (
                   <span style={{
