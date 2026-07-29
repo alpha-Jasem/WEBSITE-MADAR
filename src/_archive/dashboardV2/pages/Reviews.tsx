@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Star, Plus, MapPin, AlertTriangle } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Star, Plus, MapPin, AlertTriangle, Map as MapIcon, ExternalLink } from 'lucide-react'
 import { useClinicOS } from '@/context/ClinicOSContext'
 import {
   useClinicBranches, useClinicGoogleReviews, useClinicSupportTickets,
@@ -166,53 +167,86 @@ export function DashboardV2Reviews() {
       </div>
 
       <div className="dv2-branch-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14, marginBottom: 24 }}>
-        {branchList.map((b) => {
+        {branchList.map((b, i) => {
           const stats = branchStats.get(b.id)
           const active = activeBranch?.id === b.id
+          const hasMap = !!b.google_maps_url
           return (
-            <div
-              key={b.id}
-              onClick={() => setActiveBranchId(b.id)}
-              style={{
-                position: 'relative', aspectRatio: '1 / 0.85', borderRadius: 'var(--radius-lg)', cursor: 'pointer',
-                padding: 18, display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-                background: active ? 'var(--gradient-brand)' : '#fff',
-                border: '1px solid ' + (active ? 'transparent' : 'var(--border-default)'),
-                boxShadow: active ? 'var(--shadow-lg)' : 'var(--shadow-sm)',
-                transition: 'transform 150ms var(--ease-out, ease), box-shadow 150ms var(--ease-out, ease)',
-              }}
-            >
-              <span
-                onClick={(e) => { e.stopPropagation(); toggleFavorite(b) }}
-                style={{
-                  position: 'absolute', top: 12, insetInlineEnd: 12, cursor: 'pointer', display: 'flex',
-                  color: b.is_favorite ? 'var(--warning-500)' : (active ? 'rgba(255,255,255,.6)' : 'var(--slate-300)'),
-                }}
+            <div key={b.id} style={{ aspectRatio: '1 / 0.85', perspective: 1200 }}>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: Math.min(i * 0.05, 0.4) }}
+                whileHover={hasMap ? { rotateY: 180 } : { y: -2 }}
+                onClick={() => setActiveBranchId(b.id)}
+                style={{ position: 'relative', width: '100%', height: '100%', cursor: 'pointer', transformStyle: 'preserve-3d' }}
               >
-                <Star size={18} fill={b.is_favorite ? 'currentColor' : 'none'} />
-              </span>
-              <div style={{
-                width: 44, height: 44, borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 17,
-                background: active ? 'rgba(255,255,255,.18)' : 'var(--brand-50)',
-                color: active ? '#fff' : 'var(--brand-600)',
-              }}>{b.name.trim()[0] || 'ف'}</div>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 14.5, color: active ? '#fff' : 'var(--text-primary)', marginBottom: 4 }}>{b.name}</div>
-                {b.address && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11.5, color: active ? 'rgba(255,255,255,.75)' : 'var(--text-tertiary)', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    <MapPin size={11} /> {b.address}
+                {/* Front face */}
+                <div style={{
+                  position: 'absolute', inset: 0, backfaceVisibility: 'hidden', borderRadius: 'var(--radius-lg)',
+                  padding: 18, display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                  background: active ? 'var(--gradient-brand)' : '#fff',
+                  border: '1px solid ' + (active ? 'transparent' : 'var(--border-default)'),
+                  boxShadow: active ? 'var(--shadow-lg)' : 'var(--shadow-sm)',
+                }}>
+                  <span
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(b) }}
+                    style={{
+                      position: 'absolute', top: 12, insetInlineEnd: 12, cursor: 'pointer', display: 'flex',
+                      color: b.is_favorite ? 'var(--warning-500)' : (active ? 'rgba(255,255,255,.6)' : 'var(--slate-300)'),
+                    }}
+                  >
+                    <Star size={18} fill={b.is_favorite ? 'currentColor' : 'none'} />
+                  </span>
+                  <div style={{
+                    width: 44, height: 44, borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 17,
+                    background: active ? 'rgba(255,255,255,.18)' : 'var(--brand-50)',
+                    color: active ? '#fff' : 'var(--brand-600)',
+                  }}>{b.name.trim()[0] || 'ف'}</div>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 14.5, color: active ? '#fff' : 'var(--text-primary)', marginBottom: 4 }}>{b.name}</div>
+                    {b.address && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11.5, color: active ? 'rgba(255,255,255,.75)' : 'var(--text-tertiary)', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <MapPin size={11} /> {b.address}
+                        {hasMap && <MapIcon size={11} style={{ marginInlineStart: 'auto', flexShrink: 0, opacity: 0.8 }} />}
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: active ? '#fff' : 'var(--text-primary)' }}>
+                        {stats?.avg != null ? `${stats.avg} ★` : '—'}
+                      </span>
+                      {!!stats?.pending && (
+                        <Badge tone={active ? 'neutral' : 'warning'}>{stats.pending} بانتظار الرد</Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Back face — Google Maps */}
+                {hasMap && (
+                  <div style={{
+                    position: 'absolute', inset: 0, backfaceVisibility: 'hidden', transform: 'rotateY(180deg)',
+                    borderRadius: 'var(--radius-lg)', padding: 18, display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center', gap: 10, textAlign: 'center',
+                    background: 'var(--gradient-brand)', color: '#fff', boxShadow: 'var(--shadow-lg)',
+                  }}>
+                    <MapIcon size={26} />
+                    <div style={{ fontWeight: 700, fontSize: 13.5 }}>{b.name}</div>
+                    <a
+                      href={b.google_maps_url} target="_blank" rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#fff',
+                        background: 'rgba(255,255,255,.18)', padding: '8px 14px', borderRadius: 'var(--radius-full)',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      افتح في خرائط Google <ExternalLink size={13} />
+                    </a>
                   </div>
                 )}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: active ? '#fff' : 'var(--text-primary)' }}>
-                    {stats?.avg != null ? `${stats.avg} ★` : '—'}
-                  </span>
-                  {!!stats?.pending && (
-                    <Badge tone={active ? 'neutral' : 'warning'}>{stats.pending} بانتظار الرد</Badge>
-                  )}
-                </div>
-              </div>
+              </motion.div>
             </div>
           )
         })}

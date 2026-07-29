@@ -33,10 +33,10 @@ const TONE_BG: Record<BadgeTone, [string, string]> = {
   neutral: ['var(--slate-100)', 'var(--slate-600)'],
 }
 
-function KpiCard({ k }: { k: Kpi }) {
+function KpiCard({ k, index = 0 }: { k: Kpi; index?: number }) {
   const [bg, fg] = TONE_BG[k.tone] || TONE_BG.brand
   return (
-    <Card emphasis={k.emphasis} style={{ flex: 1, minWidth: 0 }}>
+    <Card emphasis={k.emphasis} glass glow interactive delay={index * 0.06} style={{ flex: 1, minWidth: 0 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)' }}>{k.label}</div>
         <div style={{
@@ -221,11 +221,11 @@ export function DashboardV2Home() {
       </div>
 
       <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
-        {kpis.map((k, i) => <KpiCard key={i} k={k} />)}
+        {kpis.map((k, i) => <KpiCard key={i} k={k} index={i} />)}
       </div>
 
       <div className="dv2-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr', gap: 16, marginBottom: 20 }}>
-        <Card>
+        <Card delay={0.24}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
             <div style={{ fontWeight: 700 }}>الحجوزات</div>
             <div style={{ display: 'flex', gap: 4 }}>
@@ -241,7 +241,7 @@ export function DashboardV2Home() {
           <LineChart data={weeklyData} />
         </Card>
 
-        <Card>
+        <Card delay={0.3}>
           <div style={{ fontWeight: 700, marginBottom: 10 }}>مصادر الحجوزات</div>
           <Donut sources={sources} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
@@ -256,7 +256,7 @@ export function DashboardV2Home() {
           </div>
         </Card>
 
-        <Card>
+        <Card delay={0.36}>
           <div style={{ fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
             أداء الذكاء الاصطناعي <Badge tone="brand">AI</Badge>
           </div>

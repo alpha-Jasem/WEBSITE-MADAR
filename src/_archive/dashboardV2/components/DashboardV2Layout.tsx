@@ -13,7 +13,7 @@ import { AccountMenu } from './AccountMenu'
 import { SupportChat } from './SupportChat'
 import { GlobalSearch } from './GlobalSearch'
 import { OnboardingWizard } from './OnboardingWizard'
-import { ToastProvider, requestOpenSearch } from './uiExtras'
+import { ToastProvider, requestOpenSearch, TopProgressBar } from './uiExtras'
 import '@/styles/dashboardV2Tokens.css'
 
 const THEME_KEY = 'dv2_theme'
@@ -215,7 +215,9 @@ export function DashboardV2Layout() {
         <header style={{
           height: 64, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '0 16px', background: 'var(--surface-page)', borderBottom: '1px solid var(--border-default)', gap: 12,
+          position: 'relative',
         }}>
+          <TopProgressBar triggerKey={location.pathname} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
             <span className="dv2-hamburger" onClick={() => setMobileNavOpen(true)} style={{ cursor: 'pointer', color: 'var(--text-secondary)' }}>
               <Menu size={20} />

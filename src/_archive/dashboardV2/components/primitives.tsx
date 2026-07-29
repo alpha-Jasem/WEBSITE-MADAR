@@ -3,20 +3,29 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 // ─── Card ──────────────────────────────────────────────────────────────────
 
-export function Card({ children, emphasis, interactive, style }: {
+export function Card({ children, emphasis, interactive, glow, glass, delay = 0, style }: {
   children: ReactNode
   emphasis?: boolean
   interactive?: boolean
+  glow?: boolean
+  glass?: boolean
+  delay?: number
   style?: CSSProperties
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-      whileHover={interactive ? { y: -2, boxShadow: 'var(--shadow-md)' } : undefined}
+      transition={{ duration: 0.35, delay: Math.min(delay, 0.5), ease: [0.16, 1, 0.3, 1] }}
+      whileHover={interactive ? {
+        y: -3,
+        boxShadow: glow ? 'var(--shadow-md), 0 0 0 1px var(--brand-200, #B3EDFF), 0 8px 28px rgba(0,191,255,.22)' : 'var(--shadow-md)',
+      } : undefined}
       style={{
-        background: 'var(--surface-card)',
+        background: glass
+          ? 'linear-gradient(165deg, color-mix(in srgb, var(--surface-card) 92%, var(--brand-100)) 0%, var(--surface-card) 60%)'
+          : 'var(--surface-card)',
+        backdropFilter: glass ? 'blur(8px)' : undefined,
         borderRadius: 'var(--radius-lg)',
         border: emphasis ? '1px solid var(--brand-500)' : '1px solid color-mix(in srgb, var(--border-default) 70%, transparent)',
         boxShadow: 'var(--shadow-sm)',
@@ -100,6 +109,7 @@ export function Button({ variant = 'primary', size = 'md', disabled, children, o
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       whileTap={disabled ? undefined : { scale: 0.97 }}
+      whileHover={disabled ? undefined : { boxShadow: variant === 'primary' ? '0 0 0 1px rgba(0,191,255,.35), 0 6px 20px rgba(0,191,255,.32)' : 'none' }}
       transition={{ duration: 0.1 }}
       style={{
         fontFamily: 'var(--font-body)', fontWeight: 600, borderRadius: 'var(--radius-md)',

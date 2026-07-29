@@ -49,11 +49,11 @@ export function DashboardV2Integrations() {
         <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>اربط قنوات التواصل والأدوات الخارجية بمدار — حالة الاتصال محفوظة فعلياً بحسابك</div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))', gap: 16 }}>
-        {(integrations || []).map((i) => {
+        {(integrations || []).map((i, idx) => {
           const color = COLOR_BY_PROVIDER[i.provider] || { bg: 'var(--brand-100)', fg: 'var(--brand-600)' }
           const oauthReady = OAUTH_READY[i.provider]
           return (
-            <Card key={i.id} interactive>
+            <Card key={i.id} interactive glow delay={Math.min(idx * 0.05, 0.3)}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div style={{ display: 'flex', gap: 12 }}>
                   <div style={{

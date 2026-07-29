@@ -179,6 +179,41 @@ export function SkeletonRows({ rows = 5, columns = 5 }: { rows?: number; columns
   )
 }
 
+// ─── Top route-progress bar ────────────────────────────────────────────────
+// A slim animated bar under the header that plays on every route change —
+// purely perceived progress (Vercel/Linear-style), not tied to real network state.
+
+export function TopProgressBar({ triggerKey }: { triggerKey: string }) {
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    setVisible(true)
+    const t = setTimeout(() => setVisible(false), 380)
+    return () => clearTimeout(t)
+  }, [triggerKey])
+
+  return (
+    <div style={{ position: 'absolute', top: 0, insetInlineStart: 0, insetInlineEnd: 0, height: 2.5, zIndex: 50, overflow: 'hidden', pointerEvents: 'none' }}>
+      <AnimatePresence>
+        {visible && (
+          <motion.div
+            key={triggerKey}
+            initial={{ width: '0%', opacity: 1 }}
+            animate={{ width: '82%', opacity: 1 }}
+            exit={{ width: '100%', opacity: 0, transition: { width: { duration: 0.15 }, opacity: { duration: 0.3, delay: 0.08 } } }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            style={{
+              height: '100%',
+              background: 'linear-gradient(90deg, var(--brand-400), var(--brand-600))',
+              boxShadow: '0 0 8px rgba(0,191,255,.65), 0 0 2px rgba(0,191,255,.9)',
+            }}
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
 // ─── CountUp ────────────────────────────────────────────────────────────────
 
 export function CountUp({ value, suffix = '' }: { value: number; suffix?: string }) {
