@@ -334,14 +334,14 @@ export function DashboardV2Layout() {
             <span onClick={() => refreshAccount()} style={{ cursor: 'pointer', textDecoration: 'underline', flexShrink: 0 }}>إعادة المحاولة</span>
           </div>
         )}
-        <main className="dv2-main" style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
-          <AnimatePresence mode="wait">
+        <main className="dv2-main" style={{ flex: 1, overflowY: 'auto', padding: 24, position: 'relative' }}>
+          <AnimatePresence mode="popLayout" initial={false}>
             <motion.div
               key={location.pathname}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              initial={{ opacity: 0, y: 14, scale: 0.99 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.99 }}
+              transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
             >
               <Outlet />
             </motion.div>
