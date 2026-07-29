@@ -61,21 +61,21 @@ const DashboardV3Tables        = lazy(() => import('./dashboard-v3/views/pages/t
 const DashboardV3Form          = lazy(() => import('./dashboard-v3/views/pages/form'))
 const DashboardV3UserProfile   = lazy(() => import('./dashboard-v3/views/pages/user-profile'))
 
-// ClinicOS Dashboard v2 (Madar Software Design System) — archived, still used by the /demo-review sales tour
-const DashboardV2Layout        = lazy(() => import('./components/clinicOS/v2/DashboardV2Layout').then(m => ({ default: m.DashboardV2Layout })))
-const DashboardV2Home          = lazy(() => import('./pages/clinicOS/dashboardV2/Home').then(m => ({ default: m.DashboardV2Home })))
-const DashboardV2Bookings      = lazy(() => import('./pages/clinicOS/dashboardV2/Bookings').then(m => ({ default: m.DashboardV2Bookings })))
-const DashboardV2Patients      = lazy(() => import('./pages/clinicOS/dashboardV2/Patients').then(m => ({ default: m.DashboardV2Patients })))
-const DashboardV2Conversations = lazy(() => import('./pages/clinicOS/dashboardV2/Conversations').then(m => ({ default: m.DashboardV2Conversations })))
-const DashboardV2Reviews       = lazy(() => import('./pages/clinicOS/dashboardV2/Reviews').then(m => ({ default: m.DashboardV2Reviews })))
-const DashboardV2Revenue       = lazy(() => import('./pages/clinicOS/dashboardV2/Revenue').then(m => ({ default: m.DashboardV2Revenue })))
-const DashboardV2Reports       = lazy(() => import('./pages/clinicOS/dashboardV2/Reports').then(m => ({ default: m.DashboardV2Reports })))
-const DashboardV2Reminders     = lazy(() => import('./pages/clinicOS/dashboardV2/Reminders').then(m => ({ default: m.DashboardV2Reminders })))
-const DashboardV2Integrations  = lazy(() => import('./pages/clinicOS/dashboardV2/Integrations').then(m => ({ default: m.DashboardV2Integrations })))
-const DashboardV2Settings      = lazy(() => import('./pages/clinicOS/dashboardV2/Settings').then(m => ({ default: m.DashboardV2Settings })))
-const DashboardV2Services      = lazy(() => import('./pages/clinicOS/dashboardV2/Services').then(m => ({ default: m.DashboardV2Services })))
-const DashboardV2AuditLog      = lazy(() => import('./pages/clinicOS/dashboardV2/AuditLog').then(m => ({ default: m.DashboardV2AuditLog })))
-const DashboardV2MadarAgentUsage = lazy(() => import('./pages/clinicOS/dashboardV2/MadarAgentUsage').then(m => ({ default: m.DashboardV2MadarAgentUsage })))
+// ClinicOS Dashboard v2 (Madar Software Design System) — archived to src/_archive, still used by the /demo-review sales tour
+const DashboardV2Layout        = lazy(() => import('./_archive/dashboardV2/components/DashboardV2Layout').then(m => ({ default: m.DashboardV2Layout })))
+const DashboardV2Home          = lazy(() => import('./_archive/dashboardV2/pages/Home').then(m => ({ default: m.DashboardV2Home })))
+const DashboardV2Bookings      = lazy(() => import('./_archive/dashboardV2/pages/Bookings').then(m => ({ default: m.DashboardV2Bookings })))
+const DashboardV2Patients      = lazy(() => import('./_archive/dashboardV2/pages/Patients').then(m => ({ default: m.DashboardV2Patients })))
+const DashboardV2Conversations = lazy(() => import('./_archive/dashboardV2/pages/Conversations').then(m => ({ default: m.DashboardV2Conversations })))
+const DashboardV2Reviews       = lazy(() => import('./_archive/dashboardV2/pages/Reviews').then(m => ({ default: m.DashboardV2Reviews })))
+const DashboardV2Revenue       = lazy(() => import('./_archive/dashboardV2/pages/Revenue').then(m => ({ default: m.DashboardV2Revenue })))
+const DashboardV2Reports       = lazy(() => import('./_archive/dashboardV2/pages/Reports').then(m => ({ default: m.DashboardV2Reports })))
+const DashboardV2Reminders     = lazy(() => import('./_archive/dashboardV2/pages/Reminders').then(m => ({ default: m.DashboardV2Reminders })))
+const DashboardV2Integrations  = lazy(() => import('./_archive/dashboardV2/pages/Integrations').then(m => ({ default: m.DashboardV2Integrations })))
+const DashboardV2Settings      = lazy(() => import('./_archive/dashboardV2/pages/Settings').then(m => ({ default: m.DashboardV2Settings })))
+const DashboardV2Services      = lazy(() => import('./_archive/dashboardV2/pages/Services').then(m => ({ default: m.DashboardV2Services })))
+const DashboardV2AuditLog      = lazy(() => import('./_archive/dashboardV2/pages/AuditLog').then(m => ({ default: m.DashboardV2AuditLog })))
+const DashboardV2MadarAgentUsage = lazy(() => import('./_archive/dashboardV2/pages/MadarAgentUsage').then(m => ({ default: m.DashboardV2MadarAgentUsage })))
 
 function App() {
   useEffect(() => {
