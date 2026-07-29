@@ -352,13 +352,20 @@ export function DashboardV2Bookings() {
                 key={b.id}
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
+                whileHover={{ backgroundColor: 'var(--surface-sunken)' }}
                 transition={{ duration: 0.18, delay: Math.min(i, 8) * 0.02 }}
                 style={{
                   display: 'grid', gridTemplateColumns: '32px 1.4fr 1.4fr 1fr 1fr 0.8fr 0.6fr', padding: '14px 20px', fontSize: 14,
-                  alignItems: 'center', borderBottom: '1px solid var(--border-default)',
+                  alignItems: 'center', borderBottom: '1px solid var(--border-default)', position: 'relative',
                   background: selected.has(b.id) ? 'var(--surface-sunken)' : 'transparent',
                 }}
               >
+                {selected.has(b.id) && (
+                  <motion.div
+                    layoutId={`bk-accent-${b.id}`}
+                    style={{ position: 'absolute', insetInlineStart: 0, top: 6, bottom: 6, width: 3, borderRadius: 'var(--radius-full)', background: 'var(--brand-500)' }}
+                  />
+                )}
                 <input type="checkbox" checked={selected.has(b.id)} onChange={() => toggleSelect(b.id)} style={{ cursor: 'pointer' }} />
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, color: 'var(--text-primary)' }}>
                   <Avatar name={b.patient_name} size={26} />

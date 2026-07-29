@@ -167,10 +167,21 @@ export function DashboardV2Layout() {
                   justifyContent: collapsed ? 'center' : 'flex-start',
                   borderRadius: 'var(--radius-md)', cursor: 'pointer',
                   fontSize: 'var(--text-body-sm)', fontWeight: 600,
-                  background: active ? 'rgba(255,255,255,.08)' : 'transparent',
                   color: active ? '#fff' : 'rgba(255,255,255,.65)',
                 }}
               >
+                {active && (
+                  <motion.div
+                    layoutId="dv2-nav-active-pill"
+                    transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                    style={{
+                      position: 'absolute', inset: 0, borderRadius: 'var(--radius-md)',
+                      background: 'linear-gradient(90deg, rgba(0,191,255,.24), rgba(0,191,255,.07))',
+                      border: '1px solid rgba(0,191,255,.28)',
+                      boxShadow: '0 2px 10px rgba(0,191,255,.18)',
+                    }}
+                  />
+                )}
                 <span className="dv2-nav-icon" style={{ display: 'flex' }}>{item.icon}</span>
                 {!collapsed && <span style={{ flex: 1 }}>{item.label}</span>}
                 {!collapsed && item.badge != null && (

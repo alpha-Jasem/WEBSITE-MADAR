@@ -159,6 +159,7 @@ export function DashboardV2Patients() {
             key={p.id}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
+            whileHover={{ backgroundColor: 'var(--surface-sunken)' }}
             transition={{ duration: 0.18, delay: Math.min(i, 8) * 0.02 }}
             style={{ display: 'grid', gridTemplateColumns: '28px 0.5fr 1.6fr 1.2fr 1fr 0.8fr 0.8fr', padding: '12px 20px', fontSize: 14, alignItems: 'center', borderBottom: '1px solid var(--border-default)', background: checked.has(p.id) ? 'var(--surface-sunken)' : 'transparent' }}
           >
