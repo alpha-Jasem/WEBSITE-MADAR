@@ -60,6 +60,22 @@ const DashboardV3Modern        = lazy(() => import('./dashboard-v3/views/dashboa
 const DashboardV3Tables        = lazy(() => import('./dashboard-v3/views/pages/tables'))
 const DashboardV3Form          = lazy(() => import('./dashboard-v3/views/pages/form'))
 const DashboardV3UserProfile   = lazy(() => import('./dashboard-v3/views/pages/user-profile'))
+const DashboardV3Icons         = lazy(() => import('./dashboard-v3/views/icons/iconify'))
+const DashboardV3BlogPost      = lazy(() => import('./dashboard-v3/views/apps/blog/post'))
+const DashboardV3BlogDetail    = lazy(() => import('./dashboard-v3/views/apps/blog/detail'))
+const DashboardV3BlogCreate    = lazy(() => import('./dashboard-v3/views/apps/blog/create'))
+const DashboardV3BlogEdit      = lazy(() => import('./dashboard-v3/views/apps/blog/edit'))
+const DashboardV3BlogManage    = lazy(() => import('./dashboard-v3/views/apps/blog/manage-blog'))
+const DashboardV3Notes         = lazy(() => import('./dashboard-v3/views/apps/notes'))
+const DashboardV3Tickets       = lazy(() => import('./dashboard-v3/views/apps/tickets'))
+const DashboardV3TicketCreate  = lazy(() => import('./dashboard-v3/views/apps/tickets/create'))
+
+// ClinicOS Dashboard v3 — standalone auth screens (no dashboard shell)
+const DashboardV3Register        = lazy(() => import('./dashboard-v3/views/auth/auth2/register'))
+const DashboardV3ForgotPassword  = lazy(() => import('./dashboard-v3/views/auth/auth2/forgot-password'))
+const DashboardV3TwoSteps        = lazy(() => import('./dashboard-v3/views/auth/auth2/two-steps'))
+const DashboardV3AuthError       = lazy(() => import('./dashboard-v3/views/auth/error'))
+const DashboardV3Maintenance     = lazy(() => import('./dashboard-v3/views/auth/maintenance'))
 
 // ClinicOS Dashboard v2 (Madar Software Design System) — archived to src/_archive, still used by the /demo-review sales tour
 const DashboardV2Layout        = lazy(() => import('./_archive/dashboardV2/components/DashboardV2Layout').then(m => ({ default: m.DashboardV2Layout })))
@@ -113,6 +129,11 @@ function App() {
             <Route path="/clinic-os/select"   element={
               <ClinicOSProvider><PackageSelectorPage /></ClinicOSProvider>
             } />
+            <Route path="/clinic-os/register"        element={<DashboardV3Register />} />
+            <Route path="/clinic-os/forgot-password" element={<DashboardV3ForgotPassword />} />
+            <Route path="/clinic-os/two-steps"       element={<DashboardV3TwoSteps />} />
+            <Route path="/clinic-os/error"           element={<DashboardV3AuthError />} />
+            <Route path="/clinic-os/maintenance"     element={<DashboardV3Maintenance />} />
 
             {/* ── ClinicOS Dashboard v3 (shadcn/ui — official dashboard) ── */}
             <Route path="/clinic-os/dashboard/*" element={
@@ -124,6 +145,15 @@ function App() {
               <Route path="tables" element={<DashboardV3Tables />} />
               <Route path="form" element={<DashboardV3Form />} />
               <Route path="profile" element={<DashboardV3UserProfile />} />
+              <Route path="icons" element={<DashboardV3Icons />} />
+              <Route path="blog/post" element={<DashboardV3BlogPost />} />
+              <Route path="blog/detail/:id" element={<DashboardV3BlogDetail />} />
+              <Route path="blog/create" element={<DashboardV3BlogCreate />} />
+              <Route path="blog/edit" element={<DashboardV3BlogEdit />} />
+              <Route path="blog/manage-blog" element={<DashboardV3BlogManage />} />
+              <Route path="notes" element={<DashboardV3Notes />} />
+              <Route path="tickets" element={<DashboardV3Tickets />} />
+              <Route path="tickets/create" element={<DashboardV3TicketCreate />} />
             </Route>
             {/* ── ClinicOS Demo Tour (internal, unauthenticated preview with fake data) ── */}
             <Route path="/demo-review/*" element={

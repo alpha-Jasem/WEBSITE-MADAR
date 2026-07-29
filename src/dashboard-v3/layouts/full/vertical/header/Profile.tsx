@@ -15,10 +15,17 @@ import { cn } from "@dv3/lib/utils";
 import { Mailbox } from 'lucide-react';
 
 import { profileDD } from "./data";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import avatar from '@dv3/assets/images/profile/avtar.webp';
-import Buynow from '@dv3/assets/images/backgrounds/sidebarbuynow.svg';
+import { useClinicOS } from "@/context/ClinicOSContext";
 export default function ProfileSheet() {
+  const { logout } = useClinicOS();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/clinic-os/login', { replace: true });
+  };
 
 
   return (
@@ -103,32 +110,14 @@ export default function ProfileSheet() {
 
         {/* Footer */}
         <SheetFooter className="px-0 pb-6">
-          <div className="border-t border-border w-full">
-            <div className="rounded-sm pt-6 flex flex-col justify-center items-center gap-3">
-              <div>
-                <img
-                  src={Buynow}
-                  alt="login-bg"
-                />
-              </div>
-
-              <div className="text-center">
-                <h5 className="text-xl font-semibold">
-                  Grab ShadcnDashboard Admin
-                </h5>
-                <p className="text-sm text-muted-foreground">
-                  Customize your dashboard
-                </p>
-              </div>
-
-              <Button
-                variant="secondary"
-                render={<Link to="/auth/auth2/login" />}
-                className="text-primary"
-              >
-                Log Out
-              </Button>
-            </div>
+          <div className="border-t border-border w-full pt-6">
+            <Button
+              variant="secondary"
+              onClick={handleLogout}
+              className="text-primary w-full"
+            >
+              Log Out
+            </Button>
           </div>
         </SheetFooter>
       </SheetContent>

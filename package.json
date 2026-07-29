@@ -96,5 +96,10 @@
   },
   "overrides": {
     "livekit-client": "2.16.1"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   }
 }
