@@ -11,7 +11,7 @@ import {
 } from '@/lib/clinicOSQueries'
 import { exportRowsToExcel } from '@/lib/exportExcel'
 import { Card, Badge, Button, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
-import { CountUp, useToast, Avatar, Sparkline, LiveDot, Menu } from '@/_archive/dashboardV2/components/uiExtras'
+import { CountUp, useToast, Avatar, Sparkline, LiveDot, Menu, KpiCardSkeleton } from '@/_archive/dashboardV2/components/uiExtras'
 import type { Appointment } from '@/types/clinicOS'
 
 type Period = 'أسبوعي' | 'شهري'
@@ -240,7 +240,7 @@ export function DashboardV2Home() {
   const [compare, setCompare] = useState(false)
   const pushToast = useToast()
 
-  const { data: appointments, live: appointmentsLive } = useClinicAppointments(companyId, undefined, isDemo)
+  const { data: appointments, loading: appointmentsLoading, live: appointmentsLive } = useClinicAppointments(companyId, undefined, isDemo)
   const { data: weekly } = useClinicWeeklyChart(companyId, isDemo)
   const { data: prevWeekly } = useClinicPreviousWeekChart(companyId, isDemo)
   const { data: aiCalls } = useClinicAICalls(companyId, isDemo)
@@ -382,9 +382,11 @@ export function DashboardV2Home() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
-        {kpis.map((k, i) => <KpiCard key={i} k={k} index={i} />)}
-      </div>
+      {appointmentsLoading ? <KpiCardSkeleton /> : (
+        <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
+          {kpis.map((k, i) => <KpiCard key={i} k={k} index={i} />)}
+        </div>
+      )}
 
       <div className="dv2-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr', gap: 16, marginBottom: 20 }}>
         <Card delay={0.24}>

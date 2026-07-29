@@ -9,7 +9,7 @@ import {
 } from '@/lib/clinicOSQueries'
 import type { AppointmentStatus } from '@/types/clinicOS'
 import { Card, Badge, Button, Dialog, Input, Select, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
-import { EmptyState, SkeletonRows, Pagination, useToast, Avatar, SortableHeader } from '@/_archive/dashboardV2/components/uiExtras'
+import { EmptyState, SkeletonRows, Pagination, useToast, Avatar, SortableHeader, GlowButton } from '@/_archive/dashboardV2/components/uiExtras'
 
 type SortKey = 'patient_name' | 'appointment_date' | 'start_time'
 const PAGE_SIZE = 10
@@ -271,7 +271,7 @@ export function DashboardV2Bookings() {
             <span onClick={() => setView('list')} style={{ padding: '8px 12px', cursor: 'pointer', background: view === 'list' ? 'var(--brand-500)' : '#fff', color: view === 'list' ? '#fff' : 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}><List size={15} /></span>
             <span onClick={() => setView('calendar')} style={{ padding: '8px 12px', cursor: 'pointer', background: view === 'calendar' ? 'var(--brand-500)' : '#fff', color: view === 'calendar' ? '#fff' : 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}><CalendarDays size={15} /></span>
           </div>
-          <Button onClick={() => setOpen(true)}><Plus size={15} /> حجز جديد</Button>
+          <GlowButton onClick={() => setOpen(true)}><Plus size={15} /> حجز جديد</GlowButton>
         </div>
       </div>
 

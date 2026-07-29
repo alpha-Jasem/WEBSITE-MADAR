@@ -33,6 +33,72 @@ export function Avatar({ name, size = 32 }: { name: string; size?: number }) {
   )
 }
 
+// ─── GlowButton (pill button with an animated gradient-glow border) ───────
+// Ported from 21st.dev's "Gradient Borders Button" (@Shatlyk1011), recolored
+// to the brand palette (sky/gold) instead of the original purple/cyan.
+
+export function GlowButton({ children, onClick, style }: {
+  children: ReactNode
+  onClick?: () => void
+  style?: CSSProperties
+}) {
+  const [hover, setHover] = useState(false)
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        position: 'relative', display: 'inline-block', cursor: 'pointer', border: 'none',
+        borderRadius: 'var(--radius-full)', padding: 2, background: 'var(--slate-200)',
+        fontFamily: 'var(--font-body)', ...style,
+      }}
+    >
+      <span style={{
+        position: 'absolute', inset: 0, borderRadius: 'var(--radius-full)', overflow: 'hidden', pointerEvents: 'none',
+      }}>
+        <span style={{
+          position: 'absolute', inset: 0, borderRadius: 'var(--radius-full)',
+          background: 'radial-gradient(75% 100% at 50% 0%, var(--brand-500) 0%, var(--indigo-500) 75%)',
+          opacity: hover ? 1 : 0.4, transition: 'opacity 400ms ease',
+        }} />
+      </span>
+      <span style={{
+        position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 8,
+        height: 34, borderRadius: 'var(--radius-full)', padding: '0 18px',
+        background: 'var(--surface-card)', color: 'var(--text-primary)', fontSize: 13.5, fontWeight: 700,
+        boxShadow: 'inset 0 0 0 2px rgba(255,255,255,.06)',
+      }}>
+        {children}
+      </span>
+    </button>
+  )
+}
+
+// ─── KpiCardSkeleton (loading placeholder grid, matches KpiCard layout) ────
+// Ported from 21st.dev's "Stat Cards Skeleton" (@felipemenezes098).
+
+export function KpiCardSkeleton({ count = 5 }: { count?: number }) {
+  return (
+    <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} style={{
+          flex: 1, minWidth: 0, padding: 'var(--space-6)', borderRadius: 'var(--radius-lg)',
+          background: 'var(--surface-card)', border: '1px solid color-mix(in srgb, var(--border-default) 70%, transparent)',
+          display: 'flex', flexDirection: 'column', gap: 14,
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Skeleton width="55%" height={12} radius="4px" />
+            <Skeleton width={38} height={38} radius="var(--radius-md)" />
+          </div>
+          <Skeleton width="70%" height={26} radius="6px" />
+          <Skeleton width="40%" height={10} radius="4px" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ─── SortableHeader (click a table column header to sort by it) ───────────
 
 export function SortableHeader({ label, active, dir, onClick }: {
