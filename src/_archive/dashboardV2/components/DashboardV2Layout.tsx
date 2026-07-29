@@ -65,7 +65,7 @@ export function DashboardV2Layout() {
             transition: transform .25s var(--ease-out); transform: translateX(100%); }
           [dir="rtl"] .dv2-sidebar { transform: translateX(100%); }
           .dv2-sidebar.open { transform: translateX(0) !important; }
-          .dv2-backdrop.open { display: block; position: fixed; inset: 0; background: rgba(11,13,19,.5); z-index: 1200; }
+          .dv2-backdrop.open { display: block; position: fixed; inset: 0; background: rgba(4,9,26,.5); z-index: 1200; }
           .dv2-hamburger { display: flex !important; }
           .dv2-header-subtitle { display: none; }
           .dv2-global-search { display: none; }
@@ -76,9 +76,9 @@ export function DashboardV2Layout() {
         .dv2-nav-highlight {
           position: absolute; inset-inline-start: 0; inset-inline-end: 0;
           border-radius: var(--radius-md);
-          background: linear-gradient(90deg, rgba(255,255,255,.09), rgba(255,255,255,.04));
+          background: linear-gradient(90deg, rgba(0,191,255,.12), rgba(0,191,255,.04));
           border: 1px solid rgba(255,255,255,.08);
-          box-shadow: 0 2px 10px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.06);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
           pointer-events: none;
           transition: top 220ms cubic-bezier(.22,1,.36,1), height 220ms cubic-bezier(.22,1,.36,1), opacity 160ms ease;
           opacity: 0;
@@ -95,12 +95,12 @@ export function DashboardV2Layout() {
         .dv2-sidebar-glass {
           position: relative;
           background:
-            radial-gradient(120% 60% at 0% 0%, rgba(255,255,255,.14) 0%, rgba(255,255,255,0) 55%),
-            linear-gradient(165deg, rgba(37,58,153,.82) 0%, rgba(24,34,110,.88) 45%, rgba(13,18,68,.94) 100%);
+            radial-gradient(120% 60% at 0% 0%, rgba(255,255,255,.10) 0%, rgba(255,255,255,0) 55%),
+            linear-gradient(165deg, #1A3060 0%, #0D1B3E 45%, #04091A 100%);
           backdrop-filter: blur(22px) saturate(160%);
           -webkit-backdrop-filter: blur(22px) saturate(160%);
-          border-inline-end: 1px solid rgba(255,255,255,.10);
-          box-shadow: inset -1px 0 0 rgba(255,255,255,.04), 8px 0 32px rgba(10,14,50,.25);
+          border-inline-end: 1px solid rgba(255,255,255,.08);
+          box-shadow: 4px 0 24px rgba(4,9,26,.20);
         }
         .dv2-sidebar-glass::before {
           content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;

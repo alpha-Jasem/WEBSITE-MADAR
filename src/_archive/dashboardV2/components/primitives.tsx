@@ -16,11 +16,11 @@ export function Card({ children, emphasis, interactive, style }: {
       style={{
         background: 'var(--surface-card)',
         borderRadius: 'var(--radius-lg)',
-        border: emphasis ? '1.5px solid var(--brand-500)' : '1px solid var(--border-default)',
+        border: emphasis ? '1px solid var(--brand-500)' : '1px solid color-mix(in srgb, var(--border-default) 70%, transparent)',
         boxShadow: interactive && hover ? 'var(--shadow-md)' : 'var(--shadow-sm)',
-        transform: interactive && hover ? 'translateY(-2px)' : 'none',
+        transform: interactive && hover ? 'translateY(-1px)' : 'none',
         transition: 'box-shadow var(--duration-normal) var(--ease-out), transform var(--duration-normal) var(--ease-out)',
-        padding: 'var(--space-5)',
+        padding: 'var(--space-6)',
         fontFamily: 'var(--font-body)',
         ...style,
       }}
@@ -50,9 +50,9 @@ export function Badge({ tone = 'brand', children, style }: {
   const [bg, fg] = BADGE_TONES[tone] || BADGE_TONES.brand
   return (
     <span style={{
-      display: 'inline-flex', alignItems: 'center', padding: '2px 10px',
-      borderRadius: 'var(--radius-full)', background: bg, color: fg,
-      fontSize: 'var(--text-caption)', fontWeight: 700, fontFamily: 'var(--font-body)',
+      display: 'inline-flex', alignItems: 'center', padding: '1px 9px', height: 20, boxSizing: 'border-box',
+      borderRadius: 'var(--radius-full)', background: bg, color: fg, border: `1px solid color-mix(in srgb, ${fg} 20%, transparent)`,
+      fontSize: 'var(--text-caption)', fontWeight: 600, fontFamily: 'var(--font-body)',
       lineHeight: 1.6, ...style,
     }}>
       {children}
@@ -66,14 +66,14 @@ export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
 export type ButtonSize = 'sm' | 'md' | 'lg'
 
 const SIZE_STYLES: Record<ButtonSize, CSSProperties> = {
-  sm: { padding: '6px 12px', fontSize: 'var(--text-body-sm)' },
-  md: { padding: '10px 18px', fontSize: 'var(--text-body-md)' },
-  lg: { padding: '13px 24px', fontSize: 'var(--text-body-lg)' },
+  sm: { padding: '0 10px', height: 28, fontSize: 'var(--text-caption)' },
+  md: { padding: '0 14px', height: 32, fontSize: 'var(--text-body-sm)' },
+  lg: { padding: '0 18px', height: 36, fontSize: 'var(--text-body-md)' },
 }
 
 const VARIANT_STYLES: Record<ButtonVariant, CSSProperties> = {
   primary: { background: 'var(--accent-primary)', color: 'var(--text-on-brand)', border: '1px solid transparent' },
-  secondary: { background: '#fff', color: 'var(--text-primary)', border: '1px solid var(--border-strong)' },
+  secondary: { background: '#fff', color: 'var(--text-primary)', border: '1px solid color-mix(in srgb, var(--border-strong) 80%, transparent)' },
   ghost: { background: 'transparent', color: 'var(--text-primary)', border: '1px solid transparent' },
   danger: { background: 'var(--danger-500)', color: '#fff', border: '1px solid transparent' },
 }
@@ -103,7 +103,7 @@ export function Button({ variant = 'primary', size = 'md', disabled, children, o
         cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1,
         transition: 'background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out)',
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, whiteSpace: 'nowrap',
-        ...v, ...s, background: bg, boxShadow: variant === 'primary' ? 'var(--shadow-sm)' : 'none', ...style,
+        ...v, ...s, background: bg, boxShadow: 'none', ...style,
       }}
     >
       {children}
@@ -170,9 +170,9 @@ export function Input({ label, placeholder, type = 'text', value, onChange, erro
           type={type} placeholder={placeholder} value={value} onChange={onChange}
           onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
           style={{
-            width: '100%', boxSizing: 'border-box', padding: icon ? '10px 14px 10px 36px' : '10px 14px',
-            fontSize: 'var(--text-body-md)', borderRadius: 'var(--radius-md)',
-            border: error ? '1px solid var(--danger-500)' : focus ? '1px solid var(--border-focus)' : '1px solid var(--border-strong)',
+            width: '100%', boxSizing: 'border-box', padding: icon ? '9px 14px 9px 36px' : '9px 14px',
+            fontSize: 'var(--text-body-sm)', borderRadius: 'var(--radius-md)',
+            border: error ? '1px solid var(--danger-500)' : focus ? '1px solid var(--border-focus)' : '1px solid var(--border-default)',
             boxShadow: focus ? 'var(--ring-focus)' : 'none', outline: 'none', color: 'var(--text-primary)',
             transition: 'box-shadow var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out)',
           }}
@@ -200,8 +200,8 @@ export function Select({ label, options = [], value, onChange, style }: {
       <select
         value={value} onChange={onChange}
         style={{
-          padding: '10px 14px', fontSize: 'var(--text-body-md)', borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--border-strong)', color: 'var(--text-primary)', background: '#fff',
+          padding: '9px 14px', fontSize: 'var(--text-body-sm)', borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--border-default)', color: 'var(--text-primary)', background: '#fff',
           outline: 'none', appearance: 'auto',
         }}
       >
@@ -224,13 +224,13 @@ export function Switch({ checked, onChange, label, style }: {
       <span
         onClick={() => onChange && onChange(!checked)}
         style={{
-          width: 40, height: 22, borderRadius: 'var(--radius-full)',
+          width: 34, height: 19, borderRadius: 'var(--radius-full)',
           background: checked ? 'var(--accent-primary)' : 'var(--slate-300)',
           position: 'relative', transition: 'background var(--duration-normal) var(--ease-out)', flexShrink: 0,
         }}
       >
         <span style={{
-          position: 'absolute', top: 2, insetInlineStart: checked ? 20 : 2, width: 18, height: 18,
+          position: 'absolute', top: 2, insetInlineStart: checked ? 17 : 2, width: 15, height: 15,
           borderRadius: 'var(--radius-full)', background: '#fff', boxShadow: 'var(--shadow-sm)',
           transition: 'inset-inline-start var(--duration-normal) var(--ease-out)',
         }} />
@@ -254,12 +254,13 @@ export function Dialog({ open, title, children, onClose, footer }: {
     <div
       onClick={onClose}
       style={{
-        position: 'fixed', inset: 0, background: 'rgba(15,17,23,.45)', display: 'flex',
+        position: 'fixed', inset: 0, background: 'rgba(13,27,62,.12)', backdropFilter: 'blur(2px)', display: 'flex',
         alignItems: 'center', justifyContent: 'center', zIndex: 1300,
       }}
     >
       <div onClick={(e) => e.stopPropagation()} style={{
         background: '#fff', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)',
+        border: '1px solid color-mix(in srgb, var(--border-default) 70%, transparent)',
         width: 420, maxWidth: '90vw', padding: 24, fontFamily: 'var(--font-body)', maxHeight: '85vh', overflowY: 'auto',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>

@@ -118,8 +118,7 @@ function App() {
             <Route path="/clinic-os" element={<Navigate to="/clinic-os/login" replace />} />
 
             {/* ── ClinicOS Auth & Onboarding ── */}
-            <Route path="/clinic-os/login"    element={<DashboardV3Login />} />
-            <Route path="/clinic-os/login-legacy" element={<ClinicOSLoginPage />} />
+            <Route path="/clinic-os/login"    element={<ClinicOSLoginPage />} />
             <Route path="/clinic-os/mfa-challenge" element={<MfaChallengePage />} />
             <Route path="/clinic-os/signup"   element={<ClinicOSSignupPage />} />
             <Route path="/clinic-os/demo"     element={<DemoSignupPage />} />
@@ -129,31 +128,26 @@ function App() {
             <Route path="/clinic-os/select"   element={
               <ClinicOSProvider><PackageSelectorPage /></ClinicOSProvider>
             } />
-            <Route path="/clinic-os/register"        element={<DashboardV3Register />} />
-            <Route path="/clinic-os/forgot-password" element={<DashboardV3ForgotPassword />} />
-            <Route path="/clinic-os/two-steps"       element={<DashboardV3TwoSteps />} />
-            <Route path="/clinic-os/error"           element={<DashboardV3AuthError />} />
-            <Route path="/clinic-os/maintenance"     element={<DashboardV3Maintenance />} />
 
-            {/* ── ClinicOS Dashboard v3 (shadcn/ui — official dashboard) ── */}
+            {/* ── ClinicOS Dashboard v2 (Madar Software Design System — official dashboard) ── */}
             <Route path="/clinic-os/dashboard/*" element={
               <ClinicOSProvider>
-                <DashboardV3FullLayout />
+                <DashboardV2Layout />
               </ClinicOSProvider>
             }>
-              <Route index element={<DashboardV3Modern />} />
-              <Route path="tables" element={<DashboardV3Tables />} />
-              <Route path="form" element={<DashboardV3Form />} />
-              <Route path="profile" element={<DashboardV3UserProfile />} />
-              <Route path="icons" element={<DashboardV3Icons />} />
-              <Route path="blog/post" element={<DashboardV3BlogPost />} />
-              <Route path="blog/detail/:id" element={<DashboardV3BlogDetail />} />
-              <Route path="blog/create" element={<DashboardV3BlogCreate />} />
-              <Route path="blog/edit" element={<DashboardV3BlogEdit />} />
-              <Route path="blog/manage-blog" element={<DashboardV3BlogManage />} />
-              <Route path="notes" element={<DashboardV3Notes />} />
-              <Route path="tickets" element={<DashboardV3Tickets />} />
-              <Route path="tickets/create" element={<DashboardV3TicketCreate />} />
+              <Route index element={<DashboardV2Home />} />
+              <Route path="bookings" element={<DashboardV2Bookings />} />
+              <Route path="patients" element={<DashboardV2Patients />} />
+              <Route path="conversations" element={<DashboardV2Conversations />} />
+              <Route path="reviews" element={<DashboardV2Reviews />} />
+              <Route path="revenue" element={<DashboardV2Revenue />} />
+              <Route path="reports" element={<DashboardV2Reports />} />
+              <Route path="plan-usage" element={<DashboardV2MadarAgentUsage />} />
+              <Route path="reminders" element={<DashboardV2Reminders />} />
+              <Route path="integrations" element={<DashboardV2Integrations />} />
+              <Route path="services" element={<DashboardV2Services />} />
+              <Route path="audit-log" element={<DashboardV2AuditLog />} />
+              <Route path="settings" element={<DashboardV2Settings />} />
             </Route>
             {/* ── ClinicOS Demo Tour (internal, unauthenticated preview with fake data) ── */}
             <Route path="/demo-review/*" element={
@@ -174,6 +168,33 @@ function App() {
               <Route path="services" element={<DashboardV2Services />} />
               <Route path="audit-log" element={<DashboardV2AuditLog />} />
               <Route path="settings" element={<DashboardV2Settings />} />
+            </Route>
+
+            {/* ── ClinicOS Dashboard v3 (shadcn/ui) — kept as reference/preview, not the official dashboard ── */}
+            <Route path="/clinic-os/dashboard-v3-preview/login"           element={<DashboardV3Login />} />
+            <Route path="/clinic-os/dashboard-v3-preview/register"        element={<DashboardV3Register />} />
+            <Route path="/clinic-os/dashboard-v3-preview/forgot-password" element={<DashboardV3ForgotPassword />} />
+            <Route path="/clinic-os/dashboard-v3-preview/two-steps"       element={<DashboardV3TwoSteps />} />
+            <Route path="/clinic-os/dashboard-v3-preview/error"           element={<DashboardV3AuthError />} />
+            <Route path="/clinic-os/dashboard-v3-preview/maintenance"     element={<DashboardV3Maintenance />} />
+            <Route path="/clinic-os/dashboard-v3-preview/dashboard/*" element={
+              <ClinicOSProvider>
+                <DashboardV3FullLayout />
+              </ClinicOSProvider>
+            }>
+              <Route index element={<DashboardV3Modern />} />
+              <Route path="tables" element={<DashboardV3Tables />} />
+              <Route path="form" element={<DashboardV3Form />} />
+              <Route path="profile" element={<DashboardV3UserProfile />} />
+              <Route path="icons" element={<DashboardV3Icons />} />
+              <Route path="blog/post" element={<DashboardV3BlogPost />} />
+              <Route path="blog/detail/:id" element={<DashboardV3BlogDetail />} />
+              <Route path="blog/create" element={<DashboardV3BlogCreate />} />
+              <Route path="blog/edit" element={<DashboardV3BlogEdit />} />
+              <Route path="blog/manage-blog" element={<DashboardV3BlogManage />} />
+              <Route path="notes" element={<DashboardV3Notes />} />
+              <Route path="tickets" element={<DashboardV3Tickets />} />
+              <Route path="tickets/create" element={<DashboardV3TicketCreate />} />
             </Route>
             <Route path="/real-estate" element={<Navigate to="/#products" replace />} />
             <Route path="/login" element={<Login />} />
