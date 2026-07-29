@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, CalendarDays, Users, MessageSquare, Star, BarChart3,
   Wallet, BellRing, Plug, Settings, ChevronDown, LogOut, CreditCard, Menu, X,
@@ -12,6 +13,7 @@ import { AccountMenu } from './AccountMenu'
 import { SupportChat } from './SupportChat'
 import { GlobalSearch } from './GlobalSearch'
 import { OnboardingWizard } from './OnboardingWizard'
+import { ToastProvider, requestOpenSearch } from './uiExtras'
 import '@/styles/dashboardV2Tokens.css'
 
 const THEME_KEY = 'dv2_theme'
@@ -37,6 +39,16 @@ export function DashboardV2Layout() {
 
   useEffect(() => { setMobileNavOpen(false) }, [location.pathname])
   useEffect(() => { localStorage.setItem(THEME_KEY, theme) }, [theme])
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        requestOpenSearch()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   const base = isDemo ? '/demo-review' : '/clinic-os/dashboard'
   const NAV: NavItem[] = [
@@ -56,6 +68,7 @@ export function DashboardV2Layout() {
   ]
 
   return (
+    <ToastProvider>
     <div className="dv2-scope" dir="rtl" data-theme={theme} style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
       <style>{`
         .dv2-hamburger { display: none; }
@@ -255,11 +268,22 @@ export function DashboardV2Layout() {
           </div>
         )}
         <main className="dv2-main" style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
-          <Outlet />
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
       <SupportChat />
       <OnboardingWizard />
     </div>
+    </ToastProvider>
   )
 }

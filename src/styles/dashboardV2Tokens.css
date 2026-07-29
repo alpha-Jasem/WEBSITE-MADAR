@@ -76,3 +76,12 @@
   --gradient-dark:linear-gradient(135deg,#122349 0%,#04091A 100%);
   color-scheme: dark;
 }
+
+@keyframes dv2-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dv2-scope * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
+}

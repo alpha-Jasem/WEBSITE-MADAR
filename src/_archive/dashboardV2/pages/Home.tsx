@@ -7,13 +7,16 @@ import { useClinicOS } from '@/context/ClinicOSContext'
 import {
   useClinicAppointments, useClinicWeeklyChart, useClinicAICalls, useClinicMessages,
 } from '@/lib/clinicOSQueries'
-import { Card, Badge, Button, Toast, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
+import { Card, Badge, Button, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
+import { CountUp, useToast } from '@/_archive/dashboardV2/components/uiExtras'
 
 type Period = 'أسبوعي' | 'شهري'
 
 interface Kpi {
   label: string
   value: string
+  numeric?: number
+  suffix?: string
   delta?: string
   up?: boolean
   icon: React.ReactNode
@@ -44,7 +47,7 @@ function KpiCard({ k }: { k: Kpi }) {
       <div style={{
         fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'var(--text-display-sm)',
         color: k.ready === false ? 'var(--text-tertiary)' : 'var(--text-primary)', marginTop: 10,
-      }}>{k.value}</div>
+      }}>{k.numeric != null ? <CountUp value={k.numeric} suffix={k.suffix} /> : k.value}</div>
       {k.delta && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: 'var(--text-caption)' }}>
           <span style={{ color: k.up ? 'var(--success-500)' : 'var(--danger-500)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -138,7 +141,7 @@ const SOURCE_LABELS: Record<string, string> = {
 export function DashboardV2Home() {
   const { companyId, isDemo, clinicName, userName } = useClinicOS()
   const [period, setPeriod] = useState<Period>('أسبوعي')
-  const [toast, setToast] = useState<{ title: string; description?: string } | null>(null)
+  const pushToast = useToast()
 
   const { data: appointments } = useClinicAppointments(companyId, undefined, isDemo)
   const { data: weekly } = useClinicWeeklyChart(companyId, isDemo)
@@ -152,10 +155,10 @@ export function DashboardV2Home() {
   const attendanceRate = attendanceBase > 0 ? Math.round((completed / attendanceBase) * 1000) / 10 : null
 
   const kpis: Kpi[] = [
-    { label: 'إجمالي الحجوزات', value: String(appts.length), icon: <CalendarCheck2 size={17} />, tone: 'brand', emphasis: true },
-    { label: 'الحجوزات المكتملة', value: String(completed), icon: <CalendarCheck2 size={17} />, tone: 'success' },
-    { label: 'مواعيد لم تحضر', value: String(noShow), icon: <CalendarX2 size={17} />, tone: 'danger' },
-    { label: 'معدل الحضور', value: attendanceRate != null ? `${attendanceRate}%` : '—', icon: <Users size={17} />, tone: 'brand', ready: attendanceRate != null },
+    { label: 'إجمالي الحجوزات', value: String(appts.length), numeric: appts.length, icon: <CalendarCheck2 size={17} />, tone: 'brand', emphasis: true },
+    { label: 'الحجوزات المكتملة', value: String(completed), numeric: completed, icon: <CalendarCheck2 size={17} />, tone: 'success' },
+    { label: 'مواعيد لم تحضر', value: String(noShow), numeric: noShow, icon: <CalendarX2 size={17} />, tone: 'danger' },
+    { label: 'معدل الحضور', value: attendanceRate != null ? `${attendanceRate}%` : '—', numeric: attendanceRate ?? undefined, suffix: '%', icon: <Users size={17} />, tone: 'brand', ready: attendanceRate != null },
     { label: 'إجمالي الإيرادات', value: 'بانتظار الربط', icon: <Wallet size={17} />, tone: 'warning', ready: false },
   ]
 
@@ -191,8 +194,7 @@ export function DashboardV2Home() {
   const recentMessages = (messages || []).slice(0, 5)
 
   function exportReport() {
-    setToast({ title: 'قريباً', description: 'تصدير التقارير سيتوفر مع ربط بيانات الإيرادات.' })
-    setTimeout(() => setToast(null), 3500)
+    pushToast({ kind: 'info', title: 'قريباً', description: 'تصدير التقارير سيتوفر مع ربط بيانات الإيرادات.' })
   }
 
   return (
@@ -306,12 +308,6 @@ export function DashboardV2Home() {
           ))}
         </Card>
       </div>
-
-      {toast && (
-        <div style={{ position: 'fixed', bottom: 24, insetInlineStart: 24, zIndex: 100 }}>
-          <Toast tone="brand" title={toast.title} description={toast.description} onClose={() => setToast(null)} />
-        </div>
-      )}
     </div>
   )
 }

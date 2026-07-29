@@ -1,12 +1,17 @@
-import { useMemo, useState } from 'react'
-import { Plus, Search, List, CalendarDays, ChevronRight, ChevronLeft } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
+import { Plus, Search, List, CalendarDays, ChevronRight, ChevronLeft, ArrowUpDown, CalendarX2, Trash2 } from 'lucide-react'
 import { useClinicOS } from '@/context/ClinicOSContext'
 import {
   useClinicAppointments, useClinicDoctors, useClinicServices,
   createAppointment, updateAppointmentStatus,
 } from '@/lib/clinicOSQueries'
 import type { AppointmentStatus } from '@/types/clinicOS'
-import { Card, Badge, Button, Dialog, Input, Select, Toast, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
+import { Card, Badge, Button, Dialog, Input, Select, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
+import { EmptyState, SkeletonRows, Pagination, useToast } from '@/_archive/dashboardV2/components/uiExtras'
+
+type SortKey = 'patient_name' | 'appointment_date' | 'start_time'
+const PAGE_SIZE = 10
 
 const STATUS_LABEL: Record<AppointmentStatus, string> = {
   confirmed: 'مؤكد', pending: 'قيد الانتظار', checked_in: 'تم الوصول', completed: 'مكتمل',
@@ -85,9 +90,10 @@ function MiniCalendar({ month, appointmentsByDate, selectedDate, onSelectDate, o
 
 export function DashboardV2Bookings() {
   const { companyId, isDemo } = useClinicOS()
-  const { data: appointments, refetch } = useClinicAppointments(companyId, undefined, isDemo)
+  const { data: appointments, loading, refetch } = useClinicAppointments(companyId, undefined, isDemo)
   const { data: doctors } = useClinicDoctors(companyId, isDemo)
   const { data: services } = useClinicServices(companyId, isDemo)
+  const pushToast = useToast()
 
   const [filter, setFilter] = useState<AppointmentStatus | 'all'>('all')
   const [serviceFilter, setServiceFilter] = useState('all')
@@ -97,7 +103,10 @@ export function DashboardV2Bookings() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [toast, setToast] = useState<{ title: string; description?: string } | null>(null)
+  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'appointment_date', dir: -1 })
+  const [page, setPage] = useState(1)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [bulkCancelling, setBulkCancelling] = useState(false)
   const [form, setForm] = useState({
     patient_name: '', patient_phone: '', doctor_id: '', service_id: '',
     appointment_date: new Date().toISOString().split('T')[0], start_time: '10:00',
@@ -105,7 +114,7 @@ export function DashboardV2Bookings() {
 
   const rows = appointments || []
 
-  const shown = useMemo(() => rows.filter((r) => {
+  const filtered = useMemo(() => rows.filter((r) => {
     if (filter !== 'all' && r.status !== filter) return false
     if (serviceFilter !== 'all' && r.service_id !== serviceFilter) return false
     if (selectedDate && r.appointment_date !== selectedDate) return false
@@ -115,6 +124,58 @@ export function DashboardV2Bookings() {
     }
     return true
   }), [rows, filter, serviceFilter, selectedDate, query])
+
+  const shown = useMemo(() => {
+    const copy = [...filtered]
+    copy.sort((a, b) => {
+      const av = a[sort.key] ?? ''
+      const bv = b[sort.key] ?? ''
+      return av < bv ? -sort.dir : av > bv ? sort.dir : 0
+    })
+    return copy
+  }, [filtered, sort])
+
+  const pageCount = Math.max(1, Math.ceil(shown.length / PAGE_SIZE))
+  const pageRows = useMemo(() => shown.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [shown, page])
+
+  useEffect(() => { setPage(1) }, [filter, serviceFilter, selectedDate, query, sort])
+
+  function toggleSort(key: SortKey) {
+    setSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: 1 }))
+  }
+
+  function toggleSelect(id: string) {
+    setSelected((s) => {
+      const next = new Set(s)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function toggleSelectAllOnPage() {
+    setSelected((s) => {
+      const allSelected = pageRows.every((r) => s.has(r.id))
+      const next = new Set(s)
+      pageRows.forEach((r) => (allSelected ? next.delete(r.id) : next.add(r.id)))
+      return next
+    })
+  }
+
+  async function bulkCancel() {
+    const ids = Array.from(selected)
+    if (ids.length === 0) return
+    setBulkCancelling(true)
+    try {
+      await Promise.all(ids.map((id) => updateAppointmentStatus(id, 'cancelled')))
+      pushToast({ kind: 'success', title: `تم إلغاء ${ids.length} حجز` })
+      setSelected(new Set())
+      refetch()
+    } catch (e) {
+      pushToast({ kind: 'danger', title: 'تعذّر إلغاء بعض الحجوزات', description: e instanceof Error ? e.message : undefined })
+    } finally {
+      setBulkCancelling(false)
+    }
+  }
 
   const appointmentsByDate = useMemo(() => {
     const map: Record<string, number> = {}
@@ -156,18 +217,18 @@ export function DashboardV2Bookings() {
       })
       setOpen(false)
       setForm({ patient_name: '', patient_phone: '', doctor_id: '', service_id: '', appointment_date: new Date().toISOString().split('T')[0], start_time: '10:00' })
-      setToast({ title: 'تم إنشاء الحجز', description: form.patient_name })
+      pushToast({ kind: 'success', title: 'تم إنشاء الحجز', description: form.patient_name })
       refetch()
     } catch (e) {
-      setToast({ title: 'تعذّر إنشاء الحجز', description: e instanceof Error ? e.message : undefined })
+      pushToast({ kind: 'danger', title: 'تعذّر إنشاء الحجز', description: e instanceof Error ? e.message : undefined })
     } finally {
       setSaving(false)
-      setTimeout(() => setToast(null), 3000)
     }
   }
 
   async function cancelBooking(id: string) {
     await updateAppointmentStatus(id, 'cancelled')
+    pushToast({ kind: 'success', title: 'تم إلغاء الحجز' })
     refetch()
   }
 
@@ -211,18 +272,56 @@ export function DashboardV2Bookings() {
         ))}
       </div>
 
+      {selected.size > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14,
+            padding: '10px 16px', background: 'var(--brand-50)', border: '1px solid var(--brand-200, #B3EDFF)',
+            borderRadius: 'var(--radius-md)',
+          }}
+        >
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--brand-700)' }}>{selected.size} محدد</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button variant="secondary" size="sm" onClick={() => setSelected(new Set())}>إلغاء التحديد</Button>
+            <Button variant="danger" size="sm" onClick={bulkCancel} disabled={bulkCancelling}>
+              <Trash2 size={14} /> {bulkCancelling ? 'جارِ الإلغاء...' : 'إلغاء المحدد'}
+            </Button>
+          </div>
+        </motion.div>
+      )}
+
       <div className={view === 'calendar' ? 'dv2-responsive-grid' : undefined} style={{ display: 'grid', gridTemplateColumns: view === 'calendar' ? '300px 1fr' : '1fr', gap: 16 }}>
         {view === 'calendar' && (
           <MiniCalendar month={month} appointmentsByDate={appointmentsByDate} selectedDate={selectedDate} onSelectDate={setSelectedDate} onMonthChange={setMonth} />
         )}
 
         <Card style={{ padding: 0, overflowX: 'auto' }}>
-          <div style={{ minWidth: 600 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 1fr 1fr 0.8fr 0.6fr', padding: '14px 20px', fontSize: 12, fontWeight: 700, color: 'var(--text-tertiary)', borderBottom: '1px solid var(--border-default)' }}>
-              <div>المريض</div><div>الخدمة</div><div>التاريخ</div><div>الوقت</div><div>الحالة</div><div></div>
+          <div style={{ minWidth: 640 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '32px 1.4fr 1.4fr 1fr 1fr 0.8fr 0.6fr', padding: '14px 20px', fontSize: 12, fontWeight: 700, color: 'var(--text-tertiary)', borderBottom: '1px solid var(--border-default)', alignItems: 'center' }}>
+              <input type="checkbox" checked={pageRows.length > 0 && pageRows.every((r) => selected.has(r.id))} onChange={toggleSelectAllOnPage} style={{ cursor: 'pointer' }} />
+              <SortableHeader label="المريض" active={sort.key === 'patient_name'} dir={sort.dir} onClick={() => toggleSort('patient_name')} />
+              <div>الخدمة</div>
+              <SortableHeader label="التاريخ" active={sort.key === 'appointment_date'} dir={sort.dir} onClick={() => toggleSort('appointment_date')} />
+              <SortableHeader label="الوقت" active={sort.key === 'start_time'} dir={sort.dir} onClick={() => toggleSort('start_time')} />
+              <div>الحالة</div><div></div>
             </div>
-            {shown.map((b) => (
-              <div key={b.id} style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 1fr 1fr 0.8fr 0.6fr', padding: '14px 20px', fontSize: 14, alignItems: 'center', borderBottom: '1px solid var(--border-default)' }}>
+
+            {loading && <SkeletonRows rows={6} columns={6} />}
+
+            {!loading && pageRows.map((b, i) => (
+              <motion.div
+                key={b.id}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.18, delay: Math.min(i, 8) * 0.02 }}
+                style={{
+                  display: 'grid', gridTemplateColumns: '32px 1.4fr 1.4fr 1fr 1fr 0.8fr 0.6fr', padding: '14px 20px', fontSize: 14,
+                  alignItems: 'center', borderBottom: '1px solid var(--border-default)',
+                  background: selected.has(b.id) ? 'var(--surface-sunken)' : 'transparent',
+                }}
+              >
+                <input type="checkbox" checked={selected.has(b.id)} onChange={() => toggleSelect(b.id)} style={{ cursor: 'pointer' }} />
                 <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{b.patient_name}</div>
                 <div style={{ color: 'var(--text-secondary)' }}>{b.service_name}</div>
                 <div style={{ color: 'var(--text-secondary)' }}>{b.appointment_date}</div>
@@ -233,9 +332,21 @@ export function DashboardV2Bookings() {
                     <span onClick={() => cancelBooking(b.id)} style={{ color: 'var(--danger-500)', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>إلغاء</span>
                   )}
                 </div>
-              </div>
+              </motion.div>
             ))}
-            {shown.length === 0 && <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-tertiary)' }}>لا توجد حجوزات مطابقة</div>}
+
+            {!loading && shown.length === 0 && (
+              <EmptyState
+                icon={<CalendarX2 size={20} />}
+                title="لا توجد حجوزات مطابقة"
+                description="جرّب تغيير الفلاتر أو أضف حجزًا جديدًا."
+                action={<Button size="sm" onClick={() => setOpen(true)}><Plus size={14} /> حجز جديد</Button>}
+              />
+            )}
+
+            {!loading && shown.length > 0 && (
+              <Pagination page={page} pageCount={pageCount} onChange={setPage} />
+            )}
           </div>
         </Card>
       </div>
@@ -259,12 +370,15 @@ export function DashboardV2Bookings() {
           </div>
         </div>
       </Dialog>
+    </div>
+  )
+}
 
-      {toast && (
-        <div style={{ position: 'fixed', bottom: 24, insetInlineStart: 24, zIndex: 100 }}>
-          <Toast tone="success" title={toast.title} description={toast.description} onClose={() => setToast(null)} />
-        </div>
-      )}
+function SortableHeader({ label, active, dir, onClick }: { label: string; active: boolean; dir: 1 | -1; onClick: () => void }) {
+  return (
+    <div onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', userSelect: 'none', color: active ? 'var(--brand-600)' : undefined }}>
+      {label}
+      <ArrowUpDown size={12} style={{ opacity: active ? 1 : 0.4, transform: active && dir === -1 ? 'scaleY(-1)' : undefined }} />
     </div>
   )
 }

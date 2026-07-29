@@ -1,4 +1,5 @@
 import { useState, type CSSProperties, type ReactNode, type ChangeEvent } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 // ─── Card ──────────────────────────────────────────────────────────────────
 
@@ -8,25 +9,25 @@ export function Card({ children, emphasis, interactive, style }: {
   interactive?: boolean
   style?: CSSProperties
 }) {
-  const [hover, setHover] = useState(false)
   return (
-    <div
-      onMouseEnter={interactive ? () => setHover(true) : undefined}
-      onMouseLeave={interactive ? () => setHover(false) : undefined}
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+      whileHover={interactive ? { y: -2, boxShadow: 'var(--shadow-md)' } : undefined}
       style={{
         background: 'var(--surface-card)',
         borderRadius: 'var(--radius-lg)',
         border: emphasis ? '1px solid var(--brand-500)' : '1px solid color-mix(in srgb, var(--border-default) 70%, transparent)',
-        boxShadow: interactive && hover ? 'var(--shadow-md)' : 'var(--shadow-sm)',
-        transform: interactive && hover ? 'translateY(-1px)' : 'none',
-        transition: 'box-shadow var(--duration-normal) var(--ease-out), transform var(--duration-normal) var(--ease-out)',
+        boxShadow: 'var(--shadow-sm)',
         padding: 'var(--space-6)',
         fontFamily: 'var(--font-body)',
+        cursor: interactive ? 'pointer' : undefined,
         ...style,
       }}
     >
       {children}
-    </div>
+    </motion.div>
   )
 }
 
@@ -93,11 +94,13 @@ export function Button({ variant = 'primary', size = 'md', disabled, children, o
     ? (variant === 'primary' ? 'var(--accent-primary-hover)' : variant === 'danger' ? 'var(--danger-500)' : 'var(--slate-100)')
     : v.background
   return (
-    <button
+    <motion.button
       onClick={onClick}
       disabled={disabled}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
+      whileTap={disabled ? undefined : { scale: 0.97 }}
+      transition={{ duration: 0.1 }}
       style={{
         fontFamily: 'var(--font-body)', fontWeight: 600, borderRadius: 'var(--radius-md)',
         cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1,
@@ -107,7 +110,7 @@ export function Button({ variant = 'primary', size = 'md', disabled, children, o
       }}
     >
       {children}
-    </button>
+    </motion.button>
   )
 }
 
@@ -129,11 +132,16 @@ export function Toast({ tone = 'brand', title, description, onClose }: {
 }) {
   const [, fg] = TOAST_TONES[tone] || TOAST_TONES.brand
   return (
-    <div style={{
-      display: 'flex', gap: 12, alignItems: 'flex-start', padding: '14px 16px', background: '#fff',
-      border: '1px solid var(--border-default)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)',
-      minWidth: 280, fontFamily: 'var(--font-body)',
-    }}>
+    <motion.div
+      initial={{ opacity: 0, y: 16, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, x: -24, scale: 0.95 }}
+      transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+      style={{
+        display: 'flex', gap: 12, alignItems: 'flex-start', padding: '14px 16px', background: '#fff',
+        border: '1px solid var(--border-default)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)',
+        minWidth: 280, fontFamily: 'var(--font-body)',
+      }}>
       <span style={{ width: 8, height: 8, borderRadius: 'var(--radius-full)', background: fg, marginTop: 6, flexShrink: 0 }} />
       <div style={{ flex: 1 }}>
         <div style={{ fontWeight: 700, fontSize: 'var(--text-body-sm)', color: 'var(--text-primary)' }}>{title}</div>
@@ -144,7 +152,7 @@ export function Toast({ tone = 'brand', title, description, onClose }: {
       {onClose && (
         <span onClick={onClose} style={{ cursor: 'pointer', color: 'var(--text-tertiary)' }}>×</span>
       )}
-    </div>
+    </motion.div>
   )
 }
 
@@ -229,11 +237,14 @@ export function Switch({ checked, onChange, label, style }: {
           position: 'relative', transition: 'background var(--duration-normal) var(--ease-out)', flexShrink: 0,
         }}
       >
-        <span style={{
-          position: 'absolute', top: 2, insetInlineStart: checked ? 17 : 2, width: 15, height: 15,
-          borderRadius: 'var(--radius-full)', background: '#fff', boxShadow: 'var(--shadow-sm)',
-          transition: 'inset-inline-start var(--duration-normal) var(--ease-out)',
-        }} />
+        <motion.span
+          animate={{ insetInlineStart: checked ? 17 : 2 }}
+          transition={{ type: 'spring', stiffness: 600, damping: 32 }}
+          style={{
+            position: 'absolute', top: 2, width: 15, height: 15,
+            borderRadius: 'var(--radius-full)', background: '#fff', boxShadow: 'var(--shadow-sm)',
+          }}
+        />
       </span>
       {label}
     </label>
@@ -249,27 +260,41 @@ export function Dialog({ open, title, children, onClose, footer }: {
   onClose: () => void
   footer?: ReactNode
 }) {
-  if (!open) return null
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0, background: 'rgba(13,27,62,.12)', backdropFilter: 'blur(2px)', display: 'flex',
-        alignItems: 'center', justifyContent: 'center', zIndex: 1300,
-      }}
-    >
-      <div onClick={(e) => e.stopPropagation()} style={{
-        background: '#fff', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)',
-        border: '1px solid color-mix(in srgb, var(--border-default) 70%, transparent)',
-        width: 420, maxWidth: '90vw', padding: 24, fontFamily: 'var(--font-body)', maxHeight: '85vh', overflowY: 'auto',
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <h3 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 'var(--text-heading-lg)', color: 'var(--text-primary)' }}>{title}</h3>
-          <span onClick={onClose} style={{ cursor: 'pointer', color: 'var(--text-tertiary)', fontSize: 20 }}>×</span>
-        </div>
-        <div style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-body-md)' }}>{children}</div>
-        {footer && <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>{footer}</div>}
-      </div>
-    </div>
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          onClick={onClose}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(13,27,62,.12)', backdropFilter: 'blur(2px)', display: 'flex',
+            alignItems: 'center', justifyContent: 'center', zIndex: 1300,
+          }}
+        >
+          <motion.div
+            onClick={(e) => e.stopPropagation()}
+            initial={{ opacity: 0, y: 12, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+            style={{
+              background: '#fff', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)',
+              border: '1px solid color-mix(in srgb, var(--border-default) 70%, transparent)',
+              width: 420, maxWidth: '90vw', padding: 24, fontFamily: 'var(--font-body)', maxHeight: '85vh', overflowY: 'auto',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <h3 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 'var(--text-heading-lg)', color: 'var(--text-primary)' }}>{title}</h3>
+              <span onClick={onClose} style={{ cursor: 'pointer', color: 'var(--text-tertiary)', fontSize: 20 }}>×</span>
+            </div>
+            <div style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-body-md)' }}>{children}</div>
+            {footer && <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>{footer}</div>}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
