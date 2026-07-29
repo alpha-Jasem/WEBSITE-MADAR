@@ -5,7 +5,9 @@ import { useClinicOS } from '@/context/ClinicOSContext'
 import { useClinicPatients, updatePatient } from '@/lib/clinicOSQueries'
 import type { Patient } from '@/types/clinicOS'
 import { Card, Badge, Button, Dialog, Input, Select } from '@/_archive/dashboardV2/components/primitives'
-import { EmptyState, SkeletonRows, useToast, Avatar } from '@/_archive/dashboardV2/components/uiExtras'
+import { EmptyState, SkeletonRows, useToast, Avatar, SortableHeader } from '@/_archive/dashboardV2/components/uiExtras'
+
+type SortKey = 'name' | 'last_visit_at' | 'total_visits'
 
 const EDIT_TYPE_OPTIONS = [
   { value: 'new', label: 'جديد' },
@@ -17,11 +19,6 @@ const TYPE_OPTIONS = [
   { value: 'new', label: 'جديد' },
   { value: 'returning', label: 'عائد' },
 ]
-const SORT_OPTIONS = [
-  { value: 'recent', label: 'الأحدث زيارة' },
-  { value: 'visits', label: 'الأكثر زيارات' },
-  { value: 'name', label: 'الاسم (أ-ي)' },
-]
 
 export function DashboardV2Patients() {
   const { companyId, isDemo } = useClinicOS()
@@ -29,7 +26,7 @@ export function DashboardV2Patients() {
   const pushToast = useToast()
   const [q, setQ] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
-  const [sort, setSort] = useState('recent')
+  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'last_visit_at', dir: -1 })
   const [selected, setSelected] = useState<Patient | null>(null)
   const [form, setForm] = useState({ name: '', phone: '', last_visit_at: '', total_visits: 0, patient_type: 'new' as Patient['patient_type'] })
   const [saving, setSaving] = useState(false)
@@ -96,14 +93,20 @@ export function DashboardV2Patients() {
     }
   }
 
+  function toggleSort(key: SortKey) {
+    setSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: 1 }))
+  }
+
   const rows = patients || []
   const shown = useMemo(() => {
     let filtered = rows.filter((p) => p.name.includes(q) || p.phone.includes(q))
     if (typeFilter !== 'all') filtered = filtered.filter((p) => p.patient_type === typeFilter)
     filtered = [...filtered]
-    if (sort === 'visits') filtered.sort((a, b) => b.total_visits - a.total_visits)
-    else if (sort === 'name') filtered.sort((a, b) => a.name.localeCompare(b.name, 'ar'))
-    else filtered.sort((a, b) => (b.last_visit_at || '').localeCompare(a.last_visit_at || ''))
+    filtered.sort((a, b) => {
+      const av = a[sort.key] ?? ''
+      const bv = b[sort.key] ?? ''
+      return av < bv ? -sort.dir : av > bv ? sort.dir : 0
+    })
     return filtered
   }, [rows, q, typeFilter, sort])
 
@@ -117,7 +120,6 @@ export function DashboardV2Patients() {
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <Input placeholder="بحث بالاسم أو الجوال" icon={<Search size={15} />} value={q} onChange={(e) => setQ(e.target.value)} style={{ width: 220 }} />
           <Select options={TYPE_OPTIONS} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} style={{ width: 130 }} />
-          <Select options={SORT_OPTIONS} value={sort} onChange={(e) => setSort(e.target.value)} style={{ width: 150 }} />
         </div>
       </div>
 
@@ -144,7 +146,12 @@ export function DashboardV2Patients() {
         <div style={{ minWidth: 620 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '28px 0.5fr 1.6fr 1.2fr 1fr 0.8fr 0.8fr', padding: '14px 20px', fontSize: 12, fontWeight: 700, color: 'var(--text-tertiary)', borderBottom: '1px solid var(--border-default)', alignItems: 'center' }}>
           <input type="checkbox" checked={shown.length > 0 && shown.every((p) => checked.has(p.id))} onChange={() => setChecked((s) => { const all = shown.every((p) => s.has(p.id)); const n = new Set(s); shown.forEach((p) => (all ? n.delete(p.id) : n.add(p.id))); return n })} style={{ cursor: 'pointer' }} />
-          <div></div><div>الاسم</div><div>الجوال</div><div>آخر زيارة</div><div>عدد الزيارات</div><div>النوع</div>
+          <div></div>
+          <SortableHeader label="الاسم" active={sort.key === 'name'} dir={sort.dir} onClick={() => toggleSort('name')} />
+          <div>الجوال</div>
+          <SortableHeader label="آخر زيارة" active={sort.key === 'last_visit_at'} dir={sort.dir} onClick={() => toggleSort('last_visit_at')} />
+          <SortableHeader label="عدد الزيارات" active={sort.key === 'total_visits'} dir={sort.dir} onClick={() => toggleSort('total_visits')} />
+          <div>النوع</div>
         </div>
         {loading && <SkeletonRows rows={6} columns={7} />}
         {!loading && shown.map((p, i) => (

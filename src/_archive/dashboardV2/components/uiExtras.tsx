@@ -3,7 +3,7 @@ import {
   type CSSProperties, type ReactNode,
 } from 'react'
 import { AnimatePresence, motion, useMotionValue, useTransform, animate } from 'framer-motion'
-import { CheckCircle2, XCircle, Info, X, Keyboard, Sparkles, Plus } from 'lucide-react'
+import { CheckCircle2, XCircle, Info, X, Keyboard, Sparkles, Plus, ArrowUpDown } from 'lucide-react'
 
 // ─── Avatar (deterministic color + initial) ────────────────────────────────
 
@@ -30,6 +30,41 @@ export function Avatar({ name, size = 32 }: { name: string; size?: number }) {
     }}>
       {clean[0] || '؟'}
     </div>
+  )
+}
+
+// ─── SortableHeader (click a table column header to sort by it) ───────────
+
+export function SortableHeader({ label, active, dir, onClick }: {
+  label: string
+  active: boolean
+  dir: 1 | -1
+  onClick: () => void
+}) {
+  return (
+    <div onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', userSelect: 'none', color: active ? 'var(--brand-600)' : undefined }}>
+      {label}
+      <ArrowUpDown size={12} style={{ opacity: active ? 1 : 0.4, transform: active && dir === -1 ? 'scaleY(-1)' : undefined }} />
+    </div>
+  )
+}
+
+// ─── LiveDot (pulsing indicator for realtime-subscribed data) ─────────────
+
+export function LiveDot({ live }: { live?: boolean }) {
+  if (!live) return null
+  return (
+    <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: 'var(--success-500)' }}>
+      <span style={{ position: 'relative', width: 7, height: 7, display: 'inline-flex' }}>
+        <motion.span
+          animate={{ scale: [1, 2.2], opacity: [0.55, 0] }}
+          transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut' }}
+          style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--success-500)' }}
+        />
+        <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--success-500)' }} />
+      </span>
+      مباشر
+    </span>
   )
 }
 

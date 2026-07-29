@@ -4,10 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, CalendarDays, Users, MessageSquare, Star, BarChart3,
   Wallet, BellRing, Plug, Settings, ChevronDown, LogOut, CreditCard, Menu, X,
-  Wrench, History, Sun, Moon, AlertTriangle, ShieldCheck, ChevronsRight, ChevronsLeft, Plus,
+  Wrench, History, Sun, Moon, AlertTriangle, ShieldCheck, ChevronsRight, ChevronsLeft, Plus, CalendarCheck2,
 } from 'lucide-react'
 import { useClinicOS } from '@/context/ClinicOSContext'
-import { useClinicSupportTickets } from '@/lib/clinicOSQueries'
+import { useClinicSupportTickets, useClinicTodayAppointments } from '@/lib/clinicOSQueries'
 import { NotificationCenter } from './NotificationCenter'
 import { AccountMenu } from './AccountMenu'
 import { SupportChat } from './SupportChat'
@@ -40,6 +40,8 @@ export function DashboardV2Layout() {
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COLLAPSE_KEY) === '1')
   const { data: tickets } = useClinicSupportTickets(companyId, isDemo)
   const openTicketCount = (tickets || []).filter((t) => t.status === 'open').length
+  const { data: todayAppointments } = useClinicTodayAppointments(companyId, isDemo)
+  const todayCount = (todayAppointments || []).length
 
   useEffect(() => { setMobileNavOpen(false) }, [location.pathname])
   useEffect(() => { localStorage.setItem(THEME_KEY, theme) }, [theme])
@@ -275,6 +277,18 @@ export function DashboardV2Layout() {
                 </span>
               </>
             )}
+            <Tooltip label="حجوزات اليوم">
+              <span
+                onClick={() => navigate(`${base}/bookings`)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6, padding: '5px 11px', cursor: 'pointer',
+                  borderRadius: 'var(--radius-full)', background: 'var(--brand-50)', color: 'var(--brand-700)',
+                  fontSize: 12.5, fontWeight: 700,
+                }}
+              >
+                <CalendarCheck2 size={14} /> {todayCount}
+              </span>
+            </Tooltip>
             <motion.span
               onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
               whileHover={{ scale: 1.12 }}

@@ -51,6 +51,7 @@ function useFetchRealtime<T>(
   const [data, setData] = useState<T | undefined>(undefined)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [live, setLive] = useState(false)
   const instanceId = useState(() => Math.random().toString(36).slice(2))[0]
 
   const run = useCallback(async () => {
@@ -70,7 +71,7 @@ function useFetchRealtime<T>(
   useEffect(() => { run() }, [run])
 
   useEffect(() => {
-    if (isDemo || !companyId) return
+    if (isDemo || !companyId) { setLive(false); return }
     const channel = supabase
       .channel(`rt_${realtimeTable}_${companyId}_${instanceId}`)
       .on(
@@ -78,11 +79,11 @@ function useFetchRealtime<T>(
         { event: '*', schema: 'public', table: realtimeTable, filter: `company_id=eq.${companyId}` },
         () => { run() },
       )
-      .subscribe()
-    return () => { supabase.removeChannel(channel) }
+      .subscribe((status) => { setLive(status === 'SUBSCRIBED') })
+    return () => { supabase.removeChannel(channel); setLive(false) }
   }, [realtimeTable, companyId, isDemo, run, instanceId])
 
-  return { data, loading, error, refetch: run }
+  return { data, loading, error, refetch: run, live }
 }
 
 // ─── Doctors ───────────────────────────────────────────────────────────────────

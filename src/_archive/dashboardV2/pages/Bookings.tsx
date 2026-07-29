@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Plus, Search, List, CalendarDays, ChevronRight, ChevronLeft, ArrowUpDown, CalendarX2, Trash2 } from 'lucide-react'
+import { Plus, Search, List, CalendarDays, ChevronRight, ChevronLeft, CalendarX2, Trash2 } from 'lucide-react'
 import { useClinicOS } from '@/context/ClinicOSContext'
 import {
   useClinicAppointments, useClinicDoctors, useClinicServices,
@@ -9,7 +9,7 @@ import {
 } from '@/lib/clinicOSQueries'
 import type { AppointmentStatus } from '@/types/clinicOS'
 import { Card, Badge, Button, Dialog, Input, Select, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
-import { EmptyState, SkeletonRows, Pagination, useToast, Avatar } from '@/_archive/dashboardV2/components/uiExtras'
+import { EmptyState, SkeletonRows, Pagination, useToast, Avatar, SortableHeader } from '@/_archive/dashboardV2/components/uiExtras'
 
 type SortKey = 'patient_name' | 'appointment_date' | 'start_time'
 const PAGE_SIZE = 10
@@ -23,6 +23,10 @@ const STATUS_TONE: Record<AppointmentStatus, BadgeTone> = {
   cancelled: 'danger', no_show: 'danger', rescheduled: 'neutral', needs_review: 'warning',
 }
 const FILTERS: (AppointmentStatus | 'all')[] = ['all', 'confirmed', 'pending', 'completed', 'cancelled', 'no_show']
+const SOURCE_LABELS: Record<string, string> = {
+  ai_booking: 'حجز بالذكاء الاصطناعي', whatsapp: 'واتساب', website: 'الموقع الإلكتروني',
+  reception: 'الاستقبال', manual: 'يدوي',
+}
 const WEEKDAY_LABELS = ['أح', 'إث', 'ثل', 'أر', 'خم', 'جم', 'سب']
 
 function MiniCalendar({ month, appointmentsByDate, selectedDate, onSelectDate, onMonthChange }: {
@@ -98,6 +102,7 @@ export function DashboardV2Bookings() {
 
   const [filter, setFilter] = useState<AppointmentStatus | 'all'>('all')
   const [serviceFilter, setServiceFilter] = useState('all')
+  const [sourceFilter, setSourceFilter] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [view, setView] = useState<'list' | 'calendar'>('list')
   const [month, setMonth] = useState(new Date())
@@ -118,13 +123,14 @@ export function DashboardV2Bookings() {
   const filtered = useMemo(() => rows.filter((r) => {
     if (filter !== 'all' && r.status !== filter) return false
     if (serviceFilter !== 'all' && r.service_id !== serviceFilter) return false
+    if (sourceFilter && r.source !== sourceFilter) return false
     if (selectedDate && r.appointment_date !== selectedDate) return false
     if (query.trim()) {
       const q = query.trim().toLowerCase()
       if (!r.patient_name?.toLowerCase().includes(q) && !r.patient_phone?.includes(q)) return false
     }
     return true
-  }), [rows, filter, serviceFilter, selectedDate, query])
+  }), [rows, filter, serviceFilter, sourceFilter, selectedDate, query])
 
   const shown = useMemo(() => {
     const copy = [...filtered]
@@ -139,7 +145,7 @@ export function DashboardV2Bookings() {
   const pageCount = Math.max(1, Math.ceil(shown.length / PAGE_SIZE))
   const pageRows = useMemo(() => shown.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [shown, page])
 
-  useEffect(() => { setPage(1) }, [filter, serviceFilter, selectedDate, query, sort])
+  useEffect(() => { setPage(1) }, [filter, serviceFilter, sourceFilter, selectedDate, query, sort])
 
   const [searchParams, setSearchParams] = useSearchParams()
   useEffect(() => {
@@ -148,6 +154,8 @@ export function DashboardV2Bookings() {
       searchParams.delete('new')
       setSearchParams(searchParams, { replace: true })
     }
+    const src = searchParams.get('source')
+    if (src) setSourceFilter(src)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -277,6 +285,17 @@ export function DashboardV2Bookings() {
             {selectedDate} × إزالة
           </div>
         )}
+        {sourceFilter && (
+          <div
+            onClick={() => setSourceFilter(null)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              padding: '5px 10px', borderRadius: 'var(--radius-full)', background: 'var(--brand-50)', color: 'var(--brand-700)',
+            }}
+          >
+            المصدر: {SOURCE_LABELS[sourceFilter] || sourceFilter} ×
+          </div>
+        )}
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
@@ -392,15 +411,6 @@ export function DashboardV2Bookings() {
           </div>
         </div>
       </Dialog>
-    </div>
-  )
-}
-
-function SortableHeader({ label, active, dir, onClick }: { label: string; active: boolean; dir: 1 | -1; onClick: () => void }) {
-  return (
-    <div onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', userSelect: 'none', color: active ? 'var(--brand-600)' : undefined }}>
-      {label}
-      <ArrowUpDown size={12} style={{ opacity: active ? 1 : 0.4, transform: active && dir === -1 ? 'scaleY(-1)' : undefined }} />
     </div>
   )
 }

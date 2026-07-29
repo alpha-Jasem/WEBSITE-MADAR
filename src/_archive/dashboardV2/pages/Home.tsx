@@ -1,15 +1,18 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   CalendarCheck2, CalendarX2, Users, Wallet, ArrowUp, ArrowDown, Download,
-  CalendarDays, MessageSquare, PhoneCall, MessageCircle, Star,
+  CalendarDays, MessageSquare, PhoneCall, MessageCircle, Star, FileSpreadsheet, Printer,
 } from 'lucide-react'
 import { useClinicOS } from '@/context/ClinicOSContext'
 import {
   useClinicAppointments, useClinicWeeklyChart, useClinicPreviousWeekChart, useClinicAICalls, useClinicMessages,
 } from '@/lib/clinicOSQueries'
+import { exportRowsToExcel } from '@/lib/exportExcel'
 import { Card, Badge, Button, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
-import { CountUp, useToast, Avatar, Sparkline } from '@/_archive/dashboardV2/components/uiExtras'
+import { CountUp, useToast, Avatar, Sparkline, LiveDot, Menu } from '@/_archive/dashboardV2/components/uiExtras'
+import type { Appointment } from '@/types/clinicOS'
 
 type Period = 'أسبوعي' | 'شهري'
 
@@ -124,7 +127,7 @@ function LineChart({ data, compareData, labels }: { data: number[]; compareData?
   )
 }
 
-function Donut({ sources }: { sources: { label: string; pct: number; color: string }[] }) {
+function Donut({ sources, onSelect }: { sources: { key: string; label: string; pct: number; color: string }[]; onSelect?: (key: string) => void }) {
   let acc = 0
   const stops = sources.map((s) => {
     const start = acc
@@ -132,14 +135,34 @@ function Donut({ sources }: { sources: { label: string; pct: number; color: stri
     return `${s.color} ${start}% ${acc}%`
   }).join(',')
   const total = sources.reduce((a, s) => a + s.pct, 0)
+
+  function handleClick(e: React.MouseEvent<HTMLDivElement>) {
+    if (!onSelect || total === 0) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const cx = rect.left + rect.width / 2
+    const cy = rect.top + rect.height / 2
+    const dx = e.clientX - cx
+    const dy = e.clientY - cy
+    const angle = (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360
+    const pct = (angle / 360) * 100
+    let acc2 = 0
+    for (const s of sources) {
+      acc2 += s.pct
+      if (pct <= acc2) { onSelect(s.key); return }
+    }
+  }
+
   return (
     <div style={{ position: 'relative', width: 150, height: 150, margin: '0 auto' }}>
+      <div
+        onClick={handleClick}
+        style={{
+          width: '100%', height: '100%', borderRadius: '50%', cursor: onSelect && total > 0 ? 'pointer' : 'default',
+          background: total > 0 ? `conic-gradient(${stops})` : 'var(--slate-100)',
+        }}
+      />
       <div style={{
-        width: '100%', height: '100%', borderRadius: '50%',
-        background: total > 0 ? `conic-gradient(${stops})` : 'var(--slate-100)',
-      }} />
-      <div style={{
-        position: 'absolute', inset: 22, background: '#fff', borderRadius: '50%',
+        position: 'absolute', inset: 22, background: 'var(--surface-card)', borderRadius: '50%', pointerEvents: 'none',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       }}>
         <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 20 }}>{total}%</div>
@@ -175,6 +198,10 @@ const SOURCE_LABELS: Record<string, string> = {
   reception: 'الاستقبال',
   manual: 'يدوي',
 }
+const STATUS_LABEL: Record<string, string> = {
+  confirmed: 'مؤكد', pending: 'قيد الانتظار', checked_in: 'تم الوصول', completed: 'مكتمل',
+  cancelled: 'ملغى', no_show: 'لم يحضر', rescheduled: 'مؤجل', needs_review: 'يحتاج مراجعة',
+}
 
 export function DashboardV2Home() {
   const { companyId, isDemo, clinicName, userName } = useClinicOS()
@@ -182,11 +209,11 @@ export function DashboardV2Home() {
   const [compare, setCompare] = useState(false)
   const pushToast = useToast()
 
-  const { data: appointments } = useClinicAppointments(companyId, undefined, isDemo)
+  const { data: appointments, live: appointmentsLive } = useClinicAppointments(companyId, undefined, isDemo)
   const { data: weekly } = useClinicWeeklyChart(companyId, isDemo)
   const { data: prevWeekly } = useClinicPreviousWeekChart(companyId, isDemo)
   const { data: aiCalls } = useClinicAICalls(companyId, isDemo)
-  const { data: messages } = useClinicMessages(companyId, isDemo)
+  const { data: messages, live: messagesLive } = useClinicMessages(companyId, isDemo)
 
   const appts = appointments || []
   const completed = appts.filter((a) => a.status === 'completed').length
@@ -213,6 +240,7 @@ export function DashboardV2Home() {
     appts.forEach((a) => { counts[a.source] = (counts[a.source] || 0) + 1 })
     const total = appts.length || 1
     return Object.entries(counts).map(([key, count]) => ({
+      key,
       label: SOURCE_LABELS[key] || key,
       pct: Math.round((count / total) * 100),
       color: SOURCE_COLORS[key] || 'var(--slate-400)',
@@ -236,8 +264,59 @@ export function DashboardV2Home() {
 
   const recentMessages = (messages || []).slice(0, 5)
 
-  function exportReport() {
-    pushToast({ kind: 'info', title: 'قريباً', description: 'تصدير التقارير سيتوفر مع ربط بيانات الإيرادات.' })
+  const navigate = useNavigate()
+  const base = isDemo ? '/demo-review' : '/clinic-os/dashboard'
+
+  function goToBookingsBySource(sourceKey: string) {
+    navigate(`${base}/bookings?source=${sourceKey}`)
+  }
+
+  const EXPORT_COLUMNS = [
+    { key: 'patient_name', label: 'العميل' },
+    { key: 'service_name', label: 'الخدمة' },
+    { key: 'appointment_date', label: 'التاريخ' },
+    { key: 'start_time', label: 'الوقت' },
+    { key: 'status', label: 'الحالة' },
+    { key: 'source', label: 'المصدر' },
+  ]
+
+  function appointmentsInRange(range: 'week' | 'month' | 'all'): Appointment[] {
+    if (range === 'all') return appts
+    const now = new Date()
+    const cutoff = new Date(now)
+    if (range === 'week') cutoff.setDate(now.getDate() - 7)
+    else cutoff.setMonth(now.getMonth() - 1)
+    const cutoffStr = cutoff.toISOString().split('T')[0]
+    return appts.filter((a) => a.appointment_date >= cutoffStr)
+  }
+
+  function exportExcel(range: 'week' | 'month' | 'all') {
+    const rows = appointmentsInRange(range)
+    if (rows.length === 0) {
+      pushToast({ kind: 'info', title: 'لا توجد بيانات للتصدير' })
+      return
+    }
+    exportRowsToExcel(`تقرير-الحجوزات-${range}`, [{
+      name: 'الحجوزات',
+      rows: rows.map((a) => ({
+        العميل: a.patient_name, الخدمة: a.service_name, التاريخ: a.appointment_date,
+        الوقت: a.start_time, الحالة: STATUS_LABEL[a.status] || a.status, المصدر: SOURCE_LABELS[a.source] || a.source,
+      })),
+    }])
+    pushToast({ kind: 'success', title: 'تم تصدير التقرير' })
+  }
+
+  async function exportPdf(range: 'week' | 'month' | 'all') {
+    const rows = appointmentsInRange(range)
+    if (rows.length === 0) {
+      pushToast({ kind: 'info', title: 'لا توجد بيانات للتصدير' })
+      return
+    }
+    const { printRowsAsPdf } = await import('@/lib/exportPdf')
+    printRowsAsPdf('تقرير الحجوزات', EXPORT_COLUMNS, rows.map((a) => ({
+      patient_name: a.patient_name, service_name: a.service_name, appointment_date: a.appointment_date,
+      start_time: a.start_time, status: STATUS_LABEL[a.status] || a.status, source: SOURCE_LABELS[a.source] || a.source,
+    })))
   }
 
   return (
@@ -259,7 +338,16 @@ export function DashboardV2Home() {
           }}>
             <CalendarDays size={15} />{weeklyLabel}
           </div>
-          <Button onClick={exportReport}><Download size={15} /> تصدير تقرير</Button>
+          <Menu
+            trigger={<Button><Download size={15} /> تصدير تقرير</Button>}
+            items={[
+              { label: 'Excel — آخر أسبوع', icon: <FileSpreadsheet size={14} />, onClick: () => exportExcel('week') },
+              { label: 'Excel — آخر شهر', icon: <FileSpreadsheet size={14} />, onClick: () => exportExcel('month') },
+              { label: 'Excel — الكل', icon: <FileSpreadsheet size={14} />, onClick: () => exportExcel('all') },
+              { label: 'PDF — آخر أسبوع', icon: <Printer size={14} />, onClick: () => exportPdf('week') },
+              { label: 'PDF — الكل', icon: <Printer size={14} />, onClick: () => exportPdf('all') },
+            ]}
+          />
         </div>
       </div>
 
@@ -270,7 +358,10 @@ export function DashboardV2Home() {
       <div className="dv2-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr', gap: 16, marginBottom: 20 }}>
         <Card delay={0.24}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
-            <div style={{ fontWeight: 700 }}>الحجوزات</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ fontWeight: 700 }}>الحجوزات</div>
+              <LiveDot live={appointmentsLive} />
+            </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <div
                 onClick={() => setCompare((v) => !v)}
@@ -300,11 +391,15 @@ export function DashboardV2Home() {
 
         <Card delay={0.3}>
           <div style={{ fontWeight: 700, marginBottom: 10 }}>مصادر الحجوزات</div>
-          <Donut sources={sources} />
+          <Donut sources={sources} onSelect={goToBookingsBySource} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
             {sources.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>لا توجد حجوزات بعد</div>}
-            {sources.map((s, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
+            {sources.map((s) => (
+              <div
+                key={s.key}
+                onClick={() => goToBookingsBySource(s.key)}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, cursor: 'pointer' }}
+              >
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: s.color }} />
                 <span style={{ flex: 1, color: 'var(--text-secondary)' }}>{s.label}</span>
                 <span style={{ fontWeight: 600 }}>{s.pct}%</span>
@@ -349,8 +444,9 @@ export function DashboardV2Home() {
         </Card>
 
         <Card>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div style={{ fontWeight: 700 }}>آخر المحادثات</div>
+            <LiveDot live={messagesLive} />
           </div>
           {recentMessages.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>لا توجد محادثات بعد</div>}
           {recentMessages.map((c) => (
