@@ -56,6 +56,15 @@
   font-family: var(--font-body);
 }
 
+/* Smooth theme switch: fade colors/surfaces instead of an instant cut. */
+.dv2-scope,
+.dv2-scope * {
+  transition: background-color var(--duration-slow) var(--ease-out),
+    border-color var(--duration-slow) var(--ease-out),
+    color var(--duration-slow) var(--ease-out),
+    box-shadow var(--duration-slow) var(--ease-out);
+}
+
 .dv2-scope[dir="rtl"] {
   --font-body: var(--font-arabic);
   --font-display: var(--font-arabic);
@@ -84,4 +93,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .dv2-scope * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
+  .dv2-scope, .dv2-scope * { transition-duration: 0.001ms !important; }
 }

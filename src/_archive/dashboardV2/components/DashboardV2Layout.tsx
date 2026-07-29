@@ -275,9 +275,25 @@ export function DashboardV2Layout() {
                 </span>
               </>
             )}
-            <span onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))} style={{ cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex' }}>
-              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-            </span>
+            <motion.span
+              onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+              whileHover={{ scale: 1.12 }}
+              whileTap={{ scale: 0.82, rotate: 15 }}
+              style={{ cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', overflow: 'hidden' }}
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.span
+                  key={theme}
+                  initial={{ rotate: -90, scale: 0.4, opacity: 0 }}
+                  animate={{ rotate: 0, scale: 1, opacity: 1 }}
+                  exit={{ rotate: 90, scale: 0.4, opacity: 0 }}
+                  transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                  style={{ display: 'flex' }}
+                >
+                  {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                </motion.span>
+              </AnimatePresence>
+            </motion.span>
             <WhatsNewBadge />
             <NotificationCenter />
             <AccountMenu base={base} />
