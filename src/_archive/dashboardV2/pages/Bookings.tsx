@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Plus, Search, List, CalendarDays, ChevronRight, ChevronLeft, ArrowUpDown, CalendarX2, Trash2 } from 'lucide-react'
 import { useClinicOS } from '@/context/ClinicOSContext'
@@ -8,7 +9,7 @@ import {
 } from '@/lib/clinicOSQueries'
 import type { AppointmentStatus } from '@/types/clinicOS'
 import { Card, Badge, Button, Dialog, Input, Select, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
-import { EmptyState, SkeletonRows, Pagination, useToast } from '@/_archive/dashboardV2/components/uiExtras'
+import { EmptyState, SkeletonRows, Pagination, useToast, Avatar } from '@/_archive/dashboardV2/components/uiExtras'
 
 type SortKey = 'patient_name' | 'appointment_date' | 'start_time'
 const PAGE_SIZE = 10
@@ -140,6 +141,16 @@ export function DashboardV2Bookings() {
 
   useEffect(() => { setPage(1) }, [filter, serviceFilter, selectedDate, query, sort])
 
+  const [searchParams, setSearchParams] = useSearchParams()
+  useEffect(() => {
+    if (searchParams.get('new') === '1') {
+      setOpen(true)
+      searchParams.delete('new')
+      setSearchParams(searchParams, { replace: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   function toggleSort(key: SortKey) {
     setSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: 1 }))
   }
@@ -226,10 +237,18 @@ export function DashboardV2Bookings() {
     }
   }
 
-  async function cancelBooking(id: string) {
-    await updateAppointmentStatus(id, 'cancelled')
-    pushToast({ kind: 'success', title: 'تم إلغاء الحجز' })
-    refetch()
+  function cancelBooking(id: string) {
+    const timeoutId = setTimeout(async () => {
+      await updateAppointmentStatus(id, 'cancelled')
+      refetch()
+    }, 4500)
+    pushToast({
+      kind: 'info', title: 'جارِ إلغاء الحجز...', duration: 4700,
+      action: {
+        label: 'تراجع',
+        onClick: () => { clearTimeout(timeoutId); pushToast({ kind: 'success', title: 'تم التراجع عن الإلغاء' }) },
+      },
+    })
   }
 
   return (
@@ -322,7 +341,10 @@ export function DashboardV2Bookings() {
                 }}
               >
                 <input type="checkbox" checked={selected.has(b.id)} onChange={() => toggleSelect(b.id)} style={{ cursor: 'pointer' }} />
-                <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{b.patient_name}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, color: 'var(--text-primary)' }}>
+                  <Avatar name={b.patient_name} size={26} />
+                  {b.patient_name}
+                </div>
                 <div style={{ color: 'var(--text-secondary)' }}>{b.service_name}</div>
                 <div style={{ color: 'var(--text-secondary)' }}>{b.appointment_date}</div>
                 <div style={{ color: 'var(--text-secondary)' }}>{b.start_time}</div>

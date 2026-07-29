@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type ReactNode, type ChangeEvent } from 'react'
+import { useEffect, useState, type CSSProperties, type ReactNode, type ChangeEvent } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 // ─── Card ──────────────────────────────────────────────────────────────────
@@ -270,6 +270,13 @@ export function Dialog({ open, title, children, onClose, footer }: {
   onClose: () => void
   footer?: ReactNode
 }) {
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
   return (
     <AnimatePresence>
       {open && (

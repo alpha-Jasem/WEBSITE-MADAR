@@ -7,7 +7,7 @@ import {
   useClinicStaff, inviteStaffMember, updateStaffMember, removeStaffMember,
 } from '@/lib/clinicOSQueries'
 import { Card, Button, Input, Select, Switch, Badge, Dialog, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
-import { useToast } from '@/_archive/dashboardV2/components/uiExtras'
+import { useToast, Avatar } from '@/_archive/dashboardV2/components/uiExtras'
 
 const DAYS: { key: string; label: string }[] = [
   { key: 'sun', label: 'الأحد' }, { key: 'mon', label: 'الإثنين' }, { key: 'tue', label: 'الثلاثاء' },
@@ -307,7 +307,7 @@ export function DashboardV2Settings() {
           {(staff || []).length === 0 && <div style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>لا يوجد فريق مضاف بعد</div>}
           {(staff || []).map((s) => (
             <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border-default)' }}>
-              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--slate-200)', flexShrink: 0 }} />
+              <Avatar name={s.full_name} size={32} />
               <div style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{s.full_name}</div>
               {!s.auth_user_id && <Badge tone="warning">بانتظار القبول</Badge>}
               <Badge tone={ROLE_TONE[s.role] || 'neutral'}>{ROLE_LABEL[s.role] || s.role}</Badge>

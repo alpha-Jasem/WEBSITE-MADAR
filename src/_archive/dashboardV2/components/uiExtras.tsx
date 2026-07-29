@@ -3,7 +3,35 @@ import {
   type CSSProperties, type ReactNode,
 } from 'react'
 import { AnimatePresence, motion, useMotionValue, useTransform, animate } from 'framer-motion'
-import { CheckCircle2, XCircle, Info, X } from 'lucide-react'
+import { CheckCircle2, XCircle, Info, X, Keyboard, Sparkles, Plus } from 'lucide-react'
+
+// ─── Avatar (deterministic color + initial) ────────────────────────────────
+
+const AVATAR_PALETTE = [
+  ['#E0F7FF', '#0099CC'], ['#FFE8CC', '#C2620A'], ['#E7DBFF', '#6D28D9'],
+  ['#DCFCE7', '#15803D'], ['#FCE7F3', '#BE185D'], ['#FEF3C7', '#B45309'],
+  ['#D6E4FF', '#1E3A70'], ['#FEE2E2', '#B91C1C'],
+]
+
+function hashStr(s: string) {
+  let h = 0
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0
+  return h
+}
+
+export function Avatar({ name, size = 32 }: { name: string; size?: number }) {
+  const clean = (name || '؟').trim()
+  const [bg, fg] = AVATAR_PALETTE[hashStr(clean) % AVATAR_PALETTE.length]
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: '50%', background: bg, color: fg,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+      fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: size * 0.4,
+    }}>
+      {clean[0] || '؟'}
+    </div>
+  )
+}
 
 // ─── Tooltip ───────────────────────────────────────────────────────────────
 
@@ -214,6 +242,30 @@ export function TopProgressBar({ triggerKey }: { triggerKey: string }) {
   )
 }
 
+// ─── Sparkline ──────────────────────────────────────────────────────────────
+
+export function Sparkline({ data, width = 64, height = 24, color = 'var(--brand-500)' }: {
+  data: number[]
+  width?: number
+  height?: number
+  color?: string
+}) {
+  if (data.length < 2) return null
+  const max = Math.max(1, ...data)
+  const min = Math.min(...data)
+  const range = Math.max(1, max - min)
+  const pts = data.map((v, i) => [
+    (i / (data.length - 1)) * width,
+    height - ((v - min) / range) * height,
+  ])
+  const path = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ overflow: 'visible', flexShrink: 0 }}>
+      <path d={path} fill="none" stroke={color} strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" opacity={0.85} />
+    </svg>
+  )
+}
+
 // ─── CountUp ────────────────────────────────────────────────────────────────
 
 export function CountUp({ value, suffix = '' }: { value: number; suffix?: string }) {
@@ -307,7 +359,10 @@ function PageBtn({ active, disabled, onClick, children }: { active?: boolean; di
 // ─── Toast queue (global) ──────────────────────────────────────────────────
 
 export type ToastKind = 'success' | 'danger' | 'info'
-interface QueuedToast { id: string; kind: ToastKind; title: string; description?: string }
+interface QueuedToast {
+  id: string; kind: ToastKind; title: string; description?: string; duration?: number
+  action?: { label: string; onClick: () => void }
+}
 
 const ToastCtx = createContext<{ push: (t: Omit<QueuedToast, 'id'>) => void } | null>(null)
 
@@ -323,7 +378,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const push = useCallback((t: Omit<QueuedToast, 'id'>) => {
     const id = Math.random().toString(36).slice(2)
     setToasts((s) => [...s, { ...t, id }])
-    setTimeout(() => setToasts((s) => s.filter((x) => x.id !== id)), 4000)
+    setTimeout(() => setToasts((s) => s.filter((x) => x.id !== id)), t.duration ?? 4000)
   }, [])
 
   const dismiss = (id: string) => setToasts((s) => s.filter((x) => x.id !== id))
@@ -354,6 +409,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>{t.title}</div>
                 {t.description && <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{t.description}</div>}
+                {t.action && (
+                  <span
+                    onClick={() => { t.action!.onClick(); dismiss(t.id) }}
+                    style={{ display: 'inline-block', marginTop: 6, fontSize: 12.5, fontWeight: 700, color: 'var(--brand-600)', cursor: 'pointer' }}
+                  >
+                    {t.action.label}
+                  </span>
+                )}
               </div>
               <span onClick={() => dismiss(t.id)} style={{ cursor: 'pointer', color: 'var(--text-tertiary)', flexShrink: 0 }}><X size={14} /></span>
             </motion.div>
@@ -381,4 +444,176 @@ export function useOnOpenSearchRequest(handler: () => void) {
     window.addEventListener(SEARCH_OPEN_EVENT, handler)
     return () => window.removeEventListener(SEARCH_OPEN_EVENT, handler)
   }, [handler])
+}
+
+// ─── Keyboard shortcuts overlay ("?" to open) ──────────────────────────────
+
+const SHORTCUTS: { keys: string; label: string }[] = [
+  { keys: '⌘K / Ctrl+K', label: 'فتح البحث والإجراءات السريعة' },
+  { keys: '↑ / ↓', label: 'التنقل بين نتائج البحث' },
+  { keys: 'Enter', label: 'تنفيذ النتيجة المحددة' },
+  { keys: 'Esc', label: 'إغلاق أي نافذة أو قائمة مفتوحة' },
+  { keys: '?', label: 'عرض هذه القائمة' },
+]
+
+function isTypingTarget(el: EventTarget | null) {
+  const tag = (el as HTMLElement)?.tagName
+  return tag === 'INPUT' || tag === 'TEXTAREA' || (el as HTMLElement)?.isContentEditable
+}
+
+export function ShortcutsOverlay() {
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === '?' && !isTypingTarget(e.target) && !(e.metaKey || e.ctrlKey)) { e.preventDefault(); setOpen(true) }
+      else if (e.key === 'Escape') setOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          onClick={() => setOpen(false)}
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(13,27,62,.25)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1500 }}
+        >
+          <motion.div
+            onClick={(e) => e.stopPropagation()}
+            initial={{ opacity: 0, y: 12, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+            style={{ background: '#fff', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', width: 360, maxWidth: '90vw', padding: 22, fontFamily: 'var(--font-body)' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>
+              <Keyboard size={18} style={{ color: 'var(--brand-500)' }} /> اختصارات لوحة المفاتيح
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {SHORTCUTS.map((s) => (
+                <div key={s.keys} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                  <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{s.label}</span>
+                  <span style={{
+                    fontSize: 11.5, fontWeight: 700, color: 'var(--text-primary)', background: 'var(--surface-sunken)',
+                    border: '1px solid var(--border-default)', borderRadius: 'var(--radius-sm)', padding: '3px 8px', fontFamily: 'var(--font-mono)',
+                  }}>{s.keys}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
+
+// ─── "What's New" badge ─────────────────────────────────────────────────────
+
+const WHATS_NEW_VERSION = 'dv2-2026-07-29'
+const WHATS_NEW_SEEN_KEY = 'dv2_whats_new_seen'
+const WHATS_NEW_ITEMS = [
+  'بحث سريع مطوّر: اكتب "حجز جديد" أو اضغط ⌘K لتنفيذ إجراءات مباشرة',
+  'تحديد جماعي بالحجوزات والعملاء مع إمكانية التراجع',
+  'رسوم بيانية تفاعلية مع مقارنة بالأسبوع الماضي',
+  'قائمة جانبية قابلة للطي لمساحة عرض أكبر',
+]
+
+export function WhatsNewBadge() {
+  const [open, setOpen] = useState(false)
+  const [seen, setSeen] = useState(true)
+
+  useEffect(() => {
+    setSeen(localStorage.getItem(WHATS_NEW_SEEN_KEY) === WHATS_NEW_VERSION)
+  }, [])
+
+  function toggle() {
+    setOpen((v) => !v)
+    if (!seen) { localStorage.setItem(WHATS_NEW_SEEN_KEY, WHATS_NEW_VERSION); setSeen(true) }
+  }
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <div onClick={toggle} style={{ position: 'relative', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex' }}>
+        <Sparkles size={18} />
+        {!seen && (
+          <span style={{ position: 'absolute', top: -2, insetInlineEnd: -2, width: 8, height: 8, borderRadius: '50%', background: 'var(--brand-500)', border: '2px solid var(--surface-page)' }} />
+        )}
+      </div>
+      <AnimatePresence>
+        {open && (
+          <>
+            <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1200 }} />
+            <motion.div
+              initial={{ opacity: 0, y: -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6, scale: 0.98 }}
+              transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
+              style={{
+                position: 'absolute', top: '130%', insetInlineEnd: 0, width: 280, background: '#fff', borderRadius: 'var(--radius-lg)',
+                boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-default)', zIndex: 1300, padding: 14,
+              }}
+            >
+              <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Sparkles size={14} style={{ color: 'var(--brand-500)' }} /> جديد بالداشبورد
+              </div>
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {WHATS_NEW_ITEMS.map((item, i) => (
+                  <li key={i} style={{ display: 'flex', gap: 8, fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                    <span style={{ color: 'var(--brand-500)', flexShrink: 0 }}>•</span>{item}
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+// ─── Floating quick-add button (FAB) ───────────────────────────────────────
+
+export function Fab({ actions }: { actions: { label: string; icon: ReactNode; onClick: () => void }[] }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div style={{ position: 'fixed', bottom: 24, insetInlineStart: 24, zIndex: 1250 }}>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 8, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            style={{
+              position: 'absolute', bottom: '115%', insetInlineStart: 0, minWidth: 190, background: '#fff',
+              borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-default)', padding: 6,
+            }}
+          >
+            {actions.map((a, i) => (
+              <div
+                key={i}
+                onClick={() => { a.onClick(); setOpen(false) }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', borderRadius: 'var(--radius-sm)', fontSize: 13, fontWeight: 600, cursor: 'pointer', color: 'var(--text-primary)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-sunken)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+              >
+                <span style={{ color: 'var(--brand-500)', display: 'flex' }}>{a.icon}</span>
+                {a.label}
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <motion.button
+        onClick={() => setOpen((v) => !v)}
+        whileTap={{ scale: 0.94 }}
+        animate={{ rotate: open ? 45 : 0 }}
+        transition={{ duration: 0.2 }}
+        style={{
+          width: 52, height: 52, borderRadius: '50%', background: 'var(--gradient-brand)', color: '#fff', border: 'none',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+          boxShadow: '0 8px 24px rgba(0,191,255,.4), var(--shadow-lg)',
+        }}
+      >
+        <Plus size={22} />
+      </motion.button>
+    </div>
+  )
 }

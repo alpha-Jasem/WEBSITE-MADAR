@@ -446,6 +446,40 @@ export function useClinicWeeklyChart(companyId: string | null, isDemo = false) {
   }, [companyId, isDemo])
 }
 
+// Same shape as useClinicWeeklyChart but for the 7 days before that window —
+// used to power "this week vs last week" comparison overlays.
+export function useClinicPreviousWeekChart(companyId: string | null, isDemo = false) {
+  return useFetch<WeeklyPoint[]>(async () => {
+    if (isDemo) {
+      return Array.from({ length: 7 }, () => ({
+        day: '', appointments: Math.floor(Math.random() * 8) + 1, completed: Math.floor(Math.random() * 5),
+      }))
+    }
+    if (!companyId) return []
+
+    const days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date()
+      d.setDate(d.getDate() - 13 + i)
+      return d.toISOString().split('T')[0]
+    })
+
+    const { data, error } = await supabase
+      .from('clinic_os_appointments')
+      .select('appointment_date, status')
+      .eq('company_id', companyId)
+      .gte('appointment_date', days[0])
+      .lte('appointment_date', days[6])
+
+    if (error) throw error
+
+    const rows = (data ?? []) as { appointment_date: string; status: string }[]
+    return days.map(d => {
+      const dayRows = rows.filter(r => r.appointment_date === d)
+      return { day: '', appointments: dayRows.length, completed: dayRows.filter(r => r.status === 'completed').length }
+    })
+  }, [companyId, isDemo])
+}
+
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
 export async function updateAppointmentStatus(id: string, status: AppointmentStatus) {

@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Search, Users } from 'lucide-react'
+import { Search, Users, UserCheck } from 'lucide-react'
 import { useClinicOS } from '@/context/ClinicOSContext'
 import { useClinicPatients, updatePatient } from '@/lib/clinicOSQueries'
 import type { Patient } from '@/types/clinicOS'
 import { Card, Badge, Button, Dialog, Input, Select } from '@/_archive/dashboardV2/components/primitives'
-import { EmptyState, SkeletonRows, useToast } from '@/_archive/dashboardV2/components/uiExtras'
+import { EmptyState, SkeletonRows, useToast, Avatar } from '@/_archive/dashboardV2/components/uiExtras'
 
 const EDIT_TYPE_OPTIONS = [
   { value: 'new', label: 'جديد' },
@@ -33,6 +33,8 @@ export function DashboardV2Patients() {
   const [selected, setSelected] = useState<Patient | null>(null)
   const [form, setForm] = useState({ name: '', phone: '', last_visit_at: '', total_visits: 0, patient_type: 'new' as Patient['patient_type'] })
   const [saving, setSaving] = useState(false)
+  const [checked, setChecked] = useState<Set<string>>(new Set())
+  const [bulkSaving, setBulkSaving] = useState(false)
 
   useEffect(() => {
     if (selected) {
@@ -72,6 +74,28 @@ export function DashboardV2Patients() {
     }
   }
 
+  function toggleCheck(id: string) {
+    setChecked((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
+  }
+
+  async function bulkMarkReturning() {
+    const ids = Array.from(checked)
+    if (ids.length === 0) return
+    setBulkSaving(true)
+    try {
+      if (!isDemo) {
+        await Promise.all(ids.map((id) => updatePatient(id, { clinic_id: companyId || undefined, patient_type: 'returning' })))
+        await refetch()
+      }
+      pushToast({ kind: 'success', title: `تم تحديث ${ids.length} عميل${isDemo ? ' (عرض تجريبي)' : ''}` })
+      setChecked(new Set())
+    } catch (e) {
+      pushToast({ kind: 'danger', title: 'تعذّر التحديث', description: e instanceof Error ? e.message : undefined })
+    } finally {
+      setBulkSaving(false)
+    }
+  }
+
   const rows = patients || []
   const shown = useMemo(() => {
     let filtered = rows.filter((p) => p.name.includes(q) || p.phone.includes(q))
@@ -97,27 +121,47 @@ export function DashboardV2Patients() {
         </div>
       </div>
 
+      {checked.size > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14,
+            padding: '10px 16px', background: 'var(--brand-50)', border: '1px solid var(--brand-200, #B3EDFF)',
+            borderRadius: 'var(--radius-md)',
+          }}
+        >
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--brand-700)' }}>{checked.size} محدد</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button variant="secondary" size="sm" onClick={() => setChecked(new Set())}>إلغاء التحديد</Button>
+            <Button size="sm" onClick={bulkMarkReturning} disabled={bulkSaving}>
+              <UserCheck size={14} /> {bulkSaving ? 'جارِ التحديث...' : 'تحديد كعائدين'}
+            </Button>
+          </div>
+        </motion.div>
+      )}
+
       <Card style={{ padding: 0, overflowX: 'auto' }}>
-        <div style={{ minWidth: 600 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '0.5fr 1.6fr 1.2fr 1fr 0.8fr 0.8fr', padding: '14px 20px', fontSize: 12, fontWeight: 700, color: 'var(--text-tertiary)', borderBottom: '1px solid var(--border-default)' }}>
+        <div style={{ minWidth: 620 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '28px 0.5fr 1.6fr 1.2fr 1fr 0.8fr 0.8fr', padding: '14px 20px', fontSize: 12, fontWeight: 700, color: 'var(--text-tertiary)', borderBottom: '1px solid var(--border-default)', alignItems: 'center' }}>
+          <input type="checkbox" checked={shown.length > 0 && shown.every((p) => checked.has(p.id))} onChange={() => setChecked((s) => { const all = shown.every((p) => s.has(p.id)); const n = new Set(s); shown.forEach((p) => (all ? n.delete(p.id) : n.add(p.id))); return n })} style={{ cursor: 'pointer' }} />
           <div></div><div>الاسم</div><div>الجوال</div><div>آخر زيارة</div><div>عدد الزيارات</div><div>النوع</div>
         </div>
-        {loading && <SkeletonRows rows={6} columns={6} />}
+        {loading && <SkeletonRows rows={6} columns={7} />}
         {!loading && shown.map((p, i) => (
           <motion.div
             key={p.id}
-            onClick={() => setSelected(p)}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.18, delay: Math.min(i, 8) * 0.02 }}
-            style={{ display: 'grid', gridTemplateColumns: '0.5fr 1.6fr 1.2fr 1fr 0.8fr 0.8fr', padding: '12px 20px', fontSize: 14, alignItems: 'center', borderBottom: '1px solid var(--border-default)', cursor: 'pointer' }}
+            style={{ display: 'grid', gridTemplateColumns: '28px 0.5fr 1.6fr 1.2fr 1fr 0.8fr 0.8fr', padding: '12px 20px', fontSize: 14, alignItems: 'center', borderBottom: '1px solid var(--border-default)', background: checked.has(p.id) ? 'var(--surface-sunken)' : 'transparent' }}
           >
-            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--slate-200)' }} />
-            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{p.name}</div>
-            <div style={{ color: 'var(--text-secondary)' }}>{p.phone}</div>
-            <div style={{ color: 'var(--text-secondary)' }}>{p.last_visit_at ? p.last_visit_at.split('T')[0] : '—'}</div>
-            <div style={{ color: 'var(--text-secondary)' }}>{p.total_visits}</div>
-            <div><Badge tone={p.patient_type === 'returning' ? 'success' : 'brand'}>{p.patient_type === 'returning' ? 'عائد' : 'جديد'}</Badge></div>
+            <input type="checkbox" checked={checked.has(p.id)} onChange={(e) => { e.stopPropagation(); toggleCheck(p.id) }} onClick={(e) => e.stopPropagation()} style={{ cursor: 'pointer' }} />
+            <div onClick={() => setSelected(p)} style={{ cursor: 'pointer' }}><Avatar name={p.name} size={36} /></div>
+            <div onClick={() => setSelected(p)} style={{ fontWeight: 600, color: 'var(--text-primary)', cursor: 'pointer' }}>{p.name}</div>
+            <div onClick={() => setSelected(p)} style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>{p.phone}</div>
+            <div onClick={() => setSelected(p)} style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>{p.last_visit_at ? p.last_visit_at.split('T')[0] : '—'}</div>
+            <div onClick={() => setSelected(p)} style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>{p.total_visits}</div>
+            <div onClick={() => setSelected(p)} style={{ cursor: 'pointer' }}><Badge tone={p.patient_type === 'returning' ? 'success' : 'brand'}>{p.patient_type === 'returning' ? 'عائد' : 'جديد'}</Badge></div>
           </motion.div>
         ))}
         {!loading && shown.length === 0 && (
@@ -133,7 +177,7 @@ export function DashboardV2Patients() {
         {selected && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--slate-200)', flexShrink: 0 }} />
+              <Avatar name={selected.name} size={48} />
               <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>مرات عدم الحضور: {selected.no_show_count}{selected.notes ? ` — ${selected.notes}` : ''}</div>
             </div>
             <Input label="الاسم" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />

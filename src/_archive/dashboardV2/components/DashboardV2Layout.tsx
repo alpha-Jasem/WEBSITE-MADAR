@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, CalendarDays, Users, MessageSquare, Star, BarChart3,
   Wallet, BellRing, Plug, Settings, ChevronDown, LogOut, CreditCard, Menu, X,
-  Wrench, History, Sun, Moon, AlertTriangle, ShieldCheck,
+  Wrench, History, Sun, Moon, AlertTriangle, ShieldCheck, ChevronsRight, ChevronsLeft, Plus,
 } from 'lucide-react'
 import { useClinicOS } from '@/context/ClinicOSContext'
 import { useClinicSupportTickets } from '@/lib/clinicOSQueries'
@@ -13,10 +13,13 @@ import { AccountMenu } from './AccountMenu'
 import { SupportChat } from './SupportChat'
 import { GlobalSearch } from './GlobalSearch'
 import { OnboardingWizard } from './OnboardingWizard'
-import { ToastProvider, requestOpenSearch, TopProgressBar } from './uiExtras'
+import {
+  ToastProvider, requestOpenSearch, TopProgressBar, ShortcutsOverlay, WhatsNewBadge, Fab, Tooltip,
+} from './uiExtras'
 import '@/styles/dashboardV2Tokens.css'
 
 const THEME_KEY = 'dv2_theme'
+const COLLAPSE_KEY = 'dv2_sidebar_collapsed'
 
 interface NavItem {
   label: string
@@ -34,11 +37,13 @@ export function DashboardV2Layout() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [hoverRect, setHoverRect] = useState<{ top: number; height: number } | null>(null)
   const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem(THEME_KEY) as 'dark') || 'light')
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COLLAPSE_KEY) === '1')
   const { data: tickets } = useClinicSupportTickets(companyId, isDemo)
   const openTicketCount = (tickets || []).filter((t) => t.status === 'open').length
 
   useEffect(() => { setMobileNavOpen(false) }, [location.pathname])
   useEffect(() => { localStorage.setItem(THEME_KEY, theme) }, [theme])
+  useEffect(() => { localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '0') }, [collapsed])
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -85,6 +90,7 @@ export function DashboardV2Layout() {
           .dv2-main { padding: 14px !important; }
           .dv2-responsive-grid { grid-template-columns: 1fr !important; }
           .dv2-responsive-grid-2 { grid-template-columns: 1fr 1fr !important; }
+          .dv2-desktop-only { display: none !important; }
         }
         .dv2-nav-highlight {
           position: absolute; inset-inline-start: 0; inset-inline-end: 0;
@@ -123,14 +129,15 @@ export function DashboardV2Layout() {
       `}</style>
       {mobileNavOpen && <div className="dv2-backdrop open" onClick={() => setMobileNavOpen(false)} />}
       <nav className={`dv2-sidebar dv2-sidebar-glass${mobileNavOpen ? ' open' : ''}`} style={{
-        width: 240, height: '100%', display: 'flex',
+        width: collapsed ? 76 : 240, height: '100%', display: 'flex',
         flexDirection: 'column', padding: '20px 14px', boxSizing: 'border-box',
         fontFamily: 'var(--font-body)', color: '#fff', flexShrink: 0,
+        transition: 'width 200ms var(--ease-out, ease)',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', padding: '0 8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img src="/logo-main.png" alt="مدار" style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 'var(--radius-md)' }} />
-            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16 }}>مدار</div>
+            <img src="/logo-main.png" alt="مدار" style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 'var(--radius-md)', flexShrink: 0 }} />
+            {!collapsed && <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16 }}>مدار</div>}
           </div>
           <span className="dv2-hamburger" onClick={() => setMobileNavOpen(false)} style={{ cursor: 'pointer', color: 'rgba(255,255,255,.7)' }}>
             <X size={20} />
@@ -147,14 +154,15 @@ export function DashboardV2Layout() {
           />
           {NAV.map((item) => {
             const active = location.pathname === item.path
-            return (
+            const row = (
               <div
                 key={item.path}
                 className="dv2-nav-item"
                 onClick={() => navigate(item.path)}
                 onMouseEnter={(e) => setHoverRect({ top: e.currentTarget.offsetTop, height: e.currentTarget.offsetHeight })}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
+                  display: 'flex', alignItems: 'center', gap: 10, padding: collapsed ? '10px' : '10px 12px',
+                  justifyContent: collapsed ? 'center' : 'flex-start',
                   borderRadius: 'var(--radius-md)', cursor: 'pointer',
                   fontSize: 'var(--text-body-sm)', fontWeight: 600,
                   background: active ? 'rgba(255,255,255,.08)' : 'transparent',
@@ -162,8 +170,8 @@ export function DashboardV2Layout() {
                 }}
               >
                 <span className="dv2-nav-icon" style={{ display: 'flex' }}>{item.icon}</span>
-                <span style={{ flex: 1 }}>{item.label}</span>
-                {item.badge != null && (
+                {!collapsed && <span style={{ flex: 1 }}>{item.label}</span>}
+                {!collapsed && item.badge != null && (
                   <span style={{
                     background: 'var(--danger-500)', color: '#fff', borderRadius: 'var(--radius-full)',
                     fontSize: 10, fontWeight: 700, padding: '1px 6px',
@@ -171,38 +179,53 @@ export function DashboardV2Layout() {
                 )}
               </div>
             )
+            return collapsed ? <Tooltip key={item.path} label={item.label} side="bottom">{row}</Tooltip> : row
           })}
         </div>
+
+        <span
+          className="dv2-desktop-only"
+          onClick={() => setCollapsed((v) => !v)}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '8px', marginBottom: 10,
+            borderRadius: 'var(--radius-md)', cursor: 'pointer', color: 'rgba(255,255,255,.5)', fontSize: 11.5,
+          }}
+        >
+          {collapsed ? <ChevronsLeft size={15} /> : <><ChevronsRight size={15} /> طي القائمة</>}
+        </span>
 
         <div
           onClick={() => setProfileOpen((v) => !v)}
           style={{
-            display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 'var(--radius-md)',
-            cursor: 'pointer', background: 'rgba(255,255,255,.06)', position: 'relative',
+            display: 'flex', alignItems: 'center', gap: 10, padding: collapsed ? '10px' : '10px 12px',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            borderRadius: 'var(--radius-md)', cursor: 'pointer', background: 'rgba(255,255,255,.06)', position: 'relative',
           }}
         >
           <div style={{
             width: 30, height: 30, borderRadius: '50%', background: 'var(--gradient-brand)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0,
           }}>{(userName || 'م')[0]}</div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {userName || 'مستخدم'}
+          {!collapsed && (
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {userName || 'مستخدم'}
+              </div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,.5)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {clinicName || (isDemo ? 'عرض تجريبي' : '')}
+              </div>
             </div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,.5)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {clinicName || (isDemo ? 'عرض تجريبي' : '')}
-            </div>
-          </div>
-          <ChevronDown size={14} style={{ opacity: 0.6 }} />
+          )}
+          {!collapsed && <ChevronDown size={14} style={{ opacity: 0.6 }} />}
           {profileOpen && (
             <div style={{
               position: 'absolute', bottom: '110%', insetInlineStart: 0, insetInlineEnd: 0,
               background: '#fff', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-lg)',
-              overflow: 'hidden', color: 'var(--text-primary)',
+              overflow: 'hidden', color: 'var(--text-primary)', minWidth: collapsed ? 150 : undefined,
             }}>
               <div
                 onClick={logout}
-                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', fontSize: 13, cursor: 'pointer' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap' }}
               >
                 <LogOut size={14} /> تسجيل الخروج
               </div>
@@ -225,7 +248,7 @@ export function DashboardV2Layout() {
             <div className="dv2-header-subtitle" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 0 }}>
               لوحة تحكم مدار
             </div>
-            <div className="dv2-global-search" style={{ flex: 1, minWidth: 0 }}><GlobalSearch /></div>
+            <div className="dv2-global-search" style={{ flex: 1, minWidth: 0 }}><GlobalSearch base={base} /></div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
             {isDemo && (
@@ -255,6 +278,7 @@ export function DashboardV2Layout() {
             <span onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))} style={{ cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex' }}>
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </span>
+            <WhatsNewBadge />
             <NotificationCenter />
             <AccountMenu base={base} />
           </div>
@@ -285,6 +309,8 @@ export function DashboardV2Layout() {
       </div>
       <SupportChat />
       <OnboardingWizard />
+      <ShortcutsOverlay />
+      <Fab actions={[{ label: 'حجز جديد', icon: <Plus size={15} />, onClick: () => navigate(`${base}/bookings?new=1`) }]} />
     </div>
     </ToastProvider>
   )

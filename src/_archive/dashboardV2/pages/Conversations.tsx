@@ -4,7 +4,7 @@ import { useClinicOS } from '@/context/ClinicOSContext'
 import { useClinicAICalls, useClinicMessages } from '@/lib/clinicOSQueries'
 import type { MessageLog, MessageStatus } from '@/types/clinicOS'
 import { Card, Badge, Dialog, Button, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
-import { EmptyState, SkeletonRows } from '@/_archive/dashboardV2/components/uiExtras'
+import { EmptyState, SkeletonRows, Avatar } from '@/_archive/dashboardV2/components/uiExtras'
 
 const MSG_STATUS_LABEL: Record<MessageStatus, string> = { pending: 'قيد الإرسال', sent: 'أُرسلت', delivered: 'تم التسليم', read: 'تمت القراءة', failed: 'فشلت' }
 const MSG_STATUS_TONE: Record<MessageStatus, BadgeTone> = { pending: 'neutral', sent: 'neutral', delivered: 'success', read: 'success', failed: 'danger' }
@@ -34,7 +34,7 @@ export function DashboardV2Conversations() {
               display: 'flex', alignItems: 'center', gap: 10, padding: '12px 18px', cursor: 'pointer',
               background: c.id === (active?.id) ? 'var(--brand-50)' : 'transparent', borderBottom: '1px solid var(--border-default)',
             }}>
-              <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--slate-200)', flexShrink: 0 }} />
+              <Avatar name={c.patient_name || c.phone} size={34} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 600 }}>{c.patient_name || c.phone}</div>
                 <div style={{ fontSize: 11, color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

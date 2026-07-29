@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
 import { History, UserCog, CalendarPlus, Wrench, ShieldCheck, Search } from 'lucide-react'
 import { useClinicOS } from '@/context/ClinicOSContext'
 import { useClinicAuditLog } from '@/lib/clinicOSQueries'
@@ -53,24 +54,38 @@ export function DashboardV2AuditLog() {
         <Input placeholder="بحث بالحدث..." icon={<Search size={15} />} value={query} onChange={(e) => setQuery(e.target.value)} style={{ width: 220 }} />
       </div>
 
-      <Card style={{ padding: 0 }}>
-        {shown.length === 0 && <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>لا توجد أحداث مطابقة</div>}
-        {shown.map((log, i) => (
-          <div key={log.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 20px', borderBottom: i < shown.length - 1 ? '1px solid var(--border-default)' : 'none' }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: '50%', background: 'var(--brand-100)', color: 'var(--brand-600)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2,
-            }}>{ICON_BY_ACTION[log.action] || <History size={15} />}</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <span style={{ fontWeight: 700, fontSize: 13.5 }}>{LABEL_BY_ACTION[log.action] || log.action}</span>
-                <Badge tone={TONE_BY_ACTOR[log.actor_type] || 'neutral'}>{ACTOR_LABEL[log.actor_type] || log.actor_type}</Badge>
-              </div>
-              {log.note && <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>{log.note}</div>}
-            </div>
-            <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>{fmtDate(log.created_at)}</div>
+      <Card style={{ padding: '20px 24px' }}>
+        {shown.length === 0 && <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>لا توجد أحداث مطابقة</div>}
+        {shown.length > 0 && (
+          <div style={{ position: 'relative' }}>
+            <div style={{ position: 'absolute', top: 16, bottom: 16, insetInlineStart: 15, width: 2, background: 'var(--border-default)' }} />
+            {shown.map((log, i) => (
+              <motion.div
+                key={log.id}
+                initial={{ opacity: 0, x: -6 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.2, delay: Math.min(i, 10) * 0.03 }}
+                style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', gap: 14, paddingBottom: i < shown.length - 1 ? 22 : 0 }}
+              >
+                <div style={{
+                  width: 32, height: 32, borderRadius: '50%', background: 'var(--brand-100)', color: 'var(--brand-600)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, zIndex: 1,
+                  border: '3px solid var(--surface-card)',
+                }}>{ICON_BY_ACTION[log.action] || <History size={15} />}</div>
+                <div style={{ flex: 1, paddingTop: 4 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <span style={{ fontWeight: 700, fontSize: 13.5 }}>{LABEL_BY_ACTION[log.action] || log.action}</span>
+                      <Badge tone={TONE_BY_ACTOR[log.actor_type] || 'neutral'}>{ACTOR_LABEL[log.actor_type] || log.actor_type}</Badge>
+                    </div>
+                    <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>{fmtDate(log.created_at)}</div>
+                  </div>
+                  {log.note && <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>{log.note}</div>}
+                </div>
+              </motion.div>
+            ))}
           </div>
-        ))}
+        )}
       </Card>
     </div>
   )
