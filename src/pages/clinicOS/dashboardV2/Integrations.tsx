@@ -1,4 +1,4 @@
-import { MessageCircle, Calendar, Star, Phone, Instagram, Lock } from 'lucide-react'
+import { MessageCircle, Calendar, Star, Phone, AtSign, Lock } from 'lucide-react'
 import { useClinicOS } from '../../../context/ClinicOSContext'
 import { useClinicIntegrations, toggleIntegration } from '../../../lib/clinicOSQueries'
 import type { IntegrationStatus } from '../../../types/clinicOS'
@@ -9,7 +9,7 @@ const ICON_BY_PROVIDER: Record<string, React.ReactNode> = {
   google_calendar: <Calendar size={19} />,
   google_business: <Star size={19} />,
   voip: <Phone size={19} />,
-  instagram: <Instagram size={19} />,
+  instagram: <AtSign size={19} />,
 }
 
 const COLOR_BY_PROVIDER: Record<string, { bg: string; fg: string }> = {

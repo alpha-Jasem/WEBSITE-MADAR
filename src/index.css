@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../tailwind.config.js";
 
 :root {
   /* ── Brand Colors (MADAR logo) ─── */
@@ -26,14 +25,20 @@
   --glass-bg-hover: rgba(255,255,255,0.95);
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+/* Wrapped in Tailwind's own "base" layer so utility classes (which live in
+   the higher-precedence "utilities" layer) can still override these resets —
+   unlayered rules always beat @layer rules regardless of specificity, so
+   without this, no Tailwind spacing/utility class could ever apply. */
+@layer base {
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 }
 
 body {

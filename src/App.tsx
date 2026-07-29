@@ -4,7 +4,6 @@ import { LanguageProvider } from './context/LanguageContext'
 import { ClinicOSProvider } from './context/ClinicOSContext'
 import { ProtectedRoute } from './components/shared/ProtectedRoute'
 import { ErrorBoundary, reloadForFreshAssets } from './components/shared/ErrorBoundary'
-import { HomePage } from './pages/HomePage'
 import { ClinicAILanding } from './pages/ClinicAILanding'
 import { Lumora } from './pages/Lumora'
 import { Login } from './pages/Login'
@@ -24,6 +23,14 @@ function ScrollToTop() {
   return null
 }
 
+// The old React homepage was replaced by THE SIGNAL cinematic landing
+// (public/signal/index.html, forced at "/" in production via public/_redirects).
+// This mirrors that behavior in local dev, where _redirects isn't honored.
+function SignalRedirect() {
+  useEffect(() => { window.location.replace('/signal/index.html') }, [])
+  return null
+}
+
 // Strip ?fresh= from URL without reload
 if (typeof window !== 'undefined') {
   const url = new URL(window.location.href)
@@ -39,6 +46,7 @@ const SolarEngine       = lazy(() => import('./pages/SolarEngine').then(m => ({ 
 
 // ClinicOS
 const ClinicOSLoginPage    = lazy(() => import('./pages/clinicOS/ClinicOSLogin').then(m => ({ default: m.ClinicOSLogin })))
+const DashboardV3Login     = lazy(() => import('./dashboard-v3/views/auth/auth2/login'))
 const ClinicOSSignupPage   = lazy(() => import('./pages/clinicOS/ClinicOSSignup').then(m => ({ default: m.ClinicOSSignup })))
 const DemoSignupPage       = lazy(() => import('./pages/clinicOS/DemoSignup').then(m => ({ default: m.DemoSignup })))
 const DemoConfirmPage      = lazy(() => import('./pages/clinicOS/DemoConfirm').then(m => ({ default: m.DemoConfirm })))
@@ -46,7 +54,14 @@ const PackageSelectorPage  = lazy(() => import('./pages/clinicOS/PackageSelector
 const MfaChallengePage     = lazy(() => import('./pages/clinicOS/MfaChallenge').then(m => ({ default: m.MfaChallenge })))
 const ClinicOSAdminPage    = lazy(() => import('./pages/clinicOS/admin/ClinicOSAdmin').then(m => ({ default: m.ClinicOSAdmin })))
 
-// ClinicOS Dashboard (Madar Software Design System)
+// ClinicOS Dashboard v3 (shadcn/ui — official dashboard)
+const DashboardV3FullLayout    = lazy(() => import('./dashboard-v3/layouts/full/FullLayout'))
+const DashboardV3Modern        = lazy(() => import('./dashboard-v3/views/dashboards/modern'))
+const DashboardV3Tables        = lazy(() => import('./dashboard-v3/views/pages/tables'))
+const DashboardV3Form          = lazy(() => import('./dashboard-v3/views/pages/form'))
+const DashboardV3UserProfile   = lazy(() => import('./dashboard-v3/views/pages/user-profile'))
+
+// ClinicOS Dashboard v2 (Madar Software Design System) — archived, still used by the /demo-review sales tour
 const DashboardV2Layout        = lazy(() => import('./components/clinicOS/v2/DashboardV2Layout').then(m => ({ default: m.DashboardV2Layout })))
 const DashboardV2Home          = lazy(() => import('./pages/clinicOS/dashboardV2/Home').then(m => ({ default: m.DashboardV2Home })))
 const DashboardV2Bookings      = lazy(() => import('./pages/clinicOS/dashboardV2/Bookings').then(m => ({ default: m.DashboardV2Bookings })))
@@ -79,7 +94,7 @@ function App() {
         <ScrollToTop />
         <Suspense fallback={null}>
           <Routes>
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<SignalRedirect />} />
             <Route path="/clinic-ai" element={<ClinicAILanding />} />
             <Route path="/lumora" element={<Lumora />} />
             <Route path="/car-wash" element={<Navigate to="/" replace />} />
@@ -87,7 +102,8 @@ function App() {
             <Route path="/clinic-os" element={<Navigate to="/clinic-os/login" replace />} />
 
             {/* ── ClinicOS Auth & Onboarding ── */}
-            <Route path="/clinic-os/login"    element={<ClinicOSLoginPage />} />
+            <Route path="/clinic-os/login"    element={<DashboardV3Login />} />
+            <Route path="/clinic-os/login-legacy" element={<ClinicOSLoginPage />} />
             <Route path="/clinic-os/mfa-challenge" element={<MfaChallengePage />} />
             <Route path="/clinic-os/signup"   element={<ClinicOSSignupPage />} />
             <Route path="/clinic-os/demo"     element={<DemoSignupPage />} />
@@ -98,25 +114,16 @@ function App() {
               <ClinicOSProvider><PackageSelectorPage /></ClinicOSProvider>
             } />
 
-            {/* ── ClinicOS Dashboard (Madar Software Design System) ── */}
+            {/* ── ClinicOS Dashboard v3 (shadcn/ui — official dashboard) ── */}
             <Route path="/clinic-os/dashboard/*" element={
               <ClinicOSProvider>
-                <DashboardV2Layout />
+                <DashboardV3FullLayout />
               </ClinicOSProvider>
             }>
-              <Route index element={<DashboardV2Home />} />
-              <Route path="bookings" element={<DashboardV2Bookings />} />
-              <Route path="patients" element={<DashboardV2Patients />} />
-              <Route path="conversations" element={<DashboardV2Conversations />} />
-              <Route path="reviews" element={<DashboardV2Reviews />} />
-              <Route path="revenue" element={<DashboardV2Revenue />} />
-              <Route path="reports" element={<DashboardV2Reports />} />
-              <Route path="plan-usage" element={<DashboardV2MadarAgentUsage />} />
-              <Route path="reminders" element={<DashboardV2Reminders />} />
-              <Route path="integrations" element={<DashboardV2Integrations />} />
-              <Route path="services" element={<DashboardV2Services />} />
-              <Route path="audit-log" element={<DashboardV2AuditLog />} />
-              <Route path="settings" element={<DashboardV2Settings />} />
+              <Route index element={<DashboardV3Modern />} />
+              <Route path="tables" element={<DashboardV3Tables />} />
+              <Route path="form" element={<DashboardV3Form />} />
+              <Route path="profile" element={<DashboardV3UserProfile />} />
             </Route>
             {/* ── ClinicOS Demo Tour (internal, unauthenticated preview with fake data) ── */}
             <Route path="/demo-review/*" element={

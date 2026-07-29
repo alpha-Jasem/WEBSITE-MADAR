@@ -6,6 +6,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@dv3': path.resolve(__dirname, './src/dashboard-v3'),
     },
   },
   plugins: [react()],
@@ -15,11 +16,14 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'recharts': ['recharts'],
-          'framer': ['framer-motion'],
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'supabase': ['@supabase/supabase-js'],
+        manualChunks(id: string) {
+          if (id.includes('node_modules')) {
+            if (id.includes('recharts')) return 'recharts'
+            if (id.includes('framer-motion')) return 'framer'
+            if (id.includes('react-router') || id.includes('/react/') || id.includes('/react-dom/')) return 'react-vendor'
+            if (id.includes('@supabase/supabase-js')) return 'supabase'
+          }
+          return undefined
         },
       },
     },
