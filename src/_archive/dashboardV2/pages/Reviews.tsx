@@ -6,7 +6,8 @@ import {
   createBranch, replyToReview, toggleBranchFavorite,
 } from '@/lib/clinicOSQueries'
 import type { GoogleReview, Branch } from '@/types/clinicOS'
-import { Card, Badge, Button, Dialog, Input, Toast, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
+import { Card, Badge, Button, Dialog, Input, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
+import { useToast } from '@/_archive/dashboardV2/components/uiExtras'
 
 function Stars({ n }: { n: number }) {
   return (
@@ -30,7 +31,7 @@ export function DashboardV2Reviews() {
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({ name: '', address: '', google_maps_url: '' })
   const [drafts, setDrafts] = useState<Record<string, string>>({})
-  const [toast, setToast] = useState<{ title: string; description?: string } | null>(null)
+  const pushToast = useToast()
 
   const branchList = useMemo(
     () => [...(branches || [])].sort((a, b) => Number(b.is_favorite) - Number(a.is_favorite)),
@@ -85,12 +86,11 @@ export function DashboardV2Reviews() {
       setAddOpen(false)
       setForm({ name: '', address: '', google_maps_url: '' })
       refetchBranches()
-      setToast({ title: 'تم إضافة الفرع' })
+      pushToast({ kind: 'success', title: 'تم إضافة الفرع' })
     } catch (e) {
-      setToast({ title: 'تعذّر إضافة الفرع', description: e instanceof Error ? e.message : undefined })
+      pushToast({ kind: 'danger', title: 'تعذّر إضافة الفرع', description: e instanceof Error ? e.message : undefined })
     } finally {
       setSaving(false)
-      setTimeout(() => setToast(null), 3000)
     }
   }
 
@@ -100,11 +100,9 @@ export function DashboardV2Reviews() {
     try {
       await replyToReview(review.id, text)
       refetchReviews()
-      setToast({ title: 'تم إرسال الرد' })
+      pushToast({ kind: 'success', title: 'تم إرسال الرد' })
     } catch (e) {
-      setToast({ title: 'تعذّر إرسال الرد', description: e instanceof Error ? e.message : undefined })
-    } finally {
-      setTimeout(() => setToast(null), 3000)
+      pushToast({ kind: 'danger', title: 'تعذّر إرسال الرد', description: e instanceof Error ? e.message : undefined })
     }
   }
 
@@ -280,12 +278,6 @@ export function DashboardV2Reviews() {
       </div>
 
       {renderAddDialog()}
-
-      {toast && (
-        <div style={{ position: 'fixed', bottom: 24, insetInlineStart: 24, zIndex: 100 }}>
-          <Toast tone="success" title={toast.title} description={toast.description} onClose={() => setToast(null)} />
-        </div>
-      )}
     </div>
   )
 }

@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { MessageCircle, Phone } from 'lucide-react'
+import { MessageCircle, Phone, PhoneCall, Inbox } from 'lucide-react'
 import { useClinicOS } from '@/context/ClinicOSContext'
 import { useClinicAICalls, useClinicMessages } from '@/lib/clinicOSQueries'
 import type { MessageLog, MessageStatus } from '@/types/clinicOS'
 import { Card, Badge, Dialog, Button, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
+import { EmptyState, SkeletonRows } from '@/_archive/dashboardV2/components/uiExtras'
 
 const MSG_STATUS_LABEL: Record<MessageStatus, string> = { pending: 'قيد الإرسال', sent: 'أُرسلت', delivered: 'تم التسليم', read: 'تمت القراءة', failed: 'فشلت' }
 const MSG_STATUS_TONE: Record<MessageStatus, BadgeTone> = { pending: 'neutral', sent: 'neutral', delivered: 'success', read: 'success', failed: 'danger' }
@@ -14,8 +15,8 @@ const MSG_TYPE_LABEL: Record<string, string> = {
 
 export function DashboardV2Conversations() {
   const { companyId, isDemo } = useClinicOS()
-  const { data: aiCalls } = useClinicAICalls(companyId, isDemo)
-  const { data: messages } = useClinicMessages(companyId, isDemo)
+  const { data: aiCalls, loading: callsLoading } = useClinicAICalls(companyId, isDemo)
+  const { data: messages, loading: msgsLoading } = useClinicMessages(companyId, isDemo)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [activeMessage, setActiveMessage] = useState<MessageLog | null>(null)
 
@@ -43,7 +44,8 @@ export function DashboardV2Conversations() {
               <div style={{ color: 'var(--brand-500)' }}><Phone size={14} /></div>
             </div>
           ))}
-          {calls.length === 0 && <div style={{ padding: 24, textAlign: 'center', fontSize: 12, color: 'var(--text-tertiary)' }}>لا توجد مكالمات ذكاء اصطناعي بعد</div>}
+          {callsLoading && <SkeletonRows rows={4} columns={1} />}
+          {!callsLoading && calls.length === 0 && <EmptyState icon={<PhoneCall size={18} />} title="لا توجد مكالمات بعد" />}
         </div>
       </Card>
 
@@ -88,7 +90,8 @@ export function DashboardV2Conversations() {
               <div style={{ fontSize: 12, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.body}</div>
             </div>
           ))}
-          {msgs.length === 0 && <div style={{ padding: 24, textAlign: 'center', fontSize: 12, color: 'var(--text-tertiary)' }}>لا توجد رسائل بعد</div>}
+          {msgsLoading && <SkeletonRows rows={4} columns={1} />}
+          {!msgsLoading && msgs.length === 0 && <EmptyState icon={<Inbox size={18} />} title="لا توجد رسائل بعد" />}
         </div>
       </Card>
 

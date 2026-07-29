@@ -3,7 +3,8 @@ import { Plus, Wrench, ChevronDown, Sparkles } from 'lucide-react'
 import { useClinicOS } from '@/context/ClinicOSContext'
 import { useClinicServices, createService, updateService } from '@/lib/clinicOSQueries'
 import type { Service } from '@/types/clinicOS'
-import { Card, Badge, Button, Dialog, Input, Switch, Toast } from '@/_archive/dashboardV2/components/primitives'
+import { Card, Badge, Button, Dialog, Input, Switch } from '@/_archive/dashboardV2/components/primitives'
+import { useToast } from '@/_archive/dashboardV2/components/uiExtras'
 
 const EMPTY_FORM = { name: '', category: '', duration_minutes: '30', price: '', active: true, available_for_ai: true }
 const UNCATEGORIZED = 'خدمات أخرى'
@@ -16,7 +17,7 @@ export function DashboardV2Services() {
   const [editing, setEditing] = useState<Service | null>(null)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
-  const [toast, setToast] = useState<{ title: string; description?: string } | null>(null)
+  const pushToast = useToast()
 
   const rows = services || []
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
@@ -61,12 +62,11 @@ export function DashboardV2Services() {
       }
       setDialogOpen(false)
       refetch()
-      setToast({ title: editing ? 'تم تحديث الخدمة' : 'تم إضافة الخدمة' })
+      pushToast({ kind: 'success', title: editing ? 'تم تحديث الخدمة' : 'تم إضافة الخدمة' })
     } catch (e) {
-      setToast({ title: 'تعذّر الحفظ', description: e instanceof Error ? e.message : undefined })
+      pushToast({ kind: 'danger', title: 'تعذّر الحفظ', description: e instanceof Error ? e.message : undefined })
     } finally {
       setSaving(false)
-      setTimeout(() => setToast(null), 2500)
     }
   }
 
@@ -164,12 +164,6 @@ export function DashboardV2Services() {
           </div>
         </div>
       </Dialog>
-
-      {toast && (
-        <div style={{ position: 'fixed', bottom: 24, insetInlineStart: 24, zIndex: 100 }}>
-          <Toast tone="success" title={toast.title} description={toast.description} onClose={() => setToast(null)} />
-        </div>
-      )}
     </div>
   )
 }

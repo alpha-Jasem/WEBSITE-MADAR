@@ -6,7 +6,8 @@ import {
   updateClinicCompany, uploadCompanyLogo, updateClinicWorkingHours,
   useClinicStaff, inviteStaffMember, updateStaffMember, removeStaffMember,
 } from '@/lib/clinicOSQueries'
-import { Card, Button, Input, Select, Switch, Toast, Badge, Dialog, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
+import { Card, Button, Input, Select, Switch, Badge, Dialog, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
+import { useToast } from '@/_archive/dashboardV2/components/uiExtras'
 
 const DAYS: { key: string; label: string }[] = [
   { key: 'sun', label: 'الأحد' }, { key: 'mon', label: 'الإثنين' }, { key: 'tue', label: 'الثلاثاء' },
@@ -46,7 +47,7 @@ export function DashboardV2Settings() {
   const [logoUrl, setLogoUrl] = useState(clinicLogoUrl)
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [toast, setToast] = useState<string | null>(null)
+  const pushToast = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [activeSection, setActiveSection] = useState<SectionKey>('business')
@@ -78,8 +79,7 @@ export function DashboardV2Settings() {
     setMfaError('')
     const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' })
     if (error || !data) {
-      setToast('تعذّر بدء التفعيل')
-      setTimeout(() => setToast(null), 2500)
+      pushToast({ kind: 'danger', title: 'تعذّر بدء التفعيل' })
       setMfaEnrolling(false)
       return
     }
@@ -113,8 +113,7 @@ export function DashboardV2Settings() {
     setMfaDialogOpen(false)
     setMfaCode('')
     setMfaVerifying(false)
-    setToast('تم تفعيل التحقق بخطوتين')
-    setTimeout(() => setToast(null), 2500)
+    pushToast({ kind: 'success', title: 'تم تفعيل التحقق بخطوتين' })
   }
 
   async function disableMfa() {
@@ -124,8 +123,7 @@ export function DashboardV2Settings() {
     if (totp) await supabase.auth.mfa.unenroll({ factorId: totp.id })
     setMfaEnabled(false)
     setMfaVerifying(false)
-    setToast('تم إيقاف التحقق بخطوتين')
-    setTimeout(() => setToast(null), 2500)
+    pushToast({ kind: 'success', title: 'تم إيقاف التحقق بخطوتين' })
   }
 
   useEffect(() => {
@@ -142,19 +140,17 @@ export function DashboardV2Settings() {
     try {
       const url = await uploadCompanyLogo(companyId, file)
       setLogoUrl(url)
-      setToast('تم رفع الشعار')
+      pushToast({ kind: 'success', title: 'تم رفع الشعار' })
     } catch (err) {
-      setToast(err instanceof Error ? err.message : 'تعذّر رفع الشعار')
+      pushToast({ kind: 'danger', title: 'تعذّر رفع الشعار', description: err instanceof Error ? err.message : undefined })
     } finally {
       setUploadingLogo(false)
-      setTimeout(() => setToast(null), 2500)
     }
   }
 
   async function save() {
     if (isDemo || !companyId) {
-      setToast('تم حفظ الإعدادات (عرض تجريبي)')
-      setTimeout(() => setToast(null), 2500)
+      pushToast({ kind: 'success', title: 'تم حفظ الإعدادات (عرض تجريبي)' })
       return
     }
     setSaving(true)
@@ -162,12 +158,11 @@ export function DashboardV2Settings() {
       await updateClinicCompany(companyId, { name: form.name, owner_phone: form.phone, owner_email: form.email, city: form.city })
       await updateClinicWorkingHours(companyId, clinicSettings, hours)
       await refreshAccount()
-      setToast('تم حفظ الإعدادات')
+      pushToast({ kind: 'success', title: 'تم حفظ الإعدادات' })
     } catch {
-      setToast('تعذّر حفظ الإعدادات')
+      pushToast({ kind: 'danger', title: 'تعذّر حفظ الإعدادات' })
     } finally {
       setSaving(false)
-      setTimeout(() => setToast(null), 2500)
     }
   }
 
@@ -176,19 +171,18 @@ export function DashboardV2Settings() {
     setInvitingStaff(true)
     try {
       if (isDemo) {
-        setToast('تمت الدعوة (عرض تجريبي)')
+        pushToast({ kind: 'success', title: 'تمت الدعوة (عرض تجريبي)' })
       } else {
         await inviteStaffMember({ company_id: companyId, email: staffForm.email, full_name: staffForm.full_name, role: staffForm.role })
         await refetchStaff()
-        setToast('تم إرسال دعوة عبر البريد الإلكتروني')
+        pushToast({ kind: 'success', title: 'تم إرسال دعوة عبر البريد الإلكتروني' })
       }
       setStaffDialogOpen(false)
       setStaffForm({ full_name: '', email: '', role: 'staff' })
     } catch (err) {
-      setToast(err instanceof Error ? err.message : 'تعذّرت الدعوة')
+      pushToast({ kind: 'danger', title: 'تعذّرت الدعوة', description: err instanceof Error ? err.message : undefined })
     } finally {
       setInvitingStaff(false)
-      setTimeout(() => setToast(null), 2500)
     }
   }
 
@@ -414,12 +408,6 @@ export function DashboardV2Settings() {
           {mfaError && <div style={{ fontSize: 12, color: 'var(--danger-500)' }}>{mfaError}</div>}
         </div>
       </Dialog>
-
-      {toast && (
-        <div style={{ position: 'fixed', bottom: 24, insetInlineStart: 24, zIndex: 100 }}>
-          <Toast tone="success" title={toast} onClose={() => setToast(null)} />
-        </div>
-      )}
     </div>
   )
 }
