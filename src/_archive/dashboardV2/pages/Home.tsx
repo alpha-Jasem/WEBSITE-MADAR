@@ -41,32 +41,63 @@ const TONE_BG: Record<BadgeTone, [string, string]> = {
 function KpiCard({ k, index = 0 }: { k: Kpi; index?: number }) {
   const [bg, fg] = TONE_BG[k.tone] || TONE_BG.brand
   return (
-    <Card emphasis={k.emphasis} glass glow interactive delay={index * 0.06} style={{ flex: 1, minWidth: 0 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)' }}>{k.label}</div>
-        <div style={{
-          width: 36, height: 36, borderRadius: 'var(--radius-full)', background: bg, color: fg,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-        }}>{k.icon}</div>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8, marginTop: 10 }}>
+    <Card emphasis={k.emphasis} glass glow interactive delay={index * 0.06} style={{ flex: 1, minWidth: 0, position: 'relative', overflow: 'hidden' }}>
+      <motion.div
+        aria-hidden
+        initial={{ opacity: 0, scale: 0.6 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.7, delay: index * 0.06 + 0.15, ease: [0.16, 1, 0.3, 1] }}
+        style={{
+          position: 'absolute', top: -34, insetInlineEnd: -30, width: 110, height: 110, borderRadius: '50%',
+          background: `radial-gradient(circle, ${fg} 0%, transparent 70%)`, opacity: 0.14, pointerEvents: 'none',
+        }}
+      />
+
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)' }}>{k.label}</div>
+          <motion.div
+            whileHover={{ rotate: -8, scale: 1.08 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+            style={{
+              width: 38, height: 38, borderRadius: 'var(--radius-md)',
+              background: `linear-gradient(145deg, ${bg}, color-mix(in srgb, ${bg} 55%, white))`,
+              color: fg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              boxShadow: `0 4px 14px color-mix(in srgb, ${fg} 28%, transparent)`,
+            }}
+          >{k.icon}</motion.div>
+        </div>
+
         <div style={{
           fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'var(--text-display-sm)',
+          fontVariantNumeric: 'tabular-nums', marginTop: 10,
           color: k.ready === false ? 'var(--text-tertiary)' : 'var(--text-primary)',
         }}>{k.numeric != null ? <CountUp value={k.numeric} suffix={k.suffix} /> : k.value}</div>
-        {k.trend && k.trend.length > 1 && <Sparkline data={k.trend} color={fg} />}
+
+        {k.delta && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: 'var(--text-caption)' }}>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 2, fontWeight: 700, padding: '2px 7px',
+              borderRadius: 'var(--radius-full)',
+              background: k.up ? 'var(--success-100)' : 'var(--danger-100)',
+              color: k.up ? 'var(--success-500)' : 'var(--danger-500)',
+            }}>
+              {k.up ? <ArrowUp size={11} /> : <ArrowDown size={11} />}{k.delta}
+            </span>
+            <span style={{ color: 'var(--text-tertiary)' }}>مقارنة بالأسبوع الماضي</span>
+          </div>
+        )}
+        {k.ready === false && (
+          <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 6 }}>
+            جاهزة لاستقبال البيانات
+          </div>
+        )}
+        {(!k.delta && k.ready !== false) && <div style={{ height: 22 }} />}
       </div>
-      {k.delta && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: 'var(--text-caption)' }}>
-          <span style={{ color: k.up ? 'var(--success-500)' : 'var(--danger-500)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 2 }}>
-            {k.up ? <ArrowUp size={12} /> : <ArrowDown size={12} />}{k.delta}
-          </span>
-          <span style={{ color: 'var(--text-tertiary)' }}>مقارنة بالأسبوع الماضي</span>
-        </div>
-      )}
-      {k.ready === false && (
-        <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 6 }}>
-          جاهزة لاستقبال البيانات
+
+      {k.trend && k.trend.length > 1 && (
+        <div style={{ position: 'absolute', insetInlineStart: 24, insetInlineEnd: 24, bottom: 0, height: 32, zIndex: 0, pointerEvents: 'none' }}>
+          <Sparkline data={k.trend} color={fg} variant="area" height={32} id={k.label} />
         </div>
       )}
     </Card>

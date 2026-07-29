@@ -279,24 +279,40 @@ export function TopProgressBar({ triggerKey }: { triggerKey: string }) {
 
 // ─── Sparkline ──────────────────────────────────────────────────────────────
 
-export function Sparkline({ data, width = 64, height = 24, color = 'var(--brand-500)' }: {
+export function Sparkline({ data, width = 64, height = 24, color = 'var(--brand-500)', variant = 'line', id }: {
   data: number[]
   width?: number
   height?: number
   color?: string
+  variant?: 'line' | 'area'
+  id?: string
 }) {
   if (data.length < 2) return null
   const max = Math.max(1, ...data)
   const min = Math.min(...data)
   const range = Math.max(1, max - min)
+  const pad = variant === 'area' ? 3 : 0
   const pts = data.map((v, i) => [
     (i / (data.length - 1)) * width,
-    height - ((v - min) / range) * height,
+    pad + (height - 2 * pad) - ((v - min) / range) * (height - 2 * pad),
   ])
   const path = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')
+  const gradId = `dv2-spark-${id ? hashStr(id) : Math.random().toString(36).slice(2)}`
+  const areaPath = variant === 'area'
+    ? `${path} L${pts[pts.length - 1][0].toFixed(1)},${height} L${pts[0][0].toFixed(1)},${height} Z`
+    : null
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ overflow: 'visible', flexShrink: 0 }}>
-      <path d={path} fill="none" stroke={color} strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" opacity={0.85} />
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" style={{ overflow: 'visible', flexShrink: 0, width: variant === 'area' ? '100%' : width }}>
+      {variant === 'area' && (
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" style={{ stopColor: color, stopOpacity: 0.28 }} />
+            <stop offset="100%" style={{ stopColor: color, stopOpacity: 0 }} />
+          </linearGradient>
+        </defs>
+      )}
+      {areaPath && <path d={areaPath} fill={`url(#${gradId})`} />}
+      <path d={path} fill="none" stroke={color} strokeWidth={variant === 'area' ? 2 : 1.75} strokeLinecap="round" strokeLinejoin="round" opacity={variant === 'area' ? 0.9 : 0.85} />
     </svg>
   )
 }
