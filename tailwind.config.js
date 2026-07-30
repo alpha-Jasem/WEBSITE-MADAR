@@ -48,6 +48,21 @@ export default {
           400: '#E4B86B',
           500: '#D4A853',
         },
+        // shadcn-style semantic aliases (kept additive so nothing existing
+        // that already relies on the literal color scales above changes)
+        'primary-foreground': '#FFFFFF',
+        secondary: '#D4A853',
+        'secondary-foreground': '#0D1B3E',
+        destructive: '#E0503F',
+        accent: '#00BFFF',
+        'accent-foreground': '#0D1B3E',
+        background: '#FFFFFF',
+        foreground: '#0D1B3E',
+        muted: '#EBF2FF',
+        'muted-foreground': '#3B5280',
+        border: '#E2EBF8',
+        input: '#E2EBF8',
+        ring: '#00BFFF',
       },
       fontFamily: {
         cairo: ['Alexandria', 'sans-serif'],

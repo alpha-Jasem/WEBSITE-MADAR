@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   CalendarCheck2, CalendarX2, Users, Wallet, ArrowUp, ArrowDown, Download,
   CalendarDays, MessageSquare, PhoneCall, MessageCircle, Star, FileSpreadsheet, Printer,
+  Plus, Settings as SettingsIcon,
 } from 'lucide-react'
 import { useClinicOS } from '@/context/ClinicOSContext'
 import {
@@ -12,6 +13,7 @@ import {
 import { exportRowsToExcel } from '@/lib/exportExcel'
 import { Card, Badge, Button, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
 import { CountUp, useToast, Avatar, Sparkline, LiveDot, Menu, KpiCardSkeleton } from '@/_archive/dashboardV2/components/uiExtras'
+import { Button as ShadButton, LiquidButton, MetalButton } from '@/components/ui/liquid-glass-button'
 import type { Appointment } from '@/types/clinicOS'
 
 type Period = 'أسبوعي' | 'شهري'
@@ -370,7 +372,7 @@ export function DashboardV2Home() {
             <CalendarDays size={15} />{weeklyLabel}
           </div>
           <Menu
-            trigger={<Button><Download size={15} /> تصدير تقرير</Button>}
+            trigger={<MetalButton type="button" variant="gold"><Download size={15} /> تصدير تقرير</MetalButton>}
             items={[
               { label: 'Excel — آخر أسبوع', icon: <FileSpreadsheet size={14} />, onClick: () => exportExcel('week') },
               { label: 'Excel — آخر شهر', icon: <FileSpreadsheet size={14} />, onClick: () => exportExcel('month') },
@@ -380,6 +382,23 @@ export function DashboardV2Home() {
             ]}
           />
         </div>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+        <LiquidButton
+          type="button"
+          size="sm"
+          onClick={() => navigate(`${base}/bookings?new=1`)}
+        >
+          <Plus size={16} /> حجز جديد
+        </LiquidButton>
+        <ShadButton
+          type="button"
+          variant="cool"
+          onClick={() => navigate(`${base}/settings`)}
+        >
+          <SettingsIcon size={15} /> الإعدادات
+        </ShadButton>
       </div>
 
       {appointmentsLoading ? <KpiCardSkeleton /> : (
