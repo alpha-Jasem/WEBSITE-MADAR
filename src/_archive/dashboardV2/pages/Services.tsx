@@ -4,7 +4,7 @@ import { useClinicOS } from '@/context/ClinicOSContext'
 import { useClinicServices, createService, updateService } from '@/lib/clinicOSQueries'
 import type { Service } from '@/types/clinicOS'
 import { Card, Badge, Button, Dialog, Input, Switch } from '@/_archive/dashboardV2/components/primitives'
-import { useToast, EmptyState, SkeletonRows } from '@/_archive/dashboardV2/components/uiExtras'
+import { useToast, EmptyState, SkeletonRows, GlowButton } from '@/_archive/dashboardV2/components/uiExtras'
 
 const EMPTY_FORM = { name: '', category: '', duration_minutes: '30', price: '', active: true, available_for_ai: true }
 const UNCATEGORIZED = 'خدمات أخرى'
@@ -85,7 +85,7 @@ export function DashboardV2Services() {
           </div>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>{rows.length} خدمة — تُستخدم بالحجوزات والإيرادات وخيارات الوكيل الذكي</div>
         </div>
-        <Button onClick={openNew}><Plus size={15} /> خدمة جديدة</Button>
+        <GlowButton onClick={openNew}><Plus size={15} /> خدمة جديدة</GlowButton>
       </div>
 
       {loading && <Card style={{ padding: 0 }}><SkeletonRows rows={5} columns={6} /></Card>}
