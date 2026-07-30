@@ -182,7 +182,8 @@ type ColorVariant =
   | "success"
   | "error"
   | "gold"
-  | "bronze";
+  | "bronze"
+  | "brand";
 
 interface MetalButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -240,6 +241,14 @@ const colorVariants: Record<
     button: "bg-gradient-to-b from-[#FFE3C9] to-[#A36F3D]",
     textColor: "text-[#FFF7F0]",
     textShadow: "[text-shadow:_0_-1px_0_rgb(124_45_18_/_100%)]",
+  },
+  // Madar brand (navy/sky) — matches the logo instead of a generic metal finish
+  brand: {
+    outer: "bg-gradient-to-b from-[#04091A] to-[#4DD6FF]",
+    inner: "bg-gradient-to-b from-[#E0F7FF] via-[#0D1B3E] to-[#B3EDFF]",
+    button: "bg-gradient-to-b from-[#19CCFF] to-[#0D1B3E]",
+    textColor: "text-white",
+    textShadow: "[text-shadow:_0_-1px_0_rgb(13_27_62_/_100%)]",
   },
 };
 

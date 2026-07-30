@@ -2,6 +2,7 @@ import { MessageCircle, Bell, Phone, Star, CalendarX2 } from 'lucide-react'
 import { useClinicOS } from '@/context/ClinicOSContext'
 import { useClinicReminderRules, toggleReminderRule } from '@/lib/clinicOSQueries'
 import { Card, Switch } from '@/_archive/dashboardV2/components/primitives'
+import { EmptyState, SkeletonRows } from '@/_archive/dashboardV2/components/uiExtras'
 
 const ICON_BY_KEY: Record<string, React.ReactNode> = {
   reminder_24h: <MessageCircle size={17} />,
@@ -13,7 +14,7 @@ const ICON_BY_KEY: Record<string, React.ReactNode> = {
 
 export function DashboardV2Reminders() {
   const { companyId, isDemo } = useClinicOS()
-  const { data: rules, refetch } = useClinicReminderRules(companyId, isDemo)
+  const { data: rules, loading, refetch } = useClinicReminderRules(companyId, isDemo)
 
   async function toggle(id: string, current: boolean) {
     if (isDemo) return
@@ -28,7 +29,8 @@ export function DashboardV2Reminders() {
         <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>قواعد التذكير الآلي عبر واتساب والمكالمات — محفوظة فعلياً بحسابك</div>
       </div>
       <Card style={{ padding: 0 }}>
-        {(rules || []).map((r, i) => (
+        {loading && <SkeletonRows rows={5} columns={2} />}
+        {!loading && (rules || []).map((r, i) => (
           <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 20px', borderBottom: i < (rules || []).length - 1 ? '1px solid var(--border-default)' : 'none' }}>
             <div style={{
               width: 38, height: 38, borderRadius: 'var(--radius-full)', background: 'var(--brand-100)', color: 'var(--brand-600)',
@@ -38,7 +40,9 @@ export function DashboardV2Reminders() {
             <Switch checked={r.enabled} onChange={() => toggle(r.id, r.enabled)} />
           </div>
         ))}
-        {(rules || []).length === 0 && <div style={{ padding: 30, textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>جارِ تجهيز القواعد...</div>}
+        {!loading && (rules || []).length === 0 && (
+          <EmptyState icon={<Bell size={20} />} title="جارِ تجهيز القواعد" description="قواعد التذكير الآلي تُفعّل تلقائياً مع حسابك — راجع الصفحة بعد قليل." />
+        )}
       </Card>
     </div>
   )

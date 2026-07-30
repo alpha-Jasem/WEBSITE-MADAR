@@ -4,6 +4,7 @@ import { useClinicOS } from '@/context/ClinicOSContext'
 import { CLINIC_PLANS, getOverallUsage, getUsageMetrics, usagePercentage } from '@/lib/clinicOSProduct'
 import { supabase } from '@/lib/supabase'
 import { Card, Badge } from '@/_archive/dashboardV2/components/primitives'
+import { Skeleton } from '@/_archive/dashboardV2/components/uiExtras'
 
 const nf = new Intl.NumberFormat('ar-SA')
 const POLL_MS = 60_000
@@ -98,7 +99,22 @@ export function DashboardV2MadarAgentUsage() {
   const combinedPercent = elevenlabsPercent != null ? Math.max(overall, elevenlabsPercent) : overall
 
   if (accountLoading) {
-    return <Card><div style={{ padding: 30, textAlign: 'center', color: 'var(--text-tertiary)' }}>جاري تحميل بيانات الاستخدام...</div></Card>
+    return (
+      <div className="dv2-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 16 }}>
+        <Card style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+          <Skeleton width="60%" height={14} />
+          <Skeleton width={180} height={180} radius="50%" />
+        </Card>
+        <Card>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} style={{ marginBottom: 14 }}>
+              <Skeleton width="40%" height={13} style={{ marginBottom: 8 }} />
+              <Skeleton width="100%" height={8} radius="var(--radius-full)" />
+            </div>
+          ))}
+        </Card>
+      </div>
+    )
   }
 
   return (

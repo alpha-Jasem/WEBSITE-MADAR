@@ -8,7 +8,7 @@ import {
 } from '@/lib/clinicOSQueries'
 import type { GoogleReview, Branch } from '@/types/clinicOS'
 import { Card, Badge, Button, Dialog, Input, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
-import { useToast } from '@/_archive/dashboardV2/components/uiExtras'
+import { useToast, EmptyState, SkeletonRows } from '@/_archive/dashboardV2/components/uiExtras'
 
 function Stars({ n }: { n: number }) {
   return (
@@ -23,7 +23,7 @@ const STATUS_TONE: Record<string, BadgeTone> = { pending: 'warning', auto_replie
 
 export function DashboardV2Reviews() {
   const { companyId, isDemo } = useClinicOS()
-  const { data: branches, refetch: refetchBranches } = useClinicBranches(companyId, isDemo)
+  const { data: branches, loading: branchesLoading, refetch: refetchBranches } = useClinicBranches(companyId, isDemo)
   const { data: reviews, refetch: refetchReviews } = useClinicGoogleReviews(companyId, isDemo)
   const { data: tickets } = useClinicSupportTickets(companyId, isDemo)
 
@@ -105,6 +105,19 @@ export function DashboardV2Reviews() {
     } catch (e) {
       pushToast({ kind: 'danger', title: 'تعذّر إرسال الرد', description: e instanceof Error ? e.message : undefined })
     }
+  }
+
+  if (branchesLoading) {
+    return (
+      <div>
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 'var(--text-heading-lg)', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Star size={20} style={{ color: 'var(--warning-500)' }} /> AI Google Reviews
+          </div>
+        </div>
+        <Card style={{ padding: 0 }}><SkeletonRows rows={4} columns={5} /></Card>
+      </div>
+    )
   }
 
   if (branchList.length === 0) {
@@ -254,7 +267,7 @@ export function DashboardV2Reviews() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {branchReviews.length === 0 && (
-          <Card><div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>لا توجد تقييمات لهذا الفرع بعد</div></Card>
+          <Card><EmptyState icon={<Star size={20} />} title="لا توجد تقييمات لهذا الفرع بعد" description="ستظهر تقييمات Google هنا فور وصولها، مع رد مقترح بالذكاء الاصطناعي." /></Card>
         )}
         {branchReviews.map((r) => {
           const ticket = ticketByReviewId[r.id]

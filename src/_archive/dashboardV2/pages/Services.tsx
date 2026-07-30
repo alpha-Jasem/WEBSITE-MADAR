@@ -4,14 +4,14 @@ import { useClinicOS } from '@/context/ClinicOSContext'
 import { useClinicServices, createService, updateService } from '@/lib/clinicOSQueries'
 import type { Service } from '@/types/clinicOS'
 import { Card, Badge, Button, Dialog, Input, Switch } from '@/_archive/dashboardV2/components/primitives'
-import { useToast } from '@/_archive/dashboardV2/components/uiExtras'
+import { useToast, EmptyState, SkeletonRows } from '@/_archive/dashboardV2/components/uiExtras'
 
 const EMPTY_FORM = { name: '', category: '', duration_minutes: '30', price: '', active: true, available_for_ai: true }
 const UNCATEGORIZED = 'خدمات أخرى'
 
 export function DashboardV2Services() {
   const { companyId, isDemo } = useClinicOS()
-  const { data: services, refetch } = useClinicServices(companyId, isDemo)
+  const { data: services, loading, refetch } = useClinicServices(companyId, isDemo)
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Service | null>(null)
@@ -88,12 +88,19 @@ export function DashboardV2Services() {
         <Button onClick={openNew}><Plus size={15} /> خدمة جديدة</Button>
       </div>
 
-      {rows.length === 0 && (
-        <Card><div style={{ padding: 40, textAlign: 'center', color: 'var(--text-tertiary)' }}>لا توجد خدمات بعد — أضف أول خدمة لعملك</div></Card>
+      {loading && <Card style={{ padding: 0 }}><SkeletonRows rows={5} columns={6} /></Card>}
+
+      {!loading && rows.length === 0 && (
+        <Card>
+          <EmptyState
+            icon={<Wrench size={20} />} title="لا توجد خدمات بعد" description="أضف أول خدمة لعملك ليبدأ العملاء بحجزها والوكيل الصوتي بعرضها."
+            action={<Button size="sm" onClick={openNew}><Plus size={14} /> خدمة جديدة</Button>}
+          />
+        </Card>
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {groups.map(([category, items]) => {
+        {!loading && groups.map(([category, items]) => {
           const isOpen = !collapsed[category]
           const aiCount = items.filter((s) => s.available_for_ai).length
           return (

@@ -3,6 +3,7 @@ import { useClinicOS } from '@/context/ClinicOSContext'
 import { useClinicIntegrations, toggleIntegration } from '@/lib/clinicOSQueries'
 import type { IntegrationStatus } from '@/types/clinicOS'
 import { Card, Badge, Button } from '@/_archive/dashboardV2/components/primitives'
+import { Skeleton } from '@/_archive/dashboardV2/components/uiExtras'
 
 const ICON_BY_PROVIDER: Record<string, React.ReactNode> = {
   whatsapp: <MessageCircle size={19} />,
@@ -34,7 +35,7 @@ const OAUTH_READY: Record<string, boolean> = {}
 
 export function DashboardV2Integrations() {
   const { companyId, isDemo } = useClinicOS()
-  const { data: integrations, refetch } = useClinicIntegrations(companyId, isDemo)
+  const { data: integrations, loading, refetch } = useClinicIntegrations(companyId, isDemo)
 
   async function toggle(id: string, current: IntegrationStatus) {
     if (isDemo) return
@@ -49,7 +50,19 @@ export function DashboardV2Integrations() {
         <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>اربط قنوات التواصل والأدوات الخارجية بمدار — حالة الاتصال محفوظة فعلياً بحسابك</div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))', gap: 16 }}>
-        {(integrations || []).map((i, idx) => {
+        {loading && Array.from({ length: 4 }).map((_, i) => (
+          <Card key={i}>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <Skeleton width={42} height={42} radius="var(--radius-md)" />
+              <div style={{ flex: 1 }}>
+                <Skeleton width="60%" height={14} style={{ marginBottom: 8 }} />
+                <Skeleton width="85%" height={11} />
+              </div>
+            </div>
+            <Skeleton width={100} height={30} radius="var(--radius-md)" style={{ marginTop: 14 }} />
+          </Card>
+        ))}
+        {!loading && (integrations || []).map((i, idx) => {
           const color = COLOR_BY_PROVIDER[i.provider] || { bg: 'var(--brand-100)', fg: 'var(--brand-600)' }
           const oauthReady = OAUTH_READY[i.provider]
           return (
@@ -78,7 +91,7 @@ export function DashboardV2Integrations() {
             </Card>
           )
         })}
-        {(integrations || []).length === 0 && <div style={{ padding: 30, textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>جارِ تجهيز التكاملات...</div>}
+        {!loading && (integrations || []).length === 0 && <div style={{ padding: 30, textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>جارِ تجهيز التكاملات...</div>}
       </div>
     </div>
   )

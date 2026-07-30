@@ -51,7 +51,7 @@ export default {
         // shadcn-style semantic aliases (kept additive so nothing existing
         // that already relies on the literal color scales above changes)
         'primary-foreground': '#FFFFFF',
-        secondary: '#D4A853',
+        secondary: '#00BFFF',
         'secondary-foreground': '#0D1B3E',
         destructive: '#E0503F',
         accent: '#00BFFF',

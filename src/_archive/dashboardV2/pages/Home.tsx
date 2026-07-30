@@ -372,7 +372,7 @@ export function DashboardV2Home() {
             <CalendarDays size={15} />{weeklyLabel}
           </div>
           <Menu
-            trigger={<MetalButton type="button" variant="gold"><Download size={15} /> تصدير تقرير</MetalButton>}
+            trigger={<MetalButton type="button" variant="brand"><Download size={15} /> تصدير تقرير</MetalButton>}
             items={[
               { label: 'Excel — آخر أسبوع', icon: <FileSpreadsheet size={14} />, onClick: () => exportExcel('week') },
               { label: 'Excel — آخر شهر', icon: <FileSpreadsheet size={14} />, onClick: () => exportExcel('month') },

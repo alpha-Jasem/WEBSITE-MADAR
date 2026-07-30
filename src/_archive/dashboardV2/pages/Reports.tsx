@@ -3,7 +3,10 @@ import { Download } from 'lucide-react'
 import { useClinicOS } from '@/context/ClinicOSContext'
 import { useClinicAppointments, useClinicAICalls, useClinicMessages } from '@/lib/clinicOSQueries'
 import { exportRowsToExcel } from '@/lib/exportExcel'
-import { Card, Button } from '@/_archive/dashboardV2/components/primitives'
+import { Card } from '@/_archive/dashboardV2/components/primitives'
+import { EmptyState, Skeleton } from '@/_archive/dashboardV2/components/uiExtras'
+import { MetalButton } from '@/components/ui/liquid-glass-button'
+import { BarChart3 } from 'lucide-react'
 
 function Bar({ label, value, max }: { label: string; value: number; max: number }) {
   return (
@@ -13,6 +16,20 @@ function Bar({ label, value, max }: { label: string; value: number; max: number 
         <div style={{ width: (max > 0 ? value / max * 100 : 0) + '%', height: '100%', background: 'var(--brand-500)', borderRadius: 'var(--radius-full)' }} />
       </div>
       <div style={{ width: 60, fontSize: 13, fontWeight: 600, textAlign: 'left' }}>{value.toLocaleString('en-US')}</div>
+    </div>
+  )
+}
+
+function BarsSkeleton({ rows = 4 }: { rows?: number }) {
+  return (
+    <div>
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+          <Skeleton width={150} height={13} />
+          <Skeleton width="100%" height={10} radius="var(--radius-full)" style={{ flex: 1 }} />
+          <Skeleton width={60} height={13} />
+        </div>
+      ))}
     </div>
   )
 }
@@ -28,9 +45,10 @@ const SOURCE_LABELS: Record<string, string> = {
 
 export function DashboardV2Reports() {
   const { companyId, isDemo } = useClinicOS()
-  const { data: appointments } = useClinicAppointments(companyId, undefined, isDemo)
-  const { data: aiCalls } = useClinicAICalls(companyId, isDemo)
-  const { data: messages } = useClinicMessages(companyId, isDemo)
+  const { data: appointments, loading: apptsLoading } = useClinicAppointments(companyId, undefined, isDemo)
+  const { data: aiCalls, loading: callsLoading } = useClinicAICalls(companyId, isDemo)
+  const { data: messages, loading: msgsLoading } = useClinicMessages(companyId, isDemo)
+  const loading = apptsLoading || callsLoading || msgsLoading
 
   const appts = appointments || []
   const calls = aiCalls || []
@@ -83,22 +101,30 @@ export function DashboardV2Reports() {
           <div style={{ fontSize: 'var(--text-heading-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>التقارير والتحليلات</div>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>نظرة شاملة على كل بيانات {isDemo ? 'العرض التجريبي' : 'حسابك'}</div>
         </div>
-        <Button variant="secondary" onClick={exportReport}><Download size={15} /> تصدير Excel</Button>
+        <MetalButton type="button" variant="brand" onClick={exportReport}><Download size={15} /> تصدير Excel</MetalButton>
       </div>
       <div className="dv2-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <Card>
           <div style={{ fontWeight: 700, marginBottom: 14 }}>مسار المحادثات إلى الحجوزات</div>
-          {funnel.map((f, i) => <Bar key={i} label={f.label} value={f.value} max={maxFunnel} />)}
+          {loading ? <BarsSkeleton /> : funnel.map((f, i) => <Bar key={i} label={f.label} value={f.value} max={maxFunnel} />)}
         </Card>
         <Card>
           <div style={{ fontWeight: 700, marginBottom: 14 }}>أعلى الخدمات حجوزاً</div>
-          {services.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>لا توجد بيانات بعد</div>}
-          {services.map(([label, value]) => <Bar key={label} label={label} value={value} max={maxService} />)}
+          {loading ? <BarsSkeleton rows={5} /> : (
+            <>
+              {services.length === 0 && (
+                <EmptyState icon={<BarChart3 size={20} />} title="لا توجد بيانات بعد" description="ستظهر أعلى الخدمات حجزاً هنا بمجرد وصول أول حجز." />
+              )}
+              {services.map(([label, value]) => <Bar key={label} label={label} value={value} max={maxService} />)}
+            </>
+          )}
         </Card>
       </div>
       <Card style={{ marginTop: 16 }}>
         <div style={{ fontWeight: 700, marginBottom: 14 }}>مصادر الحجوزات</div>
-        {sources.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>لا توجد بيانات بعد</div>}
+        {!loading && sources.length === 0 && (
+          <EmptyState icon={<BarChart3 size={20} />} title="لا توجد بيانات بعد" description="ستظهر توزيعة مصادر الحجوزات هنا بمجرد وصول أول حجز." />
+        )}
         <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
           {sources.map((s, i) => (
             <div key={i} style={{ flex: 1, minWidth: 140 }}>

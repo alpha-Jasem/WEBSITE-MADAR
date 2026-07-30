@@ -4,6 +4,7 @@ import { History, UserCog, CalendarPlus, Wrench, ShieldCheck, Search } from 'luc
 import { useClinicOS } from '@/context/ClinicOSContext'
 import { useClinicAuditLog } from '@/lib/clinicOSQueries'
 import { Card, Badge, Input, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
+import { EmptyState, SkeletonRows } from '@/_archive/dashboardV2/components/uiExtras'
 
 const ICON_BY_ACTION: Record<string, React.ReactNode> = {
   'appointment.created': <CalendarPlus size={15} />,
@@ -32,7 +33,7 @@ function fmtDate(iso: string) {
 
 export function DashboardV2AuditLog() {
   const { companyId, isDemo } = useClinicOS()
-  const { data: logs } = useClinicAuditLog(companyId, isDemo)
+  const { data: logs, loading } = useClinicAuditLog(companyId, isDemo)
   const [query, setQuery] = useState('')
 
   const rows = logs || []
@@ -54,9 +55,12 @@ export function DashboardV2AuditLog() {
         <Input placeholder="بحث بالحدث..." icon={<Search size={15} />} value={query} onChange={(e) => setQuery(e.target.value)} style={{ width: 220 }} />
       </div>
 
-      <Card style={{ padding: '20px 24px' }}>
-        {shown.length === 0 && <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>لا توجد أحداث مطابقة</div>}
-        {shown.length > 0 && (
+      <Card style={{ padding: loading ? 0 : '20px 24px' }}>
+        {loading && <SkeletonRows rows={6} columns={3} />}
+        {!loading && shown.length === 0 && (
+          <EmptyState icon={<History size={20} />} title="لا توجد أحداث مطابقة" description="جرّب تغيير كلمة البحث، أو ارجع لاحقاً بعد أول نشاط على حسابك." />
+        )}
+        {!loading && shown.length > 0 && (
           <div style={{ position: 'relative' }}>
             <div style={{ position: 'absolute', top: 16, bottom: 16, insetInlineStart: 15, width: 2, background: 'var(--border-default)' }} />
             {shown.map((log, i) => (

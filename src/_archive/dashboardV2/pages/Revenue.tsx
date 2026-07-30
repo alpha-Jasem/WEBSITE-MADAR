@@ -3,7 +3,10 @@ import { Download } from 'lucide-react'
 import { useClinicOS } from '@/context/ClinicOSContext'
 import { useClinicAppointments, useClinicServices } from '@/lib/clinicOSQueries'
 import { exportRowsToExcel } from '@/lib/exportExcel'
-import { Card, Button } from '@/_archive/dashboardV2/components/primitives'
+import { Card } from '@/_archive/dashboardV2/components/primitives'
+import { EmptyState, Skeleton } from '@/_archive/dashboardV2/components/uiExtras'
+import { MetalButton } from '@/components/ui/liquid-glass-button'
+import { Wallet } from 'lucide-react'
 
 function fmt(n: number) {
   return n.toLocaleString('en-US')
@@ -13,8 +16,9 @@ const MONTH_NAMES = ['يناير', 'فبراير', 'مارس', 'أبريل', 'م
 
 export function DashboardV2Revenue() {
   const { companyId, isDemo } = useClinicOS()
-  const { data: appointments } = useClinicAppointments(companyId, undefined, isDemo)
-  const { data: services } = useClinicServices(companyId, isDemo)
+  const { data: appointments, loading: apptsLoading } = useClinicAppointments(companyId, undefined, isDemo)
+  const { data: services, loading: servicesLoading } = useClinicServices(companyId, isDemo)
+  const loading = apptsLoading || servicesLoading
 
   const priceByServiceId = useMemo(() => {
     const map: Record<string, number> = {}
@@ -79,12 +83,22 @@ export function DashboardV2Revenue() {
               : 'محسوبة تلقائياً من أسعار الخدمات × الحجوزات المكتملة — أضف أسعاراً لخدماتك لتفعيلها'}
           </div>
         </div>
-        {hasPricing && <Button variant="secondary" onClick={exportRevenue}><Download size={15} /> تصدير Excel</Button>}
+        {hasPricing && <MetalButton type="button" variant="brand" onClick={exportRevenue}><Download size={15} /> تصدير Excel</MetalButton>}
       </div>
 
       <Card style={{ marginBottom: 16 }}>
         <div style={{ fontWeight: 700, marginBottom: 16 }}>الإيرادات الشهرية</div>
-        {hasPricing ? (
+        {loading ? (
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 20, height: 180 }}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                <Skeleton width={36} height={12} />
+                <Skeleton width="100%" height={90} radius="var(--radius-sm)" />
+                <Skeleton width={40} height={11} />
+              </div>
+            ))}
+          </div>
+        ) : hasPricing ? (
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 20, height: 180 }}>
             {revenueByMonth.map((r, i) => (
               <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
@@ -98,18 +112,27 @@ export function DashboardV2Revenue() {
             ))}
           </div>
         ) : (
-          <div style={{ padding: '30px 0', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>
-            جاهزة لاستقبال البيانات — لا توجد أسعار خدمات مضافة بعد
-          </div>
+          <EmptyState icon={<Wallet size={20} />} title="جاهزة لاستقبال البيانات" description="لا توجد أسعار خدمات مضافة بعد — أضف أسعاراً لخدماتك من صفحة الخدمات لتفعيل هذا التقرير." />
         )}
       </Card>
 
       <Card>
         <div style={{ fontWeight: 700, marginBottom: 14 }}>الإيرادات حسب الخدمة</div>
-        {revenueByService.length === 0 && (
-          <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>لا توجد بيانات بعد</div>
+        {loading && (
+          <div>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                <Skeleton width={140} height={13} />
+                <Skeleton width="100%" height={8} radius="var(--radius-full)" style={{ flex: 1 }} />
+                <Skeleton width={90} height={13} />
+              </div>
+            ))}
+          </div>
         )}
-        {revenueByService.map(([label, value]) => (
+        {!loading && revenueByService.length === 0 && (
+          <EmptyState icon={<Wallet size={20} />} title="لا توجد بيانات بعد" description="ستظهر الإيرادات حسب الخدمة هنا بمجرد اكتمال أول حجز مسعّر." />
+        )}
+        {!loading && revenueByService.map(([label, value]) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
             <div style={{ width: 140, fontSize: 13, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</div>
             <div style={{ flex: 1, height: 8, background: 'var(--slate-100)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
