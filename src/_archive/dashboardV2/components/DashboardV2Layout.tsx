@@ -4,7 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, CalendarDays, Users, MessageSquare, Star, BarChart3,
   Wallet, BellRing, Plug, Settings, ChevronDown, LogOut, CreditCard, Menu, X,
-  Wrench, History, Sun, Moon, AlertTriangle, ShieldCheck, ChevronsRight, ChevronsLeft, Plus, CalendarCheck2,
+  Wrench, History, Sun, Moon, AlertTriangle, ChevronsRight, ChevronsLeft, Plus, CalendarCheck2, Ticket,
+  PhoneCall, MessageCircle, Bot, SlidersHorizontal, LayoutGrid, PhoneIncoming, PhoneOutgoing, ClipboardList,
+  ShieldCheck,
 } from 'lucide-react'
 import { useClinicOS } from '@/context/ClinicOSContext'
 import { useClinicSupportTickets, useClinicTodayAppointments } from '@/lib/clinicOSQueries'
@@ -32,10 +34,9 @@ interface NavItem {
 export function DashboardV2Layout() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { companyId, clinicName, userName, isDemo, accountError, packageType, setPackageType, refreshAccount, logout } = useClinicOS()
+  const { companyId, clinicName, userName, isDemo, accountError, refreshAccount, logout } = useClinicOS()
   const [profileOpen, setProfileOpen] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
-  const [hoverRect, setHoverRect] = useState<{ top: number; height: number } | null>(null)
   const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem(THEME_KEY) as 'dark') || 'light')
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COLLAPSE_KEY) === '1')
   const { data: tickets } = useClinicSupportTickets(companyId, isDemo)
@@ -58,32 +59,56 @@ export function DashboardV2Layout() {
   }, [])
 
   const base = isDemo ? '/demo-review' : '/clinic-os/dashboard'
-  const NAV: NavItem[] = [
-    { label: 'الرئيسية', path: base, icon: <LayoutDashboard size={17} /> },
-    { label: 'الحجوزات', path: `${base}/bookings`, icon: <CalendarDays size={17} /> },
-    { label: 'العملاء', path: `${base}/patients`, icon: <Users size={17} /> },
-    { label: 'المحادثات', path: `${base}/conversations`, icon: <MessageSquare size={17} /> },
-    { label: 'AI Google Reviews', path: `${base}/reviews`, icon: <Star size={17} />, badge: openTicketCount || undefined },
-    { label: 'الخدمات', path: `${base}/services`, icon: <Wrench size={17} /> },
-    { label: 'التقارير والتحليلات', path: `${base}/reports`, icon: <BarChart3 size={17} /> },
-    { label: 'الإيرادات', path: `${base}/revenue`, icon: <Wallet size={17} /> },
-    { label: 'Madar Agent Usage', path: `${base}/plan-usage`, icon: <CreditCard size={17} /> },
-    { label: 'التذكيرات', path: `${base}/reminders`, icon: <BellRing size={17} /> },
-    { label: 'التكاملات', path: `${base}/integrations`, icon: <Plug size={17} /> },
-    { label: 'سجل التدقيق', path: `${base}/audit-log`, icon: <History size={17} /> },
-    { label: 'الإعدادات', path: `${base}/settings`, icon: <Settings size={17} /> },
+  const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
+    { title: '', items: [
+      { label: 'الرئيسية', path: base, icon: <LayoutDashboard size={17} /> },
+    ] },
+    { title: 'نظرة عامة', items: [
+      { label: 'تحليلات المكالمات', path: `${base}/calls-analytics`, icon: <PhoneCall size={17} /> },
+      { label: 'تحليلات واتساب', path: `${base}/whatsapp-analytics`, icon: <MessageCircle size={17} /> },
+    ] },
+    { title: 'البناء', items: [
+      { label: 'الوكلاء', path: `${base}/agents`, icon: <Bot size={17} /> },
+      { label: 'الأدوات', path: `${base}/tools`, icon: <SlidersHorizontal size={17} /> },
+      { label: 'مجموعات التحليل', path: `${base}/analysis-groups`, icon: <LayoutGrid size={17} /> },
+      { label: 'المتابعات', path: `${base}/reminders`, icon: <BellRing size={17} /> },
+    ] },
+    { title: 'القنوات', items: [
+      { label: 'الخدمات الواردة', path: `${base}/inbound-services`, icon: <PhoneIncoming size={17} /> },
+      { label: 'الخدمات الصادرة', path: `${base}/outbound-services`, icon: <PhoneOutgoing size={17} /> },
+    ] },
+    { title: 'التفاعل', items: [
+      { label: 'الحجوزات', path: `${base}/bookings`, icon: <CalendarDays size={17} /> },
+      { label: 'العملاء', path: `${base}/patients`, icon: <Users size={17} /> },
+      { label: 'المحادثات', path: `${base}/conversations`, icon: <MessageSquare size={17} /> },
+      { label: 'AI Google Reviews', path: `${base}/reviews`, icon: <Star size={17} /> },
+      { label: 'سجل المكالمات', path: `${base}/call-logs`, icon: <ClipboardList size={17} /> },
+      { label: 'التذاكر', path: `${base}/tickets`, icon: <Ticket size={17} />, badge: openTicketCount || undefined },
+    ] },
+    { title: 'الأعمال', items: [
+      { label: 'الخدمات', path: `${base}/services`, icon: <Wrench size={17} /> },
+      { label: 'التقارير والتحليلات', path: `${base}/reports`, icon: <BarChart3 size={17} /> },
+      { label: 'الإيرادات', path: `${base}/revenue`, icon: <Wallet size={17} /> },
+    ] },
+    { title: 'النظام', items: [
+      { label: 'Madar Agent Usage', path: `${base}/plan-usage`, icon: <CreditCard size={17} /> },
+      { label: 'التكاملات', path: `${base}/integrations`, icon: <Plug size={17} /> },
+      { label: 'سجل التدقيق', path: `${base}/audit-log`, icon: <History size={17} /> },
+      { label: 'الإعدادات', path: `${base}/settings`, icon: <Settings size={17} /> },
+    ] },
   ]
+  const NAV: NavItem[] = NAV_GROUPS.flatMap((g) => g.items)
 
   return (
     <ToastProvider>
-    <div className="dv2-scope" dir="rtl" data-theme={theme} style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+    <div className="dv2-scope" dir="rtl" data-theme={theme} style={{ display: 'flex', flexDirection: 'row-reverse', height: '100vh', overflow: 'hidden' }}>
       <style>{`
         .dv2-hamburger { display: none; }
         .dv2-backdrop { display: none; }
         @media (max-width: 900px) {
-          .dv2-sidebar { position: fixed !important; inset-inline-start: 0; top: 0; bottom: 0; z-index: 1300;
-            transition: transform .25s var(--ease-out); transform: translateX(100%); }
-          [dir="rtl"] .dv2-sidebar { transform: translateX(100%); }
+          .dv2-sidebar { position: fixed !important; inset-inline-end: 0; top: 0; bottom: 0; z-index: 1300;
+            transition: transform .25s var(--ease-out); transform: translateX(-100%); }
+          [dir="rtl"] .dv2-sidebar { transform: translateX(-100%); }
           .dv2-sidebar.open { transform: translateX(0) !important; }
           .dv2-backdrop.open { display: block; position: fixed; inset: 0; background: rgba(4,9,26,.5); z-index: 1200; }
           .dv2-hamburger { display: flex !important; }
@@ -92,149 +117,74 @@ export function DashboardV2Layout() {
           .dv2-main { padding: 14px !important; }
           .dv2-responsive-grid { grid-template-columns: 1fr !important; }
           .dv2-responsive-grid-2 { grid-template-columns: 1fr 1fr !important; }
+          .dv2-kpi-hero-grid { grid-template-columns: 1fr !important; }
           .dv2-desktop-only { display: none !important; }
         }
-        .dv2-nav-highlight {
-          position: absolute; inset-inline-start: 0; inset-inline-end: 0;
-          border-radius: var(--radius-md);
-          background: linear-gradient(90deg, rgba(0,191,255,.12), rgba(0,191,255,.04));
-          border: 1px solid rgba(255,255,255,.08);
-          box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
-          pointer-events: none;
-          transition: top 220ms cubic-bezier(.22,1,.36,1), height 220ms cubic-bezier(.22,1,.36,1), opacity 160ms ease;
-          opacity: 0;
-        }
-        .dv2-nav-highlight.visible { opacity: 1; }
-        .dv2-nav-item { position: relative; transition: color 150ms ease, transform 150ms ease; }
-        .dv2-nav-item:hover { color: #fff !important; transform: translateX(-2px); }
-        [dir="rtl"] .dv2-nav-item:hover { transform: translateX(2px); }
-        .dv2-nav-item .dv2-nav-icon { transition: transform 150ms ease; }
-        .dv2-nav-item:hover .dv2-nav-icon { transform: scale(1.08); }
+        .dv2-nav-item { position: relative; transition: background-color 150ms ease, color 150ms ease; }
+        .dv2-nav-item:hover { background: rgba(229,229,229,.7) !important; color: #171717 !important; }
         @media (prefers-reduced-motion: reduce) {
-          .dv2-nav-highlight, .dv2-nav-item, .dv2-nav-item .dv2-nav-icon { transition: none; }
+          .dv2-nav-item { transition: none; }
         }
         .dv2-sidebar-glass {
           position: relative;
-          background:
-            radial-gradient(120% 60% at 0% 0%, rgba(255,255,255,.10) 0%, rgba(255,255,255,0) 55%),
-            linear-gradient(165deg, #1A3060 0%, #0D1B3E 45%, #04091A 100%);
-          backdrop-filter: blur(22px) saturate(160%);
-          -webkit-backdrop-filter: blur(22px) saturate(160%);
-          border-inline-end: 1px solid rgba(255,255,255,.08);
-          box-shadow: 4px 0 24px rgba(4,9,26,.20);
-        }
-        .dv2-sidebar-glass::before {
-          content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
-          background: linear-gradient(180deg, rgba(255,255,255,.06) 0%, rgba(255,255,255,0) 18%);
+          background: #ffffff;
+          border-inline-start: 1px solid var(--border-default);
+          box-shadow: -4px 0 24px rgba(13,27,62,.05);
         }
         .dv2-sidebar-glass > * { position: relative; z-index: 1; }
       `}</style>
       {mobileNavOpen && <div className="dv2-backdrop open" onClick={() => setMobileNavOpen(false)} />}
       <nav className={`dv2-sidebar dv2-sidebar-glass${mobileNavOpen ? ' open' : ''}`} style={{
-        width: collapsed ? 76 : 240, height: '100%', display: 'flex',
+        width: collapsed ? 76 : 264, height: '100%', display: 'flex',
         flexDirection: 'column', padding: '20px 14px', boxSizing: 'border-box',
-        fontFamily: 'var(--font-body)', color: '#fff', flexShrink: 0,
+        fontFamily: 'var(--font-body)', color: 'var(--text-primary)', flexShrink: 0,
         transition: 'width 200ms var(--ease-out, ease)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', padding: '0 8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img src="/logo-main.png" alt="مدار" style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 'var(--radius-md)', flexShrink: 0 }} />
-            {!collapsed && <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16 }}>مدار</div>}
+            <img src="/logo-main.png" alt="مدار" style={{ width: 24, height: 24, objectFit: 'contain', borderRadius: 'var(--radius-sm)', flexShrink: 0 }} />
+            {!collapsed && (
+              <div>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, lineHeight: 1.2 }}>مدار</div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: '#737373', letterSpacing: '.18em', textTransform: 'uppercase' }}>لوحة العيادة</div>
+              </div>
+            )}
           </div>
-          <span className="dv2-hamburger" onClick={() => setMobileNavOpen(false)} style={{ cursor: 'pointer', color: 'rgba(255,255,255,.7)' }}>
+          <span className="dv2-hamburger" onClick={() => setMobileNavOpen(false)} style={{ cursor: 'pointer', color: 'var(--text-tertiary)' }}>
             <X size={20} />
           </span>
         </div>
 
         <div
-          style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 2, marginTop: 24, flex: 1, overflowY: 'auto' }}
-          onMouseLeave={() => setHoverRect(null)}
-        >
-          <div
-            className={`dv2-nav-highlight${hoverRect ? ' visible' : ''}`}
-            style={{ top: hoverRect?.top ?? 0, height: hoverRect?.height ?? 0 }}
-          />
-          {NAV.map((item) => {
-            const active = location.pathname === item.path
-            const row = (
-              <div
-                key={item.path}
-                className="dv2-nav-item"
-                onClick={() => navigate(item.path)}
-                onMouseEnter={(e) => setHoverRect({ top: e.currentTarget.offsetTop, height: e.currentTarget.offsetHeight })}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 10, padding: collapsed ? '10px' : '10px 12px',
-                  justifyContent: collapsed ? 'center' : 'flex-start',
-                  borderRadius: 'var(--radius-md)', cursor: 'pointer',
-                  fontSize: 'var(--text-body-sm)', fontWeight: 600,
-                  color: active ? '#fff' : 'rgba(255,255,255,.65)',
-                }}
-              >
-                {active && (
-                  <motion.div
-                    layoutId="dv2-nav-active-pill"
-                    transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                    style={{
-                      position: 'absolute', inset: 0, borderRadius: 'var(--radius-md)',
-                      background: 'linear-gradient(90deg, rgba(0,191,255,.24), rgba(0,191,255,.07))',
-                      border: '1px solid rgba(0,191,255,.28)',
-                      boxShadow: '0 2px 10px rgba(0,191,255,.18)',
-                    }}
-                  />
-                )}
-                <span className="dv2-nav-icon" style={{ display: 'flex' }}>{item.icon}</span>
-                {!collapsed && <span style={{ flex: 1 }}>{item.label}</span>}
-                {!collapsed && item.badge != null && (
-                  <span style={{
-                    background: 'var(--danger-500)', color: '#fff', borderRadius: 'var(--radius-full)',
-                    fontSize: 10, fontWeight: 700, padding: '1px 6px',
-                  }}>{item.badge}</span>
-                )}
-              </div>
-            )
-            return collapsed ? <Tooltip key={item.path} label={item.label} side="bottom">{row}</Tooltip> : row
-          })}
-        </div>
-
-        <span
-          className="dv2-desktop-only"
-          onClick={() => setCollapsed((v) => !v)}
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '8px', marginBottom: 10,
-            borderRadius: 'var(--radius-md)', cursor: 'pointer', color: 'rgba(255,255,255,.5)', fontSize: 11.5,
-          }}
-        >
-          {collapsed ? <ChevronsLeft size={15} /> : <><ChevronsRight size={15} /> طي القائمة</>}
-        </span>
-
-        <div
           onClick={() => setProfileOpen((v) => !v)}
           style={{
-            display: 'flex', alignItems: 'center', gap: 10, padding: collapsed ? '10px' : '10px 12px',
-            justifyContent: collapsed ? 'center' : 'flex-start',
-            borderRadius: 'var(--radius-md)', cursor: 'pointer', background: 'rgba(255,255,255,.06)', position: 'relative',
+            display: 'flex', alignItems: 'center', gap: 8, padding: collapsed ? '10px' : '10px 12px',
+            justifyContent: collapsed ? 'center' : 'space-between',
+            borderRadius: 14, cursor: 'pointer', border: '1px solid #E5E5E5', background: '#FAFAFA',
+            boxShadow: '0 1px 2px rgba(0,0,0,.04)',
+            marginTop: 14, position: 'relative',
           }}
         >
-          <div style={{
-            width: 30, height: 30, borderRadius: '50%', background: 'var(--gradient-brand)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0,
-          }}>{(userName || 'م')[0]}</div>
-          {!collapsed && (
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {userName || 'مستخدم'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+            <div style={{
+              width: 20, height: 20, borderRadius: '50%', background: 'var(--gradient-brand)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, flexShrink: 0, color: '#fff',
+            }}>{(clinicName || userName || 'م')[0]}</div>
+            {!collapsed && (
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: '#737373', letterSpacing: '.09em', textTransform: 'uppercase' }}>العيادة</div>
+                <div style={{ fontSize: 14, fontWeight: 400, color: '#171717', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {clinicName || (isDemo ? 'عرض تجريبي' : 'عيادتي')}
+                </div>
               </div>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,.5)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {clinicName || (isDemo ? 'عرض تجريبي' : '')}
-              </div>
-            </div>
-          )}
-          {!collapsed && <ChevronDown size={14} style={{ opacity: 0.6 }} />}
+            )}
+          </div>
+          {!collapsed && <ChevronDown size={13} style={{ opacity: 0.5, flexShrink: 0, color: '#737373' }} />}
           {profileOpen && (
             <div style={{
-              position: 'absolute', bottom: '110%', insetInlineStart: 0, insetInlineEnd: 0,
-              background: '#fff', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-lg)',
-              overflow: 'hidden', color: 'var(--text-primary)', minWidth: collapsed ? 150 : undefined,
+              position: 'absolute', top: '110%', insetInlineStart: 0, insetInlineEnd: 0,
+              background: '#fff', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-default)',
+              overflow: 'hidden', color: 'var(--text-primary)', minWidth: collapsed ? 150 : undefined, zIndex: 10,
             }}>
               <div
                 onClick={logout}
@@ -245,6 +195,76 @@ export function DashboardV2Layout() {
             </div>
           )}
         </div>
+
+        <div
+          style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 1, marginTop: 18, flex: 1, overflowY: 'auto' }}
+        >
+          {NAV_GROUPS.map((group, gi) => (
+            <div key={group.title || gi}>
+              {group.title && !collapsed && (
+                <div style={{
+                  fontSize: 11, fontWeight: 600, color: '#737373', letterSpacing: '.12em',
+                  padding: '0 8px', margin: gi === 0 ? '0 0 8px' : '20px 0 8px', textTransform: 'uppercase',
+                }}>{group.title}</div>
+              )}
+              {group.items.map((item) => {
+                const active = location.pathname === item.path
+                const row = (
+                  <div
+                    key={item.path}
+                    className="dv2-nav-item"
+                    onClick={() => navigate(item.path)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12, padding: collapsed ? '8px' : '8px 12px',
+                      justifyContent: collapsed ? 'center' : 'flex-start',
+                      borderRadius: 14, cursor: 'pointer',
+                      fontSize: 14, fontWeight: 500,
+                      color: active ? '#171717' : '#525252',
+                      background: active ? 'rgba(229,229,229,.9)' : 'transparent',
+                      boxShadow: active ? 'inset 0 0 0 1px rgba(0,0,0,.06)' : undefined,
+                    }}
+                  >
+                    <span className="dv2-nav-icon" style={{ display: 'flex' }}>{item.icon}</span>
+                    {!collapsed && <span style={{ flex: 1 }}>{item.label}</span>}
+                    {!collapsed && item.badge != null && (
+                      <span style={{
+                        background: 'var(--danger-500)', color: '#fff', borderRadius: 'var(--radius-full)',
+                        fontSize: 10, fontWeight: 700, padding: '1px 6px',
+                      }}>{item.badge}</span>
+                    )}
+                  </div>
+                )
+                return collapsed ? <Tooltip key={item.path} label={item.label} side="bottom">{row}</Tooltip> : row
+              })}
+            </div>
+          ))}
+        </div>
+
+        <div style={{ borderTop: '1px solid #E5E5E5', marginTop: 8, paddingTop: 8 }}>
+          <div
+            className="dv2-nav-item"
+            onClick={() => window.open(isDemo ? '/demo-review/internal-admin' : '/clinic-os/admin', '_blank')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 12, padding: collapsed ? '8px' : '8px 12px',
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              borderRadius: 14, cursor: 'pointer', fontSize: 14, fontWeight: 500, color: '#525252',
+            }}
+          >
+            <ShieldCheck size={17} />
+            {!collapsed && <span>لوحة الإدارة</span>}
+          </div>
+          <span
+            className="dv2-desktop-only"
+            onClick={() => setCollapsed((v) => !v)}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '8px', marginTop: 2,
+              borderRadius: 'var(--radius-md)', cursor: 'pointer', color: 'var(--text-tertiary)', fontSize: 11.5,
+            }}
+          >
+            {collapsed ? <ChevronsRight size={15} /> : <><ChevronsLeft size={15} /> طي القائمة</>}
+          </span>
+        </div>
+
       </nav>
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--surface-canvas)' }}>
@@ -264,30 +284,6 @@ export function DashboardV2Layout() {
             <div className="dv2-global-search" style={{ flex: 1, minWidth: 0 }}><GlobalSearch base={base} /></div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
-            {isDemo && (
-              <>
-                <div style={{ display: 'flex', background: 'var(--slate-100)', borderRadius: 'var(--radius-full)', padding: 3, gap: 2 }}>
-                  {([['whatsapp', 'واتساب'], ['ai_pro', 'AI Pro']] as const).map(([id, label]) => (
-                    <span
-                      key={id}
-                      onClick={() => setPackageType(id)}
-                      style={{
-                        padding: '5px 12px', borderRadius: 'var(--radius-full)', cursor: 'pointer', fontSize: 12, fontWeight: 700,
-                        background: packageType === id ? '#fff' : 'transparent',
-                        color: packageType === id ? 'var(--brand-600)' : 'var(--text-tertiary)',
-                        boxShadow: packageType === id ? 'var(--shadow-sm)' : 'none',
-                      }}
-                    >{label}</span>
-                  ))}
-                </div>
-                <span
-                  onClick={() => window.open('/demo-review/internal-admin', '_blank')}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 600 }}
-                >
-                  <ShieldCheck size={15} /> لوحة الإدارة
-                </span>
-              </>
-            )}
             <Tooltip label="حجوزات اليوم">
               <span
                 onClick={() => navigate(`${base}/bookings`)}

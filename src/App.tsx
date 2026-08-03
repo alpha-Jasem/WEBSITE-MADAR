@@ -92,6 +92,15 @@ const DashboardV2Settings      = lazy(() => import('./_archive/dashboardV2/pages
 const DashboardV2Services      = lazy(() => import('./_archive/dashboardV2/pages/Services').then(m => ({ default: m.DashboardV2Services })))
 const DashboardV2AuditLog      = lazy(() => import('./_archive/dashboardV2/pages/AuditLog').then(m => ({ default: m.DashboardV2AuditLog })))
 const DashboardV2MadarAgentUsage = lazy(() => import('./_archive/dashboardV2/pages/MadarAgentUsage').then(m => ({ default: m.DashboardV2MadarAgentUsage })))
+const DashboardV2Tickets       = lazy(() => import('./_archive/dashboardV2/pages/Tickets').then(m => ({ default: m.DashboardV2Tickets })))
+const DashboardV2CallsAnalytics    = lazy(() => import('./_archive/dashboardV2/pages/CallsAnalytics').then(m => ({ default: m.DashboardV2CallsAnalytics })))
+const DashboardV2WhatsAppAnalytics = lazy(() => import('./_archive/dashboardV2/pages/WhatsAppAnalytics').then(m => ({ default: m.DashboardV2WhatsAppAnalytics })))
+const DashboardV2Agents            = lazy(() => import('./_archive/dashboardV2/pages/Agents').then(m => ({ default: m.DashboardV2Agents })))
+const DashboardV2Tools             = lazy(() => import('./_archive/dashboardV2/pages/ComingSoon').then(m => ({ default: m.DashboardV2Tools })))
+const DashboardV2AnalysisGroups    = lazy(() => import('./_archive/dashboardV2/pages/ComingSoon').then(m => ({ default: m.DashboardV2AnalysisGroups })))
+const DashboardV2InboundServices   = lazy(() => import('./_archive/dashboardV2/pages/ComingSoon').then(m => ({ default: m.DashboardV2InboundServices })))
+const DashboardV2OutboundServices  = lazy(() => import('./_archive/dashboardV2/pages/ComingSoon').then(m => ({ default: m.DashboardV2OutboundServices })))
+const DashboardV2CallLogs          = lazy(() => import('./_archive/dashboardV2/pages/CallLogs').then(m => ({ default: m.DashboardV2CallLogs })))
 
 function App() {
   useEffect(() => {
@@ -147,6 +156,15 @@ function App() {
               <Route path="integrations" element={<DashboardV2Integrations />} />
               <Route path="services" element={<DashboardV2Services />} />
               <Route path="audit-log" element={<DashboardV2AuditLog />} />
+              <Route path="tickets" element={<DashboardV2Tickets />} />
+              <Route path="calls-analytics" element={<DashboardV2CallsAnalytics />} />
+              <Route path="whatsapp-analytics" element={<DashboardV2WhatsAppAnalytics />} />
+              <Route path="agents" element={<DashboardV2Agents />} />
+              <Route path="tools" element={<DashboardV2Tools />} />
+              <Route path="analysis-groups" element={<DashboardV2AnalysisGroups />} />
+              <Route path="inbound-services" element={<DashboardV2InboundServices />} />
+              <Route path="outbound-services" element={<DashboardV2OutboundServices />} />
+              <Route path="call-logs" element={<DashboardV2CallLogs />} />
               <Route path="settings" element={<DashboardV2Settings />} />
             </Route>
             {/* ── ClinicOS Demo Tour (internal, unauthenticated preview with fake data) ── */}
@@ -167,6 +185,15 @@ function App() {
               <Route path="integrations" element={<DashboardV2Integrations />} />
               <Route path="services" element={<DashboardV2Services />} />
               <Route path="audit-log" element={<DashboardV2AuditLog />} />
+              <Route path="tickets" element={<DashboardV2Tickets />} />
+              <Route path="calls-analytics" element={<DashboardV2CallsAnalytics />} />
+              <Route path="whatsapp-analytics" element={<DashboardV2WhatsAppAnalytics />} />
+              <Route path="agents" element={<DashboardV2Agents />} />
+              <Route path="tools" element={<DashboardV2Tools />} />
+              <Route path="analysis-groups" element={<DashboardV2AnalysisGroups />} />
+              <Route path="inbound-services" element={<DashboardV2InboundServices />} />
+              <Route path="outbound-services" element={<DashboardV2OutboundServices />} />
+              <Route path="call-logs" element={<DashboardV2CallLogs />} />
               <Route path="settings" element={<DashboardV2Settings />} />
             </Route>
 

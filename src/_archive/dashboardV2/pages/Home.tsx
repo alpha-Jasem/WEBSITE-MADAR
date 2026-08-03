@@ -1,22 +1,27 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import {
   CalendarCheck2, CalendarX2, Users, Wallet, ArrowUp, ArrowDown, Download,
-  CalendarDays, MessageSquare, PhoneCall, MessageCircle, Star, FileSpreadsheet, Printer,
-  Plus, Settings as SettingsIcon,
+  CalendarDays, MessageSquare, Star, FileSpreadsheet, Printer,
+  Plus, Settings as SettingsIcon, Ticket, Search, UserPlus, Wrench as WrenchIcon,
 } from 'lucide-react'
 import { useClinicOS } from '@/context/ClinicOSContext'
 import {
   useClinicAppointments, useClinicWeeklyChart, useClinicPreviousWeekChart, useClinicAICalls, useClinicMessages,
+  useClinicNotifications, useClinicIntegrations, useClinicSupportTickets, createSupportTicket,
 } from '@/lib/clinicOSQueries'
 import { exportRowsToExcel } from '@/lib/exportExcel'
-import { Card, Badge, Button, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
-import { CountUp, useToast, Avatar, Sparkline, LiveDot, Menu, KpiCardSkeleton } from '@/_archive/dashboardV2/components/uiExtras'
-import { Button as ShadButton, LiquidButton, MetalButton } from '@/components/ui/liquid-glass-button'
-import type { Appointment } from '@/types/clinicOS'
+import { Card, Badge, Button, Dialog, Input, Select, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
+import { CountUp, useToast, Avatar, Sparkline, LiveDot, Menu, KpiCardSkeleton, requestOpenSearch } from '@/_archive/dashboardV2/components/uiExtras'
+import {
+  Donut, RadialDial, AgentHeroCard, AiPerformanceCard, TodayTimeline, SystemHealthRow, ActivityFeed, InsightBanner, TicketPreviewCard,
+} from './HomeWidgets'
+import type { Appointment, TicketPriority } from '@/types/clinicOS'
 
 type Period = 'أسبوعي' | 'شهري'
+
+type KpiVariant = 'lift-glow' | 'count-spin' | 'pulse-ring' | 'tilt-shift' | 'sheen'
 
 interface Kpi {
   label: string
@@ -30,6 +35,7 @@ interface Kpi {
   emphasis?: boolean
   ready?: boolean
   trend?: number[]
+  variant: KpiVariant
 }
 
 const TONE_BG: Record<BadgeTone, [string, string]> = {
@@ -40,68 +46,139 @@ const TONE_BG: Record<BadgeTone, [string, string]> = {
   neutral: ['var(--slate-100)', 'var(--slate-600)'],
 }
 
-function KpiCard({ k, index = 0 }: { k: Kpi; index?: number }) {
+const KPI_EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1]
+const KPI_EASE_IN_OUT: [number, number, number, number] = [0.65, 0, 0.35, 1]
+
+function KpiCard({ k, index = 0, hero = false }: { k: Kpi; index?: number; hero?: boolean }) {
   const [bg, fg] = TONE_BG[k.tone] || TONE_BG.brand
+  const reduced = useReducedMotion()
+  const [hovered, setHovered] = useState(false)
+
+  // Each variant maps to a distinct whileHover treatment on the card shell — deliberately not identical.
+  const cardWhileHover = reduced ? undefined : ({
+    'lift-glow': { y: -4, boxShadow: `0 10px 32px color-mix(in srgb, ${fg} 26%, transparent)` },
+    'count-spin': { y: -2 },
+    'pulse-ring': undefined,
+    'tilt-shift': { x: 4, rotate: -0.6 },
+    'sheen': { y: -2 },
+  } as Record<KpiVariant, Record<string, unknown> | undefined>)[k.variant]
+
+  const iconWhileHover = reduced ? undefined : (
+    k.variant === 'count-spin' ? { rotate: 360, scale: 1.12 } : { rotate: -8, scale: 1.08 }
+  )
+  const iconTransition = k.variant === 'count-spin'
+    ? { duration: 0.34, ease: KPI_EASE_OUT }
+    : { type: 'spring' as const, stiffness: 300, damping: 15 }
+
   return (
-    <Card emphasis={k.emphasis} glass glow interactive delay={index * 0.06} style={{ flex: 1, minWidth: 0, position: 'relative', overflow: 'hidden' }}>
+    <Card delay={index * 0.06} style={{
+      flex: 1, minWidth: 0, position: 'relative', overflow: 'hidden',
+      padding: hero ? 'var(--space-8)' : 'var(--space-4)',
+      display: hero ? 'flex' : undefined, flexDirection: hero ? 'column' : undefined, justifyContent: hero ? 'space-between' : undefined,
+      minHeight: hero ? 200 : undefined,
+    }}>
       <motion.div
-        aria-hidden
-        initial={{ opacity: 0, scale: 0.6 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.7, delay: index * 0.06 + 0.15, ease: [0.16, 1, 0.3, 1] }}
-        style={{
-          position: 'absolute', top: -34, insetInlineEnd: -30, width: 110, height: 110, borderRadius: '50%',
-          background: `radial-gradient(circle, ${fg} 0%, transparent 70%)`, opacity: 0.14, pointerEvents: 'none',
-        }}
-      />
+        onHoverStart={() => setHovered(true)}
+        onHoverEnd={() => setHovered(false)}
+        whileHover={cardWhileHover}
+        transition={{ duration: 0.2, ease: KPI_EASE_OUT }}
+        style={{ position: 'relative' }}
+      >
+        {/* pulse-ring: only for the no-show/attention KPI — a warning ring that radiates while hovered */}
+        {k.variant === 'pulse-ring' && !reduced && (
+          <AnimatePresence>
+            {hovered && (
+              <motion.div
+                aria-hidden
+                initial={{ scale: 1, opacity: 0.55 }}
+                animate={{ scale: 1.9, opacity: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.9, repeat: Infinity, ease: KPI_EASE_IN_OUT }}
+                style={{
+                  position: 'absolute', top: 18, insetInlineEnd: 20, width: 38, height: 38, borderRadius: 'var(--radius-md)',
+                  border: `2px solid ${fg}`, pointerEvents: 'none',
+                }}
+              />
+            )}
+          </AnimatePresence>
+        )}
 
-      <div style={{ position: 'relative', zIndex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)' }}>{k.label}</div>
+        {/* sheen: only for the revenue/placeholder KPI — a light sweep across the card while hovered */}
+        {k.variant === 'sheen' && !reduced && (
           <motion.div
-            whileHover={{ rotate: -8, scale: 1.08 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+            aria-hidden
+            initial={{ x: '-120%' }}
+            animate={hovered ? { x: '120%' } : { x: '-120%' }}
+            transition={{ duration: 0.6, ease: KPI_EASE_OUT }}
             style={{
-              width: 38, height: 38, borderRadius: 'var(--radius-md)',
-              background: `linear-gradient(145deg, ${bg}, color-mix(in srgb, ${bg} 55%, white))`,
-              color: fg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              boxShadow: `0 4px 14px color-mix(in srgb, ${fg} 28%, transparent)`,
+              position: 'absolute', inset: 0, pointerEvents: 'none',
+              background: 'linear-gradient(120deg, transparent 20%, rgba(255,255,255,.35) 45%, transparent 70%)',
+              mixBlendMode: 'overlay',
             }}
-          >{k.icon}</motion.div>
+          />
+        )}
+
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          {hero ? (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={{ fontSize: 'var(--text-body-md)', color: 'var(--text-secondary)', fontWeight: 600 }}>{k.label}</div>
+              <motion.div
+                whileHover={iconWhileHover}
+                transition={iconTransition}
+                style={{
+                  width: 46, height: 46, borderRadius: 'var(--radius-md)',
+                  background: `linear-gradient(145deg, ${bg}, color-mix(in srgb, ${bg} 55%, white))`,
+                  color: fg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  boxShadow: `inset 0 1px 0 rgba(255,255,255,.5), 0 4px 14px color-mix(in srgb, ${fg} 28%, transparent)`,
+                }}
+              >{k.icon}</motion.div>
+            </div>
+          ) : (
+            <motion.div
+              whileHover={iconWhileHover}
+              transition={iconTransition}
+              style={{
+                width: 32, height: 32, borderRadius: '50%', background: bg, color: fg,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginBottom: 10,
+              }}
+            >{k.icon}</motion.div>
+          )}
+          {!hero && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', fontWeight: 500 }}>{k.label}</div>}
+
+          <div style={{
+            fontFamily: 'var(--font-numeral)', fontWeight: hero ? 900 : 700,
+            fontSize: hero ? 'var(--text-display-lg)' : 'var(--text-heading-lg)',
+            fontVariantNumeric: 'tabular-nums', marginTop: hero ? 16 : 4, letterSpacing: 'var(--tracking-tight)',
+            color: k.ready === false ? 'var(--text-tertiary)' : 'var(--text-primary)',
+          }}>{k.numeric != null ? <CountUp value={k.numeric} suffix={k.suffix} /> : k.value}</div>
+
+          {k.delta && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: 'var(--text-caption)' }}>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 2, fontWeight: 700, padding: '2px 7px',
+                borderRadius: 'var(--radius-full)',
+                background: k.up ? 'var(--success-100)' : 'var(--danger-100)',
+                color: k.up ? 'var(--success-500)' : 'var(--danger-500)',
+              }}>
+                {k.up ? <ArrowUp size={11} /> : <ArrowDown size={11} />}{k.delta}
+              </span>
+              <span style={{ color: 'var(--text-tertiary)' }}>مقارنة بالأسبوع الماضي</span>
+            </div>
+          )}
+          {k.ready === false && (
+            <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 6 }}>
+              جاهزة لاستقبال البيانات
+            </div>
+          )}
+          {(!k.delta && k.ready !== false) && <div style={{ height: 22 }} />}
         </div>
 
-        <div style={{
-          fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'var(--text-display-sm)',
-          fontVariantNumeric: 'tabular-nums', marginTop: 10,
-          color: k.ready === false ? 'var(--text-tertiary)' : 'var(--text-primary)',
-        }}>{k.numeric != null ? <CountUp value={k.numeric} suffix={k.suffix} /> : k.value}</div>
-
-        {k.delta && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: 'var(--text-caption)' }}>
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 2, fontWeight: 700, padding: '2px 7px',
-              borderRadius: 'var(--radius-full)',
-              background: k.up ? 'var(--success-100)' : 'var(--danger-100)',
-              color: k.up ? 'var(--success-500)' : 'var(--danger-500)',
-            }}>
-              {k.up ? <ArrowUp size={11} /> : <ArrowDown size={11} />}{k.delta}
-            </span>
-            <span style={{ color: 'var(--text-tertiary)' }}>مقارنة بالأسبوع الماضي</span>
+        {k.trend && k.trend.length > 1 && (
+          <div style={{ position: 'absolute', insetInlineStart: hero ? 32 : 24, insetInlineEnd: hero ? 32 : 24, bottom: 0, height: hero ? 56 : 32, zIndex: 0, pointerEvents: 'none' }}>
+            <Sparkline data={k.trend} color={fg} variant="area" height={hero ? 56 : 32} id={k.label} />
           </div>
         )}
-        {k.ready === false && (
-          <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 6 }}>
-            جاهزة لاستقبال البيانات
-          </div>
-        )}
-        {(!k.delta && k.ready !== false) && <div style={{ height: 22 }} />}
-      </div>
-
-      {k.trend && k.trend.length > 1 && (
-        <div style={{ position: 'absolute', insetInlineStart: 24, insetInlineEnd: 24, bottom: 0, height: 32, zIndex: 0, pointerEvents: 'none' }}>
-          <Sparkline data={k.trend} color={fg} variant="area" height={32} id={k.label} />
-        </div>
-      )}
+      </motion.div>
     </Card>
   )
 }
@@ -160,51 +237,6 @@ function LineChart({ data, compareData, labels }: { data: number[]; compareData?
   )
 }
 
-function Donut({ sources, onSelect }: { sources: { key: string; label: string; pct: number; color: string }[]; onSelect?: (key: string) => void }) {
-  let acc = 0
-  const stops = sources.map((s) => {
-    const start = acc
-    acc += s.pct
-    return `${s.color} ${start}% ${acc}%`
-  }).join(',')
-  const total = sources.reduce((a, s) => a + s.pct, 0)
-
-  function handleClick(e: React.MouseEvent<HTMLDivElement>) {
-    if (!onSelect || total === 0) return
-    const rect = e.currentTarget.getBoundingClientRect()
-    const cx = rect.left + rect.width / 2
-    const cy = rect.top + rect.height / 2
-    const dx = e.clientX - cx
-    const dy = e.clientY - cy
-    const angle = (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360
-    const pct = (angle / 360) * 100
-    let acc2 = 0
-    for (const s of sources) {
-      acc2 += s.pct
-      if (pct <= acc2) { onSelect(s.key); return }
-    }
-  }
-
-  return (
-    <div style={{ position: 'relative', width: 150, height: 150, margin: '0 auto' }}>
-      <div
-        onClick={handleClick}
-        style={{
-          width: '100%', height: '100%', borderRadius: '50%', cursor: onSelect && total > 0 ? 'pointer' : 'default',
-          background: total > 0 ? `conic-gradient(${stops})` : 'var(--slate-100)',
-        }}
-      />
-      <div style={{
-        position: 'absolute', inset: 22, background: 'var(--surface-card)', borderRadius: '50%', pointerEvents: 'none',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      }}>
-        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 20 }}>{total}%</div>
-        <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>موزّعة</div>
-      </div>
-    </div>
-  )
-}
-
 function Bar({ label, value, max }: { label: string; value: number; max: number }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
@@ -240,6 +272,9 @@ export function DashboardV2Home() {
   const { companyId, isDemo, clinicName, userName } = useClinicOS()
   const [period, setPeriod] = useState<Period>('أسبوعي')
   const [compare, setCompare] = useState(false)
+  const [ticketDialogOpen, setTicketDialogOpen] = useState(false)
+  const [ticketForm, setTicketForm] = useState({ subject: '', description: '', priority: 'normal' as TicketPriority })
+  const [savingTicket, setSavingTicket] = useState(false)
   const pushToast = useToast()
 
   const { data: appointments, loading: appointmentsLoading, live: appointmentsLive } = useClinicAppointments(companyId, undefined, isDemo)
@@ -247,6 +282,9 @@ export function DashboardV2Home() {
   const { data: prevWeekly } = useClinicPreviousWeekChart(companyId, isDemo)
   const { data: aiCalls } = useClinicAICalls(companyId, isDemo)
   const { data: messages, live: messagesLive } = useClinicMessages(companyId, isDemo)
+  const { data: notifications } = useClinicNotifications(companyId, isDemo)
+  const { data: integrations } = useClinicIntegrations(companyId, isDemo)
+  const { data: tickets, refetch: refetchTickets } = useClinicSupportTickets(companyId, isDemo)
 
   const appts = appointments || []
   const completed = appts.filter((a) => a.status === 'completed').length
@@ -261,11 +299,11 @@ export function DashboardV2Home() {
   const weeklyLabel = period === 'أسبوعي' ? 'آخر 7 أيام' : 'آخر 7 أيام (شهري قريباً)'
 
   const kpis: Kpi[] = [
-    { label: 'إجمالي الحجوزات', value: String(appts.length), numeric: appts.length, icon: <CalendarCheck2 size={17} />, tone: 'brand', emphasis: true, trend: weeklyData },
-    { label: 'الحجوزات المكتملة', value: String(completed), numeric: completed, icon: <CalendarCheck2 size={17} />, tone: 'success', trend: completedTrend },
-    { label: 'مواعيد لم تحضر', value: String(noShow), numeric: noShow, icon: <CalendarX2 size={17} />, tone: 'danger' },
-    { label: 'معدل الحضور', value: attendanceRate != null ? `${attendanceRate}%` : '—', numeric: attendanceRate ?? undefined, suffix: '%', icon: <Users size={17} />, tone: 'brand', ready: attendanceRate != null },
-    { label: 'إجمالي الإيرادات', value: 'بانتظار الربط', icon: <Wallet size={17} />, tone: 'warning', ready: false },
+    { label: 'إجمالي الحجوزات', value: String(appts.length), numeric: appts.length, icon: <CalendarCheck2 size={17} />, tone: 'brand', emphasis: true, trend: weeklyData, variant: 'lift-glow' },
+    { label: 'الحجوزات المكتملة', value: String(completed), numeric: completed, icon: <CalendarCheck2 size={17} />, tone: 'success', trend: completedTrend, variant: 'count-spin' },
+    { label: 'مواعيد لم تحضر', value: String(noShow), numeric: noShow, icon: <CalendarX2 size={17} />, tone: 'danger', variant: 'pulse-ring' },
+    { label: 'معدل الحضور', value: attendanceRate != null ? `${attendanceRate}%` : '—', numeric: attendanceRate ?? undefined, suffix: '%', icon: <Users size={17} />, tone: 'brand', ready: attendanceRate != null, variant: 'tilt-shift' },
+    { label: 'إجمالي الإيرادات', value: 'بانتظار الربط', icon: <Wallet size={17} />, tone: 'warning', ready: false, variant: 'sheen' },
   ]
 
   const sources = useMemo(() => {
@@ -281,12 +319,40 @@ export function DashboardV2Home() {
   }, [appts])
 
   const calls = aiCalls || []
-  const aiStats = [
-    { label: 'مكالمات الذكاء الاصطناعي', value: String(calls.length), icon: <PhoneCall size={16} /> },
-    { label: 'تم إنجازها بنجاح', value: String(calls.filter((c) => c.status === 'completed').length), icon: <MessageCircle size={16} /> },
-    { label: 'انتهت بحجز موعد', value: String(calls.filter((c) => c.result === 'booked').length), icon: <CalendarCheck2 size={16} /> },
-    { label: 'تحتاج مراجعة بشرية', value: String(calls.filter((c) => c.needs_review).length), icon: <Users size={16} /> },
-  ]
+  const notifs = notifications || []
+  const integrationsList = integrations || []
+  const ticketsList = tickets || []
+
+  const todayStr = new Date().toISOString().split('T')[0]
+  const todayCalls = useMemo(() => calls.filter((c) => c.call_time.slice(0, 10) === todayStr), [calls, todayStr])
+  const todayBookings = useMemo(() => appts.filter((a) => a.appointment_date === todayStr), [appts, todayStr])
+  const escalatedToday = todayCalls.filter((c) => c.needs_review).length
+  const lastCall = calls.length > 0 ? [...calls].sort((a, b) => new Date(b.call_time).getTime() - new Date(a.call_time).getTime())[0] : null
+
+  const topSource = sources.length > 0 ? [...sources].sort((a, b) => b.pct - a.pct)[0] : undefined
+
+  async function handleCreateTicket() {
+    if (!ticketForm.subject.trim() || !companyId) return
+    if (isDemo) {
+      pushToast({ kind: 'info', title: 'غير متاح بوضع العرض التجريبي' })
+      setTicketDialogOpen(false)
+      return
+    }
+    setSavingTicket(true)
+    try {
+      await createSupportTicket({
+        company_id: companyId, subject: ticketForm.subject, description: ticketForm.description, priority: ticketForm.priority,
+      })
+      pushToast({ kind: 'success', title: 'تم إنشاء التذكرة' })
+      setTicketDialogOpen(false)
+      setTicketForm({ subject: '', description: '', priority: 'normal' })
+      refetchTickets()
+    } catch (e) {
+      pushToast({ kind: 'danger', title: 'تعذّر إنشاء التذكرة', description: e instanceof Error ? e.message : undefined })
+    } finally {
+      setSavingTicket(false)
+    }
+  }
 
   const services = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -372,7 +438,7 @@ export function DashboardV2Home() {
             <CalendarDays size={15} />{weeklyLabel}
           </div>
           <Menu
-            trigger={<MetalButton type="button" variant="brand"><Download size={15} /> تصدير تقرير</MetalButton>}
+            trigger={<Button variant="secondary"><Download size={15} /> تصدير تقرير</Button>}
             items={[
               { label: 'Excel — آخر أسبوع', icon: <FileSpreadsheet size={14} />, onClick: () => exportExcel('week') },
               { label: 'Excel — آخر شهر', icon: <FileSpreadsheet size={14} />, onClick: () => exportExcel('month') },
@@ -385,26 +451,34 @@ export function DashboardV2Home() {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-        <LiquidButton
-          type="button"
-          size="sm"
-          onClick={() => navigate(`${base}/bookings?new=1`)}
-        >
-          <Plus size={16} /> حجز جديد
-        </LiquidButton>
-        <ShadButton
-          type="button"
-          variant="cool"
-          onClick={() => navigate(`${base}/settings`)}
-        >
-          <SettingsIcon size={15} /> الإعدادات
-        </ShadButton>
+        <Button variant="primary" size="md" onClick={() => navigate(`${base}/bookings?new=1`)}><Plus size={16} /> حجز جديد</Button>
+        <Button variant="secondary" size="md" onClick={() => setTicketDialogOpen(true)}><Ticket size={15} /> تذكرة جديدة</Button>
+        <Button variant="secondary" size="md" onClick={() => requestOpenSearch()}><Search size={15} /> بحث</Button>
+        <Button variant="secondary" size="md" onClick={() => navigate(`${base}/patients`)}><UserPlus size={15} /> العملاء</Button>
+        <Button variant="secondary" size="md" onClick={() => navigate(`${base}/services`)}><WrenchIcon size={15} /> الخدمات</Button>
+        <Button variant="secondary" size="md" onClick={() => navigate(`${base}/settings`)}><SettingsIcon size={15} /> الإعدادات</Button>
       </div>
 
       {appointmentsLoading ? <KpiCardSkeleton /> : (
-        <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
-          {kpis.map((k, i) => <KpiCard key={i} k={k} index={i} />)}
-        </div>
+        <>
+          <div className="dv2-kpi-hero-grid" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16, marginBottom: 16 }}>
+            <AgentHeroCard todayCalls={todayCalls.length} todayBookings={todayBookings.length} escalatedToday={escalatedToday} lastCall={lastCall} />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignContent: 'start' }}>
+              <KpiCard k={kpis[0]} index={0} />
+              <KpiCard k={kpis[1]} index={1} />
+              <KpiCard k={kpis[2]} index={2} />
+              <Card style={{ display: 'flex', flexDirection: 'column', padding: 'var(--space-4)' }}>
+                <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 6 }}>معدل الحضور</div>
+                <RadialDial pct={kpis[3].numeric ?? 0} sublabel={kpis[3].ready === false ? 'بانتظار بيانات' : undefined} />
+              </Card>
+              <KpiCard k={kpis[4]} index={4} />
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <InsightBanner weeklyData={weeklyData} prevWeeklyData={prevWeeklyData} topSource={topSource} />
+          </div>
+        </>
       )}
 
       <div className="dv2-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr', gap: 16, marginBottom: 20 }}>
@@ -460,23 +534,21 @@ export function DashboardV2Home() {
           </div>
         </Card>
 
-        <Card delay={0.36}>
-          <div style={{ fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-            أداء الذكاء الاصطناعي <Badge tone="brand">AI</Badge>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {aiStats.map((a, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{
-                  width: 34, height: 34, borderRadius: '50%', background: 'var(--brand-100)', color: 'var(--brand-600)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}>{a.icon}</div>
-                <div style={{ flex: 1, fontSize: 13, color: 'var(--text-secondary)' }}>{a.label}</div>
-                <div style={{ fontWeight: 700, fontSize: 14 }}>{a.value}</div>
-              </div>
-            ))}
-          </div>
-        </Card>
+        <AiPerformanceCard calls={calls} />
+      </div>
+
+      <div className="dv2-responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, marginBottom: 20 }}>
+        <TodayTimeline appointments={appts} />
+        <SystemHealthRow integrations={integrationsList} />
+      </div>
+
+      <div className="dv2-responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16, marginBottom: 20 }}>
+        <ActivityFeed notifications={notifs} calls={calls} messages={messages || []} appointments={appts} />
+        <TicketPreviewCard
+          tickets={ticketsList}
+          onCreateClick={() => setTicketDialogOpen(true)}
+          onViewAllClick={() => navigate(`${base}/tickets`)}
+        />
       </div>
 
       <div className="dv2-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
@@ -513,6 +585,24 @@ export function DashboardV2Home() {
           ))}
         </Card>
       </div>
+
+      <Dialog
+        open={ticketDialogOpen} title="تذكرة جديدة" onClose={() => setTicketDialogOpen(false)}
+        footer={<>
+          <Button variant="secondary" onClick={() => setTicketDialogOpen(false)}>إلغاء</Button>
+          <Button onClick={handleCreateTicket} disabled={savingTicket}>{savingTicket ? 'جارِ الحفظ...' : 'إنشاء التذكرة'}</Button>
+        </>}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <Input label="العنوان" placeholder="مثال: مشكلة بربط واتساب" value={ticketForm.subject} onChange={(e) => setTicketForm((f) => ({ ...f, subject: e.target.value }))} />
+          <Input label="التفاصيل" placeholder="اشرح المشكلة أو الطلب" value={ticketForm.description} onChange={(e) => setTicketForm((f) => ({ ...f, description: e.target.value }))} />
+          <Select
+            label="الأولوية" value={ticketForm.priority}
+            onChange={(e) => setTicketForm((f) => ({ ...f, priority: e.target.value as TicketPriority }))}
+            options={[{ value: 'low', label: 'منخفضة' }, { value: 'normal', label: 'عادية' }, { value: 'high', label: 'عالية' }]}
+          />
+        </div>
+      </Dialog>
     </div>
   )
 }

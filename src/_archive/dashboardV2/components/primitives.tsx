@@ -19,16 +19,25 @@ export function Card({ children, emphasis, interactive, glow, glass, delay = 0, 
       transition={{ duration: 0.35, delay: Math.min(delay, 0.5), ease: [0.16, 1, 0.3, 1] }}
       whileHover={interactive ? {
         y: -3,
-        boxShadow: glow ? 'var(--shadow-md), 0 0 0 1px var(--brand-200, #B3EDFF), 0 8px 28px rgba(0,191,255,.22)' : 'var(--shadow-md)',
+        boxShadow: glow
+          ? 'inset 0 1px 0 var(--card-rim), var(--shadow-md), 0 0 0 1px var(--brand-200, #B3EDFF), 0 10px 30px rgba(0,191,255,.22)'
+          : 'inset 0 1px 0 var(--card-rim), var(--shadow-md)',
       } : undefined}
       style={{
-        background: glass
-          ? 'linear-gradient(165deg, color-mix(in srgb, var(--surface-card) 92%, var(--brand-100)) 0%, var(--surface-card) 60%)'
-          : 'var(--surface-card)',
-        backdropFilter: glass ? 'blur(8px)' : undefined,
-        borderRadius: 'var(--radius-lg)',
-        border: emphasis ? '1px solid var(--brand-500)' : '1px solid color-mix(in srgb, var(--border-default) 70%, transparent)',
-        boxShadow: 'var(--shadow-sm)',
+        backgroundColor: 'var(--surface-card)',
+        backgroundImage: emphasis
+          ? `linear-gradient(90deg, var(--brand-400), var(--brand-500) 42%, transparent), linear-gradient(165deg, color-mix(in srgb, var(--surface-card) 88%, var(--brand-100)) 0%, var(--surface-card) 58%)`
+          : glass
+          ? 'linear-gradient(165deg, color-mix(in srgb, var(--surface-card) 94%, var(--brand-100)) 0%, var(--surface-card) 60%)'
+          : undefined,
+        backgroundSize: emphasis ? '100% 3px, 100% 100%' : undefined,
+        backgroundRepeat: emphasis ? 'no-repeat, no-repeat' : 'no-repeat',
+        backdropFilter: glass ? 'blur(10px)' : undefined,
+        borderRadius: 'var(--radius-xl)',
+        border: emphasis ? '1px solid var(--card-border-emphasis)' : '1px solid var(--card-border)',
+        boxShadow: emphasis
+          ? 'inset 0 1px 0 var(--card-rim), var(--shadow-sm), 0 14px 32px -14px color-mix(in srgb, var(--brand-500) 30%, transparent)'
+          : 'inset 0 1px 0 var(--card-rim), var(--shadow-sm)',
         padding: 'var(--space-6)',
         fontFamily: 'var(--font-body)',
         cursor: interactive ? 'pointer' : undefined,
@@ -82,10 +91,10 @@ const SIZE_STYLES: Record<ButtonSize, CSSProperties> = {
 }
 
 const VARIANT_STYLES: Record<ButtonVariant, CSSProperties> = {
-  primary: { background: 'var(--accent-primary)', color: 'var(--text-on-brand)', border: '1px solid transparent' },
-  secondary: { background: '#fff', color: 'var(--text-primary)', border: '1px solid color-mix(in srgb, var(--border-strong) 80%, transparent)' },
-  ghost: { background: 'transparent', color: 'var(--text-primary)', border: '1px solid transparent' },
-  danger: { background: 'var(--danger-500)', color: '#fff', border: '1px solid transparent' },
+  primary: { backgroundColor: 'var(--brand-500)', backgroundImage: 'linear-gradient(155deg, var(--brand-400), var(--brand-600))', color: 'var(--text-on-brand)', border: '1px solid transparent' },
+  secondary: { backgroundColor: '#fff', backgroundImage: 'none', color: 'var(--text-primary)', border: '1px solid color-mix(in srgb, var(--border-strong) 80%, transparent)' },
+  ghost: { backgroundColor: 'transparent', backgroundImage: 'none', color: 'var(--text-primary)', border: '1px solid transparent' },
+  danger: { backgroundColor: 'var(--danger-500)', backgroundImage: 'none', color: '#fff', border: '1px solid transparent' },
 }
 
 export function Button({ variant = 'primary', size = 'md', disabled, children, onClick, style }: {
@@ -99,9 +108,9 @@ export function Button({ variant = 'primary', size = 'md', disabled, children, o
   const v = VARIANT_STYLES[variant] || VARIANT_STYLES.primary
   const s = SIZE_STYLES[size] || SIZE_STYLES.md
   const [hover, setHover] = useState(false)
-  const bg = hover && !disabled
-    ? (variant === 'primary' ? 'var(--accent-primary-hover)' : variant === 'danger' ? 'var(--danger-500)' : 'var(--slate-100)')
-    : v.background
+  const hoverBg = hover && !disabled
+    ? (variant === 'primary' ? undefined : variant === 'danger' ? 'var(--danger-500)' : 'var(--slate-100)')
+    : undefined
   return (
     <motion.button
       onClick={onClick}
@@ -109,14 +118,15 @@ export function Button({ variant = 'primary', size = 'md', disabled, children, o
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       whileTap={disabled ? undefined : { scale: 0.97 }}
-      whileHover={disabled ? undefined : { boxShadow: variant === 'primary' ? '0 0 0 1px rgba(0,191,255,.35), 0 6px 20px rgba(0,191,255,.32)' : 'none' }}
+      whileHover={disabled ? undefined : { boxShadow: variant === 'primary' ? 'inset 0 1px 0 rgba(255,255,255,.4), 0 0 0 1px rgba(0,191,255,.35), 0 8px 22px rgba(0,191,255,.32)' : 'none' }}
       transition={{ duration: 0.1 }}
       style={{
         fontFamily: 'var(--font-body)', fontWeight: 600, borderRadius: 'var(--radius-md)',
         cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1,
-        transition: 'background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out)',
+        transition: 'background-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out)',
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, whiteSpace: 'nowrap',
-        ...v, ...s, background: bg, boxShadow: 'none', ...style,
+        boxShadow: variant === 'primary' ? 'inset 0 1px 0 rgba(255,255,255,.35)' : 'none',
+        ...v, ...s, ...(hoverBg ? { backgroundColor: hoverBg } : {}), ...style,
       }}
     >
       {children}

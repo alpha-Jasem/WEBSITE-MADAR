@@ -8,7 +8,7 @@ import {
 } from './clinicOSDemoData'
 import type {
   Doctor, Service, Patient, Appointment, MessageLog, AICallLog, Waitlist, AppointmentStatus,
-  Branch, GoogleReview, SupportTicket, ReviewStatus,
+  Branch, GoogleReview, SupportTicket, ReviewStatus, TicketPriority, TicketStatus,
   ReminderRule, Integration, IntegrationStatus, CompanyStaff, ClinicNotification, NotificationSeverity,
   AuditLogEntry,
 } from '../types/clinicOS'
@@ -765,6 +765,30 @@ export async function resolveTicket(id: string) {
     .update({ status: 'resolved', updated_at: new Date().toISOString() })
     .eq('id', id)
   if (error) throw error
+}
+
+export async function updateTicketStatus(id: string, status: TicketStatus) {
+  const { error } = await supabase
+    .from('ai_agent_support_tickets')
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function createSupportTicket(input: {
+  company_id: string
+  subject: string
+  description: string
+  priority: TicketPriority
+  route?: string
+}) {
+  const { data, error } = await supabase
+    .from('ai_agent_support_tickets')
+    .insert({ ...input, route: input.route || 'dashboard-home', status: 'open' })
+    .select()
+    .single()
+  if (error) throw error
+  return data as SupportTicket
 }
 
 // ─── Reminder Rules ─────────────────────────────────────────────────────────

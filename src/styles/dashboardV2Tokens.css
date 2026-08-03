@@ -2,12 +2,14 @@
    Everything lives under .dv2-scope so it never touches the existing app's --navy/--sky/--bg-primary tokens. */
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&display=swap');
 
 .dv2-scope {
-  /* colors — Madar brand (navy/sky/gold), shadcn/ui-style structure */
+  /* colors — Madar brand (navy/sky only, no gold) */
   --brand-50:#E0F7FF;--brand-100:#B3EDFF;--brand-200:#80E0FF;--brand-300:#4DD6FF;--brand-400:#19CCFF;
   --brand-500:#00BFFF;--brand-600:#0099CC;--brand-700:#007399;--brand-800:#005C7A;--brand-900:#003D52;
-  --indigo-400:#E4B86B;--indigo-500:#D4A853;--indigo-600:#B88C3D;--indigo-700:#96702E;
+  /* secondary blue-steel family (was gold — kept variable names for backward compat, values now on-brand) */
+  --indigo-400:#7C96C4;--indigo-500:#5A76AC;--indigo-600:#435C8C;--indigo-700:#33456B;
   --slate-50:#f6f7fb;--slate-100:#eceef4;--slate-200:#d8dbe6;--slate-300:#b7bccf;--slate-400:#8b91ab;
   --slate-500:#666d8a;--slate-600:#4a5170;--slate-700:#333a54;--slate-800:#232838;--slate-900:#14171f;--slate-950:#0b0d13;
   --success-500:#1fa971;--success-100:#d7f5e8;--warning-500:#e2a13d;--warning-100:#fbead0;
@@ -27,6 +29,7 @@
   --font-body:'Inter',ui-sans-serif,system-ui,sans-serif;
   --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,monospace;
   --font-arabic:'IBM Plex Sans Arabic','Manrope',ui-sans-serif,sans-serif;
+  --font-numeral:'Cairo','IBM Plex Sans Arabic',ui-sans-serif,sans-serif;
   --text-display-2xl:4.5rem;--text-display-xl:3.5rem;--text-display-lg:2.75rem;--text-display-md:2.25rem;
   --text-display-sm:1.75rem;--text-heading-lg:1.5rem;--text-heading-md:1.25rem;--text-heading-sm:1.0625rem;
   --text-body-lg:1.125rem;--text-body-md:1rem;--text-body-sm:0.875rem;--text-caption:0.75rem;
@@ -40,13 +43,16 @@
   --container-sm:640px;--container-md:768px;--container-lg:1024px;--container-xl:1280px;--container-2xl:1440px;
   --gutter:24px;
 
-  /* effects — tighter radii + softer, brand-tinted shadows (shadcn/ui structural feel) */
-  --radius-sm:6px;--radius-md:8px;--radius-lg:12px;--radius-xl:16px;--radius-full:999px;
+  /* effects — refined radii + layered, rim-lit shadows for a more considered "editorial glass" feel */
+  --radius-sm:8px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;--radius-full:999px;
   --shadow-sm:0 1px 2px rgba(13,27,62,0.05);
-  --shadow-md:0 2px 8px rgba(13,27,62,0.06),0 1px 2px rgba(13,27,62,0.04);
-  --shadow-lg:0 8px 24px rgba(13,27,62,0.10),0 2px 6px rgba(13,27,62,0.05);
-  --shadow-brand:0 8px 24px rgba(0,191,255,0.25);
+  --shadow-md:0 4px 16px rgba(13,27,62,0.07),0 1px 3px rgba(13,27,62,0.05);
+  --shadow-lg:0 16px 40px rgba(13,27,62,0.12),0 4px 10px rgba(13,27,62,0.06);
+  --shadow-brand:0 12px 32px rgba(0,191,255,0.24);
   --ring-focus:0 0 0 3px rgba(0,191,255,0.35);
+  --card-rim:rgba(255,255,255,.65);
+  --card-border:color-mix(in srgb, var(--border-default) 65%, transparent);
+  --card-border-emphasis:color-mix(in srgb, var(--brand-500) 40%, transparent);
   --ease-out:cubic-bezier(.16,1,.3,1);--ease-in-out:cubic-bezier(.65,0,.35,1);
   --duration-fast:120ms;--duration-normal:200ms;--duration-slow:340ms;
   --z-dropdown:1000;--z-sticky:1100;--z-overlay:1200;--z-modal:1300;--z-toast:1400;
@@ -80,9 +86,12 @@
   --surface-sunken:#122349;
   --text-on-brand:#ffffff;
   --shadow-sm:0 1px 2px rgba(0,0,0,0.4),0 1px 1px rgba(0,0,0,0.3);
-  --shadow-md:0 4px 12px rgba(0,0,0,0.45),0 2px 4px rgba(0,0,0,0.3);
-  --shadow-lg:0 12px 32px rgba(0,0,0,0.55),0 4px 10px rgba(0,0,0,0.35);
+  --shadow-md:0 6px 20px rgba(0,0,0,0.4),0 2px 5px rgba(0,0,0,0.3);
+  --shadow-lg:0 20px 48px rgba(0,0,0,0.5),0 6px 14px rgba(0,0,0,0.35);
   --gradient-dark:linear-gradient(135deg,#122349 0%,#04091A 100%);
+  --card-rim:rgba(255,255,255,.08);
+  --card-border:color-mix(in srgb, var(--border-default) 55%, transparent);
+  --card-border-emphasis:color-mix(in srgb, var(--brand-500) 55%, transparent);
   color-scheme: dark;
 }
 
