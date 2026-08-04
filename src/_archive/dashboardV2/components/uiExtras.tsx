@@ -136,15 +136,17 @@ export function LiveDot({ live }: { live?: boolean }) {
 
 // ─── Tooltip ───────────────────────────────────────────────────────────────
 
-export function Tooltip({ label, children, side = 'top' }: {
+export function Tooltip({ label, children, side = 'top', style }: {
   label: string
   children: ReactNode
   side?: 'top' | 'bottom'
+  /** Merged into the wrapper — needed when the trigger must grow inside a flex row. */
+  style?: CSSProperties
 }) {
   const [show, setShow] = useState(false)
   return (
     <span
-      style={{ position: 'relative', display: 'inline-flex' }}
+      style={{ position: 'relative', display: 'inline-flex', ...style }}
       onMouseEnter={() => setShow(true)}
       onMouseLeave={() => setShow(false)}
       onFocus={() => setShow(true)}
@@ -387,7 +389,8 @@ export function Sparkline({ data, width = 64, height = 24, color = 'var(--brand-
 
 export function CountUp({ value, suffix = '' }: { value: number; suffix?: string }) {
   const mv = useMotionValue(0)
-  const rounded = useTransform(mv, (v) => Math.round(v).toLocaleString('ar-SA') + suffix)
+  // Latin numerals to match the rest of the dashboard (Revenue/Reports/AgentHeroCard all use en-US)
+  const rounded = useTransform(mv, (v) => Math.round(v).toLocaleString('en-US') + suffix)
   const [display, setDisplay] = useState('0' + suffix)
 
   useEffect(() => {

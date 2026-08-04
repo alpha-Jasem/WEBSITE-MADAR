@@ -6,7 +6,6 @@ import {
   Wallet, BellRing, Plug, Settings, ChevronDown, LogOut, CreditCard, Menu, X,
   Wrench, History, Sun, Moon, AlertTriangle, ChevronsRight, ChevronsLeft, Plus, CalendarCheck2, Ticket,
   PhoneCall, MessageCircle, Bot, SlidersHorizontal, LayoutGrid, PhoneIncoming, PhoneOutgoing, ClipboardList,
-  ShieldCheck,
 } from 'lucide-react'
 import { useClinicOS } from '@/context/ClinicOSContext'
 import { useClinicSupportTickets, useClinicTodayAppointments } from '@/lib/clinicOSQueries'
@@ -241,18 +240,6 @@ export function DashboardV2Layout() {
         </div>
 
         <div style={{ borderTop: '1px solid #E5E5E5', marginTop: 8, paddingTop: 8 }}>
-          <div
-            className="dv2-nav-item"
-            onClick={() => window.open(isDemo ? '/demo-review/internal-admin' : '/clinic-os/admin', '_blank')}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 12, padding: collapsed ? '8px' : '8px 12px',
-              justifyContent: collapsed ? 'center' : 'flex-start',
-              borderRadius: 14, cursor: 'pointer', fontSize: 14, fontWeight: 500, color: '#525252',
-            }}
-          >
-            <ShieldCheck size={17} />
-            {!collapsed && <span>لوحة الإدارة</span>}
-          </div>
           <span
             className="dv2-desktop-only"
             onClick={() => setCollapsed((v) => !v)}

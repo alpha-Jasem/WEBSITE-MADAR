@@ -471,7 +471,10 @@ export function DashboardV2Home() {
                 <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 6 }}>معدل الحضور</div>
                 <RadialDial pct={kpis[3].numeric ?? 0} sublabel={kpis[3].ready === false ? 'بانتظار بيانات' : undefined} />
               </Card>
-              <KpiCard k={kpis[4]} index={4} />
+              {/* 5 tiles in a 2-col grid would leave an empty cell — the revenue tile spans the full row instead */}
+              <div style={{ gridColumn: '1 / -1', display: 'flex' }}>
+                <KpiCard k={kpis[4]} index={4} />
+              </div>
             </div>
           </div>
 

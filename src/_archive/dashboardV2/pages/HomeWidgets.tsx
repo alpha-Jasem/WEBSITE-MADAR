@@ -89,7 +89,7 @@ export function Donut({ sources, onSelect }: { sources: { key: string; label: st
 // ─── RadialDial — single-metric gauge with a dotted tick track ─────────────
 
 export function RadialDial({ pct, sublabel }: { pct: number; sublabel?: string }) {
-  const size = 132, stroke = 9, r = (size - stroke) / 2, c = 2 * Math.PI * r
+  const size = 104, stroke = 8, r = (size - stroke) / 2, c = 2 * Math.PI * r
   const clamped = Math.min(100, Math.max(0, pct))
   const dash = (clamped / 100) * c
   return (
@@ -103,7 +103,7 @@ export function RadialDial({ pct, sublabel }: { pct: number; sublabel?: string }
         />
       </svg>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ fontFamily: 'var(--font-numeral)', fontWeight: 800, fontSize: 24, color: 'var(--text-primary)' }}>{pct}%</div>
+        <div style={{ fontFamily: 'var(--font-numeral)', fontWeight: 800, fontSize: 21, color: 'var(--text-primary)' }}>{pct}%</div>
         {sublabel && <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 2 }}>{sublabel}</div>}
       </div>
     </div>
@@ -226,15 +226,17 @@ export function TodayTimeline({ appointments }: { appointments: Appointment[] })
   const max = Math.max(1, ...counts)
 
   return (
-    <Card>
+    // Column layout so the hour bars absorb whatever height the row's tallest card sets,
+    // instead of leaving dead space under a fixed 44px strip.
+    <Card style={{ display: 'flex', flexDirection: 'column' }}>
       <SectionTitle>الجدول الزمني لليوم</SectionTitle>
       {todays.length === 0 ? <EmptyRow text="لا توجد مواعيد اليوم بعد" /> : (
         <>
-          <div style={{ display: 'flex', gap: 4 }}>
+          <div style={{ display: 'flex', gap: 4, flex: 1, minHeight: 44 }}>
             {hours.map((h, i) => (
-              <Tooltip key={h} label={`${h}:00 — ${counts[i]} موعد`}>
+              <Tooltip key={h} label={`${h}:00 — ${counts[i]} موعد`} style={{ flex: 1 }}>
                 <div style={{
-                  flex: 1, height: 44, borderRadius: 5,
+                  flex: 1, height: '100%', borderRadius: 5,
                   background: counts[i] > 0
                     ? `color-mix(in srgb, var(--brand-500) ${Math.round((counts[i] / max) * 90) + 10}%, var(--surface-sunken))`
                     : 'var(--surface-sunken)',
@@ -243,7 +245,7 @@ export function TodayTimeline({ appointments }: { appointments: Appointment[] })
             ))}
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 6 }}>
-            <span>٨ص</span><span>٢م</span><span>٨م</span>
+            <span>8 ص</span><span>2 م</span><span>8 م</span>
           </div>
         </>
       )}
