@@ -100,14 +100,13 @@ export function DashboardV2Layout() {
 
   return (
     <ToastProvider>
-    <div className="dv2-scope" dir="rtl" data-theme={theme} style={{ display: 'flex', flexDirection: 'row-reverse', height: '100vh', overflow: 'hidden' }}>
+    <div className="dv2-scope" dir="rtl" data-theme={theme} style={{ display: 'flex', flexDirection: 'row', height: '100vh', overflow: 'hidden' }}>
       <style>{`
         .dv2-hamburger { display: none; }
         .dv2-backdrop { display: none; }
         @media (max-width: 900px) {
-          .dv2-sidebar { position: fixed !important; inset-inline-end: 0; top: 0; bottom: 0; z-index: 1300;
-            transition: transform .25s var(--ease-out); transform: translateX(-100%); }
-          [dir="rtl"] .dv2-sidebar { transform: translateX(-100%); }
+          .dv2-sidebar { position: fixed !important; inset-inline-start: 0; top: 0; bottom: 0; z-index: 1300;
+            transition: transform .25s var(--ease-out); transform: translateX(100%); }
           .dv2-sidebar.open { transform: translateX(0) !important; }
           .dv2-backdrop.open { display: block; position: fixed; inset: 0; background: rgba(4,9,26,.5); z-index: 1200; }
           .dv2-hamburger { display: flex !important; }
@@ -127,8 +126,8 @@ export function DashboardV2Layout() {
         .dv2-sidebar-glass {
           position: relative;
           background: #ffffff;
-          border-inline-start: 1px solid var(--border-default);
-          box-shadow: -4px 0 24px rgba(13,27,62,.05);
+          border-inline-end: 1px solid var(--border-default);
+          box-shadow: 4px 0 24px rgba(13,27,62,.05);
         }
         .dv2-sidebar-glass > * { position: relative; z-index: 1; }
       `}</style>
@@ -248,7 +247,7 @@ export function DashboardV2Layout() {
               borderRadius: 'var(--radius-md)', cursor: 'pointer', color: 'var(--text-tertiary)', fontSize: 11.5,
             }}
           >
-            {collapsed ? <ChevronsRight size={15} /> : <><ChevronsLeft size={15} /> طي القائمة</>}
+            {collapsed ? <ChevronsLeft size={15} /> : <><ChevronsRight size={15} /> طي القائمة</>}
           </span>
         </div>
 
