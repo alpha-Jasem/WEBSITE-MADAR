@@ -379,8 +379,18 @@ export function Sparkline({ data, width = 64, height = 24, color = 'var(--brand-
           </linearGradient>
         </defs>
       )}
-      {areaPath && <path d={areaPath} fill={`url(#${gradId})`} />}
-      <path d={path} fill="none" stroke={color} strokeWidth={variant === 'area' ? 2 : 1.75} strokeLinecap="round" strokeLinejoin="round" opacity={variant === 'area' ? 0.9 : 0.85} />
+      {areaPath && (
+        <motion.path
+          d={areaPath} fill={`url(#${gradId})`}
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.5 }}
+        />
+      )}
+      <motion.path
+        d={path} fill="none" stroke={color} strokeWidth={variant === 'area' ? 2 : 1.75} strokeLinecap="round" strokeLinejoin="round"
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={{ pathLength: 1, opacity: variant === 'area' ? 0.9 : 0.85 }}
+        transition={{ pathLength: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }, opacity: { duration: 0.3 } }}
+      />
     </svg>
   )
 }
@@ -394,7 +404,7 @@ export function CountUp({ value, suffix = '' }: { value: number; suffix?: string
   const [display, setDisplay] = useState('0' + suffix)
 
   useEffect(() => {
-    const controls = animate(mv, value, { duration: 0.6, ease: [0.16, 1, 0.3, 1] })
+    const controls = animate(mv, value, { type: 'spring', bounce: 0.22, duration: 0.9 })
     const unsub = rounded.on('change', (v) => setDisplay(v))
     return () => { controls.stop(); unsub() }
     // eslint-disable-next-line react-hooks/exhaustive-deps

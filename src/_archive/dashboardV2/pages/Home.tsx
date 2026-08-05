@@ -274,7 +274,7 @@ function Bar({ label, value, max }: { label: string; value: number; max: number 
         <motion.div
           initial={{ width: '0%' }}
           animate={{ width: pct + '%' }}
-          transition={{ duration: 0.7, ease: KPI_EASE_OUT }}
+          transition={{ type: 'spring', bounce: 0.2, duration: 0.8 }}
           style={{ height: '100%', background: 'var(--brand-500)', borderRadius: 'var(--radius-full)' }}
         />
       </div>
@@ -526,7 +526,7 @@ export function DashboardV2Home() {
               <KpiCard k={kpis[0]} index={0} />
               <KpiCard k={kpis[1]} index={1} />
               <KpiCard k={kpis[2]} index={2} />
-              <Card style={{ display: 'flex', flexDirection: 'column', padding: 'var(--space-4)' }}>
+              <Card delay={0.18} style={{ display: 'flex', flexDirection: 'column', padding: 'var(--space-4)' }}>
                 <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 6, fontWeight: 600 }}>معدل الحضور</div>
                 <RadialDial pct={kpis[3].numeric ?? 0} sublabel={kpis[3].ready === false ? 'بانتظار بيانات' : undefined} />
                 <div style={{ borderTop: '1px dashed var(--border-default)', marginTop: 14, paddingTop: 12, textAlign: 'center' }}>
@@ -543,7 +543,7 @@ export function DashboardV2Home() {
           </div>
 
           <div style={{ marginBottom: 20 }}>
-            <InsightBanner weeklyData={weeklyData} prevWeeklyData={prevWeeklyData} topSource={topSource} />
+            <InsightBanner weeklyData={weeklyData} prevWeeklyData={prevWeeklyData} topSource={topSource} delay={0.16} />
           </div>
         </>
       )}
@@ -601,31 +601,32 @@ export function DashboardV2Home() {
           </div>
         </Card>
 
-        <AiPerformanceCard calls={calls} />
+        <AiPerformanceCard calls={calls} delay={0.36} />
       </div>
 
       <div className="dv2-responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, marginBottom: 20 }}>
-        <TodayTimeline appointments={appts} />
-        <SystemHealthRow integrations={integrationsList} />
+        <TodayTimeline appointments={appts} delay={0.42} />
+        <SystemHealthRow integrations={integrationsList} delay={0.46} />
       </div>
 
       <div className="dv2-responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16, marginBottom: 20 }}>
-        <ActivityFeed notifications={notifs} calls={calls} messages={messages || []} appointments={appts} />
+        <ActivityFeed notifications={notifs} calls={calls} messages={messages || []} appointments={appts} delay={0.5} />
         <TicketPreviewCard
           tickets={ticketsList}
           onCreateClick={() => setTicketDialogOpen(true)}
           onViewAllClick={() => navigate(`${base}/tickets`)}
+          delay={0.5}
         />
       </div>
 
       <div className="dv2-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-        <Card>
+        <Card delay={0.5}>
           <div style={{ fontWeight: 700, marginBottom: 14 }}>أعلى الخدمات حجوزاً</div>
           {services.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>لا توجد بيانات بعد</div>}
           {services.map(([label, value]) => <Bar key={label} label={label} value={value} max={maxService} />)}
         </Card>
 
-        <Card>
+        <Card delay={0.5}>
           <div style={{ fontWeight: 700, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
             <Star size={16} style={{ color: 'var(--warning-500)' }} /> AI Google Reviews
           </div>
@@ -634,7 +635,7 @@ export function DashboardV2Home() {
           </div>
         </Card>
 
-        <Card>
+        <Card delay={0.5}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div style={{ fontWeight: 700 }}>آخر المحادثات</div>
             <LiveDot live={messagesLive} />

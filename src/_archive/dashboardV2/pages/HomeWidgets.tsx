@@ -101,7 +101,7 @@ export function RadialDial({ pct, sublabel }: { pct: number; sublabel?: string }
           strokeLinecap="round" transform={`rotate(-90 ${size / 2} ${size / 2})`}
           initial={{ strokeDasharray: `0 ${c}` }}
           animate={{ strokeDasharray: `${dash} ${c - dash}` }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ type: 'spring', bounce: 0.2, duration: 0.9 }}
         />
       </svg>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
@@ -126,6 +126,15 @@ export function AgentHeroCard({ todayCalls, todayBookings, escalatedToday, lastC
   }
   return (
     <Card glow style={{ position: 'relative', overflow: 'hidden', padding: 'var(--space-6)' }}>
+      <motion.div
+        aria-hidden
+        animate={{ opacity: [0.25, 0.65, 0.25] }}
+        transition={{ duration: 3.6, repeat: Infinity, ease: 'easeInOut' }}
+        style={{
+          position: 'absolute', inset: 0, borderRadius: 'inherit', pointerEvents: 'none',
+          boxShadow: 'inset 0 0 0 1px var(--brand-300), inset 0 0 32px -12px var(--brand-400)',
+        }}
+      />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 40, height: 40, borderRadius: 'var(--radius-md)', background: 'var(--gradient-brand)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
@@ -185,7 +194,7 @@ export function AgentHeroCard({ todayCalls, todayBookings, escalatedToday, lastC
 
 // ─── AiPerformanceCard — real Donut from clinic_os_ai_calls.status, no confidence placeholder ──
 
-export function AiPerformanceCard({ calls }: { calls: AICallLog[] }) {
+export function AiPerformanceCard({ calls, delay = 0 }: { calls: AICallLog[]; delay?: number }) {
   const total = calls.length
   const solved = calls.filter((c) => c.status === 'completed' && !c.needs_review).length
   const needsHuman = calls.filter((c) => c.needs_review || c.status === 'needs_review').length
@@ -198,7 +207,7 @@ export function AiPerformanceCard({ calls }: { calls: AICallLog[] }) {
   ].filter((s) => s.pct > 0) : []
 
   return (
-    <Card>
+    <Card delay={delay}>
       <SectionTitle action={<Badge tone="brand">AI</Badge>}>أداء الذكاء الاصطناعي</SectionTitle>
       {total === 0 ? <EmptyRow text="لا توجد مكالمات بعد" /> : (
         <>
@@ -220,7 +229,7 @@ export function AiPerformanceCard({ calls }: { calls: AICallLog[] }) {
 
 // ─── TodayTimeline — real hourly bucket of today's appointments ────────────
 
-export function TodayTimeline({ appointments }: { appointments: Appointment[] }) {
+export function TodayTimeline({ appointments, delay = 0 }: { appointments: Appointment[]; delay?: number }) {
   const todayStr = new Date().toISOString().split('T')[0]
   const todays = useMemo(() => appointments.filter((a) => a.appointment_date === todayStr), [appointments, todayStr])
   const hours = Array.from({ length: 13 }, (_, i) => 8 + i)
@@ -230,19 +239,24 @@ export function TodayTimeline({ appointments }: { appointments: Appointment[] })
   return (
     // Column layout so the hour bars absorb whatever height the row's tallest card sets,
     // instead of leaving dead space under a fixed 44px strip.
-    <Card style={{ display: 'flex', flexDirection: 'column' }}>
+    <Card delay={delay} style={{ display: 'flex', flexDirection: 'column' }}>
       <SectionTitle>الجدول الزمني لليوم</SectionTitle>
       {todays.length === 0 ? <EmptyRow text="لا توجد مواعيد اليوم بعد" /> : (
         <>
-          <div style={{ display: 'flex', gap: 4, flex: 1, minHeight: 44 }}>
+          <div style={{ display: 'flex', gap: 4, flex: 1, minHeight: 44, alignItems: 'flex-end' }}>
             {hours.map((h, i) => (
-              <Tooltip key={h} label={`${h}:00 — ${counts[i]} موعد`} style={{ flex: 1 }}>
-                <div style={{
-                  flex: 1, height: '100%', borderRadius: 5,
-                  background: counts[i] > 0
-                    ? `color-mix(in srgb, var(--brand-500) ${Math.round((counts[i] / max) * 90) + 10}%, var(--surface-sunken))`
-                    : 'var(--surface-sunken)',
-                }} />
+              <Tooltip key={h} label={`${h}:00 — ${counts[i]} موعد`} style={{ flex: 1, height: '100%' }}>
+                <motion.div
+                  initial={{ scaleY: 0 }}
+                  animate={{ scaleY: 1 }}
+                  transition={{ type: 'spring', bounce: 0.25, duration: 0.6, delay: Math.min(delay, 0.5) + i * 0.025 }}
+                  style={{
+                    width: '100%', height: '100%', borderRadius: 5, transformOrigin: 'bottom',
+                    background: counts[i] > 0
+                      ? `color-mix(in srgb, var(--brand-500) ${Math.round((counts[i] / max) * 90) + 10}%, var(--surface-sunken))`
+                      : 'var(--surface-sunken)',
+                  }}
+                />
               </Tooltip>
             ))}
           </div>
@@ -257,9 +271,9 @@ export function TodayTimeline({ appointments }: { appointments: Appointment[] })
 
 // ─── SystemHealthRow — only the 5 real tracked integrations, no fake uptime ─
 
-export function SystemHealthRow({ integrations }: { integrations: Integration[] }) {
+export function SystemHealthRow({ integrations, delay = 0 }: { integrations: Integration[]; delay?: number }) {
   return (
-    <Card>
+    <Card delay={delay}>
       <SectionTitle>التكاملات</SectionTitle>
       {integrations.length === 0 ? <EmptyRow text="لا توجد تكاملات بعد" /> : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -292,11 +306,12 @@ export function SystemHealthRow({ integrations }: { integrations: Integration[] 
 
 // ─── ActivityFeed — real merge of notifications + calls + messages + appointments ──
 
-export function ActivityFeed({ notifications, calls, messages, appointments }: {
+export function ActivityFeed({ notifications, calls, messages, appointments, delay = 0 }: {
   notifications: ClinicNotification[]
   calls: AICallLog[]
   messages: MessageLog[]
   appointments: Appointment[]
+  delay?: number
 }) {
   const items = useMemo(() => {
     const arr: { id: string; icon: ReactNode; title: string; ts: number }[] = []
@@ -308,18 +323,24 @@ export function ActivityFeed({ notifications, calls, messages, appointments }: {
   }, [notifications, calls, messages, appointments])
 
   return (
-    <Card>
+    <Card delay={delay}>
       <SectionTitle>النشاط المباشر</SectionTitle>
       {items.length === 0 ? <EmptyRow text="لا يوجد نشاط بعد" /> : (
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {items.map((it) => (
-            <div key={it.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '1px dashed var(--border-default)' }}>
+          {items.map((it, i) => (
+            <motion.div
+              key={it.id}
+              initial={{ opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.35, delay: Math.min(delay, 0.5) + i * 0.03, ease: [0.16, 1, 0.3, 1] }}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '1px dashed var(--border-default)' }}
+            >
               <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--surface-sunken)', color: 'var(--brand-600)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 {it.icon}
               </div>
               <div style={{ flex: 1, fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.title}</div>
               <div style={{ fontSize: 11, color: 'var(--text-tertiary)', flexShrink: 0 }}>{timeAgo(new Date(it.ts).toISOString())}</div>
-            </div>
+            </motion.div>
           ))}
         </div>
       )}
@@ -329,10 +350,11 @@ export function ActivityFeed({ notifications, calls, messages, appointments }: {
 
 // ─── InsightBanner — template sentence from real aggregates, not an LLM call ─
 
-export function InsightBanner({ weeklyData, prevWeeklyData, topSource }: {
+export function InsightBanner({ weeklyData, prevWeeklyData, topSource, delay = 0 }: {
   weeklyData: number[]
   prevWeeklyData: number[]
   topSource?: { label: string; pct: number }
+  delay?: number
 }) {
   const sum = (arr: number[]) => arr.reduce((a, b) => a + b, 0)
   const cur = sum(weeklyData), prev = sum(prevWeeklyData)
@@ -344,10 +366,14 @@ export function InsightBanner({ weeklyData, prevWeeklyData, topSource }: {
   if (topSource && topSource.pct > 0) parts.push(`أغلب الحجوزات جتك من ${topSource.label} (${topSource.pct}%).`)
 
   return (
-    <Card style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px' }}>
-      <div style={{ width: 32, height: 32, borderRadius: 'var(--radius-md)', background: 'var(--brand-100)', color: 'var(--brand-600)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+    <Card delay={delay} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px' }}>
+      <motion.div
+        animate={{ scale: [1, 1.12, 1] }}
+        transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+        style={{ width: 32, height: 32, borderRadius: 'var(--radius-md)', background: 'var(--brand-100)', color: 'var(--brand-600)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+      >
         <Sparkles size={16} />
-      </div>
+      </motion.div>
       <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{parts.join(' ')}</div>
     </Card>
   )
@@ -355,10 +381,11 @@ export function InsightBanner({ weeklyData, prevWeeklyData, topSource }: {
 
 // ─── TicketPreviewCard — real ai_agent_support_tickets, "عرض الكل" is a "قريبًا" toast ──
 
-export function TicketPreviewCard({ tickets, onCreateClick, onViewAllClick }: {
+export function TicketPreviewCard({ tickets, onCreateClick, onViewAllClick, delay = 0 }: {
   tickets: SupportTicket[]
   onCreateClick: () => void
   onViewAllClick: () => void
+  delay?: number
 }) {
   const today = new Date()
   const open = tickets.filter((t) => t.status === 'open').length
@@ -371,7 +398,7 @@ export function TicketPreviewCard({ tickets, onCreateClick, onViewAllClick }: {
   const PRIORITY_LABEL: Record<TicketPriority, string> = { high: 'عالية', normal: 'عادية', low: 'منخفضة' }
 
   return (
-    <Card>
+    <Card delay={delay}>
       <SectionTitle action={<Button size="sm" variant="ghost" onClick={onCreateClick}><Plus size={14} /> تذكرة جديدة</Button>}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Ticket size={15} /> مركز التذاكر</span>
       </SectionTitle>
