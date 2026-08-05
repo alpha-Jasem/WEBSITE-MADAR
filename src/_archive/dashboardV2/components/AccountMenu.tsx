@@ -47,7 +47,7 @@ export function AccountMenu({ base }: { base: string }) {
           <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1200 }} />
           <div style={{
             position: 'absolute', top: '130%', insetInlineEnd: 0, width: 220,
-            background: '#fff', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', zIndex: 1300,
+            background: 'var(--surface-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', zIndex: 1300,
             border: '1px solid var(--border-default)', overflow: 'hidden',
           }}>
             <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border-default)' }}>

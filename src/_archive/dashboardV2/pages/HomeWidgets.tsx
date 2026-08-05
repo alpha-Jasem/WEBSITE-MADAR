@@ -5,7 +5,7 @@ import {
   PhoneOff, Sparkles,
 } from 'lucide-react'
 import { Card, Badge, Button } from '@/_archive/dashboardV2/components/primitives'
-import { Tooltip } from '@/_archive/dashboardV2/components/uiExtras'
+import { Tooltip, CountUp } from '@/_archive/dashboardV2/components/uiExtras'
 import type { AICallLog, Appointment, ClinicNotification, Integration, MessageLog, SupportTicket, TicketPriority } from '@/types/clinicOS'
 
 // ─── shared helpers ─────────────────────────────────────────────────────────
@@ -79,7 +79,7 @@ export function Donut({ sources, onSelect }: { sources: { key: string; label: st
         position: 'absolute', inset: 22, background: 'var(--surface-card)', borderRadius: '50%', pointerEvents: 'none',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       }}>
-        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 20 }}>{total}%</div>
+        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 20 }}><CountUp value={total} suffix="%" /></div>
         <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>موزّعة</div>
       </div>
     </div>
@@ -96,14 +96,16 @@ export function RadialDial({ pct, sublabel }: { pct: number; sublabel?: string }
     <div style={{ position: 'relative', width: size, height: size, margin: '0 auto' }}>
       <svg width={size} height={size}>
         <circle cx={size / 2} cy={size / 2} r={r} stroke="var(--border-default)" strokeWidth={1.5} strokeDasharray="1 7" fill="none" />
-        <circle
+        <motion.circle
           cx={size / 2} cy={size / 2} r={r} stroke="var(--brand-500)" strokeWidth={stroke} fill="none"
-          strokeDasharray={`${dash} ${c - dash}`} strokeLinecap="round" transform={`rotate(-90 ${size / 2} ${size / 2})`}
-          style={{ transition: 'stroke-dasharray 500ms var(--ease-out, ease)' }}
+          strokeLinecap="round" transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          initial={{ strokeDasharray: `0 ${c}` }}
+          animate={{ strokeDasharray: `${dash} ${c - dash}` }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         />
       </svg>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ fontFamily: 'var(--font-numeral)', fontWeight: 800, fontSize: 21, color: 'var(--text-primary)' }}>{pct}%</div>
+        <div style={{ fontFamily: 'var(--font-numeral)', fontWeight: 800, fontSize: 21, color: 'var(--text-primary)' }}><CountUp value={pct} suffix="%" /></div>
         {sublabel && <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 2 }}>{sublabel}</div>}
       </div>
     </div>
@@ -150,7 +152,7 @@ export function AgentHeroCard({ todayCalls, todayBookings, escalatedToday, lastC
           { label: 'تحويل لبشري', value: escalatedToday },
         ].map((s) => (
           <div key={s.label} style={{ background: 'var(--surface-sunken)', borderRadius: 'var(--radius-md)', padding: '12px 10px', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'var(--font-numeral)', fontWeight: 800, fontSize: 22 }}>{s.value}</div>
+            <div style={{ fontFamily: 'var(--font-numeral)', fontWeight: 800, fontSize: 22 }}><CountUp value={s.value} /></div>
             <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>{s.label}</div>
           </div>
         ))}
@@ -206,7 +208,7 @@ export function AiPerformanceCard({ calls }: { calls: AICallLog[] }) {
               <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: s.color }} />
                 <span style={{ flex: 1, color: 'var(--text-secondary)' }}>{s.label}</span>
-                <span style={{ fontWeight: 600 }}>{s.pct}%</span>
+                <span style={{ fontWeight: 600 }}><CountUp value={s.pct} suffix="%" /></span>
               </div>
             ))}
           </div>
@@ -260,20 +262,28 @@ export function SystemHealthRow({ integrations }: { integrations: Integration[] 
     <Card>
       <SectionTitle>التكاملات</SectionTitle>
       {integrations.length === 0 ? <EmptyRow text="لا توجد تكاملات بعد" /> : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
-          {integrations.map((i) => (
-            <div key={i.id} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 12.5 }}>
-              <span style={{
-                width: 8, height: 8, borderRadius: '50%',
-                background: i.status === 'connected' ? 'var(--success-500)' : 'var(--slate-300)',
-                boxShadow: i.status === 'connected' ? '0 0 0 3px var(--success-100)' : undefined,
-              }} />
-              <span style={{ flex: 1, color: 'var(--text-secondary)' }}>{i.name}</span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: i.status === 'connected' ? 'var(--success-500)' : 'var(--text-tertiary)' }}>
-                {i.status === 'connected' ? 'متصل' : 'غير متصل'}
-              </span>
-            </div>
-          ))}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {integrations.map((i) => {
+            const connected = i.status === 'connected'
+            return (
+              <div key={i.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px dashed var(--border-default)' }}>
+                <span style={{
+                  width: 30, height: 30, borderRadius: 'var(--radius-md)', flexShrink: 0,
+                  background: connected ? 'var(--success-100)' : 'var(--surface-sunken)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <span style={{
+                    width: 8, height: 8, borderRadius: '50%',
+                    background: connected ? 'var(--success-500)' : 'var(--slate-300)',
+                  }} />
+                </span>
+                <span style={{ flex: 1, fontSize: 12.5, color: 'var(--text-primary)', fontWeight: 500 }}>{i.name}</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: connected ? 'var(--success-500)' : 'var(--text-tertiary)' }}>
+                  {connected ? 'متصل' : 'غير متصل'}
+                </span>
+              </div>
+            )
+          })}
         </div>
       )}
     </Card>
@@ -374,7 +384,7 @@ export function TicketPreviewCard({ tickets, onCreateClick, onViewAllClick }: {
           { label: 'أولوية عالية', value: highPriority },
         ].map((s) => (
           <div key={s.label} style={{ background: 'var(--surface-sunken)', borderRadius: 'var(--radius-md)', padding: '8px 6px', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'var(--font-numeral)', fontWeight: 800, fontSize: 16 }}>{s.value}</div>
+            <div style={{ fontFamily: 'var(--font-numeral)', fontWeight: 800, fontSize: 16 }}><CountUp value={s.value} /></div>
             <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 1 }}>{s.label}</div>
           </div>
         ))}

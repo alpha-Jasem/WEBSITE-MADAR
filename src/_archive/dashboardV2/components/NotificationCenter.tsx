@@ -101,7 +101,7 @@ export function NotificationCenter() {
               transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
               style={{
                 position: 'absolute', top: '130%', insetInlineEnd: 0, width: 320, maxHeight: 420, overflowY: 'auto',
-                background: '#fff', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', zIndex: 1300,
+                background: 'var(--surface-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', zIndex: 1300,
                 border: '1px solid var(--border-default)',
               }}
             >

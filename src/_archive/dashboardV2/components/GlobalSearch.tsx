@@ -141,7 +141,7 @@ export function GlobalSearch({ base }: { base: string }) {
               exit={{ opacity: 0, y: -6, scale: 0.98 }}
               transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
               style={{
-                position: 'absolute', top: '115%', insetInlineStart: 0, insetInlineEnd: 0, background: '#fff',
+                position: 'absolute', top: '115%', insetInlineStart: 0, insetInlineEnd: 0, background: 'var(--surface-card)',
                 borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-default)',
                 zIndex: 1300, maxHeight: 400, overflowY: 'auto',
               }}

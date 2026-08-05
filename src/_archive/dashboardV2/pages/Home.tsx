@@ -15,7 +15,7 @@ import { exportRowsToExcel } from '@/lib/exportExcel'
 import { Card, Badge, Button, Dialog, Input, Select, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
 import { CountUp, useToast, Avatar, Sparkline, LiveDot, Menu, KpiCardSkeleton, requestOpenSearch } from '@/_archive/dashboardV2/components/uiExtras'
 import {
-  Donut, RadialDial, AgentHeroCard, AiPerformanceCard, TodayTimeline, SystemHealthRow, ActivityFeed, InsightBanner, TicketPreviewCard,
+  Donut, RadialDial, AgentHeroCard, AiPerformanceCard, TodayTimeline, SystemHealthRow, ActivityFeed, InsightBanner, TicketPreviewCard, timeAgo,
 } from './HomeWidgets'
 import type { Appointment, TicketPriority } from '@/types/clinicOS'
 
@@ -36,6 +36,7 @@ interface Kpi {
   ready?: boolean
   trend?: number[]
   variant: KpiVariant
+  footer?: React.ReactNode
 }
 
 const TONE_BG: Record<BadgeTone, [string, string]> = {
@@ -134,25 +135,48 @@ function KpiCard({ k, index = 0, hero = false }: { k: Kpi; index?: number; hero?
               >{k.icon}</motion.div>
             </div>
           ) : (
-            <motion.div
-              whileHover={iconWhileHover}
-              transition={iconTransition}
-              style={{
-                width: 32, height: 32, borderRadius: '50%', background: bg, color: fg,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginBottom: 10,
-              }}
-            >{k.icon}</motion.div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <motion.div
+                whileHover={iconWhileHover}
+                transition={iconTransition}
+                style={{
+                  width: 26, height: 26, borderRadius: 'var(--radius-sm)', background: bg, color: fg,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                }}
+              >{k.icon}</motion.div>
+              <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', fontWeight: 500 }}>{k.label}</div>
+            </div>
           )}
-          {!hero && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', fontWeight: 500 }}>{k.label}</div>}
 
-          <div style={{
-            fontFamily: 'var(--font-numeral)', fontWeight: hero ? 900 : 700,
-            fontSize: hero ? 'var(--text-display-lg)' : 'var(--text-heading-lg)',
-            fontVariantNumeric: 'tabular-nums', marginTop: hero ? 16 : 4, letterSpacing: 'var(--tracking-tight)',
-            color: k.ready === false ? 'var(--text-tertiary)' : 'var(--text-primary)',
-          }}>{k.numeric != null ? <CountUp value={k.numeric} suffix={k.suffix} /> : k.value}</div>
+          {hero && (
+            <div style={{
+              fontFamily: 'var(--font-numeral)', fontWeight: 900, fontSize: 'var(--text-display-lg)',
+              fontVariantNumeric: 'tabular-nums', marginTop: 16, letterSpacing: 'var(--tracking-tight)',
+              color: k.ready === false ? 'var(--text-tertiary)' : 'var(--text-primary)',
+            }}>{k.numeric != null ? <CountUp value={k.numeric} suffix={k.suffix} /> : k.value}</div>
+          )}
 
-          {k.delta && (
+          {!hero && (
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, flexWrap: 'wrap' }}>
+              <div style={{
+                fontFamily: 'var(--font-numeral)', fontWeight: 700, fontSize: 'var(--text-heading-lg)',
+                fontVariantNumeric: 'tabular-nums', letterSpacing: 'var(--tracking-tight)',
+                color: k.ready === false ? 'var(--text-tertiary)' : 'var(--text-primary)',
+              }}>{k.numeric != null ? <CountUp value={k.numeric} suffix={k.suffix} /> : k.value}</div>
+              {k.delta && (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 2, fontWeight: 700, padding: '2px 7px',
+                  borderRadius: 'var(--radius-full)', fontSize: 'var(--text-caption)',
+                  background: k.up ? 'var(--success-100)' : 'var(--danger-100)',
+                  color: k.up ? 'var(--success-500)' : 'var(--danger-500)',
+                }}>
+                  {k.up ? <ArrowUp size={11} /> : <ArrowDown size={11} />}{k.delta}
+                </span>
+              )}
+            </div>
+          )}
+
+          {hero && k.delta && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: 'var(--text-caption)' }}>
               <span style={{
                 display: 'inline-flex', alignItems: 'center', gap: 2, fontWeight: 700, padding: '2px 7px',
@@ -165,12 +189,16 @@ function KpiCard({ k, index = 0, hero = false }: { k: Kpi; index?: number; hero?
               <span style={{ color: 'var(--text-tertiary)' }}>مقارنة بالأسبوع الماضي</span>
             </div>
           )}
+          {!hero && k.delta && (
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4 }}>مقارنة بالأسبوع الماضي</div>
+          )}
           {k.ready === false && (
             <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 6 }}>
               جاهزة لاستقبال البيانات
             </div>
           )}
-          {(!k.delta && k.ready !== false) && <div style={{ height: 22 }} />}
+          {(!k.delta && k.ready !== false) && <div style={{ height: 18 }} />}
+          {k.footer}
         </div>
 
         {k.trend && k.trend.length > 1 && (
@@ -238,13 +266,19 @@ function LineChart({ data, compareData, labels }: { data: number[]; compareData?
 }
 
 function Bar({ label, value, max }: { label: string; value: number; max: number }) {
+  const pct = max > 0 ? value / max * 100 : 0
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
       <div style={{ width: 130, fontSize: 'var(--text-body-sm)', color: 'var(--text-primary)', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</div>
       <div style={{ flex: 1, height: 8, background: 'var(--slate-100)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
-        <div style={{ width: (max > 0 ? value / max * 100 : 0) + '%', height: '100%', background: 'var(--brand-500)', borderRadius: 'var(--radius-full)' }} />
+        <motion.div
+          initial={{ width: '0%' }}
+          animate={{ width: pct + '%' }}
+          transition={{ duration: 0.7, ease: KPI_EASE_OUT }}
+          style={{ height: '100%', background: 'var(--brand-500)', borderRadius: 'var(--radius-full)' }}
+        />
       </div>
-      <div style={{ width: 30, fontSize: 'var(--text-body-sm)', fontWeight: 600, textAlign: 'left' }}>{value}</div>
+      <div style={{ width: 30, fontSize: 'var(--text-body-sm)', fontWeight: 600, textAlign: 'left' }}><CountUp value={value} /></div>
     </div>
   )
 }
@@ -292,6 +326,12 @@ export function DashboardV2Home() {
   const attendanceBase = completed + noShow
   const attendanceRate = attendanceBase > 0 ? Math.round((completed / attendanceBase) * 1000) / 10 : null
 
+  const lastNoShow = useMemo(() => {
+    const rows = appts.filter((a) => a.status === 'no_show')
+    if (rows.length === 0) return null
+    return [...rows].sort((a, b) => `${b.appointment_date}T${b.start_time}`.localeCompare(`${a.appointment_date}T${a.start_time}`))[0]
+  }, [appts])
+
   const weeklyData = useMemo(() => (weekly || []).map((w) => w.appointments), [weekly])
   const weeklyLabels = useMemo(() => (weekly || []).map((w) => w.day), [weekly])
   const prevWeeklyData = useMemo(() => (prevWeekly || []).map((w) => w.appointments), [prevWeekly])
@@ -301,7 +341,26 @@ export function DashboardV2Home() {
   const kpis: Kpi[] = [
     { label: 'إجمالي الحجوزات', value: String(appts.length), numeric: appts.length, icon: <CalendarCheck2 size={17} />, tone: 'brand', emphasis: true, trend: weeklyData, variant: 'lift-glow' },
     { label: 'الحجوزات المكتملة', value: String(completed), numeric: completed, icon: <CalendarCheck2 size={17} />, tone: 'success', trend: completedTrend, variant: 'count-spin' },
-    { label: 'مواعيد لم تحضر', value: String(noShow), numeric: noShow, icon: <CalendarX2 size={17} />, tone: 'danger', variant: 'pulse-ring' },
+    {
+      label: 'مواعيد لم تحضر', value: String(noShow), numeric: noShow, icon: <CalendarX2 size={17} />, tone: 'danger', variant: 'pulse-ring',
+      footer: (
+        <div style={{ borderTop: '1px dashed var(--border-default)', marginTop: 14, paddingTop: 12 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 6 }}>آخر موعد لم يُحضَر</div>
+          {lastNoShow ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ flex: 1, minWidth: 0, fontSize: 12.5, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {lastNoShow.patient_name} — {lastNoShow.service_name}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-tertiary)', flexShrink: 0 }}>
+                {timeAgo(`${lastNoShow.appointment_date}T${lastNoShow.start_time}`)}
+              </div>
+            </div>
+          ) : (
+            <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>لا توجد مواعيد فائتة — كله تمام</div>
+          )}
+        </div>
+      ),
+    },
     { label: 'معدل الحضور', value: attendanceRate != null ? `${attendanceRate}%` : '—', numeric: attendanceRate ?? undefined, suffix: '%', icon: <Users size={17} />, tone: 'brand', ready: attendanceRate != null, variant: 'tilt-shift' },
     { label: 'إجمالي الإيرادات', value: 'بانتظار الربط', icon: <Wallet size={17} />, tone: 'warning', ready: false, variant: 'sheen' },
   ]
@@ -433,7 +492,7 @@ export function DashboardV2Home() {
           <div style={{
             display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px',
             border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-md)', fontSize: 13,
-            color: 'var(--text-secondary)', background: '#fff',
+            color: 'var(--text-secondary)', background: 'var(--surface-card)',
           }}>
             <CalendarDays size={15} />{weeklyLabel}
           </div>
@@ -468,8 +527,13 @@ export function DashboardV2Home() {
               <KpiCard k={kpis[1]} index={1} />
               <KpiCard k={kpis[2]} index={2} />
               <Card style={{ display: 'flex', flexDirection: 'column', padding: 'var(--space-4)' }}>
-                <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 6 }}>معدل الحضور</div>
+                <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 6, fontWeight: 600 }}>معدل الحضور</div>
                 <RadialDial pct={kpis[3].numeric ?? 0} sublabel={kpis[3].ready === false ? 'بانتظار بيانات' : undefined} />
+                <div style={{ borderTop: '1px dashed var(--border-default)', marginTop: 14, paddingTop: 12, textAlign: 'center' }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>الحجوزات المكتملة</div>
+                  <div style={{ fontFamily: 'var(--font-numeral)', fontWeight: 800, fontSize: 'var(--text-heading-lg)', marginTop: 2 }}><CountUp value={completed} /></div>
+                </div>
+                <Button variant="secondary" size="sm" style={{ width: '100%', marginTop: 12 }} onClick={() => navigate(`${base}/bookings`)}>عرض الحجوزات</Button>
               </Card>
               {/* 5 tiles in a 2-col grid would leave an empty cell — the revenue tile spans the full row instead */}
               <div style={{ gridColumn: '1 / -1', display: 'flex' }}>
@@ -531,7 +595,7 @@ export function DashboardV2Home() {
               >
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: s.color }} />
                 <span style={{ flex: 1, color: 'var(--text-secondary)' }}>{s.label}</span>
-                <span style={{ fontWeight: 600 }}>{s.pct}%</span>
+                <span style={{ fontWeight: 600 }}><CountUp value={s.pct} suffix="%" /></span>
               </div>
             ))}
           </div>

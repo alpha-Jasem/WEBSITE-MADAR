@@ -268,8 +268,8 @@ export function DashboardV2Bookings() {
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <div style={{ display: 'flex', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
-            <span onClick={() => setView('list')} style={{ padding: '8px 12px', cursor: 'pointer', background: view === 'list' ? 'var(--brand-500)' : '#fff', color: view === 'list' ? '#fff' : 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}><List size={15} /></span>
-            <span onClick={() => setView('calendar')} style={{ padding: '8px 12px', cursor: 'pointer', background: view === 'calendar' ? 'var(--brand-500)' : '#fff', color: view === 'calendar' ? '#fff' : 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}><CalendarDays size={15} /></span>
+            <span onClick={() => setView('list')} style={{ padding: '8px 12px', cursor: 'pointer', background: view === 'list' ? 'var(--brand-500)' : 'var(--surface-card)', color: view === 'list' ? '#fff' : 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}><List size={15} /></span>
+            <span onClick={() => setView('calendar')} style={{ padding: '8px 12px', cursor: 'pointer', background: view === 'calendar' ? 'var(--brand-500)' : 'var(--surface-card)', color: view === 'calendar' ? '#fff' : 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}><CalendarDays size={15} /></span>
           </div>
           <GlowButton onClick={() => setOpen(true)}><Plus size={15} /> حجز جديد</GlowButton>
         </div>
@@ -302,7 +302,7 @@ export function DashboardV2Bookings() {
         {FILTERS.map((f) => (
           <div key={f} onClick={() => setFilter(f)} style={{
             padding: '6px 14px', borderRadius: 'var(--radius-full)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-            background: filter === f ? 'var(--brand-500)' : '#fff', color: filter === f ? '#fff' : 'var(--text-secondary)',
+            background: filter === f ? 'var(--brand-500)' : 'var(--surface-card)', color: filter === f ? '#fff' : 'var(--text-secondary)',
             border: '1px solid ' + (filter === f ? 'var(--brand-500)' : 'var(--border-default)'),
           }}>
             {f === 'all' ? 'الكل' : STATUS_LABEL[f]}

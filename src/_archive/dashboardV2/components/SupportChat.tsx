@@ -96,7 +96,7 @@ export function SupportChat() {
       `}</style>
       {open && (
         <div className="dv2-chat-panel" style={{
-          width: 340, height: 460, background: '#fff', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)',
+          width: 340, height: 460, background: 'var(--surface-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)',
           border: '1px solid var(--border-default)', display: 'flex', flexDirection: 'column', marginBottom: 12, overflow: 'hidden',
         }}>
           <div style={{

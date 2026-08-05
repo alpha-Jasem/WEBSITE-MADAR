@@ -210,7 +210,7 @@ export function Menu({ trigger, items, align = 'end' }: {
             transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
             style={{
               position: 'absolute', top: 'calc(100% + 6px)', [align === 'end' ? 'insetInlineEnd' : 'insetInlineStart']: 0,
-              minWidth: 180, background: '#fff', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-lg)',
+              minWidth: 180, background: 'var(--surface-card)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-lg)',
               border: '1px solid color-mix(in srgb, var(--border-default) 70%, transparent)',
               padding: 6, zIndex: 1300, fontFamily: 'var(--font-body)',
             } as CSSProperties}
@@ -520,7 +520,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               exit={{ opacity: 0, x: -24, scale: 0.95, transition: { duration: 0.15 } }}
               transition={{ type: 'spring', stiffness: 420, damping: 32 }}
               style={{
-                display: 'flex', gap: 10, alignItems: 'flex-start', padding: '12px 14px', background: '#fff',
+                display: 'flex', gap: 10, alignItems: 'flex-start', padding: '12px 14px', background: 'var(--surface-card)',
                 border: '1px solid color-mix(in srgb, var(--border-default) 70%, transparent)', borderRadius: 'var(--radius-lg)',
                 boxShadow: 'var(--shadow-lg)', fontFamily: 'var(--font-body)',
               }}
@@ -605,7 +605,7 @@ export function ShortcutsOverlay() {
             onClick={(e) => e.stopPropagation()}
             initial={{ opacity: 0, y: 12, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.97 }}
             transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-            style={{ background: '#fff', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', width: 360, maxWidth: '90vw', padding: 22, fontFamily: 'var(--font-body)' }}
+            style={{ background: 'var(--surface-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', width: 360, maxWidth: '90vw', padding: 22, fontFamily: 'var(--font-body)' }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>
               <Keyboard size={18} style={{ color: 'var(--brand-500)' }} /> اختصارات لوحة المفاتيح
@@ -668,7 +668,7 @@ export function WhatsNewBadge() {
               initial={{ opacity: 0, y: -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6, scale: 0.98 }}
               transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
               style={{
-                position: 'absolute', top: '130%', insetInlineEnd: 0, width: 280, background: '#fff', borderRadius: 'var(--radius-lg)',
+                position: 'absolute', top: '130%', insetInlineEnd: 0, width: 280, background: 'var(--surface-card)', borderRadius: 'var(--radius-lg)',
                 boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-default)', zIndex: 1300, padding: 14,
               }}
             >
@@ -702,7 +702,7 @@ export function Fab({ actions }: { actions: { label: string; icon: ReactNode; on
             initial={{ opacity: 0, y: 8, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.95 }}
             transition={{ duration: 0.15 }}
             style={{
-              position: 'absolute', bottom: '115%', insetInlineStart: 0, minWidth: 190, background: '#fff',
+              position: 'absolute', bottom: '115%', insetInlineStart: 0, minWidth: 190, background: 'var(--surface-card)',
               borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-default)', padding: 6,
             }}
           >

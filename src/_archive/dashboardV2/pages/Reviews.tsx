@@ -198,7 +198,7 @@ export function DashboardV2Reviews() {
                 <div style={{
                   position: 'absolute', inset: 0, backfaceVisibility: 'hidden', borderRadius: 'var(--radius-lg)',
                   padding: 18, display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-                  background: active ? 'var(--gradient-brand)' : '#fff',
+                  background: active ? 'var(--gradient-brand)' : 'var(--surface-card)',
                   border: '1px solid ' + (active ? 'transparent' : 'var(--border-default)'),
                   boxShadow: active ? 'var(--shadow-lg)' : 'var(--shadow-sm)',
                 }}>

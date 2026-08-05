@@ -183,7 +183,7 @@ export function DashboardV2Layout() {
             <div style={{
               position: 'absolute', top: '110%', insetInlineStart: 0, insetInlineEnd: 0,
               background: '#fff', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-default)',
-              overflow: 'hidden', color: 'var(--text-primary)', minWidth: collapsed ? 150 : undefined, zIndex: 10,
+              overflow: 'hidden', color: '#171717', minWidth: collapsed ? 150 : undefined, zIndex: 10,
             }}>
               <div
                 onClick={logout}

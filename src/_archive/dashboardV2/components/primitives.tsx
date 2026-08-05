@@ -92,7 +92,7 @@ const SIZE_STYLES: Record<ButtonSize, CSSProperties> = {
 
 const VARIANT_STYLES: Record<ButtonVariant, CSSProperties> = {
   primary: { backgroundColor: 'var(--brand-500)', backgroundImage: 'linear-gradient(155deg, var(--brand-400), var(--brand-600))', color: 'var(--text-on-brand)', border: '1px solid transparent' },
-  secondary: { backgroundColor: '#fff', backgroundImage: 'none', color: 'var(--text-primary)', border: '1px solid color-mix(in srgb, var(--border-strong) 80%, transparent)' },
+  secondary: { backgroundColor: 'var(--surface-card)', backgroundImage: 'none', color: 'var(--text-primary)', border: '1px solid color-mix(in srgb, var(--border-strong) 80%, transparent)' },
   ghost: { backgroundColor: 'transparent', backgroundImage: 'none', color: 'var(--text-primary)', border: '1px solid transparent' },
   danger: { backgroundColor: 'var(--danger-500)', backgroundImage: 'none', color: '#fff', border: '1px solid transparent' },
 }
@@ -158,7 +158,7 @@ export function Toast({ tone = 'brand', title, description, onClose }: {
       exit={{ opacity: 0, x: -24, scale: 0.95 }}
       transition={{ type: 'spring', stiffness: 420, damping: 32 }}
       style={{
-        display: 'flex', gap: 12, alignItems: 'flex-start', padding: '14px 16px', background: '#fff',
+        display: 'flex', gap: 12, alignItems: 'flex-start', padding: '14px 16px', background: 'var(--surface-card)',
         border: '1px solid var(--border-default)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)',
         minWidth: 280, fontFamily: 'var(--font-body)',
       }}>
@@ -229,7 +229,7 @@ export function Select({ label, options = [], value, onChange, style }: {
         value={value} onChange={onChange}
         style={{
           padding: '9px 14px', fontSize: 'var(--text-body-sm)', borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--border-default)', color: 'var(--text-primary)', background: '#fff',
+          border: '1px solid var(--border-default)', color: 'var(--text-primary)', background: 'var(--surface-card)',
           outline: 'none', appearance: 'auto',
         }}
       >
@@ -308,7 +308,7 @@ export function Dialog({ open, title, children, onClose, footer }: {
             exit={{ opacity: 0, y: 8, scale: 0.97 }}
             transition={{ type: 'spring', stiffness: 420, damping: 34 }}
             style={{
-              background: '#fff', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)',
+              background: 'var(--surface-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)',
               border: '1px solid color-mix(in srgb, var(--border-default) 70%, transparent)',
               width: 420, maxWidth: '90vw', padding: 24, fontFamily: 'var(--font-body)', maxHeight: '85vh', overflowY: 'auto',
             }}
