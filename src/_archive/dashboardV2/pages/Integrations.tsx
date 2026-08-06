@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react'
 import { MessageCircle, Calendar, Star, Phone, AtSign, Lock } from 'lucide-react'
 import { useClinicOS } from '@/context/ClinicOSContext'
 import { useClinicIntegrations, toggleIntegration } from '@/lib/clinicOSQueries'
@@ -35,12 +36,23 @@ const OAUTH_READY: Record<string, boolean> = {}
 
 export function DashboardV2Integrations() {
   const { companyId, isDemo } = useClinicOS()
-  const { data: integrations, loading, refetch } = useClinicIntegrations(companyId, isDemo)
+  const { data: rawIntegrations, loading, refetch } = useClinicIntegrations(companyId, isDemo)
+  const [optimisticStatus, setOptimisticStatus] = useState<Record<string, IntegrationStatus>>({})
+  const integrations = useMemo(() => (rawIntegrations || []).map((i) => (
+    optimisticStatus[i.id] ? { ...i, status: optimisticStatus[i.id] } : i
+  )), [rawIntegrations, optimisticStatus])
 
   async function toggle(id: string, current: IntegrationStatus) {
     if (isDemo) return
-    await toggleIntegration(id, current === 'connected' ? 'disconnected' : 'connected')
-    refetch()
+    const next: IntegrationStatus = current === 'connected' ? 'disconnected' : 'connected'
+    setOptimisticStatus((s) => ({ ...s, [id]: next }))
+    try {
+      await toggleIntegration(id, next)
+      refetch()
+    } catch (e) {
+      setOptimisticStatus((s) => { const { [id]: _drop, ...rest } = s; return rest })
+      throw e
+    }
   }
 
   return (

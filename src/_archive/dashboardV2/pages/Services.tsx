@@ -17,9 +17,12 @@ export function DashboardV2Services() {
   const [editing, setEditing] = useState<Service | null>(null)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
+  const [optimisticActive, setOptimisticActive] = useState<Record<string, boolean>>({})
   const pushToast = useToast()
 
-  const rows = services || []
+  const rows = useMemo(() => (services || []).map((s) => (
+    s.id in optimisticActive ? { ...s, active: optimisticActive[s.id] } : s
+  )), [services, optimisticActive])
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
 
   const groups = useMemo(() => {
@@ -72,8 +75,14 @@ export function DashboardV2Services() {
 
   async function toggleActive(s: Service) {
     if (isDemo || !companyId) return
-    await updateService(s.id, { clinic_id: companyId, active: !s.active })
-    refetch()
+    setOptimisticActive((o) => ({ ...o, [s.id]: !s.active }))
+    try {
+      await updateService(s.id, { clinic_id: companyId, active: !s.active })
+      refetch()
+    } catch (e) {
+      setOptimisticActive((o) => { const { [s.id]: _drop, ...rest } = o; return rest })
+      pushToast({ kind: 'danger', title: 'تعذّر تحديث الحالة', description: e instanceof Error ? e.message : undefined })
+    }
   }
 
   return (

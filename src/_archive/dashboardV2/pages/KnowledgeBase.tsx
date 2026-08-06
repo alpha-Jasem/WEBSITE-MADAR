@@ -21,9 +21,12 @@ export function DashboardV2KnowledgeBase() {
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  const [optimisticActive, setOptimisticActive] = useState<Record<string, boolean>>({})
   const pushToast = useToast()
 
-  const rows = items || []
+  const rows = useMemo(() => (items || []).map((it) => (
+    it.id in optimisticActive ? { ...it, is_active: optimisticActive[it.id] } : it
+  )), [items, optimisticActive])
   const groups = useMemo(() => {
     const map = new Map<string, ClinicKnowledgeItem[]>()
     for (const it of rows) {
@@ -65,8 +68,14 @@ export function DashboardV2KnowledgeBase() {
 
   async function toggleActive(it: ClinicKnowledgeItem) {
     if (isDemo) return
-    await toggleClinicKnowledgeItem(it.id, !it.is_active)
-    refetch()
+    setOptimisticActive((o) => ({ ...o, [it.id]: !it.is_active }))
+    try {
+      await toggleClinicKnowledgeItem(it.id, !it.is_active)
+      refetch()
+    } catch (e) {
+      setOptimisticActive((o) => { const { [it.id]: _drop, ...rest } = o; return rest })
+      pushToast({ kind: 'danger', title: 'تعذّر تحديث الحالة', description: e instanceof Error ? e.message : undefined })
+    }
   }
 
   async function remove(it: ClinicKnowledgeItem) {

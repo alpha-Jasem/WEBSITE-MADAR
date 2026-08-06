@@ -18,6 +18,7 @@ import {
   Donut, RadialDial, AgentHeroCard, AiPerformanceCard, TodayTimeline, SystemHealthRow, ActivityFeed, InsightBanner, TicketPreviewCard, timeAgo,
 } from './HomeWidgets'
 import type { Appointment, TicketPriority } from '@/types/clinicOS'
+import { EASE_OUT, EASE_IN_OUT, SPRING_SNAPPY } from '@/_archive/dashboardV2/components/motionTokens'
 
 type Period = 'أسبوعي' | 'شهري'
 
@@ -47,8 +48,8 @@ const TONE_BG: Record<BadgeTone, [string, string]> = {
   neutral: ['var(--slate-100)', 'var(--slate-600)'],
 }
 
-const KPI_EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1]
-const KPI_EASE_IN_OUT: [number, number, number, number] = [0.65, 0, 0.35, 1]
+const KPI_EASE_OUT = EASE_OUT
+const KPI_EASE_IN_OUT = EASE_IN_OUT
 
 function KpiCard({ k, index = 0, hero = false }: { k: Kpi; index?: number; hero?: boolean }) {
   const [bg, fg] = TONE_BG[k.tone] || TONE_BG.brand
@@ -290,10 +291,10 @@ function Bar({ label, value, max }: { label: string; value: number; max: number 
       <div style={{ width: 130, fontSize: 'var(--text-body-sm)', color: 'var(--text-primary)', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</div>
       <div style={{ flex: 1, height: 8, background: 'var(--slate-100)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
         <motion.div
-          initial={{ width: '0%' }}
-          animate={{ width: pct + '%' }}
-          transition={{ type: 'spring', bounce: 0.2, duration: 0.8 }}
-          style={{ height: '100%', background: 'var(--brand-500)', borderRadius: 'var(--radius-full)' }}
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: pct / 100 }}
+          transition={SPRING_SNAPPY}
+          style={{ width: '100%', height: '100%', background: 'var(--brand-500)', borderRadius: 'var(--radius-full)', transformOrigin: 'left' }}
         />
       </div>
       <div style={{ width: 30, fontSize: 'var(--text-body-sm)', fontWeight: 600, textAlign: 'left' }}><CountUp value={value} /></div>

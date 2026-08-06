@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { Card, Badge, Button } from '@/_archive/dashboardV2/components/primitives'
 import { Tooltip, CountUp } from '@/_archive/dashboardV2/components/uiExtras'
+import { SPRING_SMOOTH, SPRING_SNAPPY } from '@/_archive/dashboardV2/components/motionTokens'
 import type { AICallLog, Appointment, ClinicNotification, Integration, MessageLog, SupportTicket, TicketPriority } from '@/types/clinicOS'
 
 // ─── shared helpers ─────────────────────────────────────────────────────────
@@ -101,7 +102,7 @@ export function RadialDial({ pct, sublabel }: { pct: number; sublabel?: string }
           strokeLinecap="round" transform={`rotate(-90 ${size / 2} ${size / 2})`}
           initial={{ strokeDasharray: `0 ${c}` }}
           animate={{ strokeDasharray: `${dash} ${c - dash}` }}
-          transition={{ type: 'spring', bounce: 0.2, duration: 0.9 }}
+          transition={SPRING_SMOOTH}
         />
       </svg>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
@@ -249,7 +250,7 @@ export function TodayTimeline({ appointments, delay = 0 }: { appointments: Appoi
                 <motion.div
                   initial={{ scaleY: 0 }}
                   animate={{ scaleY: 1 }}
-                  transition={{ type: 'spring', bounce: 0.25, duration: 0.6, delay: Math.min(delay, 0.5) + i * 0.025 }}
+                  transition={{ ...SPRING_SNAPPY, delay: Math.min(delay, 0.5) + i * 0.025 }}
                   style={{
                     width: '100%', height: '100%', borderRadius: 5, transformOrigin: 'bottom',
                     background: counts[i] > 0

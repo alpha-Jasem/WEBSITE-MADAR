@@ -1,5 +1,6 @@
 import { useEffect, useState, type CSSProperties, type ReactNode, type ChangeEvent } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { DURATION_MEDIUM, DURATION_FAST, EASE_OUT } from './motionTokens'
 
 // ─── Card ──────────────────────────────────────────────────────────────────
 
@@ -16,7 +17,7 @@ export function Card({ children, emphasis, interactive, glow, glass, delay = 0, 
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: Math.min(delay, 0.5), ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: DURATION_MEDIUM, delay: Math.min(delay, 0.5), ease: EASE_OUT }}
       whileHover={interactive ? {
         y: -3,
         boxShadow: glow
@@ -119,7 +120,7 @@ export function Button({ variant = 'primary', size = 'md', disabled, children, o
       onMouseLeave={() => setHover(false)}
       whileTap={disabled ? undefined : { scale: 0.97 }}
       whileHover={disabled ? undefined : { boxShadow: variant === 'primary' ? 'inset 0 1px 0 rgba(255,255,255,.4), 0 0 0 1px rgba(0,191,255,.35), 0 8px 22px rgba(0,191,255,.32)' : 'none' }}
-      transition={{ duration: 0.1 }}
+      transition={{ duration: DURATION_FAST }}
       style={{
         fontFamily: 'var(--font-body)', fontWeight: 600, borderRadius: 'var(--radius-md)',
         cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1,

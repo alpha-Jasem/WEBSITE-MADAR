@@ -5,6 +5,7 @@ import {
 import { AnimatePresence, motion, useMotionValue, useTransform, animate } from 'framer-motion'
 import { CheckCircle2, XCircle, Info, X, Keyboard, Sparkles, Plus, ArrowUpDown, Phone, MessageCircle } from 'lucide-react'
 import { sendWhatsAppMessage } from '@/lib/whatsapp'
+import { SPRING_SMOOTH, DURATION_SLOW, EASE_OUT } from './motionTokens'
 
 // ─── Avatar (deterministic color + initial) ────────────────────────────────
 
@@ -414,7 +415,7 @@ export function Sparkline({ data, width = 64, height = 24, color = 'var(--brand-
         d={path} fill="none" stroke={color} strokeWidth={variant === 'area' ? 2 : 1.75} strokeLinecap="round" strokeLinejoin="round"
         initial={{ pathLength: 0, opacity: 0 }}
         animate={{ pathLength: 1, opacity: variant === 'area' ? 0.9 : 0.85 }}
-        transition={{ pathLength: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }, opacity: { duration: 0.3 } }}
+        transition={{ pathLength: { duration: DURATION_SLOW, ease: EASE_OUT }, opacity: { duration: 0.3 } }}
       />
     </svg>
   )
@@ -429,7 +430,7 @@ export function CountUp({ value, suffix = '' }: { value: number; suffix?: string
   const [display, setDisplay] = useState('0' + suffix)
 
   useEffect(() => {
-    const controls = animate(mv, value, { type: 'spring', bounce: 0.22, duration: 0.9 })
+    const controls = animate(mv, value, SPRING_SMOOTH)
     const unsub = rounded.on('change', (v) => setDisplay(v))
     return () => { controls.stop(); unsub() }
     // eslint-disable-next-line react-hooks/exhaustive-deps

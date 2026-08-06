@@ -52,7 +52,10 @@ export function DashboardV2Tickets() {
   const [saving, setSaving] = useState(false)
   const pushToast = useToast()
 
-  const all = tickets || []
+  const [optimisticStatus, setOptimisticStatus] = useState<Record<string, TicketStatus>>({})
+  const all = useMemo(() => (tickets || []).map((t) => (
+    optimisticStatus[t.id] ? { ...t, status: optimisticStatus[t.id] } : t
+  )), [tickets, optimisticStatus])
   const filtered = useMemo(() => all.filter((t) => {
     if (priorityFilter !== 'all' && t.priority !== priorityFilter) return false
     if (statusFilter !== 'all' && t.status !== statusFilter) return false
@@ -75,11 +78,14 @@ export function DashboardV2Tickets() {
 
   async function handleAdvance(t: SupportTicket) {
     if (isDemo) { pushToast({ kind: 'info', title: 'غير متاح بوضع العرض التجريبي' }); return }
+    const next: TicketStatus = t.status === 'open' ? 'in_progress' : 'resolved'
+    setOptimisticStatus((s) => ({ ...s, [t.id]: next })) // reflect the move instantly, roll back below if it fails
     try {
       if (t.status === 'open') await updateTicketStatus(t.id, 'in_progress')
       else if (t.status === 'in_progress') await resolveTicket(t.id)
       refetch()
     } catch (e) {
+      setOptimisticStatus((s) => { const { [t.id]: _drop, ...rest } = s; return rest })
       pushToast({ kind: 'danger', title: 'تعذّر تحديث التذكرة', description: e instanceof Error ? e.message : undefined })
     }
   }
