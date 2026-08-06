@@ -334,7 +334,7 @@ export function DashboardV2Bookings() {
           <MiniCalendar month={month} appointmentsByDate={appointmentsByDate} selectedDate={selectedDate} onSelectDate={setSelectedDate} onMonthChange={setMonth} />
         )}
 
-        <Card style={{ padding: 0, overflowX: 'auto' }}>
+        <Card delay={0.08} style={{ padding: 0, overflowX: 'auto' }}>
           <div style={{ minWidth: 640 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '32px 1.4fr 1.4fr 1fr 1fr 0.8fr 0.6fr', padding: '14px 20px', fontSize: 12, fontWeight: 700, color: 'var(--text-tertiary)', borderBottom: '1px solid var(--border-default)', alignItems: 'center' }}>
               <input type="checkbox" checked={pageRows.length > 0 && pageRows.every((r) => selected.has(r.id))} onChange={toggleSelectAllOnPage} style={{ cursor: 'pointer' }} />

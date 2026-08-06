@@ -104,11 +104,11 @@ export function DashboardV2Reports() {
         <MetalButton type="button" variant="brand" onClick={exportReport}><Download size={15} /> تصدير Excel</MetalButton>
       </div>
       <div className="dv2-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        <Card>
+        <Card delay={0}>
           <div style={{ fontWeight: 700, marginBottom: 14 }}>مسار المحادثات إلى الحجوزات</div>
           {loading ? <BarsSkeleton /> : funnel.map((f, i) => <Bar key={i} label={f.label} value={f.value} max={maxFunnel} />)}
         </Card>
-        <Card>
+        <Card delay={0.08}>
           <div style={{ fontWeight: 700, marginBottom: 14 }}>أعلى الخدمات حجوزاً</div>
           {loading ? <BarsSkeleton rows={5} /> : (
             <>
@@ -120,7 +120,7 @@ export function DashboardV2Reports() {
           )}
         </Card>
       </div>
-      <Card style={{ marginTop: 16 }}>
+      <Card delay={0.16} style={{ marginTop: 16 }}>
         <div style={{ fontWeight: 700, marginBottom: 14 }}>مصادر الحجوزات</div>
         {!loading && sources.length === 0 && (
           <EmptyState icon={<BarChart3 size={20} />} title="لا توجد بيانات بعد" description="ستظهر توزيعة مصادر الحجوزات هنا بمجرد وصول أول حجز." />

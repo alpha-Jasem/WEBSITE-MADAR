@@ -269,10 +269,10 @@ export function DashboardV2Reviews() {
         {branchReviews.length === 0 && (
           <Card><EmptyState icon={<Star size={20} />} title="لا توجد تقييمات لهذا الفرع بعد" description="ستظهر تقييمات Google هنا فور وصولها، مع رد مقترح بالذكاء الاصطناعي." /></Card>
         )}
-        {branchReviews.map((r) => {
+        {branchReviews.map((r, ri) => {
           const ticket = ticketByReviewId[r.id]
           return (
-            <Card key={r.id}>
+            <Card key={r.id} delay={Math.min(ri * 0.05, 0.3)}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{

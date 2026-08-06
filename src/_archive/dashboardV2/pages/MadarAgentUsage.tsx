@@ -129,7 +129,7 @@ export function DashboardV2MadarAgentUsage() {
       </div>
 
       <div className="dv2-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 16, marginBottom: 16 }}>
-        <Card>
+        <Card delay={0}>
           <div style={{ fontWeight: 700, marginBottom: 6, textAlign: 'center' }}>الاستهلاك الإجمالي</div>
           <div style={{ fontSize: 12, color: 'var(--text-tertiary)', textAlign: 'center', marginBottom: 10 }}>مرّر الفأرة للتفاصيل</div>
           <CircularGauge percent={combinedPercent} />
@@ -138,7 +138,7 @@ export function DashboardV2MadarAgentUsage() {
           </div>
         </Card>
 
-        <Card>
+        <Card delay={0.08}>
           <div style={{ fontWeight: 700, marginBottom: 14 }}>تفاصيل الاستخدام هذا الشهر</div>
           {metrics.length === 0 && (
             <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>تظهر الحدود فور تفعيل الاشتراك</div>
@@ -188,7 +188,7 @@ export function DashboardV2MadarAgentUsage() {
         </Card>
       </div>
 
-      <Card>
+      <Card delay={0.16}>
         <div className="dv2-responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
           <div>
             <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>الباقة الحالية</div>

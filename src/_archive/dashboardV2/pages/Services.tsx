@@ -100,11 +100,11 @@ export function DashboardV2Services() {
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {!loading && groups.map(([category, items]) => {
+        {!loading && groups.map(([category, items], gi) => {
           const isOpen = !collapsed[category]
           const aiCount = items.filter((s) => s.available_for_ai).length
           return (
-            <Card key={category} style={{ padding: 0, overflow: 'hidden' }}>
+            <Card key={category} delay={gi * 0.06} style={{ padding: 0, overflow: 'hidden' }}>
               <div
                 onClick={() => setCollapsed((c) => ({ ...c, [category]: isOpen }))}
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', cursor: 'pointer' }}

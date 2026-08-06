@@ -77,8 +77,8 @@ export function DashboardV2CallsAnalytics() {
           { label: 'متوسط المدة', value: `${Math.floor(avgDuration / 60)}د ${avgDuration % 60}ث` },
           { label: 'مكتملة', value: completed },
           { label: 'فشلت/تحتاج مراجعة', value: failedOrReview },
-        ].map((s) => (
-          <Card key={s.label} style={{ padding: 'var(--space-4)' }}>
+        ].map((s, i) => (
+          <Card key={s.label} delay={i * 0.06} style={{ padding: 'var(--space-4)' }}>
             <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--brand-100)', color: 'var(--brand-600)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
               <PhoneCall size={15} />
             </div>
@@ -89,7 +89,7 @@ export function DashboardV2CallsAnalytics() {
       </div>
 
       <div className="dv2-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 16, marginBottom: 16 }}>
-        <Card>
+        <Card delay={0.24}>
           <div style={{ fontWeight: 700, marginBottom: 14 }}>اتجاه المكالمات</div>
           {totalCalls === 0 ? <EmptyState icon={<PhoneCall size={18} />} title="لا توجد بيانات للفترة المحددة" /> : (
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 140 }}>
@@ -102,7 +102,7 @@ export function DashboardV2CallsAnalytics() {
             </div>
           )}
         </Card>
-        <Card>
+        <Card delay={0.3}>
           <div style={{ fontWeight: 700, marginBottom: 14 }}>توزيع حالة المكالمات</div>
           {totalCalls === 0 ? <EmptyState icon={<PhoneCall size={18} />} title="لا توجد بيانات" /> : (
             <>
@@ -121,7 +121,7 @@ export function DashboardV2CallsAnalytics() {
         </Card>
       </div>
 
-      <Card>
+      <Card delay={0.36}>
         <div style={{ fontWeight: 700 }}>التوزيع بالساعة</div>
         <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 14 }}>نمط حجم المكالمات خلال 24 ساعة</div>
         {totalCalls === 0 ? <EmptyState icon={<PhoneCall size={18} />} title="لا توجد بيانات للفترة المحددة" /> : (

@@ -33,7 +33,7 @@ export function ShellListPage({ title, subtitle, searchPlaceholder, createLabel,
         </div>
       </div>
 
-      <Card style={{ marginBottom: 16, padding: 'var(--space-4)' }}>
+      <Card delay={0} style={{ marginBottom: 16, padding: 'var(--space-4)' }}>
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
           <Search size={14} style={{ position: 'absolute', insetInlineStart: 12, color: 'var(--text-tertiary)' }} />
           <input
@@ -46,7 +46,7 @@ export function ShellListPage({ title, subtitle, searchPlaceholder, createLabel,
         </div>
       </Card>
 
-      <Card style={{ padding: 'var(--space-8)' }}>
+      <Card delay={0.08} style={{ padding: 'var(--space-8)' }}>
         <EmptyState
           icon={icon} title={emptyTitle} description={emptyDescription}
           action={<Button size="sm" onClick={handleCreate}><Plus size={14} /> {createLabel}</Button>}

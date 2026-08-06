@@ -63,8 +63,8 @@ export function DashboardV2WhatsAppAnalytics() {
               { label: 'إجمالي الرسائل', value: inRange.length },
               { label: 'تم التسليم', value: inRange.filter((m) => m.status === 'delivered' || m.status === 'read').length },
               { label: 'فشلت', value: inRange.filter((m) => m.status === 'failed').length },
-            ].map((s) => (
-              <Card key={s.label} style={{ padding: 'var(--space-4)' }}>
+            ].map((s, i) => (
+              <Card key={s.label} delay={i * 0.06} style={{ padding: 'var(--space-4)' }}>
                 <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--brand-100)', color: 'var(--brand-600)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
                   <MessageCircle size={15} />
                 </div>

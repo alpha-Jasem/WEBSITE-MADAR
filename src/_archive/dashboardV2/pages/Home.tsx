@@ -13,7 +13,7 @@ import {
 } from '@/lib/clinicOSQueries'
 import { exportRowsToExcel } from '@/lib/exportExcel'
 import { Card, Badge, Button, Dialog, Input, Select, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
-import { CountUp, useToast, Avatar, Sparkline, LiveDot, Menu, KpiCardSkeleton, requestOpenSearch } from '@/_archive/dashboardV2/components/uiExtras'
+import { CountUp, useToast, Avatar, Sparkline, LiveDot, Menu, KpiCardSkeleton, requestOpenSearch, Skeleton } from '@/_archive/dashboardV2/components/uiExtras'
 import {
   Donut, RadialDial, AgentHeroCard, AiPerformanceCard, TodayTimeline, SystemHealthRow, ActivityFeed, InsightBanner, TicketPreviewCard, timeAgo,
 } from './HomeWidgets'
@@ -265,6 +265,24 @@ function LineChart({ data, compareData, labels }: { data: number[]; compareData?
   )
 }
 
+function SectionSkeleton({ delay = 0, lines = 4, withCircle }: { delay?: number; lines?: number; withCircle?: boolean }) {
+  return (
+    <Card delay={delay}>
+      <Skeleton width="40%" height={14} style={{ marginBottom: 18 }} />
+      {withCircle ? (
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
+          <Skeleton width={104} height={104} radius="50%" />
+        </div>
+      ) : null}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {Array.from({ length: lines }).map((_, i) => (
+          <Skeleton key={i} width={`${85 - i * 8}%`} height={12} />
+        ))}
+      </div>
+    </Card>
+  )
+}
+
 function Bar({ label, value, max }: { label: string; value: number; max: number }) {
   const pct = max > 0 ? value / max * 100 : 0
   return (
@@ -312,13 +330,17 @@ export function DashboardV2Home() {
   const pushToast = useToast()
 
   const { data: appointments, loading: appointmentsLoading, live: appointmentsLive } = useClinicAppointments(companyId, undefined, isDemo)
-  const { data: weekly } = useClinicWeeklyChart(companyId, isDemo)
+  const { data: weekly, loading: weeklyLoading } = useClinicWeeklyChart(companyId, isDemo)
   const { data: prevWeekly } = useClinicPreviousWeekChart(companyId, isDemo)
-  const { data: aiCalls } = useClinicAICalls(companyId, isDemo)
-  const { data: messages, live: messagesLive } = useClinicMessages(companyId, isDemo)
-  const { data: notifications } = useClinicNotifications(companyId, isDemo)
-  const { data: integrations } = useClinicIntegrations(companyId, isDemo)
-  const { data: tickets, refetch: refetchTickets } = useClinicSupportTickets(companyId, isDemo)
+  const { data: aiCalls, loading: aiCallsLoading } = useClinicAICalls(companyId, isDemo)
+  const { data: messages, live: messagesLive, loading: messagesLoading } = useClinicMessages(companyId, isDemo)
+  const { data: notifications, loading: notificationsLoading } = useClinicNotifications(companyId, isDemo)
+  const { data: integrations, loading: integrationsLoading } = useClinicIntegrations(companyId, isDemo)
+  const { data: tickets, refetch: refetchTickets, loading: ticketsLoading } = useClinicSupportTickets(companyId, isDemo)
+
+  const chartRowLoading = weeklyLoading || aiCallsLoading
+  const timelineRowLoading = appointmentsLoading || integrationsLoading
+  const feedRowLoading = notificationsLoading || aiCallsLoading || messagesLoading || ticketsLoading
 
   const appts = appointments || []
   const completed = appts.filter((a) => a.status === 'completed').length
@@ -549,6 +571,14 @@ export function DashboardV2Home() {
       )}
 
       <div className="dv2-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr', gap: 16, marginBottom: 20 }}>
+        {chartRowLoading ? (
+          <>
+            <SectionSkeleton delay={0.24} lines={5} />
+            <SectionSkeleton delay={0.3} withCircle lines={3} />
+            <SectionSkeleton delay={0.36} withCircle lines={3} />
+          </>
+        ) : (
+          <>
         <Card delay={0.24}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -602,14 +632,32 @@ export function DashboardV2Home() {
         </Card>
 
         <AiPerformanceCard calls={calls} delay={0.36} />
+          </>
+        )}
       </div>
 
       <div className="dv2-responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, marginBottom: 20 }}>
+        {timelineRowLoading ? (
+          <>
+            <SectionSkeleton delay={0.42} lines={1} />
+            <SectionSkeleton delay={0.46} lines={5} />
+          </>
+        ) : (
+          <>
         <TodayTimeline appointments={appts} delay={0.42} />
         <SystemHealthRow integrations={integrationsList} delay={0.46} />
+          </>
+        )}
       </div>
 
       <div className="dv2-responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16, marginBottom: 20 }}>
+        {feedRowLoading ? (
+          <>
+            <SectionSkeleton delay={0.5} lines={6} />
+            <SectionSkeleton delay={0.5} lines={4} />
+          </>
+        ) : (
+          <>
         <ActivityFeed notifications={notifs} calls={calls} messages={messages || []} appointments={appts} delay={0.5} />
         <TicketPreviewCard
           tickets={ticketsList}
@@ -617,6 +665,8 @@ export function DashboardV2Home() {
           onViewAllClick={() => navigate(`${base}/tickets`)}
           delay={0.5}
         />
+          </>
+        )}
       </div>
 
       <div className="dv2-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>

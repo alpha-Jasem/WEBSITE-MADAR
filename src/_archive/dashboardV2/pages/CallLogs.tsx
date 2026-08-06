@@ -57,7 +57,7 @@ export function DashboardV2CallLogs() {
         <Button variant="secondary" onClick={handleExport}><Download size={15} /> تصدير Excel</Button>
       </div>
 
-      <Card style={{ marginBottom: 16, padding: 'var(--space-4)' }}>
+      <Card delay={0} style={{ marginBottom: 16, padding: 'var(--space-4)' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
             <Search size={14} style={{ position: 'absolute', insetInlineStart: 12, color: 'var(--text-tertiary)' }} />
@@ -81,7 +81,7 @@ export function DashboardV2CallLogs() {
         </div>
       </Card>
 
-      <Card style={{ padding: 0, overflow: 'hidden' }}>
+      <Card delay={0.08} style={{ padding: 0, overflow: 'hidden' }}>
         {filtered.length === 0 ? (
           <div style={{ padding: '40px 0' }}>
             <EmptyState icon={<PhoneOff size={20} />} title="لا توجد مكالمات" description="ستظهر هنا المكالمات فور استقبال الوكيل لأي نشاط." />

@@ -135,7 +135,7 @@ export function DashboardV2Tickets() {
         </div>
       </div>
 
-      <Card style={{ marginBottom: 18, padding: 'var(--space-4)' }}>
+      <Card delay={0} style={{ marginBottom: 18, padding: 'var(--space-4)' }}>
         <Input
           icon={<Search size={14} />} placeholder="ابحث بعنوان التذكرة..."
           value={search} onChange={(e) => setSearch(e.target.value)}
@@ -181,10 +181,10 @@ export function DashboardV2Tickets() {
 
       {view === 'kanban' ? (
         <div className="dv2-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-          {COLUMNS.map((col) => {
+          {COLUMNS.map((col, ci) => {
             const items = filtered.filter((t) => t.status === col.key)
             return (
-              <Card key={col.key} style={{ padding: 'var(--space-4)' }}>
+              <Card key={col.key} delay={0.08 + ci * 0.06} style={{ padding: 'var(--space-4)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 14 }}>
                   <span style={{ width: 8, height: 8, borderRadius: '50%', background: col.color }} />
                   <span style={{ fontWeight: 700, fontSize: 13.5 }}>{col.label}</span>
@@ -200,7 +200,7 @@ export function DashboardV2Tickets() {
           })}
         </div>
       ) : (
-        <Card style={{ padding: 'var(--space-4)' }}>
+        <Card delay={0.08} style={{ padding: 'var(--space-4)' }}>
           {filtered.length === 0 ? (
             <EmptyState icon={<Inbox size={18} />} title="لا توجد تذاكر" description="عدّل الفلاتر أو أنشئ تذكرة جديدة." />
           ) : (

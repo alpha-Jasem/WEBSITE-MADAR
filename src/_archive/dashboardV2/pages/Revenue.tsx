@@ -86,7 +86,7 @@ export function DashboardV2Revenue() {
         {hasPricing && <MetalButton type="button" variant="brand" onClick={exportRevenue}><Download size={15} /> تصدير Excel</MetalButton>}
       </div>
 
-      <Card style={{ marginBottom: 16 }}>
+      <Card delay={0} style={{ marginBottom: 16 }}>
         <div style={{ fontWeight: 700, marginBottom: 16 }}>الإيرادات الشهرية</div>
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 20, height: 180 }}>
@@ -116,7 +116,7 @@ export function DashboardV2Revenue() {
         )}
       </Card>
 
-      <Card>
+      <Card delay={0.08}>
         <div style={{ fontWeight: 700, marginBottom: 14 }}>الإيرادات حسب الخدمة</div>
         {loading && (
           <div>

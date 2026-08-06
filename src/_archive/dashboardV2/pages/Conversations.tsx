@@ -26,7 +26,7 @@ export function DashboardV2Conversations() {
 
   return (
     <div style={{ display: 'flex', gap: 16, height: 'calc(100vh - 112px)' }}>
-      <Card style={{ width: 300, padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <Card delay={0} style={{ width: 300, padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ padding: '16px 18px', fontWeight: 700, borderBottom: '1px solid var(--border-default)' }}>المحادثات</div>
         <div style={{ overflowY: 'auto', flex: 1 }}>
           {calls.map((c) => (
@@ -49,7 +49,7 @@ export function DashboardV2Conversations() {
         </div>
       </Card>
 
-      <Card style={{ flex: 1, padding: 0, display: 'flex', flexDirection: 'column' }}>
+      <Card delay={0.06} style={{ flex: 1, padding: 0, display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-default)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ fontWeight: 700 }}>{active ? (active.patient_name || active.phone) : 'اختر محادثة'}</div>
           {active && <Badge tone="brand">تمت الإدارة بواسطة AI</Badge>}
@@ -75,7 +75,7 @@ export function DashboardV2Conversations() {
         </div>
       </Card>
 
-      <Card style={{ width: 300, padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <Card delay={0.12} style={{ width: 300, padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ padding: '16px 18px', fontWeight: 700, borderBottom: '1px solid var(--border-default)', display: 'flex', alignItems: 'center', gap: 8 }}>
           <MessageCircle size={16} style={{ color: '#25D366' }} /> رسائل واتساب
         </div>
