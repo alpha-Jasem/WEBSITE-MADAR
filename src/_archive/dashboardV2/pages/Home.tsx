@@ -212,44 +212,55 @@ function KpiCard({ k, index = 0, hero = false }: { k: Kpi; index?: number; hero?
   )
 }
 
-function LineChart({ data, compareData, labels }: { data: number[]; compareData?: number[] | null; labels?: string[] }) {
+function BarChart({ data, compareData, labels }: { data: number[]; compareData?: number[] | null; labels?: string[] }) {
   const [hover, setHover] = useState<number | null>(null)
   const w = 560, h = 160, pad = 6
   const max = Math.max(1, ...data, ...(compareData || []))
-  const toPts = (arr: number[]) => arr.map((v, i) => [i / Math.max(1, arr.length - 1) * (w - 2 * pad) + pad, h - pad - (v / max) * (h - 2 * pad)] as const)
-  const pts = toPts(data)
-  const comparePts = compareData && compareData.length > 1 ? toPts(compareData) : null
-  const path = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0] + ',' + p[1]).join(' ')
-  const comparePath = comparePts ? comparePts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0] + ',' + p[1]).join(' ') : null
-  const area = pts.length ? `${path} L${pts[pts.length - 1][0]},${h} L${pts[0][0]},${h} Z` : ''
-  const cellW = w / Math.max(1, data.length)
+  const n = Math.max(1, data.length)
+  const cellW = (w - 2 * pad) / n
+  const hasCompare = !!(compareData && compareData.length === data.length)
+  const barW = hasCompare ? cellW * 0.28 : cellW * 0.46
 
   return (
     <div style={{ position: 'relative' }}>
       <svg width="100%" viewBox={`0 0 ${w} ${h}`} style={{ overflow: 'visible' }} onMouseLeave={() => setHover(null)}>
-        <defs>
-          <linearGradient id="dv2-area" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--brand-300)" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="var(--brand-300)" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        {pts.length > 0 && <path d={area} fill="url(#dv2-area)" />}
-        {comparePath && <path d={comparePath} fill="none" stroke="var(--slate-300)" strokeWidth="2" strokeDasharray="4 4" />}
-        {pts.length > 0 && <path d={path} fill="none" stroke="var(--brand-500)" strokeWidth="2.5" />}
-        {pts.map((p, i) => (
-          <g key={i}>
-            {hover === i && <line x1={p[0]} y1={0} x2={p[0]} y2={h} stroke="var(--border-default)" strokeWidth="1" strokeDasharray="3 3" />}
-            <circle cx={p[0]} cy={p[1]} r={hover === i ? 4.5 : 2.5} fill="var(--brand-500)" style={{ transition: 'r 120ms ease' }} />
-            <rect x={p[0] - cellW / 2} y={0} width={cellW} height={h} fill="transparent" onMouseEnter={() => setHover(i)} style={{ cursor: 'pointer' }} />
-          </g>
-        ))}
+        {data.map((v, i) => {
+          const cx = pad + i * cellW + cellW / 2
+          const barH = Math.max(2, (v / max) * (h - 2 * pad))
+          const compH = hasCompare ? Math.max(2, (compareData![i] / max) * (h - 2 * pad)) : 0
+          const curX = hasCompare ? cx - barW - 2 : cx - barW / 2
+          const compX = cx + 2
+          return (
+            <g key={i}>
+              {hover === i && <line x1={cx} y1={0} x2={cx} y2={h} stroke="var(--border-default)" strokeWidth="1" strokeDasharray="3 3" />}
+              {hasCompare && (
+                <motion.rect
+                  x={compX} y={h - pad - compH} width={barW} height={compH} rx={3}
+                  fill="var(--slate-200)"
+                  initial={{ scaleY: 0 }} animate={{ scaleY: 1 }}
+                  transition={{ ...SPRING_SNAPPY, delay: i * 0.03 }}
+                  style={{ transformOrigin: 'bottom', transformBox: 'fill-box' } as React.CSSProperties}
+                />
+              )}
+              <motion.rect
+                x={curX} y={h - pad - barH} width={barW} height={barH} rx={3}
+                fill={hover === i ? 'var(--brand-600)' : 'var(--brand-500)'}
+                initial={{ scaleY: 0 }} animate={{ scaleY: 1 }}
+                transition={{ ...SPRING_SNAPPY, delay: i * 0.03 }}
+                style={{ transformOrigin: 'bottom', transformBox: 'fill-box', transition: 'fill 120ms ease' } as React.CSSProperties}
+              />
+              <rect x={pad + i * cellW} y={0} width={cellW} height={h} fill="transparent" onMouseEnter={() => setHover(i)} style={{ cursor: 'pointer' }} />
+            </g>
+          )
+        })}
       </svg>
       <AnimatePresence>
         {hover != null && (
           <motion.div
             initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.12 }}
             style={{
-              position: 'absolute', left: `${(pts[hover][0] / w) * 100}%`, top: `${(pts[hover][1] / h) * 100}%`,
+              position: 'absolute', left: `${((pad + hover * cellW + cellW / 2) / w) * 100}%`,
+              top: `${((h - pad - Math.max(2, (data[hover] / max) * (h - 2 * pad))) / h) * 100}%`,
               transform: 'translate(-50%, -130%)', pointerEvents: 'none', zIndex: 5,
               background: 'var(--surface-inverse)', color: '#fff', padding: '6px 10px', borderRadius: 'var(--radius-sm)',
               fontSize: 11.5, whiteSpace: 'nowrap', boxShadow: 'var(--shadow-md)', textAlign: 'center',
@@ -257,7 +268,7 @@ function LineChart({ data, compareData, labels }: { data: number[]; compareData?
           >
             {labels?.[hover] && <div style={{ opacity: 0.7, fontSize: 10 }}>{labels[hover]}</div>}
             <div style={{ fontWeight: 700 }}>
-              {data[hover]}{comparePts && ` (سابقاً ${compareData![hover]})`}
+              {data[hover]}{hasCompare && ` (سابقاً ${compareData![hover]})`}
             </div>
           </motion.div>
         )}
@@ -287,17 +298,22 @@ function SectionSkeleton({ delay = 0, lines = 4, withCircle }: { delay?: number;
 function Bar({ label, value, max }: { label: string; value: number; max: number }) {
   const pct = max > 0 ? value / max * 100 : 0
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-      <div style={{ width: 130, fontSize: 'var(--text-body-sm)', color: 'var(--text-primary)', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</div>
-      <div style={{ flex: 1, height: 8, background: 'var(--slate-100)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 5, fontSize: 'var(--text-body-sm)' }}>
+        <span style={{ color: 'var(--text-primary)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
+        <span style={{ fontFamily: 'var(--font-numeral)', fontWeight: 800, color: 'var(--brand-600)', flexShrink: 0 }}><CountUp value={value} /></span>
+      </div>
+      <div style={{ height: 11, background: 'var(--slate-100)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
         <motion.div
           initial={{ scaleX: 0 }}
           animate={{ scaleX: pct / 100 }}
           transition={SPRING_SNAPPY}
-          style={{ width: '100%', height: '100%', background: 'var(--brand-500)', borderRadius: 'var(--radius-full)', transformOrigin: 'left' }}
+          style={{
+            width: '100%', height: '100%', borderRadius: 'var(--radius-full)', transformOrigin: 'left',
+            backgroundImage: 'linear-gradient(90deg, var(--brand-500), #2fbfa0)',
+          }}
         />
       </div>
-      <div style={{ width: 30, fontSize: 'var(--text-body-sm)', fontWeight: 600, textAlign: 'left' }}><CountUp value={value} /></div>
     </div>
   )
 }
@@ -611,7 +627,7 @@ export function DashboardV2Home() {
               </div>
             </div>
           </div>
-          <LineChart data={weeklyData} labels={weeklyLabels} compareData={compare ? prevWeeklyData : null} />
+          <BarChart data={weeklyData} labels={weeklyLabels} compareData={compare ? prevWeeklyData : null} />
         </Card>
 
         <Card delay={0.3}>

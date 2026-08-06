@@ -411,14 +411,19 @@ export function useClinicWeeklyChart(companyId: string | null, isDemo = false) {
         '0': 'الأحد', '1': 'الإثنين', '2': 'الثلاثاء',
         '3': 'الأربعاء', '4': 'الخميس', '5': 'الجمعة', '6': 'السبت',
       }
+      // Fixed fallback shape (not Math.random()) for the days DEMO_APPOINTMENTS has no exact-date
+      // rows for — a random fallback would reshuffle the chart on every refetch, which reads as
+      // broken/inconsistent during a sales demo even though the underlying data is synthetic anyway.
+      const FALLBACK_APPTS = [3, 4, 3, 5, 4, 6, 9]
+      const FALLBACK_COMPLETED = [1, 2, 1, 2, 2, 3, 4]
       return Array.from({ length: 7 }, (_, i) => {
         const d = new Date(); d.setDate(d.getDate() - 6 + i)
         const dateStr = d.toISOString().split('T')[0]
         const dayRows = DEMO_APPOINTMENTS.filter(a => a.appointment_date === dateStr)
         return {
           day: DAY_NAMES[String(d.getDay())],
-          appointments: dayRows.length || Math.floor(Math.random() * 8) + 2,
-          completed: dayRows.filter(a => a.status === 'completed').length || Math.floor(Math.random() * 5),
+          appointments: dayRows.length || FALLBACK_APPTS[i],
+          completed: dayRows.filter(a => a.status === 'completed').length || FALLBACK_COMPLETED[i],
         }
       })
     }
@@ -462,8 +467,10 @@ export function useClinicWeeklyChart(companyId: string | null, isDemo = false) {
 export function useClinicPreviousWeekChart(companyId: string | null, isDemo = false) {
   return useFetch<WeeklyPoint[]>(async () => {
     if (isDemo) {
-      return Array.from({ length: 7 }, () => ({
-        day: '', appointments: Math.floor(Math.random() * 8) + 1, completed: Math.floor(Math.random() * 5),
+      const FALLBACK_APPTS = [2, 3, 2, 4, 3, 4, 6]
+      const FALLBACK_COMPLETED = [1, 1, 1, 2, 1, 2, 3]
+      return Array.from({ length: 7 }, (_, i) => ({
+        day: '', appointments: FALLBACK_APPTS[i], completed: FALLBACK_COMPLETED[i],
       }))
     }
     if (!companyId) return []

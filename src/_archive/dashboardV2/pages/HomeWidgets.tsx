@@ -6,7 +6,7 @@ import {
 } from 'lucide-react'
 import { Card, Badge, Button } from '@/_archive/dashboardV2/components/primitives'
 import { Tooltip, CountUp } from '@/_archive/dashboardV2/components/uiExtras'
-import { SPRING_SMOOTH, SPRING_SNAPPY } from '@/_archive/dashboardV2/components/motionTokens'
+import { SPRING_SNAPPY } from '@/_archive/dashboardV2/components/motionTokens'
 import type { AICallLog, Appointment, ClinicNotification, Integration, MessageLog, SupportTicket, TicketPriority } from '@/types/clinicOS'
 
 // ─── shared helpers ─────────────────────────────────────────────────────────
@@ -146,23 +146,34 @@ export function Donut({ sources, onSelect, total, centerLabel = 'الإجمال�
   )
 }
 
-// ─── RadialDial — single-metric gauge with a dotted tick track ─────────────
+// ─── RadialDial — speedometer-style tick gauge ─────────────────────────────
 
 export function RadialDial({ pct, sublabel }: { pct: number; sublabel?: string }) {
-  const size = 104, stroke = 8, r = (size - stroke) / 2, c = 2 * Math.PI * r
+  const size = 104, cx = size / 2, cy = size / 2, rInner = 40, rOuter = 47
   const clamped = Math.min(100, Math.max(0, pct))
-  const dash = (clamped / 100) * c
+  const TOTAL_TICKS = 36
+  const activeCount = Math.round((clamped / 100) * TOTAL_TICKS)
+  const ticks = Array.from({ length: TOTAL_TICKS }, (_, i) => {
+    const angle = (i / TOTAL_TICKS) * 360 - 90
+    const rad = (angle * Math.PI) / 180
+    const x1 = cx + Math.cos(rad) * rInner, y1 = cy + Math.sin(rad) * rInner
+    const x2 = cx + Math.cos(rad) * rOuter, y2 = cy + Math.sin(rad) * rOuter
+    return { x1, y1, x2, y2, active: i <= activeCount }
+  })
   return (
     <div style={{ position: 'relative', width: size, height: size, margin: '0 auto' }}>
       <svg width={size} height={size}>
-        <circle cx={size / 2} cy={size / 2} r={r} stroke="var(--border-default)" strokeWidth={1.5} strokeDasharray="1 7" fill="none" />
-        <motion.circle
-          cx={size / 2} cy={size / 2} r={r} stroke="var(--brand-500)" strokeWidth={stroke} fill="none"
-          strokeLinecap="round" transform={`rotate(-90 ${size / 2} ${size / 2})`}
-          initial={{ strokeDasharray: `0 ${c}` }}
-          animate={{ strokeDasharray: `${dash} ${c - dash}` }}
-          transition={SPRING_SMOOTH}
-        />
+        {ticks.map((t, i) => (
+          <motion.line
+            key={i}
+            x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}
+            stroke={t.active ? 'var(--brand-500)' : 'var(--border-default)'}
+            strokeWidth={2.4} strokeLinecap="round"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2, delay: i * 0.012 }}
+          />
+        ))}
       </svg>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ fontFamily: 'var(--font-numeral)', fontWeight: 800, fontSize: 21, color: 'var(--text-primary)' }}><CountUp value={pct} suffix="%" /></div>
