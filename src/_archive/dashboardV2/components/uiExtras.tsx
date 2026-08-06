@@ -59,48 +59,6 @@ export function ContactActions({ phone, message, size = 26 }: { phone?: string |
   )
 }
 
-// ─── GlowButton (pill button with an animated gradient-glow border) ───────
-// Ported from 21st.dev's "Gradient Borders Button" (@Shatlyk1011), recolored
-// to the brand palette (sky/gold) instead of the original purple/cyan.
-
-export function GlowButton({ children, onClick, style }: {
-  children: ReactNode
-  onClick?: () => void
-  style?: CSSProperties
-}) {
-  const [hover, setHover] = useState(false)
-  return (
-    <button
-      onClick={onClick}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{
-        position: 'relative', display: 'inline-block', cursor: 'pointer', border: 'none',
-        borderRadius: 'var(--radius-full)', padding: 2, background: 'var(--slate-200)',
-        fontFamily: 'var(--font-body)', ...style,
-      }}
-    >
-      <span style={{
-        position: 'absolute', inset: 0, borderRadius: 'var(--radius-full)', overflow: 'hidden', pointerEvents: 'none',
-      }}>
-        <span style={{
-          position: 'absolute', inset: 0, borderRadius: 'var(--radius-full)',
-          background: 'radial-gradient(75% 100% at 50% 0%, var(--brand-500) 0%, var(--indigo-500) 75%)',
-          opacity: hover ? 1 : 0.4, transition: 'opacity 400ms ease',
-        }} />
-      </span>
-      <span style={{
-        position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 8,
-        height: 34, borderRadius: 'var(--radius-full)', padding: '0 18px',
-        background: 'var(--surface-card)', color: 'var(--text-primary)', fontSize: 13.5, fontWeight: 700,
-        boxShadow: 'inset 0 0 0 2px rgba(255,255,255,.06)',
-      }}>
-        {children}
-      </span>
-    </button>
-  )
-}
-
 // ─── KpiCardSkeleton (loading placeholder grid, matches KpiCard layout) ────
 // Ported from 21st.dev's "Stat Cards Skeleton" (@felipemenezes098).
 

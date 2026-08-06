@@ -8,7 +8,7 @@ import {
 } from '@/lib/clinicOSQueries'
 import type { GoogleReview, Branch } from '@/types/clinicOS'
 import { Card, Badge, Button, Dialog, Input, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
-import { useToast, EmptyState, SkeletonRows, GlowButton } from '@/_archive/dashboardV2/components/uiExtras'
+import { useToast, EmptyState, SkeletonRows } from '@/_archive/dashboardV2/components/uiExtras'
 
 function Stars({ n }: { n: number }) {
   return (
@@ -176,7 +176,7 @@ export function DashboardV2Reviews() {
             </div>
           )}
         </div>
-        <GlowButton onClick={() => setAddOpen(true)}><Plus size={15} /> إضافة فرع</GlowButton>
+        <Button onClick={() => setAddOpen(true)}><Plus size={15} /> إضافة فرع</Button>
       </div>
 
       <div className="dv2-branch-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14, marginBottom: 24 }}>

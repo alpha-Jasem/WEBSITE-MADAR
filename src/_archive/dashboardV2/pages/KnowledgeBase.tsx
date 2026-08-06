@@ -6,7 +6,7 @@ import {
   type ClinicKnowledgeItem,
 } from '@/lib/clinicOSQueries'
 import { Card, Badge, Button, Dialog, Input, Select, Switch } from '@/_archive/dashboardV2/components/primitives'
-import { useToast, EmptyState, SkeletonRows, GlowButton } from '@/_archive/dashboardV2/components/uiExtras'
+import { useToast, EmptyState, SkeletonRows } from '@/_archive/dashboardV2/components/uiExtras'
 
 const TYPE_LABEL: Record<string, string> = { faq: 'سؤال شائع', policy: 'سياسة عامة' }
 const TYPE_OPTIONS = [{ value: 'faq', label: 'سؤال شائع' }, { value: 'policy', label: 'سياسة عامة' }]
@@ -99,7 +99,7 @@ export function DashboardV2KnowledgeBase() {
           </div>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>{rows.length} عنصر — المعلومات اللي يرجع لها الوكيل الصوتي مها أثناء المكالمات</div>
         </div>
-        <GlowButton onClick={openNew}><Plus size={15} /> عنصر جديد</GlowButton>
+        <Button onClick={openNew}><Plus size={15} /> عنصر جديد</Button>
       </div>
 
       {loading && <Card style={{ padding: 0 }}><SkeletonRows rows={4} columns={3} /></Card>}

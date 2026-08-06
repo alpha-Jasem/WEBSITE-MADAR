@@ -3,9 +3,8 @@ import { Download } from 'lucide-react'
 import { useClinicOS } from '@/context/ClinicOSContext'
 import { useClinicAppointments, useClinicServices } from '@/lib/clinicOSQueries'
 import { exportRowsToExcel } from '@/lib/exportExcel'
-import { Card } from '@/_archive/dashboardV2/components/primitives'
+import { Card, Button } from '@/_archive/dashboardV2/components/primitives'
 import { EmptyState, Skeleton } from '@/_archive/dashboardV2/components/uiExtras'
-import { MetalButton } from '@/components/ui/liquid-glass-button'
 import { Wallet } from 'lucide-react'
 
 function fmt(n: number) {
@@ -83,7 +82,7 @@ export function DashboardV2Revenue() {
               : 'محسوبة تلقائياً من أسعار الخدمات × الحجوزات المكتملة — أضف أسعاراً لخدماتك لتفعيلها'}
           </div>
         </div>
-        {hasPricing && <MetalButton type="button" variant="brand" onClick={exportRevenue}><Download size={15} /> تصدير Excel</MetalButton>}
+        {hasPricing && <Button variant="secondary" onClick={exportRevenue}><Download size={15} /> تصدير Excel</Button>}
       </div>
 
       <Card delay={0} style={{ marginBottom: 16 }}>

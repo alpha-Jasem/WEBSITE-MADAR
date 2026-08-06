@@ -3,9 +3,8 @@ import { Download } from 'lucide-react'
 import { useClinicOS } from '@/context/ClinicOSContext'
 import { useClinicAppointments, useClinicAICalls, useClinicMessages } from '@/lib/clinicOSQueries'
 import { exportRowsToExcel } from '@/lib/exportExcel'
-import { Card } from '@/_archive/dashboardV2/components/primitives'
+import { Card, Button } from '@/_archive/dashboardV2/components/primitives'
 import { EmptyState, Skeleton } from '@/_archive/dashboardV2/components/uiExtras'
-import { MetalButton } from '@/components/ui/liquid-glass-button'
 import { BarChart3 } from 'lucide-react'
 import { PillBar as Bar } from './HomeWidgets'
 
@@ -90,7 +89,7 @@ export function DashboardV2Reports() {
           <div style={{ fontSize: 'var(--text-heading-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>التقارير والتحليلات</div>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>نظرة شاملة على كل بيانات {isDemo ? 'العرض التجريبي' : 'حسابك'}</div>
         </div>
-        <MetalButton type="button" variant="brand" onClick={exportReport}><Download size={15} /> تصدير Excel</MetalButton>
+        <Button variant="secondary" onClick={exportReport}><Download size={15} /> تصدير Excel</Button>
       </div>
       <div className="dv2-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <Card delay={0}>
