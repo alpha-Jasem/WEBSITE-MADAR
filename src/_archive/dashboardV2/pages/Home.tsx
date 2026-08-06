@@ -397,6 +397,7 @@ export function DashboardV2Home() {
       label: SOURCE_LABELS[key] || key,
       pct: Math.round((count / total) * 100),
       color: SOURCE_COLORS[key] || 'var(--slate-400)',
+      count,
     }))
   }, [appts])
 
@@ -615,21 +616,7 @@ export function DashboardV2Home() {
 
         <Card delay={0.3}>
           <div style={{ fontWeight: 700, marginBottom: 10 }}>مصادر الحجوزات</div>
-          <Donut sources={sources} onSelect={goToBookingsBySource} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
-            {sources.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>لا توجد حجوزات بعد</div>}
-            {sources.map((s) => (
-              <div
-                key={s.key}
-                onClick={() => goToBookingsBySource(s.key)}
-                style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, cursor: 'pointer' }}
-              >
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: s.color }} />
-                <span style={{ flex: 1, color: 'var(--text-secondary)' }}>{s.label}</span>
-                <span style={{ fontWeight: 600 }}><CountUp value={s.pct} suffix="%" /></span>
-              </div>
-            ))}
-          </div>
+          <Donut sources={sources} onSelect={goToBookingsBySource} total={appts.length} centerLabel="حجز" />
         </Card>
 
         <AiPerformanceCard calls={calls} delay={0.36} />
