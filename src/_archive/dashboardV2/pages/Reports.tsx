@@ -7,18 +7,7 @@ import { Card } from '@/_archive/dashboardV2/components/primitives'
 import { EmptyState, Skeleton } from '@/_archive/dashboardV2/components/uiExtras'
 import { MetalButton } from '@/components/ui/liquid-glass-button'
 import { BarChart3 } from 'lucide-react'
-
-function Bar({ label, value, max }: { label: string; value: number; max: number }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-      <div style={{ width: 150, fontSize: 13, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</div>
-      <div style={{ flex: 1, height: 10, background: 'var(--slate-100)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
-        <div style={{ width: (max > 0 ? value / max * 100 : 0) + '%', height: '100%', background: 'var(--brand-500)', borderRadius: 'var(--radius-full)' }} />
-      </div>
-      <div style={{ width: 60, fontSize: 13, fontWeight: 600, textAlign: 'left' }}>{value.toLocaleString('en-US')}</div>
-    </div>
-  )
-}
+import { PillBar as Bar } from './HomeWidgets'
 
 function BarsSkeleton({ rows = 4 }: { rows?: number }) {
   return (

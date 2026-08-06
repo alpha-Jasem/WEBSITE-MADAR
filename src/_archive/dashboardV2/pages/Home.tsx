@@ -16,6 +16,7 @@ import { Card, Badge, Button, Dialog, Input, Select, type BadgeTone } from '@/_a
 import { CountUp, useToast, Avatar, Sparkline, LiveDot, Menu, KpiCardSkeleton, requestOpenSearch, Skeleton } from '@/_archive/dashboardV2/components/uiExtras'
 import {
   Donut, RadialDial, AgentHeroCard, AiPerformanceCard, TodayTimeline, SystemHealthRow, ActivityFeed, InsightBanner, TicketPreviewCard, timeAgo,
+  PillBar as Bar,
 } from './HomeWidgets'
 import type { Appointment, TicketPriority } from '@/types/clinicOS'
 import { EASE_OUT, EASE_IN_OUT, SPRING_SNAPPY } from '@/_archive/dashboardV2/components/motionTokens'
@@ -292,29 +293,6 @@ function SectionSkeleton({ delay = 0, lines = 4, withCircle }: { delay?: number;
         ))}
       </div>
     </Card>
-  )
-}
-
-function Bar({ label, value, max }: { label: string; value: number; max: number }) {
-  const pct = max > 0 ? value / max * 100 : 0
-  return (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 5, fontSize: 'var(--text-body-sm)' }}>
-        <span style={{ color: 'var(--text-primary)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
-        <span style={{ fontFamily: 'var(--font-numeral)', fontWeight: 800, color: 'var(--brand-600)', flexShrink: 0 }}><CountUp value={value} /></span>
-      </div>
-      <div style={{ height: 11, background: 'var(--slate-100)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
-        <motion.div
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: pct / 100 }}
-          transition={SPRING_SNAPPY}
-          style={{
-            width: '100%', height: '100%', borderRadius: 'var(--radius-full)', transformOrigin: 'left',
-            backgroundImage: 'linear-gradient(90deg, var(--brand-500), #2fbfa0)',
-          }}
-        />
-      </div>
-    </div>
   )
 }
 

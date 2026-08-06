@@ -146,6 +146,34 @@ export function Donut({ sources, onSelect, total, centerLabel = 'الإجمال�
   )
 }
 
+// ─── PillBar — thick gradient progress bar with a label/value row above ───
+// Shared so every page's "top N" ranked list (services, funnel steps, revenue
+// by service...) uses the exact same shape instead of each page keeping its
+// own copy that drifts out of sync when the style changes.
+
+export function PillBar({ label, value, max }: { label: string; value: number; max: number }) {
+  const pct = max > 0 ? value / max * 100 : 0
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 5, fontSize: 'var(--text-body-sm)' }}>
+        <span style={{ color: 'var(--text-primary)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
+        <span style={{ fontFamily: 'var(--font-numeral)', fontWeight: 800, color: 'var(--brand-600)', flexShrink: 0 }}><CountUp value={value} /></span>
+      </div>
+      <div style={{ height: 11, background: 'var(--slate-100)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
+        <motion.div
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: pct / 100 }}
+          transition={SPRING_SNAPPY}
+          style={{
+            width: '100%', height: '100%', borderRadius: 'var(--radius-full)', transformOrigin: 'left',
+            backgroundImage: 'linear-gradient(90deg, var(--brand-500), #2fbfa0)',
+          }}
+        />
+      </div>
+    </div>
+  )
+}
+
 // ─── RadialDial — speedometer-style tick gauge ─────────────────────────────
 
 export function RadialDial({ pct, sublabel }: { pct: number; sublabel?: string }) {

@@ -35,10 +35,12 @@ export function DashboardV2CallsAnalytics() {
   }, [inRange, period])
   const maxDay = Math.max(1, ...dayBuckets.map((d) => d.count))
 
+  const needsReviewCount = inRange.filter((c) => c.status === 'needs_review').length
+  const failedCount = inRange.filter((c) => c.status === 'failed').length
   const statusSources = totalCalls > 0 ? [
-    { key: 'completed', label: 'مكتملة', pct: Math.round((completed / totalCalls) * 100), color: 'var(--success-500)' },
-    { key: 'needs_review', label: 'تحتاج مراجعة', pct: Math.round((inRange.filter((c) => c.status === 'needs_review').length / totalCalls) * 100), color: 'var(--warning-500)' },
-    { key: 'failed', label: 'فشلت', pct: Math.round((inRange.filter((c) => c.status === 'failed').length / totalCalls) * 100), color: 'var(--danger-500)' },
+    { key: 'completed', label: 'مكتملة', pct: Math.round((completed / totalCalls) * 100), color: 'var(--success-500)', count: completed },
+    { key: 'needs_review', label: 'تحتاج مراجعة', pct: Math.round((needsReviewCount / totalCalls) * 100), color: 'var(--warning-500)', count: needsReviewCount },
+    { key: 'failed', label: 'فشلت', pct: Math.round((failedCount / totalCalls) * 100), color: 'var(--danger-500)', count: failedCount },
   ].filter((s) => s.pct > 0) : []
 
   const hourBuckets = useMemo(() => {
@@ -105,18 +107,7 @@ export function DashboardV2CallsAnalytics() {
         <Card delay={0.3}>
           <div style={{ fontWeight: 700, marginBottom: 14 }}>توزيع حالة المكالمات</div>
           {totalCalls === 0 ? <EmptyState icon={<PhoneCall size={18} />} title="لا توجد بيانات" /> : (
-            <>
-              <Donut sources={statusSources} />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
-                {statusSources.map((s) => (
-                  <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: s.color }} />
-                    <span style={{ flex: 1, color: 'var(--text-secondary)' }}>{s.label}</span>
-                    <span style={{ fontWeight: 600 }}>{s.pct}%</span>
-                  </div>
-                ))}
-              </div>
-            </>
+            <Donut sources={statusSources} total={totalCalls} centerLabel="مكالمة" />
           )}
         </Card>
       </div>
