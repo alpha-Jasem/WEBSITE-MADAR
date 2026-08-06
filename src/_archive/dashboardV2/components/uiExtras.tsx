@@ -3,7 +3,8 @@ import {
   type CSSProperties, type ReactNode,
 } from 'react'
 import { AnimatePresence, motion, useMotionValue, useTransform, animate } from 'framer-motion'
-import { CheckCircle2, XCircle, Info, X, Keyboard, Sparkles, Plus, ArrowUpDown } from 'lucide-react'
+import { CheckCircle2, XCircle, Info, X, Keyboard, Sparkles, Plus, ArrowUpDown, Phone, MessageCircle } from 'lucide-react'
+import { sendWhatsAppMessage } from '@/lib/whatsapp'
 
 // ─── Avatar (deterministic color + initial) ────────────────────────────────
 
@@ -29,6 +30,30 @@ export function Avatar({ name, size = 32 }: { name: string; size?: number }) {
       fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: size * 0.4,
     }}>
       {clean[0] || '؟'}
+    </div>
+  )
+}
+
+// ─── ContactActions (click-to-call + click-to-WhatsApp, reused across every table showing a phone number) ──
+
+export function ContactActions({ phone, message, size = 26 }: { phone?: string | null; message?: string; size?: number }) {
+  if (!phone) return null
+  const btnStyle: CSSProperties = {
+    width: size, height: size, borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0, cursor: 'pointer', border: '1px solid var(--border-default)', background: 'var(--surface-card)',
+  }
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={(e) => e.stopPropagation()}>
+      <a
+        href={`tel:${phone}`}
+        title="اتصال"
+        style={{ ...btnStyle, color: 'var(--brand-600)' }}
+      ><Phone size={size * 0.5} /></a>
+      <span
+        onClick={() => sendWhatsAppMessage(phone, message || 'مرحباً')}
+        title="واتساب"
+        style={{ ...btnStyle, color: '#25D366' }}
+      ><MessageCircle size={size * 0.5} /></span>
     </div>
   )
 }

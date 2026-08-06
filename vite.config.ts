@@ -6,7 +6,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@dv3': path.resolve(__dirname, './src/dashboard-v3'),
     },
   },
   plugins: [react()],

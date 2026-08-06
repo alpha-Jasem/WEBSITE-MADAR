@@ -5,7 +5,7 @@ import {
   LayoutDashboard, CalendarDays, Users, MessageSquare, Star, BarChart3,
   Wallet, BellRing, Plug, Settings, ChevronDown, LogOut, CreditCard, Menu, X,
   Wrench, History, Sun, Moon, AlertTriangle, ChevronsRight, ChevronsLeft, Plus, CalendarCheck2, Ticket,
-  PhoneCall, MessageCircle, Bot, SlidersHorizontal, LayoutGrid, PhoneIncoming, PhoneOutgoing, ClipboardList,
+  PhoneCall, MessageCircle, Bot, SlidersHorizontal, LayoutGrid, PhoneIncoming, PhoneOutgoing, ClipboardList, BookOpen,
 } from 'lucide-react'
 import { useClinicOS } from '@/context/ClinicOSContext'
 import { useClinicSupportTickets, useClinicTodayAppointments } from '@/lib/clinicOSQueries'
@@ -68,6 +68,7 @@ export function DashboardV2Layout() {
     ] },
     { title: 'البناء', items: [
       { label: 'الوكلاء', path: `${base}/agents`, icon: <Bot size={17} /> },
+      { label: 'قاعدة المعرفة', path: `${base}/knowledge-base`, icon: <BookOpen size={17} /> },
       { label: 'الأدوات', path: `${base}/tools`, icon: <SlidersHorizontal size={17} /> },
       { label: 'مجموعات التحليل', path: `${base}/analysis-groups`, icon: <LayoutGrid size={17} /> },
       { label: 'المتابعات', path: `${base}/reminders`, icon: <BellRing size={17} /> },

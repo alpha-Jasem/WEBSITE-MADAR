@@ -46,36 +46,12 @@ const SolarEngine       = lazy(() => import('./pages/SolarEngine').then(m => ({ 
 
 // ClinicOS
 const ClinicOSLoginPage    = lazy(() => import('./pages/clinicOS/ClinicOSLogin').then(m => ({ default: m.ClinicOSLogin })))
-const DashboardV3Login     = lazy(() => import('./dashboard-v3/views/auth/auth2/login'))
 const ClinicOSSignupPage   = lazy(() => import('./pages/clinicOS/ClinicOSSignup').then(m => ({ default: m.ClinicOSSignup })))
 const DemoSignupPage       = lazy(() => import('./pages/clinicOS/DemoSignup').then(m => ({ default: m.DemoSignup })))
 const DemoConfirmPage      = lazy(() => import('./pages/clinicOS/DemoConfirm').then(m => ({ default: m.DemoConfirm })))
 const PackageSelectorPage  = lazy(() => import('./pages/clinicOS/PackageSelector').then(m => ({ default: m.PackageSelector })))
 const MfaChallengePage     = lazy(() => import('./pages/clinicOS/MfaChallenge').then(m => ({ default: m.MfaChallenge })))
 const ClinicOSAdminPage    = lazy(() => import('./pages/clinicOS/admin/ClinicOSAdmin').then(m => ({ default: m.ClinicOSAdmin })))
-
-// ClinicOS Dashboard v3 (shadcn/ui — official dashboard)
-const DashboardV3FullLayout    = lazy(() => import('./dashboard-v3/layouts/full/FullLayout'))
-const DashboardV3Modern        = lazy(() => import('./dashboard-v3/views/dashboards/modern'))
-const DashboardV3Tables        = lazy(() => import('./dashboard-v3/views/pages/tables'))
-const DashboardV3Form          = lazy(() => import('./dashboard-v3/views/pages/form'))
-const DashboardV3UserProfile   = lazy(() => import('./dashboard-v3/views/pages/user-profile'))
-const DashboardV3Icons         = lazy(() => import('./dashboard-v3/views/icons/iconify'))
-const DashboardV3BlogPost      = lazy(() => import('./dashboard-v3/views/apps/blog/post'))
-const DashboardV3BlogDetail    = lazy(() => import('./dashboard-v3/views/apps/blog/detail'))
-const DashboardV3BlogCreate    = lazy(() => import('./dashboard-v3/views/apps/blog/create'))
-const DashboardV3BlogEdit      = lazy(() => import('./dashboard-v3/views/apps/blog/edit'))
-const DashboardV3BlogManage    = lazy(() => import('./dashboard-v3/views/apps/blog/manage-blog'))
-const DashboardV3Notes         = lazy(() => import('./dashboard-v3/views/apps/notes'))
-const DashboardV3Tickets       = lazy(() => import('./dashboard-v3/views/apps/tickets'))
-const DashboardV3TicketCreate  = lazy(() => import('./dashboard-v3/views/apps/tickets/create'))
-
-// ClinicOS Dashboard v3 — standalone auth screens (no dashboard shell)
-const DashboardV3Register        = lazy(() => import('./dashboard-v3/views/auth/auth2/register'))
-const DashboardV3ForgotPassword  = lazy(() => import('./dashboard-v3/views/auth/auth2/forgot-password'))
-const DashboardV3TwoSteps        = lazy(() => import('./dashboard-v3/views/auth/auth2/two-steps'))
-const DashboardV3AuthError       = lazy(() => import('./dashboard-v3/views/auth/error'))
-const DashboardV3Maintenance     = lazy(() => import('./dashboard-v3/views/auth/maintenance'))
 
 // ClinicOS Dashboard v2 (Madar Software Design System) — archived to src/_archive, still used by the /demo-review sales tour
 const DashboardV2Layout        = lazy(() => import('./_archive/dashboardV2/components/DashboardV2Layout').then(m => ({ default: m.DashboardV2Layout })))
@@ -96,6 +72,7 @@ const DashboardV2Tickets       = lazy(() => import('./_archive/dashboardV2/pages
 const DashboardV2CallsAnalytics    = lazy(() => import('./_archive/dashboardV2/pages/CallsAnalytics').then(m => ({ default: m.DashboardV2CallsAnalytics })))
 const DashboardV2WhatsAppAnalytics = lazy(() => import('./_archive/dashboardV2/pages/WhatsAppAnalytics').then(m => ({ default: m.DashboardV2WhatsAppAnalytics })))
 const DashboardV2Agents            = lazy(() => import('./_archive/dashboardV2/pages/Agents').then(m => ({ default: m.DashboardV2Agents })))
+const DashboardV2KnowledgeBase      = lazy(() => import('./_archive/dashboardV2/pages/KnowledgeBase').then(m => ({ default: m.DashboardV2KnowledgeBase })))
 const DashboardV2Tools             = lazy(() => import('./_archive/dashboardV2/pages/ComingSoon').then(m => ({ default: m.DashboardV2Tools })))
 const DashboardV2AnalysisGroups    = lazy(() => import('./_archive/dashboardV2/pages/ComingSoon').then(m => ({ default: m.DashboardV2AnalysisGroups })))
 const DashboardV2InboundServices   = lazy(() => import('./_archive/dashboardV2/pages/ComingSoon').then(m => ({ default: m.DashboardV2InboundServices })))
@@ -160,6 +137,7 @@ function App() {
               <Route path="calls-analytics" element={<DashboardV2CallsAnalytics />} />
               <Route path="whatsapp-analytics" element={<DashboardV2WhatsAppAnalytics />} />
               <Route path="agents" element={<DashboardV2Agents />} />
+              <Route path="knowledge-base" element={<DashboardV2KnowledgeBase />} />
               <Route path="tools" element={<DashboardV2Tools />} />
               <Route path="analysis-groups" element={<DashboardV2AnalysisGroups />} />
               <Route path="inbound-services" element={<DashboardV2InboundServices />} />
@@ -189,6 +167,7 @@ function App() {
               <Route path="calls-analytics" element={<DashboardV2CallsAnalytics />} />
               <Route path="whatsapp-analytics" element={<DashboardV2WhatsAppAnalytics />} />
               <Route path="agents" element={<DashboardV2Agents />} />
+              <Route path="knowledge-base" element={<DashboardV2KnowledgeBase />} />
               <Route path="tools" element={<DashboardV2Tools />} />
               <Route path="analysis-groups" element={<DashboardV2AnalysisGroups />} />
               <Route path="inbound-services" element={<DashboardV2InboundServices />} />
@@ -197,32 +176,6 @@ function App() {
               <Route path="settings" element={<DashboardV2Settings />} />
             </Route>
 
-            {/* ── ClinicOS Dashboard v3 (shadcn/ui) — kept as reference/preview, not the official dashboard ── */}
-            <Route path="/clinic-os/dashboard-v3-preview/login"           element={<DashboardV3Login />} />
-            <Route path="/clinic-os/dashboard-v3-preview/register"        element={<DashboardV3Register />} />
-            <Route path="/clinic-os/dashboard-v3-preview/forgot-password" element={<DashboardV3ForgotPassword />} />
-            <Route path="/clinic-os/dashboard-v3-preview/two-steps"       element={<DashboardV3TwoSteps />} />
-            <Route path="/clinic-os/dashboard-v3-preview/error"           element={<DashboardV3AuthError />} />
-            <Route path="/clinic-os/dashboard-v3-preview/maintenance"     element={<DashboardV3Maintenance />} />
-            <Route path="/clinic-os/dashboard-v3-preview/dashboard/*" element={
-              <ClinicOSProvider>
-                <DashboardV3FullLayout />
-              </ClinicOSProvider>
-            }>
-              <Route index element={<DashboardV3Modern />} />
-              <Route path="tables" element={<DashboardV3Tables />} />
-              <Route path="form" element={<DashboardV3Form />} />
-              <Route path="profile" element={<DashboardV3UserProfile />} />
-              <Route path="icons" element={<DashboardV3Icons />} />
-              <Route path="blog/post" element={<DashboardV3BlogPost />} />
-              <Route path="blog/detail/:id" element={<DashboardV3BlogDetail />} />
-              <Route path="blog/create" element={<DashboardV3BlogCreate />} />
-              <Route path="blog/edit" element={<DashboardV3BlogEdit />} />
-              <Route path="blog/manage-blog" element={<DashboardV3BlogManage />} />
-              <Route path="notes" element={<DashboardV3Notes />} />
-              <Route path="tickets" element={<DashboardV3Tickets />} />
-              <Route path="tickets/create" element={<DashboardV3TicketCreate />} />
-            </Route>
             <Route path="/real-estate" element={<Navigate to="/#products" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />

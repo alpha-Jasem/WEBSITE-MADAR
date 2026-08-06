@@ -312,6 +312,16 @@ export async function saveClinicKnowledgeItem(input: {
   if (error) throw error
 }
 
+export async function deleteClinicKnowledgeItem(id: string) {
+  const { error } = await supabase.from('clinic_os_knowledge_items').delete().eq('id', id)
+  if (error) throw error
+}
+
+export async function toggleClinicKnowledgeItem(id: string, is_active: boolean) {
+  const { error } = await supabase.from('clinic_os_knowledge_items').update({ is_active, updated_at: new Date().toISOString() }).eq('id', id)
+  if (error) throw error
+}
+
 export async function updateClinicCompany(companyId: string, data: Record<string, unknown>) {
   const { error } = await supabase.from('companies').update(data).eq('id', companyId)
   if (error) throw error

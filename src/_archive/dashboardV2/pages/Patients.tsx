@@ -5,7 +5,7 @@ import { useClinicOS } from '@/context/ClinicOSContext'
 import { useClinicPatients, updatePatient } from '@/lib/clinicOSQueries'
 import type { Patient } from '@/types/clinicOS'
 import { Card, Badge, Button, Dialog, Input, Select } from '@/_archive/dashboardV2/components/primitives'
-import { EmptyState, SkeletonRows, useToast, Avatar, SortableHeader } from '@/_archive/dashboardV2/components/uiExtras'
+import { EmptyState, SkeletonRows, useToast, Avatar, SortableHeader, ContactActions } from '@/_archive/dashboardV2/components/uiExtras'
 
 type SortKey = 'name' | 'last_visit_at' | 'total_visits'
 
@@ -144,7 +144,7 @@ export function DashboardV2Patients() {
 
       <Card style={{ padding: 0, overflowX: 'auto' }}>
         <div style={{ minWidth: 620 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '28px 0.5fr 1.6fr 1.2fr 1fr 0.8fr 0.8fr', padding: '14px 20px', fontSize: 12, fontWeight: 700, color: 'var(--text-tertiary)', borderBottom: '1px solid var(--border-default)', alignItems: 'center' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '28px 0.5fr 1.6fr 1.2fr 1fr 0.8fr 0.8fr auto', padding: '14px 20px', fontSize: 12, fontWeight: 700, color: 'var(--text-tertiary)', borderBottom: '1px solid var(--border-default)', alignItems: 'center' }}>
           <input type="checkbox" checked={shown.length > 0 && shown.every((p) => checked.has(p.id))} onChange={() => setChecked((s) => { const all = shown.every((p) => s.has(p.id)); const n = new Set(s); shown.forEach((p) => (all ? n.delete(p.id) : n.add(p.id))); return n })} style={{ cursor: 'pointer' }} />
           <div></div>
           <SortableHeader label="الاسم" active={sort.key === 'name'} dir={sort.dir} onClick={() => toggleSort('name')} />
@@ -152,6 +152,7 @@ export function DashboardV2Patients() {
           <SortableHeader label="آخر زيارة" active={sort.key === 'last_visit_at'} dir={sort.dir} onClick={() => toggleSort('last_visit_at')} />
           <SortableHeader label="عدد الزيارات" active={sort.key === 'total_visits'} dir={sort.dir} onClick={() => toggleSort('total_visits')} />
           <div>النوع</div>
+          <div>تواصل</div>
         </div>
         {loading && <SkeletonRows rows={6} columns={7} />}
         {!loading && shown.map((p, i) => (
@@ -161,7 +162,7 @@ export function DashboardV2Patients() {
             animate={{ opacity: 1, y: 0 }}
             whileHover={{ backgroundColor: 'var(--surface-sunken)' }}
             transition={{ duration: 0.18, delay: Math.min(i, 8) * 0.02 }}
-            style={{ display: 'grid', gridTemplateColumns: '28px 0.5fr 1.6fr 1.2fr 1fr 0.8fr 0.8fr', padding: '12px 20px', fontSize: 14, alignItems: 'center', borderBottom: '1px solid var(--border-default)', background: checked.has(p.id) ? 'var(--surface-sunken)' : 'transparent' }}
+            style={{ display: 'grid', gridTemplateColumns: '28px 0.5fr 1.6fr 1.2fr 1fr 0.8fr 0.8fr auto', padding: '12px 20px', fontSize: 14, alignItems: 'center', borderBottom: '1px solid var(--border-default)', background: checked.has(p.id) ? 'var(--surface-sunken)' : 'transparent' }}
           >
             <input type="checkbox" checked={checked.has(p.id)} onChange={(e) => { e.stopPropagation(); toggleCheck(p.id) }} onClick={(e) => e.stopPropagation()} style={{ cursor: 'pointer' }} />
             <div onClick={() => setSelected(p)} style={{ cursor: 'pointer' }}><Avatar name={p.name} size={36} /></div>
@@ -170,6 +171,7 @@ export function DashboardV2Patients() {
             <div onClick={() => setSelected(p)} style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>{p.last_visit_at ? p.last_visit_at.split('T')[0] : '—'}</div>
             <div onClick={() => setSelected(p)} style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>{p.total_visits}</div>
             <div onClick={() => setSelected(p)} style={{ cursor: 'pointer' }}><Badge tone={p.patient_type === 'returning' ? 'success' : 'brand'}>{p.patient_type === 'returning' ? 'عائد' : 'جديد'}</Badge></div>
+            <ContactActions phone={p.phone} message={`مرحباً ${p.name}`} />
           </motion.div>
         ))}
         {!loading && shown.length === 0 && (

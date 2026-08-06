@@ -4,7 +4,7 @@ import { useClinicOS } from '@/context/ClinicOSContext'
 import { useClinicAICalls, useClinicMessages } from '@/lib/clinicOSQueries'
 import type { MessageLog, MessageStatus } from '@/types/clinicOS'
 import { Card, Badge, Dialog, Button, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
-import { EmptyState, SkeletonRows, Avatar } from '@/_archive/dashboardV2/components/uiExtras'
+import { EmptyState, SkeletonRows, Avatar, ContactActions } from '@/_archive/dashboardV2/components/uiExtras'
 
 const MSG_STATUS_LABEL: Record<MessageStatus, string> = { pending: 'قيد الإرسال', sent: 'أُرسلت', delivered: 'تم التسليم', read: 'تمت القراءة', failed: 'فشلت' }
 const MSG_STATUS_TONE: Record<MessageStatus, BadgeTone> = { pending: 'neutral', sent: 'neutral', delivered: 'success', read: 'success', failed: 'danger' }
@@ -52,7 +52,12 @@ export function DashboardV2Conversations() {
       <Card delay={0.06} style={{ flex: 1, padding: 0, display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-default)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ fontWeight: 700 }}>{active ? (active.patient_name || active.phone) : 'اختر محادثة'}</div>
-          {active && <Badge tone="brand">تمت الإدارة بواسطة AI</Badge>}
+          {active && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <ContactActions phone={active.phone} message={`مرحباً ${active.patient_name || ''}`} />
+              <Badge tone="brand">تمت الإدارة بواسطة AI</Badge>
+            </div>
+          )}
         </div>
         <div style={{ flex: 1, padding: 20, overflowY: 'auto' }}>
           {active?.transcript && active.transcript.length > 0 ? (

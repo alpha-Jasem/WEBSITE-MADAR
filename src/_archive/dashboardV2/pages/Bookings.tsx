@@ -9,7 +9,7 @@ import {
 } from '@/lib/clinicOSQueries'
 import type { AppointmentStatus } from '@/types/clinicOS'
 import { Card, Badge, Button, Dialog, Input, Select, type BadgeTone } from '@/_archive/dashboardV2/components/primitives'
-import { EmptyState, SkeletonRows, Pagination, useToast, Avatar, SortableHeader, GlowButton } from '@/_archive/dashboardV2/components/uiExtras'
+import { EmptyState, SkeletonRows, Pagination, useToast, Avatar, SortableHeader, GlowButton, ContactActions } from '@/_archive/dashboardV2/components/uiExtras'
 
 type SortKey = 'patient_name' | 'appointment_date' | 'start_time'
 const PAGE_SIZE = 10
@@ -336,13 +336,13 @@ export function DashboardV2Bookings() {
 
         <Card delay={0.08} style={{ padding: 0, overflowX: 'auto' }}>
           <div style={{ minWidth: 640 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '32px 1.4fr 1.4fr 1fr 1fr 0.8fr 0.6fr', padding: '14px 20px', fontSize: 12, fontWeight: 700, color: 'var(--text-tertiary)', borderBottom: '1px solid var(--border-default)', alignItems: 'center' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '32px 1.4fr 1.4fr 1fr 1fr 0.8fr auto 0.6fr', padding: '14px 20px', fontSize: 12, fontWeight: 700, color: 'var(--text-tertiary)', borderBottom: '1px solid var(--border-default)', alignItems: 'center' }}>
               <input type="checkbox" checked={pageRows.length > 0 && pageRows.every((r) => selected.has(r.id))} onChange={toggleSelectAllOnPage} style={{ cursor: 'pointer' }} />
               <SortableHeader label="المريض" active={sort.key === 'patient_name'} dir={sort.dir} onClick={() => toggleSort('patient_name')} />
               <div>الخدمة</div>
               <SortableHeader label="التاريخ" active={sort.key === 'appointment_date'} dir={sort.dir} onClick={() => toggleSort('appointment_date')} />
               <SortableHeader label="الوقت" active={sort.key === 'start_time'} dir={sort.dir} onClick={() => toggleSort('start_time')} />
-              <div>الحالة</div><div></div>
+              <div>الحالة</div><div>تواصل</div><div></div>
             </div>
 
             {loading && <SkeletonRows rows={6} columns={6} />}
@@ -355,7 +355,7 @@ export function DashboardV2Bookings() {
                 whileHover={{ backgroundColor: 'var(--surface-sunken)' }}
                 transition={{ duration: 0.18, delay: Math.min(i, 8) * 0.02 }}
                 style={{
-                  display: 'grid', gridTemplateColumns: '32px 1.4fr 1.4fr 1fr 1fr 0.8fr 0.6fr', padding: '14px 20px', fontSize: 14,
+                  display: 'grid', gridTemplateColumns: '32px 1.4fr 1.4fr 1fr 1fr 0.8fr auto 0.6fr', padding: '14px 20px', fontSize: 14,
                   alignItems: 'center', borderBottom: '1px solid var(--border-default)', position: 'relative',
                   background: selected.has(b.id) ? 'var(--surface-sunken)' : 'transparent',
                 }}
@@ -375,6 +375,7 @@ export function DashboardV2Bookings() {
                 <div style={{ color: 'var(--text-secondary)' }}>{b.appointment_date}</div>
                 <div style={{ color: 'var(--text-secondary)' }}>{b.start_time}</div>
                 <div><Badge tone={STATUS_TONE[b.status]}>{STATUS_LABEL[b.status]}</Badge></div>
+                <ContactActions phone={b.patient_phone} message={`مرحباً ${b.patient_name}، بخصوص موعدك بتاريخ ${b.appointment_date}.`} />
                 <div>
                   {b.status !== 'cancelled' && b.status !== 'completed' && (
                     <span onClick={() => cancelBooking(b.id)} style={{ color: 'var(--danger-500)', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>إلغاء</span>

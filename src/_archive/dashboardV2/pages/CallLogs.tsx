@@ -4,7 +4,7 @@ import { useClinicOS } from '@/context/ClinicOSContext'
 import { useClinicAICalls } from '@/lib/clinicOSQueries'
 import { exportRowsToExcel } from '@/lib/exportExcel'
 import { Card, Badge, Button, Select } from '@/_archive/dashboardV2/components/primitives'
-import { EmptyState, KpiCardSkeleton, useToast } from '@/_archive/dashboardV2/components/uiExtras'
+import { EmptyState, KpiCardSkeleton, useToast, ContactActions } from '@/_archive/dashboardV2/components/uiExtras'
 import type { AICallLog, AICallStatus } from '@/types/clinicOS'
 
 const STATUS_TONE: Record<AICallStatus, 'success' | 'warning' | 'danger'> = { completed: 'success', needs_review: 'warning', failed: 'danger' }
@@ -89,11 +89,11 @@ export function DashboardV2CallLogs() {
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <div style={{ minWidth: 640 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr 1fr', padding: '10px 20px', fontSize: 11.5, fontWeight: 700, color: 'var(--text-tertiary)' }}>
-                <div>العميل</div><div>الهاتف</div><div>المدة</div><div>النتيجة</div><div>الحالة</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr 1fr auto', padding: '10px 20px', fontSize: 11.5, fontWeight: 700, color: 'var(--text-tertiary)' }}>
+                <div>العميل</div><div>الهاتف</div><div>المدة</div><div>النتيجة</div><div>الحالة</div><div>تواصل</div>
               </div>
               {filtered.map((c) => (
-                <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr 1fr', padding: '13px 20px', fontSize: 13, alignItems: 'center', borderTop: '1px solid var(--border-default)' }}>
+                <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr 1fr auto', padding: '13px 20px', fontSize: 13, alignItems: 'center', borderTop: '1px solid var(--border-default)' }}>
                   <div>
                     <div style={{ fontWeight: 600 }}>{c.patient_name || 'غير معروف'}</div>
                     <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{new Date(c.call_time).toLocaleString('ar-SA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
@@ -102,6 +102,7 @@ export function DashboardV2CallLogs() {
                   <div style={{ color: 'var(--text-secondary)' }}>{Math.round(c.duration_seconds / 60)} د {c.duration_seconds % 60} ث</div>
                   <div style={{ color: 'var(--text-secondary)' }}>{RESULT_LABEL[c.result] || c.result}</div>
                   <div><Badge tone={STATUS_TONE[c.status]}>{STATUS_LABEL[c.status]}</Badge></div>
+                  <ContactActions phone={c.phone} message={`مرحباً ${c.patient_name || ''}، نتواصل معك بخصوص مكالمتك الأخيرة.`} />
                 </div>
               ))}
             </div>
