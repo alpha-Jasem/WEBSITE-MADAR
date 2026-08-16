@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mic, Square, Loader2 } from 'lucide-react'
+import { Mic, Square, Loader2, MessageSquare, Send, PhoneOff } from 'lucide-react'
 import {
   ConversationProvider,
   useConversationControls,
@@ -127,11 +127,13 @@ function Bubble({ entry }: { entry: TranscriptEntry }) {
 }
 
 function WidgetInner() {
-  const { startSession, endSession } = useConversationControls()
+  const { startSession, endSession, sendUserMessage } = useConversationControls()
   const { status } = useConversationStatus()
   const { isSpeaking, isListening } = useConversationMode()
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([])
   const [permissionError, setPermissionError] = useState<string | null>(null)
+  const [mode, setMode] = useState<'idle' | 'voice' | 'text'>('idle')
+  const [draft, setDraft] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
   const idRef = useRef(0)
 
@@ -139,29 +141,104 @@ function WidgetInner() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [transcript])
 
-  async function handleStart() {
+  function pushMessage(role: 'user' | 'ai', text: string) {
+    idRef.current += 1
+    setTranscript((prev) => [...prev, { id: idRef.current, role, text }])
+  }
+
+  function openSession(textOnly: boolean) {
+    setTranscript([])
+    const onMessage = ({ message, role }: { message: string; role: string }) =>
+      pushMessage(role === 'ai' ? 'ai' : 'user', message)
+
+    // Text mode runs over websocket (the SDK picks the transport from textOnly),
+    // so connectionType is only set for the voice session.
+    if (textOnly) {
+      startSession({ agentId: RAZ_AGENT_ID, textOnly: true, onMessage })
+    } else {
+      startSession({ agentId: RAZ_AGENT_ID, connectionType: 'webrtc', textOnly: false, onMessage })
+    }
+  }
+
+  async function handleStartVoice() {
     setPermissionError(null)
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true })
     } catch {
-      setPermissionError('نحتاج إذن الميكروفون عشان تبدأ المكالمة — تأكد من السماح للمتصفح بالوصول للمايك.')
+      setPermissionError('نحتاج إذن الميكروفون عشان تبدأ المكالمة. أو جرّب الدردشة الكتابية بدالها.')
       return
     }
-    setTranscript([])
-    startSession({
-      agentId: RAZ_AGENT_ID,
-      connectionType: 'webrtc',
-      onMessage: ({ message, role }) => {
-        idRef.current += 1
-        setTranscript((prev) => [...prev, { id: idRef.current, role: role === 'ai' ? 'ai' : 'user', text: message }])
-      },
-    })
+    setMode('voice')
+    openSession(false)
   }
 
+  function handleStartText() {
+    setPermissionError(null)
+    setMode('text')
+    openSession(true)
+  }
+
+  function handleEnd() {
+    endSession()
+    setMode('idle')
+    setDraft('')
+  }
+
+  function handleSend(e: React.FormEvent) {
+    e.preventDefault()
+    const text = draft.trim()
+    if (!text || status !== 'connected') return
+    // In text mode the SDK has no ASR transcript to echo back, so the typed
+    // message is added locally. (Voice mode gets it via onMessage instead.)
+    pushMessage('user', text)
+    sendUserMessage(text)
+    setDraft('')
+  }
+
+  const connected = status === 'connected'
+  const connecting = status === 'connecting'
+
   return (
-    <div className="flex flex-col items-center gap-6 w-full">
-      <MicButton status={status} isSpeaking={isSpeaking} onStart={handleStart} onEnd={endSession} />
-      <StatusLabel status={status} isSpeaking={isSpeaking} isListening={isListening} />
+    <div className="flex flex-col items-center gap-5 w-full">
+      {mode !== 'text' && (
+        <>
+          <MicButton status={status} isSpeaking={isSpeaking} onStart={handleStartVoice} onEnd={handleEnd} />
+          <StatusLabel status={status} isSpeaking={isSpeaking} isListening={isListening} />
+        </>
+      )}
+
+      {/* Text-chat entry point — for visitors who can't use a mic */}
+      {mode === 'idle' && !connecting && (
+        <button
+          onClick={handleStartText}
+          className="inline-flex items-center gap-2 text-xs font-tajawal px-4 py-2 rounded-full"
+          style={{
+            color: 'rgba(234,241,251,0.75)',
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.1)',
+          }}
+        >
+          <MessageSquare size={13} />
+          أو جرّب الدردشة الكتابية
+        </button>
+      )}
+
+      {mode === 'text' && (
+        <div className="flex items-center justify-between w-full">
+          <span className="text-sm font-tajawal" style={{ color: 'rgba(234,241,251,0.7)' }}>
+            {connecting ? 'جاري الاتصال بعمر…' : 'دردشة كتابية مع عمر'}
+          </span>
+          <button
+            onClick={handleEnd}
+            className="inline-flex items-center gap-1.5 text-xs font-tajawal px-3 py-1.5 rounded-full"
+            style={{ color: '#FFB4B4', background: 'rgba(255,120,120,0.08)', border: '1px solid rgba(255,120,120,0.2)' }}
+          >
+            <PhoneOff size={12} />
+            إنهاء
+          </button>
+        </div>
+      )}
+
       {permissionError && (
         <p className="text-xs font-tajawal text-center" style={{ color: '#FF8A8A', maxWidth: 320 }}>
           {permissionError}
@@ -183,6 +260,35 @@ function WidgetInner() {
             <Bubble key={entry.id} entry={entry} />
           ))}
         </div>
+      )}
+
+      {mode === 'text' && connected && (
+        <form onSubmit={handleSend} className="flex items-center gap-2 w-full">
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="اكتب رسالتك لعمر…"
+            className="flex-1 text-sm font-tajawal rounded-xl px-4 py-2.5 outline-none"
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              color: '#EAF1FB',
+            }}
+          />
+          <button
+            type="submit"
+            disabled={!draft.trim()}
+            className="rounded-xl flex items-center justify-center disabled:opacity-40"
+            style={{
+              width: 42,
+              height: 42,
+              background: 'linear-gradient(160deg, #00BFFF, #0D1B3E)',
+              border: '1px solid rgba(0,191,255,0.4)',
+            }}
+          >
+            <Send size={16} color="#EAF6FF" />
+          </button>
+        </form>
       )}
     </div>
   )
