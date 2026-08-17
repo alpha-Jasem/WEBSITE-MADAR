@@ -39,7 +39,13 @@ export function DashboardV2Layout() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem(THEME_KEY) as 'dark') || 'light')
-  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COLLAPSE_KEY) === '1')
+  // `collapsed` is the pinned preference; hovering the rail expands it temporarily
+  // without changing that preference.
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COLLAPSE_KEY) !== '0')
+  const [hoverExpanded, setHoverExpanded] = useState(false)
+  // The mobile drawer is opened deliberately, so it always shows full labels —
+  // an icon-only drawer would be pointless there.
+  const expanded = !collapsed || hoverExpanded || mobileNavOpen
   const { data: tickets } = useClinicSupportTickets(companyId, isDemo)
   const openTicketCount = (tickets || []).filter((t) => t.status === 'open').length
   const { data: leads } = useRazLeads()
@@ -110,7 +116,9 @@ export function DashboardV2Layout() {
       <style>{`
         .dv2-hamburger { display: none; }
         .dv2-backdrop { display: none; }
+        .dv2-sidebar-spacer { display: block; }
         @media (max-width: 900px) {
+          .dv2-sidebar-spacer { display: none; }
           .dv2-sidebar { position: fixed !important; inset-inline-start: 0; top: 0; bottom: 0; z-index: 1300;
             transition: transform .25s var(--ease-out); transform: translateX(100%); }
           .dv2-sidebar.open { transform: translateX(0) !important; }
@@ -128,6 +136,20 @@ export function DashboardV2Layout() {
         .dv2-nav-item:hover { background: rgba(229,229,229,.7) !important; color: #171717 !important; }
         @media (prefers-reduced-motion: reduce) {
           .dv2-nav-item { transition: none; }
+        }
+        /* On desktop the rail is taken out of flow and centred, so expanding it on
+           hover overlays the page instead of shoving every column sideways.
+           A spacer keeps the layout width reserved. */
+        @media (min-width: 901px) {
+          /* Two classes so this beats the .dv2-sidebar-glass rule declared below. */
+          .dv2-sidebar.dv2-sidebar-glass {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            inset-inline-start: 16px;
+            margin: 0 !important;
+            z-index: 40;
+          }
         }
         /* Floating rail: detached from the viewport edges and centred vertically,
            so it reads as a card rather than a wall. */
@@ -153,22 +175,39 @@ export function DashboardV2Layout() {
         }
       `}</style>
       {mobileNavOpen && <div className="dv2-backdrop open" onClick={() => setMobileNavOpen(false)} />}
-      <nav className={`dv2-sidebar dv2-sidebar-glass${mobileNavOpen ? ' open' : ''}`} style={{
-        width: collapsed ? 76 : 264,
-        // Centred floating rail: sized to its content, capped to the viewport.
-        alignSelf: 'center',
-        height: 'auto',
-        maxHeight: 'calc(100vh - 32px)',
-        margin: '16px 16px 16px 0',
-        display: 'flex',
-        flexDirection: 'column', padding: '18px 14px', boxSizing: 'border-box',
-        fontFamily: 'var(--font-body)', color: 'var(--text-primary)', flexShrink: 0,
-        transition: 'width 200ms var(--ease-out, ease)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', padding: '0 8px' }}>
+      {/* Reserves the rail's footprint so hover-expansion doesn't reflow the page. */}
+      <div
+        className="dv2-sidebar-spacer"
+        aria-hidden
+        style={{
+          width: collapsed ? 76 + 32 : 264 + 32,
+          flexShrink: 0,
+          transition: 'width 200ms var(--ease-out, ease)',
+        }}
+      />
+      <nav
+        className={`dv2-sidebar dv2-sidebar-glass${mobileNavOpen ? ' open' : ''}`}
+        onMouseEnter={() => setHoverExpanded(true)}
+        onMouseLeave={() => { setHoverExpanded(false); setProfileOpen(false) }}
+        style={{
+          width: expanded ? 264 : 76,
+          // Centred floating rail: sized to its content, capped to the viewport.
+          alignSelf: 'center',
+          height: 'auto',
+          maxHeight: 'calc(100vh - 32px)',
+          margin: '16px 16px 16px 0',
+          display: 'flex',
+          flexDirection: 'column', padding: '18px 14px', boxSizing: 'border-box',
+          fontFamily: 'var(--font-body)', color: 'var(--text-primary)', flexShrink: 0,
+          transition: 'width 200ms var(--ease-out, ease)',
+          // Hover-expansion floats over the content instead of pushing it.
+          zIndex: collapsed ? 40 : undefined,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: expanded ? 'space-between' : 'center', padding: '0 8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <img src="/logo-main.png" alt="مدار" style={{ width: 24, height: 24, objectFit: 'contain', borderRadius: 'var(--radius-sm)', flexShrink: 0 }} />
-            {!collapsed && (
+            {expanded && (
               <div>
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, lineHeight: 1.2 }}>مدار</div>
                 <div style={{ fontSize: 10, fontWeight: 600, color: '#737373', letterSpacing: '.18em', textTransform: 'uppercase' }}>لوحة العيادة</div>
@@ -183,8 +222,8 @@ export function DashboardV2Layout() {
         <div
           onClick={() => setProfileOpen((v) => !v)}
           style={{
-            display: 'flex', alignItems: 'center', gap: 8, padding: collapsed ? '10px' : '10px 12px',
-            justifyContent: collapsed ? 'center' : 'space-between',
+            display: 'flex', alignItems: 'center', gap: 8, padding: expanded ? '10px 12px' : '10px',
+            justifyContent: expanded ? 'space-between' : 'center',
             borderRadius: 14, cursor: 'pointer', border: '1px solid #E5E5E5', background: '#FAFAFA',
             boxShadow: '0 1px 2px rgba(0,0,0,.04)',
             marginTop: 14, position: 'relative',
@@ -195,7 +234,7 @@ export function DashboardV2Layout() {
               width: 20, height: 20, borderRadius: '50%', background: 'var(--gradient-brand)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, flexShrink: 0, color: '#fff',
             }}>{(clinicName || userName || 'م')[0]}</div>
-            {!collapsed && (
+            {expanded && (
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 10, fontWeight: 600, color: '#737373', letterSpacing: '.09em', textTransform: 'uppercase' }}>العيادة</div>
                 <div style={{ fontSize: 14, fontWeight: 400, color: '#171717', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -204,12 +243,12 @@ export function DashboardV2Layout() {
               </div>
             )}
           </div>
-          {!collapsed && <ChevronDown size={13} style={{ opacity: 0.5, flexShrink: 0, color: '#737373' }} />}
+          {expanded && <ChevronDown size={13} style={{ opacity: 0.5, flexShrink: 0, color: '#737373' }} />}
           {profileOpen && (
             <div style={{
               position: 'absolute', top: '110%', insetInlineStart: 0, insetInlineEnd: 0,
               background: '#fff', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-default)',
-              overflow: 'hidden', color: '#171717', minWidth: collapsed ? 150 : undefined, zIndex: 10,
+              overflow: 'hidden', color: '#171717', minWidth: expanded ? undefined : 150, zIndex: 10,
             }}>
               <div
                 onClick={logout}
@@ -226,7 +265,7 @@ export function DashboardV2Layout() {
         >
           {NAV_GROUPS.map((group, gi) => (
             <div key={group.title || gi}>
-              {group.title && !collapsed && (
+              {group.title && expanded && (
                 <div style={{
                   fontSize: 11, fontWeight: 600, color: '#737373', letterSpacing: '.12em',
                   padding: '0 8px', margin: gi === 0 ? '0 0 8px' : '20px 0 8px', textTransform: 'uppercase',
@@ -240,8 +279,8 @@ export function DashboardV2Layout() {
                     className="dv2-nav-item"
                     onClick={() => navigate(item.path)}
                     style={{
-                      display: 'flex', alignItems: 'center', gap: 12, padding: collapsed ? '8px' : '8px 12px',
-                      justifyContent: collapsed ? 'center' : 'flex-start',
+                      display: 'flex', alignItems: 'center', gap: 12, padding: expanded ? '8px 12px' : '8px',
+                      justifyContent: expanded ? 'flex-start' : 'center',
                       borderRadius: 14, cursor: 'pointer',
                       fontSize: 14, fontWeight: 500,
                       color: active ? '#171717' : '#525252',
@@ -250,8 +289,8 @@ export function DashboardV2Layout() {
                     }}
                   >
                     <span className="dv2-nav-icon" style={{ display: 'flex' }}>{item.icon}</span>
-                    {!collapsed && <span style={{ flex: 1 }}>{item.label}</span>}
-                    {!collapsed && item.badge != null && (
+                    {expanded && <span style={{ flex: 1 }}>{item.label}</span>}
+                    {expanded && item.badge != null && (
                       <span style={{
                         background: 'var(--danger-500)', color: '#fff', borderRadius: 'var(--radius-full)',
                         fontSize: 10, fontWeight: 700, padding: '1px 6px',
@@ -259,7 +298,7 @@ export function DashboardV2Layout() {
                     )}
                   </div>
                 )
-                return collapsed ? <Tooltip key={item.path} label={item.label} side="bottom">{row}</Tooltip> : row
+                return expanded ? row : <Tooltip key={item.path} label={item.label} side="bottom">{row}</Tooltip>
               })}
             </div>
           ))}
@@ -274,7 +313,9 @@ export function DashboardV2Layout() {
               borderRadius: 'var(--radius-md)', cursor: 'pointer', color: 'var(--text-tertiary)', fontSize: 11.5,
             }}
           >
-            {collapsed ? <ChevronsLeft size={15} /> : <><ChevronsRight size={15} /> طي القائمة</>}
+            {collapsed
+              ? (expanded ? <><ChevronsLeft size={15} /> تثبيت القائمة</> : <ChevronsLeft size={15} />)
+              : <><ChevronsRight size={15} /> طي القائمة</>}
           </span>
         </div>
 
