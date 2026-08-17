@@ -89,7 +89,18 @@ async function main() {
   check(prompt.prompt?.includes('ممنوع اللهجة المصرية'), 'Egyptian-dialect ban present in prompt',
     'Egyptian-dialect ban missing from prompt');
 
-  // 5. Workflow
+  // 5. Booking tool — without this the agent promises callbacks that vanish
+  const toolIds = prompt.tool_ids || [];
+  check(toolIds.length > 0, 'Lead-capture tool attached to agent',
+    'NO LEAD TOOL — the agent will promise callbacks that are never recorded');
+
+  const bookingTools = agent.workflow?.nodes?.booking?.additional_tool_ids || [];
+  const supportTools = agent.workflow?.nodes?.support?.additional_tool_ids || [];
+  check(bookingTools.length > 0 && supportTools.length > 0,
+    'Booking + support stages can save leads',
+    `Lead tool missing from stages (booking: ${bookingTools.length}, support: ${supportTools.length})`);
+
+  // 6. Workflow
   const nodes = Object.keys(agent.workflow?.nodes || {});
   const missing = EXPECTED.workflow_nodes.filter((n) => !nodes.includes(n));
   check(missing.length === 0, `Workflow intact (${nodes.length} nodes)`, `Workflow missing nodes: ${missing.join(', ')}`);
@@ -100,7 +111,7 @@ async function main() {
   check(badEntry.length === 0, 'Stage entry behavior correct (no duplicate greetings)',
     `Nodes will double-greet: ${badEntry.join(', ')}`);
 
-  // 6. WhatsApp channel
+  // 7. WhatsApp channel
   const wr = await fetch('https://api.elevenlabs.io/v1/convai/whatsapp-accounts', { headers: { 'xi-api-key': API_KEY } });
   if (wr.ok) {
     const list = (await wr.json()).items || [];
