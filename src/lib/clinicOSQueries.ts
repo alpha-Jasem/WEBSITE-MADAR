@@ -10,7 +10,7 @@ import type {
   Doctor, Service, Patient, Appointment, MessageLog, AICallLog, Waitlist, AppointmentStatus,
   Branch, GoogleReview, SupportTicket, ReviewStatus, TicketPriority, TicketStatus,
   ReminderRule, Integration, IntegrationStatus, CompanyStaff, ClinicNotification, NotificationSeverity,
-  AuditLogEntry,
+  AuditLogEntry, RazLead, LeadStatus,
 } from '../types/clinicOS'
 
 // ─── Generic fetch hook ────────────────────────────────────────────────────────
@@ -496,6 +496,31 @@ export function useClinicPreviousWeekChart(companyId: string | null, isDemo = fa
       return { day: '', appointments: dayRows.length, completed: dayRows.filter(r => r.status === 'completed').length }
     })
   }, [companyId, isDemo])
+}
+
+// ─── RAZ leads (written by the AI sales agent via the raz-booking webhook) ────
+
+export function useRazLeads() {
+  return useFetch<RazLead[]>(async () => {
+    const { data, error } = await supabase
+      .from('raz_leads')
+      .select('*')
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return (data || []) as RazLead[]
+  }, [])
+}
+
+export async function updateRazLeadStatus(id: string, status: LeadStatus) {
+  const { error } = await supabase
+    .from('raz_leads')
+    .update({
+      status,
+      // Stamp who closed the loop, so an unfollowed promise is visible.
+      handled_at: status === 'new' ? null : new Date().toISOString(),
+    })
+    .eq('id', id)
+  if (error) throw error
 }
 
 // ─── Mutations ────────────────────────────────────────────────────────────────

@@ -7,9 +7,10 @@ import {
   Wallet, BellRing, Plug, Settings, ChevronDown, LogOut, CreditCard, Menu, X,
   Wrench, History, Sun, Moon, AlertTriangle, ChevronsRight, ChevronsLeft, Plus, CalendarCheck2, Ticket,
   PhoneCall, MessageCircle, Bot, SlidersHorizontal, LayoutGrid, PhoneIncoming, PhoneOutgoing, ClipboardList, BookOpen,
+  Inbox,
 } from 'lucide-react'
 import { useClinicOS } from '@/context/ClinicOSContext'
-import { useClinicSupportTickets, useClinicTodayAppointments } from '@/lib/clinicOSQueries'
+import { useClinicSupportTickets, useClinicTodayAppointments, useRazLeads } from '@/lib/clinicOSQueries'
 import { NotificationCenter } from './NotificationCenter'
 import { AccountMenu } from './AccountMenu'
 import { SupportChat } from './SupportChat'
@@ -41,6 +42,8 @@ export function DashboardV2Layout() {
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COLLAPSE_KEY) === '1')
   const { data: tickets } = useClinicSupportTickets(companyId, isDemo)
   const openTicketCount = (tickets || []).filter((t) => t.status === 'open').length
+  const { data: leads } = useRazLeads()
+  const newLeadCount = (leads || []).filter((l) => l.status === 'new').length
   const { data: todayAppointments } = useClinicTodayAppointments(companyId, isDemo)
   const todayCount = (todayAppointments || []).length
 
@@ -81,6 +84,7 @@ export function DashboardV2Layout() {
     { title: 'التفاعل', items: [
       { label: 'الحجوزات', path: `${base}/bookings`, icon: <CalendarDays size={17} /> },
       { label: 'العملاء', path: `${base}/patients`, icon: <Users size={17} /> },
+      { label: 'طلبات العملاء', path: `${base}/leads`, icon: <Inbox size={17} />, badge: newLeadCount || undefined },
       { label: 'المحادثات', path: `${base}/conversations`, icon: <MessageSquare size={17} /> },
       { label: 'AI Google Reviews', path: `${base}/reviews`, icon: <Star size={17} /> },
       { label: 'سجل المكالمات', path: `${base}/call-logs`, icon: <ClipboardList size={17} /> },

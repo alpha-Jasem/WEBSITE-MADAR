@@ -70,6 +70,7 @@ const DashboardV2Services      = lazy(() => import('./_archive/dashboardV2/pages
 const DashboardV2AuditLog      = lazy(() => import('./_archive/dashboardV2/pages/AuditLog').then(m => ({ default: m.DashboardV2AuditLog })))
 const DashboardV2MadarAgentUsage = lazy(() => import('./_archive/dashboardV2/pages/MadarAgentUsage').then(m => ({ default: m.DashboardV2MadarAgentUsage })))
 const DashboardV2Tickets       = lazy(() => import('./_archive/dashboardV2/pages/Tickets').then(m => ({ default: m.DashboardV2Tickets })))
+const DashboardV2RazLeads      = lazy(() => import('./_archive/dashboardV2/pages/RazLeads').then(m => ({ default: m.DashboardV2RazLeads })))
 const DashboardV2CallsAnalytics    = lazy(() => import('./_archive/dashboardV2/pages/CallsAnalytics').then(m => ({ default: m.DashboardV2CallsAnalytics })))
 const DashboardV2WhatsAppAnalytics = lazy(() => import('./_archive/dashboardV2/pages/WhatsAppAnalytics').then(m => ({ default: m.DashboardV2WhatsAppAnalytics })))
 const DashboardV2Agents            = lazy(() => import('./_archive/dashboardV2/pages/Agents').then(m => ({ default: m.DashboardV2Agents })))
@@ -136,6 +137,7 @@ function App() {
               <Route path="services" element={<DashboardV2Services />} />
               <Route path="audit-log" element={<DashboardV2AuditLog />} />
               <Route path="tickets" element={<DashboardV2Tickets />} />
+              <Route path="leads" element={<DashboardV2RazLeads />} />
               <Route path="calls-analytics" element={<DashboardV2CallsAnalytics />} />
               <Route path="whatsapp-analytics" element={<DashboardV2WhatsAppAnalytics />} />
               <Route path="agents" element={<DashboardV2Agents />} />
@@ -166,6 +168,7 @@ function App() {
               <Route path="services" element={<DashboardV2Services />} />
               <Route path="audit-log" element={<DashboardV2AuditLog />} />
               <Route path="tickets" element={<DashboardV2Tickets />} />
+              <Route path="leads" element={<DashboardV2RazLeads />} />
               <Route path="calls-analytics" element={<DashboardV2CallsAnalytics />} />
               <Route path="whatsapp-analytics" element={<DashboardV2WhatsAppAnalytics />} />
               <Route path="agents" element={<DashboardV2Agents />} />

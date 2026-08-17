@@ -287,6 +287,30 @@ export interface SupportTicket {
   updated_at: string
 }
 
+// ─── RAZ real-estate leads (captured by the AI sales agent) ───────────────────
+
+export type LeadStatus = 'new' | 'contacted' | 'closed'
+
+export interface RazLead {
+  id: string
+  created_at: string
+  customer_name: string | null
+  customer_phone: string | null
+  request_type: string
+  project_of_interest: string | null
+  purpose: string | null
+  property_type: string | null
+  notes: string | null
+  appointment_day: string | null
+  appointment_time: string | null
+  contact_channel: string | null
+  status: LeadStatus
+  handled_by: string | null
+  handled_at: string | null
+  conversation_id: string | null
+  source: string
+}
+
 export interface ReminderRule {
   id: string
   company_id: string
