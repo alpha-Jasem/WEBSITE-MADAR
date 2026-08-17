@@ -72,34 +72,32 @@ export function DashboardV2Layout() {
     { title: '', items: [
       { label: 'الرئيسية', path: base, icon: <LayoutDashboard size={17} /> },
     ] },
-    { title: 'نظرة عامة', items: [
+    // Grouped by how often it's opened, not by internal architecture: the daily
+    // operational work sits at the top, configuration further down.
+    { title: 'التشغيل اليومي', items: [
+      { label: 'طلبات العملاء', path: `${base}/leads`, icon: <Inbox size={17} />, badge: newLeadCount || undefined },
+      { label: 'الحجوزات', path: `${base}/bookings`, icon: <CalendarDays size={17} /> },
+      { label: 'المحادثات', path: `${base}/conversations`, icon: <MessageSquare size={17} /> },
+      { label: 'التذاكر', path: `${base}/tickets`, icon: <Ticket size={17} />, badge: openTicketCount || undefined },
+      { label: 'AI Google Reviews', path: `${base}/reviews`, icon: <Star size={17} /> },
+      { label: 'العملاء', path: `${base}/patients`, icon: <Users size={17} /> },
+      { label: 'سجل المكالمات', path: `${base}/call-logs`, icon: <ClipboardList size={17} /> },
+    ] },
+    { title: 'التقارير', items: [
+      { label: 'التقارير والتحليلات', path: `${base}/reports`, icon: <BarChart3 size={17} /> },
       { label: 'تحليلات المكالمات', path: `${base}/calls-analytics`, icon: <PhoneCall size={17} /> },
       { label: 'تحليلات واتساب', path: `${base}/whatsapp-analytics`, icon: <MessageCircle size={17} /> },
+      { label: 'مجموعات التحليل', path: `${base}/analysis-groups`, icon: <LayoutGrid size={17} /> },
+      { label: 'الإيرادات', path: `${base}/revenue`, icon: <Wallet size={17} /> },
     ] },
-    { title: 'البناء', items: [
+    { title: 'الإعداد', items: [
       { label: 'الوكلاء', path: `${base}/agents`, icon: <Bot size={17} /> },
       { label: 'قاعدة المعرفة', path: `${base}/knowledge-base`, icon: <BookOpen size={17} /> },
       { label: 'الأدوات', path: `${base}/tools`, icon: <SlidersHorizontal size={17} /> },
-      { label: 'مجموعات التحليل', path: `${base}/analysis-groups`, icon: <LayoutGrid size={17} /> },
       { label: 'المتابعات', path: `${base}/reminders`, icon: <BellRing size={17} /> },
-    ] },
-    { title: 'القنوات', items: [
+      { label: 'الخدمات', path: `${base}/services`, icon: <Wrench size={17} /> },
       { label: 'الخدمات الواردة', path: `${base}/inbound-services`, icon: <PhoneIncoming size={17} /> },
       { label: 'الخدمات الصادرة', path: `${base}/outbound-services`, icon: <PhoneOutgoing size={17} /> },
-    ] },
-    { title: 'التفاعل', items: [
-      { label: 'الحجوزات', path: `${base}/bookings`, icon: <CalendarDays size={17} /> },
-      { label: 'العملاء', path: `${base}/patients`, icon: <Users size={17} /> },
-      { label: 'طلبات العملاء', path: `${base}/leads`, icon: <Inbox size={17} />, badge: newLeadCount || undefined },
-      { label: 'المحادثات', path: `${base}/conversations`, icon: <MessageSquare size={17} /> },
-      { label: 'AI Google Reviews', path: `${base}/reviews`, icon: <Star size={17} /> },
-      { label: 'سجل المكالمات', path: `${base}/call-logs`, icon: <ClipboardList size={17} /> },
-      { label: 'التذاكر', path: `${base}/tickets`, icon: <Ticket size={17} />, badge: openTicketCount || undefined },
-    ] },
-    { title: 'الأعمال', items: [
-      { label: 'الخدمات', path: `${base}/services`, icon: <Wrench size={17} /> },
-      { label: 'التقارير والتحليلات', path: `${base}/reports`, icon: <BarChart3 size={17} /> },
-      { label: 'الإيرادات', path: `${base}/revenue`, icon: <Wallet size={17} /> },
     ] },
     { title: 'النظام', items: [
       { label: 'Madar Agent Usage', path: `${base}/plan-usage`, icon: <CreditCard size={17} /> },
