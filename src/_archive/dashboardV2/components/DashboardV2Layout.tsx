@@ -129,18 +129,39 @@ export function DashboardV2Layout() {
         @media (prefers-reduced-motion: reduce) {
           .dv2-nav-item { transition: none; }
         }
+        /* Floating rail: detached from the viewport edges and centred vertically,
+           so it reads as a card rather than a wall. */
         .dv2-sidebar-glass {
           position: relative;
           background: #ffffff;
-          border-inline-end: 1px solid var(--border-default);
-          box-shadow: 4px 0 24px rgba(13,27,62,.05);
+          border: 1px solid var(--border-default);
+          border-radius: 22px;
+          box-shadow: 0 18px 44px -20px rgba(13,27,62,.28), 0 2px 8px rgba(13,27,62,.05);
         }
         .dv2-sidebar-glass > * { position: relative; z-index: 1; }
+        @media (max-width: 900px) {
+          /* On mobile it becomes a full-height drawer again, so drop the float. */
+          .dv2-sidebar-glass {
+            border-radius: 0;
+            border: none;
+            border-inline-end: 1px solid var(--border-default);
+            margin: 0 !important;
+            max-height: none !important;
+            height: 100% !important;
+            align-self: stretch !important;
+          }
+        }
       `}</style>
       {mobileNavOpen && <div className="dv2-backdrop open" onClick={() => setMobileNavOpen(false)} />}
       <nav className={`dv2-sidebar dv2-sidebar-glass${mobileNavOpen ? ' open' : ''}`} style={{
-        width: collapsed ? 76 : 264, height: '100%', display: 'flex',
-        flexDirection: 'column', padding: '20px 14px', boxSizing: 'border-box',
+        width: collapsed ? 76 : 264,
+        // Centred floating rail: sized to its content, capped to the viewport.
+        alignSelf: 'center',
+        height: 'auto',
+        maxHeight: 'calc(100vh - 32px)',
+        margin: '16px 16px 16px 0',
+        display: 'flex',
+        flexDirection: 'column', padding: '18px 14px', boxSizing: 'border-box',
         fontFamily: 'var(--font-body)', color: 'var(--text-primary)', flexShrink: 0,
         transition: 'width 200ms var(--ease-out, ease)',
       }}>
