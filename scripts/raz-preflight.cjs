@@ -104,6 +104,25 @@ async function main() {
     'Booking + complaint + handoff stages can save leads',
     `Lead tool missing from stages: ${missingTool.join(', ')}`);
 
+  // A lead with no name and no phone is a callback that was promised and cannot
+  // happen. The webhook rejects those, but the agent must also know to collect
+  // them up front instead of burning a turn on a rejection.
+  check(prompt.prompt?.includes('الاسم الكامل شرط لتسجيل'),
+    'Full-name rule present in prompt',
+    'Full-name rule missing — leads will be recorded with no way to call back');
+
+  if (toolIds.length) {
+    const lt = await fetch(`https://api.elevenlabs.io/v1/convai/tools/${toolIds[0]}`, {
+      headers: { 'xi-api-key': API_KEY },
+    });
+    if (lt.ok) {
+      const req = (await lt.json()).tool_config?.api_schema?.request_body_schema?.required || [];
+      const gaps = ['customer_name', 'customer_phone'].filter((f) => !req.includes(f));
+      check(gaps.length === 0, 'Lead tool requires full name + phone',
+        `Lead tool does not require: ${gaps.join(', ')}`);
+    }
+  }
+
   // Without end_call the agent cannot hang up and loops on goodbyes.
   check(!!prompt.built_in_tools?.end_call, 'end_call enabled (agent can end the conversation)',
     'end_call NOT enabled — conversations will loop on goodbyes');
@@ -121,11 +140,15 @@ async function main() {
   const missing = EXPECTED.workflow_nodes.filter((n) => !nodes.includes(n));
   check(missing.length === 0, `Workflow intact (${nodes.length} nodes)`, `Workflow missing nodes: ${missing.join(', ')}`);
 
+  // Only the opening stage waits: it follows first_message, so speaking again
+  // there double-greets. Every other stage is entered *because* the customer
+  // just spoke — waiting there is what produced silent turns on WhatsApp.
   const badEntry = Object.entries(agent.workflow?.nodes || {})
-    .filter(([, n]) => n.type === 'override_agent' && n.entry_behavior !== 'wait_for_user')
+    .filter(([id, n]) => n.type === 'override_agent' &&
+      n.entry_behavior !== (id === 'triage' ? 'wait_for_user' : 'generate_immediately'))
     .map(([id]) => id);
-  check(badEntry.length === 0, 'Stage entry behavior correct (no duplicate greetings)',
-    `Nodes will double-greet: ${badEntry.join(', ')}`);
+  check(badEntry.length === 0, 'Stage entry behavior correct (no double-greet, no dead air)',
+    `Wrong entry_behavior — will double-greet or go silent: ${badEntry.join(', ')}`);
 
   // 7. WhatsApp channel
   const wr = await fetch('https://api.elevenlabs.io/v1/convai/whatsapp-accounts', { headers: { 'xi-api-key': API_KEY } });
