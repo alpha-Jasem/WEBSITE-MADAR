@@ -73,7 +73,12 @@ async function run(s) {
   return { id: s.id, turns };
 }
 
+// The client chose this exact closing wording, so it outranks the dialect rule.
+// Blanked before linting so its formal words don't count against the turn.
+const SANCTIONED = [/سيتم التواصل مع(ك|كم)\s*من قبل فريق الدعم/g];
+
 function lint(text) {
+  for (const p of SANCTIONED) text = text.replace(p, '');
   const hits = [];
   for (const [group, dict] of [['مصري', EGYPTIAN], ['فصحى رسمية', TOO_FORMAL], ['إملاء حجازي', SPELLING]]) {
     for (const [bad, good] of Object.entries(dict)) {
