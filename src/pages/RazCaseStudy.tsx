@@ -110,7 +110,7 @@ export const RazCaseStudy = () => {
             </div>
             <h3 className="text-xl font-bold font-cairo" style={{ color: 'white' }}>تفضّل تجربة سريعة؟</h3>
             <p className="text-sm font-tajawal leading-relaxed" style={{ color: 'rgba(234,241,251,0.6)' }}>
-              راسل "عمر" — مستشار راز العقاري — مباشرة على واتساب، ويرد عليك فوراً بنفس المعلومات والمشاريع الحقيقية.
+              راسل "سعود" — مستشار راز العقاري — مباشرة على واتساب، ويرد عليك فوراً بنفس المعلومات والمشاريع الحقيقية.
             </p>
             <a
               href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent('السلام عليكم، أبغى أستفسر عن مشاريع راز العقارية')}`}

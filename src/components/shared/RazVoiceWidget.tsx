@@ -85,8 +85,8 @@ function MicButton({ status, isSpeaking, onStart, onEnd }: {
 
 function StatusLabel({ status, isSpeaking, isListening }: { status: string; isSpeaking: boolean; isListening: boolean }) {
   let text = 'انقر على الميكروفون لبدء التحدث'
-  if (status === 'connecting') text = 'جاري الاتصال بعمر…'
-  else if (status === 'connected' && isSpeaking) text = 'عمر يتحدث…'
+  if (status === 'connecting') text = 'جاري الاتصال بسعود…'
+  else if (status === 'connected' && isSpeaking) text = 'سعود يتحدث…'
   else if (status === 'connected' && isListening) text = 'يستمع إليك الآن…'
   else if (status === 'connected') text = 'المكالمة جارية'
 
@@ -226,7 +226,7 @@ function WidgetInner() {
       {mode === 'text' && (
         <div className="flex items-center justify-between w-full">
           <span className="text-sm font-tajawal" style={{ color: 'rgba(234,241,251,0.7)' }}>
-            {connecting ? 'جاري الاتصال بعمر…' : 'دردشة كتابية مع عمر'}
+            {connecting ? 'جاري الاتصال بسعود…' : 'دردشة كتابية مع سعود'}
           </span>
           <button
             onClick={handleEnd}
@@ -267,7 +267,7 @@ function WidgetInner() {
           <input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="اكتب رسالتك لعمر…"
+            placeholder="اكتب رسالتك لسعود…"
             className="flex-1 text-sm font-tajawal rounded-xl px-4 py-2.5 outline-none"
             style={{
               background: 'rgba(255,255,255,0.04)',
