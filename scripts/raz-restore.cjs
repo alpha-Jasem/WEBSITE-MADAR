@@ -16,9 +16,9 @@ const API_KEY = fs.readFileSync(ENV_PATH, 'utf8').match(/^ELEVENLABS_API_KEY=(.+
 const AGENT_ID = 'agent_7501kzx1z7xaekxbegasw7cpqs7n';
 
 const GOOD_TTS = {
-  voice_id: 'VAFkN4Xb78Y1zB1QZa3i', // RAZ - Omar (Munsit official Hijazi) v4
+  voice_id: '3nav5pHC1EYvWOd5LmnA', // Saud - Deep, Formal and Clear
   model_id: 'eleven_flash_v2_5',    // verified account-authorized
-  stability: 0.7,                    // keeps the cloned accent from drifting
+  stability: 0.7,                    // keeps the accent from drifting
   similarity_boost: 1.0,
   speed: 1.05,
   expressive_mode: false,

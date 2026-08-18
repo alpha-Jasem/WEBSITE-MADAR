@@ -16,8 +16,10 @@ const API_KEY = fs.readFileSync(ENV_PATH, 'utf8').match(/^ELEVENLABS_API_KEY=(.+
 
 const AGENT_ID = 'agent_7501kzx1z7xaekxbegasw7cpqs7n';
 const EXPECTED = {
-  voice_id: 'VAFkN4Xb78Y1zB1QZa3i',
-  voice_name: 'RAZ - Omar (Munsit official, Hijazi) v4 - max fidelity',
+  // The chosen voice for the agent "سعود". Update both fields together if the
+  // voice is ever changed deliberately, so this check keeps catching accidents.
+  voice_id: '3nav5pHC1EYvWOd5LmnA',
+  voice_name: 'Saud - Deep, Formal and Clear',
   model_id: 'eleven_flash_v2_5',
   stability: 0.7,
   workflow_nodes: ['start_node', 'discovery', 'present', 'objection', 'booking', 'support', 'end_node'],
