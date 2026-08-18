@@ -22,7 +22,7 @@ const EXPECTED = {
   voice_name: 'Saud - Deep, Formal and Clear',
   model_id: 'eleven_flash_v2_5',
   stability: 0.7,
-  workflow_nodes: ['start_node', 'discovery', 'present', 'objection', 'booking', 'support', 'end_node'],
+  workflow_nodes: ['start_node', 'triage', 'info', 'objection', 'booking', 'complaint', 'handoff', 'end_node'],
   whatsapp_number: '+966 56 876 6030',
 };
 
@@ -96,11 +96,25 @@ async function main() {
   check(toolIds.length > 0, 'Lead-capture tool attached to agent',
     'NO LEAD TOOL — the agent will promise callbacks that are never recorded');
 
-  const bookingTools = agent.workflow?.nodes?.booking?.additional_tool_ids || [];
-  const supportTools = agent.workflow?.nodes?.support?.additional_tool_ids || [];
-  check(bookingTools.length > 0 && supportTools.length > 0,
-    'Booking + support stages can save leads',
-    `Lead tool missing from stages (booking: ${bookingTools.length}, support: ${supportTools.length})`);
+  // Every stage that promises a follow-up must be able to record it.
+  const recordingStages = ['booking', 'complaint', 'handoff'];
+  const missingTool = recordingStages
+    .filter((id) => !(agent.workflow?.nodes?.[id]?.additional_tool_ids || []).length);
+  check(missingTool.length === 0,
+    'Booking + complaint + handoff stages can save leads',
+    `Lead tool missing from stages: ${missingTool.join(', ')}`);
+
+  // Without end_call the agent cannot hang up and loops on goodbyes.
+  check(!!prompt.built_in_tools?.end_call, 'end_call enabled (agent can end the conversation)',
+    'end_call NOT enabled — conversations will loop on goodbyes');
+
+  // A complaint must never route back into a sales stage.
+  const salesStages = ['triage', 'info', 'objection', 'booking'];
+  const leaks = Object.values(agent.workflow?.edges || {}).filter((e) =>
+    (['complaint', 'handoff'].includes(e.source) && salesStages.includes(e.target)) ||
+    (e.backward_condition && ['complaint', 'handoff'].includes(e.target) && salesStages.includes(e.source)));
+  check(leaks.length === 0, 'No path from complaint/handoff back into sales',
+    `${leaks.length} route(s) would resume selling after a complaint`);
 
   // 6. Workflow
   const nodes = Object.keys(agent.workflow?.nodes || {});
