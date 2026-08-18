@@ -2,7 +2,7 @@ const fs = require('fs');
 const API_KEY = fs.readFileSync('c:\\Users\\acer\\Desktop\\ملفي الشركة\\.env', 'utf8').match(/^ELEVENLABS_API_KEY=(.+)$/m)[1].trim();
 const AGENT_ID = 'agent_7501kzx1z7xaekxbegasw7cpqs7n';
 
-const GREET = /هلا|أهلين|اهلين|حياك|مرحبا|أبشر|ابشر/;
+const GREET = /هلا|أهلين|اهلين|حياك|مرحبا|أبشر|ابشر|وعليكم السلام|السلام عليكم/;
 const GENERIC = /وش حاب تعرف|وش تحب تعرف|كيف أقدر أساعدك|سكن ولا استثمار|أي منطقة/;
 const ACK = /حقك علينا|فاهم|معك حق|أعتذر|آسف|مزعج|نأسف/;
 const ASKS_NAME = /اسم(ك)?\s*(ال)?كامل|اسم العائلة|وش اسمك|ممكن اسمك/;
