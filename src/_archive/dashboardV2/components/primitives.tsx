@@ -86,16 +86,40 @@ export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
 export type ButtonSize = 'sm' | 'md' | 'lg'
 
 const SIZE_STYLES: Record<ButtonSize, CSSProperties> = {
-  sm: { padding: '0 10px', height: 28, fontSize: 'var(--text-caption)' },
-  md: { padding: '0 14px', height: 32, fontSize: 'var(--text-body-sm)' },
-  lg: { padding: '0 18px', height: 36, fontSize: 'var(--text-body-md)' },
+  sm: { padding: '0 12px', height: 32, fontSize: 'var(--text-caption)' },
+  md: { padding: '0 16px', height: 38, fontSize: 'var(--text-body-sm)' },
+  lg: { padding: '0 22px', height: 44, fontSize: 'var(--text-body-md)' },
 }
 
+// Flat fills instead of the old gloss (gradient + inset white highlight), which
+// is what made these read as dated.
 const VARIANT_STYLES: Record<ButtonVariant, CSSProperties> = {
-  primary: { backgroundColor: 'var(--brand-500)', backgroundImage: 'linear-gradient(155deg, var(--brand-400), var(--brand-600))', color: 'var(--text-on-brand)', border: '1px solid transparent' },
-  secondary: { backgroundColor: 'var(--surface-card)', backgroundImage: 'none', color: 'var(--text-primary)', border: '1px solid color-mix(in srgb, var(--border-strong) 80%, transparent)' },
-  ghost: { backgroundColor: 'transparent', backgroundImage: 'none', color: 'var(--text-primary)', border: '1px solid transparent' },
+  primary: { backgroundColor: 'var(--brand-500)', backgroundImage: 'none', color: 'var(--text-on-brand)', border: '1px solid transparent' },
+  secondary: { backgroundColor: 'var(--surface-card)', backgroundImage: 'none', color: 'var(--text-primary)', border: '1px solid var(--border-default)' },
+  ghost: { backgroundColor: 'transparent', backgroundImage: 'none', color: 'var(--text-secondary)', border: '1px solid transparent' },
   danger: { backgroundColor: 'var(--danger-500)', backgroundImage: 'none', color: '#fff', border: '1px solid transparent' },
+}
+
+// Hover deepens the fill rather than firing a coloured glow.
+const HOVER_BG: Record<ButtonVariant, string> = {
+  primary: 'var(--brand-600)',
+  secondary: 'var(--surface-sunken)',
+  ghost: 'var(--surface-sunken)',
+  danger: '#c8402f',
+}
+
+const RESTING_SHADOW: Record<ButtonVariant, string> = {
+  primary: '0 1px 2px rgba(13,27,62,.16)',
+  secondary: '0 1px 2px rgba(13,27,62,.06)',
+  ghost: 'none',
+  danger: '0 1px 2px rgba(224,80,63,.22)',
+}
+
+const HOVER_SHADOW: Record<ButtonVariant, string> = {
+  primary: '0 4px 12px -2px rgba(0,153,204,.45)',
+  secondary: '0 2px 6px rgba(13,27,62,.10)',
+  ghost: 'none',
+  danger: '0 4px 12px -2px rgba(224,80,63,.4)',
 }
 
 export function Button({ variant = 'primary', size = 'md', disabled, children, onClick, style }: {
@@ -109,25 +133,28 @@ export function Button({ variant = 'primary', size = 'md', disabled, children, o
   const v = VARIANT_STYLES[variant] || VARIANT_STYLES.primary
   const s = SIZE_STYLES[size] || SIZE_STYLES.md
   const [hover, setHover] = useState(false)
-  const hoverBg = hover && !disabled
-    ? (variant === 'primary' ? undefined : variant === 'danger' ? 'var(--danger-500)' : 'var(--slate-100)')
-    : undefined
+  const active = hover && !disabled
   return (
     <motion.button
       onClick={onClick}
       disabled={disabled}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      whileTap={disabled ? undefined : { scale: 0.97 }}
-      whileHover={disabled ? undefined : { boxShadow: variant === 'primary' ? 'inset 0 1px 0 rgba(255,255,255,.4), 0 0 0 1px rgba(0,191,255,.35), 0 8px 22px rgba(0,191,255,.32)' : 'none' }}
+      whileTap={disabled ? undefined : { scale: 0.98 }}
+      whileHover={disabled ? undefined : { y: -1 }}
       transition={{ duration: DURATION_FAST }}
       style={{
-        fontFamily: 'var(--font-body)', fontWeight: 600, borderRadius: 'var(--radius-md)',
-        cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1,
-        transition: 'background-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out)',
+        fontFamily: 'var(--font-body)', fontWeight: 600, letterSpacing: '.01em',
+        borderRadius: 'var(--radius-lg)',
+        cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.45 : 1,
+        transition: 'background-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out)',
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, whiteSpace: 'nowrap',
-        boxShadow: variant === 'primary' ? 'inset 0 1px 0 rgba(255,255,255,.35)' : 'none',
-        ...v, ...s, ...(hoverBg ? { backgroundColor: hoverBg } : {}), ...style,
+        boxShadow: active ? HOVER_SHADOW[variant] : RESTING_SHADOW[variant],
+        ...v, ...s,
+        ...(active ? { backgroundColor: HOVER_BG[variant] } : {}),
+        ...(active && variant === 'secondary' ? { borderColor: 'var(--border-strong)' } : {}),
+        ...(active && variant === 'ghost' ? { color: 'var(--text-primary)' } : {}),
+        ...style,
       }}
     >
       {children}
