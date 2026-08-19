@@ -39,6 +39,11 @@
 [[headers]]
   for = "/*"
   [headers.values]
+    # SPA routes are rewritten to index.html, but header rules match the request
+    # path, so /index.html's no-cache never applied to them. Without this the
+    # edge cached the shell — and these headers — for a year, and deploys took
+    # that long to reach anyone. Hashed assets keep their immutable rule above.
+    Cache-Control = "public, max-age=0, must-revalidate"
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     X-XSS-Protection = "1; mode=block"
