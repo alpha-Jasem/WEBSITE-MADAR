@@ -6,6 +6,7 @@ import { ProtectedRoute } from './components/shared/ProtectedRoute'
 import { ErrorBoundary, reloadForFreshAssets } from './components/shared/ErrorBoundary'
 const ClinicAILanding = lazy(() => import('./pages/ClinicAILanding').then((m) => ({ default: m.ClinicAILanding })))
 const RazCaseStudy = lazy(() => import('./pages/RazCaseStudy'))
+const RazNabrahDemo = lazy(() => import('./pages/RazNabrahDemo'))
 import { Lumora } from './pages/Lumora'
 import { Login } from './pages/Login'
 import { ForgotPassword } from './pages/ForgotPassword'
@@ -101,6 +102,7 @@ function App() {
             <Route path="/" element={<SignalRedirect />} />
             <Route path="/clinic-ai" element={<ClinicAILanding />} />
             <Route path="/case-studies/raz" element={<RazCaseStudy />} />
+            <Route path="/demo/raz" element={<RazNabrahDemo />} />
             <Route path="/lumora" element={<Lumora />} />
             <Route path="/car-wash" element={<Navigate to="/" replace />} />
             <Route path="/clinic" element={<Navigate to="/" replace />} />
