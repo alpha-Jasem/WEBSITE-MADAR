@@ -135,6 +135,18 @@ async function main() {
   check(leaks.length === 0, 'No path from complaint/handoff back into sales',
     `${leaks.length} route(s) would resume selling after a complaint`);
 
+  // Ending mid-answer is what produced the WhatsApp greeting loop: the agent
+  // hopped straight to end_node, end_call killed the session, and the
+  // customer's next message opened a fresh conversation that replayed
+  // first_message. Every edge into end_node must carry the guard.
+  const endEdges = Object.entries(agent.workflow?.edges || {}).filter(([, e]) => e.target === 'end_node');
+  const unguarded = endEdges
+    .filter(([, e]) => !(e.forward_condition?.condition || '').includes('⛔ شرط إضافي إلزامي فوق ما سبق'))
+    .map(([id]) => id);
+  check(endEdges.length > 0 && unguarded.length === 0,
+    `All ${endEdges.length} end-transitions guarded (won't hang up mid-answer)`,
+    `UNGUARDED end-transitions — will end before answering and restart the WhatsApp thread: ${unguarded.join(', ')}`);
+
   // 6. Workflow
   const nodes = Object.keys(agent.workflow?.nodes || {});
   const missing = EXPECTED.workflow_nodes.filter((n) => !nodes.includes(n));
@@ -166,7 +178,8 @@ async function main() {
     process.exit(0);
   }
   bad(`${failures} problem(s) found — FIX BEFORE DEMOING\n`);
-  warn('Restore known-good state: node scripts/raz-restore.cjs\n');
+  warn('Restore voice/TTS drift:   node scripts/raz-restore.cjs');
+  warn('Re-guard end-transitions:  node scripts/raz-fix-end-edges.cjs\n');
   process.exit(1);
 }
 

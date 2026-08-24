@@ -44,3 +44,5 @@ logo/
 # Claude Code skills (local tooling, not site content)
 .agents/
 skills-lock.json
+
+scripts/backups/
