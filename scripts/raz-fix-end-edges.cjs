@@ -43,12 +43,21 @@ const DRY = process.argv.includes('--dry');
 // misfired. The transactional stages keep their business rule and gain the
 // same farewell requirement.
 const FAREWELL_ONLY = [
-  'العميل قال عبارة وداع صريحة وواضحة، مثل: "مع السلامة"، "باي"، "شكراً خلاص"، "الله يعطيك العافية خلاص"، "ما أبغى شي ثاني".',
+  'العميل قال عبارة **انصراف** صريحة تعني أنه ينهي المحادثة الآن، مثل: "مع السلامة"، "باي"، "في أمان الله"، "خلاص ما أبغى شي ثاني".',
   '',
-  '⛔ أي رسالة غير ذلك ليست وداعاً والشرط غير متحقق، ومنها: التحية والسلام، السؤال عن الحال ("كيف حالك"، "تمام"، "الحمدلله")، المجاملات، أي سؤال أو طلب، وأي رسالة لم ترد عليها بعد.',
+  '⛔ الشرط غير متحقق في كل ما يلي:',
+  '- **الشكر وحده ليس وداعاً**: "شكراً"، "شكراً لك"، "يعطيك العافية"، "مشكور" — بدون كلمة انصراف صريحة معها. رد بلطف واعرض المساعدة، ولا تُنهِ.',
+  '- التحية والسلام، والسؤال عن الحال ("كيف حالك"، "تمام"، "الحمدلله")، والمجاملات.',
+  '- أي سؤال أو طلب، وأي رسالة لم ترد عليها بعد.',
+  '- إذا كانت هذي أول رسالة من العميل، أو لم تقدّم له أي معلومة أو خدمة بعد — مهما كانت صيغتها.',
 ].join('\n');
 
-const FAREWELL_SUFFIX = '\n\nويشترط إضافةً لذلك أن يكون العميل قد ودّع صراحة بعد التأكيد. التحية أو السؤال عن الحال أو أي طلب جديد ليست وداعاً.';
+const FAREWELL_SUFFIX = [
+  '',
+  '',
+  'ويشترط إضافةً لذلك أن يكون العميل قال عبارة انصراف صريحة بعد التأكيد ("مع السلامة"، "باي"، "في أمان الله").',
+  '⛔ الشكر وحده ("شكراً"، "شكراً لك"، "يعطيك العافية") ليس وداعاً — رد عليه بلطف واسأله إن كان يحتاج شي ثاني، ولا تُنهِ.',
+].join('\n');
 
 // Stages where the customer is still conversing — no legitimate reason to hang
 // up except a real goodbye.
@@ -85,8 +94,18 @@ async function main() {
   const patched = JSON.parse(JSON.stringify(edges));
   for (const [id, e] of endEdges) {
     const before = e.forward_condition?.condition || '';
-    // Drop any guard from the earlier (ineffective) revision before rewriting.
-    const original = before.split('\n\n⛔ شرط إضافي إلزامي فوق ما سبق')[0].trimEnd();
+    // Strip any guard this script has written before, so re-running rewrites
+    // rather than stacking a second copy on top of the first.
+    const MARKERS = [
+      '\n\n⛔ شرط إضافي إلزامي فوق ما سبق',  // first revision
+      '\n\nويشترط إضافةً لذلك',                // second revision
+    ];
+    let original = before;
+    for (const m of MARKERS) {
+      const i = original.indexOf(m);
+      if (i !== -1) original = original.slice(0, i);
+    }
+    original = original.trimEnd();
 
     let after;
     if (CONVERSATIONAL.includes(id)) {

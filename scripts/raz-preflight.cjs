@@ -146,7 +146,11 @@ async function main() {
   const unguarded = endEdges
     .filter(([, e]) => {
       const c = e.forward_condition?.condition || '';
-      return !c.includes('ودّع صراحة') && !c.includes('عبارة وداع صريحة');
+      // Two things must hold: an explicit parting phrase is required, and bare
+      // thanks is excluded. Dropping either one put the agent back to hanging
+      // up mid-conversation, which restarts the WhatsApp thread.
+      const plain = c.replace(/\*/g, '');
+      return !/عبارة انصراف صريحة/.test(plain) || !/الشكر وحده/.test(plain);
     })
     .map(([id]) => id);
   check(endEdges.length > 0 && unguarded.length === 0,
