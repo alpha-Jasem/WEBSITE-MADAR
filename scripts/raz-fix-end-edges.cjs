@@ -31,6 +31,7 @@ const ENV_PATH = path.join(__dirname, '..', '.env');
 const API_KEY = fs.readFileSync(ENV_PATH, 'utf8').match(/^ELEVENLABS_API_KEY=(.+)$/m)?.[1]?.trim();
 const AGENT_ID = 'agent_7501kzx1z7xaekxbegasw7cpqs7n';
 const DRY = process.argv.includes('--dry');
+const warnLine = (m) => console.log(`\x1b[33m!\x1b[0m ${m}`);
 
 // A first attempt appended exceptions underneath the original wording and it
 // did NOT hold: conv_4001m0swtbkbf0grxpa94enabkg7 still ended on "كيف حالك
@@ -62,6 +63,24 @@ const FAREWELL_SUFFIX = [
 // Stages where the customer is still conversing — no legitimate reason to hang
 // up except a real goodbye.
 const CONVERSATIONAL = ['e_triage_end', 'e_info_end', 'e_objection_end'];
+
+// Guarding the workflow edges was only half the job. Repeated testing
+// (scripts/raz-end-behavior-test.cjs) showed the agent hanging up on bare
+// thanks about half the time via the built-in end_call tool, which it can
+// invoke from any stage regardless of the edges. Its own description carried
+// the same permissive clause the edges did — "أو انتهى طلبه".
+const END_CALL_DESCRIPTION = [
+  'أنهِ المحادثة. لا تستدعِ هذه الأداة إلا بعد أن يقول العميل عبارة انصراف صريحة تعني أنه ينهي المحادثة الآن: "مع السلامة"، "باي"، "في أمان الله"، "خلاص ما أبغى شي ثاني".',
+  '',
+  '⛔ ممنوع استدعاؤها في كل ما يلي:',
+  '- **الشكر وحده**: "شكراً"، "شكراً لك"، "مشكور"، "يعطيك العافية" — هذا ليس انصرافاً. رد بلطف واسأله إن كان يحتاج شي ثاني، وابقَ في المحادثة.',
+  '- التحية، أو السؤال عن الحال، أو أي رسالة قصيرة مثل "تمام"، "اوك"، "زين".',
+  '- أي رسالة فيها سؤال أو طلب، أو رسالة لم ترد عليها بعد.',
+  '- إذا كانت أول رسالة من العميل، أو لم تقدّم له أي معلومة أو خدمة بعد.',
+  '- مباشرة بعد أداة أخرى، أو بدون أن ترسل رسالة نصية ختامية قبلها.',
+  '',
+  '✅ إلزامي: أرسل رسالة وداع نصية للعميل أولاً، ثم استدعِ الأداة. ممنوع إنهاء المحادثة بصمت.',
+].join('\n');
 
 async function main() {
   if (!API_KEY) {
@@ -127,15 +146,39 @@ async function main() {
     console.log(`   now: ${after.split('\n')[0].slice(0, 95)}\n`);
   }
 
+  // The end_call tool can be invoked from any stage, so the edge guards alone
+  // do not stop a premature hang-up.
+  const builtIn = agent.conversation_config?.agent?.prompt?.built_in_tools || {};
+  const endCall = builtIn.end_call;
+  let endCallPatch;
+  if (!endCall) {
+    warnLine('end_call tool is not enabled — skipping its description');
+  } else if (endCall.description === END_CALL_DESCRIPTION) {
+    console.log('end_call description: already correct, skipping\n');
+  } else {
+    endCallPatch = { ...builtIn, end_call: { ...endCall, description: END_CALL_DESCRIPTION } };
+    console.log('end_call tool description  [REPLACED]');
+    console.log(`   was: ${(endCall.description || '').slice(0, 95)}`);
+    console.log(`   now: ${END_CALL_DESCRIPTION.split('\n')[0].slice(0, 95)}\n`);
+  }
+
   if (DRY) {
     console.log('--dry: nothing written to ElevenLabs.');
     return;
   }
 
+  // PATCH deep-merges, so send only the field being changed. Spreading the
+  // whole prompt object round-trips both `tools` and `tool_ids`, and the API
+  // rejects receiving both ("Cannot specify both tools and tool IDs").
+  const body = { workflow: { ...agent.workflow, edges: patched } };
+  if (endCallPatch) {
+    body.conversation_config = { agent: { prompt: { built_in_tools: endCallPatch } } };
+  }
+
   const put = await fetch(`https://api.elevenlabs.io/v1/convai/agents/${AGENT_ID}`, {
     method: 'PATCH',
     headers: { 'xi-api-key': API_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ workflow: { ...agent.workflow, edges: patched } }),
+    body: JSON.stringify(body),
   });
   if (!put.ok) {
     console.error(`PATCH failed: ${put.status}`);
