@@ -32,21 +32,27 @@ const API_KEY = fs.readFileSync(ENV_PATH, 'utf8').match(/^ELEVENLABS_API_KEY=(.+
 const AGENT_ID = 'agent_7501kzx1z7xaekxbegasw7cpqs7n';
 const DRY = process.argv.includes('--dry');
 
-// APPENDED to each end-edge's existing condition — never replaces it. The
-// booking/complaint/handoff edges carry real business rules ("the lead was
-// recorded and confirmed"); those must survive. Only the premature-exit hole
-// is being closed.
-const GUARD = [
+// A first attempt appended exceptions underneath the original wording and it
+// did NOT hold: conv_4001m0swtbkbf0grxpa94enabkg7 still ended on "كيف حالك
+// تمام", because the original clause ("انتهى طلب العميل أو قال إنه ما يحتاج
+// شي ثاني") stays true for any message that isn't a request. A long list of
+// negative exceptions does not outweigh a permissive positive trigger.
+//
+// So the conversational stages get their condition REPLACED with a single
+// strict test — an explicit farewell — plus the counter-examples that actually
+// misfired. The transactional stages keep their business rule and gain the
+// same farewell requirement.
+const FAREWELL_ONLY = [
+  'العميل قال عبارة وداع صريحة وواضحة، مثل: "مع السلامة"، "باي"، "شكراً خلاص"، "الله يعطيك العافية خلاص"، "ما أبغى شي ثاني".',
   '',
-  '',
-  '⛔ شرط إضافي إلزامي فوق ما سبق — ممنوع اعتبار هذا الشرط متحققاً في أي من الحالات التالية:',
-  '- آخر رسالة من العميل فيها سؤال أو طلب لم تُرسل له إجابة نصية بعد.',
-  '- ما أرسلت أي رد نصي للعميل في هذه المرحلة بعد.',
-  '- العميل طلب معلومة أو قائمة أو تفاصيل (مثل: "ابغاك تسرد لي كل المشاريع"، "اش ابرز مشاريعكم"، "ابغاك تعلمني عن مشاريعكم") — هذا طلب معلومات وليس وداعاً.',
-  '- العميل عبّر عن انزعاج أو قال "ما رديت علي" — هذا يعني إنك لم تجب، وليس إنه انتهى.',
-  '',
-  '✅ القاعدة: لا تُنهِ المحادثة أبداً وأنت مدين للعميل برد.',
+  '⛔ أي رسالة غير ذلك ليست وداعاً والشرط غير متحقق، ومنها: التحية والسلام، السؤال عن الحال ("كيف حالك"، "تمام"، "الحمدلله")، المجاملات، أي سؤال أو طلب، وأي رسالة لم ترد عليها بعد.',
 ].join('\n');
+
+const FAREWELL_SUFFIX = '\n\nويشترط إضافةً لذلك أن يكون العميل قد ودّع صراحة بعد التأكيد. التحية أو السؤال عن الحال أو أي طلب جديد ليست وداعاً.';
+
+// Stages where the customer is still conversing — no legitimate reason to hang
+// up except a real goodbye.
+const CONVERSATIONAL = ['e_triage_end', 'e_info_end', 'e_objection_end'];
 
 async function main() {
   if (!API_KEY) {
@@ -79,18 +85,27 @@ async function main() {
   const patched = JSON.parse(JSON.stringify(edges));
   for (const [id, e] of endEdges) {
     const before = e.forward_condition?.condition || '';
-    if (before.includes('⛔ شرط إضافي إلزامي فوق ما سبق')) {
-      console.log(`${id}: already guarded, skipping`);
+    // Drop any guard from the earlier (ineffective) revision before rewriting.
+    const original = before.split('\n\n⛔ شرط إضافي إلزامي فوق ما سبق')[0].trimEnd();
+
+    let after;
+    if (CONVERSATIONAL.includes(id)) {
+      after = FAREWELL_ONLY;                       // replace the permissive trigger outright
+    } else {
+      after = original + FAREWELL_SUFFIX;          // keep the business rule, add the farewell gate
+    }
+
+    if (before === after) {
+      console.log(`${id}: already correct, skipping`);
       continue;
     }
-    const after = before.trimEnd() + GUARD;
     patched[id] = {
       ...e,
       forward_condition: { ...(e.forward_condition || { label: null, type: 'llm' }), condition: after },
     };
-    console.log(`${id}  (${e.source} -> end_node)`);
-    console.log(`   kept  : ${before.slice(0, 100)}`);
-    console.log(`   +guard: ${after.length - before.length} chars appended\n`);
+    console.log(`${id}  (${e.source} -> end_node)  [${CONVERSATIONAL.includes(id) ? 'REPLACED' : 'business rule kept + farewell gate'}]`);
+    console.log(`   was: ${original.slice(0, 95)}`);
+    console.log(`   now: ${after.split('\n')[0].slice(0, 95)}\n`);
   }
 
   if (DRY) {

@@ -139,9 +139,15 @@ async function main() {
   // hopped straight to end_node, end_call killed the session, and the
   // customer's next message opened a fresh conversation that replayed
   // first_message. Every edge into end_node must carry the guard.
+  // Every end-transition must require an explicit farewell. Wording that merely
+  // says "the customer has no further request" is not enough — it stayed true
+  // for small talk like "كيف حالك تمام" and hung up mid-conversation.
   const endEdges = Object.entries(agent.workflow?.edges || {}).filter(([, e]) => e.target === 'end_node');
   const unguarded = endEdges
-    .filter(([, e]) => !(e.forward_condition?.condition || '').includes('⛔ شرط إضافي إلزامي فوق ما سبق'))
+    .filter(([, e]) => {
+      const c = e.forward_condition?.condition || '';
+      return !c.includes('ودّع صراحة') && !c.includes('عبارة وداع صريحة');
+    })
     .map(([id]) => id);
   check(endEdges.length > 0 && unguarded.length === 0,
     `All ${endEdges.length} end-transitions guarded (won't hang up mid-answer)`,
