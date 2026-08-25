@@ -46,3 +46,9 @@ logo/
 skills-lock.json
 
 scripts/backups/
+
+# ElevenLabs CLI agent dumps - contain live webhook secrets (x-raz-secret).
+# Ignore the contents, not the directory: git cannot re-include a file inside
+# an excluded directory, so `elevenlabs/` + a negation would drop the README too.
+elevenlabs/*
+!elevenlabs/README.md
