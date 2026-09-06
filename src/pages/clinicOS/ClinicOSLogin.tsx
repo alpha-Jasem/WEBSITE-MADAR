@@ -50,6 +50,7 @@ export const ClinicOSLogin = () => {
   return (
     <main className="clinic-login" dir="rtl">
       <section className="clinic-login-brand">
+        <img className="clinic-login-hero" src="/clinic-os/login-hero.png" alt="" aria-hidden="true" />
         <button className="clinic-login-logo" onClick={() => navigate('/')}>
           <img src="/logo-main.png" alt="Madar.software" />
           <span><strong>Madar.software</strong><small>Clinic OS للعيادات</small></span>
