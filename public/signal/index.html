@@ -1331,8 +1331,10 @@
   var statusEl = document.getElementById('maha-status');
   var endBtn = document.getElementById('maha-end');
   if (!orb) return;
-  var AGENT_ID = 'agent_6901kgxmt4pbfmy84gp7xx3tbsvk';
-  var conv = null, st = 'idle', Conversation = null;
+  // Nabrah runs its agents on LiveKit. The room token is minted by a Supabase
+  // function so the Nabrah API key never reaches the browser.
+  var TOKEN_ENDPOINT = 'https://aacnqiuwrpzgxhzdavaq.supabase.co/functions/v1/madar-nabrah-token';
+  var room = null, audioEl = null, st = 'idle';
   var TXT = {
     idle: 'اضغط للتحدث مع مدار Voice Agent',
     connecting: 'جاري الاتصال بمدار Voice Agent…',
@@ -1349,39 +1351,46 @@
     orb.classList.toggle('speaking', s === 'speaking');
     endBtn.hidden = !live;
   }
-  async function ensureSDK(){
-    if (Conversation) return Conversation;
-    // pin livekit-client@2.16.1 to match the project's working webrtc override
-    var m = await import('https://esm.sh/@elevenlabs/client?deps=livekit-client@2.16.1');
-    Conversation = m.Conversation;
-    return Conversation;
+  function cleanup(){
+    if (room) { try { room.disconnect(); } catch(e){} room = null; }
+    if (audioEl) { audioEl.remove(); audioEl = null; }
   }
   async function start(){
     if (st !== 'idle' && st !== 'error') return;
     set('connecting');
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
-      var C = await ensureSDK();
-      conv = await C.startSession({
-        agentId: AGENT_ID,
-        connectionType: 'webrtc',
-        // The agent prompt interpolates {{customer_phone}}. A web visitor has no
-        // caller ID, and leaving it unresolved makes ElevenLabs abort with
-        // "Conversation initialization failed" a couple of seconds after the
-        // greeting plays, so pass an explicit empty value for web sessions.
-        dynamicVariables: { customer_phone: '' },
-        onConnect: function(){ set('listening'); },
-        onDisconnect: function(){ conv = null; set('idle'); },
-        onError: function(e){ console.error('maha error', e); set('error'); setTimeout(function(){ if (st === 'error') set('idle'); }, 2600); },
-        onModeChange: function(m){ if (st === 'connecting') return; set(m && m.mode === 'speaking' ? 'speaking' : 'listening'); }
+      var LK = await import('https://esm.sh/livekit-client@2.16.1');
+      var res = await fetch(TOKEN_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      if (!res.ok) throw new Error('token endpoint ' + res.status);
+      var data = await res.json();
+      var r = new LK.Room();
+      room = r;
+      r.on(LK.RoomEvent.TrackSubscribed, function(track){
+        if (track.kind !== 'audio') return;
+        var el = track.attach();
+        el.autoplay = true;
+        el.style.display = 'none';
+        document.body.appendChild(el);
+        audioEl = el;
       });
+      r.on(LK.RoomEvent.ActiveSpeakersChanged, function(speakers){
+        var speaking = speakers.some(function(s){ return s.identity !== r.localParticipant.identity; });
+        set(speaking ? 'speaking' : 'listening');
+      });
+      r.on(LK.RoomEvent.Disconnected, function(){ cleanup(); set('idle'); });
+      await r.connect(data.url, data.token);
+      var track = await LK.createLocalAudioTrack();
+      await r.localParticipant.publishTrack(track);
+      set('listening');
     } catch (e){
-      console.error('maha start failed', e);
+      console.error('madar voice agent start failed', e);
+      cleanup();
       set('error'); setTimeout(function(){ if (st === 'error') set('idle'); }, 2600);
     }
   }
   async function stop(){
-    if (conv){ try { await conv.endSession(); } catch(e){} conv = null; }
+    cleanup();
     set('idle');
   }
   orb.addEventListener('click', function(){ if (st === 'idle' || st === 'error') start(); });
