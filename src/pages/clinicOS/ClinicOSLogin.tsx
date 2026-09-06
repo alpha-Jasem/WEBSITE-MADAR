@@ -1,7 +1,7 @@
 import { FormEvent, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
-import { ArrowLeft, Check, Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react'
+import { ArrowLeft, Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import './clinic-os-login.css'
 
@@ -54,17 +54,11 @@ export const ClinicOSLogin = () => {
         <img className="clinic-login-hero" src="/clinic-os/login-hero.png" alt="" aria-hidden="true" />
         <button className="clinic-login-logo" onClick={() => navigate('/')}>
           <img src="/logo-main.png" alt="Madar.software" />
-          <span><strong>Madar.software</strong><small>Clinic OS للعيادات</small></span>
+          <span><strong>Madar.software</strong></span>
         </button>
         <div className="clinic-login-message">
-          <span className="clinic-login-kicker">نظام تشغيل يومي للعيادات</span>
-          <h1>ابدأ يوم العيادة<br />من شاشة واحدة.</h1>
-          <p>المواعيد والمرضى والأطباء والتقارير أمام فريقك بوضوح، من أول موعد حتى نهاية اليوم.</p>
-          <div className="clinic-login-benefits">
-            {['دخول آمن وسريع', 'صلاحيات مستقلة لكل مستخدم', 'يعمل على الكمبيوتر والجوال'].map(item => (
-              <span key={item}><i><Check /></i>{item}</span>
-            ))}
-          </div>
+          <h1>مرحباً بعودتك<br />إلى Madar.software</h1>
+          <p>من الرائع رؤيتك. سجّل دخولك للوصول إلى حسابك.</p>
         </div>
       </section>
 
@@ -78,7 +72,7 @@ export const ClinicOSLogin = () => {
           <button className="clinic-login-back" onClick={() => navigate('/')}><ArrowLeft /> العودة للموقع</button>
           <span className="clinic-login-label">تسجيل الدخول</span>
           <h2>مرحباً بعودتك</h2>
-          <p>أدخل بيانات حساب العيادة للوصول إلى لوحة التشغيل.</p>
+          <p>أدخل بيانات حسابك للوصول إلى لوحة التشغيل.</p>
 
           <form onSubmit={handleLogin}>
             <label>
@@ -92,10 +86,10 @@ export const ClinicOSLogin = () => {
 
             <div className="clinic-login-help"><button type="button" onClick={() => navigate('/forgot-password')}>هل نسيت كلمة المرور؟</button></div>
             {error && <div className="clinic-login-error" role="alert">{error}</div>}
-            <button className="clinic-login-submit" type="submit" disabled={loading}>{loading ? 'جاري الدخول...' : <>دخول لوحة العيادة <ArrowLeft /></>}</button>
+            <button className="clinic-login-submit" type="submit" disabled={loading}>{loading ? 'جاري الدخول...' : <>دخول لوحة التحكم <ArrowLeft /></>}</button>
           </form>
 
-          <div className="clinic-login-signup">ليس لديك حساب؟ <button onClick={() => navigate('/trial')}>أنشئ حساب عيادة</button></div>
+          <div className="clinic-login-signup">ليس لديك حساب؟ <button onClick={() => navigate('/trial')}>أنشئ حساب</button></div>
         </motion.div>
       </section>
     </main>
