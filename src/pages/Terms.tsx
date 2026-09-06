@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useDocumentHead } from '../hooks/useDocumentHead'
 
 /* ── design tokens (مطابقة SYC) ─────────────────────────────────── */
 const C = {
@@ -50,6 +51,12 @@ const css = `
 `
 
 export const Terms = () => {
+  useDocumentHead({
+    title: 'شروط الاستخدام — مدار',
+    description: 'شروط استخدام منصة مدار: الاشتراك، الالتزامات، وحدود المسؤولية بين مدار والمنشأة المشتركة.',
+    canonical: 'https://madar.software/terms',
+  })
+
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])

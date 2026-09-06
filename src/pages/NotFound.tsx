@@ -1,6 +1,15 @@
 import { Link } from 'react-router-dom'
+import { useDocumentHead } from '../hooks/useDocumentHead'
 
-export const NotFound = () => (
+export const NotFound = () => {
+  useDocumentHead({
+    title: 'الصفحة غير موجودة — مدار',
+    description: 'الصفحة اللي تبحث عنها مو موجودة.',
+    canonical: typeof window !== 'undefined' ? window.location.href : 'https://madar.software/',
+    noindex: true,
+  })
+
+  return (
   <main
     dir="rtl"
     style={{
@@ -105,4 +114,5 @@ export const NotFound = () => (
       </div>
     </div>
   </main>
-)
+  )
+}

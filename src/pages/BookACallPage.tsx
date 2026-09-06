@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { openWhatsAppChat } from '../lib/whatsapp'
+import { useDocumentHead } from '../hooks/useDocumentHead'
 
 /* ── design tokens ─────────────────────────────────────────────── */
 const C = {
@@ -78,6 +79,12 @@ const trustItems = [
 ]
 
 export const BookACallPage = () => {
+  useDocumentHead({
+    title: 'احجز مكالمة تعريفية — مدار',
+    description: 'احجز مكالمة تعريفية مجانية مع فريق مدار لمعرفة كيف يرد موظف مبيعات الذكاء الاصطناعي على واتساب ومكالماتك على مدار الساعة.',
+    canonical: 'https://madar.software/book-a-call',
+  })
+
   const [name, setName]   = useState('')
   const [phone, setPhone] = useState('')
   const [biz, setBiz]     = useState('')

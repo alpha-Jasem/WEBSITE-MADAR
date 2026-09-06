@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useDocumentHead } from '../hooks/useDocumentHead'
 
 /* ── design tokens (مطابقة SYC) ─────────────────────────────────── */
 const C = {
@@ -48,6 +49,12 @@ const css = `
 `
 
 export const Privacy = () => {
+  useDocumentHead({
+    title: 'سياسة الخصوصية — مدار',
+    description: 'كيف يتعامل مدار مع بيانات عملك وعملائك: التشفير، الملكية، وعدم المشاركة مع أي طرف ثالث.',
+    canonical: 'https://madar.software/privacy',
+  })
+
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])

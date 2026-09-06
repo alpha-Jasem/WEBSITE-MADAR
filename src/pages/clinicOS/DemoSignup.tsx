@@ -2,7 +2,14 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Bot, ArrowLeft, CheckCircle, Phone, Building2 } from 'lucide-react'
+import { useDocumentHead } from '../../hooks/useDocumentHead'
 export const DemoSignup = () => {
+  useDocumentHead({
+    title: 'جرب مساعد استقبال العيادات بالذكاء الاصطناعي — مدار',
+    description: 'اطلب تجربة مجانية لمساعد استقبال العيادات من مدار: يرد على المكالمات والواتساب ويحجز المواعيد تلقائياً على مدار الساعة.',
+    canonical: 'https://madar.software/clinic-os/demo',
+  })
+
   const navigate = useNavigate()
   const [form, setForm] = useState({ name: '', clinicName: '', phone: '', email: '', city: '' })
   const [loading, setLoading] = useState(false)
