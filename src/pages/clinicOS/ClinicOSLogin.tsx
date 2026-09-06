@@ -1,11 +1,12 @@
 import { FormEvent, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { ArrowLeft, Check, Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import './clinic-os-login.css'
 
 export const ClinicOSLogin = () => {
+  const prefersReducedMotion = useReducedMotion()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const redirectTo = useMemo(() => {
@@ -68,7 +69,12 @@ export const ClinicOSLogin = () => {
       </section>
 
       <section className="clinic-login-panel">
-        <motion.div className="clinic-login-card" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
+        <motion.div
+          className="clinic-login-card"
+          initial={prefersReducedMotion ? false : { opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+        >
           <button className="clinic-login-back" onClick={() => navigate('/')}><ArrowLeft /> العودة للموقع</button>
           <span className="clinic-login-label">تسجيل الدخول</span>
           <h2>مرحباً بعودتك</h2>
