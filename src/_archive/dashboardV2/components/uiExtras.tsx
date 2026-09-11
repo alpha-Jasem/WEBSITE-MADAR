@@ -9,10 +9,11 @@ import { SPRING_SMOOTH, DURATION_SLOW, EASE_OUT } from './motionTokens'
 
 // ─── Avatar (deterministic color + initial) ────────────────────────────────
 
+// Deterministic but monochrome: identity comes from the initial, not from hue.
 const AVATAR_PALETTE = [
-  ['#E0F7FF', '#0099CC'], ['#FFE8CC', '#C2620A'], ['#E7DBFF', '#6D28D9'],
-  ['#DCFCE7', '#15803D'], ['#FCE7F3', '#BE185D'], ['#FEF3C7', '#B45309'],
-  ['#D6E4FF', '#1E3A70'], ['#FEE2E2', '#B91C1C'],
+  ['#0A0A0A', '#FFFFFF'], ['#F3F3F3', '#0F0F0F'], ['#2E2E2E', '#FFFFFF'],
+  ['#EBEBEB', '#3D3D3D'], ['#5C5C5C', '#FFFFFF'], ['#FAFAFA', '#222222'],
+  ['#3D3D3D', '#FFFFFF'], ['#D9D9D9', '#0F0F0F'],
 ]
 
 function hashStr(s: string) {

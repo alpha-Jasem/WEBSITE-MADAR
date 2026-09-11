@@ -41,11 +41,13 @@ interface Kpi {
   footer?: React.ReactNode
 }
 
+// KPI icon chips and sparklines are decoration, not signal — the delta pill already
+// carries direction in colour, so tinting the icon too just adds noise.
 const TONE_BG: Record<BadgeTone, [string, string]> = {
-  brand: ['var(--brand-100)', 'var(--brand-600)'],
-  success: ['var(--success-100)', 'var(--success-500)'],
-  danger: ['var(--danger-100)', 'var(--danger-500)'],
-  warning: ['var(--warning-100)', 'var(--warning-500)'],
+  brand: ['var(--slate-100)', 'var(--slate-900)'],
+  success: ['var(--slate-100)', 'var(--slate-900)'],
+  danger: ['var(--slate-100)', 'var(--slate-900)'],
+  warning: ['var(--slate-100)', 'var(--slate-900)'],
   neutral: ['var(--slate-100)', 'var(--slate-600)'],
 }
 
@@ -296,12 +298,14 @@ function SectionSkeleton({ delay = 0, lines = 4, withCircle }: { delay?: number;
   )
 }
 
+// Categories are separated by value, not hue — a single ink ramp keeps the chart
+// readable in greyscale, in print, and for colour-blind users.
 const SOURCE_COLORS: Record<string, string> = {
-  ai_booking: 'var(--brand-500)',
-  whatsapp: '#2fbfa0',
-  website: 'var(--indigo-500)',
-  reception: '#c9b6f5',
-  manual: 'var(--slate-400)',
+  ai_booking: 'var(--slate-900)',
+  whatsapp: 'var(--slate-700)',
+  website: 'var(--slate-500)',
+  reception: 'var(--slate-400)',
+  manual: 'var(--slate-300)',
 }
 const SOURCE_LABELS: Record<string, string> = {
   ai_booking: 'حجز بالذكاء الاصطناعي',
@@ -677,7 +681,7 @@ export function DashboardV2Home() {
             <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
               <Avatar name={c.recipient_name} size={32} />
               <div style={{ flex: 1, fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.recipient_name}</div>
-              <div style={{ color: '#2fbf6f' }}><MessageSquare size={15} /></div>
+              <div style={{ color: 'var(--text-secondary)' }}><MessageSquare size={15} /></div>
               <div style={{ fontSize: 11, color: 'var(--text-tertiary)', width: 56, textAlign: 'left' }}>
                 {new Date(c.created_at).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
               </div>

@@ -4,13 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { DURATION_MEDIUM, EASE_OUT } from './motionTokens'
 import {
   LayoutDashboard, CalendarDays, Users, MessageSquare, Star, BarChart3,
-  Wallet, BellRing, Plug, Settings, ChevronDown, LogOut, CreditCard, Menu, X,
-  Wrench, History, Sun, Moon, AlertTriangle, ChevronsRight, ChevronsLeft, Plus, CalendarCheck2, Ticket,
-  PhoneCall, MessageCircle, Bot, SlidersHorizontal, LayoutGrid, PhoneIncoming, PhoneOutgoing, ClipboardList, BookOpen,
-  Inbox,
-} from 'lucide-react'
+  Wallet, BellRing, Settings, ChevronDown, LogOut, Menu, X,
+  Wrench, Sun, Moon, AlertTriangle, ChevronsRight, ChevronsLeft, Plus, CalendarCheck2, Ticket,
+  ClipboardList, BookOpen,
+  } from 'lucide-react'
 import { useClinicOS } from '@/context/ClinicOSContext'
-import { useClinicSupportTickets, useClinicTodayAppointments, useRazLeads } from '@/lib/clinicOSQueries'
+import { useClinicSupportTickets, useClinicTodayAppointments } from '@/lib/clinicOSQueries'
 import { NotificationCenter } from './NotificationCenter'
 import { AccountMenu } from './AccountMenu'
 import { SupportChat } from './SupportChat'
@@ -48,8 +47,6 @@ export function DashboardV2Layout() {
   const expanded = !collapsed || hoverExpanded || mobileNavOpen
   const { data: tickets } = useClinicSupportTickets(companyId, isDemo)
   const openTicketCount = (tickets || []).filter((t) => t.status === 'open').length
-  const { data: leads } = useRazLeads()
-  const newLeadCount = (leads || []).filter((l) => l.status === 'new').length
   const { data: todayAppointments } = useClinicTodayAppointments(companyId, isDemo)
   const todayCount = (todayAppointments || []).length
 
@@ -75,38 +72,24 @@ export function DashboardV2Layout() {
     // Grouped by how often it's opened, not by internal architecture: the daily
     // operational work sits at the top, configuration further down.
     { title: 'التشغيل اليومي', items: [
-      { label: 'طلبات العملاء', path: `${base}/leads`, icon: <Inbox size={17} />, badge: newLeadCount || undefined },
       { label: 'الحجوزات', path: `${base}/bookings`, icon: <CalendarDays size={17} /> },
       { label: 'المحادثات', path: `${base}/conversations`, icon: <MessageSquare size={17} /> },
+      { label: 'العملاء', path: `${base}/patients`, icon: <Users size={17} /> },
       { label: 'التذاكر', path: `${base}/tickets`, icon: <Ticket size={17} />, badge: openTicketCount || undefined },
       { label: 'AI Google Reviews', path: `${base}/reviews`, icon: <Star size={17} /> },
-      { label: 'العملاء', path: `${base}/patients`, icon: <Users size={17} /> },
       { label: 'سجل المكالمات', path: `${base}/call-logs`, icon: <ClipboardList size={17} /> },
     ] },
     { title: 'التقارير', items: [
       { label: 'التقارير والتحليلات', path: `${base}/reports`, icon: <BarChart3 size={17} /> },
-      { label: 'تحليلات المكالمات', path: `${base}/calls-analytics`, icon: <PhoneCall size={17} /> },
-      { label: 'تحليلات واتساب', path: `${base}/whatsapp-analytics`, icon: <MessageCircle size={17} /> },
-      { label: 'مجموعات التحليل', path: `${base}/analysis-groups`, icon: <LayoutGrid size={17} /> },
       { label: 'الإيرادات', path: `${base}/revenue`, icon: <Wallet size={17} /> },
     ] },
     { title: 'الإعداد', items: [
-      { label: 'الوكلاء', path: `${base}/agents`, icon: <Bot size={17} /> },
       { label: 'قاعدة المعرفة', path: `${base}/knowledge-base`, icon: <BookOpen size={17} /> },
-      { label: 'الأدوات', path: `${base}/tools`, icon: <SlidersHorizontal size={17} /> },
-      { label: 'المتابعات', path: `${base}/reminders`, icon: <BellRing size={17} /> },
       { label: 'الخدمات', path: `${base}/services`, icon: <Wrench size={17} /> },
-      { label: 'الخدمات الواردة', path: `${base}/inbound-services`, icon: <PhoneIncoming size={17} /> },
-      { label: 'الخدمات الصادرة', path: `${base}/outbound-services`, icon: <PhoneOutgoing size={17} /> },
-    ] },
-    { title: 'النظام', items: [
-      { label: 'Madar Agent Usage', path: `${base}/plan-usage`, icon: <CreditCard size={17} /> },
-      { label: 'التكاملات', path: `${base}/integrations`, icon: <Plug size={17} /> },
-      { label: 'سجل التدقيق', path: `${base}/audit-log`, icon: <History size={17} /> },
+      { label: 'المتابعات', path: `${base}/reminders`, icon: <BellRing size={17} /> },
       { label: 'الإعدادات', path: `${base}/settings`, icon: <Settings size={17} /> },
     ] },
   ]
-  const NAV: NavItem[] = NAV_GROUPS.flatMap((g) => g.items)
 
   return (
     <ToastProvider>
@@ -131,7 +114,7 @@ export function DashboardV2Layout() {
           .dv2-desktop-only { display: none !important; }
         }
         .dv2-nav-item { position: relative; transition: background-color 150ms ease, color 150ms ease; }
-        .dv2-nav-item:hover { background: rgba(229,229,229,.7) !important; color: #171717 !important; }
+        .dv2-nav-item:not(.is-active):hover { background: var(--surface-sunken) !important; color: var(--text-primary) !important; }
         @media (prefers-reduced-motion: reduce) {
           .dv2-nav-item { transition: none; }
         }
@@ -153,7 +136,7 @@ export function DashboardV2Layout() {
            so it reads as a card rather than a wall. */
         .dv2-sidebar-glass {
           position: relative;
-          background: #ffffff;
+          background: var(--surface-card);
           border: 1px solid var(--border-default);
           border-radius: 22px;
           box-shadow: 0 18px 44px -20px rgba(13,27,62,.28), 0 2px 8px rgba(13,27,62,.05);
@@ -208,7 +191,7 @@ export function DashboardV2Layout() {
             {expanded && (
               <div>
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, lineHeight: 1.2 }}>مدار</div>
-                <div style={{ fontSize: 10, fontWeight: 600, color: '#737373', letterSpacing: '.18em', textTransform: 'uppercase' }}>لوحة العيادة</div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '.18em', textTransform: 'uppercase' }}>لوحة العيادة</div>
               </div>
             )}
           </div>
@@ -222,7 +205,7 @@ export function DashboardV2Layout() {
           style={{
             display: 'flex', alignItems: 'center', gap: 8, padding: expanded ? '10px 12px' : '10px',
             justifyContent: expanded ? 'space-between' : 'center',
-            borderRadius: 14, cursor: 'pointer', border: '1px solid #E5E5E5', background: '#FAFAFA',
+            borderRadius: 14, cursor: 'pointer', border: '1px solid var(--border-default)', background: 'var(--surface-canvas)',
             boxShadow: '0 1px 2px rgba(0,0,0,.04)',
             marginTop: 14, position: 'relative',
           }}
@@ -230,23 +213,23 @@ export function DashboardV2Layout() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
             <div style={{
               width: 20, height: 20, borderRadius: '50%', background: 'var(--gradient-brand)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, flexShrink: 0, color: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, flexShrink: 0, color: 'var(--text-on-brand)',
             }}>{(clinicName || userName || 'م')[0]}</div>
             {expanded && (
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: '#737373', letterSpacing: '.09em', textTransform: 'uppercase' }}>العيادة</div>
-                <div style={{ fontSize: 14, fontWeight: 400, color: '#171717', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '.09em', textTransform: 'uppercase' }}>العيادة</div>
+                <div style={{ fontSize: 14, fontWeight: 400, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {clinicName || (isDemo ? 'عرض تجريبي' : 'عيادتي')}
                 </div>
               </div>
             )}
           </div>
-          {expanded && <ChevronDown size={13} style={{ opacity: 0.5, flexShrink: 0, color: '#737373' }} />}
+          {expanded && <ChevronDown size={13} style={{ opacity: 0.5, flexShrink: 0, color: 'var(--text-tertiary)' }} />}
           {profileOpen && (
             <div style={{
               position: 'absolute', top: '110%', insetInlineStart: 0, insetInlineEnd: 0,
-              background: '#fff', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-default)',
-              overflow: 'hidden', color: '#171717', minWidth: expanded ? undefined : 150, zIndex: 10,
+              background: 'var(--surface-card)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-default)',
+              overflow: 'hidden', color: 'var(--text-primary)', minWidth: expanded ? undefined : 150, zIndex: 10,
             }}>
               <div
                 onClick={logout}
@@ -265,8 +248,8 @@ export function DashboardV2Layout() {
             <div key={group.title || gi}>
               {group.title && expanded && (
                 <div style={{
-                  fontSize: 11, fontWeight: 600, color: '#737373', letterSpacing: '.12em',
-                  padding: '0 8px', margin: gi === 0 ? '0 0 8px' : '20px 0 8px', textTransform: 'uppercase',
+                  fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '.12em',
+                  padding: '0 8px', margin: gi === 0 ? '0 0 8px' : '18px 0 8px', textTransform: 'uppercase',
                 }}>{group.title}</div>
               )}
               {group.items.map((item) => {
@@ -274,16 +257,15 @@ export function DashboardV2Layout() {
                 const row = (
                   <div
                     key={item.path}
-                    className="dv2-nav-item"
+                    className={`dv2-nav-item${active ? ' is-active' : ''}`}
                     onClick={() => navigate(item.path)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 12, padding: expanded ? '8px 12px' : '8px',
                       justifyContent: expanded ? 'flex-start' : 'center',
-                      borderRadius: 14, cursor: 'pointer',
-                      fontSize: 14, fontWeight: 500,
-                      color: active ? '#171717' : '#525252',
-                      background: active ? 'rgba(229,229,229,.9)' : 'transparent',
-                      boxShadow: active ? 'inset 0 0 0 1px rgba(0,0,0,.06)' : undefined,
+                      borderRadius: 12, cursor: 'pointer',
+                      fontSize: 14, fontWeight: active ? 600 : 500,
+                      color: active ? 'var(--text-on-brand)' : 'var(--text-secondary)',
+                      background: active ? 'var(--accent-primary)' : 'transparent',
                     }}
                   >
                     <span className="dv2-nav-icon" style={{ display: 'flex' }}>{item.icon}</span>
@@ -302,7 +284,7 @@ export function DashboardV2Layout() {
           ))}
         </div>
 
-        <div style={{ borderTop: '1px solid #E5E5E5', marginTop: 8, paddingTop: 8 }}>
+        <div style={{ borderTop: '1px solid var(--border-default)', marginTop: 8, paddingTop: 8 }}>
           <span
             className="dv2-desktop-only"
             onClick={() => setCollapsed((v) => !v)}

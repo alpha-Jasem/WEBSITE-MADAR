@@ -23,8 +23,8 @@ function BarsSkeleton({ rows = 4 }: { rows?: number }) {
 }
 
 const SOURCE_COLORS: Record<string, string> = {
-  ai_booking: 'var(--brand-500)', whatsapp: '#2fbfa0', website: 'var(--indigo-500)',
-  reception: '#c9b6f5', manual: 'var(--slate-400)',
+  ai_booking: 'var(--slate-900)', whatsapp: 'var(--slate-700)', website: 'var(--slate-500)',
+  reception: 'var(--slate-400)', manual: 'var(--slate-300)',
 }
 const SOURCE_LABELS: Record<string, string> = {
   ai_booking: 'حجز بالذكاء الاصطناعي', whatsapp: 'واتساب', website: 'الموقع الإلكتروني',

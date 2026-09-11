@@ -21,7 +21,7 @@ export function Card({ children, emphasis, interactive, glow, glass, delay = 0, 
       whileHover={interactive ? {
         y: -3,
         boxShadow: glow
-          ? 'inset 0 1px 0 var(--card-rim), var(--shadow-md), 0 0 0 1px var(--brand-200, #B3EDFF), 0 10px 30px rgba(0,191,255,.22)'
+          ? 'var(--shadow-md), 0 0 0 1px var(--slate-900)'
           : 'inset 0 1px 0 var(--card-rim), var(--shadow-md)',
       } : undefined}
       style={{
@@ -105,7 +105,7 @@ const HOVER_BG: Record<ButtonVariant, string> = {
   primary: 'var(--brand-600)',
   secondary: 'var(--surface-sunken)',
   ghost: 'var(--surface-sunken)',
-  danger: '#c8402f',
+  danger: 'var(--danger-500)',
 }
 
 const RESTING_SHADOW: Record<ButtonVariant, string> = {

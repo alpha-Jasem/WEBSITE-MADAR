@@ -27,7 +27,7 @@ export function AccountMenu({ base }: { base: string }) {
         onMouseLeave={() => setHover(false)}
         style={{
           width: 30, height: 30, borderRadius: '50%', cursor: 'pointer', flexShrink: 0,
-          background: 'linear-gradient(135deg, #EC4899, #A855F7)', color: '#fff',
+          background: 'var(--accent-primary)', color: 'var(--text-on-brand)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700,
         }}
       >{initial}</div>

@@ -166,7 +166,7 @@ export function PillBar({ label, value, max }: { label: string; value: number; m
           transition={SPRING_SNAPPY}
           style={{
             width: '100%', height: '100%', borderRadius: 'var(--radius-full)', transformOrigin: 'left',
-            backgroundImage: 'linear-gradient(90deg, var(--brand-500), #2fbfa0)',
+            backgroundImage: 'linear-gradient(90deg, var(--slate-900), var(--slate-500))',
           }}
         />
       </div>
@@ -300,9 +300,9 @@ export function AiPerformanceCard({ calls, delay = 0 }: { calls: AICallLog[]; de
   const failed = calls.filter((c) => c.status === 'failed').length
 
   const sources = total > 0 ? [
-    { key: 'solved', label: 'حلّها الذكاء الاصطناعي', pct: Math.round((solved / total) * 100), color: 'var(--success-500)', count: solved },
-    { key: 'human', label: 'تحتاج بشري', pct: Math.round((needsHuman / total) * 100), color: 'var(--warning-500)', count: needsHuman },
-    { key: 'failed', label: 'فشلت', pct: Math.round((failed / total) * 100), color: 'var(--danger-500)', count: failed },
+    { key: 'solved', label: 'حلّها الذكاء الاصطناعي', pct: Math.round((solved / total) * 100), color: 'var(--slate-900)', count: solved },
+    { key: 'human', label: 'تحتاج بشري', pct: Math.round((needsHuman / total) * 100), color: 'var(--slate-500)', count: needsHuman },
+    { key: 'failed', label: 'فشلت', pct: Math.round((failed / total) * 100), color: 'var(--slate-300)', count: failed },
   ].filter((s) => s.pct > 0) : []
 
   return (

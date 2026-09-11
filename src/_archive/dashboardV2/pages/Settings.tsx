@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { Camera, Plus, Trash2, Users, ShieldCheck, ShieldOff, Building2, Clock, Sparkles as SparklesIcon } from 'lucide-react'
+import { Camera, Plus, Trash2, Users, ShieldCheck, ShieldOff, Building2, Clock, Sparkles as SparklesIcon, Plug, CreditCard, History } from 'lucide-react'
+import { DashboardV2Integrations } from './Integrations'
+import { DashboardV2MadarAgentUsage } from './MadarAgentUsage'
+import { DashboardV2AuditLog } from './AuditLog'
 import { useClinicOS } from '@/context/ClinicOSContext'
 import { supabase } from '@/lib/supabase'
 import {
@@ -31,6 +34,11 @@ const SECTIONS = [
   { key: 'team', label: 'الفريق والصلاحيات', icon: Users },
   { key: 'security', label: 'الأمان', icon: ShieldCheck },
   { key: 'ai', label: 'تفضيلات الذكاء الاصطناعي', icon: SparklesIcon },
+  // Account-level screens that used to sit in the sidebar. They are configuration,
+  // not daily work, so they live behind Settings rather than in the nav.
+  { key: 'integrations', label: 'التكاملات', icon: Plug },
+  { key: 'usage', label: 'الاستخدام والباقة', icon: CreditCard },
+  { key: 'audit', label: 'سجل التدقيق', icon: History },
 ] as const
 type SectionKey = typeof SECTIONS[number]['key']
 
@@ -369,6 +377,10 @@ export function DashboardV2Settings() {
         <Button onClick={save} disabled={saving} style={{ marginTop: 18 }}>{saving ? 'جارِ الحفظ...' : 'حفظ التغييرات'}</Button>
       </Card>
       )}
+
+      {activeSection === 'integrations' && <DashboardV2Integrations />}
+      {activeSection === 'usage' && <DashboardV2MadarAgentUsage />}
+      {activeSection === 'audit' && <DashboardV2AuditLog />}
         </div>
       </div>
 
