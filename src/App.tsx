@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Suspense, lazy, useEffect } from 'react'
 import { LanguageProvider } from './context/LanguageContext'
-import { ClinicOSProvider } from './context/ClinicOSContext'
+import { ClinicOSProvider } from './context/WorkspaceContext'
 import { ProtectedRoute } from './components/shared/ProtectedRoute'
 import { ErrorBoundary, reloadForFreshAssets } from './components/shared/ErrorBoundary'
 const ClinicAILanding = lazy(() => import('./pages/ClinicAILanding').then((m) => ({ default: m.ClinicAILanding })))
@@ -54,31 +54,31 @@ const PackageSelectorPage  = lazy(() => import('./pages/clinicOS/PackageSelector
 const MfaChallengePage     = lazy(() => import('./pages/clinicOS/MfaChallenge').then(m => ({ default: m.MfaChallenge })))
 const ClinicOSAdminPage    = lazy(() => import('./pages/clinicOS/admin/ClinicOSAdmin').then(m => ({ default: m.ClinicOSAdmin })))
 
-// ClinicOS Dashboard v2 (Madar Software Design System) — archived to src/_archive, still used by the /demo-review sales tour
-const DashboardV2Layout        = lazy(() => import('./_archive/dashboardV2/components/DashboardV2Layout').then(m => ({ default: m.DashboardV2Layout })))
-const DashboardV2Home          = lazy(() => import('./_archive/dashboardV2/pages/Home').then(m => ({ default: m.DashboardV2Home })))
-const DashboardV2Bookings      = lazy(() => import('./_archive/dashboardV2/pages/Bookings').then(m => ({ default: m.DashboardV2Bookings })))
-const DashboardV2Patients      = lazy(() => import('./_archive/dashboardV2/pages/Patients').then(m => ({ default: m.DashboardV2Patients })))
-const DashboardV2Conversations = lazy(() => import('./_archive/dashboardV2/pages/Conversations').then(m => ({ default: m.DashboardV2Conversations })))
-const DashboardV2Reviews       = lazy(() => import('./_archive/dashboardV2/pages/Reviews').then(m => ({ default: m.DashboardV2Reviews })))
-const DashboardV2Revenue       = lazy(() => import('./_archive/dashboardV2/pages/Revenue').then(m => ({ default: m.DashboardV2Revenue })))
-const DashboardV2Reports       = lazy(() => import('./_archive/dashboardV2/pages/Reports').then(m => ({ default: m.DashboardV2Reports })))
-const DashboardV2Reminders     = lazy(() => import('./_archive/dashboardV2/pages/Reminders').then(m => ({ default: m.DashboardV2Reminders })))
-const DashboardV2Integrations  = lazy(() => import('./_archive/dashboardV2/pages/Integrations').then(m => ({ default: m.DashboardV2Integrations })))
-const DashboardV2Settings      = lazy(() => import('./_archive/dashboardV2/pages/Settings').then(m => ({ default: m.DashboardV2Settings })))
-const DashboardV2Services      = lazy(() => import('./_archive/dashboardV2/pages/Services').then(m => ({ default: m.DashboardV2Services })))
-const DashboardV2AuditLog      = lazy(() => import('./_archive/dashboardV2/pages/AuditLog').then(m => ({ default: m.DashboardV2AuditLog })))
-const DashboardV2MadarAgentUsage = lazy(() => import('./_archive/dashboardV2/pages/MadarAgentUsage').then(m => ({ default: m.DashboardV2MadarAgentUsage })))
-const DashboardV2Tickets       = lazy(() => import('./_archive/dashboardV2/pages/Tickets').then(m => ({ default: m.DashboardV2Tickets })))
-const DashboardV2CallsAnalytics    = lazy(() => import('./_archive/dashboardV2/pages/CallsAnalytics').then(m => ({ default: m.DashboardV2CallsAnalytics })))
-const DashboardV2WhatsAppAnalytics = lazy(() => import('./_archive/dashboardV2/pages/WhatsAppAnalytics').then(m => ({ default: m.DashboardV2WhatsAppAnalytics })))
-const DashboardV2Agents            = lazy(() => import('./_archive/dashboardV2/pages/Agents').then(m => ({ default: m.DashboardV2Agents })))
-const DashboardV2KnowledgeBase      = lazy(() => import('./_archive/dashboardV2/pages/KnowledgeBase').then(m => ({ default: m.DashboardV2KnowledgeBase })))
-const DashboardV2Tools             = lazy(() => import('./_archive/dashboardV2/pages/ComingSoon').then(m => ({ default: m.DashboardV2Tools })))
-const DashboardV2AnalysisGroups    = lazy(() => import('./_archive/dashboardV2/pages/ComingSoon').then(m => ({ default: m.DashboardV2AnalysisGroups })))
-const DashboardV2InboundServices   = lazy(() => import('./_archive/dashboardV2/pages/ComingSoon').then(m => ({ default: m.DashboardV2InboundServices })))
-const DashboardV2OutboundServices  = lazy(() => import('./_archive/dashboardV2/pages/ComingSoon').then(m => ({ default: m.DashboardV2OutboundServices })))
-const DashboardV2CallLogs          = lazy(() => import('./_archive/dashboardV2/pages/CallLogs').then(m => ({ default: m.DashboardV2CallLogs })))
+// The dashboard, shared by real tenants and the /demo-review sales tour.
+const DashboardV2Layout        = lazy(() => import('./dashboard/components/DashboardV2Layout').then(m => ({ default: m.DashboardV2Layout })))
+const DashboardV2Home          = lazy(() => import('./dashboard/pages/Home').then(m => ({ default: m.DashboardV2Home })))
+const DashboardV2Bookings      = lazy(() => import('./dashboard/pages/Bookings').then(m => ({ default: m.DashboardV2Bookings })))
+const DashboardV2Patients      = lazy(() => import('./dashboard/pages/Patients').then(m => ({ default: m.DashboardV2Patients })))
+const DashboardV2Conversations = lazy(() => import('./dashboard/pages/Conversations').then(m => ({ default: m.DashboardV2Conversations })))
+const DashboardV2Reviews       = lazy(() => import('./dashboard/pages/Reviews').then(m => ({ default: m.DashboardV2Reviews })))
+const DashboardV2Revenue       = lazy(() => import('./dashboard/pages/Revenue').then(m => ({ default: m.DashboardV2Revenue })))
+const DashboardV2Reports       = lazy(() => import('./dashboard/pages/Reports').then(m => ({ default: m.DashboardV2Reports })))
+const DashboardV2Reminders     = lazy(() => import('./dashboard/pages/Reminders').then(m => ({ default: m.DashboardV2Reminders })))
+const DashboardV2Integrations  = lazy(() => import('./dashboard/pages/Integrations').then(m => ({ default: m.DashboardV2Integrations })))
+const DashboardV2Settings      = lazy(() => import('./dashboard/pages/Settings').then(m => ({ default: m.DashboardV2Settings })))
+const DashboardV2Services      = lazy(() => import('./dashboard/pages/Services').then(m => ({ default: m.DashboardV2Services })))
+const DashboardV2AuditLog      = lazy(() => import('./dashboard/pages/AuditLog').then(m => ({ default: m.DashboardV2AuditLog })))
+const DashboardV2MadarAgentUsage = lazy(() => import('./dashboard/pages/MadarAgentUsage').then(m => ({ default: m.DashboardV2MadarAgentUsage })))
+const DashboardV2Tickets       = lazy(() => import('./dashboard/pages/Tickets').then(m => ({ default: m.DashboardV2Tickets })))
+const DashboardV2CallsAnalytics    = lazy(() => import('./dashboard/pages/CallsAnalytics').then(m => ({ default: m.DashboardV2CallsAnalytics })))
+const DashboardV2WhatsAppAnalytics = lazy(() => import('./dashboard/pages/WhatsAppAnalytics').then(m => ({ default: m.DashboardV2WhatsAppAnalytics })))
+const DashboardV2Agents            = lazy(() => import('./dashboard/pages/Agents').then(m => ({ default: m.DashboardV2Agents })))
+const DashboardV2KnowledgeBase      = lazy(() => import('./dashboard/pages/KnowledgeBase').then(m => ({ default: m.DashboardV2KnowledgeBase })))
+const DashboardV2Tools             = lazy(() => import('./dashboard/pages/ComingSoon').then(m => ({ default: m.DashboardV2Tools })))
+const DashboardV2AnalysisGroups    = lazy(() => import('./dashboard/pages/ComingSoon').then(m => ({ default: m.DashboardV2AnalysisGroups })))
+const DashboardV2InboundServices   = lazy(() => import('./dashboard/pages/ComingSoon').then(m => ({ default: m.DashboardV2InboundServices })))
+const DashboardV2OutboundServices  = lazy(() => import('./dashboard/pages/ComingSoon').then(m => ({ default: m.DashboardV2OutboundServices })))
+const DashboardV2CallLogs          = lazy(() => import('./dashboard/pages/CallLogs').then(m => ({ default: m.DashboardV2CallLogs })))
 
 // The dashboard is mounted twice — once for real tenants and once for the
 // unauthenticated sales tour — and both render the identical tree. isDemo is

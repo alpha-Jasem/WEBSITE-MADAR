@@ -1,4 +1,4 @@
-import type { PackageType } from '../types/clinicOS'
+import type { PackageType } from '../types/dashboard'
 
 export type ClinicAccountStatus = 'active' | 'warning' | 'usage_limited' | 'expired' | 'suspended'
 

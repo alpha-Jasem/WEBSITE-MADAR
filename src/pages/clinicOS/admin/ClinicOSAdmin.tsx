@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, Building2, CalendarClock, CheckCircle2, Loader2, RefreshCw, Star, TrendingUp, UsersRound, Wrench } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { CLINIC_PLANS } from '../../../lib/clinicOSProduct'
-import type { PackageType, SupportTicket } from '../../../types/clinicOS'
+import type { PackageType, SupportTicket } from '../../../types/dashboard'
 import '../dashboard/clinic-ai-dashboard.css'
 
 type TicketWithCompany = SupportTicket & { company?: { name: string } | null }

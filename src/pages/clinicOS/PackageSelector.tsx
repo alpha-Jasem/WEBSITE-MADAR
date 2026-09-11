@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Bot, CheckCircle, Lock, Zap, ArrowLeft } from 'lucide-react'
-import { useClinicOS } from '../../context/ClinicOSContext'
-import type { PackageType } from '../../types/clinicOS'
+import { useClinicOS } from '../../context/WorkspaceContext'
+import type { PackageType } from '../../types/dashboard'
 
 const PACKAGES = [
   {
