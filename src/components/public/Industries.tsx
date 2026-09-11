@@ -30,7 +30,7 @@ const industries = [
     en: {
       label: 'Healthcare',
       name: 'Clinics & Hospitals',
-      tagline: 'Patient Messages or Calls, System Replies and Books',
+      tagline: 'Customer Messages or Calls, System Replies and Books',
       desc: 'Do not lose a patient because the line is busy or a reply is late. The system answers WhatsApp or calls, identifies the service, books the appointment, and reminds before arrival.',
       features: [
         { icon: CalendarCheck, text: '24/7 automatic appointment booking via WhatsApp or phone call' },

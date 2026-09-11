@@ -3,11 +3,11 @@ import { Camera, Plus, Trash2, Users, ShieldCheck, ShieldOff, Building2, Clock, 
 import { DashboardV2Integrations } from './Integrations'
 import { DashboardV2MadarAgentUsage } from './MadarAgentUsage'
 import { DashboardV2AuditLog } from './AuditLog'
-import { useClinicOS } from '@/context/WorkspaceContext'
+import { useWorkspace } from '@/context/WorkspaceContext'
 import { supabase } from '@/lib/supabase'
 import {
-  updateClinicCompany, uploadCompanyLogo, updateClinicWorkingHours,
-  useClinicStaff, inviteStaffMember, updateStaffMember, removeStaffMember,
+  updateCompany, uploadCompanyLogo, updateWorkingHours,
+  useCompanyStaff, inviteStaffMember, updateStaffMember, removeStaffMember,
 } from '@/lib/dashboardQueries'
 import { Card, Button, Input, Select, Switch, Badge, Dialog, type BadgeTone } from '@/dashboard/components/primitives'
 import { useToast, Avatar } from '@/dashboard/components/uiExtras'
@@ -44,15 +44,15 @@ type SectionKey = typeof SECTIONS[number]['key']
 
 export function DashboardV2Settings() {
   const {
-    companyId, clinicName, clinicPhone, clinicEmail, clinicCity, clinicLogoUrl, clinicSettings,
+    companyId, companyName, companyPhone, companyEmail, companyCity, companyLogoUrl, companySettings,
     isDemo, isOwner, refreshAccount,
-  } = useClinicOS()
-  const { data: staff, refetch: refetchStaff } = useClinicStaff(companyId, isDemo)
+  } = useWorkspace()
+  const { data: staff, refetch: refetchStaff } = useCompanyStaff(companyId, isDemo)
 
-  const [form, setForm] = useState({ name: clinicName, phone: clinicPhone, email: clinicEmail, city: clinicCity })
+  const [form, setForm] = useState({ name: companyName, phone: companyPhone, email: companyEmail, city: companyCity })
   const [prefs, setPrefs] = useState({ ai: true, reviews: true, sms: false })
   const [hours, setHours] = useState<WorkingHours>(DEFAULT_HOURS)
-  const [logoUrl, setLogoUrl] = useState(clinicLogoUrl)
+  const [logoUrl, setLogoUrl] = useState(companyLogoUrl)
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [saving, setSaving] = useState(false)
   const pushToast = useToast()
@@ -135,11 +135,11 @@ export function DashboardV2Settings() {
   }
 
   useEffect(() => {
-    setForm({ name: clinicName, phone: clinicPhone, email: clinicEmail, city: clinicCity })
-    setLogoUrl(clinicLogoUrl)
-    const savedHours = clinicSettings?.working_hours as WorkingHours | undefined
+    setForm({ name: companyName, phone: companyPhone, email: companyEmail, city: companyCity })
+    setLogoUrl(companyLogoUrl)
+    const savedHours = companySettings?.working_hours as WorkingHours | undefined
     if (savedHours) setHours({ ...DEFAULT_HOURS, ...savedHours })
-  }, [clinicName, clinicPhone, clinicEmail, clinicCity, clinicLogoUrl, clinicSettings])
+  }, [companyName, companyPhone, companyEmail, companyCity, companyLogoUrl, companySettings])
 
   async function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -163,8 +163,8 @@ export function DashboardV2Settings() {
     }
     setSaving(true)
     try {
-      await updateClinicCompany(companyId, { name: form.name, owner_phone: form.phone, owner_email: form.email, city: form.city })
-      await updateClinicWorkingHours(companyId, clinicSettings, hours)
+      await updateCompany(companyId, { name: form.name, owner_phone: form.phone, owner_email: form.email, city: form.city })
+      await updateWorkingHours(companyId, companySettings, hours)
       await refreshAccount()
       pushToast({ kind: 'success', title: 'تم حفظ الإعدادات' })
     } catch {

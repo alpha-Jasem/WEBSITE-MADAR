@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Plus, BookOpen, ChevronDown, Trash2 } from 'lucide-react'
-import { useClinicOS } from '@/context/WorkspaceContext'
+import { useWorkspace } from '@/context/WorkspaceContext'
 import {
-  useClinicKnowledge, saveClinicKnowledgeItem, deleteClinicKnowledgeItem, toggleClinicKnowledgeItem,
+  useKnowledge, saveKnowledgeItem, deleteKnowledgeItem, toggleKnowledgeItem,
   type ClinicKnowledgeItem,
 } from '@/lib/dashboardQueries'
 import { Card, Badge, Button, Dialog, Input, Select, Switch } from '@/dashboard/components/primitives'
@@ -13,8 +13,8 @@ const TYPE_OPTIONS = [{ value: 'faq', label: 'سؤال شائع' }, { value: 'po
 const EMPTY_FORM = { type: 'faq', title: '', content: '' }
 
 export function DashboardV2KnowledgeBase() {
-  const { companyId, isDemo } = useClinicOS()
-  const { data: items, loading, refetch } = useClinicKnowledge(companyId, isDemo)
+  const { companyId, isDemo } = useWorkspace()
+  const { data: items, loading, refetch } = useKnowledge(companyId, isDemo)
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<ClinicKnowledgeItem | null>(null)
@@ -53,7 +53,7 @@ export function DashboardV2KnowledgeBase() {
     if (isDemo) { pushToast({ kind: 'info', title: 'غير متاح بوضع العرض التجريبي' }); setDialogOpen(false); return }
     setSaving(true)
     try {
-      await saveClinicKnowledgeItem({
+      await saveKnowledgeItem({
         id: editing?.id, company_id: companyId, type: form.type, title: form.title, content: form.content,
       })
       setDialogOpen(false)
@@ -70,7 +70,7 @@ export function DashboardV2KnowledgeBase() {
     if (isDemo) return
     setOptimisticActive((o) => ({ ...o, [it.id]: !it.is_active }))
     try {
-      await toggleClinicKnowledgeItem(it.id, !it.is_active)
+      await toggleKnowledgeItem(it.id, !it.is_active)
       refetch()
     } catch (e) {
       setOptimisticActive((o) => { const { [it.id]: _drop, ...rest } = o; return rest })
@@ -82,7 +82,7 @@ export function DashboardV2KnowledgeBase() {
     if (isDemo) { pushToast({ kind: 'info', title: 'غير متاح بوضع العرض التجريبي' }); return }
     if (!window.confirm(`حذف "${it.title}"؟`)) return
     try {
-      await deleteClinicKnowledgeItem(it.id)
+      await deleteKnowledgeItem(it.id)
       refetch()
       pushToast({ kind: 'success', title: 'تم الحذف' })
     } catch (e) {

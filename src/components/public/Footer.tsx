@@ -14,11 +14,11 @@ const navLinks = [
 
 const services = [
   { ar: 'مساعد استقبال AI على واتساب', en: 'AI Receptionist on WhatsApp' },
-  { ar: 'إدارة المواعيد والحجوزات',    en: 'Appointment & Booking Management' },
+  { ar: 'إدارة المواعيد والحجوزات',    en: 'Booking & Booking Management' },
   { ar: 'تذكيرات تلقائية للعملاء',     en: 'Automated Reminders' },
   { ar: 'CRM العملاء والمتابعة',        en: 'Client CRM & Follow-Up' },
-  { ar: 'تقارير العيادة وإحصاءات AI', en: 'Clinic Reports & AI Analytics' },
-  { ar: 'لوحة تشغيل يومية للعيادة',  en: 'Daily Clinic Operations Dashboard' },
+  { ar: 'تقارير العيادة وإحصاءات AI', en: 'Workspace Reports & AI Analytics' },
+  { ar: 'لوحة تشغيل يومية للعيادة',  en: 'Daily Workspace Operations Dashboard' },
 ]
 
 export const Footer = () => {

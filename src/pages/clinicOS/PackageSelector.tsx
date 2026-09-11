@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Bot, CheckCircle, Lock, Zap, ArrowLeft } from 'lucide-react'
-import { useClinicOS } from '../../context/WorkspaceContext'
+import { useWorkspace } from '../../context/WorkspaceContext'
 import type { PackageType } from '../../types/dashboard'
 
 const PACKAGES = [
@@ -52,7 +52,7 @@ const PACKAGES = [
 
 export const PackageSelector = () => {
   const navigate = useNavigate()
-  const { setPackageType, userName } = useClinicOS()
+  const { setPackageType, userName } = useWorkspace()
 
   const select = (pkg: PackageType) => {
     setPackageType(pkg)

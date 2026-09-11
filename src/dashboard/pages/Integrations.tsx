@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { MessageCircle, Calendar, Star, Phone, AtSign, Lock } from 'lucide-react'
-import { useClinicOS } from '@/context/WorkspaceContext'
-import { useClinicIntegrations, toggleIntegration } from '@/lib/dashboardQueries'
+import { useWorkspace } from '@/context/WorkspaceContext'
+import { useIntegrations, toggleIntegration } from '@/lib/dashboardQueries'
 import type { IntegrationStatus } from '@/types/dashboard'
 import { Card, Badge, Button } from '@/dashboard/components/primitives'
 import { Skeleton } from '@/dashboard/components/uiExtras'
@@ -35,8 +35,8 @@ const DESC_BY_PROVIDER: Record<string, string> = {
 const OAUTH_READY: Record<string, boolean> = {}
 
 export function DashboardV2Integrations() {
-  const { companyId, isDemo } = useClinicOS()
-  const { data: rawIntegrations, loading, refetch } = useClinicIntegrations(companyId, isDemo)
+  const { companyId, isDemo } = useWorkspace()
+  const { data: rawIntegrations, loading, refetch } = useIntegrations(companyId, isDemo)
   const [optimisticStatus, setOptimisticStatus] = useState<Record<string, IntegrationStatus>>({})
   const integrations = useMemo(() => (rawIntegrations || []).map((i) => (
     optimisticStatus[i.id] ? { ...i, status: optimisticStatus[i.id] } : i

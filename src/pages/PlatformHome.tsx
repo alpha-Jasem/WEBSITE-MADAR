@@ -65,7 +65,7 @@ function DashMockup() {
       }}>
         {/* Topbar */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-          <span style={{ color: MUTED, fontSize: 11, fontFamily: 'Cairo, sans-serif', letterSpacing: '0.05em' }}>Clinic OS · لوحة التحكم</span>
+          <span style={{ color: MUTED, fontSize: 11, fontFamily: 'Cairo, sans-serif', letterSpacing: '0.05em' }}>Workspace OS · لوحة التحكم</span>
           <div style={{ display: 'flex', gap: 5 }}>
             {['#EF4444', '#F59E0B', '#22C55E'].map((c, i) => (
               <div key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: c, opacity: 0.7 }} />
@@ -321,7 +321,7 @@ export const PlatformHome = () => {
   ]
 
   const steps = [
-    { num: '١', title: 'سجّل عيادتك',  body: 'نظام Clinic OS مبني خصيصاً للعيادات ومتطلباتها الكاملة.', color: CW },
+    { num: '١', title: 'سجّل عيادتك',  body: 'نظام Workspace OS مبني خصيصاً للعيادات ومتطلباتها الكاملة.', color: CW },
     { num: '٢', title: 'نجهزه معك',    body: 'فريقنا يعدّ الحساب، يدخل بياناتك، ويجري اختبار تشغيل حقيقي.',  color: GOLD },
     { num: '٣', title: 'يشتغل بدونك',  body: 'الذكاء الاصطناعي يعمل ٢٤/٧ — حجز وتأكيد وإشعارات وتقارير.',    color: CL },
   ]
@@ -486,7 +486,7 @@ export const PlatformHome = () => {
                   display: 'flex', alignItems: 'center', gap: 6,
                   boxShadow: `0 4px 20px rgba(212,168,83,0.2)`,
                 }}>
-                {t('اكتشف Clinic OS', 'Explore Clinic OS')}
+                {t('اكتشف Workspace OS', 'Explore Workspace OS')}
                 <ArrowLeft size={14} />
               </motion.button>
               <motion.button
@@ -552,7 +552,7 @@ export const PlatformHome = () => {
               {t('منتجنا', 'Our Product')}
             </span>
             <h2 style={{ fontSize: 'clamp(1.9rem,3.8vw,3rem)', fontWeight: 900, color: TEXT, fontFamily: 'Cairo, sans-serif', margin: '0 0 12px', lineHeight: 1.12 }}>
-              {t('Clinic OS — نظام العيادات الذكي', 'Clinic OS — The Smart Clinic System')}
+              {t('Workspace OS — نظام العيادات الذكي', 'Workspace OS — The Smart Workspace System')}
             </h2>
             <p style={{ color: MUTED, fontSize: 15, fontFamily: 'Tajawal, sans-serif', maxWidth: 440, margin: '0 auto' }}>
               {t('نظام مبني للعيادات تحديداً — لا حلول عامة، لا تكييف اضطراري', 'Built specifically for clinics — no generic solutions, no forced adaptation')}
@@ -561,7 +561,7 @@ export const PlatformHome = () => {
 
           <div className="prod-grid" style={{ display: 'flex', gap: 20 }}>
 
-            {/* ── Clinic ────────────────────────────────────────────── */}
+            {/* ── Workspace ────────────────────────────────────────────── */}
             <FadeUp delay={0.06} style={{ flex: 1 }}>
               <div className="card-hover" style={{
                 background: CARD, border: `1px solid ${BORDER}`,
@@ -574,10 +574,10 @@ export const PlatformHome = () => {
                   <Stethoscope size={21} color={CL} />
                 </div>
                 <div style={{ fontSize: 9, fontWeight: 700, color: CL, letterSpacing: '0.15em', fontFamily: 'Cairo, sans-serif', marginBottom: 12, textTransform: 'uppercase' }}>
-                  Clinic OS
+                  Workspace OS
                 </div>
                 <h3 style={{ fontSize: 20, fontWeight: 900, color: TEXT, fontFamily: 'Cairo, sans-serif', margin: '0 0 10px', lineHeight: 1.2 }}>
-                  {t('نظام تشغيل العيادات', 'Clinic Operating System')}
+                  {t('نظام تشغيل العيادات', 'Workspace Operating System')}
                 </h3>
                 <p style={{ color: MUTED, fontSize: 13, fontFamily: 'Tajawal, sans-serif', lineHeight: 1.8, margin: '0 0 22px' }}>
                   {t(
@@ -588,7 +588,7 @@ export const PlatformHome = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 26 }}>
                   {[
                     t('حجز مواعيد واتساب تلقائي', 'Automatic WhatsApp appointment booking'),
-                    t('إدارة المرضى والأطباء', 'Patient and doctor management'),
+                    t('إدارة المرضى والأطباء', 'Customer and doctor management'),
                     t('وكيل AI يحجز ٢٤/٧', 'AI agent that books 24/7'),
                     t('تذكيرات تلقائية للمرضى', 'Automatic patient reminders'),
                     t('تقارير وإحصاءات الأداء', 'Performance reports and analytics'),

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { MessageCircle, X, Send, Sparkles } from 'lucide-react'
-import { useClinicOS } from '@/context/WorkspaceContext'
+import { useWorkspace } from '@/context/WorkspaceContext'
 import { supabase } from '@/lib/supabase'
 
 interface ChatMessage {
@@ -13,7 +13,7 @@ const DEMO_REPLY = 'هذا عرض تجريبي — سجّل دخولك بحسا�
 
 export function SupportChat() {
   const location = useLocation()
-  const { companyId, isDemo } = useClinicOS()
+  const { companyId, isDemo } = useWorkspace()
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: 'assistant', content: 'أهلاً! أنا دعم مدار الذكي. اسألني عن أي شي بخصوص حسابك — الحجوزات، الاستخدام، أو أي مشكلة تواجهك.' },

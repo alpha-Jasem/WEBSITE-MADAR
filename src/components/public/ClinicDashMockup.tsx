@@ -44,7 +44,7 @@ export const ClinicDashMockup = ({ compact = false }: { compact?: boolean }) => 
             style={{ background: `linear-gradient(135deg, #065F46, ${EM})` }}>
             <Stethoscope size={13} className="text-white" />
           </div>
-          <span className="font-black text-sm" style={{ color: '#0F172A' }}>Clinic OS</span>
+          <span className="font-black text-sm" style={{ color: '#0F172A' }}>Workspace OS</span>
           <div className="h-4 w-px mx-1" style={{ background: '#E2E8F0' }} />
           <span className="text-xs font-medium" style={{ color: '#94A3B8' }}>عيادات نور</span>
         </div>

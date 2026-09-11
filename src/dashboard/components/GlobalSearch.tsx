@@ -5,8 +5,8 @@ import {
   Search, User, CalendarDays, X, LayoutDashboard, Users, MessageSquare, Star,
   Wrench, BarChart3, Wallet, BellRing, Plug, History, Settings, Plus, Clock,
 } from 'lucide-react'
-import { useClinicOS } from '@/context/WorkspaceContext'
-import { useClinicPatients, useClinicAppointments } from '@/lib/dashboardQueries'
+import { useWorkspace } from '@/context/WorkspaceContext'
+import { useCustomers, useBookings } from '@/lib/dashboardQueries'
 import { useOnOpenSearchRequest } from './uiExtras'
 
 const RECENT_KEY = 'dv2_recent_searches'
@@ -39,9 +39,9 @@ function saveRecent(q: string) {
 
 export function GlobalSearch({ base }: { base: string }) {
   const navigate = useNavigate()
-  const { companyId, isDemo } = useClinicOS()
-  const { data: patients } = useClinicPatients(companyId, isDemo)
-  const { data: appointments } = useClinicAppointments(companyId, undefined, isDemo)
+  const { companyId, isDemo } = useWorkspace()
+  const { data: patients } = useCustomers(companyId, isDemo)
+  const { data: appointments } = useBookings(companyId, undefined, isDemo)
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)

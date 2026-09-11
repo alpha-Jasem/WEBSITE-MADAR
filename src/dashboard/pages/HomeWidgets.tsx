@@ -7,7 +7,7 @@ import {
 import { Card, Badge, Button } from '@/dashboard/components/primitives'
 import { Tooltip, CountUp } from '@/dashboard/components/uiExtras'
 import { SPRING_SNAPPY } from '@/dashboard/components/motionTokens'
-import type { AICallLog, Appointment, ClinicNotification, Integration, MessageLog, SupportTicket, TicketPriority } from '@/types/dashboard'
+import type { AICallLog, Booking, AppNotification, Integration, MessageLog, SupportTicket, TicketPriority } from '@/types/dashboard'
 
 // ─── shared helpers ─────────────────────────────────────────────────────────
 
@@ -317,7 +317,7 @@ export function AiPerformanceCard({ calls, delay = 0 }: { calls: AICallLog[]; de
 
 // ─── TodayTimeline — real hourly bucket of today's appointments ────────────
 
-export function TodayTimeline({ appointments, delay = 0 }: { appointments: Appointment[]; delay?: number }) {
+export function TodayTimeline({ appointments, delay = 0 }: { appointments: Booking[]; delay?: number }) {
   const todayStr = new Date().toISOString().split('T')[0]
   const todays = useMemo(() => appointments.filter((a) => a.appointment_date === todayStr), [appointments, todayStr])
   const hours = Array.from({ length: 13 }, (_, i) => 8 + i)
@@ -395,10 +395,10 @@ export function SystemHealthRow({ integrations, delay = 0 }: { integrations: Int
 // ─── ActivityFeed — real merge of notifications + calls + messages + appointments ──
 
 export function ActivityFeed({ notifications, calls, messages, appointments, delay = 0 }: {
-  notifications: ClinicNotification[]
+  notifications: AppNotification[]
   calls: AICallLog[]
   messages: MessageLog[]
-  appointments: Appointment[]
+  appointments: Booking[]
   delay?: number
 }) {
   const items = useMemo(() => {

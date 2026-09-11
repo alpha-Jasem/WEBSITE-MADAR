@@ -45,7 +45,7 @@ export interface Company {
   tax_enabled?: boolean
   vat_rate?: number
   price_includes_vat?: boolean
-  // Clinic OS
+  // Workspace OS
   package_type?: string
   city?: string
   google_maps_url?: string

@@ -76,7 +76,7 @@ export const MfaChallenge = () => {
       <section className="clinic-login-brand">
         <button className="clinic-login-logo" onClick={() => navigate('/')}>
           <img src="/logo-main.png" alt="Madar.software" />
-          <span><strong>Madar.software</strong><small>Clinic OS للعيادات</small></span>
+          <span><strong>Madar.software</strong><small>Workspace OS للعيادات</small></span>
         </button>
         <div className="clinic-login-message">
           <span className="clinic-login-kicker">تحقق إضافي</span>

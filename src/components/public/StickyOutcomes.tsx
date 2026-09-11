@@ -34,7 +34,7 @@ const scenes = [
   },
   {
     accent: EM,
-    tag     : { ar: 'Clinic OS', en: 'Clinic OS' },
+    tag     : { ar: 'Workspace OS', en: 'Workspace OS' },
     num     : { ar: '٧٨٪', en: '78%' },
     headline: { ar: 'من كل اتصال يصير موعد — حتى وأنت نايم', en: 'Every Call Becomes a Booking — Even While You Sleep' },
     sub     : { ar: 'مها تستقبل بالليل والعطل. تتحقق من جدول الدكتور. تحجز وترسل تأكيد. بدون تعارض.', en: 'Maha answers nights and weekends. Checks the schedule. Books and sends confirmation. Zero conflicts.' },
@@ -230,7 +230,7 @@ export const StickyOutcomes = () => {
                         </div>
                       )}
                       <span className={`text-sm font-bold text-white ${isAr ? 'font-cairo' : 'font-sora'}`}>
-                        {active === 0 ? t('بدون نظام', 'No System') : active === 1 ? 'Car Wash OS' : 'Clinic OS'}
+                        {active === 0 ? t('بدون نظام', 'No System') : active === 1 ? 'Car Wash OS' : 'Workspace OS'}
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"

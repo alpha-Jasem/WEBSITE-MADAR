@@ -191,12 +191,12 @@ export const AdminOverview = () => {
         {/* Company distribution */}
         <div className="card card-pad">
           <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>توزيع الحسابات</div>
-          <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 12 }}>{clinicOSCount} عميل على منصة Clinic OS</div>
+          <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 12 }}>{clinicOSCount} عميل على منصة Workspace OS</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {[
               { label: 'شركات نشطة', value: activeCompanies, color: 'var(--green)', pct: Math.round((activeCompanies / Math.max(companies.length, 1)) * 100) },
               { label: 'تجربة أو موقوفة', value: companies.length - activeCompanies, color: 'var(--amber)', pct: Math.round(((companies.length - activeCompanies) / Math.max(companies.length, 1)) * 100) },
-              { label: 'عملاء Clinic OS', value: clinicOSCount, color: 'var(--primary)', pct: 100 },
+              { label: 'عملاء Workspace OS', value: clinicOSCount, color: 'var(--primary)', pct: 100 },
             ].map(row => (
               <div key={row.label}>
                 <div className="row gap-2" style={{ marginBottom: 6 }}>

@@ -23,7 +23,7 @@ export const ClinicOSSignup = () => {
   const pkgParam = searchParams.get('pkg') === 'ai_pro' ? 'ai_pro' : 'whatsapp'
 
   const [step, setStep]           = useState<'form' | 'sent'>('form')
-  const [clinicName, setClinicName] = useState('')
+  const [companyName, setCompanyName] = useState('')
   const [ownerName, setOwnerName]   = useState('')
   const [phone, setPhone]           = useState('')
   const [email, setEmail]           = useState('')
@@ -34,7 +34,7 @@ export const ClinicOSSignup = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!clinicName.trim() || !ownerName.trim() || !phone.trim() || !email.trim() || !password) {
+    if (!companyName.trim() || !ownerName.trim() || !phone.trim() || !email.trim() || !password) {
       setError('يرجى تعبئة جميع الحقول')
       return
     }
@@ -55,7 +55,7 @@ export const ClinicOSSignup = () => {
             full_name: ownerName.trim(),
             account_type: 'clinic',
             business_type: 'clinic',
-            clinic_name: clinicName.trim(),
+            clinic_name: companyName.trim(),
             owner_phone: phone.trim(),
             package_type: pkgParam,
           },
@@ -92,7 +92,7 @@ export const ClinicOSSignup = () => {
           <div style={{ width: 38, height: 38, borderRadius: 11, background: 'linear-gradient(135deg,#4F46E5,#7C3AED)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Stethoscope size={17} color="white" />
           </div>
-          <span style={{ fontSize: 17, fontWeight: 900, color: TEXT, fontFamily: 'Cairo, sans-serif' }}>Clinic OS</span>
+          <span style={{ fontSize: 17, fontWeight: 900, color: TEXT, fontFamily: 'Cairo, sans-serif' }}>Workspace OS</span>
         </div>
 
         <div style={{ marginBottom: 36 }}>
@@ -134,8 +134,8 @@ export const ClinicOSSignup = () => {
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <div style={{ position: 'relative' }}>
                     <Building2 size={15} style={{ position: 'absolute', right: 13, top: '50%', transform: 'translateY(-50%)', color: MUTED, pointerEvents: 'none' }} />
-                    <input style={inputStyle} placeholder="اسم العيادة" value={clinicName}
-                      onChange={e => { setClinicName(e.target.value); setError('') }}
+                    <input style={inputStyle} placeholder="اسم العيادة" value={companyName}
+                      onChange={e => { setCompanyName(e.target.value); setError('') }}
                       onFocus={e => (e.currentTarget.style.borderColor = '#4F46E5')}
                       onBlur={e => (e.currentTarget.style.borderColor = BORDER)} />
                   </div>

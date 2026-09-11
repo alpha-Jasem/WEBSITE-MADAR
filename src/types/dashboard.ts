@@ -1,6 +1,6 @@
 export type PackageType = 'whatsapp' | 'ai_pro'
 
-export type AppointmentStatus =
+export type BookingStatus =
   | 'confirmed'
   | 'pending'
   | 'checked_in'
@@ -10,7 +10,7 @@ export type AppointmentStatus =
   | 'rescheduled'
   | 'needs_review'
 
-export type AppointmentSource =
+export type BookingSource =
   | 'ai_booking'
   | 'whatsapp'
   | 'reception'
@@ -29,7 +29,7 @@ export type MessageType =
   | 'waitlist_offer'
   | 'manual'
 
-export type PatientTag =
+export type CustomerTag =
   | 'new_patient'
   | 'returning'
   | 'vip'
@@ -38,13 +38,13 @@ export type PatientTag =
   | 'payment_pending'
   | 'whatsapp_only'
 
-export type DoctorStatus = 'available' | 'busy' | 'fully_booked' | 'on_break' | 'off_today' | 'emergency_only'
+export type StaffStatus = 'available' | 'busy' | 'fully_booked' | 'on_break' | 'off_today' | 'emergency_only'
 
 export type AICallIntent = 'book_appointment' | 'reschedule' | 'cancel' | 'ask_availability' | 'request_human' | 'other'
 export type AICallResult = 'booked' | 'needs_review' | 'no_slot' | 'cancelled' | 'failed' | 'transferred'
 export type AICallStatus = 'completed' | 'needs_review' | 'failed'
 
-export interface Clinic {
+export interface Workspace {
   id: string
   name: string
   logo_url?: string
@@ -75,16 +75,16 @@ export interface DayHours {
   break_end?: string
 }
 
-export interface Patient {
+export interface Customer {
   id: string
-  clinic_id: string
+  company_id: string
   name: string
   phone: string
   email?: string
   national_id?: string
   city?: string
   patient_type: 'new' | 'returning'
-  tags: PatientTag[]
+  tags: CustomerTag[]
   notes?: string
   no_show_count: number
   total_visits: number
@@ -93,9 +93,9 @@ export interface Patient {
   created_at: string
 }
 
-export interface Doctor {
+export interface StaffMember {
   id: string
-  clinic_id: string
+  company_id: string
   name: string
   specialty: string
   phone?: string
@@ -110,14 +110,14 @@ export interface Doctor {
   max_appointments_per_day: number
   emergency_slots_per_day: number
   appointments_today?: number
-  status?: DoctorStatus
+  status?: StaffStatus
   next_available?: string
   created_at: string
 }
 
 export interface Service {
   id: string
-  clinic_id: string
+  company_id: string
   name: string
   category: string
   duration_minutes: number
@@ -132,9 +132,9 @@ export interface Service {
   created_at: string
 }
 
-export interface Appointment {
+export interface Booking {
   id: string
-  clinic_id: string
+  company_id: string
   patient_id: string
   patient_name: string
   patient_phone: string
@@ -148,8 +148,8 @@ export interface Appointment {
   end_time: string
   duration_minutes: number
   buffer_minutes: number
-  status: AppointmentStatus
-  source: AppointmentSource
+  status: BookingStatus
+  source: BookingSource
   confirmation_status: 'pending' | 'confirmed' | 'declined'
   message_status: MessageStatus
   calendar_sync_status: 'synced' | 'pending' | 'failed'
@@ -162,7 +162,7 @@ export interface Appointment {
 
 export interface MessageLog {
   id: string
-  clinic_id: string
+  company_id: string
   appointment_id?: string
   patient_id?: string
   channel: 'whatsapp'
@@ -180,7 +180,7 @@ export interface MessageLog {
 
 export interface AICallLog {
   id: string
-  clinic_id: string
+  company_id: string
   patient_id?: string
   patient_name?: string
   phone: string
@@ -209,7 +209,7 @@ export interface AITranscriptLine {
 
 export interface Waitlist {
   id: string
-  clinic_id: string
+  company_id: string
   patient_id?: string
   patient_name: string
   patient_phone: string
@@ -322,7 +322,7 @@ export interface CompanyStaff {
 
 export type NotificationSeverity = 'info' | 'warning' | 'critical' | 'success'
 
-export interface ClinicNotification {
+export interface AppNotification {
   id: string
   company_id: string
   notification_type: string

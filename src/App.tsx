@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Suspense, lazy, useEffect } from 'react'
 import { LanguageProvider } from './context/LanguageContext'
-import { ClinicOSProvider } from './context/WorkspaceContext'
+import { WorkspaceProvider } from './context/WorkspaceContext'
 import { ProtectedRoute } from './components/shared/ProtectedRoute'
 import { ErrorBoundary, reloadForFreshAssets } from './components/shared/ErrorBoundary'
 const ClinicAILanding = lazy(() => import('./pages/ClinicAILanding').then((m) => ({ default: m.ClinicAILanding })))
@@ -17,7 +17,7 @@ import { Privacy } from './pages/Privacy'
 import { Terms } from './pages/Terms'
 import { BookACallPage } from './pages/BookACallPage'
 import { NotFound } from './pages/NotFound'
-// Note: ClinicOSProvider wraps only /clinic-os/dashboard/* routes (protected)
+// Note: WorkspaceProvider wraps only /clinic-os/dashboard/* routes (protected)
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -58,7 +58,7 @@ const ClinicOSAdminPage    = lazy(() => import('./pages/clinicOS/admin/ClinicOSA
 const DashboardV2Layout        = lazy(() => import('./dashboard/components/DashboardV2Layout').then(m => ({ default: m.DashboardV2Layout })))
 const DashboardV2Home          = lazy(() => import('./dashboard/pages/Home').then(m => ({ default: m.DashboardV2Home })))
 const DashboardV2Bookings      = lazy(() => import('./dashboard/pages/Bookings').then(m => ({ default: m.DashboardV2Bookings })))
-const DashboardV2Patients      = lazy(() => import('./dashboard/pages/Patients').then(m => ({ default: m.DashboardV2Patients })))
+const DashboardV2Customers      = lazy(() => import('./dashboard/pages/Customers').then(m => ({ default: m.DashboardV2Customers })))
 const DashboardV2Conversations = lazy(() => import('./dashboard/pages/Conversations').then(m => ({ default: m.DashboardV2Conversations })))
 const DashboardV2Reviews       = lazy(() => import('./dashboard/pages/Reviews').then(m => ({ default: m.DashboardV2Reviews })))
 const DashboardV2Revenue       = lazy(() => import('./dashboard/pages/Revenue').then(m => ({ default: m.DashboardV2Revenue })))
@@ -88,7 +88,7 @@ const dashboardChildRoutes = (
   <>
     <Route index element={<DashboardV2Home />} />
     <Route path="bookings" element={<DashboardV2Bookings />} />
-    <Route path="patients" element={<DashboardV2Patients />} />
+    <Route path="patients" element={<DashboardV2Customers />} />
     <Route path="conversations" element={<DashboardV2Conversations />} />
     <Route path="reviews" element={<DashboardV2Reviews />} />
     <Route path="revenue" element={<DashboardV2Revenue />} />
@@ -149,22 +149,22 @@ function App() {
             <Route path="/demo-review/internal-admin" element={<ClinicOSAdminPage embedded />} />
             <Route path="/clinic-os/admin" element={<ClinicOSAdminPage />} />
             <Route path="/clinic-os/select"   element={
-              <ClinicOSProvider><PackageSelectorPage /></ClinicOSProvider>
+              <WorkspaceProvider><PackageSelectorPage /></WorkspaceProvider>
             } />
 
             {/* ── ClinicOS Dashboard v2 (Madar Software Design System — official dashboard) ── */}
             <Route path="/clinic-os/dashboard/*" element={
-              <ClinicOSProvider>
+              <WorkspaceProvider>
                 <DashboardV2Layout />
-              </ClinicOSProvider>
+              </WorkspaceProvider>
             }>
               {dashboardChildRoutes}
             </Route>
             {/* ── ClinicOS Demo Tour (internal, unauthenticated preview with fake data) ── */}
             <Route path="/demo-review/*" element={
-              <ClinicOSProvider>
+              <WorkspaceProvider>
                 <DashboardV2Layout />
-              </ClinicOSProvider>
+              </WorkspaceProvider>
             }>
               {dashboardChildRoutes}
             </Route>

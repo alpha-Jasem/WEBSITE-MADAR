@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Plus, Search, Ticket as TicketIcon, Inbox, ArrowLeft, LayoutGrid, Rows3 } from 'lucide-react'
-import { useClinicOS } from '@/context/WorkspaceContext'
-import { useClinicSupportTickets, createSupportTicket, updateTicketStatus, resolveTicket } from '@/lib/dashboardQueries'
+import { useWorkspace } from '@/context/WorkspaceContext'
+import { useSupportTickets, createSupportTicket, updateTicketStatus, resolveTicket } from '@/lib/dashboardQueries'
 import { Card, Badge, Button, Dialog, Input, Select } from '@/dashboard/components/primitives'
 import { useToast, EmptyState, KpiCardSkeleton } from '@/dashboard/components/uiExtras'
 import { timeAgo } from './HomeWidgets'
@@ -41,8 +41,8 @@ function TicketCard({ ticket, onAdvance }: { ticket: SupportTicket; onAdvance?: 
 }
 
 export function DashboardV2Tickets() {
-  const { companyId, isDemo } = useClinicOS()
-  const { data: tickets, loading, refetch } = useClinicSupportTickets(companyId, isDemo)
+  const { companyId, isDemo } = useWorkspace()
+  const { data: tickets, loading, refetch } = useSupportTickets(companyId, isDemo)
   const [search, setSearch] = useState('')
   const [priorityFilter, setPriorityFilter] = useState<TicketPriority | 'all'>('all')
   const [statusFilter, setStatusFilter] = useState<TicketStatus | 'all'>('all')

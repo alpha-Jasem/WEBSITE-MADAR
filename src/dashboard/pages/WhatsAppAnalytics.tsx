@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { MessageCircle, PlugZap } from 'lucide-react'
-import { useClinicOS } from '@/context/WorkspaceContext'
-import { useClinicMessages, useClinicIntegrations } from '@/lib/dashboardQueries'
+import { useWorkspace } from '@/context/WorkspaceContext'
+import { useMessages, useIntegrations } from '@/lib/dashboardQueries'
 import { Card, Button } from '@/dashboard/components/primitives'
 import { EmptyState, KpiCardSkeleton } from '@/dashboard/components/uiExtras'
 import { useNavigate } from 'react-router-dom'
@@ -9,9 +9,9 @@ import { useNavigate } from 'react-router-dom'
 type Period = 1 | 7 | 30
 
 export function DashboardV2WhatsAppAnalytics() {
-  const { companyId, isDemo } = useClinicOS()
-  const { data: messages, loading: msgLoading } = useClinicMessages(companyId, isDemo)
-  const { data: integrations, loading: intLoading } = useClinicIntegrations(companyId, isDemo)
+  const { companyId, isDemo } = useWorkspace()
+  const { data: messages, loading: msgLoading } = useMessages(companyId, isDemo)
+  const { data: integrations, loading: intLoading } = useIntegrations(companyId, isDemo)
   const [period, setPeriod] = useState<Period>(7)
   const navigate = useNavigate()
   const base = isDemo ? '/demo-review' : '/clinic-os/dashboard'

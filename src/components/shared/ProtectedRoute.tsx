@@ -71,7 +71,7 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
   if (isLoading) return null
 
   if (!isAuthed) {
-    // Clinic OS dashboard → go to clinic login
+    // Workspace OS dashboard → go to clinic login
     if (location.pathname.startsWith('/clinic-os/dashboard')) {
       return <Navigate to="/clinic-os/login" replace />
     }
@@ -81,7 +81,7 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
   }
 
   if (requiredRole && userRole !== requiredRole && userRole !== 'admin') {
-    // Clinic users trying to access wrong portal → redirect to clinic dashboard
+    // Workspace users trying to access wrong portal → redirect to clinic dashboard
     if (location.pathname.startsWith('/clinic-os/')) {
       return <Navigate to="/clinic-os/login" replace />
     }

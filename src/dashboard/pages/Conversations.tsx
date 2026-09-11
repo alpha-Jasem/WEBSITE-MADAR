@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { MessageCircle, Phone, PhoneCall, Inbox } from 'lucide-react'
-import { useClinicOS } from '@/context/WorkspaceContext'
-import { useClinicAICalls, useClinicMessages } from '@/lib/dashboardQueries'
+import { useWorkspace } from '@/context/WorkspaceContext'
+import { useAICalls, useMessages } from '@/lib/dashboardQueries'
 import type { MessageLog, MessageStatus } from '@/types/dashboard'
 import { Card, Badge, Dialog, Button, type BadgeTone } from '@/dashboard/components/primitives'
 import { EmptyState, SkeletonRows, Avatar, ContactActions } from '@/dashboard/components/uiExtras'
@@ -14,9 +14,9 @@ const MSG_TYPE_LABEL: Record<string, string> = {
 }
 
 export function DashboardV2Conversations() {
-  const { companyId, isDemo } = useClinicOS()
-  const { data: aiCalls, loading: callsLoading } = useClinicAICalls(companyId, isDemo)
-  const { data: messages, loading: msgsLoading } = useClinicMessages(companyId, isDemo)
+  const { companyId, isDemo } = useWorkspace()
+  const { data: aiCalls, loading: callsLoading } = useAICalls(companyId, isDemo)
+  const { data: messages, loading: msgsLoading } = useMessages(companyId, isDemo)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [activeMessage, setActiveMessage] = useState<MessageLog | null>(null)
 

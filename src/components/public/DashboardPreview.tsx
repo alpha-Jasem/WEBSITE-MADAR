@@ -169,7 +169,7 @@ export const DashboardPreview = () => {
                     />
                   </div>
                   <p className={`text-xs text-slate-600 mt-1.5 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
-                    {t('موقع عيادة الشاكرين - مرحلة التطوير', 'Al-Shakireen Clinic - Development Phase')}
+                    {t('موقع عيادة الشاكرين - مرحلة التطوير', 'Al-Shakireen Workspace - Development Phase')}
                   </p>
                 </div>
               </div>

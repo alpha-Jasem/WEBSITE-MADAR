@@ -11,7 +11,7 @@ export const DemoSignup = () => {
   })
 
   const navigate = useNavigate()
-  const [form, setForm] = useState({ name: '', clinicName: '', phone: '', email: '', city: '' })
+  const [form, setForm] = useState({ name: '', companyName: '', phone: '', email: '', city: '' })
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -20,7 +20,7 @@ export const DemoSignup = () => {
   const validate = () => {
     const e: Record<string, string> = {}
     if (!form.name.trim()) e.name = 'الاسم مطلوب'
-    if (!form.clinicName.trim()) e.clinicName = 'اسم العيادة مطلوب'
+    if (!form.companyName.trim()) e.companyName = 'اسم العيادة مطلوب'
     if (!form.phone.trim()) e.phone = 'رقم الجوال مطلوب'
     if (!form.email.trim() || !form.email.includes('@')) e.email = 'بريد إلكتروني صحيح مطلوب'
     if (!form.city) e.city = 'المدينة مطلوبة'
@@ -90,7 +90,7 @@ export const DemoSignup = () => {
         {/* Form */}
         <form onSubmit={handleSubmit} style={{ padding: '28px 32px', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <Field name="name" label="اسمك الكريم" placeholder="مثال: أحمد العتيبي" />
-          <Field name="clinicName" label="اسم العيادة" placeholder="مثال: عيادات الأمل للأسنان" />
+          <Field name="companyName" label="اسم العيادة" placeholder="مثال: عيادات الأمل للأسنان" />
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

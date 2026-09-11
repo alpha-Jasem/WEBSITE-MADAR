@@ -1,6 +1,6 @@
 import { MessageCircle, Bell, Phone, Star, CalendarX2 } from 'lucide-react'
-import { useClinicOS } from '@/context/WorkspaceContext'
-import { useClinicReminderRules, toggleReminderRule } from '@/lib/dashboardQueries'
+import { useWorkspace } from '@/context/WorkspaceContext'
+import { useReminderRules, toggleReminderRule } from '@/lib/dashboardQueries'
 import { Card, Switch } from '@/dashboard/components/primitives'
 import { EmptyState, SkeletonRows } from '@/dashboard/components/uiExtras'
 
@@ -13,8 +13,8 @@ const ICON_BY_KEY: Record<string, React.ReactNode> = {
 }
 
 export function DashboardV2Reminders() {
-  const { companyId, isDemo } = useClinicOS()
-  const { data: rules, loading, refetch } = useClinicReminderRules(companyId, isDemo)
+  const { companyId, isDemo } = useWorkspace()
+  const { data: rules, loading, refetch } = useReminderRules(companyId, isDemo)
 
   async function toggle(id: string, current: boolean) {
     if (isDemo) return

@@ -16,17 +16,17 @@ export interface ClinicUsageSummary {
   humanHandoffs: number
 }
 
-interface ClinicOSContextValue {
+interface WorkspaceContextValue {
   packageType: PackageType
   setPackageType: (p: PackageType) => void
-  clinicName: string
+  companyName: string
   userName: string
   userEmail: string
-  clinicPhone: string
-  clinicEmail: string
-  clinicCity: string
-  clinicLogoUrl: string
-  clinicSettings: Record<string, unknown>
+  companyPhone: string
+  companyEmail: string
+  companyCity: string
+  companyLogoUrl: string
+  companySettings: Record<string, unknown>
   companyId: string | null
   isOwner: boolean
   staffRole: string | null
@@ -45,24 +45,24 @@ interface ClinicOSContextValue {
   logout: () => void
 }
 
-const ClinicOSContext = createContext<ClinicOSContextValue | null>(null)
+const WorkspaceContext = createContext<WorkspaceContextValue | null>(null)
 
 const PACKAGE_KEY = 'clinicos_package'
 
-export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
+export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate()
   const location = useLocation()
   const [packageType, setPackageTypeState] = useState<PackageType>(() =>
     (localStorage.getItem(PACKAGE_KEY) as PackageType) || 'whatsapp'
   )
-  const [clinicName, setClinicName] = useState('')
+  const [companyName, setCompanyName] = useState('')
   const [userName, setUserName] = useState('')
   const [userEmail, setUserEmail] = useState('')
-  const [clinicPhone, setClinicPhone] = useState('')
-  const [clinicEmail, setClinicEmail] = useState('')
-  const [clinicCity, setClinicCity] = useState('')
-  const [clinicLogoUrl, setClinicLogoUrl] = useState('')
-  const [clinicSettings, setClinicSettings] = useState<Record<string, unknown>>({})
+  const [companyPhone, setCompanyPhone] = useState('')
+  const [companyEmail, setCompanyEmail] = useState('')
+  const [companyCity, setCompanyCity] = useState('')
+  const [companyLogoUrl, setCompanyLogoUrl] = useState('')
+  const [companySettings, setCompanySettings] = useState<Record<string, unknown>>({})
   const [companyId, setCompanyId] = useState<string | null>(null)
   const [isOwner, setIsOwner] = useState(false)
   const [staffRole, setStaffRole] = useState<string | null>(null)
@@ -87,14 +87,14 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
 
         if (demoRoute) {
           setCompanyId(DEMO_CLINIC.id)
-          setClinicName(DEMO_CLINIC.name)
+          setCompanyName(DEMO_CLINIC.name)
           setUserName('مستخدم تجريبي')
           setUserEmail(DEMO_CLINIC.email)
-          setClinicPhone(DEMO_CLINIC.phone)
-          setClinicEmail(DEMO_CLINIC.email)
-          setClinicCity(DEMO_CLINIC.city)
-          setClinicLogoUrl('')
-          setClinicSettings({})
+          setCompanyPhone(DEMO_CLINIC.phone)
+          setCompanyEmail(DEMO_CLINIC.email)
+          setCompanyCity(DEMO_CLINIC.city)
+          setCompanyLogoUrl('')
+          setCompanySettings({})
           setIsOwner(true)
           setStaffRole(null)
           setIsSubscribed(true)
@@ -170,12 +170,12 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
         }
 
         if (company?.id) setCompanyId(company.id)
-        if (company?.name) setClinicName(company.name)
-        setClinicPhone(company?.owner_phone || '')
-        setClinicEmail(company?.owner_email || user.email || '')
-        setClinicCity(company?.city || '')
-        setClinicLogoUrl(company?.logo_url || '')
-        setClinicSettings((company?.clinic_settings as Record<string, unknown>) || {})
+        if (company?.name) setCompanyName(company.name)
+        setCompanyPhone(company?.owner_phone || '')
+        setCompanyEmail(company?.owner_email || user.email || '')
+        setCompanyCity(company?.city || '')
+        setCompanyLogoUrl(company?.logo_url || '')
+        setCompanySettings((company?.clinic_settings as Record<string, unknown>) || {})
         setSubscriptionStatus(company?.subscription_status || null)
         setSubscriptionStartDate(company?.subscription_start_date || null)
         setSubscriptionEndDate(company?.subscription_end_date || null)
@@ -240,16 +240,16 @@ export const ClinicOSProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <ClinicOSContext.Provider value={{ packageType, setPackageType, clinicName, userName, userEmail, clinicPhone, clinicEmail, clinicCity, clinicLogoUrl, clinicSettings, companyId, isOwner, staffRole, accountLoading, accountError, isDemo, isSubscribed, subscriptionStatus, subscriptionStartDate, subscriptionEndDate, usageCycleStart, usageCycleEnd, usageMetrics, usageSummary, refreshAccount: load, logout }}>
+    <WorkspaceContext.Provider value={{ packageType, setPackageType, companyName, userName, userEmail, companyPhone, companyEmail, companyCity, companyLogoUrl, companySettings, companyId, isOwner, staffRole, accountLoading, accountError, isDemo, isSubscribed, subscriptionStatus, subscriptionStartDate, subscriptionEndDate, usageCycleStart, usageCycleEnd, usageMetrics, usageSummary, refreshAccount: load, logout }}>
       <ToastProvider>
         {children}
       </ToastProvider>
-    </ClinicOSContext.Provider>
+    </WorkspaceContext.Provider>
   )
 }
 
-export const useClinicOS = () => {
-  const ctx = useContext(ClinicOSContext)
-  if (!ctx) throw new Error('useClinicOS must be used inside ClinicOSProvider')
+export const useWorkspace = () => {
+  const ctx = useContext(WorkspaceContext)
+  if (!ctx) throw new Error('useWorkspace must be used inside WorkspaceProvider')
   return ctx
 }

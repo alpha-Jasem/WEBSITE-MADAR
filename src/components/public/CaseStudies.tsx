@@ -27,7 +27,7 @@ import { openWhatsAppChat } from '../../lib/whatsapp'
 
 const cases = [
   {
-    industry: { ar: 'عيادة أسنان', en: 'Dental Clinic' },
+    industry: { ar: 'عيادة أسنان', en: 'Dental Workspace' },
     tag: { ar: 'مساعد صوتي + حجوزات', en: 'Voice Assistant + Booking' },
     gradient: 'linear-gradient(135deg, #1565C0, #0099CC)',
     glow: 'rgba(21,101,192,0.12)',
@@ -43,20 +43,20 @@ const cases = [
     author: { ar: 'إدارة عيادات نور — جدة', en: 'Noor Dental Clinics Management — Jeddah' },
   },
   {
-    industry: { ar: 'عيادة عامة', en: 'General Clinic' },
+    industry: { ar: 'عيادة عامة', en: 'General Workspace' },
     tag: { ar: 'واتساب + تذكيرات تلقائية', en: 'WhatsApp + Auto Reminders' },
     gradient: 'linear-gradient(135deg, #0D1B3E, #00BFFF)',
     glow: 'rgba(0,191,255,0.12)',
     metrics: [
-      { icon: Clock,      before: { ar: 'يدوي (دقائق)', en: 'Manual (minutes)' }, after: { ar: 'أقل من ثانية', en: 'Under 1 second' }, label: { ar: 'وقت الرد على المرضى', en: 'Patient Response Time' }, color: '#0D1B3E' },
-      { icon: Users,      before: { ar: '٣٠%', en: '30%' }, after: { ar: '٧٨%', en: '78%' }, label: { ar: 'نسبة حضور المرضى', en: 'Patient Attendance Rate' }, color: '#00BFFF' },
+      { icon: Clock,      before: { ar: 'يدوي (دقائق)', en: 'Manual (minutes)' }, after: { ar: 'أقل من ثانية', en: 'Under 1 second' }, label: { ar: 'وقت الرد على المرضى', en: 'Customer Response Time' }, color: '#0D1B3E' },
+      { icon: Users,      before: { ar: '٣٠%', en: '30%' }, after: { ar: '٧٨%', en: '78%' }, label: { ar: 'نسبة حضور المرضى', en: 'Customer Attendance Rate' }, color: '#00BFFF' },
       { icon: DollarSign, before: { ar: '+٤٠ ساعة', en: '40+ hours' }, after: { ar: '٤ ساعات', en: '4 hours' }, label: { ar: 'ساعات عمل يدوي شهرياً', en: 'Monthly Manual Work' }, color: '#1565C0' },
     ],
     testimony: {
       ar: '"قبل مدار كنا نفوت مرضى كل يوم بدون ما ندري. الحين كل موعد يُسجَّل تلقائياً والتذكيرات تُرسَل بدون أي جهد."',
       en: '"Before Madar, we missed patients every day without realizing it. Now every appointment is logged automatically and reminders are sent without any effort."',
     },
-    author: { ar: 'فريق عيادة الصحة — الرياض', en: 'Al-Sehha Clinic Team — Riyadh' },
+    author: { ar: 'فريق عيادة الصحة — الرياض', en: 'Al-Sehha Workspace Team — Riyadh' },
   },
 ]
 

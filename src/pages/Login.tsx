@@ -306,7 +306,7 @@ export const Login = () => {
                       </div>
                       <div>
                         <p className="font-cairo font-bold text-[#0D1B3E] text-sm">حساب جديد</p>
-                        <p className="font-tajawal text-xs text-slate-400">عيادة — Clinic OS</p>
+                        <p className="font-tajawal text-xs text-slate-400">عيادة — Workspace OS</p>
                       </div>
                     </div>
 

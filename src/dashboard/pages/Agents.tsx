@@ -1,10 +1,10 @@
 import { Bot, Plus } from 'lucide-react'
-import { useClinicOS } from '@/context/WorkspaceContext'
+import { useWorkspace } from '@/context/WorkspaceContext'
 import { Card, Badge, Button } from '@/dashboard/components/primitives'
 import { useToast } from '@/dashboard/components/uiExtras'
 
 export function DashboardV2Agents() {
-  const { clinicName } = useClinicOS()
+  const { companyName } = useWorkspace()
   const pushToast = useToast()
 
   return (
@@ -29,7 +29,7 @@ export function DashboardV2Agents() {
               <span style={{ fontWeight: 700, fontSize: 14.5 }}>مها</span>
               <Badge tone="success">متصلة</Badge>
             </div>
-            <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)', marginTop: 2 }}>الوكيل الصوتي — ElevenLabs Conversational AI · {clinicName || 'عيادتك'}</div>
+            <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)', marginTop: 2 }}>الوكيل الصوتي — ElevenLabs Conversational AI · {companyName || 'عيادتك'}</div>
           </div>
         </div>
       </Card>

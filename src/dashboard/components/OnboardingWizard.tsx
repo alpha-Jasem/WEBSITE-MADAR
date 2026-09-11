@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { CheckCircle2, MapPin, Wrench, PartyPopper } from 'lucide-react'
-import { useClinicOS } from '@/context/WorkspaceContext'
-import { useClinicBranches, useClinicServices, createBranch, createService, updateClinicWorkingHours } from '@/lib/dashboardQueries'
+import { useWorkspace } from '@/context/WorkspaceContext'
+import { useBranches, useServices, createBranch, createService, updateWorkingHours } from '@/lib/dashboardQueries'
 import { Card, Button, Input } from './primitives'
 
 const STEPS = ['الفرع', 'أول خدمة', 'ساعات العمل', 'جاهز'] as const
@@ -14,14 +14,14 @@ const DEFAULT_HOURS = Object.fromEntries(
 function dismissKey(companyId: string) { return `dv2_onboarding_dismissed_${companyId}` }
 
 export function OnboardingWizard() {
-  const { companyId, isDemo, clinicName, accountLoading } = useClinicOS()
-  const { data: branches, refetch: refetchBranches } = useClinicBranches(companyId, isDemo)
-  const { data: services, refetch: refetchServices } = useClinicServices(companyId, isDemo)
+  const { companyId, isDemo, companyName, accountLoading } = useWorkspace()
+  const { data: branches, refetch: refetchBranches } = useBranches(companyId, isDemo)
+  const { data: services, refetch: refetchServices } = useServices(companyId, isDemo)
 
   const [dismissed, setDismissed] = useState(true)
   const [step, setStep] = useState(0)
   const [saving, setSaving] = useState(false)
-  const [branchForm, setBranchForm] = useState({ name: clinicName || '', address: '' })
+  const [branchForm, setBranchForm] = useState({ name: companyName || '', address: '' })
   const [serviceForm, setServiceForm] = useState({ name: '', price: '', duration: '30' })
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export function OnboardingWizard() {
     setSaving(true)
     try {
       await createService({
-        clinic_id: companyId, name: serviceForm.name, category: 'عام',
+        company_id: companyId, name: serviceForm.name, category: 'عام',
         duration_minutes: Number(serviceForm.duration) || 30, buffer_minutes: 0,
         price: Number(serviceForm.price) || 0, active: true, requires_approval: false,
         available_for_ai: true, available_for_whatsapp: true,
@@ -68,7 +68,7 @@ export function OnboardingWizard() {
     if (!companyId) return
     setSaving(true)
     try {
-      await updateClinicWorkingHours(companyId, {}, DEFAULT_HOURS)
+      await updateWorkingHours(companyId, {}, DEFAULT_HOURS)
       setStep(3)
     } finally { setSaving(false) }
   }

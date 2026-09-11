@@ -19,7 +19,7 @@ const chatScriptEn: Msg[] = [
   { id: 1, from: 'user', text: 'Hi, I run a clinic and we get many WhatsApp messages and calls', time: '10:41' },
   { id: 2, from: 'ai',   text: 'Great. We can help with a system that answers patients on WhatsApp and phone calls, identifies the service they need, and books appointments automatically.\n\nHow many daily interactions do you get?', time: '10:41' },
   { id: 3, from: 'user', text: 'Around 40 to 60 daily, mostly about appointments and prices', time: '10:42' },
-  { id: 4, from: 'ai',   text: 'That is a strong growth opportunity.\n\nRecommended system:\n✅ Instant price and service replies\n✅ 24/7 automatic booking\n✅ Appointment reminders\n✅ Post-visit follow-up\n\nWant a first growth map?', time: '10:42' },
+  { id: 4, from: 'ai',   text: 'That is a strong growth opportunity.\n\nRecommended system:\n✅ Instant price and service replies\n✅ 24/7 automatic booking\n✅ Booking reminders\n✅ Post-visit follow-up\n\nWant a first growth map?', time: '10:42' },
   { id: 5, from: 'user', text: 'Yes, when can we talk?', time: '10:43' },
   { id: 6, from: 'ai',   text: 'I sent a short-call link. You will leave with a clear diagnosis: where bookings leak and what flow to automate first.', time: '10:43' },
 ]
@@ -171,7 +171,7 @@ const BookingDemo = () => {
         </div>
         <div>
           <p className={`text-sm font-bold text-white ${language === 'ar' ? 'font-cairo' : 'font-sora'}`}>
-            {t('حجز موعد تلقائي', 'Auto Appointment Booking')}
+            {t('حجز موعد تلقائي', 'Auto Booking Booking')}
           </p>
           <p className={`text-[10px] text-slate-500 ${language === 'ar' ? 'font-tajawal' : 'font-work'}`}>
             {t('اختر الوقت المناسب لك', 'Choose your preferred time')}

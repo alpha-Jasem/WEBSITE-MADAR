@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Download } from 'lucide-react'
-import { useClinicOS } from '@/context/WorkspaceContext'
-import { useClinicAppointments, useClinicAICalls, useClinicMessages } from '@/lib/dashboardQueries'
+import { useWorkspace } from '@/context/WorkspaceContext'
+import { useBookings, useAICalls, useMessages } from '@/lib/dashboardQueries'
 import { exportRowsToExcel } from '@/lib/exportExcel'
 import { Card, Button } from '@/dashboard/components/primitives'
 import { EmptyState, Skeleton } from '@/dashboard/components/uiExtras'
@@ -32,10 +32,10 @@ const SOURCE_LABELS: Record<string, string> = {
 }
 
 export function DashboardV2Reports() {
-  const { companyId, isDemo } = useClinicOS()
-  const { data: appointments, loading: apptsLoading } = useClinicAppointments(companyId, undefined, isDemo)
-  const { data: aiCalls, loading: callsLoading } = useClinicAICalls(companyId, isDemo)
-  const { data: messages, loading: msgsLoading } = useClinicMessages(companyId, isDemo)
+  const { companyId, isDemo } = useWorkspace()
+  const { data: appointments, loading: apptsLoading } = useBookings(companyId, undefined, isDemo)
+  const { data: aiCalls, loading: callsLoading } = useAICalls(companyId, isDemo)
+  const { data: messages, loading: msgsLoading } = useMessages(companyId, isDemo)
   const loading = apptsLoading || callsLoading || msgsLoading
 
   const appts = appointments || []

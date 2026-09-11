@@ -31,7 +31,7 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
   '/admin': { title: 'نظرة عامة', sub: 'ملخّص أداء منصة مدار' },
   '/admin/reports': { title: 'التقارير', sub: 'تحليلات الأداء والإيرادات' },
   '/admin/companies': { title: 'الشركات', sub: 'إدارة حسابات العملاء والباقات' },
-  '/admin/accounts': { title: 'حسابات العيادات', sub: 'تحكم باشتراكات Clinic OS وحدود الاستخدام' },
+  '/admin/accounts': { title: 'حسابات العيادات', sub: 'تحكم باشتراكات Workspace OS وحدود الاستخدام' },
   '/admin/leads': { title: 'العملاء المحتملون', sub: 'متابعة وتحويل الليدز' },
   '/admin/pipeline': { title: 'خط المبيعات', sub: 'لوحة المراحل البيعية' },
   '/admin/sales-blitz': { title: 'Sales Blitz — جدة الطبية', sub: '26 عيادة مستهدفة في جدة' },

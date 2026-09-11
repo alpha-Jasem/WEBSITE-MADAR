@@ -1,4 +1,4 @@
-// ─── Clinic OS → n8n Webhooks ────────────────────────────────────────────────
+// ─── Workspace OS → n8n Webhooks ────────────────────────────────────────────────
 // All calls are fire-and-forget (silent fail) — UI never blocks on these.
 
 const N8N_BASE = 'https://keepcalm.app.n8n.cloud/webhook'

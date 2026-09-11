@@ -1,18 +1,18 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Settings, Users, CreditCard, LogOut } from 'lucide-react'
-import { useClinicOS } from '@/context/WorkspaceContext'
+import { useWorkspace } from '@/context/WorkspaceContext'
 import { getOverallUsage, getUsageMetrics } from '@/lib/clinicOSProduct'
 
 export function AccountMenu({ base }: { base: string }) {
   const navigate = useNavigate()
-  const { clinicName, packageType, isDemo, usageMetrics, logout } = useClinicOS()
+  const { companyName, packageType, isDemo, usageMetrics, logout } = useWorkspace()
   const [open, setOpen] = useState(false)
   const [hover, setHover] = useState(false)
 
   const metrics = isDemo ? getUsageMetrics(packageType) : usageMetrics
   const overall = getOverallUsage(packageType, metrics)
-  const initial = (clinicName || 'م').trim()[0] || 'م'
+  const initial = (companyName || 'م').trim()[0] || 'م'
 
   function go(path: string) {
     setOpen(false)
@@ -51,7 +51,7 @@ export function AccountMenu({ base }: { base: string }) {
             border: '1px solid var(--border-default)', overflow: 'hidden',
           }}>
             <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border-default)' }}>
-              <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>{clinicName || 'حسابي'}</div>
+              <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>{companyName || 'حسابي'}</div>
               <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>{overall}% من الاستخدام الشهري</div>
             </div>
             {[

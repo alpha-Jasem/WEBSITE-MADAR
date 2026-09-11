@@ -2,27 +2,27 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Plus, Search, List, CalendarDays, ChevronRight, ChevronLeft, CalendarX2, Trash2 } from 'lucide-react'
-import { useClinicOS } from '@/context/WorkspaceContext'
+import { useWorkspace } from '@/context/WorkspaceContext'
 import {
-  useClinicAppointments, useClinicDoctors, useClinicServices,
-  createAppointment, updateAppointmentStatus,
+  useBookings, useStaffMembers, useServices,
+  createBooking, updateBookingStatus,
 } from '@/lib/dashboardQueries'
-import type { AppointmentStatus } from '@/types/dashboard'
+import type { BookingStatus } from '@/types/dashboard'
 import { Card, Badge, Button, Dialog, Input, Select, type BadgeTone } from '@/dashboard/components/primitives'
 import { EmptyState, SkeletonRows, Pagination, useToast, Avatar, SortableHeader, ContactActions } from '@/dashboard/components/uiExtras'
 
 type SortKey = 'patient_name' | 'appointment_date' | 'start_time'
 const PAGE_SIZE = 10
 
-const STATUS_LABEL: Record<AppointmentStatus, string> = {
+const STATUS_LABEL: Record<BookingStatus, string> = {
   confirmed: 'مؤكد', pending: 'قيد الانتظار', checked_in: 'تم الوصول', completed: 'مكتمل',
   cancelled: 'ملغى', no_show: 'لم يحضر', rescheduled: 'مؤجل', needs_review: 'يحتاج مراجعة',
 }
-const STATUS_TONE: Record<AppointmentStatus, BadgeTone> = {
+const STATUS_TONE: Record<BookingStatus, BadgeTone> = {
   confirmed: 'success', pending: 'warning', checked_in: 'brand', completed: 'brand',
   cancelled: 'danger', no_show: 'danger', rescheduled: 'neutral', needs_review: 'warning',
 }
-const FILTERS: (AppointmentStatus | 'all')[] = ['all', 'confirmed', 'pending', 'completed', 'cancelled', 'no_show']
+const FILTERS: (BookingStatus | 'all')[] = ['all', 'confirmed', 'pending', 'completed', 'cancelled', 'no_show']
 const SOURCE_LABELS: Record<string, string> = {
   ai_booking: 'حجز بالذكاء الاصطناعي', whatsapp: 'واتساب', website: 'الموقع الإلكتروني',
   reception: 'الاستقبال', manual: 'يدوي',
@@ -94,13 +94,13 @@ function MiniCalendar({ month, appointmentsByDate, selectedDate, onSelectDate, o
 }
 
 export function DashboardV2Bookings() {
-  const { companyId, isDemo } = useClinicOS()
-  const { data: appointments, loading, refetch } = useClinicAppointments(companyId, undefined, isDemo)
-  const { data: doctors } = useClinicDoctors(companyId, isDemo)
-  const { data: services } = useClinicServices(companyId, isDemo)
+  const { companyId, isDemo } = useWorkspace()
+  const { data: appointments, loading, refetch } = useBookings(companyId, undefined, isDemo)
+  const { data: doctors } = useStaffMembers(companyId, isDemo)
+  const { data: services } = useServices(companyId, isDemo)
   const pushToast = useToast()
 
-  const [filter, setFilter] = useState<AppointmentStatus | 'all'>('all')
+  const [filter, setFilter] = useState<BookingStatus | 'all'>('all')
   const [serviceFilter, setServiceFilter] = useState('all')
   const [sourceFilter, setSourceFilter] = useState<string | null>(null)
   const [query, setQuery] = useState('')
@@ -185,7 +185,7 @@ export function DashboardV2Bookings() {
     if (ids.length === 0) return
     setBulkCancelling(true)
     try {
-      await Promise.all(ids.map((id) => updateAppointmentStatus(id, 'cancelled')))
+      await Promise.all(ids.map((id) => updateBookingStatus(id, 'cancelled')))
       pushToast({ kind: 'success', title: `تم إلغاء ${ids.length} حجز` })
       setSelected(new Set())
       refetch()
@@ -216,8 +216,8 @@ export function DashboardV2Bookings() {
       const [h, m] = form.start_time.split(':').map(Number)
       const endDate = new Date(0, 0, 0, h, m + duration)
       const end_time = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`
-      await createAppointment({
-        clinic_id: companyId,
+      await createBooking({
+        company_id: companyId,
         patient_name: form.patient_name,
         patient_phone: form.patient_phone,
         doctor_id: form.doctor_id || undefined,
@@ -247,7 +247,7 @@ export function DashboardV2Bookings() {
 
   function cancelBooking(id: string) {
     const timeoutId = setTimeout(async () => {
-      await updateAppointmentStatus(id, 'cancelled')
+      await updateBookingStatus(id, 'cancelled')
       refetch()
     }, 4500)
     pushToast({

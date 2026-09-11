@@ -120,7 +120,7 @@ export const ClinicOSAdmin = ({ embedded = false }: { embedded?: boolean }) => {
 
   const body = <div className="clinic-ai-page">
     <div className="clinic-ai-header">
-      <div><h1>اشتراكات Clinic OS</h1><p>فعّل الباقة والحدود ودورة الاستخدام للعميل بضغطة واحدة بعد تأكيد التحويل.</p></div>
+      <div><h1>اشتراكات Workspace OS</h1><p>فعّل الباقة والحدود ودورة الاستخدام للعميل بضغطة واحدة بعد تأكيد التحويل.</p></div>
       <button className="clinic-action secondary" onClick={loadClients} disabled={loading}><RefreshCw size={15}/>تحديث</button>
     </div>
     <div className="clinic-kpi-grid">

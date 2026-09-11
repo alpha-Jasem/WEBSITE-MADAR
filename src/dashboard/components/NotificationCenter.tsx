@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Bell, CalendarCheck2, Star, CalendarX2, CheckCheck } from 'lucide-react'
-import { useClinicOS } from '@/context/WorkspaceContext'
-import { useClinicNotifications, markNotificationRead, markAllNotificationsRead } from '@/lib/dashboardQueries'
+import { useWorkspace } from '@/context/WorkspaceContext'
+import { useNotifications, markNotificationRead, markAllNotificationsRead } from '@/lib/dashboardQueries'
 import type { NotificationSeverity } from '@/types/dashboard'
 
 const ICON_BY_TYPE: Record<string, React.ReactNode> = {
@@ -26,7 +26,7 @@ function timeAgo(iso: string) {
   return `منذ ${Math.floor(hours / 24)} يوم`
 }
 
-function NotificationRow({ n, onClick }: { n: NonNullable<ReturnType<typeof useClinicNotifications>['data']>[number]; onClick: () => void }) {
+function NotificationRow({ n, onClick }: { n: NonNullable<ReturnType<typeof useNotifications>['data']>[number]; onClick: () => void }) {
   return (
     <div
       onClick={onClick}
@@ -52,8 +52,8 @@ function NotificationRow({ n, onClick }: { n: NonNullable<ReturnType<typeof useC
 
 export function NotificationCenter() {
   const navigate = useNavigate()
-  const { companyId, isDemo } = useClinicOS()
-  const { data: notifications, refetch } = useClinicNotifications(companyId, isDemo)
+  const { companyId, isDemo } = useWorkspace()
+  const { data: notifications, refetch } = useNotifications(companyId, isDemo)
   const [open, setOpen] = useState(false)
 
   const rows = notifications || []

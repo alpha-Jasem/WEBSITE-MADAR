@@ -379,7 +379,7 @@ const TrustLine = () => {
 const HowItWorks = () => {
   const { t, dir } = useLanguage()
   const steps = [
-    { n: '01', title: t('العميل يراسل أو يتصل', 'Patient messages or calls'), body: t('عبر واتساب أو مكالمة هاتفية مباشرة على رقم عيادتك.', "Via WhatsApp or a direct call to your clinic's number.") },
+    { n: '01', title: t('العميل يراسل أو يتصل', 'Customer messages or calls'), body: t('عبر واتساب أو مكالمة هاتفية مباشرة على رقم عيادتك.', "Via WhatsApp or a direct call to your clinic's number.") },
     { n: '02', title: t('المساعد يرد ويفهم الطلب', 'The agent answers and understands'), body: t('يتكلم لهجتك، يسأل الأسئلة الصح، ويعرف الفرق بين حجز وإلغاء واستفسار.', 'Speaks your dialect, asks the right questions, and knows booking from cancelling from a general question.') },
     { n: '03', title: t('يحجز مباشرة بالتقويم', 'Books directly on the calendar'), body: t('يشيك على الأوقات الفعلية المتاحة عند كل دكتور ويثبت الموعد فوراً.', "Checks each doctor's real availability and confirms the slot instantly.") },
     { n: '04', title: t('يذكّر ويتابع', 'Reminds and follows up'), body: t('رسالة تأكيد وتذكير تلقائي قبل الموعد — تقليل الغياب بدون أي مجهود منك.', 'Automatic confirmation and reminder before the visit — fewer no-shows, zero effort.') },
@@ -450,7 +450,7 @@ const Pricing = () => {
     {
       name: t('البداية الذكية', 'Smart Start'),
       desc: t('لعيادة وحدة تبي تجرب الفكرة', 'For a single clinic testing the waters'),
-      features: [t('مساعد واتساب', 'WhatsApp agent'), t('حجز مواعيد', 'Appointment booking'), t('تذكيرات تلقائية', 'Automatic reminders')],
+      features: [t('مساعد واتساب', 'WhatsApp agent'), t('حجز مواعيد', 'Booking booking'), t('تذكيرات تلقائية', 'Automatic reminders')],
       cta: t('ابدأ الآن', 'Get started'),
       highlight: false,
     },
@@ -723,7 +723,7 @@ const Services = () => {
   const items = [
     { icon: Phone, title: t('الوكيل الصوتي (AI Voice Agent)', 'AI Voice Agent'), body: t('يستقبل المكالمات ٢٤/٧، يجاوب الأسئلة، يحجز ويعدّل المواعيد، ويحوّل المكالمة للموظف عند الحاجة — بصوت طبيعي باللهجة العربية.', 'Answers calls 24/7, handles questions, books and edits appointments, and transfers to staff when needed — natural Arabic voice.') },
     { icon: MessageCircle, title: t('وكيل واتساب الذكي', 'WhatsApp AI Agent'), body: t('رد فوري على كل رسالة، حجز وتعديل المواعيد، الرد على الأسئلة، إرسال الموقع والأسعار، ومتابعة المريض.', 'Instant reply to every message — booking, editing, Q&A, sending location and pricing, and patient follow-up.') },
-    { icon: Calendar, title: t('أتمتة المواعيد', 'Appointment Automation'), body: t('تذكير وتأكيد تلقائي، إعادة جدولة وإلغاء بسهولة، وتقليل حالات عدم الحضور (No-Shows).', 'Automatic reminders and confirmations, easy rescheduling, and fewer no-shows.') },
+    { icon: Calendar, title: t('أتمتة المواعيد', 'Booking Automation'), body: t('تذكير وتأكيد تلقائي، إعادة جدولة وإلغاء بسهولة، وتقليل حالات عدم الحضور (No-Shows).', 'Automatic reminders and confirmations, easy rescheduling, and fewer no-shows.') },
     { icon: Bell, title: t('متابعة ما بعد الزيارة', 'Post-Visit Automation'), body: t('رسالة شكر بعد الزيارة، طلب تقييم Google، متابعة حالة المريض، وعرض خدمات مستقبلية.', 'Post-visit thank-you, Google review requests, patient status follow-up, and future offers.') },
     { icon: Zap, title: t('ردود قوقل ماب الذكية', 'Google Maps Reviews AI'), body: t('يراقب التعليقات الجديدة ويرد عليها بذكاء بأسلوب يعزّز سمعة عيادتك ويزيد تقييماتك.', 'Monitors new reviews and replies intelligently in a way that boosts your reputation and ratings.') },
     { icon: BarChart3, title: t('لوحة التحكم والتقارير', 'Dashboard & Analytics'), body: t('كل بيانات عيادتك في مكان واحد — محادثات، حجوزات، إيرادات، وأداء الذكاء الاصطناعي لحظة بلحظة.', "All your clinic's data in one place — conversations, bookings, revenue, and AI performance in real time.") },
@@ -792,7 +792,7 @@ const CaseStudy = () => {
     { n: '1,248', l: t('إجمالي الحجوزات', 'Total bookings'), d: '+28%' },
     { n: '90.2%', l: t('معدل الحضور', 'Attendance rate'), d: '+6%' },
     { n: '482,650', l: t('إجمالي الإيرادات (ر.س)', 'Total revenue (SAR)'), d: '+32%' },
-    { n: '4.8/5', l: t('رضا المرضى', 'Patient satisfaction'), d: '+4.8%' },
+    { n: '4.8/5', l: t('رضا المرضى', 'Customer satisfaction'), d: '+4.8%' },
   ]
   return (
     <section id="dashboard" dir={dir} style={{ background: K.bgAlt, padding: '110px 0', borderTop: `1px solid ${K.rule}`, borderBottom: `1px solid ${K.rule}` }}>
@@ -873,7 +873,7 @@ const Tools = () => {
   const { t, dir } = useLanguage()
   const integrations = [
     { logo: '/logos/whatsapp.svg', name: 'WhatsApp Business', label: t('المكالمات والرسائل', 'Calls & messages') },
-    { logo: '/logos/google-calendar.svg', name: 'Google Calendar', label: t('مزامنة وإدارة المواعيد', 'Appointment sync') },
+    { logo: '/logos/google-calendar.svg', name: 'Google Calendar', label: t('مزامنة وإدارة المواعيد', 'Booking sync') },
     { logo: '/logos/google-maps.svg', name: 'Google Maps', label: t('الرد على التقييمات', 'Reviews & replies') },
     { logo: '/logos/instagram.svg', name: 'Meta', label: t('رسائل إنستقرام وفيسبوك', 'Instagram & Facebook DMs') },
     { logo: '/logos/twilio.svg', name: 'SMS', label: t('تذكيرات ورسائل نصية', 'SMS reminders') },

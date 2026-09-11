@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Plus, Wrench, ChevronDown, Sparkles } from 'lucide-react'
-import { useClinicOS } from '@/context/WorkspaceContext'
-import { useClinicServices, createService, updateService } from '@/lib/dashboardQueries'
+import { useWorkspace } from '@/context/WorkspaceContext'
+import { useServices, createService, updateService } from '@/lib/dashboardQueries'
 import type { Service } from '@/types/dashboard'
 import { Card, Badge, Button, Dialog, Input, Switch } from '@/dashboard/components/primitives'
 import { useToast, EmptyState, SkeletonRows } from '@/dashboard/components/uiExtras'
@@ -10,8 +10,8 @@ const EMPTY_FORM = { name: '', category: '', duration_minutes: '30', price: '', 
 const UNCATEGORIZED = 'خدمات أخرى'
 
 export function DashboardV2Services() {
-  const { companyId, isDemo } = useClinicOS()
-  const { data: services, loading, refetch } = useClinicServices(companyId, isDemo)
+  const { companyId, isDemo } = useWorkspace()
+  const { data: services, loading, refetch } = useServices(companyId, isDemo)
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Service | null>(null)
@@ -52,13 +52,13 @@ export function DashboardV2Services() {
     try {
       if (editing) {
         await updateService(editing.id, {
-          clinic_id: companyId, name: form.name, category: form.category,
+          company_id: companyId, name: form.name, category: form.category,
           duration_minutes: Number(form.duration_minutes) || 30, price: Number(form.price) || 0, active: form.active,
           available_for_ai: form.available_for_ai,
         })
       } else {
         await createService({
-          clinic_id: companyId, name: form.name, category: form.category,
+          company_id: companyId, name: form.name, category: form.category,
           duration_minutes: Number(form.duration_minutes) || 30, buffer_minutes: 0, price: Number(form.price) || 0,
           active: form.active, requires_approval: false, available_for_ai: form.available_for_ai, available_for_whatsapp: true,
         })
@@ -77,7 +77,7 @@ export function DashboardV2Services() {
     if (isDemo || !companyId) return
     setOptimisticActive((o) => ({ ...o, [s.id]: !s.active }))
     try {
-      await updateService(s.id, { clinic_id: companyId, active: !s.active })
+      await updateService(s.id, { company_id: companyId, active: !s.active })
       refetch()
     } catch (e) {
       setOptimisticActive((o) => { const { [s.id]: _drop, ...rest } = o; return rest })

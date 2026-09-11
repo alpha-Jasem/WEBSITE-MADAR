@@ -8,8 +8,8 @@ import {
   Wrench, Sun, Moon, AlertTriangle, ChevronsRight, ChevronsLeft, Plus, CalendarCheck2, Ticket,
   ClipboardList, BookOpen,
   } from 'lucide-react'
-import { useClinicOS } from '@/context/WorkspaceContext'
-import { useClinicSupportTickets, useClinicTodayAppointments } from '@/lib/dashboardQueries'
+import { useWorkspace } from '@/context/WorkspaceContext'
+import { useSupportTickets, useTodayBookings } from '@/lib/dashboardQueries'
 import { NotificationCenter } from './NotificationCenter'
 import { AccountMenu } from './AccountMenu'
 import { SupportChat } from './SupportChat'
@@ -34,7 +34,7 @@ interface NavItem {
 export function DashboardV2Layout() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { companyId, clinicName, userName, isDemo, accountError, refreshAccount, logout } = useClinicOS()
+  const { companyId, companyName, userName, isDemo, accountError, refreshAccount, logout } = useWorkspace()
   const [profileOpen, setProfileOpen] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem(THEME_KEY) as 'dark') || 'light')
@@ -45,9 +45,9 @@ export function DashboardV2Layout() {
   // The mobile drawer is opened deliberately, so it always shows full labels —
   // an icon-only drawer would be pointless there.
   const expanded = !collapsed || hoverExpanded || mobileNavOpen
-  const { data: tickets } = useClinicSupportTickets(companyId, isDemo)
+  const { data: tickets } = useSupportTickets(companyId, isDemo)
   const openTicketCount = (tickets || []).filter((t) => t.status === 'open').length
-  const { data: todayAppointments } = useClinicTodayAppointments(companyId, isDemo)
+  const { data: todayAppointments } = useTodayBookings(companyId, isDemo)
   const todayCount = (todayAppointments || []).length
 
   useEffect(() => { setMobileNavOpen(false) }, [location.pathname])
@@ -214,12 +214,12 @@ export function DashboardV2Layout() {
             <div style={{
               width: 20, height: 20, borderRadius: '50%', background: 'var(--gradient-brand)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, flexShrink: 0, color: 'var(--text-on-brand)',
-            }}>{(clinicName || userName || 'م')[0]}</div>
+            }}>{(companyName || userName || 'م')[0]}</div>
             {expanded && (
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '.09em', textTransform: 'uppercase' }}>العيادة</div>
                 <div style={{ fontSize: 14, fontWeight: 400, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {clinicName || (isDemo ? 'عرض تجريبي' : 'عيادتي')}
+                  {companyName || (isDemo ? 'عرض تجريبي' : 'عيادتي')}
                 </div>
               </div>
             )}

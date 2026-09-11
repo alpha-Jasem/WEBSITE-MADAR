@@ -273,7 +273,7 @@ export function AdminClinicAccounts() {
       <div className="sec-head admin-accounts-heading">
         <div>
           <div className="sec-title">الحسابات</div>
-          <div className="sec-sub">إدارة اشتراكات Clinic OS والباقات والحدود ودورات الاستخدام من مكان واحد</div>
+          <div className="sec-sub">إدارة اشتراكات Workspace OS والباقات والحدود ودورات الاستخدام من مكان واحد</div>
         </div>
         <button className="btn btn-ghost" onClick={() => load()} disabled={loading}><RefreshCw size={15} className={loading ? 'spin' : ''}/> تحديث</button>
       </div>

@@ -6,10 +6,10 @@ import {
   CalendarDays, MessageSquare, Star, FileSpreadsheet, Printer,
   Plus, Settings as SettingsIcon, Ticket, Search, UserPlus, Wrench as WrenchIcon,
 } from 'lucide-react'
-import { useClinicOS } from '@/context/WorkspaceContext'
+import { useWorkspace } from '@/context/WorkspaceContext'
 import {
-  useClinicAppointments, useClinicWeeklyChart, useClinicPreviousWeekChart, useClinicAICalls, useClinicMessages,
-  useClinicNotifications, useClinicIntegrations, useClinicSupportTickets, createSupportTicket,
+  useBookings, useWeeklyChart, usePreviousWeekChart, useAICalls, useMessages,
+  useNotifications, useIntegrations, useSupportTickets, createSupportTicket,
 } from '@/lib/dashboardQueries'
 import { exportRowsToExcel } from '@/lib/exportExcel'
 import { Card, Badge, Button, Dialog, Input, Select, type BadgeTone } from '@/dashboard/components/primitives'
@@ -18,7 +18,7 @@ import {
   Donut, RadialDial, AgentHeroCard, AiPerformanceCard, TodayTimeline, SystemHealthRow, ActivityFeed, InsightBanner, TicketPreviewCard, timeAgo,
   PillBar as Bar,
 } from './HomeWidgets'
-import type { Appointment, TicketPriority } from '@/types/dashboard'
+import type { Booking, TicketPriority } from '@/types/dashboard'
 import { EASE_OUT, EASE_IN_OUT, SPRING_SNAPPY } from '@/dashboard/components/motionTokens'
 
 type Period = 'أسبوعي' | 'شهري'
@@ -320,7 +320,7 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 export function DashboardV2Home() {
-  const { companyId, isDemo, clinicName, userName } = useClinicOS()
+  const { companyId, isDemo, companyName, userName } = useWorkspace()
   const [period, setPeriod] = useState<Period>('أسبوعي')
   const [compare, setCompare] = useState(false)
   const [ticketDialogOpen, setTicketDialogOpen] = useState(false)
@@ -328,14 +328,14 @@ export function DashboardV2Home() {
   const [savingTicket, setSavingTicket] = useState(false)
   const pushToast = useToast()
 
-  const { data: appointments, loading: appointmentsLoading, live: appointmentsLive } = useClinicAppointments(companyId, undefined, isDemo)
-  const { data: weekly, loading: weeklyLoading } = useClinicWeeklyChart(companyId, isDemo)
-  const { data: prevWeekly } = useClinicPreviousWeekChart(companyId, isDemo)
-  const { data: aiCalls, loading: aiCallsLoading } = useClinicAICalls(companyId, isDemo)
-  const { data: messages, live: messagesLive, loading: messagesLoading } = useClinicMessages(companyId, isDemo)
-  const { data: notifications, loading: notificationsLoading } = useClinicNotifications(companyId, isDemo)
-  const { data: integrations, loading: integrationsLoading } = useClinicIntegrations(companyId, isDemo)
-  const { data: tickets, refetch: refetchTickets, loading: ticketsLoading } = useClinicSupportTickets(companyId, isDemo)
+  const { data: appointments, loading: appointmentsLoading, live: appointmentsLive } = useBookings(companyId, undefined, isDemo)
+  const { data: weekly, loading: weeklyLoading } = useWeeklyChart(companyId, isDemo)
+  const { data: prevWeekly } = usePreviousWeekChart(companyId, isDemo)
+  const { data: aiCalls, loading: aiCallsLoading } = useAICalls(companyId, isDemo)
+  const { data: messages, live: messagesLive, loading: messagesLoading } = useMessages(companyId, isDemo)
+  const { data: notifications, loading: notificationsLoading } = useNotifications(companyId, isDemo)
+  const { data: integrations, loading: integrationsLoading } = useIntegrations(companyId, isDemo)
+  const { data: tickets, refetch: refetchTickets, loading: ticketsLoading } = useSupportTickets(companyId, isDemo)
 
   const chartRowLoading = weeklyLoading || aiCallsLoading
   const timelineRowLoading = appointmentsLoading || integrationsLoading
@@ -460,7 +460,7 @@ export function DashboardV2Home() {
     { key: 'source', label: 'المصدر' },
   ]
 
-  function appointmentsInRange(range: 'week' | 'month' | 'all'): Appointment[] {
+  function appointmentsInRange(range: 'week' | 'month' | 'all'): Booking[] {
     if (range === 'all') return appts
     const now = new Date()
     const cutoff = new Date(now)
@@ -507,7 +507,7 @@ export function DashboardV2Home() {
             مرحباً {userName || ''}
           </div>
           <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 4 }}>
-            إليك نظرة عامة على أداء {clinicName || 'عملك'} اليوم.
+            إليك نظرة عامة على أداء {companyName || 'عملك'} اليوم.
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

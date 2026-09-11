@@ -36,7 +36,7 @@ const features = [
 const faqs = [
   ['هل أحتاج إلى تغيير طريقة عمل العيادة؟', 'لا. يبدأ النظام من سير العمل الحالي، ثم يجمع المواعيد والمرضى والأطباء والتقارير في واجهة واحدة أوضح.'],
   ['هل يمكنني مشاهدة النظام قبل الاشتراك؟', 'نعم. الديمو يوضح شكل التشغيل داخل المنصة، ويمكن بعدها إنشاء حساب للعيادة وتجهيز البيانات الأساسية.'],
-  ['هل الحجز الذكي إلزامي؟', 'لا. هو ميزة اختيارية. يمكن استخدام Clinic OS لإدارة التشغيل أولاً ثم تفعيل القنوات الذكية عند الحاجة.'],
+  ['هل الحجز الذكي إلزامي؟', 'لا. هو ميزة اختيارية. يمكن استخدام Workspace OS لإدارة التشغيل أولاً ثم تفعيل القنوات الذكية عند الحاجة.'],
   ['هل يعمل على الجوال والكمبيوتر؟', 'نعم. الواجهة مصممة للاستخدام اليومي على الكمبيوتر والتابلت والجوال.'],
 ]
 
@@ -46,9 +46,9 @@ function DashboardPreview() {
     ['الخدمات', ''], ['التقويم', ''], ['الرسائل', ''], ['الحجز الذكي', ''], ['التقارير', ''],
   ]
   return (
-    <div className="clinic-preview" aria-label="معاينة واجهة Clinic OS">
+    <div className="clinic-preview" aria-label="معاينة واجهة Workspace OS">
       <aside className="preview-sidebar">
-        <div className="preview-brand"><span><Stethoscope size={16} /></span><b>Clinic OS</b></div>
+        <div className="preview-brand"><span><Stethoscope size={16} /></span><b>Workspace OS</b></div>
         <button className="preview-add">+ موعد جديد</button>
         <nav>{side.map(([label, state], index) => <span className={state} key={label}><i>{index + 1}</i>{label}</span>)}</nav>
         <div className="preview-plan"><small>حالة النظام</small><strong>جاهز للتشغيل</strong></div>
@@ -92,8 +92,8 @@ export const ClinicOSLanding = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(0)
 
   useEffect(() => {
-    document.title = 'Clinic OS من مدار | تشغيل العيادة بوضوح'
-    const description = 'Clinic OS من مدار يجمع مواعيد العيادة والمرضى والأطباء والتذكيرات والتقارير في واجهة تشغيل عربية واحدة.'
+    document.title = 'Workspace OS من مدار | تشغيل العيادة بوضوح'
+    const description = 'Workspace OS من مدار يجمع مواعيد العيادة والمرضى والأطباء والتذكيرات والتقارير في واجهة تشغيل عربية واحدة.'
     let meta = document.querySelector<HTMLMetaElement>('meta[name="description"]')
     if (!meta) {
       meta = document.createElement('meta')
@@ -111,14 +111,14 @@ export const ClinicOSLanding = () => {
     setMenuOpen(false)
     document.getElementById(id)?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth' })
   }
-  const openWhatsApp = () => window.open(`https://wa.me/${PHONE}?text=${encodeURIComponent('مرحباً، أريد معرفة المزيد عن Clinic OS للعيادات.')}`, '_blank', 'noopener,noreferrer')
+  const openWhatsApp = () => window.open(`https://wa.me/${PHONE}?text=${encodeURIComponent('مرحباً، أريد معرفة المزيد عن Workspace OS للعيادات.')}`, '_blank', 'noopener,noreferrer')
   const reveal = reduceMotion ? {} : { initial: { opacity: 0, y: 24 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, amount: 0.2 }, transition: { duration: 0.55 } }
 
   return (
     <div className="clinic-site" dir="rtl">
       <header className={`clinic-public-nav ${scrolled ? 'is-scrolled' : ''}`}>
         <button className="clinic-public-logo" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} aria-label="العودة للأعلى">
-          <img src="/logo-main.png" alt="مدار" /><span><b>Clinic OS</b><small>من مدار</small></span>
+          <img src="/logo-main.png" alt="مدار" /><span><b>Workspace OS</b><small>من مدار</small></span>
         </button>
         <nav className={menuOpen ? 'open' : ''}>{navItems.map(([id, label]) => <button key={id} onClick={() => go(id)}>{label}</button>)}</nav>
         <div className="clinic-nav-actions"><button className="text-button" onClick={() => navigate('/clinic-os/login')}>تسجيل الدخول</button><button className="nav-cta" onClick={() => navigate('/trial')}>إنشاء حساب</button></div>
@@ -132,7 +132,7 @@ export const ClinicOSLanding = () => {
           <motion.div className="clinic-hero-copy" initial={reduceMotion ? undefined : { opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
             <span className="clinic-eyebrow"><Sparkles size={15} /> نظام تشغيل يومي للعيادات</span>
             <h1>عيادتك تعمل بوضوح،<br /><em>حتى في أكثر الأيام ازدحاماً.</em></h1>
-            <p>من المواعيد والمرضى إلى الأطباء والتذكيرات والتقارير، Clinic OS يجمع تشغيل العيادة في مكان واحد.</p>
+            <p>من المواعيد والمرضى إلى الأطباء والتذكيرات والتقارير، Workspace OS يجمع تشغيل العيادة في مكان واحد.</p>
             <div className="clinic-hero-buttons"><button className="primary-button" onClick={() => navigate('/clinic-os/demo')}>جرّب الداشبورد <ArrowLeft size={17} /></button><button className="secondary-button" onClick={() => navigate('/trial')}>إنشاء حساب عيادة</button></div>
             <div className="clinic-live-strip"><span><i /> 12 موعد اليوم</span><span>9 مؤكدة</span><span>2 بانتظار التأكيد</span></div>
           </motion.div>
@@ -165,7 +165,7 @@ export const ClinicOSLanding = () => {
           <div className="faq-list">{faqs.map(([q, a], index) => <article className={openFaq === index ? 'open' : ''} key={q}><button onClick={() => setOpenFaq(openFaq === index ? null : index)}><b>{q}</b><ChevronDown /></button><div><p>{a}</p></div></article>)}</div>
         </section>
 
-        <section className="clinic-final-cta"><motion.div {...reveal}><span>Clinic OS من مدار</span><h2>شاهد يوم عيادتك من شاشة واحدة.</h2><p>جرّب الداشبورد، ثم أنشئ حساب العيادة عندما تكون جاهزاً.</p><div><button onClick={() => navigate('/clinic-os/demo')}>فتح الديمو</button><button onClick={() => navigate('/trial')}>إنشاء حساب</button></div></motion.div></section>
+        <section className="clinic-final-cta"><motion.div {...reveal}><span>Workspace OS من مدار</span><h2>شاهد يوم عيادتك من شاشة واحدة.</h2><p>جرّب الداشبورد، ثم أنشئ حساب العيادة عندما تكون جاهزاً.</p><div><button onClick={() => navigate('/clinic-os/demo')}>فتح الديمو</button><button onClick={() => navigate('/trial')}>إنشاء حساب</button></div></motion.div></section>
       </main>
 
       <footer className="clinic-public-footer"><div><img src="/logo-main.png" alt="مدار" /><p>منصة عربية لتنظيم تشغيل العيادات بوضوح.</p></div><nav><button onClick={() => navigate('/clinic-os/demo')}>الديمو</button><button onClick={() => navigate('/clinic-os/login')}>تسجيل الدخول</button><button onClick={openWhatsApp}>واتساب</button></nav><small>© 2026 مدار. جميع الحقوق محفوظة.</small></footer>

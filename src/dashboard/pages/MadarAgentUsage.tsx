@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Bot } from 'lucide-react'
-import { useClinicOS } from '@/context/WorkspaceContext'
+import { useWorkspace } from '@/context/WorkspaceContext'
 import { CLINIC_PLANS, getOverallUsage, getUsageMetrics, usagePercentage } from '@/lib/clinicOSProduct'
 import { supabase } from '@/lib/supabase'
 import { Card, Badge } from '@/dashboard/components/primitives'
@@ -58,7 +58,7 @@ export function DashboardV2MadarAgentUsage() {
   const {
     packageType, isDemo, isSubscribed, usageMetrics, usageCycleStart, usageCycleEnd,
     subscriptionEndDate, accountLoading,
-  } = useClinicOS()
+  } = useWorkspace()
 
   const [elevenlabs, setElevenlabs] = useState<AgentVoiceUsage | null>(null)
   const [elevenlabsLoading, setElevenlabsLoading] = useState(!isDemo)

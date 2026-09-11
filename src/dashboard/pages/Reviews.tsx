@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Star, Plus, MapPin, AlertTriangle, Map as MapIcon, ExternalLink } from 'lucide-react'
-import { useClinicOS } from '@/context/WorkspaceContext'
+import { useWorkspace } from '@/context/WorkspaceContext'
 import {
-  useClinicBranches, useClinicGoogleReviews, useClinicSupportTickets,
+  useBranches, useGoogleReviews, useSupportTickets,
   createBranch, replyToReview, toggleBranchFavorite,
 } from '@/lib/dashboardQueries'
 import type { GoogleReview, Branch } from '@/types/dashboard'
@@ -22,10 +22,10 @@ const STATUS_LABEL: Record<string, string> = { pending: 'بانتظار الرد
 const STATUS_TONE: Record<string, BadgeTone> = { pending: 'warning', auto_replied: 'success', replied: 'success' }
 
 export function DashboardV2Reviews() {
-  const { companyId, isDemo } = useClinicOS()
-  const { data: branches, loading: branchesLoading, refetch: refetchBranches } = useClinicBranches(companyId, isDemo)
-  const { data: reviews, refetch: refetchReviews } = useClinicGoogleReviews(companyId, isDemo)
-  const { data: tickets } = useClinicSupportTickets(companyId, isDemo)
+  const { companyId, isDemo } = useWorkspace()
+  const { data: branches, loading: branchesLoading, refetch: refetchBranches } = useBranches(companyId, isDemo)
+  const { data: reviews, refetch: refetchReviews } = useGoogleReviews(companyId, isDemo)
+  const { data: tickets } = useSupportTickets(companyId, isDemo)
 
   const [activeBranchId, setActiveBranchId] = useState<string | null>(null)
   const [addOpen, setAddOpen] = useState(false)

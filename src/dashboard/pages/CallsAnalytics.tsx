@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { PhoneCall } from 'lucide-react'
-import { useClinicOS } from '@/context/WorkspaceContext'
-import { useClinicAICalls } from '@/lib/dashboardQueries'
+import { useWorkspace } from '@/context/WorkspaceContext'
+import { useAICalls } from '@/lib/dashboardQueries'
 import { Card } from '@/dashboard/components/primitives'
 import { EmptyState, KpiCardSkeleton } from '@/dashboard/components/uiExtras'
 import { Donut } from './HomeWidgets'
@@ -10,8 +10,8 @@ import type { AICallLog } from '@/types/dashboard'
 type Period = 7 | 30
 
 export function DashboardV2CallsAnalytics() {
-  const { companyId, isDemo } = useClinicOS()
-  const { data: calls, loading } = useClinicAICalls(companyId, isDemo)
+  const { companyId, isDemo } = useWorkspace()
+  const { data: calls, loading } = useAICalls(companyId, isDemo)
   const [period, setPeriod] = useState<Period>(7)
 
   const all = calls || []

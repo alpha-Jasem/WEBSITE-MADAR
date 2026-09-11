@@ -16,9 +16,9 @@ const workflowGroups = [
       { id: '5DYHvRiGznpfYToi', name: 'Calendar Slot Finder',  active: true,  trigger: 'Webhook', runs: 280, updatedAt: '2026-05-04' },
       { id: 'dsWkzzvQNLv87f0I', name: 'Check Availability',    active: true,  trigger: 'Sub-workflow', runs: null, updatedAt: '2026-05-06' },
       { id: 'GmCJVQwRoVwcnhFv', name: 'Book Event',            active: true,  trigger: 'Sub-workflow', runs: null, updatedAt: '2026-05-06' },
-      { id: 'jhNcO2ELZXr09JYi', name: 'Lookup Appointment',    active: true,  trigger: 'Sub-workflow', runs: null, updatedAt: '2026-05-06' },
-      { id: 'xZMhGXVZTdVHjFYg', name: 'Delete Appointment',    active: true,  trigger: 'Sub-workflow', runs: null, updatedAt: '2026-05-06' },
-      { id: 'O9ZCKfhOQi42UoXI', name: 'Update Appointment',    active: true,  trigger: 'Sub-workflow', runs: null, updatedAt: '2026-05-06' },
+      { id: 'jhNcO2ELZXr09JYi', name: 'Lookup Booking',    active: true,  trigger: 'Sub-workflow', runs: null, updatedAt: '2026-05-06' },
+      { id: 'xZMhGXVZTdVHjFYg', name: 'Delete Booking',    active: true,  trigger: 'Sub-workflow', runs: null, updatedAt: '2026-05-06' },
+      { id: 'O9ZCKfhOQi42UoXI', name: 'Update Booking',    active: true,  trigger: 'Sub-workflow', runs: null, updatedAt: '2026-05-06' },
     ],
   },
   {
@@ -35,7 +35,7 @@ const workflowGroups = [
     color: '#F59E0B',
     workflows: [
       { id: 'ziFXfmOdX1LHu8Xs', name: 'WBOS — Core Booking Flow',            active: false, trigger: 'Webhook', runs: null, updatedAt: '2026-05-12', note: 'قيد التطوير' },
-      { id: 'HewqaAv6D19XqMfL', name: 'WBOS — Appointment Reminder System',  active: false, trigger: 'Schedule (30m)', runs: null, updatedAt: '2026-05-12', note: 'قيد التطوير' },
+      { id: 'HewqaAv6D19XqMfL', name: 'WBOS — Booking Reminder System',  active: false, trigger: 'Schedule (30m)', runs: null, updatedAt: '2026-05-12', note: 'قيد التطوير' },
       { id: 'UJCSPMgU7th4HHPs', name: 'WBOS — Post-Service Review Request',  active: false, trigger: 'Schedule (1h)',  runs: null, updatedAt: '2026-05-12', note: 'قيد التطوير' },
       { id: 'kxjAGgwUtB3ZpPL0', name: 'WBOS — No-Show Recovery System',      active: false, trigger: 'Schedule (2h)',  runs: null, updatedAt: '2026-05-12', note: 'قيد التطوير' },
     ],

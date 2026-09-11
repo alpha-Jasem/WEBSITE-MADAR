@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Search, Users, UserCheck } from 'lucide-react'
-import { useClinicOS } from '@/context/WorkspaceContext'
-import { useClinicPatients, updatePatient } from '@/lib/dashboardQueries'
-import type { Patient } from '@/types/dashboard'
+import { useWorkspace } from '@/context/WorkspaceContext'
+import { useCustomers, updateCustomer } from '@/lib/dashboardQueries'
+import type { Customer } from '@/types/dashboard'
 import { Card, Badge, Button, Dialog, Input, Select } from '@/dashboard/components/primitives'
 import { EmptyState, SkeletonRows, useToast, Avatar, SortableHeader, ContactActions } from '@/dashboard/components/uiExtras'
 
@@ -20,15 +20,15 @@ const TYPE_OPTIONS = [
   { value: 'returning', label: 'عائد' },
 ]
 
-export function DashboardV2Patients() {
-  const { companyId, isDemo } = useClinicOS()
-  const { data: patients, loading, refetch } = useClinicPatients(companyId, isDemo)
+export function DashboardV2Customers() {
+  const { companyId, isDemo } = useWorkspace()
+  const { data: patients, loading, refetch } = useCustomers(companyId, isDemo)
   const pushToast = useToast()
   const [q, setQ] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'last_visit_at', dir: -1 })
-  const [selected, setSelected] = useState<Patient | null>(null)
-  const [form, setForm] = useState({ name: '', phone: '', last_visit_at: '', total_visits: 0, patient_type: 'new' as Patient['patient_type'] })
+  const [selected, setSelected] = useState<Customer | null>(null)
+  const [form, setForm] = useState({ name: '', phone: '', last_visit_at: '', total_visits: 0, patient_type: 'new' as Customer['patient_type'] })
   const [saving, setSaving] = useState(false)
   const [checked, setChecked] = useState<Set<string>>(new Set())
   const [bulkSaving, setBulkSaving] = useState(false)
@@ -52,8 +52,8 @@ export function DashboardV2Patients() {
       if (isDemo) {
         pushToast({ kind: 'success', title: 'تم الحفظ (عرض تجريبي)' })
       } else {
-        await updatePatient(selected.id, {
-          clinic_id: companyId || undefined,
+        await updateCustomer(selected.id, {
+          company_id: companyId || undefined,
           name: form.name,
           phone: form.phone,
           last_visit_at: form.last_visit_at ? new Date(form.last_visit_at).toISOString() : undefined,
@@ -81,7 +81,7 @@ export function DashboardV2Patients() {
     setBulkSaving(true)
     try {
       if (!isDemo) {
-        await Promise.all(ids.map((id) => updatePatient(id, { clinic_id: companyId || undefined, patient_type: 'returning' })))
+        await Promise.all(ids.map((id) => updateCustomer(id, { company_id: companyId || undefined, patient_type: 'returning' })))
         await refetch()
       }
       pushToast({ kind: 'success', title: `تم تحديث ${ids.length} عميل${isDemo ? ' (عرض تجريبي)' : ''}` })
@@ -200,7 +200,7 @@ export function DashboardV2Patients() {
               </label>
               <Input label="عدد الزيارات" type="number" value={String(form.total_visits)} onChange={(e) => setForm((f) => ({ ...f, total_visits: Number(e.target.value) || 0 }))} style={{ flex: 1 }} />
             </div>
-            <Select label="النوع" options={EDIT_TYPE_OPTIONS} value={form.patient_type} onChange={(e) => setForm((f) => ({ ...f, patient_type: e.target.value as Patient['patient_type'] }))} />
+            <Select label="النوع" options={EDIT_TYPE_OPTIONS} value={form.patient_type} onChange={(e) => setForm((f) => ({ ...f, patient_type: e.target.value as Customer['patient_type'] }))} />
           </div>
         )}
       </Dialog>

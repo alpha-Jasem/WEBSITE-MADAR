@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Download } from 'lucide-react'
-import { useClinicOS } from '@/context/WorkspaceContext'
-import { useClinicAppointments, useClinicServices } from '@/lib/dashboardQueries'
+import { useWorkspace } from '@/context/WorkspaceContext'
+import { useBookings, useServices } from '@/lib/dashboardQueries'
 import { exportRowsToExcel } from '@/lib/exportExcel'
 import { Card, Button } from '@/dashboard/components/primitives'
 import { EmptyState, Skeleton } from '@/dashboard/components/uiExtras'
@@ -14,9 +14,9 @@ function fmt(n: number) {
 const MONTH_NAMES = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
 
 export function DashboardV2Revenue() {
-  const { companyId, isDemo } = useClinicOS()
-  const { data: appointments, loading: apptsLoading } = useClinicAppointments(companyId, undefined, isDemo)
-  const { data: services, loading: servicesLoading } = useClinicServices(companyId, isDemo)
+  const { companyId, isDemo } = useWorkspace()
+  const { data: appointments, loading: apptsLoading } = useBookings(companyId, undefined, isDemo)
+  const { data: services, loading: servicesLoading } = useServices(companyId, isDemo)
   const loading = apptsLoading || servicesLoading
 
   const priceByServiceId = useMemo(() => {

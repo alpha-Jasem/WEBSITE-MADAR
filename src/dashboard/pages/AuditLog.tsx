@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { History, UserCog, CalendarPlus, Wrench, ShieldCheck, Search } from 'lucide-react'
-import { useClinicOS } from '@/context/WorkspaceContext'
-import { useClinicAuditLog } from '@/lib/dashboardQueries'
+import { useWorkspace } from '@/context/WorkspaceContext'
+import { useAuditLog } from '@/lib/dashboardQueries'
 import { Card, Badge, Input, type BadgeTone } from '@/dashboard/components/primitives'
 import { EmptyState, SkeletonRows } from '@/dashboard/components/uiExtras'
 
@@ -32,8 +32,8 @@ function fmtDate(iso: string) {
 }
 
 export function DashboardV2AuditLog() {
-  const { companyId, isDemo } = useClinicOS()
-  const { data: logs, loading } = useClinicAuditLog(companyId, isDemo)
+  const { companyId, isDemo } = useWorkspace()
+  const { data: logs, loading } = useAuditLog(companyId, isDemo)
   const [query, setQuery] = useState('')
 
   const rows = logs || []
