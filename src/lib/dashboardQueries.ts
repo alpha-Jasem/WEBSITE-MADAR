@@ -729,6 +729,8 @@ export async function createBranch(input: {
   address?: string
   phone?: string
   google_maps_url?: string
+  /** The workspace's industry. Branches used to be stamped 'clinic' regardless. */
+  industry_type?: string
 }) {
   const { data: branch, error } = await supabase
     .from('branches')
@@ -738,7 +740,7 @@ export async function createBranch(input: {
       name_ar: input.name,
       address: input.address,
       phone: input.phone,
-      industry_type: 'clinic',
+      industry_type: input.industry_type || 'other',
     })
     .select()
     .single()

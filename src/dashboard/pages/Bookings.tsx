@@ -338,7 +338,7 @@ export function DashboardV2Bookings() {
           <div style={{ minWidth: 640 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '32px 1.4fr 1.4fr 1fr 1fr 0.8fr auto 0.6fr', padding: '14px 20px', fontSize: 12, fontWeight: 700, color: 'var(--text-tertiary)', borderBottom: '1px solid var(--border-default)', alignItems: 'center' }}>
               <input type="checkbox" checked={pageRows.length > 0 && pageRows.every((r) => selected.has(r.id))} onChange={toggleSelectAllOnPage} style={{ cursor: 'pointer' }} />
-              <SortableHeader label="المريض" active={sort.key === 'patient_name'} dir={sort.dir} onClick={() => toggleSort('patient_name')} />
+              <SortableHeader label="العميل" active={sort.key === 'patient_name'} dir={sort.dir} onClick={() => toggleSort('patient_name')} />
               <div>الخدمة</div>
               <SortableHeader label="التاريخ" active={sort.key === 'appointment_date'} dir={sort.dir} onClick={() => toggleSort('appointment_date')} />
               <SortableHeader label="الوقت" active={sort.key === 'start_time'} dir={sort.dir} onClick={() => toggleSort('start_time')} />

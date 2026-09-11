@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Plus, Wrench, ChevronDown, Sparkles } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
+import { SERVICE_NAME_EXAMPLE } from '@/lib/industryExamples'
 import { useServices, createService, updateService } from '@/lib/dashboardQueries'
 import type { Service } from '@/types/dashboard'
 import { Card, Badge, Button, Dialog, Input, Switch } from '@/dashboard/components/primitives'
@@ -10,7 +11,7 @@ const EMPTY_FORM = { name: '', category: '', duration_minutes: '30', price: '', 
 const UNCATEGORIZED = 'خدمات أخرى'
 
 export function DashboardV2Services() {
-  const { companyId, isDemo } = useWorkspace()
+  const { companyId, isDemo, businessType } = useWorkspace()
   const { data: services, loading, refetch } = useServices(companyId, isDemo)
 
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -161,7 +162,7 @@ export function DashboardV2Services() {
         footer={<><Button variant="secondary" onClick={() => setDialogOpen(false)}>إلغاء</Button><Button onClick={save} disabled={saving}>{saving ? 'جارِ الحفظ...' : 'حفظ'}</Button></>}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <Input label="اسم الخدمة" placeholder="مثال: كشف عام" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+          <Input label="اسم الخدمة" placeholder={SERVICE_NAME_EXAMPLE[businessType]} value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
           <Input label="الفئة" placeholder="مثال: عام" value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} />
           <div style={{ display: 'flex', gap: 12 }}>
             <Input label="المدة (دقيقة)" type="number" value={form.duration_minutes} onChange={(e) => setForm((f) => ({ ...f, duration_minutes: e.target.value }))} style={{ flex: 1 }} />

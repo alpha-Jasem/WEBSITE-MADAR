@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { CheckCircle2, MapPin, Wrench, PartyPopper } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
+import { SERVICE_NAME_EXAMPLE } from '@/lib/industryExamples'
 import { useBranches, useServices, createBranch, createService, updateWorkingHours } from '@/lib/dashboardQueries'
 import { Card, Button, Input } from './primitives'
 
@@ -14,7 +15,7 @@ const DEFAULT_HOURS = Object.fromEntries(
 function dismissKey(companyId: string) { return `dv2_onboarding_dismissed_${companyId}` }
 
 export function OnboardingWizard() {
-  const { companyId, isDemo, companyName, accountLoading } = useWorkspace()
+  const { companyId, isDemo, companyName, accountLoading, businessType } = useWorkspace()
   const { data: branches, refetch: refetchBranches } = useBranches(companyId, isDemo)
   const { data: services, refetch: refetchServices } = useServices(companyId, isDemo)
 
@@ -43,7 +44,7 @@ export function OnboardingWizard() {
     if (!branchForm.name.trim() || !companyId) return
     setSaving(true)
     try {
-      await createBranch({ company_id: companyId, name: branchForm.name, address: branchForm.address })
+      await createBranch({ company_id: companyId, name: branchForm.name, address: branchForm.address, industry_type: businessType })
       await refetchBranches()
       setStep(1)
     } finally { setSaving(false) }
@@ -104,7 +105,7 @@ export function OnboardingWizard() {
             <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>أضف أول خدمة</div>
             <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 18 }}>هذي تظهر بقائمة الحجوزات وتُستخدم لحساب إيراداتك تلقائياً.</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 18 }}>
-              <Input label="اسم الخدمة" placeholder="مثال: كشف عام" value={serviceForm.name} onChange={(e) => setServiceForm((f) => ({ ...f, name: e.target.value }))} />
+              <Input label="اسم الخدمة" placeholder={SERVICE_NAME_EXAMPLE[businessType]} value={serviceForm.name} onChange={(e) => setServiceForm((f) => ({ ...f, name: e.target.value }))} />
               <div style={{ display: 'flex', gap: 12 }}>
                 <Input label="السعر (ر.س)" type="number" value={serviceForm.price} onChange={(e) => setServiceForm((f) => ({ ...f, price: e.target.value }))} style={{ flex: 1 }} />
                 <Input label="المدة (دقيقة)" type="number" value={serviceForm.duration} onChange={(e) => setServiceForm((f) => ({ ...f, duration: e.target.value }))} style={{ flex: 1 }} />

@@ -22,7 +22,7 @@ const STATUS_LABEL: Record<string, string> = { pending: 'بانتظار الرد
 const STATUS_TONE: Record<string, BadgeTone> = { pending: 'warning', auto_replied: 'success', replied: 'success' }
 
 export function DashboardV2Reviews() {
-  const { companyId, isDemo } = useWorkspace()
+  const { companyId, isDemo, businessType } = useWorkspace()
   const { data: branches, loading: branchesLoading, refetch: refetchBranches } = useBranches(companyId, isDemo)
   const { data: reviews, refetch: refetchReviews } = useGoogleReviews(companyId, isDemo)
   const { data: tickets } = useSupportTickets(companyId, isDemo)
@@ -83,7 +83,7 @@ export function DashboardV2Reviews() {
     if (!form.name.trim() || !companyId) return
     setSaving(true)
     try {
-      await createBranch({ company_id: companyId, name: form.name, address: form.address, google_maps_url: form.google_maps_url || undefined })
+      await createBranch({ company_id: companyId, name: form.name, address: form.address, google_maps_url: form.google_maps_url || undefined, industry_type: businessType })
       setAddOpen(false)
       setForm({ name: '', address: '', google_maps_url: '' })
       refetchBranches()

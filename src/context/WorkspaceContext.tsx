@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import type { PackageType } from '../types/dashboard'
+import type { BusinessType } from '../types'
 import { supabase, signOut } from '../lib/supabase'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ToastProvider } from '../components/clinicOS/ui/Toast'
@@ -17,6 +18,9 @@ export interface ClinicUsageSummary {
 }
 
 interface WorkspaceContextValue {
+  /** Which industry this workspace is. Terminology is neutral everywhere, so this
+   *  steers example copy and provisioning rather than labels. */
+  businessType: BusinessType
   packageType: PackageType
   setPackageType: (p: PackageType) => void
   companyName: string
@@ -61,6 +65,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
   const [companyPhone, setCompanyPhone] = useState('')
   const [companyEmail, setCompanyEmail] = useState('')
   const [companyCity, setCompanyCity] = useState('')
+  const [businessType, setBusinessType] = useState<BusinessType>('other')
   const [companyLogoUrl, setCompanyLogoUrl] = useState('')
   const [companySettings, setCompanySettings] = useState<Record<string, unknown>>({})
   const [companyId, setCompanyId] = useState<string | null>(null)
@@ -93,6 +98,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
           setCompanyPhone(DEMO_CLINIC.phone)
           setCompanyEmail(DEMO_CLINIC.email)
           setCompanyCity(DEMO_CLINIC.city)
+          setBusinessType('clinic')
           setCompanyLogoUrl('')
           setCompanySettings({})
           setIsOwner(true)
@@ -133,7 +139,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
 
         setUserEmail(user.email || '')
 
-        const companyColumns = 'id, name, owner_phone, owner_email, city, logo_url, clinic_settings, package_type, clinic_plan_code, status, subscription_status, subscription_start_date, subscription_end_date, monthly_usage_cycle_start, monthly_usage_cycle_end'
+        const companyColumns = 'id, name, owner_phone, owner_email, city, logo_url, business_type, clinic_settings, package_type, clinic_plan_code, status, subscription_status, subscription_start_date, subscription_end_date, monthly_usage_cycle_start, monthly_usage_cycle_end'
         const [companyRes, userRes] = await Promise.allSettled([
           supabase.from('companies').select(companyColumns).eq('auth_user_id', user.id).single(),
           supabase.from('users').select('full_name').eq('id', user.id).single(),
@@ -166,7 +172,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         setStaffRole(resolvedStaffRole)
 
         if (!company) {
-          setAccountError('تعذر تحميل بيانات حساب العيادة. تواصل مع فريق دعم مدار.')
+          setAccountError('تعذر تحميل بيانات الحساب. تواصل مع فريق دعم مدار.')
         }
 
         if (company?.id) setCompanyId(company.id)
@@ -174,6 +180,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         setCompanyPhone(company?.owner_phone || '')
         setCompanyEmail(company?.owner_email || user.email || '')
         setCompanyCity(company?.city || '')
+        setBusinessType((company?.business_type as BusinessType) || 'other')
         setCompanyLogoUrl(company?.logo_url || '')
         setCompanySettings((company?.clinic_settings as Record<string, unknown>) || {})
         setSubscriptionStatus(company?.subscription_status || null)
@@ -240,7 +247,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <WorkspaceContext.Provider value={{ packageType, setPackageType, companyName, userName, userEmail, companyPhone, companyEmail, companyCity, companyLogoUrl, companySettings, companyId, isOwner, staffRole, accountLoading, accountError, isDemo, isSubscribed, subscriptionStatus, subscriptionStartDate, subscriptionEndDate, usageCycleStart, usageCycleEnd, usageMetrics, usageSummary, refreshAccount: load, logout }}>
+    <WorkspaceContext.Provider value={{ businessType, packageType, setPackageType, companyName, userName, userEmail, companyPhone, companyEmail, companyCity, companyLogoUrl, companySettings, companyId, isOwner, staffRole, accountLoading, accountError, isDemo, isSubscribed, subscriptionStatus, subscriptionStartDate, subscriptionEndDate, usageCycleStart, usageCycleEnd, usageMetrics, usageSummary, refreshAccount: load, logout }}>
       <ToastProvider>
         {children}
       </ToastProvider>

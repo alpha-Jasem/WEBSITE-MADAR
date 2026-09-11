@@ -191,7 +191,7 @@ export function DashboardV2Layout() {
             {expanded && (
               <div>
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, lineHeight: 1.2 }}>مدار</div>
-                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '.18em', textTransform: 'uppercase' }}>لوحة العيادة</div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '.18em', textTransform: 'uppercase' }}>لوحة التحكم</div>
               </div>
             )}
           </div>
@@ -217,7 +217,7 @@ export function DashboardV2Layout() {
             }}>{(companyName || userName || 'م')[0]}</div>
             {expanded && (
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '.09em', textTransform: 'uppercase' }}>العيادة</div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '.09em', textTransform: 'uppercase' }}>المنشأة</div>
                 <div style={{ fontSize: 14, fontWeight: 400, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {companyName || (isDemo ? 'عرض تجريبي' : 'عيادتي')}
                 </div>
