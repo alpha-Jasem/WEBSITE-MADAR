@@ -70,7 +70,6 @@ const DashboardV2Services      = lazy(() => import('./_archive/dashboardV2/pages
 const DashboardV2AuditLog      = lazy(() => import('./_archive/dashboardV2/pages/AuditLog').then(m => ({ default: m.DashboardV2AuditLog })))
 const DashboardV2MadarAgentUsage = lazy(() => import('./_archive/dashboardV2/pages/MadarAgentUsage').then(m => ({ default: m.DashboardV2MadarAgentUsage })))
 const DashboardV2Tickets       = lazy(() => import('./_archive/dashboardV2/pages/Tickets').then(m => ({ default: m.DashboardV2Tickets })))
-const DashboardV2RazLeads      = lazy(() => import('./_archive/dashboardV2/pages/RazLeads').then(m => ({ default: m.DashboardV2RazLeads })))
 const DashboardV2CallsAnalytics    = lazy(() => import('./_archive/dashboardV2/pages/CallsAnalytics').then(m => ({ default: m.DashboardV2CallsAnalytics })))
 const DashboardV2WhatsAppAnalytics = lazy(() => import('./_archive/dashboardV2/pages/WhatsAppAnalytics').then(m => ({ default: m.DashboardV2WhatsAppAnalytics })))
 const DashboardV2Agents            = lazy(() => import('./_archive/dashboardV2/pages/Agents').then(m => ({ default: m.DashboardV2Agents })))
@@ -80,6 +79,40 @@ const DashboardV2AnalysisGroups    = lazy(() => import('./_archive/dashboardV2/p
 const DashboardV2InboundServices   = lazy(() => import('./_archive/dashboardV2/pages/ComingSoon').then(m => ({ default: m.DashboardV2InboundServices })))
 const DashboardV2OutboundServices  = lazy(() => import('./_archive/dashboardV2/pages/ComingSoon').then(m => ({ default: m.DashboardV2OutboundServices })))
 const DashboardV2CallLogs          = lazy(() => import('./_archive/dashboardV2/pages/CallLogs').then(m => ({ default: m.DashboardV2CallLogs })))
+
+// The dashboard is mounted twice — once for real tenants and once for the
+// unauthenticated sales tour — and both render the identical tree. isDemo is
+// derived from the pathname, so the children need no per-mount difference.
+// Declared once so a new page can never be added to only one of them.
+const dashboardChildRoutes = (
+  <>
+    <Route index element={<DashboardV2Home />} />
+    <Route path="bookings" element={<DashboardV2Bookings />} />
+    <Route path="patients" element={<DashboardV2Patients />} />
+    <Route path="conversations" element={<DashboardV2Conversations />} />
+    <Route path="reviews" element={<DashboardV2Reviews />} />
+    <Route path="revenue" element={<DashboardV2Revenue />} />
+    <Route path="reports" element={<DashboardV2Reports />} />
+    <Route path="plan-usage" element={<DashboardV2MadarAgentUsage />} />
+    <Route path="reminders" element={<DashboardV2Reminders />} />
+    <Route path="integrations" element={<DashboardV2Integrations />} />
+    <Route path="services" element={<DashboardV2Services />} />
+    <Route path="audit-log" element={<DashboardV2AuditLog />} />
+    <Route path="tickets" element={<DashboardV2Tickets />} />
+    <Route path="calls-analytics" element={<DashboardV2CallsAnalytics />} />
+    <Route path="whatsapp-analytics" element={<DashboardV2WhatsAppAnalytics />} />
+    <Route path="agents" element={<DashboardV2Agents />} />
+    <Route path="knowledge-base" element={<DashboardV2KnowledgeBase />} />
+    <Route path="tools" element={<DashboardV2Tools />} />
+    <Route path="analysis-groups" element={<DashboardV2AnalysisGroups />} />
+    <Route path="inbound-services" element={<DashboardV2InboundServices />} />
+    <Route path="outbound-services" element={<DashboardV2OutboundServices />} />
+    <Route path="call-logs" element={<DashboardV2CallLogs />} />
+    <Route path="settings" element={<DashboardV2Settings />} />
+    {/* Retired pages keep their links alive instead of rendering a blank outlet. */}
+    <Route path="*" element={<Navigate to="." replace />} />
+  </>
+)
 
 function App() {
   useEffect(() => {
@@ -125,30 +158,7 @@ function App() {
                 <DashboardV2Layout />
               </ClinicOSProvider>
             }>
-              <Route index element={<DashboardV2Home />} />
-              <Route path="bookings" element={<DashboardV2Bookings />} />
-              <Route path="patients" element={<DashboardV2Patients />} />
-              <Route path="conversations" element={<DashboardV2Conversations />} />
-              <Route path="reviews" element={<DashboardV2Reviews />} />
-              <Route path="revenue" element={<DashboardV2Revenue />} />
-              <Route path="reports" element={<DashboardV2Reports />} />
-              <Route path="plan-usage" element={<DashboardV2MadarAgentUsage />} />
-              <Route path="reminders" element={<DashboardV2Reminders />} />
-              <Route path="integrations" element={<DashboardV2Integrations />} />
-              <Route path="services" element={<DashboardV2Services />} />
-              <Route path="audit-log" element={<DashboardV2AuditLog />} />
-              <Route path="tickets" element={<DashboardV2Tickets />} />
-              <Route path="leads" element={<DashboardV2RazLeads />} />
-              <Route path="calls-analytics" element={<DashboardV2CallsAnalytics />} />
-              <Route path="whatsapp-analytics" element={<DashboardV2WhatsAppAnalytics />} />
-              <Route path="agents" element={<DashboardV2Agents />} />
-              <Route path="knowledge-base" element={<DashboardV2KnowledgeBase />} />
-              <Route path="tools" element={<DashboardV2Tools />} />
-              <Route path="analysis-groups" element={<DashboardV2AnalysisGroups />} />
-              <Route path="inbound-services" element={<DashboardV2InboundServices />} />
-              <Route path="outbound-services" element={<DashboardV2OutboundServices />} />
-              <Route path="call-logs" element={<DashboardV2CallLogs />} />
-              <Route path="settings" element={<DashboardV2Settings />} />
+              {dashboardChildRoutes}
             </Route>
             {/* ── ClinicOS Demo Tour (internal, unauthenticated preview with fake data) ── */}
             <Route path="/demo-review/*" element={
@@ -156,30 +166,7 @@ function App() {
                 <DashboardV2Layout />
               </ClinicOSProvider>
             }>
-              <Route index element={<DashboardV2Home />} />
-              <Route path="bookings" element={<DashboardV2Bookings />} />
-              <Route path="patients" element={<DashboardV2Patients />} />
-              <Route path="conversations" element={<DashboardV2Conversations />} />
-              <Route path="reviews" element={<DashboardV2Reviews />} />
-              <Route path="revenue" element={<DashboardV2Revenue />} />
-              <Route path="reports" element={<DashboardV2Reports />} />
-              <Route path="plan-usage" element={<DashboardV2MadarAgentUsage />} />
-              <Route path="reminders" element={<DashboardV2Reminders />} />
-              <Route path="integrations" element={<DashboardV2Integrations />} />
-              <Route path="services" element={<DashboardV2Services />} />
-              <Route path="audit-log" element={<DashboardV2AuditLog />} />
-              <Route path="tickets" element={<DashboardV2Tickets />} />
-              <Route path="leads" element={<DashboardV2RazLeads />} />
-              <Route path="calls-analytics" element={<DashboardV2CallsAnalytics />} />
-              <Route path="whatsapp-analytics" element={<DashboardV2WhatsAppAnalytics />} />
-              <Route path="agents" element={<DashboardV2Agents />} />
-              <Route path="knowledge-base" element={<DashboardV2KnowledgeBase />} />
-              <Route path="tools" element={<DashboardV2Tools />} />
-              <Route path="analysis-groups" element={<DashboardV2AnalysisGroups />} />
-              <Route path="inbound-services" element={<DashboardV2InboundServices />} />
-              <Route path="outbound-services" element={<DashboardV2OutboundServices />} />
-              <Route path="call-logs" element={<DashboardV2CallLogs />} />
-              <Route path="settings" element={<DashboardV2Settings />} />
+              {dashboardChildRoutes}
             </Route>
 
             <Route path="/real-estate" element={<Navigate to="/#products" replace />} />
