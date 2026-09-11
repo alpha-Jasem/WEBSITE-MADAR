@@ -44,7 +44,6 @@ if (typeof window !== 'undefined') {
 
 
 const AdminDashboard    = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
-const SolarEngine       = lazy(() => import('./pages/SolarEngine').then(m => ({ default: m.SolarEngine })))
 
 // ClinicOS
 const ClinicOSLoginPage    = lazy(() => import('./pages/clinicOS/ClinicOSLogin').then(m => ({ default: m.ClinicOSLogin })))
@@ -198,14 +197,6 @@ function App() {
               }
             />
             <Route path="/client/*" element={<Navigate to="/clinic-os/dashboard" replace />} />
-            <Route
-              path="/solar/*"
-              element={
-                <ProtectedRoute requiredRole="admin">
-                  <SolarEngine />
-                </ProtectedRoute>
-              }
-            />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/book-a-call" element={<BookACallPage />} />
