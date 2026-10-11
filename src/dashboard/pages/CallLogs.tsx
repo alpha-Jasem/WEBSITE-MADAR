@@ -6,12 +6,10 @@ import { exportRowsToExcel } from '@/lib/exportExcel'
 import { Card, Badge, Button, Select } from '@/dashboard/components/primitives'
 import { EmptyState, KpiCardSkeleton, useToast, ContactActions } from '@/dashboard/components/uiExtras'
 import type { AICallLog, AICallStatus } from '@/types/dashboard'
+import { aiCallResultLabel } from '@/lib/aiCallLabels'
 
 const STATUS_TONE: Record<AICallStatus, 'success' | 'warning' | 'danger'> = { completed: 'success', needs_review: 'warning', failed: 'danger' }
 const STATUS_LABEL: Record<AICallStatus, string> = { completed: 'مكتملة', needs_review: 'تحتاج مراجعة', failed: 'فشلت' }
-const RESULT_LABEL: Record<string, string> = {
-  booked: 'حجز موعد', needs_review: 'تحتاج مراجعة', no_slot: 'لا يوجد موعد متاح', cancelled: 'أُلغيت', failed: 'فشلت', transferred: 'حُوّلت لموظف',
-}
 
 export function DashboardV2CallLogs() {
   const { companyId, isDemo } = useWorkspace()
@@ -38,7 +36,7 @@ export function DashboardV2CallLogs() {
         العميل: c.patient_name || '', الهاتف: c.phone,
         الوقت: new Date(c.call_time).toLocaleString('ar-SA'),
         'المدة (ث)': c.duration_seconds,
-        النتيجة: RESULT_LABEL[c.result] || c.result,
+        النتيجة: aiCallResultLabel(c.result),
         الحالة: STATUS_LABEL[c.status] || c.status,
       })),
     }])
@@ -100,7 +98,7 @@ export function DashboardV2CallLogs() {
                   </div>
                   <div style={{ color: 'var(--text-secondary)', direction: 'ltr', textAlign: 'right' }}>{c.phone}</div>
                   <div style={{ color: 'var(--text-secondary)' }}>{Math.round(c.duration_seconds / 60)} د {c.duration_seconds % 60} ث</div>
-                  <div style={{ color: 'var(--text-secondary)' }}>{RESULT_LABEL[c.result] || c.result}</div>
+                  <div style={{ color: 'var(--text-secondary)' }}>{aiCallResultLabel(c.result)}</div>
                   <div><Badge tone={STATUS_TONE[c.status]}>{STATUS_LABEL[c.status]}</Badge></div>
                   <ContactActions phone={c.phone} message={`مرحباً ${c.patient_name || ''}، نتواصل معك بخصوص مكالمتك الأخيرة.`} />
                 </div>

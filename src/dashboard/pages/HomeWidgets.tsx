@@ -8,6 +8,7 @@ import { Card, Badge, Button } from '@/dashboard/components/primitives'
 import { Tooltip, CountUp } from '@/dashboard/components/uiExtras'
 import { SPRING_SNAPPY } from '@/dashboard/components/motionTokens'
 import type { AICallLog, Booking, AppNotification, Integration, MessageLog, SupportTicket, TicketPriority } from '@/types/dashboard'
+import { aiCallResultLabel } from '@/lib/aiCallLabels'
 
 // ─── shared helpers ─────────────────────────────────────────────────────────
 
@@ -230,10 +231,6 @@ export function AgentHeroCard({ todayCalls, todayBookings, escalatedToday, lastC
   /** False for industries without bookings: drops the bookings stat and the "books" wording. */
   showBookings?: boolean
 }) {
-  const RESULT_LABEL: Record<string, string> = {
-    booked: 'انتهت بحجز موعد', needs_review: 'تحتاج مراجعة بشرية', no_slot: 'لا يوجد موعد متاح',
-    cancelled: 'أُلغيت', failed: 'فشلت', transferred: 'حُوّلت لموظف',
-  }
   return (
     <Card glow style={{ position: 'relative', overflow: 'hidden', padding: 'var(--space-6)', display: 'flex', flexDirection: 'column' }}>
       <motion.div
@@ -289,7 +286,7 @@ export function AgentHeroCard({ todayCalls, todayBookings, escalatedToday, lastC
               <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {lastCall.patient_name || lastCall.phone}
               </div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>{RESULT_LABEL[lastCall.result] || lastCall.result}</div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>{lastCall.status === 'needs_review' ? 'تحتاج مراجعة بشرية' : aiCallResultLabel(lastCall.result)}</div>
             </div>
             <div style={{ fontSize: 11, color: 'var(--text-tertiary)', flexShrink: 0 }}>{timeAgo(lastCall.call_time)}</div>
           </div>

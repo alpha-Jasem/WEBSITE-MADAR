@@ -40,9 +40,11 @@ export type CustomerTag =
 
 export type StaffStatus = 'available' | 'busy' | 'fully_booked' | 'on_break' | 'off_today' | 'emergency_only'
 
-export type AICallIntent = 'book_appointment' | 'reschedule' | 'cancel' | 'ask_availability' | 'request_human' | 'other'
-export type AICallResult = 'booked' | 'needs_review' | 'no_slot' | 'cancelled' | 'failed' | 'transferred'
+// Mirror the CHECK constraints on clinic_os_ai_calls.
+export type AICallIntent = 'new_booking' | 'reschedule' | 'cancellation' | 'inquiry' | 'follow_up' | 'other'
+export type AICallResult = 'booked' | 'rescheduled' | 'cancelled' | 'referred' | 'no_action' | 'failed'
 export type AICallStatus = 'completed' | 'needs_review' | 'failed'
+export type AICallChannel = 'phone' | 'web' | 'whatsapp'
 
 export interface Workspace {
   id: string
@@ -186,9 +188,14 @@ export interface AICallLog {
   phone: string
   call_time: string
   duration_seconds: number
-  intent: AICallIntent
-  result: AICallResult
+  intent?: AICallIntent | null
+  result?: AICallResult | null
   status: AICallStatus
+  provider?: 'nabrah' | 'elevenlabs' | null
+  external_id?: string | null
+  agent_id?: string | null
+  channel?: AICallChannel | null
+  caller_name?: string | null
   transcript?: AITranscriptLine[]
   summary?: string
   service_requested?: string
@@ -276,6 +283,7 @@ export type TicketStatus = 'open' | 'in_progress' | 'resolved'
 export interface SupportTicket {
   id: string
   conversation_id?: string
+  ai_call_id?: string | null
   company_id: string
   user_id?: string
   subject: string
