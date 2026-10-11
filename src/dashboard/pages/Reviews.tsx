@@ -9,11 +9,12 @@ import {
 import type { GoogleReview, Branch } from '@/types/dashboard'
 import { Card, Badge, Button, Dialog, Input, type BadgeTone } from '@/dashboard/components/primitives'
 import { useToast, EmptyState, SkeletonRows } from '@/dashboard/components/uiExtras'
+import { NightPage, PageHead, fmtNum } from './shared/night'
 
 function Stars({ n }: { n: number }) {
   return (
     <span style={{ color: 'var(--warning-500)', letterSpacing: 1 }}>
-      {'★'.repeat(n)}<span style={{ color: 'var(--slate-200)' }}>{'★'.repeat(5 - n)}</span>
+      {'★'.repeat(n)}<span style={{ color: 'var(--line-2)' }}>{'★'.repeat(5 - n)}</span>
     </span>
   )
 }
@@ -109,26 +110,17 @@ export function DashboardV2Reviews() {
 
   if (branchesLoading) {
     return (
-      <div>
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 'var(--text-heading-lg)', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Star size={20} style={{ color: 'var(--warning-500)' }} /> AI Google Reviews
-          </div>
-        </div>
+      <NightPage>
+        <PageHead title="تقييمات Google" sub="تقييمات Google مع ردود مقترحة بالذكاء الاصطناعي" />
         <Card style={{ padding: 0 }}><SkeletonRows rows={4} columns={5} /></Card>
-      </div>
+      </NightPage>
     )
   }
 
   if (branchList.length === 0) {
     return (
-      <div>
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 'var(--text-heading-lg)', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Star size={20} style={{ color: 'var(--warning-500)' }} /> AI Google Reviews
-          </div>
-          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>تقييمات Google مع ردود مقترحة بالذكاء الاصطناعي</div>
-        </div>
+      <NightPage>
+        <PageHead title="تقييمات Google" sub="تقييمات Google مع ردود مقترحة بالذكاء الاصطناعي" />
         <Card>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '40px 24px' }}>
             <div style={{ width: 56, height: 56, borderRadius: 'var(--radius-full)', background: 'var(--warning-100)', color: 'var(--warning-500)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
@@ -142,7 +134,7 @@ export function DashboardV2Reviews() {
           </div>
         </Card>
         {renderAddDialog()}
-      </div>
+      </NightPage>
     )
   }
 
@@ -162,24 +154,20 @@ export function DashboardV2Reviews() {
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <div style={{ fontSize: 'var(--text-heading-lg)', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Star size={20} style={{ color: 'var(--warning-500)' }} /> AI Google Reviews
-          </div>
-          {overallRating != null && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 20 }}>{overallRating}</span>
-              <Stars n={Math.round(overallRating)} />
-              <span style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>({branchReviews.length} تقييم)</span>
-            </div>
-          )}
-        </div>
-        <Button onClick={() => setAddOpen(true)}><Plus size={15} /> إضافة فرع</Button>
-      </div>
+    <NightPage>
+      <PageHead
+        title="تقييمات Google"
+        sub={overallRating != null ? (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <b style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--text-primary)' }}>{overallRating}</b>
+            <Stars n={Math.round(overallRating)} />
+            <span>({fmtNum(branchReviews.length)} تقييم{activeBranch ? ` · ${activeBranch.name}` : ''})</span>
+          </span>
+        ) : 'تقييمات Google مع ردود مقترحة بالذكاء الاصطناعي'}
+        actions={<Button onClick={() => setAddOpen(true)}><Plus size={15} /> إضافة فرع</Button>}
+      />
 
-      <div className="dv2-branch-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14, marginBottom: 24 }}>
+      <div className="dv2-branch-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 170px), 1fr))', gap: 14 }}>
         {branchList.map((b, i) => {
           const stats = branchStats.get(b.id)
           const active = activeBranch?.id === b.id
@@ -273,14 +261,14 @@ export function DashboardV2Reviews() {
           const ticket = ticketByReviewId[r.id]
           return (
             <Card key={r.id} delay={Math.min(ri * 0.05, 0.3)}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{
                     width: 38, height: 38, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
                     background: 'var(--gradient-brand)', color: '#fff', fontWeight: 700, fontSize: 14,
                   }}>{r.reviewer_name.trim()[0] || '؟'}</div>
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: 14 }}>{r.reviewer_name}</div>
+                    <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)' }}>{r.reviewer_name}</div>
                     <Stars n={r.rating} />
                   </div>
                 </div>
@@ -308,12 +296,12 @@ export function DashboardV2Reviews() {
                       </div>
                     </div>
                   )}
-                  <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+                  <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-start' }}>
                     <textarea
                       placeholder="اكتب رداً على هذا التقييم..."
                       value={drafts[r.id] ?? ''}
                       onChange={(e) => setDrafts((d) => ({ ...d, [r.id]: e.target.value }))}
-                      style={{ flex: 1, minHeight: 44, padding: '8px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-strong)', fontFamily: 'var(--font-arabic)', fontSize: 13, resize: 'vertical' }}
+                      style={{ flex: '1 1 220px', minWidth: 0, minHeight: 44, padding: '8px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-strong)', fontFamily: 'var(--font-arabic)', fontSize: 13, resize: 'vertical' }}
                     />
                     <Button size="sm" onClick={() => sendReply(r)}>إرسال الرد</Button>
                   </div>
@@ -325,6 +313,6 @@ export function DashboardV2Reviews() {
       </div>
 
       {renderAddDialog()}
-    </div>
+    </NightPage>
   )
 }

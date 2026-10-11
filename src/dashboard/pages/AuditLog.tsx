@@ -5,6 +5,7 @@ import { useWorkspace } from '@/context/WorkspaceContext'
 import { useAuditLog } from '@/lib/dashboardQueries'
 import { Card, Badge, Input, type BadgeTone } from '@/dashboard/components/primitives'
 import { EmptyState, SkeletonRows } from '@/dashboard/components/uiExtras'
+import { NightPage, PageHead, useIsNarrow } from './shared/night'
 
 const ICON_BY_ACTION: Record<string, React.ReactNode> = {
   'appointment.created': <CalendarPlus size={15} />,
@@ -36,6 +37,7 @@ export function DashboardV2AuditLog() {
   const { data: logs, loading } = useAuditLog(companyId, isDemo)
   const [query, setQuery] = useState('')
 
+  const narrow = useIsNarrow()
   const rows = logs || []
   const shown = useMemo(() => {
     if (!query.trim()) return rows
@@ -44,16 +46,12 @@ export function DashboardV2AuditLog() {
   }, [rows, query])
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <div style={{ fontSize: 'var(--text-heading-lg)', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <History size={20} style={{ color: 'var(--brand-500)' }} /> سجل التدقيق
-          </div>
-          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>كل عملية مهمة تصير على حسابك — من سواها ومتى</div>
-        </div>
-        <Input placeholder="بحث بالحدث..." icon={<Search size={15} />} value={query} onChange={(e) => setQuery(e.target.value)} style={{ width: 220 }} />
-      </div>
+    <NightPage>
+      <PageHead
+        title="سجل التدقيق"
+        sub="كل عملية مهمة تصير على حسابك — من سواها ومتى"
+        actions={<Input placeholder="بحث بالحدث..." icon={<Search size={15} />} value={query} onChange={(e) => setQuery(e.target.value)} style={{ width: narrow ? '100%' : 240 }} />}
+      />
 
       <Card style={{ padding: loading ? 0 : '20px 24px' }}>
         {loading && <SkeletonRows rows={6} columns={3} />}
@@ -72,14 +70,14 @@ export function DashboardV2AuditLog() {
                 style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', gap: 14, paddingBottom: i < shown.length - 1 ? 22 : 0 }}
               >
                 <div style={{
-                  width: 32, height: 32, borderRadius: '50%', background: 'var(--brand-100)', color: 'var(--brand-600)',
+                  width: 32, height: 32, borderRadius: '50%', background: 'var(--info-bg)', color: 'var(--sky)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, zIndex: 1,
-                  border: '3px solid var(--surface-card)',
+                  boxShadow: '0 0 0 3px var(--surface-card)',
                 }}>{ICON_BY_ACTION[log.action] || <History size={15} />}</div>
                 <div style={{ flex: 1, paddingTop: 4 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                      <span style={{ fontWeight: 700, fontSize: 13.5 }}>{LABEL_BY_ACTION[log.action] || log.action}</span>
+                      <span style={{ fontWeight: 700, fontSize: 13.5, color: 'var(--text-primary)' }}>{LABEL_BY_ACTION[log.action] || log.action}</span>
                       <Badge tone={TONE_BY_ACTOR[log.actor_type] || 'neutral'}>{ACTOR_LABEL[log.actor_type] || log.actor_type}</Badge>
                     </div>
                     <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>{fmtDate(log.created_at)}</div>
@@ -91,6 +89,6 @@ export function DashboardV2AuditLog() {
           </div>
         )}
       </Card>
-    </div>
+    </NightPage>
   )
 }

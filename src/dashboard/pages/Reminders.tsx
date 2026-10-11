@@ -1,7 +1,8 @@
 import { MessageCircle, Bell, Phone, Star, CalendarX2 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useReminderRules, toggleReminderRule } from '@/lib/dashboardQueries'
-import { Card, Switch } from '@/dashboard/components/primitives'
+import { Card } from '@/dashboard/components/primitives'
+import { NightPage, PageHead, CardTitle, Toggle, fmtNum } from './shared/night'
 import { EmptyState, SkeletonRows } from '@/dashboard/components/uiExtras'
 
 const ICON_BY_KEY: Record<string, React.ReactNode> = {
@@ -22,28 +23,26 @@ export function DashboardV2Reminders() {
     refetch()
   }
 
+  const list = rules || []
+  const on = list.filter((r) => r.enabled).length
+
   return (
-    <div>
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 'var(--text-heading-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>التذكيرات</div>
-        <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>قواعد التذكير الآلي عبر واتساب والمكالمات — محفوظة فعلياً بحسابك</div>
-      </div>
-      <Card style={{ padding: 0 }}>
+    <NightPage>
+      <PageHead title="التذكيرات" sub="قواعد التذكير الآلي عبر واتساب والمكالمات — محفوظة فعلياً بحسابك" />
+      <Card>
+        <CardTitle aside={loading ? null : `${fmtNum(on)} مفعّلة من ${fmtNum(list.length)}`}>قواعد التذكير</CardTitle>
         {loading && <SkeletonRows rows={5} columns={2} />}
-        {!loading && (rules || []).map((r, i) => (
-          <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 20px', borderBottom: i < (rules || []).length - 1 ? '1px solid var(--border-default)' : 'none' }}>
-            <div style={{
-              width: 38, height: 38, borderRadius: 'var(--radius-full)', background: 'var(--brand-100)', color: 'var(--brand-600)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            }}>{ICON_BY_KEY[r.rule_key] || <Bell size={17} />}</div>
-            <div style={{ flex: 1, fontSize: 14, color: 'var(--text-primary)' }}>{r.label}</div>
-            <Switch checked={r.enabled} onChange={() => toggle(r.id, r.enabled)} />
+        {!loading && list.map((r) => (
+          <div key={r.id} className="np-row">
+            <div className="np-icon-tile" style={{ background: 'var(--info-bg)', color: 'var(--sky)' }}>{ICON_BY_KEY[r.rule_key] || <Bell size={17} />}</div>
+            <div className="np-row-main"><b>{r.label}</b></div>
+            <Toggle checked={r.enabled} label={r.label} onChange={() => toggle(r.id, r.enabled)} />
           </div>
         ))}
-        {!loading && (rules || []).length === 0 && (
+        {!loading && list.length === 0 && (
           <EmptyState icon={<Bell size={20} />} title="جارِ تجهيز القواعد" description="قواعد التذكير الآلي تُفعّل تلقائياً مع حسابك — راجع الصفحة بعد قليل." />
         )}
       </Card>
-    </div>
+    </NightPage>
   )
 }

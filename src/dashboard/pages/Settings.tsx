@@ -1,16 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
-import { Camera, Plus, Trash2, Users, ShieldCheck, ShieldOff, Building2, Clock, Sparkles as SparklesIcon, Plug, CreditCard, History } from 'lucide-react'
-import { DashboardV2Integrations } from './Integrations'
-import { DashboardV2MadarAgentUsage } from './MadarAgentUsage'
-import { DashboardV2AuditLog } from './AuditLog'
+import { useNavigate } from 'react-router-dom'
+import { Camera, Plus, Trash2, Users, ShieldCheck, ShieldOff, Sparkles as SparklesIcon, Plug, History, Check, ChevronLeft } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { supabase } from '@/lib/supabase'
 import {
   updateCompany, uploadCompanyLogo, updateWorkingHours,
-  useCompanyStaff, inviteStaffMember, updateStaffMember, removeStaffMember,
+  useCompanyStaff, inviteStaffMember, updateStaffMember, removeStaffMember, useIntegrations,
 } from '@/lib/dashboardQueries'
-import { Card, Button, Input, Select, Switch, Badge, Dialog, type BadgeTone } from '@/dashboard/components/primitives'
+import { CLINIC_PLANS, getUsageMetrics, usagePercentage } from '@/lib/clinicOSProduct'
+import { isIntegrationVisible } from '@/dashboard/modules'
+import { Card, Button, Input, Select, Badge, Dialog, type BadgeTone } from '@/dashboard/components/primitives'
 import { useToast, Avatar } from '@/dashboard/components/uiExtras'
+import { NightPage, PageHead, CardTitle, Meter, Toggle, Chip, EmptyLine, fmtNum } from './shared/night'
 
 const DAYS: { key: string; label: string }[] = [
   { key: 'sun', label: 'الأحد' }, { key: 'mon', label: 'الإثنين' }, { key: 'tue', label: 'الثلاثاء' },
@@ -28,26 +29,33 @@ const ROLE_LABEL: Record<string, string> = { owner: 'مالك', manager: 'مدي
 const ROLE_TONE: Record<string, BadgeTone> = { owner: 'brand', manager: 'success', staff: 'neutral' }
 const ROLE_OPTIONS = [{ value: 'staff', label: 'موظف' }, { value: 'manager', label: 'مدير' }]
 
-const SECTIONS = [
-  { key: 'business', label: 'بيانات العمل', icon: Building2 },
-  { key: 'hours', label: 'ساعات العمل', icon: Clock },
-  { key: 'team', label: 'الفريق والصلاحيات', icon: Users },
-  { key: 'security', label: 'الأمان', icon: ShieldCheck },
-  { key: 'ai', label: 'تفضيلات الذكاء الاصطناعي', icon: SparklesIcon },
-  // Account-level screens that used to sit in the sidebar. They are configuration,
-  // not daily work, so they live behind Settings rather than in the nav.
-  { key: 'integrations', label: 'التكاملات', icon: Plug },
-  { key: 'usage', label: 'الاستخدام والباقة', icon: CreditCard },
-  { key: 'audit', label: 'سجل التدقيق', icon: History },
-] as const
-type SectionKey = typeof SECTIONS[number]['key']
+const SETTINGS_CSS = `
+.st-logo { width: 64px; height: 64px; border-radius: var(--radius-lg); background-color: var(--panel-2); background-size: cover; background-position: center;
+  border: 1px solid var(--line-2); display: grid; place-items: center; cursor: pointer; flex-shrink: 0; padding: 0; overflow: hidden; }
+.st-hour-row { display: grid; grid-template-columns: 90px auto minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.st-hour-row:last-child { border-bottom: 0; }
+.st-hour-row b { font-weight: 600; font-size: 13.5px; color: var(--text-primary); }
+.st-time { width: 100%; min-width: 0; box-sizing: border-box; padding: 6px 10px; border-radius: var(--radius-md); border: 1px solid var(--border-strong); font-size: 13px; font-variant-numeric: tabular-nums; }
+.st-icon-btn { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 9px; border: 0; background: var(--bad-bg); color: var(--bad); cursor: pointer; padding: 0; flex: none; }
+@media (max-width: 900px) {
+  .st-time { min-height: 40px; }
+  .st-icon-btn { width: 40px; height: 40px; }
+}
+@media (max-width: 520px) {
+  .st-hour-row { grid-template-columns: 62px auto minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+  .st-time { padding: 6px; font-size: 12.5px; }
+}
+`
 
 export function DashboardV2Settings() {
   const {
     companyId, companyName, companyPhone, companyEmail, companyCity, companyLogoUrl, companySettings,
-    isDemo, isOwner, refreshAccount,
+    isDemo, isOwner, refreshAccount, hasModule, packageType, isSubscribed, usageMetrics, usageCycleStart, usageCycleEnd,
   } = useWorkspace()
   const { data: staff, refetch: refetchStaff } = useCompanyStaff(companyId, isDemo)
+  const { data: rawIntegrations } = useIntegrations(companyId, isDemo)
+  const navigate = useNavigate()
+  const base = isDemo ? '/demo-review' : '/clinic-os/dashboard'
 
   const [form, setForm] = useState({ name: companyName, phone: companyPhone, email: companyEmail, city: companyCity })
   const [prefs, setPrefs] = useState({ ai: true, reviews: true, sms: false })
@@ -58,7 +66,6 @@ export function DashboardV2Settings() {
   const pushToast = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [activeSection, setActiveSection] = useState<SectionKey>('business')
   const [staffDialogOpen, setStaffDialogOpen] = useState(false)
   const [staffForm, setStaffForm] = useState({ full_name: '', email: '', role: 'staff' })
   const [invitingStaff, setInvitingStaff] = useState(false)
@@ -206,182 +213,169 @@ export function DashboardV2Settings() {
     refetchStaff()
   }
 
-  const Rail = (
-    <div className="dv2-settings-rail" style={{ width: 220, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {SECTIONS.map((s) => {
-        const Icon = s.icon
-        const active = activeSection === s.key
-        return (
-          <div
-            key={s.key}
-            onClick={() => setActiveSection(s.key)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 'var(--radius-md)',
-              cursor: 'pointer', fontSize: 13.5, fontWeight: 600,
-              background: active ? 'var(--brand-50)' : 'transparent',
-              color: active ? 'var(--brand-700)' : 'var(--text-secondary)',
-            }}
-          >
-            <Icon size={16} /> {s.label}
-          </div>
-        )
-      })}
-    </div>
-  )
+  const planName = isSubscribed ? CLINIC_PLANS[packageType]?.name ?? packageType : 'Free'
+  const metrics = (isDemo ? getUsageMetrics(packageType) : usageMetrics).filter((m) => m.limit > 0 || m.used > 0)
+  const integrations = (rawIntegrations || []).filter((i) => isIntegrationVisible(i.provider, hasModule))
 
   return (
-    <div style={{ maxWidth: 960 }}>
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 'var(--text-heading-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>الإعدادات</div>
-        <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>بيانات عملك، ساعات العمل، والفريق</div>
+    <NightPage>
+      <style>{SETTINGS_CSS}</style>
+      <PageHead
+        title="الإعدادات"
+        sub={companyName || 'بيانات عملك، ساعات العمل، والفريق'}
+        actions={<Button onClick={save} disabled={saving}><Check size={15} /> {saving ? 'جارِ الحفظ...' : 'حفظ'}</Button>}
+      />
+
+      <div className="np-grid-2">
+        <Card>
+          <CardTitle>بيانات المنشأة</CardTitle>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18 }}>
+            <button
+              type="button" aria-label="تغيير الشعار" className="st-logo"
+              onClick={() => fileInputRef.current?.click()}
+              style={{ backgroundImage: logoUrl ? `url(${logoUrl})` : undefined }}
+            >
+              {!logoUrl && <Camera size={22} style={{ color: 'var(--text-tertiary)' }} />}
+            </button>
+            <div style={{ minWidth: 0 }}>
+              <Button variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploadingLogo}>
+                {uploadingLogo ? 'جارِ الرفع...' : 'رفع شعار جديد'}
+              </Button>
+              <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 6 }}>PNG أو JPG، مربّع الشكل يفضل</div>
+            </div>
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleLogoChange} style={{ display: 'none' }} />
+          </div>
+          <div className="np-form-grid">
+            <Input label="اسم المنشأة" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+            <Input label="المدينة" value={form.city} onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))} />
+            <Input label="البريد الإلكتروني" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
+            <Input label="رقم الجوال" type="tel" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />
+          </div>
+        </Card>
+
+        <Card>
+          <CardTitle aside={<Chip tone={isSubscribed ? 'ok' : 'muted'}>{isSubscribed ? 'مفعّلة' : 'غير مفعّلة'}</Chip>}>الباقة والاستهلاك</CardTitle>
+          <div className="np-usage-row" style={{ marginBottom: 12 }}><span>الباقة</span><b>{planName}</b></div>
+          {usageCycleStart && usageCycleEnd && (
+            <div className="np-usage-row" style={{ marginBottom: 12 }}><span>دورة الاستخدام</span><b className="np-num">{usageCycleStart} - {usageCycleEnd}</b></div>
+          )}
+          {metrics.length === 0 && <EmptyLine>تظهر حدود الاستهلاك فور تفعيل الاشتراك</EmptyLine>}
+          {metrics.map((m) => {
+            const p = usagePercentage(m)
+            return (
+              <Meter
+                key={m.key} label={m.label} value={p}
+                display={<span dir="ltr">{fmtNum(m.used)} / {m.limit ? fmtNum(m.limit) : '—'}</span>}
+                color={p >= 100 ? 'var(--bad)' : p >= 80 ? 'linear-gradient(90deg, var(--warn), var(--bad))' : undefined}
+              />
+            )
+          })}
+          <Button variant="secondary" size="sm" onClick={() => navigate(`${base}/plan-usage`)}>تفاصيل الاستهلاك <ChevronLeft size={14} /></Button>
+        </Card>
       </div>
 
-      <div className="dv2-settings-layout" style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
-        <style>{`@media (max-width: 800px) { .dv2-settings-layout { flex-direction: column; } .dv2-settings-rail { width: 100% !important; flex-direction: row !important; overflow-x: auto; } }`}</style>
-        {Rail}
-
-        <div style={{ flex: 1, minWidth: 0 }}>
-      {activeSection === 'business' && (
-      <Card style={{ marginBottom: 16 }}>
-        <div style={{ fontWeight: 700, marginBottom: 14 }}>بيانات العمل</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18 }}>
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            style={{
-              width: 64, height: 64, borderRadius: 'var(--radius-lg)', background: 'var(--slate-100)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-              backgroundImage: logoUrl ? `url(${logoUrl})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center',
-              border: '1px solid var(--border-default)', flexShrink: 0, position: 'relative', overflow: 'hidden',
-            }}
-          >
-            {!logoUrl && <Camera size={22} style={{ color: 'var(--text-tertiary)' }} />}
-          </div>
-          <div>
-            <Button variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploadingLogo}>
-              {uploadingLogo ? 'جارِ الرفع...' : 'رفع شعار جديد'}
-            </Button>
-            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 6 }}>PNG أو JPG، مربّع الشكل يفضل</div>
-          </div>
-          <input ref={fileInputRef} type="file" accept="image/*" onChange={handleLogoChange} style={{ display: 'none' }} />
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <Input label="اسم النشاط" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
-          <div style={{ display: 'flex', gap: 12 }}>
-            <Input label="رقم الجوال" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} style={{ flex: 1 }} />
-            <Input label="البريد الإلكتروني" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} style={{ flex: 1 }} />
-          </div>
-          <Input label="المدينة" value={form.city} onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))} />
-        </div>
-        <Button onClick={save} disabled={saving} style={{ marginTop: 18 }}>{saving ? 'جارِ الحفظ...' : 'حفظ التغييرات'}</Button>
-      </Card>
-      )}
-
-      {activeSection === 'hours' && (
-      <Card style={{ marginBottom: 16 }}>
-        <div style={{ fontWeight: 700, marginBottom: 14 }}>ساعات العمل</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <Card>
+        <CardTitle aside="يستخدمها الموظف الذكي عند الرد على العملاء">ساعات العمل</CardTitle>
+        <div>
           {DAYS.map((d) => {
             const day = hours[d.key] || DEFAULT_HOURS[d.key]
             return (
-              <div key={d.key} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 80, fontSize: 13, fontWeight: 600 }}>{d.label}</div>
-                <Switch checked={day.open} onChange={(v) => setHours((h) => ({ ...h, [d.key]: { ...day, open: v } }))} />
+              <div key={d.key} className="st-hour-row">
+                <b>{d.label}</b>
+                <Toggle checked={day.open} label={d.label} onChange={(v) => setHours((h) => ({ ...h, [d.key]: { ...day, open: v } }))} />
                 {day.open ? (
                   <>
-                    <input type="time" value={day.start} onChange={(e) => setHours((h) => ({ ...h, [d.key]: { ...day, start: e.target.value } }))}
-                      style={{ padding: '6px 10px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-strong)', fontSize: 13 }} />
-                    <span style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>إلى</span>
-                    <input type="time" value={day.end} onChange={(e) => setHours((h) => ({ ...h, [d.key]: { ...day, end: e.target.value } }))}
-                      style={{ padding: '6px 10px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-strong)', fontSize: 13 }} />
+                    <input type="time" aria-label={`${d.label} من`} className="st-time" value={day.start} onChange={(e) => setHours((h) => ({ ...h, [d.key]: { ...day, start: e.target.value } }))} />
+                    <input type="time" aria-label={`${d.label} إلى`} className="st-time" value={day.end} onChange={(e) => setHours((h) => ({ ...h, [d.key]: { ...day, end: e.target.value } }))} />
                   </>
                 ) : (
-                  <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>مغلق</span>
+                  <span style={{ color: 'var(--dim)', gridColumn: 'span 2', fontSize: 13 }}>مغلق</span>
                 )}
               </div>
             )
           })}
         </div>
-        <Button onClick={save} disabled={saving} style={{ marginTop: 18 }}>{saving ? 'جارِ الحفظ...' : 'حفظ التغييرات'}</Button>
       </Card>
-      )}
 
-      {activeSection === 'team' && (
-      <Card style={{ marginBottom: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-          <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}><Users size={16} /> الفريق والصلاحيات</div>
-          {isOwner && <Button size="sm" variant="secondary" onClick={() => setStaffDialogOpen(true)}><Plus size={14} /> دعوة موظف</Button>}
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {(staff || []).length === 0 && <div style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>لا يوجد فريق مضاف بعد</div>}
+      <div className="np-grid-2 even">
+        <Card>
+          <CardTitle aside={`${fmtNum((staff || []).length)} عضو`}><Users size={16} style={{ color: 'var(--sky)' }} /> الفريق والصلاحيات</CardTitle>
+          {(staff || []).length === 0 && <EmptyLine>لا يوجد فريق مضاف بعد</EmptyLine>}
           {(staff || []).map((s) => (
-            <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border-default)' }}>
-              <Avatar name={s.full_name} size={32} />
-              <div style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{s.full_name}</div>
+            <div key={s.id} className="np-row" style={{ flexWrap: 'wrap' }}>
+              <Avatar name={s.full_name || ''} size={34} />
+              <div className="np-row-main"><b>{s.full_name}</b></div>
               {!s.auth_user_id && <Badge tone="warning">بانتظار القبول</Badge>}
               <Badge tone={ROLE_TONE[s.role] || 'neutral'}>{ROLE_LABEL[s.role] || s.role}</Badge>
-              {isOwner ? (
+              {isOwner && (
                 <>
                   <Select options={ROLE_OPTIONS} value={s.role} onChange={(e) => changeStaffRole(s.id, e.target.value)} style={{ width: 110 }} />
-                  <span onClick={() => deleteStaff(s.id)} style={{ cursor: 'pointer', color: 'var(--danger-500)' }}><Trash2 size={15} /></span>
+                  <button type="button" className="st-icon-btn" aria-label={`حذف ${s.full_name}`} onClick={() => deleteStaff(s.id)}><Trash2 size={15} /></button>
                 </>
-              ) : null}
+              )}
             </div>
           ))}
-        </div>
-      </Card>
-      )}
+          {isOwner && <Button variant="secondary" size="sm" onClick={() => setStaffDialogOpen(true)} style={{ marginTop: 12 }}><Plus size={14} /> دعوة عضو</Button>}
+        </Card>
 
-      {activeSection === 'security' && (
-      <Card style={{ marginBottom: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
-              {mfaEnabled ? <ShieldCheck size={16} style={{ color: 'var(--success-500)' }} /> : <ShieldOff size={16} style={{ color: 'var(--text-tertiary)' }} />}
-              الأمان — التحقق بخطوتين
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4, maxWidth: 400 }}>
-              يطلب رمزاً إضافياً من تطبيق مصادقة (Google Authenticator) عند تسجيل الدخول، حتى لو سُرقت كلمة المرور.
-            </div>
+        <Card>
+          <CardTitle><SparklesIcon size={16} style={{ color: 'var(--ai)' }} /> التنبيهات والتفضيلات</CardTitle>
+          <div className="np-row">
+            <div className="np-row-main"><b>الرد الآلي على واتساب والمكالمات</b><small>{hasModule('bookings') ? 'يتيح للموظف الذكي حجز المواعيد تلقائياً' : 'يتيح للموظف الذكي الرد على العملاء تلقائياً'}</small></div>
+            <Toggle checked={prefs.ai} label="الرد الآلي" onChange={(v) => setPrefs((p) => ({ ...p, ai: v }))} />
           </div>
-          {!mfaChecking && (
-            mfaEnabled ? (
-              <Button variant="secondary" size="sm" onClick={disableMfa} disabled={mfaVerifying}>إيقاف</Button>
-            ) : (
-              <Button size="sm" onClick={startMfaEnrollment} disabled={mfaEnrolling || isDemo}>{mfaEnrolling ? 'جارِ التجهيز...' : 'تفعيل الآن'}</Button>
-            )
+          {hasModule('reviews') && (
+            <div className="np-row">
+              <div className="np-row-main"><b>الردود الآلية على تقييمات Google</b></div>
+              <Toggle checked={prefs.reviews} label="الردود الآلية على التقييمات" onChange={(v) => setPrefs((p) => ({ ...p, reviews: v }))} />
+            </div>
           )}
-        </div>
-      </Card>
-      )}
-
-      {activeSection === 'ai' && (
-      <Card style={{ marginBottom: 16 }}>
-        <div style={{ fontWeight: 700, marginBottom: 14 }}>تفضيلات الذكاء الاصطناعي</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 600 }}>الرد الآلي على واتساب والمكالمات</div>
-              <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>يتيح للذكاء الاصطناعي حجز المواعيد تلقائياً</div>
+          {hasModule('reminders') && (
+            <div className="np-row">
+              <div className="np-row-main"><b>تذكيرات SMS الاحتياطية</b></div>
+              <Toggle checked={prefs.sms} label="تذكيرات SMS" onChange={(v) => setPrefs((p) => ({ ...p, sms: v }))} />
             </div>
-            <Switch checked={prefs.ai} onChange={(v) => setPrefs((p) => ({ ...p, ai: v }))} />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ fontSize: 14, fontWeight: 600 }}>الردود الآلية على تقييمات Google</div>
-            <Switch checked={prefs.reviews} onChange={(v) => setPrefs((p) => ({ ...p, reviews: v }))} />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ fontSize: 14, fontWeight: 600 }}>تذكيرات SMS الاحتياطية</div>
-            <Switch checked={prefs.sms} onChange={(v) => setPrefs((p) => ({ ...p, sms: v }))} />
-          </div>
-        </div>
-        <Button onClick={save} disabled={saving} style={{ marginTop: 18 }}>{saving ? 'جارِ الحفظ...' : 'حفظ التغييرات'}</Button>
-      </Card>
-      )}
+          )}
+        </Card>
+      </div>
 
-      {activeSection === 'integrations' && <DashboardV2Integrations />}
-      {activeSection === 'usage' && <DashboardV2MadarAgentUsage />}
-      {activeSection === 'audit' && <DashboardV2AuditLog />}
-        </div>
+      <div className="np-grid-2 even">
+        <Card>
+          <CardTitle aside={<button type="button" className="np-link" onClick={() => navigate(`${base}/integrations`)}>كل التكاملات <ChevronLeft size={13} /></button>}><Plug size={16} style={{ color: 'var(--sky)' }} /> الربط</CardTitle>
+          {integrations.length === 0 && <EmptyLine>جارِ تجهيز التكاملات...</EmptyLine>}
+          {integrations.map((i) => {
+            const ok = i.status === 'connected'
+            return (
+              <div key={i.id} className="np-row">
+                <div className="np-row-main"><b>{i.name}</b></div>
+                <Chip tone={ok ? 'ok' : 'muted'}>{ok ? 'متصل' : 'غير متصل'}</Chip>
+                <Button variant="secondary" size="sm" onClick={() => navigate(`${base}/integrations`)}>{ok ? 'إدارة' : 'ربط'}</Button>
+              </div>
+            )
+          })}
+        </Card>
+
+        <Card>
+          <CardTitle>{mfaEnabled ? <ShieldCheck size={16} style={{ color: 'var(--ok)' }} /> : <ShieldOff size={16} style={{ color: 'var(--text-tertiary)' }} />} الأمان</CardTitle>
+          <div className="np-row" style={{ flexWrap: 'wrap' }}>
+            <div className="np-row-main" style={{ minWidth: 200 }}>
+              <b>التحقق بخطوتين</b>
+              <small>يطلب رمزاً إضافياً من تطبيق مصادقة (Google Authenticator) عند تسجيل الدخول، حتى لو سُرقت كلمة المرور.</small>
+            </div>
+            {!mfaChecking && (
+              mfaEnabled ? (
+                <Button variant="secondary" size="sm" onClick={disableMfa} disabled={mfaVerifying}>إيقاف</Button>
+              ) : (
+                <Button size="sm" onClick={startMfaEnrollment} disabled={mfaEnrolling || isDemo}>{mfaEnrolling ? 'جارِ التجهيز...' : 'تفعيل الآن'}</Button>
+              )
+            )}
+          </div>
+          <div className="np-row">
+            <History size={16} style={{ color: 'var(--sky)', flexShrink: 0 }} />
+            <div className="np-row-main"><b>سجل التدقيق</b><small>كل عملية مهمة على حسابك، من سواها ومتى</small></div>
+            <Button variant="secondary" size="sm" onClick={() => navigate(`${base}/audit-log`)}>عرض</Button>
+          </div>
+        </Card>
       </div>
 
       <Dialog
@@ -420,6 +414,6 @@ export function DashboardV2Settings() {
           {mfaError && <div style={{ fontSize: 12, color: 'var(--danger-500)' }}>{mfaError}</div>}
         </div>
       </Dialog>
-    </div>
+    </NightPage>
   )
 }
