@@ -21,21 +21,24 @@ export function AccountMenu({ base }: { base: string }) {
 
   return (
     <div style={{ position: 'relative' }}>
-      <div
+      <button
+        type="button"
+        aria-label="قائمة الحساب"
+        aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
         style={{
-          width: 30, height: 30, borderRadius: '50%', cursor: 'pointer', flexShrink: 0,
-          background: 'var(--accent-primary)', color: 'var(--text-on-brand)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700,
+          width: 40, height: 40, borderRadius: 12, cursor: 'pointer', flexShrink: 0, border: 0, padding: 0,
+          background: 'var(--gradient-brand)', color: '#fff', fontFamily: 'var(--font-display)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700,
         }}
-      >{initial}</div>
+      >{initial}</button>
 
       {hover && !open && (
         <div style={{
           position: 'absolute', top: '130%', insetInlineEnd: 0, whiteSpace: 'nowrap', zIndex: 1300,
-          background: 'var(--slate-900)', color: '#fff', padding: '6px 10px', borderRadius: 'var(--radius-md)',
+          background: 'var(--surface-inverse)', color: '#fff', padding: '6px 10px', borderRadius: 'var(--radius-md)',
           fontSize: 11.5, boxShadow: 'var(--shadow-lg)',
         }}>
           {overall}% من الاستخدام الشهري مستهلك
@@ -47,7 +50,7 @@ export function AccountMenu({ base }: { base: string }) {
           <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1200 }} />
           <div style={{
             position: 'absolute', top: '130%', insetInlineEnd: 0, width: 220,
-            background: 'var(--surface-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', zIndex: 1300,
+            background: 'var(--surface-raised)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', zIndex: 1300,
             border: '1px solid var(--border-default)', overflow: 'hidden',
           }}>
             <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border-default)' }}>

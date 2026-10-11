@@ -63,7 +63,7 @@ export function SupportChat() {
   }
 
   return (
-    <div style={{ position: 'fixed', bottom: 24, left: 24, zIndex: 1400 }}>
+    <div className="dv2-floating" style={{ position: 'fixed', bottom: 24, left: 24, zIndex: 1400 }}>
       <style>{`
         @keyframes dv2-agent-pulse {
           0%   { transform: scale(1);    opacity: .55; }

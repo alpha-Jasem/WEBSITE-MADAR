@@ -73,10 +73,10 @@ export function NotificationCenter() {
 
   return (
     <div style={{ position: 'relative' }}>
-      <div onClick={() => setOpen((v) => !v)} style={{ position: 'relative', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+      <button type="button" className="dv2-icon-btn" aria-label="الإشعارات" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
         <Bell size={18} />
         {unreadCount > 0 && (
-          <span style={{ position: 'absolute', top: -4, insetInlineEnd: -4, width: 14, height: 14 }}>
+          <span style={{ position: 'absolute', top: 5, insetInlineEnd: 5, width: 14, height: 14 }}>
             <motion.span
               animate={{ scale: [1, 1.9], opacity: [0.55, 0] }}
               transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut' }}
@@ -89,7 +89,7 @@ export function NotificationCenter() {
             }}>{unreadCount > 9 ? '9+' : unreadCount}</span>
           </span>
         )}
-      </div>
+      </button>
       <AnimatePresence>
         {open && (
           <>
@@ -100,8 +100,8 @@ export function NotificationCenter() {
               exit={{ opacity: 0, y: -6, scale: 0.98 }}
               transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
               style={{
-                position: 'absolute', top: '130%', insetInlineEnd: 0, width: 320, maxHeight: 420, overflowY: 'auto',
-                background: 'var(--surface-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', zIndex: 1300,
+                position: 'absolute', top: '130%', insetInlineEnd: 0, width: 'min(340px, calc(100vw - 32px))', maxHeight: 420, overflowY: 'auto',
+                background: 'var(--surface-raised)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', zIndex: 1300,
                 border: '1px solid var(--border-default)',
               }}
             >
