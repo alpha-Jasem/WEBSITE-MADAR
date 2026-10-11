@@ -229,7 +229,8 @@ export function useAICalls(companyId: string | null, isDemo = false) {
       .order('call_time', { ascending: false })
       .limit(100)
     if (error) throw error
-    return (data ?? []) as AICallLog[]
+    // Ingested calls store the caller's name in caller_name; the pages read patient_name.
+    return ((data ?? []) as AICallLog[]).map((c) => ({ ...c, patient_name: c.patient_name ?? c.caller_name ?? undefined }))
   }, [companyId, isDemo], TABLES.aiCalls, companyId, isDemo)
 }
 

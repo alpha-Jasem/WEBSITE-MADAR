@@ -195,7 +195,7 @@ export const DEMO_MESSAGES: MessageLog[] = [
 
 export const DEMO_AI_CALLS: AICallLog[] = [
   {
-    id: 'call-001', company_id: 'demo-clinic-001', patient_name: 'ليلى الغامدي', phone: '0506789012', call_time: TODAY + 'T08:10:00Z', duration_seconds: 87, intent: 'book_appointment', result: 'booked', status: 'completed',
+    id: 'call-001', company_id: 'demo-clinic-001', patient_name: 'ليلى الغامدي', phone: '0506789012', call_time: TODAY + 'T08:10:00Z', duration_seconds: 87, intent: 'new_booking', result: 'booked', status: 'completed',
     transcript: [
       { speaker: 'agent', text: 'أهلاً وسهلاً، عيادات نور للأسنان، أنا مساعد مدار الذكي كيف أقدر أساعدك؟', time: '00:00' },
       { speaker: 'patient', text: 'أبغى أحجز موعد كشف عام لليوم إذا في وقت متاح', time: '00:05' },
@@ -208,7 +208,7 @@ export const DEMO_AI_CALLS: AICallLog[] = [
     summary: 'المريضة طلبت كشف عام ليوم اليوم. تم اقتراح الساعة 4 مع د. سارة الحربي وتأكيد الحجز.', service_requested: 'كشف عام', doctor_requested: 'د. سارة الحربي', preferred_date: TODAY, preferred_time: '16:00', appointment_id: 'apt-006', needs_review: false, created_at: TODAY + 'T08:10:00Z',
   },
   {
-    id: 'call-002', company_id: 'demo-clinic-001', patient_name: 'رنا الشهري', phone: '0503345678', call_time: TODAY + 'T05:55:00Z', duration_seconds: 104, intent: 'book_appointment', result: 'booked', status: 'completed',
+    id: 'call-002', company_id: 'demo-clinic-001', patient_name: 'رنا الشهري', phone: '0503345678', call_time: TODAY + 'T05:55:00Z', duration_seconds: 104, intent: 'new_booking', result: 'booked', status: 'completed',
     transcript: [
       { speaker: 'agent', text: 'أهلاً وسهلاً، عيادات نور للأسنان، كيف أقدر أساعدك؟', time: '00:00' },
       { speaker: 'patient', text: 'بغيت أحجز تنظيف أسنان ليوم المساء', time: '00:06' },
@@ -221,7 +221,7 @@ export const DEMO_AI_CALLS: AICallLog[] = [
     summary: 'طلب تنظيف أسنان مساءً. تم الحجز مع د. أحمد 6:40 مساءً.', service_requested: 'تنظيف الأسنان', preferred_date: TODAY, preferred_time: '18:40', appointment_id: 'apt-012', needs_review: false, created_at: TODAY + 'T05:55:00Z',
   },
   {
-    id: 'call-003', company_id: 'demo-clinic-001', patient_name: 'دانة السلمي', phone: '0505567890', call_time: TODAY + 'T07:25:00Z', duration_seconds: 62, intent: 'book_appointment', result: 'needs_review', status: 'needs_review',
+    id: 'call-003', company_id: 'demo-clinic-001', patient_name: 'دانة السلمي', phone: '0505567890', call_time: TODAY + 'T07:25:00Z', duration_seconds: 62, intent: 'new_booking', result: 'referred', status: 'needs_review',
     transcript: [
       { speaker: 'agent', text: 'أهلاً، عيادات نور للأسنان، كيف أساعدك؟', time: '00:00' },
       { speaker: 'patient', text: 'أبغى أحجز استشارة تقويم لليوم الضحى', time: '00:05' },
@@ -231,7 +231,7 @@ export const DEMO_AI_CALLS: AICallLog[] = [
     summary: 'طلب استشارة تقويم في وقت يوجد تعارض محتمل. يحتاج مراجعة من الاستقبال.', service_requested: 'استشارة تقويم', needs_review: true, review_reason: 'تعارض في الجدول مع د. نورة القحطاني', created_at: TODAY + 'T07:25:00Z',
   },
   {
-    id: 'call-004', company_id: 'demo-clinic-001', phone: '0509888777', call_time: TODAY + 'T06:30:00Z', duration_seconds: 28, intent: 'book_appointment', result: 'failed', status: 'failed',
+    id: 'call-004', company_id: 'demo-clinic-001', phone: '0509888777', call_time: TODAY + 'T06:30:00Z', duration_seconds: 28, intent: 'new_booking', result: 'failed', status: 'failed',
     transcript: [
       { speaker: 'agent', text: 'أهلاً، عيادات نور للأسنان...', time: '00:00' },
       { speaker: 'patient', text: 'أه أبغى أحجز—', time: '00:05' },
@@ -239,7 +239,7 @@ export const DEMO_AI_CALLS: AICallLog[] = [
     summary: 'المتصل قطع المكالمة في البداية. لم يتم الحجز.', needs_review: false, review_reason: 'قطع المتصل المكالمة', created_at: TODAY + 'T06:30:00Z',
   },
   {
-    id: 'call-005', company_id: 'demo-clinic-001', patient_name: 'تركي الدوسري', phone: '0508890123', call_time: D3 + 'T18:55:00Z', duration_seconds: 95, intent: 'book_appointment', result: 'booked', status: 'completed',
+    id: 'call-005', company_id: 'demo-clinic-001', patient_name: 'تركي الدوسري', phone: '0508890123', call_time: D3 + 'T18:55:00Z', duration_seconds: 95, intent: 'new_booking', result: 'booked', status: 'completed',
     summary: 'حجز تنظيف أسنان مساءً مع د. أحمد الزهراني.', service_requested: 'تنظيف الأسنان', preferred_date: TODAY, appointment_id: 'apt-017', needs_review: false, created_at: D3 + 'T18:55:00Z',
   },
 ]

@@ -3,6 +3,7 @@ import { MessageCircle, Phone, PhoneCall, Inbox } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useAICalls, useMessages } from '@/lib/dashboardQueries'
 import type { MessageLog, MessageStatus } from '@/types/dashboard'
+import { aiCallIntentLabel } from '@/lib/aiCallLabels'
 import { Card, Badge, Dialog, Button, type BadgeTone } from '@/dashboard/components/primitives'
 import { EmptyState, SkeletonRows, Avatar, ContactActions } from '@/dashboard/components/uiExtras'
 
@@ -38,7 +39,7 @@ export function DashboardV2Conversations() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 600 }}>{c.patient_name || c.phone}</div>
                 <div style={{ fontSize: 11, color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {c.summary || c.intent}
+                  {c.summary || aiCallIntentLabel(c.intent)}
                 </div>
               </div>
               <div style={{ color: 'var(--brand-500)' }}><Phone size={14} /></div>
