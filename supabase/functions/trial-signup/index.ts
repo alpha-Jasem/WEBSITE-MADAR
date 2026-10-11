@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
       if (userErr || !user) return json({ error: 'unauthorized' }, 401)
 
       const { company_name, owner_name, city, phone, email, business_type } = body
-      const btype = business_type === 'clinic' ? 'clinic' : 'car_wash'
+      const btype = 'clinic'
 
       if (!company_name?.trim() || !owner_name?.trim() || !email?.trim()) {
         return json({ error: 'missing_required_fields' }, 400)

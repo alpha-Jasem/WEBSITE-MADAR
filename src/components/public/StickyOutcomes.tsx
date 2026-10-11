@@ -1,10 +1,9 @@
 import { useRef, useState } from 'react'
 import { motion, useScroll, useMotionValueEvent, AnimatePresence } from 'framer-motion'
-import { Car, Stethoscope, TrendingUp, Clock, Users, Zap, CheckCircle2 } from 'lucide-react'
+import { Stethoscope, TrendingUp, Clock, Users, Zap, CheckCircle2 } from 'lucide-react'
 import { useLanguage } from '../../context/LanguageContext'
 
 const EM = '#10B981'
-const CY = '#0099CC'
 const VI = '#7C3AED'
 
 const scenes = [
@@ -18,18 +17,6 @@ const scenes = [
       { icon: Clock,    val:{ ar:'٢+ ساعة', en:'2+ hrs'  }, lbl:{ ar:'يومياً في التنظيم اليدوي', en:'daily on manual management' }, bad: true },
       { icon: Users,    val:{ ar:'٤٠٪',     en:'40%'     }, lbl:{ ar:'مكالمات تضيع بلا رد',       en:'of calls go unanswered'     }, bad: true },
       { icon: TrendingUp, val:{ ar:'٠',     en:'0'       }, lbl:{ ar:'من هذا يُقاس أو يُتابع',   en:'of this is tracked'         }, bad: true },
-    ],
-  },
-  {
-    accent: CY,
-    tag     : { ar: 'Car Wash OS', en: 'Car Wash OS' },
-    num     : { ar: '٤٠+', en: '40+' },
-    headline: { ar: 'دقيقة تُستعاد يومياً — بدون موظف إضافي', en: 'Minutes Reclaimed Daily — No Extra Staff' },
-    sub     : { ar: 'الطابور ينظّم نفسه. الواتساب يرسل تأكيدات تلقائية. أنت تشوف الأرقام بدل ما تعدّها.', en: 'Queue manages itself. WhatsApp sends auto-confirmations. You watch the numbers instead of counting them.' },
-    stats   : [
-      { icon: Clock,       val:{ ar:'٤٠+ دق', en:'40+ min' }, lbl:{ ar:'توفير يومي موثّق',        en:'daily saving documented'      }, bad: false },
-      { icon: Zap,         val:{ ar:'١١',      en:'11'      }, lbl:{ ar:'workflow أتمتة جاهز',    en:'automation workflows ready'   }, bad: false },
-      { icon: CheckCircle2,val:{ ar:'٠',       en:'0'       }, lbl:{ ar:'تدخل يدوي في الطابور',   en:'manual queue interventions'   }, bad: false },
     ],
   },
   {
@@ -58,7 +45,7 @@ export const StickyOutcomes = () => {
   })
 
   useMotionValueEvent(scrollYProgress, 'change', (v) => {
-    const idx = Math.min(2, Math.floor(v * 3 + 0.05))
+    const idx = Math.min(1, Math.floor(v * 2 + 0.05))
     setActive(idx)
   })
 
@@ -84,7 +71,7 @@ export const StickyOutcomes = () => {
       </div>
 
       {/* ── tall container that drives scroll ── */}
-      <div ref={containerRef} style={{ height: '300vh' }}>
+      <div ref={containerRef} style={{ height: '200vh' }}>
         <div className="sticky top-0 overflow-hidden" style={{ height: '100vh' }}>
 
           {/* Accent glow that matches active scene */}
@@ -120,8 +107,7 @@ export const StickyOutcomes = () => {
                     style={{ background: `${scene.accent}18`, border: `1px solid ${scene.accent}40` }}
                   >
                     {active === 0 && <span style={{ fontSize: 11, color: scene.accent }}>⚠</span>}
-                    {active === 1 && <Car size={11} style={{ color: scene.accent }} />}
-                    {active === 2 && <Stethoscope size={11} style={{ color: scene.accent }} />}
+                    {active === 1 && <Stethoscope size={11} style={{ color: scene.accent }} />}
                     <span className={`text-xs font-bold tracking-widest uppercase ${isAr ? 'font-cairo' : 'font-work'}`}
                       style={{ color: scene.accent }}>
                       {isAr ? scene.tag.ar : scene.tag.en}
@@ -219,18 +205,12 @@ export const StickyOutcomes = () => {
                       {active === 0 && <span style={{ fontSize: 16 }}>⚠️</span>}
                       {active === 1 && (
                         <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-                          style={{ background: `linear-gradient(135deg, #0D1B3E, ${CY})` }}>
-                          <Car size={12} className="text-white" />
-                        </div>
-                      )}
-                      {active === 2 && (
-                        <div className="w-7 h-7 rounded-lg flex items-center justify-center"
                           style={{ background: `linear-gradient(135deg, #0D2B1E, ${EM})` }}>
                           <Stethoscope size={12} className="text-white" />
                         </div>
                       )}
                       <span className={`text-sm font-bold text-white ${isAr ? 'font-cairo' : 'font-sora'}`}>
-                        {active === 0 ? t('بدون نظام', 'No System') : active === 1 ? 'Car Wash OS' : 'Workspace OS'}
+                        {active === 0 ? t('بدون نظام', 'No System') : 'Workspace OS'}
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
@@ -295,10 +275,7 @@ export const StickyOutcomes = () => {
                         <span style={{ fontSize: 14 }}>💡</span>
                         <p className={`text-xs ${isAr ? 'font-tajawal' : 'font-work'}`}
                           style={{ color: 'rgba(255,255,255,0.5)' }}>
-                          {active === 1
-                            ? t('تشغيل فوري — فريقنا يجهّز كل شيء في ٤٨ ساعة', 'Instant activation — our team sets everything up in 48 hours')
-                            : t('مها تشتغل من اليوم الأول — لا موظف إضافي', 'Maha works from day one — no extra staff')
-                          }
+                          {t('مها تشتغل من اليوم الأول — لا موظف إضافي', 'Maha works from day one — no extra staff')}
                         </p>
                       </div>
                     </div>

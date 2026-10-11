@@ -20,40 +20,9 @@ _آخر تحديث: 2026-06-01_
 
 ---
 
-## 2) المنتجات الثلاثة
+## 2) المنتجات
 
-### 🚗 المنتج 1 — مغاسل السيارات (Car Wash OS) ✅ الأنضج
-نظام تشغيل كامل لمغسلة (walk-in فقط، بدون مواعيد).
-
-**المكوّنات:**
-- Dashboard: طابور السيارات، العمال، المصاريف، الإغلاق اليومي، الولاء، الحملات
-- 11 workflow شغّالة في n8n (واتساب آلي بالكامل)
-- OTP عبر واتساب لتسجيل دخول العملاء
-
-**جداول Supabase (cw_*):**
-`cw_customers`, `cw_visits`, `cw_workers`, `cw_queue`, `cw_expenses`, `cw_services`, `cw_daily_closings`, `cw_campaigns`, `cw_audit_logs`, `cw_otps`, `cw_phone_otps`, `cw_membership_plans`, `cw_customer_memberships`, `cw_wallet_transactions`
-
-**n8n Workflows (CW):**
-| Workflow | الجدول | الوظيفة |
-|---|---|---|
-| CW — Car Ready | webhook | واتساب "سيارتك جاهزة" |
-| CW — Delivery Receipt | webhook | فاتورة واتساب بعد التسليم |
-| CW — Loyalty Milestone | webhook | تهنئة الغسلة المجانية |
-| CW — Daily Closing Summary | webhook | ملخص يومي للمالك |
-| CW — Review Request | كل 30د | طلب تقييم Google |
-| CW — Daily Reactivation | يومي 10ص | تنشيط العملاء الخاملين 30+ يوم |
-| CW — Post Followup | كل ساعة | متابعة بعد الزيارة |
-| CW — Weekly Promo (AI) | خميس 9ص | عرض أسبوعي مولّد بالـ AI |
-| CW — First Visit Welcome | كل 30د | ترحيب أول زيارة |
-| CW — Manual Campaigns | كل دقيقتين | حملات يدوية من الـ Dashboard |
-| CW — Walk-in Registration | webhook | ترحيب فوري عند التسجيل |
-| CW — OTP WhatsApp | webhook | رمز تحقق |
-
-> **ملاحظة:** الإشعارات هاجرت من n8n إلى Supabase DB triggers (commit `7ca2b3c`).
-
----
-
-### 🦷 المنتج 2 — العيادات الطبية (مربوط ElevenLabs) ✅ تم بناؤه
+### 🦷 المنتج 1 — العيادات الطبية (مربوط ElevenLabs) ✅ تم بناؤه
 مساعد استقبال واتساب (مها — Maha) يحجز عبر Supabase + n8n.
 
 **التفاصيل الكاملة:** → [ELEVENLABS_DENTAL_AGENT.md](ELEVENLABS_DENTAL_AGENT.md)
@@ -66,16 +35,16 @@ _آخر تحديث: 2026-06-01_
 - نموذج الهوية: اسم + رقم هوية + إيميل الدكتور (بدون إيميل المريض)
 
 **جداول Supabase (clinic):**
-`clinic_patients` (12), `clinic_appointments`, `message_logs`, `doctors` (4), `working_hours`, `offers`, `customer_service`, `clinic_info` (62 — مصدر الـ FAQ), `conversation_state`
+`clinic_patients` (12), `clinic_appointments`, `message_logs`, `doctors` (12), `working_hours`, `offers`, `customer_service`, `clinic_info` (62 — مصدر الـ FAQ), `conversation_state`
 
 **جداول WBOS (تصميم سابق — Google Calendar):**
 `branches`, `wbos_services`, `wbos_resources`, `wbos_schedules`, `wbos_blocked_days`, `branch_settings`, `appointments`
 
-> ⚠️ **تعارض بيانات:** الـ prompt فيه 12 دكتور افتراضي + ساعات افتراضية، بينما Supabase فيه عيادة متعددة التخصصات حقيقية (دوام أحد-خميس ٨ص-١٠م، الجمعة مغلق). يحتاج توحيد.
+> ℹ️ **كل بيانات العيادات الحالية تجريبية** (نور للأسنان جدة في الـ prompt وجدول `doctors`، والنخبة الطبية الرياض في `clinic_info`، وكلها بأرقام وإيميلات placeholder). تُستبدل ببيانات العميل الفعلي عند التشغيل.
 
 ---
 
-### 🏠 المنتج 3 — العقارات 🔲 لم يُبنَ
+### 🏠 المنتج 2 — العقارات 🔲 لم يُبنَ
 موقع عرض عقارات + واتساب مباشر (wa.me).
 
 **المخطط:**
@@ -112,7 +81,7 @@ Command Deck · Accounts · Appointments · Conversations · Live Pipeline (CRM)
 ## 5) ⚠️ الحالة الأمنية (مهم)
 
 **19 جدول في Supabase بدون RLS** — مكشوفة لأي شخص معه الـ anon key:
-`clinic_patients`, `clinic_appointments`, `message_logs`, `doctors`, `working_hours`, `offers`, `customer_service`, `clinic_info`, `branches`, `wbos_*`, `branch_settings`, `conversation_state`, `cw_otps`, `_madar_config`
+`clinic_patients`, `clinic_appointments`, `message_logs`, `doctors`, `working_hours`, `offers`, `customer_service`, `clinic_info`, `branches`, `wbos_*`, `branch_settings`, `conversation_state`, `_madar_config`
 
 > **إجراء مطلوب:** تفعيل RLS + سياسات مناسبة لكل جدول قبل الإنتاج. (لا تُفعّل RLS بدون policies — يحجب كل الوصول.)
 
@@ -121,7 +90,6 @@ Command Deck · Accounts · Appointments · Conversations · Live Pipeline (CRM)
 ## 6) الحالة العامة وما تبقّى
 
 ### ✅ جاهز
-- Car Wash OS — كامل وشغّال
 - Dental Agent (ElevenLabs) — مبني ومختبر
 
 ### 🔲 يحتاج إكمال
@@ -147,6 +115,5 @@ Command Deck · Accounts · Appointments · Conversations · Live Pipeline (CRM)
 |---|---|
 | [MADAR_MASTER.md](MADAR_MASTER.md) | هذا الملف — نظرة شاملة |
 | [ELEVENLABS_DENTAL_AGENT.md](ELEVENLABS_DENTAL_AGENT.md) | توثيق agent العيادات الكامل |
-| [N8N_WORKFLOWS.md](N8N_WORKFLOWS.md) | workflows المغاسل بالتفصيل |
 | [WBOS_AI_Design.md](WBOS_AI_Design.md) | تصميم WBOS الأصلي (3 منتجات) |
 | [README.md](README.md) | نقطة الدخول |

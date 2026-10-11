@@ -1,6 +1,6 @@
 # MADAR OS
 
-MADAR is an Arabic SaaS platform for automating car wash and medical clinic operations in the Saudi market.
+MADAR is an Arabic SaaS platform for automating medical clinic operations in the Saudi market.
 
 The canonical project brief is maintained here:
 

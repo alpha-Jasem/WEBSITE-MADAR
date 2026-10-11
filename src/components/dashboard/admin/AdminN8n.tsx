@@ -40,15 +40,6 @@ const workflowGroups = [
       { id: 'kxjAGgwUtB3ZpPL0', name: 'WBOS — No-Show Recovery System',      active: false, trigger: 'Schedule (2h)',  runs: null, updatedAt: '2026-05-12', note: 'قيد التطوير' },
     ],
   },
-  {
-    group: 'CW — حملات العملاء',
-    color: '#EC4899',
-    workflows: [
-      { id: 'Sg5bPRkgSmLCGCJX', name: 'CW — Customer Entry & Welcome',   active: false, trigger: 'Supabase-owned', runs: null, updatedAt: '2026-06-01', note: 'منقول إلى Supabase' },
-      { id: 'diBQsaD8c2BS4Jnq', name: 'CW — Weekly AI Promo',            active: false, trigger: 'Supabase-owned', runs: null, updatedAt: '2026-06-01', note: 'منقول إلى Supabase' },
-      { id: 'S1DQdOUyxXx08aiC', name: 'CW — Daily Customer Reactivation', active: false, trigger: 'Supabase-owned', runs: null, updatedAt: '2026-06-01', note: 'منقول إلى Supabase' },
-    ],
-  },
 ]
 
 const recentExecutions = [
