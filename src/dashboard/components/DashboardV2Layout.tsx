@@ -143,6 +143,10 @@ const SHELL_CSS = `
     .dv2-responsive-grid-2 { grid-template-columns: 1fr 1fr !important; }
     .dv2-kpi-hero-grid { grid-template-columns: 1fr !important; }
   }
+  /* desktop: the quick-add button clears the sidebar instead of covering its footer */
+  @media (min-width: 901px) {
+    .dv2-fab { inset-inline-start: calc(var(--side-w, 240px) + 24px) !important; }
+  }
   @media (max-width: 380px) {
     .dv2-mlogo span { display: none; }
   }
@@ -273,7 +277,7 @@ export function DashboardV2Layout() {
 
   return (
     // ToastProvider sits inside the scope so its toast stack inherits the tokens.
-    <div className="dv2-scope dv2-app" dir="rtl" data-theme={theme}>
+    <div className="dv2-scope dv2-app" dir="rtl" data-theme={theme} style={{ ['--side-w' as string]: collapsed ? '76px' : '240px' }}>
     <ToastProvider>
       <style>{SHELL_CSS}</style>
 

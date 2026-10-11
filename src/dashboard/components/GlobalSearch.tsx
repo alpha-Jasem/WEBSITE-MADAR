@@ -130,7 +130,7 @@ export function GlobalSearch({ base }: { base: string }) {
           <span style={{
             position: 'absolute', insetInlineEnd: 8, top: '50%', transform: 'translateY(-50%)',
             fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', border: '1px solid var(--border-strong)',
-            borderRadius: 6, padding: '0 6px', pointerEvents: 'none', direction: 'ltr',
+            borderRadius: 6, padding: '0 6px', pointerEvents: 'none',
           }}>⌘K</span>
         )}
       </div>

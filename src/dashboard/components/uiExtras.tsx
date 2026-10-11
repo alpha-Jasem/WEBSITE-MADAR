@@ -691,7 +691,7 @@ export function WhatsNewBadge() {
 export function Fab({ actions }: { actions: { label: string; icon: ReactNode; onClick: () => void }[] }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="dv2-floating" style={{ position: 'fixed', bottom: 24, insetInlineStart: 24, zIndex: 1250 }}>
+    <div className="dv2-floating dv2-fab" style={{ position: 'fixed', bottom: 24, insetInlineStart: 24, zIndex: 1250 }}>
       <AnimatePresence>
         {open && (
           <motion.div
