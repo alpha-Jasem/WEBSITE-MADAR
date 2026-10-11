@@ -80,8 +80,8 @@ export function TicketDialog({ ticket, onClose, caps, team, isDemo, base, agentN
 
   const go = (path: string) => { onClose(); navigate(`${base}${path}`) }
   let source: { label: string; onClick: () => void } | null = null
-  if (t.ai_call_id && canOpenCalls) source = { label: 'افتح المكالمة', onClick: () => go(`/call-logs?call=${t.ai_call_id}`) }
-  else if (t.conversation_id) source = { label: 'افتح المحادثة', onClick: () => go(`/conversations?c=${t.conversation_id}`) }
+  if (t.ai_call_id && canOpenCalls) source = { label: 'افتح المكالمة', onClick: () => go(`/conversations?id=call:${t.ai_call_id}`) }
+  else if (t.conversation_id) source = { label: 'افتح المحادثة', onClick: () => go(`/conversations`) }
   else if (t.route?.startsWith('google_review')) source = { label: 'افتح التقييم', onClick: () => go('/reviews') }
 
   return (
