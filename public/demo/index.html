@@ -220,6 +220,24 @@ tbody tr:hover td { background: rgba(255,255,255,.025); }
 .qa div > span { color: var(--muted); font-size: 13px; }
 .qa.new { background: var(--ai-bg); }
 
+/* tickets */
+.tk-sum { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: start; }
+.col { background: rgba(255,255,255,.02); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.col-head { display: flex; align-items: center; gap: 8px; font-weight: 700; padding: 2px 4px 4px; }
+.col-head .n { margin-inline-start: auto; color: var(--dim); font-weight: 600; font-size: 12px; }
+.tk { text-align: start; width: 100%; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; position: relative; overflow: hidden; }
+.tk:hover { border-color: var(--line-2); }
+.tk::before { content: ""; position: absolute; inset-block: 0; inset-inline-start: 0; width: 3px; background: var(--pri, var(--dim)); }
+.tk .id { font-size: 11.5px; color: var(--dim); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.tk p { margin: 0; font-weight: 600; font-size: 13.5px; }
+.tk .meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--muted); }
+.tk .who { width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center; font-size: 11px; font-weight: 700; background: var(--raise); color: var(--ink); margin-inline-start: auto; }
+.timeline { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.tl { display: flex; gap: 10px; font-size: 13px; }
+.tl i { width: 8px; height: 8px; border-radius: 50%; background: var(--sky); margin-top: 7px; flex: none; }
+.tl small { color: var(--dim); display: block; }
+
 /* settings forms */
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .hours { display: flex; flex-direction: column; }
@@ -246,6 +264,7 @@ tbody tr:hover td { background: rgba(255,255,255,.025); }
 /* responsive */
 @media (max-width: 1150px) {
   .grid-3 { grid-template-columns: 1fr 1fr; }
+  .tk-sum { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 900px) {
   .app { grid-template-columns: 1fr; }
@@ -255,7 +274,7 @@ tbody tr:hover td { background: rgba(255,255,255,.025); }
   .top .mlogo img { width: 28px; }
   .search { display: none; }
   .content { padding: 18px 16px calc(130px + env(safe-area-inset-bottom, 0px)); }
-  .grid-2, .grid-3, .detail, .onboard, .form-grid { grid-template-columns: 1fr; }
+  .grid-2, .grid-3, .detail, .onboard, .form-grid, .board { grid-template-columns: 1fr; }
   .tabbar { display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; bottom: 0; inset-inline: 0; z-index: 45; background: rgba(13,21,49,.96); backdrop-filter: blur(10px); border-top: 1px solid var(--line); padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px)); }
   .tabbar button { background: none; border: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; color: var(--dim); padding: 6px 0; position: relative; }
   .tabbar button.on { color: var(--ink); }
@@ -337,6 +356,7 @@ const P = {
   x: '<path d="M6 6l12 12M18 6L6 18"/>',
   send: '<path d="M21 3L3 11l7 3 3 7z"/>',
   bag: '<path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 016 0v2"/>',
+  ticket: '<path d="M3 8a2 2 0 002-2h14a2 2 0 002 2v2a2 2 0 000 4v2a2 2 0 00-2 2H5a2 2 0 00-2-2v-2a2 2 0 000-4z"/><path d="M14 7v2M14 11v2M14 15v2"/>',
 };
 const ic = (k, a = '') => `<svg class="ico" ${a} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k]}</svg>`;
 const CH = { phone: ['هاتف', 'phone'], whatsapp: ['واتساب', 'chat'], web: ['الموقع', 'web'] };
@@ -432,21 +452,48 @@ const IND = {
   },
 };
 
+/* tickets the AI receptionist opened from conversations (example data) */
+const TICKETS = {
+  clinic: [
+    { id: 'T-1042', subject: 'تأكيد تغطية بوبا لتقويم الأسنان', type: 'استفسار تأمين', pri: 'high', status: 'open', conv: 'c2', customer: 'نورة القحطاني', who: 'ريم', due: 'خلال 30 د', late: false, created: 'قبل 6 د', src: 'ai' },
+    { id: 'T-1041', subject: 'موعد أسنان أطفال، يطلب اتصال الصبح', type: 'طلب اتصال', pri: 'normal', status: 'open', conv: 'c6', customer: 'فهد العتيبي', who: '', due: 'اليوم 12 م', late: false, created: 'أمس 11:40 م', src: 'ai' },
+    { id: 'T-1038', subject: 'شكوى من طول الانتظار في العيادة', type: 'شكوى', pri: 'high', status: 'in_progress', conv: '', customer: 'سلطان الدوسري', who: 'خالد', due: 'متأخرة ساعتين', late: true, created: 'أمس 4 م', src: 'ai' },
+    { id: 'T-1035', subject: 'طلب تقرير طبي لجهة العمل', type: 'طلب خاص', pri: 'low', status: 'in_progress', conv: '', customer: 'منيرة العنزي', who: 'ريم', due: 'بكره', late: false, created: 'أمس', src: 'staff' },
+    { id: 'T-1031', subject: 'استرداد مبلغ موعد ملغي', type: 'استرداد', pri: 'normal', status: 'resolved', conv: '', customer: 'خالد الزهراني', who: 'خالد', due: 'انحلت', late: false, created: 'قبل يومين', src: 'ai' },
+  ],
+  real_estate: [
+    { id: 'T-2210', subject: 'تأخر تسليم وحدة في الأفق 55', type: 'شكوى', pri: 'high', status: 'open', conv: 'r2', customer: 'تركي المطيري', who: '', due: 'خلال ساعة', late: false, created: 'قبل 12 د', src: 'ai' },
+    { id: 'T-2207', subject: 'طلب مخطط الوحدة 85م²', type: 'طلب خاص', pri: 'normal', status: 'in_progress', conv: 'r1', customer: 'بندر الحربي', who: 'نواف', due: 'اليوم 6 م', late: false, created: 'قبل ساعة', src: 'ai' },
+    { id: 'T-2199', subject: 'تعديل موعد التوقيع', type: 'متابعة', pri: 'low', status: 'resolved', conv: '', customer: 'هند الدوسري', who: 'نواف', due: 'انحلت', late: false, created: 'أمس', src: 'staff' },
+  ],
+  ecommerce: [
+    { id: 'T-3388', subject: 'استرجاع كوب وصل مكسور، طلب 48177', type: 'استرجاع', pri: 'high', status: 'open', conv: 'e2', customer: 'ريان السبيعي', who: '', due: 'خلال ساعتين', late: false, created: 'قبل 8 د', src: 'ai' },
+    { id: 'T-3381', subject: 'الطلب 48102 تأخر عن موعده', type: 'شكوى', pri: 'normal', status: 'in_progress', conv: '', customer: 'عبير الشمري', who: 'سارة', due: 'متأخرة 3 س', late: true, created: 'أمس', src: 'ai' },
+    { id: 'T-3376', subject: 'تغيير عنوان التوصيل', type: 'متابعة', pri: 'low', status: 'resolved', conv: '', customer: 'دانة القحطاني', who: 'سارة', due: 'انحلت', late: false, created: 'أمس', src: 'ai' },
+  ],
+};
+const TEAM = { clinic: ['ريم', 'خالد'], real_estate: ['نواف', 'هند'], ecommerce: ['سارة', 'ماجد'] };
+const TK_STATUS = { open: ['مفتوحة', 'var(--sky)'], in_progress: ['قيد المعالجة', 'var(--warn)'], resolved: ['محلولة', 'var(--ok)'] };
+const TK_PRI = { high: ['عالية', 'var(--bad)', 'var(--bad-bg)'], normal: ['عادية', 'var(--info)', 'var(--info-bg)'], low: ['منخفضة', 'var(--dim)', 'rgba(255,255,255,.06)'] };
+
 /* ── state ── */
 const S = {
   route: 'home', convId: null, ind: 'clinic', agent: 'live', empty: false, loading: false, period: 'today',
   filter: 'all', search: '', taken: new Set(), dismissed: new Set(), staffMsgs: {}, kbAdded: [], answered: new Set(),
-  pop: null, demo: false, notifRead: false, playing: false,
+  pop: null, demo: false, notifRead: false, playing: false, tkFilter: 'all', tkNotes: {}, tkSeq: 4000,
+  tickets: JSON.parse(JSON.stringify(TICKETS)),
   settings: { greeting: '', transfer: '05• ••• 0000', hours: null, channels: { phone: true, whatsapp: true, web: true }, after: 'take' },
 };
 try { const r = localStorage.getItem('madar_night_route'); if (r) S.route = r; } catch (e) {}
 const hashRoute = (location.hash || '').slice(1);
-const ROUTES = ['home', 'convs', 'bookings', 'customers', 'kb', 'agent', 'reports', 'settings'];
+const ROUTES = ['home', 'convs', 'tickets', 'bookings', 'customers', 'kb', 'agent', 'reports', 'settings'];
 if (ROUTES.includes(hashRoute)) S.route = hashRoute;
 const IND_HASH = { clinic: 'clinic', realestate: 'real_estate', store: 'ecommerce' };
 if (IND_HASH[hashRoute]) { S.ind = IND_HASH[hashRoute]; S.route = 'home'; }
 
 const I = () => IND[S.ind];
+const TK = () => S.tickets[S.ind];
+const openTickets = () => TK().filter(t => t.status !== 'resolved').length;
 const allConvos = () => I().convos;
 const conv = id => allConvos().find(c => c.id === id);
 const pendingQs = () => I().questions.filter(q => !S.answered.has(S.ind + q.q));
@@ -471,7 +518,7 @@ const AGENT = {
 function navItems() {
   const ind = I();
   return [
-    ['اليوم', [['home', 'الرئيسية', 'home'], ['convs', 'المحادثات', 'chat', inboxItems().length], ind.bookings ? ['bookings', ind.bookings, 'cal'] : null, ['customers', 'العملاء', 'users']]],
+    ['اليوم', [['home', 'الرئيسية', 'home'], ['convs', 'المحادثات', 'chat', inboxItems().length], ['tickets', 'التذاكر', 'ticket', openTickets()], ind.bookings ? ['bookings', ind.bookings, 'cal'] : null, ['customers', 'العملاء', 'users']]],
     ['الموظف الذكي', [['kb', 'قاعدة المعرفة', 'book', pendingQs().length || null], ['agent', 'إعدادات الموظف', 'bot'], ['reports', 'التقارير', 'chart']]],
     ['الحساب', [['settings', 'الإعدادات', 'gear']]],
   ];
@@ -564,6 +611,10 @@ function home() {
         ${pendingQs().length ? pendingQs().map(q => `<div class="q"><p>${esc(q.q)}</p><span class="times num">×${q.n}</span><button type="button" class="btn sm pri" data-act="teach" data-q="${esc(q.q)}">جاوب</button></div>`).join('') : '<div class="empty-line">جاوبت كل الأسئلة. الموظف صار يعرفها.</div>'}
       </div>
       <div class="card">
+        <h3>${ic('ticket', 'style="color:var(--sky)"')} التذاكر <span class="aside"><button type="button" class="link" data-go="tickets">عرض الكل</button></span></h3>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">${['open', 'in_progress'].map(k => `<div class="stat" style="flex:1;min-width:96px"><b class="num">${TK().filter(t => t.status === k).length}</b><span>${TK_STATUS[k][0]}</span></div>`).join('')}<div class="stat" style="flex:1;min-width:96px"><b class="num" style="color:${TK().some(t => t.late && t.status !== 'resolved') ? 'var(--bad)' : 'var(--ink)'}">${TK().filter(t => t.late && t.status !== 'resolved').length}</b><span>متأخرة</span></div></div>
+      </div>
+      <div class="card">
         <h3>${ic('clock', 'style="color:var(--sky)"')} الباقة <span class="aside">تتجدد 1 نوفمبر</span></h3>
         <div class="usage">
           ${ind.voice ? `<div><div class="usage-row"><span>دقائق المكالمات</span><b class="num" dir="ltr">${S.agent === 'low' ? '2,410' : '1,840'} / 2,500</b></div><div class="meter ${S.agent === 'low' ? 'hot' : ''}"><i style="width:${S.agent === 'low' ? 96 : 74}%"></i></div></div>` : ''}
@@ -636,6 +687,7 @@ function convDetail() {
         <div style="display:flex;flex-direction:column;gap:8px">
           ${taken ? `<button type="button" class="btn" data-act="release" data-id="${c.id}">${ic('bot')} رجّعها للموظف الذكي</button>` : `<button type="button" class="btn pri" data-act="take" data-id="${c.id}">${ic('user')} أنا أكمل المحادثة</button>`}
           <button type="button" class="btn" data-act="call" data-id="${c.id}">${ic('phone')} اتصل بالعميل</button>
+          ${TK().some(t => t.conv === c.id) ? `<button type="button" class="btn" data-act="ticket" data-id="${TK().find(t => t.conv === c.id).id}">${ic('ticket')} التذكرة ${TK().find(t => t.conv === c.id).id}</button>` : `<button type="button" class="btn" data-act="new-ticket" data-conv="${c.id}">${ic('ticket')} افتح تذكرة</button>`}
           <button type="button" class="btn" data-act="teach" data-q="${esc(c.sum)}">${ic('book')} علّمه شي من هالمحادثة</button>
         </div></div>
     </div>
@@ -759,7 +811,68 @@ function settings() {
   <div class="card"><h3>الربط</h3>${[['واتساب للأعمال', 'متصل', S.agent !== 'offline'], ...(I().voice ? [['رقم الهاتف', 'متصل', true]] : []), ['تقويم Google', 'غير متصل', false]].map(([n, s, ok]) => `<div class="row-line"><b style="flex:1">${n}</b>${chip(ok ? 'متصل' : 'غير متصل', ok ? 'var(--ok)' : 'var(--dim)', ok ? 'var(--ok-bg)' : 'rgba(255,255,255,.05)')}<button type="button" class="btn sm" data-act="soon">${ok ? 'إدارة' : 'ربط'}</button></div>`).join('')}</div>`;
 }
 
-const PAGES = { home, convs, conv: convDetail, bookings, customers, kb, agent: agentPage, reports, settings };
+function tkCard(t) {
+  const p = TK_PRI[t.pri];
+  return `<button type="button" class="tk" style="--pri:${p[1]}" data-act="ticket" data-id="${t.id}">
+    <span class="id"><span class="num">${t.id}</span>${t.src === 'ai' ? chip(`${ic('bot', 'style="width:12px;height:12px"')}الموظف الذكي`, 'var(--ai)', 'var(--ai-bg)') : ''}<span style="margin-inline-start:auto">${t.created}</span></span>
+    <p>${esc(t.subject)}</p>
+    <span class="meta">${esc(t.customer)} · ${esc(t.type)}</span>
+    <span class="meta">${chip(p[0], p[1], p[2])}<span style="color:${t.late && t.status !== 'resolved' ? 'var(--bad)' : 'var(--muted)'}">${ic('clock', 'style="width:13px;height:13px;vertical-align:-2px"')} ${t.due}</span>${t.who ? `<span class="who" title="${t.who}">${t.who[0]}</span>` : `<span class="who" title="بدون مسؤول" style="background:transparent;border:1px dashed var(--line-2);color:var(--dim)">؟</span>`}</span>
+  </button>`;
+}
+function tickets() {
+  const all = TK(); const me = TEAM[S.ind][0];
+  const list = all.filter(t => S.tkFilter === 'all' || (S.tkFilter === 'mine' && t.who === me) || (S.tkFilter === 'unassigned' && !t.who && t.status !== 'resolved') || (S.tkFilter === 'late' && t.late && t.status !== 'resolved'));
+  const count = k => all.filter(t => t.status === k).length;
+  const late = all.filter(t => t.late && t.status !== 'resolved').length;
+  return `<div class="head"><div><h1 class="h1">التذاكر</h1><p class="h1-sub">طلبات العملاء اللي تحتاج متابعة من فريقك. الموظف الذكي يفتحها تلقائيًا من المحادثات</p></div><button type="button" class="btn pri" data-act="new-ticket">${ic('plus')} تذكرة جديدة</button></div>
+  <div class="tk-sum">
+    <div class="kpi"><span>مفتوحة</span><b class="num">${count('open')}</b><i class="flat">${all.filter(t => t.status === 'open' && !t.who).length} بدون مسؤول</i></div>
+    <div class="kpi"><span>قيد المعالجة</span><b class="num">${count('in_progress')}</b><i class="flat">يتابعها فريقك</i></div>
+    <div class="kpi"><span>متأخرة</span><b class="num" style="color:${late ? 'var(--bad)' : 'var(--ink)'}">${late}</b><i class="flat">تجاوزت وقت الرد</i></div>
+    <div class="kpi"><span>فتحها الموظف الذكي</span><b class="num">${Math.round(all.filter(t => t.src === 'ai').length / Math.max(1, all.length) * 100)}%</b><i class="flat">والباقي فتحها فريقك</i></div>
+  </div>
+  <div class="filters"><div class="seg" role="group" aria-label="تصفية التذاكر">${[['all', 'الكل'], ['mine', `المعيّنة لـ ${me}`], ['unassigned', 'بدون مسؤول'], ['late', 'متأخرة']].map(([k, l]) => `<button type="button" aria-pressed="${S.tkFilter === k}" data-tkfilter="${k}">${l}</button>`).join('')}</div></div>
+  <div class="board">${Object.entries(TK_STATUS).map(([k, [l, c]]) => { const items = list.filter(t => t.status === k); return `
+    <section class="col" aria-label="${l}"><div class="col-head"><span style="width:9px;height:9px;border-radius:50%;background:${c}"></span>${l}<span class="n num">${items.length}</span></div>
+      ${items.length ? items.map(tkCard).join('') : '<div class="empty-line">ما فيه تذاكر هنا</div>'}</section>`; }).join('')}</div>`;
+}
+function ticketModal(id) {
+  const t = TK().find(x => x.id === id); if (!t) return;
+  const p = TK_PRI[t.pri]; const c = t.conv ? conv(t.conv) : null; const notes = S.tkNotes[t.id] || [];
+  modal(`<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px"><span class="num" style="color:var(--dim)">${t.id}</span>${chip(TK_STATUS[t.status][0], TK_STATUS[t.status][1], 'rgba(255,255,255,.06)')}${chip(p[0], p[1], p[2])}${t.src === 'ai' ? chip('فتحها الموظف الذكي', 'var(--ai)', 'var(--ai-bg)') : ''}</div>
+    <h3>${esc(t.subject)}</h3><p class="sub">${esc(t.customer)} · ${esc(t.type)} · ${t.created}</p>
+    <dl class="kv"><dt>وقت الرد</dt><dd style="color:${t.late && t.status !== 'resolved' ? 'var(--bad)' : 'inherit'}">${t.due}</dd>
+      <dt>المسؤول</dt><dd><select class="select" id="tk-who" data-tk="${t.id}" style="padding:5px 10px;max-width:200px"><option value="">بدون مسؤول</option>${TEAM[S.ind].map(n => `<option ${t.who === n ? 'selected' : ''}>${n}</option>`).join('')}</select></dd>
+      ${c ? `<dt>المحادثة</dt><dd><button type="button" class="link" data-open="${c.id}">${esc(c.sum)}</button></dd>` : ''}</dl>
+    <div class="timeline">
+      <div class="tl"><i></i><div>${t.src === 'ai' ? `${I().agentName} فتح التذكرة من المحادثة` : 'فتحها الفريق يدويًا'}<small>${t.created}</small></div></div>
+      ${t.who ? `<div class="tl"><i></i><div>معيّنة لـ ${t.who}</div></div>` : ''}
+      ${notes.map(n => `<div class="tl"><i style="background:var(--ok)"></i><div>${esc(n)}<small>أنت · الحين</small></div></div>`).join('')}
+    </div>
+    <form data-form="tnote" data-id="${t.id}" class="reply"><input class="input" id="tk-note" placeholder="أضف ملاحظة داخلية" autocomplete="off"><button type="submit" class="btn">إضافة</button></form>
+    <div class="foot">
+      ${t.status !== 'open' ? `<button type="button" class="btn" data-act="tstatus" data-id="${t.id}" data-v="open">إعادة فتح</button>` : ''}
+      ${t.status === 'open' ? `<button type="button" class="btn" data-act="tstatus" data-id="${t.id}" data-v="in_progress">بدء المعالجة</button>` : ''}
+      ${t.status !== 'resolved' ? `<button type="button" class="btn pri" data-act="tstatus" data-id="${t.id}" data-v="resolved">${ic('check')} تم الحل</button>` : `<button type="button" class="btn" data-act="close-modal">إغلاق</button>`}
+    </div>`);
+}
+function newTicketModal(convId) {
+  const c = convId ? conv(convId) : null;
+  modal(`<h3>تذكرة جديدة</h3><p class="sub">للطلبات اللي تحتاج متابعة من فريقك.</p>
+    <form data-form="ticket" data-conv="${convId || ''}">
+      <div class="field"><label for="nt-s">الموضوع</label><input class="input" id="nt-s" required value="${c ? esc(c.sum) : ''}"></div>
+      <div class="form-grid" style="margin-top:12px">
+        <div class="field"><label for="nt-c">العميل</label><input class="input" id="nt-c" required value="${c ? esc(c.name) : ''}"></div>
+        <div class="field"><label for="nt-t">النوع</label><select class="select" id="nt-t">${['شكوى', 'استرجاع', 'متابعة', 'طلب اتصال', 'طلب خاص'].map(o => `<option>${o}</option>`).join('')}</select></div>
+        <div class="field"><label for="nt-p">الأولوية</label><select class="select" id="nt-p"><option value="normal">عادية</option><option value="high">عالية</option><option value="low">منخفضة</option></select></div>
+        <div class="field"><label for="nt-w">المسؤول</label><select class="select" id="nt-w"><option value="">بدون مسؤول</option>${TEAM[S.ind].map(n => `<option>${n}</option>`).join('')}</select></div>
+      </div>
+      <div class="foot"><button type="button" class="btn" data-act="close-modal">إلغاء</button><button type="submit" class="btn pri">${ic('check')} افتح التذكرة</button></div>
+    </form>`);
+}
+
+const PAGES = { home, convs, conv: convDetail, tickets, bookings, customers, kb, agent: agentPage, reports, settings };
 
 /* ── render ── */
 function render(focus) {
@@ -843,17 +956,18 @@ function testModal() {
   }, 900);
 }
 function moreSheet() {
-  modal(`<h3>المزيد</h3><div class="sheet" style="display:flex;flex-direction:column;gap:4px;margin-top:10px">${[['customers', 'العملاء', 'users'], ['agent', 'إعدادات الموظف', 'bot'], ['reports', 'التقارير', 'chart'], ['settings', 'الإعدادات', 'gear']].map(([r, l, k]) => `<button type="button" class="nav" data-go="${r}">${ic(k)}${l}</button>`).join('')}</div>`);
+  modal(`<h3>المزيد</h3><div class="sheet" style="display:flex;flex-direction:column;gap:4px;margin-top:10px">${[['tickets', 'التذاكر', 'ticket'], ['customers', 'العملاء', 'users'], ['agent', 'إعدادات الموظف', 'bot'], ['reports', 'التقارير', 'chart'], ['settings', 'الإعدادات', 'gear']].map(([r, l, k]) => `<button type="button" class="nav" data-go="${r}">${ic(k)}${l}</button>`).join('')}</div>`);
 }
 
 /* ── events ── */
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-go],[data-open],[data-act],[data-period],[data-filter],[data-demo],[data-after]');
+  const t = e.target.closest('[data-go],[data-open],[data-act],[data-period],[data-filter],[data-tkfilter],[data-demo],[data-after]');
   if (!t) { if (S.pop && !e.target.closest('.pop')) { S.pop = null; renderPop(); } return; }
   if (t.dataset.go) { closeModal(); return go(t.dataset.go); }
   if (t.dataset.open) { closeModal(); return go('conv', t.dataset.open); }
   if (t.dataset.period) { S.period = t.dataset.period; return reload(); }
   if (t.dataset.filter) { S.filter = t.dataset.filter; return render(); }
+  if (t.dataset.tkfilter) { S.tkFilter = t.dataset.tkfilter; return render(); }
   if (t.dataset.after) { S.settings.after = t.dataset.after; return render(); }
   if (t.dataset.demo) {
     const k = t.dataset.demo, v = t.dataset.v;
@@ -870,6 +984,14 @@ document.addEventListener('click', e => {
   if (a === 'reload') return reload();
   if (a === 'more') return moreSheet();
   if (a === 'teach') return teachModal(t.dataset.q, t.dataset.a);
+  if (a === 'ticket') return ticketModal(t.dataset.id);
+  if (a === 'new-ticket') return newTicketModal(t.dataset.conv);
+  if (a === 'tstatus') {
+    const tk = TK().find(x => x.id === t.dataset.id); tk.status = t.dataset.v;
+    if (t.dataset.v === 'resolved') { tk.due = 'انحلت'; tk.late = false; }
+    toast(t.dataset.v === 'resolved' ? 'تم حل التذكرة' : t.dataset.v === 'in_progress' ? 'بدأت معالجة التذكرة' : 'انفتحت التذكرة من جديد');
+    render(); return ticketModal(tk.id);
+  }
   if (a === 'call') return callModal(t.dataset.id);
   if (a === 'called') { S.dismissed.add(t.dataset.id); closeModal(); toast('تم. شلناها من قائمة المهام'); return render(); }
   if (a === 'dismiss') { S.dismissed.add(t.dataset.id); toast('تم وانشالت من القائمة'); return render(); }
@@ -894,9 +1016,24 @@ document.addEventListener('submit', e => {
     S.answered.add(S.ind + q); S.kbAdded.unshift({ ind: S.ind, q, a: ans });
     closeModal(); toast(`انضاف لقاعدة المعرفة. ${I().agentName} بيجاوبه من المحادثة الجاية`); render();
   }
+  if (f.dataset.form === 'ticket') {
+    const id = 'T-' + (++S.tkSeq);
+    TK().unshift({ id, subject: $('#nt-s').value.trim(), type: $('#nt-t').value, pri: $('#nt-p').value, status: 'open', conv: f.dataset.conv || '', customer: $('#nt-c').value.trim(), who: $('#nt-w').value, due: 'خلال 4 س', late: false, created: 'الحين', src: 'staff' });
+    closeModal(); toast(`انفتحت التذكرة ${id}`); return render();
+  }
+  if (f.dataset.form === 'tnote') {
+    const v = $('#tk-note').value.trim(); if (!v) return;
+    (S.tkNotes[f.dataset.id] = S.tkNotes[f.dataset.id] || []).push(v); return ticketModal(f.dataset.id);
+  }
   if (f.dataset.form === 'reply') {
     const id = f.dataset.id, inp = $('#reply-' + id), v = inp.value.trim(); if (!v) return;
     (S.staffMsgs[id] = S.staffMsgs[id] || []).push(v); render(); $('#reply-' + id)?.focus();
+  }
+});
+document.addEventListener('change', e => {
+  if (e.target.id === 'tk-who') {
+    const tk = TK().find(x => x.id === e.target.dataset.tk); tk.who = e.target.value;
+    toast(tk.who ? `تم تعيينها لـ ${tk.who}` : 'شلنا المسؤول'); render(); ticketModal(tk.id);
   }
 });
 document.addEventListener('input', e => {
