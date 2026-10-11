@@ -1,15 +1,12 @@
 import { useMemo } from 'react'
-import { Download } from 'lucide-react'
+import { Download, Wallet } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useBookings, useServices } from '@/lib/dashboardQueries'
 import { exportRowsToExcel } from '@/lib/exportExcel'
 import { Card, Button } from '@/dashboard/components/primitives'
 import { EmptyState, Skeleton } from '@/dashboard/components/uiExtras'
-import { Wallet } from 'lucide-react'
-
-function fmt(n: number) {
-  return n.toLocaleString('en-US')
-}
+import { NightPage, PageHead, CardTitle, Kpi, Meter, EmptyLine, fmtNum } from './shared/night'
+import { BarChart } from './shared/charts'
 
 const MONTH_NAMES = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
 
@@ -32,6 +29,7 @@ export function DashboardV2Revenue() {
 
   const hasPricing = Object.keys(priceByServiceId).length > 0
 
+  // Oldest month first; the chart draws it on the right (RTL time).
   const revenueByMonth = useMemo(() => {
     const buckets: Record<string, number> = {}
     completed.forEach((a) => {
@@ -60,8 +58,8 @@ export function DashboardV2Revenue() {
   const total = revenueByMonth[revenueByMonth.length - 1]?.v || 0
   const prev = revenueByMonth[revenueByMonth.length - 2]?.v || 0
   const delta = prev > 0 ? Math.round(((total - prev) / prev) * 1000) / 10 : null
-
-  const max = Math.max(1, ...revenueByMonth.map((r) => r.v))
+  const fiveMonths = revenueByMonth.reduce((s, r) => s + r.v, 0)
+  const pricedCompleted = completed.filter((a) => (priceByServiceId[a.service_id] || 0) > 0).length
   const maxS = Math.max(1, ...revenueByService.map(([, v]) => v))
 
   function exportRevenue() {
@@ -72,75 +70,45 @@ export function DashboardV2Revenue() {
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <div style={{ fontSize: 'var(--text-heading-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>الإيرادات</div>
-          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
-            {hasPricing
-              ? `${fmt(total)} ر.س هذا الشهر${delta != null ? ` · ${delta >= 0 ? '+' : ''}${delta}% مقارنة بالشهر السابق` : ''}`
-              : 'محسوبة تلقائياً من أسعار الخدمات × الحجوزات المكتملة — أضف أسعاراً لخدماتك لتفعيلها'}
-          </div>
-        </div>
-        {hasPricing && <Button variant="secondary" onClick={exportRevenue}><Download size={15} /> تصدير Excel</Button>}
-      </div>
+    <NightPage>
+      <PageHead
+        title="الإيرادات"
+        sub={hasPricing
+          ? 'محسوبة تلقائياً من أسعار الخدمات × الحجوزات المكتملة'
+          : 'محسوبة تلقائياً من أسعار الخدمات × الحجوزات المكتملة — أضف أسعاراً لخدماتك لتفعيلها'}
+        actions={hasPricing ? <Button variant="secondary" onClick={exportRevenue}><Download size={15} /> تصدير Excel</Button> : undefined}
+      />
 
-      <Card delay={0} style={{ marginBottom: 16 }}>
-        <div style={{ fontWeight: 700, marginBottom: 16 }}>الإيرادات الشهرية</div>
+      {hasPricing && !loading && (
+        <div className="np-kpis">
+          <Kpi label="هذا الشهر" value={`${fmtNum(total)} ر.س`} hint={delta != null ? `${delta >= 0 ? '+' : ''}${delta}% عن الشهر السابق` : 'لا توجد مقارنة'} trend={delta == null ? 'flat' : delta >= 0 ? 'up' : 'down'} />
+          <Kpi label="الشهر السابق" value={`${fmtNum(prev)} ر.س`} hint={revenueByMonth[revenueByMonth.length - 2]?.m} />
+          <Kpi label="آخر 5 أشهر" value={`${fmtNum(fiveMonths)} ر.س`} hint="إجمالي الإيرادات" />
+          <Kpi label="حجوزات مكتملة مسعّرة" value={fmtNum(pricedCompleted)} hint={`من ${fmtNum(completed.length)} مكتملة`} />
+        </div>
+      )}
+
+      <Card delay={0}>
+        <CardTitle aside="ر.س">الإيرادات الشهرية</CardTitle>
         {loading ? (
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 20, height: 180 }}>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-                <Skeleton width={36} height={12} />
-                <Skeleton width="100%" height={90} radius="var(--radius-sm)" />
-                <Skeleton width={40} height={11} />
-              </div>
-            ))}
-          </div>
+          <Skeleton width="100%" height={200} />
         ) : hasPricing ? (
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 20, height: 180 }}>
-            {revenueByMonth.map((r, i) => (
-              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>{fmt(r.v)}</div>
-                <div style={{
-                  width: '100%', height: (r.v / max * 140) + 'px', minHeight: r.v > 0 ? 4 : 0,
-                  background: i === revenueByMonth.length - 1 ? 'var(--brand-500)' : 'var(--brand-200)', borderRadius: 'var(--radius-sm)',
-                }} />
-                <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{r.m}</div>
-              </div>
-            ))}
-          </div>
+          <BarChart values={revenueByMonth.map((r) => r.v)} labels={revenueByMonth.map((r) => r.m)} ariaLabel="الإيرادات الشهرية" format={(n) => `${fmtNum(n)} ر.س`} />
         ) : (
           <EmptyState icon={<Wallet size={20} />} title="جاهزة لاستقبال البيانات" description="لا توجد أسعار خدمات مضافة بعد — أضف أسعاراً لخدماتك من صفحة الخدمات لتفعيل هذا التقرير." />
         )}
       </Card>
 
       <Card delay={0.08}>
-        <div style={{ fontWeight: 700, marginBottom: 14 }}>الإيرادات حسب الخدمة</div>
-        {loading && (
-          <div>
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                <Skeleton width={140} height={13} />
-                <Skeleton width="100%" height={8} radius="var(--radius-full)" style={{ flex: 1 }} />
-                <Skeleton width={90} height={13} />
-              </div>
-            ))}
-          </div>
-        )}
+        <CardTitle>الإيرادات حسب الخدمة</CardTitle>
+        {loading && <Skeleton width="100%" height={140} />}
         {!loading && revenueByService.length === 0 && (
-          <EmptyState icon={<Wallet size={20} />} title="لا توجد بيانات بعد" description="ستظهر الإيرادات حسب الخدمة هنا بمجرد اكتمال أول حجز مسعّر." />
+          <EmptyLine>ستظهر الإيرادات حسب الخدمة هنا بمجرد اكتمال أول حجز مسعّر.</EmptyLine>
         )}
         {!loading && revenueByService.map(([label, value]) => (
-          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-            <div style={{ width: 140, fontSize: 13, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</div>
-            <div style={{ flex: 1, height: 8, background: 'var(--slate-100)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
-              <div style={{ width: (value / maxS * 100) + '%', height: '100%', background: 'var(--brand-500)', borderRadius: 'var(--radius-full)' }} />
-            </div>
-            <div style={{ width: 90, fontSize: 13, fontWeight: 600, textAlign: 'left' }}>{fmt(value)} ر.س</div>
-          </div>
+          <Meter key={label} label={label} value={value} max={maxS} display={`${fmtNum(value)} ر.س`} />
         ))}
       </Card>
-    </div>
+    </NightPage>
   )
 }

@@ -5,6 +5,7 @@ import { useWorkspace } from '@/context/WorkspaceContext'
 import { useCustomers, updateCustomer } from '@/lib/dashboardQueries'
 import type { Customer } from '@/types/dashboard'
 import { Card, Badge, Button, Dialog, Input, Select } from '@/dashboard/components/primitives'
+import { NightPage, PageHead, Seg, useIsNarrow, fmtNum } from './shared/night'
 import { EmptyState, SkeletonRows, useToast, Avatar, SortableHeader, ContactActions } from '@/dashboard/components/uiExtras'
 
 type SortKey = 'name' | 'last_visit_at' | 'total_visits'
@@ -15,13 +16,13 @@ const EDIT_TYPE_OPTIONS = [
 ]
 
 const TYPE_OPTIONS = [
-  { value: 'all', label: 'كل الأنواع' },
+  { value: 'all', label: 'الكل' },
   { value: 'new', label: 'جديد' },
   { value: 'returning', label: 'عائد' },
 ]
 
 export function DashboardV2Customers() {
-  const { companyId, isDemo } = useWorkspace()
+  const { companyId, isDemo, hasModule } = useWorkspace()
   const { data: patients, loading, refetch } = useCustomers(companyId, isDemo)
   const pushToast = useToast()
   const [q, setQ] = useState('')
@@ -110,30 +111,27 @@ export function DashboardV2Customers() {
     return filtered
   }, [rows, q, typeFilter, sort])
 
+  const narrow = useIsNarrow()
+  const returning = rows.filter((p) => p.patient_type === 'returning').length
+  const visitsLabel = hasModule('bookings') ? 'عدد الزيارات' : 'عدد الطلبات'
+
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <div style={{ fontSize: 'var(--text-heading-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>العملاء</div>
-          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>{shown.length} من {rows.length} عميل</div>
-        </div>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <Input placeholder="بحث بالاسم أو الجوال" icon={<Search size={15} />} value={q} onChange={(e) => setQ(e.target.value)} style={{ width: 220 }} />
-          <Select options={TYPE_OPTIONS} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} style={{ width: 130 }} />
-        </div>
+    <NightPage>
+      <PageHead
+        title="العملاء"
+        sub={loading ? 'جارِ التحميل…' : `${fmtNum(rows.length)} عميل · ${fmtNum(returning)} عائد · كل من تواصل مع الموظف الذكي يُحفظ هنا تلقائيًا`}
+      />
+
+      <div className="np-filters">
+        <Input placeholder="بحث بالاسم أو الجوال" icon={<Search size={15} />} value={q} onChange={(e) => setQ(e.target.value)} style={{ width: narrow ? '100%' : 260 }} />
+        <Seg label="نوع العميل" value={typeFilter} onChange={setTypeFilter} options={TYPE_OPTIONS.map((o) => [o.value, o.label] as const)} />
+        <span className="np-aside np-num">{fmtNum(shown.length)} من {fmtNum(rows.length)}</span>
       </div>
 
       {checked.size > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14,
-            padding: '10px 16px', background: 'var(--brand-50)', border: '1px solid var(--brand-200, #B3EDFF)',
-            borderRadius: 'var(--radius-md)',
-          }}
-        >
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--brand-700)' }}>{checked.size} محدد</div>
-          <div style={{ display: 'flex', gap: 8 }}>
+        <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="np-bulk">
+          <b>{checked.size} محدد</b>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <Button variant="secondary" size="sm" onClick={() => setChecked(new Set())}>إلغاء التحديد</Button>
             <Button size="sm" onClick={bulkMarkReturning} disabled={bulkSaving}>
               <UserCheck size={14} /> {bulkSaving ? 'جارِ التحديث...' : 'تحديد كعائدين'}
@@ -142,42 +140,47 @@ export function DashboardV2Customers() {
         </motion.div>
       )}
 
-      <Card style={{ padding: 0, overflowX: 'auto' }}>
-        <div style={{ minWidth: 620 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '28px 0.5fr 1.6fr 1.2fr 1fr 0.8fr 0.8fr auto', padding: '14px 20px', fontSize: 12, fontWeight: 700, color: 'var(--text-tertiary)', borderBottom: '1px solid var(--border-default)', alignItems: 'center' }}>
-          <input type="checkbox" checked={shown.length > 0 && shown.every((p) => checked.has(p.id))} onChange={() => setChecked((s) => { const all = shown.every((p) => s.has(p.id)); const n = new Set(s); shown.forEach((p) => (all ? n.delete(p.id) : n.add(p.id))); return n })} style={{ cursor: 'pointer' }} />
-          <div></div>
-          <SortableHeader label="الاسم" active={sort.key === 'name'} dir={sort.dir} onClick={() => toggleSort('name')} />
-          <div>الجوال</div>
-          <SortableHeader label="آخر زيارة" active={sort.key === 'last_visit_at'} dir={sort.dir} onClick={() => toggleSort('last_visit_at')} />
-          <SortableHeader label="عدد الزيارات" active={sort.key === 'total_visits'} dir={sort.dir} onClick={() => toggleSort('total_visits')} />
-          <div>النوع</div>
-          <div>تواصل</div>
-        </div>
+      <Card style={{ padding: 0 }}>
         {loading && <SkeletonRows rows={6} columns={7} />}
-        {!loading && shown.map((p, i) => (
-          <motion.div
-            key={p.id}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileHover={{ backgroundColor: 'var(--surface-sunken)' }}
-            transition={{ duration: 0.18, delay: Math.min(i, 8) * 0.02 }}
-            style={{ display: 'grid', gridTemplateColumns: '28px 0.5fr 1.6fr 1.2fr 1fr 0.8fr 0.8fr auto', padding: '12px 20px', fontSize: 14, alignItems: 'center', borderBottom: '1px solid var(--border-default)', background: checked.has(p.id) ? 'var(--surface-sunken)' : 'transparent' }}
-          >
-            <input type="checkbox" checked={checked.has(p.id)} onChange={(e) => { e.stopPropagation(); toggleCheck(p.id) }} onClick={(e) => e.stopPropagation()} style={{ cursor: 'pointer' }} />
-            <div onClick={() => setSelected(p)} style={{ cursor: 'pointer' }}><Avatar name={p.name} size={36} /></div>
-            <div onClick={() => setSelected(p)} style={{ fontWeight: 600, color: 'var(--text-primary)', cursor: 'pointer' }}>{p.name}</div>
-            <div onClick={() => setSelected(p)} style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>{p.phone}</div>
-            <div onClick={() => setSelected(p)} style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>{p.last_visit_at ? p.last_visit_at.split('T')[0] : '—'}</div>
-            <div onClick={() => setSelected(p)} style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>{p.total_visits}</div>
-            <div onClick={() => setSelected(p)} style={{ cursor: 'pointer' }}><Badge tone={p.patient_type === 'returning' ? 'success' : 'brand'}>{p.patient_type === 'returning' ? 'عائد' : 'جديد'}</Badge></div>
-            <ContactActions phone={p.phone} message={`مرحباً ${p.name}`} />
-          </motion.div>
-        ))}
+        {!loading && shown.length > 0 && (
+          <div className="np-table-wrap">
+            <table className="np-table" style={{ minWidth: 700 }}>
+              <thead>
+                <tr>
+                  <th style={{ width: 36 }}>
+                    <label className="np-check"><input type="checkbox" aria-label="تحديد الكل" checked={shown.length > 0 && shown.every((p) => checked.has(p.id))} onChange={() => setChecked((s) => { const all = shown.every((p) => s.has(p.id)); const n = new Set(s); shown.forEach((p) => (all ? n.delete(p.id) : n.add(p.id))); return n })} /></label>
+                  </th>
+                  <th><SortableHeader label="العميل" active={sort.key === 'name'} dir={sort.dir} onClick={() => toggleSort('name')} /></th>
+                  <th>الجوال</th>
+                  <th><SortableHeader label="آخر زيارة" active={sort.key === 'last_visit_at'} dir={sort.dir} onClick={() => toggleSort('last_visit_at')} /></th>
+                  <th><SortableHeader label={visitsLabel} active={sort.key === 'total_visits'} dir={sort.dir} onClick={() => toggleSort('total_visits')} /></th>
+                  <th>النوع</th>
+                  <th>تواصل</th>
+                </tr>
+              </thead>
+              <tbody>
+                {shown.map((p) => (
+                  <tr key={p.id} className={`clickable${checked.has(p.id) ? ' is-selected' : ''}`} onClick={() => setSelected(p)}>
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <label className="np-check"><input type="checkbox" aria-label={`تحديد ${p.name}`} checked={checked.has(p.id)} onChange={() => toggleCheck(p.id)} /></label>
+                    </td>
+                    <td className="strong">
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}><Avatar name={p.name} size={32} />{p.name}</span>
+                    </td>
+                    <td className="np-num" dir="ltr" style={{ textAlign: 'end' }}>{p.phone}</td>
+                    <td className="np-num">{p.last_visit_at ? p.last_visit_at.split('T')[0] : '—'}</td>
+                    <td className="np-num">{p.total_visits}</td>
+                    <td><Badge tone={p.patient_type === 'returning' ? 'success' : 'brand'}>{p.patient_type === 'returning' ? 'عائد' : 'جديد'}</Badge></td>
+                    <td><ContactActions size={narrow ? 40 : 28} phone={p.phone} message={`مرحباً ${p.name}`} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
         {!loading && shown.length === 0 && (
           <EmptyState icon={<Users size={20} />} title="لا يوجد عملاء مطابقون" description="جرّب تغيير كلمة البحث أو الفلاتر." />
         )}
-        </div>
       </Card>
 
       <Dialog
@@ -192,18 +195,14 @@ export function DashboardV2Customers() {
             </div>
             <Input label="الاسم" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
             <Input label="الجوال" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />
-            <div style={{ display: 'flex', gap: 12 }}>
-              <label style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6, fontFamily: 'var(--font-body)' }}>
-                <span style={{ fontSize: 'var(--text-body-sm)', fontWeight: 600, color: 'var(--text-secondary)' }}>آخر زيارة</span>
-                <input type="date" value={form.last_visit_at} onChange={(e) => setForm((f) => ({ ...f, last_visit_at: e.target.value }))}
-                  style={{ padding: '9px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-strong)', fontSize: 13 }} />
-              </label>
-              <Input label="عدد الزيارات" type="number" value={String(form.total_visits)} onChange={(e) => setForm((f) => ({ ...f, total_visits: Number(e.target.value) || 0 }))} style={{ flex: 1 }} />
+            <div className="np-form-grid">
+              <Input label="آخر زيارة" type="date" value={form.last_visit_at} onChange={(e) => setForm((f) => ({ ...f, last_visit_at: e.target.value }))} />
+              <Input label={visitsLabel} type="number" value={String(form.total_visits)} onChange={(e) => setForm((f) => ({ ...f, total_visits: Number(e.target.value) || 0 }))} />
             </div>
             <Select label="النوع" options={EDIT_TYPE_OPTIONS} value={form.patient_type} onChange={(e) => setForm((f) => ({ ...f, patient_type: e.target.value as Customer['patient_type'] }))} />
           </div>
         )}
       </Dialog>
-    </div>
+    </NightPage>
   )
 }

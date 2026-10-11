@@ -5,8 +5,9 @@ import { CLINIC_PLANS, getOverallUsage, getUsageMetrics, usagePercentage } from 
 import { supabase } from '@/lib/supabase'
 import { Card, Badge } from '@/dashboard/components/primitives'
 import { Skeleton } from '@/dashboard/components/uiExtras'
+import { NightPage, PageHead, CardTitle, Meter, Kpi } from './shared/night'
 
-const nf = new Intl.NumberFormat('ar-SA')
+const nf = new Intl.NumberFormat('en-US')
 const POLL_MS = 60_000
 
 interface AgentVoiceUsage {
@@ -30,7 +31,7 @@ function CircularGauge({ percent, size = 180, stroke = 16 }: { percent: number; 
       style={{ position: 'relative', width: size, height: size, margin: '0 auto', cursor: 'default' }}
     >
       <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--slate-100)" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--raise)" strokeWidth={stroke} />
         <circle
           cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke}
           strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round"
@@ -100,7 +101,9 @@ export function DashboardV2MadarAgentUsage() {
 
   if (accountLoading) {
     return (
-      <div className="dv2-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 16 }}>
+      <NightPage>
+      <PageHead title="الباقة والاستهلاك" sub="استهلاك مساعد مدار الذكي — المكالمات الصوتية ورسائل واتساب/AI" />
+      <div className="np-grid-2" style={{ gridTemplateColumns: undefined }}>
         <Card style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
           <Skeleton width="60%" height={14} />
           <Skeleton width={180} height={180} radius="50%" />
@@ -114,23 +117,28 @@ export function DashboardV2MadarAgentUsage() {
           ))}
         </Card>
       </div>
+      </NightPage>
     )
   }
 
   return (
-    <div>
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 'var(--text-heading-lg)', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Bot size={20} style={{ color: 'var(--brand-500)' }} /> Madar Agent Usage
-        </div>
-        <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
-          استهلاك مساعد مدار الذكي — المكالمات الصوتية ورسائل واتساب/AI، بشكل حي
-        </div>
+    <NightPage>
+      <PageHead
+        title="الباقة والاستهلاك"
+        icon={<Bot size={22} style={{ color: 'var(--ai)' }} />}
+        sub="استهلاك مساعد مدار الذكي — المكالمات الصوتية ورسائل واتساب/AI، بشكل حي"
+      />
+
+      <div className="np-kpis">
+        <Kpi label="الباقة الحالية" value={isSubscribed ? plan.name : 'Free'} />
+        <Kpi label="السعر السنوي" value={isSubscribed ? `${nf.format(plan.annualPrice)} ر.س` : '0 ر.س'} />
+        <Kpi label="دورة الاستخدام" value={<span style={{ fontSize: 15 }}>{usageCycleStart && usageCycleEnd ? `${usageCycleStart} - ${usageCycleEnd}` : 'تبدأ بعد التفعيل'}</span>} />
+        <Kpi label="انتهاء الاشتراك" value={<span style={{ fontSize: 15 }}>{subscriptionEndDate || 'غير مفعّل'}</span>} />
       </div>
 
-      <div className="dv2-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 16, marginBottom: 16 }}>
+      <div className="np-grid-2" style={{ gridTemplateColumns: undefined }}>
         <Card delay={0}>
-          <div style={{ fontWeight: 700, marginBottom: 6, textAlign: 'center' }}>الاستهلاك الإجمالي</div>
+          <div style={{ fontWeight: 700, marginBottom: 6, textAlign: 'center', color: 'var(--text-primary)' }}>الاستهلاك الإجمالي</div>
           <div style={{ fontSize: 12, color: 'var(--text-tertiary)', textAlign: 'center', marginBottom: 10 }}>مرّر الفأرة للتفاصيل</div>
           <CircularGauge percent={combinedPercent} />
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: 14 }}>
@@ -139,22 +147,18 @@ export function DashboardV2MadarAgentUsage() {
         </Card>
 
         <Card delay={0.08}>
-          <div style={{ fontWeight: 700, marginBottom: 14 }}>تفاصيل الاستخدام هذا الشهر</div>
+          <CardTitle>تفاصيل الاستخدام هذا الشهر</CardTitle>
           {metrics.length === 0 && (
             <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>تظهر الحدود فور تفعيل الاشتراك</div>
           )}
           {metrics.map((m) => {
             const p = usagePercentage(m)
             return (
-              <div key={m.key} style={{ marginBottom: 14 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>{m.label}</span>
-                  <span style={{ fontWeight: 700 }}>{nf.format(m.used)} / {m.limit ? nf.format(m.limit) : 'غير مفعّل'}</span>
-                </div>
-                <div style={{ height: 8, background: 'var(--slate-100)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
-                  <div style={{ width: `${p}%`, height: '100%', background: p >= 100 ? 'var(--danger-500)' : p >= 80 ? 'var(--warning-500)' : 'var(--success-500)' }} />
-                </div>
-              </div>
+              <Meter
+                key={m.key} label={m.label} value={p}
+                display={<span dir="ltr">{nf.format(m.used)} / {m.limit ? nf.format(m.limit) : 'غير مفعّل'}</span>}
+                color={p >= 100 ? 'var(--bad)' : p >= 80 ? 'var(--warn)' : undefined}
+              />
             )
           })}
 
@@ -176,8 +180,8 @@ export function DashboardV2MadarAgentUsage() {
               </div>
             )}
             {elevenlabsPercent != null ? (
-              <div style={{ height: 8, background: 'var(--slate-100)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
-                <div style={{ width: `${elevenlabsPercent}%`, height: '100%', background: elevenlabsPercent >= 100 ? 'var(--danger-500)' : elevenlabsPercent >= 80 ? 'var(--warning-500)' : 'var(--brand-500)' }} />
+              <div className="np-meter">
+                <i style={{ width: `${elevenlabsPercent}%`, ...(elevenlabsPercent >= 80 ? { background: elevenlabsPercent >= 100 ? 'var(--bad)' : 'var(--warn)' } : {}) }} />
               </div>
             ) : (
               <div style={{ fontSize: 12, color: elevenlabsError ? 'var(--danger-500)' : 'var(--text-tertiary)' }}>
@@ -188,26 +192,6 @@ export function DashboardV2MadarAgentUsage() {
         </Card>
       </div>
 
-      <Card delay={0.16}>
-        <div className="dv2-responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-          <div>
-            <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>الباقة الحالية</div>
-            <div style={{ fontWeight: 700, fontSize: 15, marginTop: 4 }}>{isSubscribed ? plan.name : 'Free'}</div>
-          </div>
-          <div>
-            <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>السعر السنوي</div>
-            <div style={{ fontWeight: 700, fontSize: 15, marginTop: 4 }}>{isSubscribed ? `${nf.format(plan.annualPrice)} ر.س` : '0 ر.س'}</div>
-          </div>
-          <div>
-            <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>دورة الاستخدام</div>
-            <div style={{ fontWeight: 700, fontSize: 13, marginTop: 4 }}>{usageCycleStart && usageCycleEnd ? `${usageCycleStart} - ${usageCycleEnd}` : 'تبدأ بعد التفعيل'}</div>
-          </div>
-          <div>
-            <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>انتهاء الاشتراك</div>
-            <div style={{ fontWeight: 700, fontSize: 13, marginTop: 4 }}>{subscriptionEndDate || 'غير مفعّل'}</div>
-          </div>
-        </div>
-      </Card>
-    </div>
+    </NightPage>
   )
 }

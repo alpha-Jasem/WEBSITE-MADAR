@@ -4,7 +4,8 @@ import { useWorkspace } from '@/context/WorkspaceContext'
 import { useIntegrations, toggleIntegration } from '@/lib/dashboardQueries'
 import { isIntegrationVisible } from '@/dashboard/modules'
 import type { IntegrationStatus } from '@/types/dashboard'
-import { Card, Badge, Button } from '@/dashboard/components/primitives'
+import { Card, Button } from '@/dashboard/components/primitives'
+import { NightPage, PageHead, Chip, EmptyLine, fmtNum } from './shared/night'
 import { Skeleton } from '@/dashboard/components/uiExtras'
 
 const ICON_BY_PROVIDER: Record<string, React.ReactNode> = {
@@ -15,12 +16,13 @@ const ICON_BY_PROVIDER: Record<string, React.ReactNode> = {
   instagram: <AtSign size={19} />,
 }
 
+// Semantic tints from the tokens, so the tiles read on Night and Day alike.
 const COLOR_BY_PROVIDER: Record<string, { bg: string; fg: string }> = {
-  whatsapp: { bg: '#DCFCE7', fg: '#16A34A' },
-  google_calendar: { bg: '#DBEAFE', fg: '#2563EB' },
-  google_business: { bg: '#FEF3C7', fg: '#D97706' },
-  voip: { bg: '#EDE9FE', fg: '#7C3AED' },
-  instagram: { bg: '#FCE7F3', fg: '#DB2777' },
+  whatsapp: { bg: 'var(--ok-bg)', fg: 'var(--ok)' },
+  google_calendar: { bg: 'var(--info-bg)', fg: 'var(--info)' },
+  google_business: { bg: 'var(--warn-bg)', fg: 'var(--warn)' },
+  voip: { bg: 'var(--ai-bg)', fg: 'var(--ai)' },
+  instagram: { bg: 'var(--bad-bg)', fg: 'var(--bad)' },
 }
 
 const DESC_BY_PROVIDER: Record<string, string> = {
@@ -59,12 +61,12 @@ export function DashboardV2Integrations() {
   }
 
   return (
-    <div>
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 'var(--text-heading-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>التكاملات</div>
-        <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>اربط قنوات التواصل والأدوات الخارجية بمدار — حالة الاتصال محفوظة فعلياً بحسابك</div>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))', gap: 16 }}>
+    <NightPage>
+      <PageHead
+        title="التكاملات"
+        sub={loading ? 'اربط قنوات التواصل والأدوات الخارجية بمدار' : `${fmtNum(integrations.filter((i) => i.status === 'connected').length)} متصل من ${fmtNum(integrations.length)} · حالة الاتصال محفوظة فعلياً بحسابك`}
+      />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: 16 }}>
         {loading && Array.from({ length: 4 }).map((_, i) => (
           <Card key={i}>
             <div style={{ display: 'flex', gap: 12 }}>
@@ -81,21 +83,18 @@ export function DashboardV2Integrations() {
           const color = COLOR_BY_PROVIDER[i.provider] || { bg: 'var(--brand-100)', fg: 'var(--brand-600)' }
           const oauthReady = OAUTH_READY[i.provider]
           return (
-            <Card key={i.id} interactive glow delay={Math.min(idx * 0.05, 0.3)}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <div style={{
-                    width: 42, height: 42, borderRadius: 'var(--radius-md)', background: color.bg, color: color.fg,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                  }}>{ICON_BY_PROVIDER[i.provider] || <Star size={18} />}</div>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 14 }}>{i.name}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, maxWidth: 220 }}>{DESC_BY_PROVIDER[i.provider] || ''}</div>
+            <Card key={i.id} delay={Math.min(idx * 0.05, 0.3)} style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+                <div style={{ display: 'flex', gap: 12, minWidth: 0 }}>
+                  <div className="np-icon-tile" style={{ width: 42, height: 42, background: color.bg, color: color.fg }}>{ICON_BY_PROVIDER[i.provider] || <Star size={18} />}</div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>{i.name}</div>
+                    <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 2 }}>{DESC_BY_PROVIDER[i.provider] || ''}</div>
                   </div>
                 </div>
-                <Badge tone={i.status === 'connected' ? 'success' : 'neutral'}>{i.status === 'connected' ? 'متصل' : 'غير متصل'}</Badge>
+                <Chip tone={i.status === 'connected' ? 'ok' : 'muted'}>{i.status === 'connected' ? 'متصل' : 'غير متصل'}</Chip>
               </div>
-              <Button size="sm" variant={i.status === 'connected' ? 'secondary' : 'primary'} onClick={() => toggle(i.id, i.status)} style={{ marginTop: 14 }}>
+              <Button size="sm" variant={i.status === 'connected' ? 'secondary' : 'primary'} onClick={() => toggle(i.id, i.status)} style={{ marginTop: 14, alignSelf: 'flex-start' }}>
                 {i.status === 'connected' ? 'قطع الاتصال' : 'ربط الآن'}
               </Button>
               {!oauthReady && i.status !== 'connected' && (
@@ -106,8 +105,8 @@ export function DashboardV2Integrations() {
             </Card>
           )
         })}
-        {!loading && (integrations || []).length === 0 && <div style={{ padding: 30, textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>جارِ تجهيز التكاملات...</div>}
       </div>
-    </div>
+      {!loading && (integrations || []).length === 0 && <Card><EmptyLine>جارِ تجهيز التكاملات...</EmptyLine></Card>}
+    </NightPage>
   )
 }
