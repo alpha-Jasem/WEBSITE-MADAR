@@ -19,27 +19,27 @@ export function Card({ children, emphasis, interactive, glow, glass, delay = 0, 
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: DURATION_MEDIUM, delay: Math.min(delay, 0.5), ease: EASE_OUT }}
       whileHover={interactive ? {
-        y: -3,
+        y: -2,
         boxShadow: glow
-          ? 'var(--shadow-md), 0 0 0 1px var(--slate-900)'
-          : 'inset 0 1px 0 var(--card-rim), var(--shadow-md)',
+          ? 'var(--shadow-md), 0 0 0 1px var(--card-border-emphasis)'
+          : 'var(--shadow-md)',
       } : undefined}
       style={{
-        backgroundColor: 'var(--surface-card)',
+        // Night panel: flat navy on the abyss, separated by a hairline. Emphasis adds
+        // the logo gradient as a thin top rule plus a faint blue/violet wash.
+        backgroundColor: emphasis || glass ? 'var(--panel-2)' : 'var(--surface-card)',
         backgroundImage: emphasis
-          ? `linear-gradient(90deg, var(--brand-400), var(--brand-500) 42%, transparent), linear-gradient(165deg, color-mix(in srgb, var(--surface-card) 88%, var(--brand-100)) 0%, var(--surface-card) 58%)`
+          ? 'var(--grad), radial-gradient(120% 140% at 100% 0%, rgba(128,83,248,.14), transparent 55%), radial-gradient(90% 120% at 0% 100%, rgba(72,168,240,.10), transparent 60%)'
           : glass
-          ? 'linear-gradient(165deg, color-mix(in srgb, var(--surface-card) 94%, var(--brand-100)) 0%, var(--surface-card) 60%)'
+          ? 'radial-gradient(120% 140% at 100% 0%, rgba(72,168,240,.08), transparent 60%)'
           : undefined,
-        backgroundSize: emphasis ? '100% 3px, 100% 100%' : undefined,
-        backgroundRepeat: emphasis ? 'no-repeat, no-repeat' : 'no-repeat',
-        backdropFilter: glass ? 'blur(10px)' : undefined,
+        backgroundSize: emphasis ? '100% 2px, 100% 100%, 100% 100%' : undefined,
+        backgroundRepeat: 'no-repeat',
         borderRadius: 'var(--radius-xl)',
         border: emphasis ? '1px solid var(--card-border-emphasis)' : '1px solid var(--card-border)',
-        boxShadow: emphasis
-          ? 'inset 0 1px 0 var(--card-rim), var(--shadow-sm), 0 14px 32px -14px color-mix(in srgb, var(--brand-500) 30%, transparent)'
-          : 'inset 0 1px 0 var(--card-rim), var(--shadow-sm)',
-        padding: 'var(--space-6)',
+        boxShadow: 'var(--shadow-sm)',
+        padding: 'var(--space-5)',
+        color: 'var(--text-primary)',
         fontFamily: 'var(--font-body)',
         cursor: interactive ? 'pointer' : undefined,
         ...style,
@@ -54,12 +54,13 @@ export function Card({ children, emphasis, interactive, glow, glass, delay = 0, 
 
 export type BadgeTone = 'brand' | 'success' | 'warning' | 'danger' | 'neutral'
 
+// Night chips: the semantic colour on a ~13% tint of itself, no border.
 const BADGE_TONES: Record<BadgeTone, [string, string]> = {
-  brand: ['var(--brand-100)', 'var(--brand-600)'],
-  success: ['var(--success-100)', 'var(--success-500)'],
-  warning: ['var(--warning-100)', 'var(--warning-500)'],
-  danger: ['var(--danger-100)', 'var(--danger-500)'],
-  neutral: ['var(--slate-100)', 'var(--slate-600)'],
+  brand: ['var(--info-bg)', 'var(--info)'],
+  success: ['var(--ok-bg)', 'var(--ok)'],
+  warning: ['var(--warn-bg)', 'var(--warn)'],
+  danger: ['var(--bad-bg)', 'var(--bad)'],
+  neutral: ['var(--hover-bg)', 'var(--text-secondary)'],
 }
 
 export function Badge({ tone = 'brand', children, style }: {
@@ -70,10 +71,11 @@ export function Badge({ tone = 'brand', children, style }: {
   const [bg, fg] = BADGE_TONES[tone] || BADGE_TONES.brand
   return (
     <span style={{
-      display: 'inline-flex', alignItems: 'center', padding: '1px 9px', height: 20, boxSizing: 'border-box',
-      borderRadius: 'var(--radius-full)', background: bg, color: fg, border: `1px solid color-mix(in srgb, ${fg} 20%, transparent)`,
-      fontSize: 'var(--text-caption)', fontWeight: 600, fontFamily: 'var(--font-body)',
-      lineHeight: 1.6, ...style,
+      display: 'inline-flex', alignItems: 'center', gap: 5, padding: '0 9px', height: 22, boxSizing: 'border-box',
+      borderRadius: 'var(--radius-full)', background: bg, color: fg,
+      border: tone === 'neutral' ? '1px solid var(--border-default)' : '1px solid transparent',
+      fontSize: 11.5, fontWeight: 700, fontFamily: 'var(--font-body)', whiteSpace: 'nowrap',
+      lineHeight: 1, ...style,
     }}>
       {children}
     </span>
@@ -86,40 +88,39 @@ export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
 export type ButtonSize = 'sm' | 'md' | 'lg'
 
 const SIZE_STYLES: Record<ButtonSize, CSSProperties> = {
-  sm: { padding: '0 12px', height: 32, fontSize: 'var(--text-caption)' },
-  md: { padding: '0 16px', height: 38, fontSize: 'var(--text-body-sm)' },
-  lg: { padding: '0 22px', height: 44, fontSize: 'var(--text-body-md)' },
+  sm: { padding: '0 11px', height: 30, fontSize: 12, borderRadius: 'var(--radius-sm)' },
+  md: { padding: '0 14px', height: 36, fontSize: 13, borderRadius: 'var(--radius-md)' },
+  lg: { padding: '0 20px', height: 42, fontSize: 14, borderRadius: 'var(--radius-lg)' },
 }
 
-// Flat fills instead of the old gloss (gradient + inset white highlight), which
-// is what made these read as dated.
+// Primary carries the logo gradient (reserved for primary actions); the rest stay
+// quiet navy/outline so the one gradient button on a screen is the obvious next step.
 const VARIANT_STYLES: Record<ButtonVariant, CSSProperties> = {
-  primary: { backgroundColor: 'var(--brand-500)', backgroundImage: 'none', color: 'var(--text-on-brand)', border: '1px solid transparent' },
-  secondary: { backgroundColor: 'var(--surface-card)', backgroundImage: 'none', color: 'var(--text-primary)', border: '1px solid var(--border-default)' },
-  ghost: { backgroundColor: 'transparent', backgroundImage: 'none', color: 'var(--text-secondary)', border: '1px solid transparent' },
-  danger: { backgroundColor: 'var(--danger-500)', backgroundImage: 'none', color: '#fff', border: '1px solid transparent' },
+  primary: { backgroundColor: 'var(--royal-2)', backgroundImage: 'var(--grad)', color: '#fff', border: '1px solid transparent' },
+  secondary: { backgroundColor: 'var(--panel-2)', backgroundImage: 'none', color: 'var(--text-primary)', border: '1px solid var(--border-strong)' },
+  ghost: { backgroundColor: 'transparent', backgroundImage: 'none', color: 'var(--sky)', border: '1px solid color-mix(in srgb, var(--sky) 35%, transparent)' },
+  danger: { backgroundColor: 'var(--bad-bg)', backgroundImage: 'none', color: 'var(--bad)', border: '1px solid transparent' },
 }
 
-// Hover deepens the fill rather than firing a coloured glow.
 const HOVER_BG: Record<ButtonVariant, string> = {
-  primary: 'var(--brand-600)',
-  secondary: 'var(--surface-sunken)',
-  ghost: 'var(--surface-sunken)',
-  danger: 'var(--danger-500)',
+  primary: 'var(--royal-2)',
+  secondary: 'var(--raise)',
+  ghost: 'var(--info-bg)',
+  danger: 'color-mix(in srgb, var(--bad) 22%, transparent)',
 }
 
 const RESTING_SHADOW: Record<ButtonVariant, string> = {
-  primary: '0 1px 2px rgba(13,27,62,.16)',
-  secondary: '0 1px 2px rgba(13,27,62,.06)',
+  primary: 'var(--shadow-brand)',
+  secondary: 'none',
   ghost: 'none',
-  danger: '0 1px 2px rgba(224,80,63,.22)',
+  danger: 'none',
 }
 
 const HOVER_SHADOW: Record<ButtonVariant, string> = {
-  primary: '0 4px 12px -2px rgba(0,153,204,.45)',
-  secondary: '0 2px 6px rgba(13,27,62,.10)',
+  primary: '0 10px 26px -10px rgba(128,83,248,.95)',
+  secondary: 'none',
   ghost: 'none',
-  danger: '0 4px 12px -2px rgba(224,80,63,.4)',
+  danger: 'none',
 }
 
 export function Button({ variant = 'primary', size = 'md', disabled, children, onClick, style }: {
@@ -144,16 +145,14 @@ export function Button({ variant = 'primary', size = 'md', disabled, children, o
       whileHover={disabled ? undefined : { y: -1 }}
       transition={{ duration: DURATION_FAST }}
       style={{
-        fontFamily: 'var(--font-body)', fontWeight: 600, letterSpacing: '.01em',
-        borderRadius: 'var(--radius-lg)',
+        fontFamily: 'var(--font-body)', fontWeight: 600,
         cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.45 : 1,
         transition: 'background-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out)',
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, whiteSpace: 'nowrap',
         boxShadow: active ? HOVER_SHADOW[variant] : RESTING_SHADOW[variant],
         ...v, ...s,
         ...(active ? { backgroundColor: HOVER_BG[variant] } : {}),
-        ...(active && variant === 'secondary' ? { borderColor: 'var(--border-strong)' } : {}),
-        ...(active && variant === 'ghost' ? { color: 'var(--text-primary)' } : {}),
+        ...(active && variant === 'secondary' ? { borderColor: 'color-mix(in srgb, var(--ink) 30%, transparent)' } : {}),
         ...style,
       }}
     >
@@ -167,9 +166,9 @@ export function Button({ variant = 'primary', size = 'md', disabled, children, o
 export type ToastTone = 'success' | 'danger' | 'brand'
 
 const TOAST_TONES: Record<ToastTone, [string, string]> = {
-  success: ['var(--success-100)', 'var(--success-500)'],
-  danger: ['var(--danger-100)', 'var(--danger-500)'],
-  brand: ['var(--brand-100)', 'var(--brand-600)'],
+  success: ['var(--ok-bg)', 'var(--ok)'],
+  danger: ['var(--bad-bg)', 'var(--bad)'],
+  brand: ['var(--info-bg)', 'var(--sky)'],
 }
 
 export function Toast({ tone = 'brand', title, description, onClose }: {
@@ -186,8 +185,8 @@ export function Toast({ tone = 'brand', title, description, onClose }: {
       exit={{ opacity: 0, x: -24, scale: 0.95 }}
       transition={{ type: 'spring', stiffness: 420, damping: 32 }}
       style={{
-        display: 'flex', gap: 12, alignItems: 'flex-start', padding: '14px 16px', background: 'var(--surface-card)',
-        border: '1px solid var(--border-default)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)',
+        display: 'flex', gap: 12, alignItems: 'flex-start', padding: '14px 16px', background: 'var(--surface-raised)',
+        border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)',
         minWidth: 280, fontFamily: 'var(--font-body)',
       }}>
       <span style={{ width: 8, height: 8, borderRadius: 'var(--radius-full)', background: fg, marginTop: 6, flexShrink: 0 }} />
@@ -219,16 +218,16 @@ export function Input({ label, placeholder, type = 'text', value, onChange, erro
   const [focus, setFocus] = useState(false)
   return (
     <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontFamily: 'var(--font-body)', ...style }}>
-      {label && <span style={{ fontSize: 'var(--text-body-sm)', fontWeight: 600, color: 'var(--text-secondary)' }}>{label}</span>}
+      {label && <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)' }}>{label}</span>}
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
         {icon && <span style={{ position: 'absolute', insetInlineStart: 12, color: 'var(--text-tertiary)', display: 'flex' }}>{icon}</span>}
         <input
           type={type} placeholder={placeholder} value={value} onChange={onChange}
           onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
           style={{
-            width: '100%', boxSizing: 'border-box', padding: icon ? '9px 14px 9px 36px' : '9px 14px',
-            fontSize: 'var(--text-body-sm)', borderRadius: 'var(--radius-md)',
-            border: error ? '1px solid var(--danger-500)' : focus ? '1px solid var(--border-focus)' : '1px solid var(--border-default)',
+            width: '100%', boxSizing: 'border-box', paddingBlock: 9, paddingInlineEnd: 12, paddingInlineStart: icon ? 36 : 12,
+            fontSize: 'var(--text-body-sm)', borderRadius: 'var(--radius-md)', background: 'var(--surface-input)',
+            border: error ? '1px solid var(--danger-500)' : focus ? '1px solid var(--border-focus)' : '1px solid var(--border-strong)',
             boxShadow: focus ? 'var(--ring-focus)' : 'none', outline: 'none', color: 'var(--text-primary)',
             transition: 'box-shadow var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out)',
           }}
@@ -252,12 +251,12 @@ export function Select({ label, options = [], value, onChange, style }: {
 }) {
   return (
     <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontFamily: 'var(--font-body)', ...style }}>
-      {label && <span style={{ fontSize: 'var(--text-body-sm)', fontWeight: 600, color: 'var(--text-secondary)' }}>{label}</span>}
+      {label && <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)' }}>{label}</span>}
       <select
         value={value} onChange={onChange}
         style={{
-          padding: '9px 14px', fontSize: 'var(--text-body-sm)', borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--border-default)', color: 'var(--text-primary)', background: 'var(--surface-card)',
+          padding: '9px 12px', fontSize: 'var(--text-body-sm)', borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--border-strong)', color: 'var(--text-primary)', background: 'var(--surface-input)',
           outline: 'none', appearance: 'auto',
         }}
       >
@@ -280,16 +279,16 @@ export function Switch({ checked, onChange, label, style }: {
       <span
         onClick={() => onChange && onChange(!checked)}
         style={{
-          width: 34, height: 19, borderRadius: 'var(--radius-full)',
-          background: checked ? 'var(--accent-primary)' : 'var(--slate-300)',
+          width: 42, height: 24, borderRadius: 'var(--radius-full)',
+          background: checked ? 'var(--royal-2)' : 'var(--border-strong)',
           position: 'relative', transition: 'background var(--duration-normal) var(--ease-out)', flexShrink: 0,
         }}
       >
         <motion.span
-          animate={{ insetInlineStart: checked ? 17 : 2 }}
+          animate={{ insetInlineStart: checked ? 21 : 3 }}
           transition={{ type: 'spring', stiffness: 600, damping: 32 }}
           style={{
-            position: 'absolute', top: 2, width: 15, height: 15,
+            position: 'absolute', top: 3, width: 18, height: 18,
             borderRadius: 'var(--radius-full)', background: '#fff', boxShadow: 'var(--shadow-sm)',
           }}
         />
@@ -325,8 +324,8 @@ export function Dialog({ open, title, children, onClose, footer }: {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
           style={{
-            position: 'fixed', inset: 0, background: 'rgba(13,27,62,.12)', backdropFilter: 'blur(2px)', display: 'flex',
-            alignItems: 'center', justifyContent: 'center', zIndex: 1300,
+            position: 'fixed', inset: 0, background: 'var(--scrim)', backdropFilter: 'blur(3px)', display: 'flex',
+            alignItems: 'center', justifyContent: 'center', zIndex: 1300, padding: 16,
           }}
         >
           <motion.div
@@ -336,17 +335,17 @@ export function Dialog({ open, title, children, onClose, footer }: {
             exit={{ opacity: 0, y: 8, scale: 0.97 }}
             transition={{ type: 'spring', stiffness: 420, damping: 34 }}
             style={{
-              background: 'var(--surface-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)',
-              border: '1px solid color-mix(in srgb, var(--border-default) 70%, transparent)',
-              width: 420, maxWidth: '90vw', padding: 24, fontFamily: 'var(--font-body)', maxHeight: '85vh', overflowY: 'auto',
+              background: 'var(--surface-raised)', borderRadius: 20, boxShadow: '0 40px 80px -30px rgba(0,0,0,.8)',
+              border: '1px solid var(--border-strong)',
+              width: 460, maxWidth: '100%', padding: 22, fontFamily: 'var(--font-body)', maxHeight: 'calc(100vh - 32px)', overflowY: 'auto',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <h3 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 'var(--text-heading-lg)', color: 'var(--text-primary)' }}>{title}</h3>
-              <span onClick={onClose} style={{ cursor: 'pointer', color: 'var(--text-tertiary)', fontSize: 20 }}>×</span>
+              <h3 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>{title}</h3>
+              <button type="button" onClick={onClose} aria-label="إغلاق" style={{ cursor: 'pointer', color: 'var(--text-tertiary)', fontSize: 22, lineHeight: 1, background: 'none', border: 0, padding: 4 }}>×</button>
             </div>
-            <div style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-body-md)' }}>{children}</div>
-            {footer && <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>{footer}</div>}
+            <div style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{children}</div>
+            {footer && <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 18, flexWrap: 'wrap' }}>{footer}</div>}
           </motion.div>
         </motion.div>
       )}

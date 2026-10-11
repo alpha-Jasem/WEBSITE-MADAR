@@ -9,11 +9,12 @@ import { SPRING_SMOOTH, DURATION_SLOW, EASE_OUT } from './motionTokens'
 
 // ─── Avatar (deterministic color + initial) ────────────────────────────────
 
-// Deterministic but monochrome: identity comes from the initial, not from hue.
+// Deterministic shades of the logo blues/violet; every pair reads on both the
+// Night panels and the light theme's white cards.
 const AVATAR_PALETTE = [
-  ['#0A0A0A', '#FFFFFF'], ['#F3F3F3', '#0F0F0F'], ['#2E2E2E', '#FFFFFF'],
-  ['#EBEBEB', '#3D3D3D'], ['#5C5C5C', '#FFFFFF'], ['#FAFAFA', '#222222'],
-  ['#3D3D3D', '#FFFFFF'], ['#D9D9D9', '#0F0F0F'],
+  ['#1131A8', '#FFFFFF'], ['#2A4BD1', '#FFFFFF'], ['#48A8F0', '#04122E'],
+  ['#8053F8', '#FFFFFF'], ['#17234D', '#A6D7FC'], ['#1E3A8A', '#E8EBF4'],
+  ['#3B2A86', '#D9CCFF'], ['#0E5A8A', '#E4F2FE'],
 ]
 
 function hashStr(s: string) {
@@ -501,7 +502,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastCtx.Provider value={{ push }}>
       {children}
-      <div style={{
+      <div className="dv2-floating" style={{
         position: 'fixed', bottom: 20, insetInlineStart: 20, zIndex: 1400,
         display: 'flex', flexDirection: 'column', gap: 8, width: 320, maxWidth: 'calc(100vw - 40px)',
       }}>
@@ -649,12 +650,12 @@ export function WhatsNewBadge() {
 
   return (
     <div style={{ position: 'relative' }}>
-      <div onClick={toggle} style={{ position: 'relative', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex' }}>
+      <button type="button" className="dv2-icon-btn" aria-label="الجديد بالداشبورد" onClick={toggle}>
         <Sparkles size={18} />
         {!seen && (
-          <span style={{ position: 'absolute', top: -2, insetInlineEnd: -2, width: 8, height: 8, borderRadius: '50%', background: 'var(--brand-500)', border: '2px solid var(--surface-page)' }} />
+          <span style={{ position: 'absolute', top: 8, insetInlineEnd: 9, width: 8, height: 8, borderRadius: '50%', background: 'var(--sky)', boxShadow: '0 0 0 2px var(--panel)' }} />
         )}
-      </div>
+      </button>
       <AnimatePresence>
         {open && (
           <>
@@ -663,7 +664,7 @@ export function WhatsNewBadge() {
               initial={{ opacity: 0, y: -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6, scale: 0.98 }}
               transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
               style={{
-                position: 'absolute', top: '130%', insetInlineEnd: 0, width: 280, background: 'var(--surface-card)', borderRadius: 'var(--radius-lg)',
+                position: 'absolute', top: '130%', insetInlineEnd: 0, width: 280, background: 'var(--surface-raised)', borderRadius: 'var(--radius-lg)',
                 boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-default)', zIndex: 1300, padding: 14,
               }}
             >
@@ -690,7 +691,7 @@ export function WhatsNewBadge() {
 export function Fab({ actions }: { actions: { label: string; icon: ReactNode; onClick: () => void }[] }) {
   const [open, setOpen] = useState(false)
   return (
-    <div style={{ position: 'fixed', bottom: 24, insetInlineStart: 24, zIndex: 1250 }}>
+    <div className="dv2-floating" style={{ position: 'fixed', bottom: 24, insetInlineStart: 24, zIndex: 1250 }}>
       <AnimatePresence>
         {open && (
           <motion.div

@@ -107,9 +107,9 @@ export function GlobalSearch({ base }: { base: string }) {
   }
 
   return (
-    <div style={{ position: 'relative', flex: 1, maxWidth: 360 }}>
+    <div style={{ position: 'relative', flex: 1, maxWidth: 420 }}>
       <div style={{ position: 'relative' }}>
-        <Search size={15} style={{ position: 'absolute', insetInlineStart: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
+        <Search size={16} style={{ position: 'absolute', insetInlineStart: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
         <input
           ref={inputRef}
           value={query}
@@ -118,8 +118,8 @@ export function GlobalSearch({ base }: { base: string }) {
           onKeyDown={onKeyDown}
           placeholder="ابحث أو اكتب أمرًا سريعًا..."
           style={{
-            width: '100%', boxSizing: 'border-box', padding: '8px 60px 8px 12px', borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-default)', fontSize: 13, outline: 'none', background: 'var(--surface-sunken)',
+            width: '100%', boxSizing: 'border-box', height: 40, paddingBlock: 0, paddingInlineStart: 36, paddingInlineEnd: 44, borderRadius: 12,
+            border: '1px solid var(--border-default)', fontSize: 13.5, outline: 'none', background: 'var(--panel)', color: 'var(--text-primary)',
           }}
         />
         {query ? (
@@ -129,8 +129,8 @@ export function GlobalSearch({ base }: { base: string }) {
         ) : (
           <span style={{
             position: 'absolute', insetInlineEnd: 8, top: '50%', transform: 'translateY(-50%)',
-            fontSize: 10.5, fontWeight: 700, color: 'var(--text-tertiary)', border: '1px solid var(--border-default)',
-            borderRadius: 'var(--radius-sm)', padding: '2px 5px', pointerEvents: 'none',
+            fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', border: '1px solid var(--border-strong)',
+            borderRadius: 6, padding: '0 6px', pointerEvents: 'none', direction: 'ltr',
           }}>⌘K</span>
         )}
       </div>
@@ -144,7 +144,7 @@ export function GlobalSearch({ base }: { base: string }) {
               exit={{ opacity: 0, y: -6, scale: 0.98 }}
               transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
               style={{
-                position: 'absolute', top: '115%', insetInlineStart: 0, insetInlineEnd: 0, background: 'var(--surface-card)',
+                position: 'absolute', top: '115%', insetInlineStart: 0, insetInlineEnd: 0, background: 'var(--surface-raised)',
                 borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-default)',
                 zIndex: 1300, maxHeight: 400, overflowY: 'auto',
               }}

@@ -44,7 +44,7 @@ function CircularGauge({ percent, size = 180, stroke = 16 }: { percent: number; 
       {hover && (
         <div style={{
           position: 'absolute', top: '105%', insetInlineStart: '50%', transform: 'translateX(-50%)',
-          background: 'var(--slate-900)', color: '#fff', padding: '8px 12px', borderRadius: 'var(--radius-md)',
+          background: 'var(--surface-inverse)', color: '#fff', padding: '8px 12px', borderRadius: 'var(--radius-md)',
           fontSize: 12, whiteSpace: 'nowrap', boxShadow: 'var(--shadow-lg)', zIndex: 10,
         }}>
           متبقٍ {100 - clamped}% من حدك الشهري
