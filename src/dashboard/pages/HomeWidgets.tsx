@@ -27,6 +27,14 @@ function isSameDay(iso: string, ref: Date): boolean {
   return d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth() && d.getDate() === ref.getDate()
 }
 
+// Arabic counted noun: 1 and 2 have their own forms, 3–10 take the plural, 11+ the singular.
+function countLabel(n: number, one = 'موعد واحد', two = 'موعدين', few = 'مواعيد', many = 'موعد'): string {
+  if (n === 1) return one
+  if (n === 2) return two
+  if (n >= 3 && n <= 10) return `${n} ${few}`
+  return `${n} ${many}`
+}
+
 function EmptyRow({ text }: { text: string }) {
   return <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)', padding: '14px 0', textAlign: 'center' }}>{text}</div>
 }
@@ -213,18 +221,21 @@ export function RadialDial({ pct, sublabel }: { pct: number; sublabel?: string }
 
 // ─── AgentHeroCard — real today's stats + real last call, no fake live call ─
 
-export function AgentHeroCard({ todayCalls, todayBookings, escalatedToday, lastCall }: {
+export function AgentHeroCard({ todayCalls, todayBookings, escalatedToday, lastCall, onViewCalls, showBookings = true }: {
   todayCalls: number
   todayBookings: number
   escalatedToday: number
   lastCall: AICallLog | null
+  onViewCalls?: () => void
+  /** False for industries without bookings: drops the bookings stat and the "books" wording. */
+  showBookings?: boolean
 }) {
   const RESULT_LABEL: Record<string, string> = {
     booked: 'انتهت بحجز موعد', needs_review: 'تحتاج مراجعة بشرية', no_slot: 'لا يوجد موعد متاح',
     cancelled: 'أُلغيت', failed: 'فشلت', transferred: 'حُوّلت لموظف',
   }
   return (
-    <Card glow style={{ position: 'relative', overflow: 'hidden', padding: 'var(--space-6)' }}>
+    <Card glow style={{ position: 'relative', overflow: 'hidden', padding: 'var(--space-6)', display: 'flex', flexDirection: 'column' }}>
       <motion.div
         aria-hidden
         animate={{ opacity: [0.25, 0.65, 0.25] }}
@@ -240,8 +251,9 @@ export function AgentHeroCard({ todayCalls, todayBookings, escalatedToday, lastC
             <Sparkles size={19} />
           </div>
           <div>
-            <div style={{ fontWeight: 800, fontSize: 15 }}>الوكيل الصوتي — مها</div>
-            <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>ElevenLabs AI Agent</div>
+            {/* Generic across tenants: the agent's name and voice vendor differ per business. */}
+            <div style={{ fontWeight: 800, fontSize: 15 }}>الوكيل الصوتي</div>
+            <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>{showBookings ? 'يرد على المكالمات ويحجز تلقائيًا' : 'يرد على المكالمات تلقائيًا'}</div>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 11px', borderRadius: 'var(--radius-full)', background: 'var(--success-100)' }}>
@@ -253,10 +265,10 @@ export function AgentHeroCard({ todayCalls, todayBookings, escalatedToday, lastC
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 18 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: showBookings ? '1fr 1fr 1fr' : '1fr 1fr', gap: 10, marginBottom: 18 }}>
         {[
           { label: 'مكالمات اليوم', value: todayCalls },
-          { label: 'حجوزات اليوم', value: todayBookings },
+          ...(showBookings ? [{ label: 'حجوزات اليوم', value: todayBookings }] : []),
           { label: 'تحويل لبشري', value: escalatedToday },
         ].map((s) => (
           <div key={s.label} style={{ background: 'var(--surface-sunken)', borderRadius: 'var(--radius-md)', padding: '12px 10px', textAlign: 'center' }}>
@@ -287,6 +299,15 @@ export function AgentHeroCard({ todayCalls, todayBookings, escalatedToday, lastC
           </div>
         )}
       </div>
+
+      {onViewCalls && (
+        // Pinned to the bottom so the card's spare height (it matches the KPI column) reads as intent, not a gap.
+        <div style={{ marginTop: 'auto', paddingTop: 16 }}>
+          <Button variant="secondary" size="sm" onClick={onViewCalls}>
+            سجل المكالمات <ArrowLeft size={14} />
+          </Button>
+        </div>
+      )}
     </Card>
   )
 }
@@ -323,33 +344,45 @@ export function TodayTimeline({ appointments, delay = 0 }: { appointments: Booki
   const hours = Array.from({ length: 13 }, (_, i) => 8 + i)
   const counts = hours.map((h) => todays.filter((a) => parseInt(a.start_time.split(':')[0], 10) === h).length)
   const max = Math.max(1, ...counts)
+  const hourLabel = (h: number) => (h < 12 ? `${h} ص` : h === 12 ? '12 م' : `${h - 12} م`)
+  const peakIdx = counts.indexOf(Math.max(...counts))
 
   return (
-    // Column layout so the hour bars absorb whatever height the row's tallest card sets,
-    // instead of leaving dead space under a fixed 44px strip.
     <Card delay={delay} style={{ display: 'flex', flexDirection: 'column' }}>
       <SectionTitle>الجدول الزمني لليوم</SectionTitle>
       {todays.length === 0 ? <EmptyRow text="لا توجد مواعيد اليوم بعد" /> : (
         <>
-          <div style={{ display: 'flex', gap: 4, flex: 1, minHeight: 44, alignItems: 'flex-end' }}>
+          <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 14 }}>
+            {countLabel(todays.length)} اليوم، وأزحم وقت الساعة {hourLabel(hours[peakIdx])}.
+          </div>
+          {/* Bar height is the number of bookings in that hour; empty hours stay as a thin track. */}
+          <div style={{ display: 'flex', gap: 4, height: 140, alignItems: 'stretch' }}>
             {hours.map((h, i) => (
-              <Tooltip key={h} label={`${h}:00 — ${counts[i]} موعد`} style={{ flex: 1, height: '100%' }}>
-                <motion.div
-                  initial={{ scaleY: 0 }}
-                  animate={{ scaleY: 1 }}
-                  transition={{ ...SPRING_SNAPPY, delay: Math.min(delay, 0.5) + i * 0.025 }}
-                  style={{
-                    width: '100%', height: '100%', borderRadius: 5, transformOrigin: 'bottom',
-                    background: counts[i] > 0
-                      ? `color-mix(in srgb, var(--brand-500) ${Math.round((counts[i] / max) * 90) + 10}%, var(--surface-sunken))`
-                      : 'var(--surface-sunken)',
-                  }}
-                />
+              <Tooltip key={h} label={`${hourLabel(h)} — ${counts[i]} موعد`} style={{ flex: 1, height: '100%' }}>
+                <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', gap: 4 }}>
+                  {counts[i] > 0 && (
+                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>{counts[i]}</span>
+                  )}
+                  <motion.div
+                    initial={{ scaleY: 0 }}
+                    animate={{ scaleY: 1 }}
+                    transition={{ ...SPRING_SNAPPY, delay: Math.min(delay, 0.5) + i * 0.025 }}
+                    style={{
+                      width: '100%', borderRadius: 5, transformOrigin: 'bottom',
+                      height: counts[i] > 0 ? `${Math.max(12, Math.round((counts[i] / max) * 100) - 14)}%` : 6,
+                      background: counts[i] > 0 ? 'var(--brand-500)' : 'var(--surface-sunken)',
+                    }}
+                  />
+                </div>
               </Tooltip>
             ))}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 6 }}>
-            <span>8 ص</span><span>2 م</span><span>8 م</span>
+          <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
+            {hours.map((h, i) => (
+              <span key={h} style={{ flex: 1, textAlign: 'center', fontSize: 10.5, color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>
+                {i % 2 === 0 ? hourLabel(h) : ''}
+              </span>
+            ))}
           </div>
         </>
       )}

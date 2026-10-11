@@ -3,6 +3,7 @@ import { Suspense, lazy, useEffect } from 'react'
 import { LanguageProvider } from './context/LanguageContext'
 import { WorkspaceProvider } from './context/WorkspaceContext'
 import { ProtectedRoute } from './components/shared/ProtectedRoute'
+import { ModuleRoute } from './dashboard/components/ModuleRoute'
 import { ErrorBoundary, reloadForFreshAssets } from './components/shared/ErrorBoundary'
 const ClinicAILanding = lazy(() => import('./pages/ClinicAILanding').then((m) => ({ default: m.ClinicAILanding })))
 const RazCaseStudy = lazy(() => import('./pages/RazCaseStudy'))
@@ -86,28 +87,29 @@ const DashboardV2CallLogs          = lazy(() => import('./dashboard/pages/CallLo
 // Declared once so a new page can never be added to only one of them.
 const dashboardChildRoutes = (
   <>
+    {/* Pages tied to an industry module redirect home when the company doesn't have it. */}
     <Route index element={<DashboardV2Home />} />
-    <Route path="bookings" element={<DashboardV2Bookings />} />
-    <Route path="patients" element={<DashboardV2Customers />} />
-    <Route path="conversations" element={<DashboardV2Conversations />} />
-    <Route path="reviews" element={<DashboardV2Reviews />} />
-    <Route path="revenue" element={<DashboardV2Revenue />} />
-    <Route path="reports" element={<DashboardV2Reports />} />
+    <Route path="bookings" element={<ModuleRoute module="bookings"><DashboardV2Bookings /></ModuleRoute>} />
+    <Route path="patients" element={<ModuleRoute module="customers"><DashboardV2Customers /></ModuleRoute>} />
+    <Route path="conversations" element={<ModuleRoute module="conversations"><DashboardV2Conversations /></ModuleRoute>} />
+    <Route path="reviews" element={<ModuleRoute module="reviews"><DashboardV2Reviews /></ModuleRoute>} />
+    <Route path="revenue" element={<ModuleRoute module="revenue"><DashboardV2Revenue /></ModuleRoute>} />
+    <Route path="reports" element={<ModuleRoute module="reports"><DashboardV2Reports /></ModuleRoute>} />
     <Route path="plan-usage" element={<DashboardV2MadarAgentUsage />} />
-    <Route path="reminders" element={<DashboardV2Reminders />} />
+    <Route path="reminders" element={<ModuleRoute module="reminders"><DashboardV2Reminders /></ModuleRoute>} />
     <Route path="integrations" element={<DashboardV2Integrations />} />
-    <Route path="services" element={<DashboardV2Services />} />
+    <Route path="services" element={<ModuleRoute module="services"><DashboardV2Services /></ModuleRoute>} />
     <Route path="audit-log" element={<DashboardV2AuditLog />} />
-    <Route path="tickets" element={<DashboardV2Tickets />} />
-    <Route path="calls-analytics" element={<DashboardV2CallsAnalytics />} />
-    <Route path="whatsapp-analytics" element={<DashboardV2WhatsAppAnalytics />} />
+    <Route path="tickets" element={<ModuleRoute module="tickets"><DashboardV2Tickets /></ModuleRoute>} />
+    <Route path="calls-analytics" element={<ModuleRoute module="voice"><DashboardV2CallsAnalytics /></ModuleRoute>} />
+    <Route path="whatsapp-analytics" element={<ModuleRoute module="conversations"><DashboardV2WhatsAppAnalytics /></ModuleRoute>} />
     <Route path="agents" element={<DashboardV2Agents />} />
-    <Route path="knowledge-base" element={<DashboardV2KnowledgeBase />} />
+    <Route path="knowledge-base" element={<ModuleRoute module="knowledge_base"><DashboardV2KnowledgeBase /></ModuleRoute>} />
     <Route path="tools" element={<DashboardV2Tools />} />
     <Route path="analysis-groups" element={<DashboardV2AnalysisGroups />} />
     <Route path="inbound-services" element={<DashboardV2InboundServices />} />
     <Route path="outbound-services" element={<DashboardV2OutboundServices />} />
-    <Route path="call-logs" element={<DashboardV2CallLogs />} />
+    <Route path="call-logs" element={<ModuleRoute module="voice"><DashboardV2CallLogs /></ModuleRoute>} />
     <Route path="settings" element={<DashboardV2Settings />} />
     {/* Retired pages keep their links alive instead of rendering a blank outlet. */}
     <Route path="*" element={<Navigate to="." replace />} />

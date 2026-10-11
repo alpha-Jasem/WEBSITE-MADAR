@@ -8,22 +8,23 @@ import {
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useCustomers, useBookings } from '@/lib/dashboardQueries'
 import { useOnOpenSearchRequest } from './uiExtras'
+import type { ModuleId } from '@/dashboard/modules'
 
 const RECENT_KEY = 'dv2_recent_searches'
 
-interface QuickAction { id: string; label: string; icon: React.ReactNode; run: (navigate: ReturnType<typeof useNavigate>, base: string) => void }
+interface QuickAction { id: string; label: string; icon: React.ReactNode; run: (navigate: ReturnType<typeof useNavigate>, base: string) => void; module?: ModuleId }
 
 const QUICK_ACTIONS: QuickAction[] = [
-  { id: 'new-booking', label: 'حجز جديد', icon: <Plus size={14} />, run: (nav, base) => nav(`${base}/bookings?new=1`) },
+  { id: 'new-booking', label: 'حجز جديد', icon: <Plus size={14} />, run: (nav, base) => nav(`${base}/bookings?new=1`), module: 'bookings' },
   { id: 'nav-home', label: 'الرئيسية', icon: <LayoutDashboard size={14} />, run: (nav, base) => nav(base) },
-  { id: 'nav-bookings', label: 'الحجوزات', icon: <CalendarDays size={14} />, run: (nav, base) => nav(`${base}/bookings`) },
-  { id: 'nav-patients', label: 'العملاء', icon: <Users size={14} />, run: (nav, base) => nav(`${base}/patients`) },
-  { id: 'nav-conversations', label: 'المحادثات', icon: <MessageSquare size={14} />, run: (nav, base) => nav(`${base}/conversations`) },
-  { id: 'nav-reviews', label: 'AI Google Reviews', icon: <Star size={14} />, run: (nav, base) => nav(`${base}/reviews`) },
-  { id: 'nav-services', label: 'الخدمات', icon: <Wrench size={14} />, run: (nav, base) => nav(`${base}/services`) },
-  { id: 'nav-reports', label: 'التقارير والتحليلات', icon: <BarChart3 size={14} />, run: (nav, base) => nav(`${base}/reports`) },
-  { id: 'nav-revenue', label: 'الإيرادات', icon: <Wallet size={14} />, run: (nav, base) => nav(`${base}/revenue`) },
-  { id: 'nav-reminders', label: 'التذكيرات', icon: <BellRing size={14} />, run: (nav, base) => nav(`${base}/reminders`) },
+  { id: 'nav-bookings', label: 'الحجوزات', icon: <CalendarDays size={14} />, run: (nav, base) => nav(`${base}/bookings`), module: 'bookings' },
+  { id: 'nav-patients', label: 'العملاء', icon: <Users size={14} />, run: (nav, base) => nav(`${base}/patients`), module: 'customers' },
+  { id: 'nav-conversations', label: 'المحادثات', icon: <MessageSquare size={14} />, run: (nav, base) => nav(`${base}/conversations`), module: 'conversations' },
+  { id: 'nav-reviews', label: 'تقييمات Google', icon: <Star size={14} />, run: (nav, base) => nav(`${base}/reviews`), module: 'reviews' },
+  { id: 'nav-services', label: 'الخدمات', icon: <Wrench size={14} />, run: (nav, base) => nav(`${base}/services`), module: 'services' },
+  { id: 'nav-reports', label: 'التقارير والتحليلات', icon: <BarChart3 size={14} />, run: (nav, base) => nav(`${base}/reports`), module: 'reports' },
+  { id: 'nav-revenue', label: 'الإيرادات', icon: <Wallet size={14} />, run: (nav, base) => nav(`${base}/revenue`), module: 'revenue' },
+  { id: 'nav-reminders', label: 'التذكيرات', icon: <BellRing size={14} />, run: (nav, base) => nav(`${base}/reminders`), module: 'reminders' },
   { id: 'nav-integrations', label: 'التكاملات', icon: <Plug size={14} />, run: (nav, base) => nav(`${base}/integrations`) },
   { id: 'nav-audit', label: 'سجل التدقيق', icon: <History size={14} />, run: (nav, base) => nav(`${base}/audit-log`) },
   { id: 'nav-settings', label: 'الإعدادات', icon: <Settings size={14} />, run: (nav, base) => nav(`${base}/settings`) },
@@ -39,7 +40,7 @@ function saveRecent(q: string) {
 
 export function GlobalSearch({ base }: { base: string }) {
   const navigate = useNavigate()
-  const { companyId, isDemo } = useWorkspace()
+  const { companyId, isDemo, hasModule } = useWorkspace()
   const { data: patients } = useCustomers(companyId, isDemo)
   const { data: appointments } = useBookings(companyId, undefined, isDemo)
   const [open, setOpen] = useState(false)
@@ -63,16 +64,18 @@ export function GlobalSearch({ base }: { base: string }) {
   }, [patients, query])
 
   const bookingMatches = useMemo(() => {
-    if (!query.trim()) return []
+    if (!query.trim() || !hasModule('bookings')) return []
     const q = query.trim().toLowerCase()
     return (appointments || []).filter((a) => a.patient_name?.toLowerCase().includes(q) || a.patient_phone?.includes(q) || a.service_name?.toLowerCase().includes(q)).slice(0, 5)
-  }, [appointments, query])
+  }, [appointments, query, hasModule])
 
   const actionMatches = useMemo(() => {
-    if (!query.trim()) return QUICK_ACTIONS
+    // Same module gating as the sidebar, so hidden sections aren't reachable from search.
+    const available = QUICK_ACTIONS.filter((a) => !a.module || hasModule(a.module))
+    if (!query.trim()) return available
     const q = query.trim().toLowerCase()
-    return QUICK_ACTIONS.filter((a) => a.label.toLowerCase().includes(q))
-  }, [query])
+    return available.filter((a) => a.label.toLowerCase().includes(q))
+  }, [query, hasModule])
 
   const flatResults = useMemo(() => [
     ...actionMatches.map((a) => ({ kind: 'action' as const, item: a })),

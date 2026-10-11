@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { MessageCircle, Calendar, Star, Phone, AtSign, Lock } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useIntegrations, toggleIntegration } from '@/lib/dashboardQueries'
+import { isIntegrationVisible } from '@/dashboard/modules'
 import type { IntegrationStatus } from '@/types/dashboard'
 import { Card, Badge, Button } from '@/dashboard/components/primitives'
 import { Skeleton } from '@/dashboard/components/uiExtras'
@@ -35,12 +36,14 @@ const DESC_BY_PROVIDER: Record<string, string> = {
 const OAUTH_READY: Record<string, boolean> = {}
 
 export function DashboardV2Integrations() {
-  const { companyId, isDemo } = useWorkspace()
+  const { companyId, isDemo, hasModule } = useWorkspace()
   const { data: rawIntegrations, loading, refetch } = useIntegrations(companyId, isDemo)
   const [optimisticStatus, setOptimisticStatus] = useState<Record<string, IntegrationStatus>>({})
-  const integrations = useMemo(() => (rawIntegrations || []).map((i) => (
-    optimisticStatus[i.id] ? { ...i, status: optimisticStatus[i.id] } : i
-  )), [rawIntegrations, optimisticStatus])
+  // Integrations for sections this company doesn't have (e.g. Google reviews for a store) are hidden.
+  const integrations = useMemo(() => (rawIntegrations || [])
+    .filter((i) => isIntegrationVisible(i.provider, hasModule))
+    .map((i) => (optimisticStatus[i.id] ? { ...i, status: optimisticStatus[i.id] } : i)),
+  [rawIntegrations, optimisticStatus, hasModule])
 
   async function toggle(id: string, current: IntegrationStatus) {
     if (isDemo) return

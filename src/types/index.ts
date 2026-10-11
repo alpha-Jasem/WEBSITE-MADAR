@@ -1,7 +1,7 @@
 export type Language = 'ar' | 'en'
 export type UserRole = 'admin' | 'client'
 export type Plan = 'starter' | 'growth' | 'enterprise'
-export type BusinessType = 'clinic' | 'real_estate' | 'other'
+export type BusinessType = 'clinic' | 'real_estate' | 'ecommerce' | 'other'
 export type AutomationType = 'whatsapp' | 'crm' | 'ai_agent' | 'booking' | 'sales'
 export type AutomationStatus = 'active' | 'paused' | 'error' | 'building'
 export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'converted' | 'lost'
@@ -24,6 +24,8 @@ export interface Company {
   name: string
   industry: string
   business_type?: BusinessType
+  /** Admin overrides of the industry's dashboard sections, e.g. { reviews: false }. */
+  dashboard_modules?: Record<string, boolean> | null
   plan: Plan
   status: CompanyStatus
   owner_name: string
@@ -133,101 +135,6 @@ export interface LeadFormData {
   phone: string
   service: string
   message: string
-}
-
-// Car Wash types
-export type QueueStatus = 'received' | 'washing' | 'drying' | 'ready' | 'delivered' | 'cancelled'
-export type CommissionType = 'fixed' | 'percentage'
-export type ExpenseCategory = 'tools' | 'electricity' | 'rent' | 'other' | 'cash_in' | 'cash_out'
-export type PaymentMethod = 'cash' | 'mada' | 'visa' | 'bank_transfer' | 'stc_pay' | 'other'
-export type PaymentStatus = 'unpaid' | 'paid' | 'refunded' | 'cancelled'
-export type SalaryType = 'fixed' | 'commission' | 'mixed'
-
-export interface CWService {
-  id: string
-  company_id: string
-  name: string
-  price: number
-  duration_minutes: number
-  active: boolean
-  created_at: string
-}
-
-export interface CWWorker {
-  id: string
-  company_id: string
-  name: string
-  phone?: string
-  commission_type: CommissionType
-  commission_value: number
-  salary_type?: SalaryType
-  fixed_salary?: number
-  salary_period?: 'monthly' | 'weekly'
-  active: boolean
-  created_at: string
-}
-
-export interface CWQueueItem {
-  id: string
-  company_id: string
-  customer_name: string
-  phone?: string
-  car_type?: string
-  plate?: string
-  service_id?: string
-  service_name?: string
-  price: number
-  subtotal?: number
-  vat_amount?: number
-  total_amount?: number
-  worker_id?: string
-  status: QueueStatus
-  payment_method?: PaymentMethod
-  payment_status?: PaymentStatus
-  is_free_wash?: boolean
-  original_price?: number
-  discount_amount?: number
-  notes?: string
-  started_at?: string
-  delivered_at?: string
-  created_at: string
-  worker?: CWWorker
-}
-
-export interface CWExpense {
-  id: string
-  company_id: string
-  amount: number
-  category: ExpenseCategory
-  description?: string
-  expense_date: string
-  created_at: string
-}
-
-export interface CWDailyClosing {
-  id: string
-  company_id: string
-  closing_date: string
-  total_cars: number
-  total_sales: number
-  subtotal_sales: number
-  vat_amount: number
-  cash_sales: number
-  mada_sales: number
-  visa_sales: number
-  bank_transfer_sales: number
-  stc_pay_sales: number
-  other_sales: number
-  total_expenses: number
-  worker_salaries: number
-  worker_commissions: number
-  total_worker_cost: number
-  net_profit: number
-  free_washes_count: number
-  loyalty_discount_amount: number
-  notes?: string
-  closed_by?: string
-  created_at: string
 }
 
 export interface CompanyUser {

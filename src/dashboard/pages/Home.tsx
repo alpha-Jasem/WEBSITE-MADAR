@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import {
   CalendarCheck2, CalendarX2, Users, Wallet, ArrowUp, ArrowDown, Download,
-  CalendarDays, MessageSquare, Star, FileSpreadsheet, Printer,
-  Plus, Settings as SettingsIcon, Ticket, Search, UserPlus, Wrench as WrenchIcon,
+  CalendarDays, MessageSquare, Star, FileSpreadsheet, Printer, Plus, Ticket,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import {
@@ -13,12 +12,13 @@ import {
 } from '@/lib/dashboardQueries'
 import { exportRowsToExcel } from '@/lib/exportExcel'
 import { Card, Badge, Button, Dialog, Input, Select, type BadgeTone } from '@/dashboard/components/primitives'
-import { CountUp, useToast, Avatar, Sparkline, LiveDot, Menu, KpiCardSkeleton, requestOpenSearch, Skeleton } from '@/dashboard/components/uiExtras'
+import { CountUp, useToast, Avatar, Sparkline, LiveDot, Menu, KpiCardSkeleton, Skeleton } from '@/dashboard/components/uiExtras'
 import {
   Donut, RadialDial, AgentHeroCard, AiPerformanceCard, TodayTimeline, SystemHealthRow, ActivityFeed, InsightBanner, TicketPreviewCard, timeAgo,
   PillBar as Bar,
 } from './HomeWidgets'
 import type { Booking, TicketPriority } from '@/types/dashboard'
+import { bookingsLabel, isIntegrationVisible } from '@/dashboard/modules'
 import { EASE_OUT, EASE_IN_OUT, SPRING_SNAPPY } from '@/dashboard/components/motionTokens'
 
 type Period = 'أسبوعي' | 'شهري'
@@ -201,15 +201,15 @@ function KpiCard({ k, index = 0, hero = false }: { k: Kpi; index?: number; hero?
               جاهزة لاستقبال البيانات
             </div>
           )}
-          {(!k.delta && k.ready !== false) && <div style={{ height: 18 }} />}
+          {/* The trend sits in the flow under the number; drawn absolutely it ran through the figure. */}
+          {k.trend && k.trend.length > 1 && (
+            <div style={{ marginTop: 10, height: hero ? 56 : 32, pointerEvents: 'none' }}>
+              <Sparkline data={k.trend} color={fg} variant="area" height={hero ? 56 : 32} id={k.label} />
+            </div>
+          )}
+          {(!k.delta && k.ready !== false && !(k.trend && k.trend.length > 1)) && <div style={{ height: 18 }} />}
           {k.footer}
         </div>
-
-        {k.trend && k.trend.length > 1 && (
-          <div style={{ position: 'absolute', insetInlineStart: hero ? 32 : 24, insetInlineEnd: hero ? 32 : 24, bottom: 0, height: hero ? 56 : 32, zIndex: 0, pointerEvents: 'none' }}>
-            <Sparkline data={k.trend} color={fg} variant="area" height={hero ? 56 : 32} id={k.label} />
-          </div>
-        )}
       </motion.div>
     </Card>
   )
@@ -217,7 +217,7 @@ function KpiCard({ k, index = 0, hero = false }: { k: Kpi; index?: number; hero?
 
 function BarChart({ data, compareData, labels }: { data: number[]; compareData?: number[] | null; labels?: string[] }) {
   const [hover, setHover] = useState<number | null>(null)
-  const w = 560, h = 160, pad = 6
+  const w = 560, h = 180, pad = 6
   const max = Math.max(1, ...data, ...(compareData || []))
   const n = Math.max(1, data.length)
   const cellW = (w - 2 * pad) / n
@@ -227,6 +227,7 @@ function BarChart({ data, compareData, labels }: { data: number[]; compareData?:
   return (
     <div style={{ position: 'relative' }}>
       <svg width="100%" viewBox={`0 0 ${w} ${h}`} style={{ overflow: 'visible' }} onMouseLeave={() => setHover(null)}>
+        <line x1={0} y1={h - pad} x2={w} y2={h - pad} stroke="var(--border-default)" strokeWidth="1" />
         {data.map((v, i) => {
           const cx = pad + i * cellW + cellW / 2
           const barH = Math.max(2, (v / max) * (h - 2 * pad))
@@ -257,6 +258,17 @@ function BarChart({ data, compareData, labels }: { data: number[]; compareData?:
           )
         })}
       </svg>
+      {/* Day names under the bars; LTR so each label lines up with the SVG column above it. */}
+      {labels && labels.length === data.length && (
+        <div style={{ display: 'flex', direction: 'ltr', padding: `0 ${(pad / w) * 100}%`, marginTop: 8 }}>
+          {labels.map((l, i) => (
+            <div key={i} style={{
+              flex: 1, textAlign: 'center', fontSize: 11, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              color: hover === i ? 'var(--text-primary)' : 'var(--text-tertiary)', fontWeight: hover === i ? 700 : 500,
+            }}>{l}</div>
+          ))}
+        </div>
+      )}
       <AnimatePresence>
         {hover != null && (
           <motion.div
@@ -320,7 +332,11 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 export function DashboardV2Home() {
-  const { companyId, isDemo, companyName, userName } = useWorkspace()
+  const { companyId, isDemo, companyName, userName, hasModule, businessType } = useWorkspace()
+  const showBookings = hasModule('bookings')
+  const showVoice = hasModule('voice')
+  const showReviews = hasModule('reviews')
+  const showConversations = hasModule('conversations')
   const [period, setPeriod] = useState<Period>('أسبوعي')
   const [compare, setCompare] = useState(false)
   const [ticketDialogOpen, setTicketDialogOpen] = useState(false)
@@ -383,7 +399,15 @@ export function DashboardV2Home() {
       ),
     },
     { label: 'معدل الحضور', value: attendanceRate != null ? `${attendanceRate}%` : '—', numeric: attendanceRate ?? undefined, suffix: '%', icon: <Users size={17} />, tone: 'brand', ready: attendanceRate != null, variant: 'tilt-shift' },
-    { label: 'إجمالي الإيرادات', value: 'بانتظار الربط', icon: <Wallet size={17} />, tone: 'warning', ready: false, variant: 'sheen' },
+  ]
+
+  // Shown instead of the booking tiles for industries without bookings (e.g. e-commerce).
+  const weekAgo = Date.now() - 7 * 86400000
+  const weekMessages = (messages || []).filter((m) => new Date(m.created_at).getTime() >= weekAgo).length
+  const openTickets = (tickets || []).filter((t) => t.status === 'open').length
+  const genericKpis: Kpi[] = [
+    { label: 'رسائل آخر 7 أيام', value: String(weekMessages), numeric: weekMessages, icon: <MessageSquare size={17} />, tone: 'brand', variant: 'lift-glow' },
+    { label: 'تذاكر مفتوحة', value: String(openTickets), numeric: openTickets, icon: <Ticket size={17} />, tone: 'warning', variant: 'pulse-ring' },
   ]
 
   const sources = useMemo(() => {
@@ -401,7 +425,7 @@ export function DashboardV2Home() {
 
   const calls = aiCalls || []
   const notifs = notifications || []
-  const integrationsList = integrations || []
+  const integrationsList = (integrations || []).filter((i) => isIntegrationVisible(i.provider, hasModule))
   const ticketsList = tickets || []
 
   const todayStr = new Date().toISOString().split('T')[0]
@@ -443,6 +467,7 @@ export function DashboardV2Home() {
   const maxService = Math.max(1, ...services.map(([, v]) => v))
 
   const recentMessages = (messages || []).slice(0, 5)
+  const bottomCards = [showBookings, showReviews, showConversations].filter(Boolean).length
 
   const navigate = useNavigate()
   const base = isDemo ? '/demo-review' : '/clinic-os/dashboard'
@@ -500,7 +525,8 @@ export function DashboardV2Home() {
   }
 
   return (
-    <div>
+    // Bottom padding keeps the last row clear of the floating support and quick-add buttons.
+    <div style={{ paddingBottom: 96 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={{ fontSize: 'var(--text-heading-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>
@@ -510,15 +536,17 @@ export function DashboardV2Home() {
             إليك نظرة عامة على أداء {companyName || 'عملك'} اليوم.
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
+        {/* Search, customers, services and settings already live in the sidebar and top bar;
+            the page header keeps only the two actions people start their day with. */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          {showBookings && <div style={{
             display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px',
             border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-md)', fontSize: 13,
             color: 'var(--text-secondary)', background: 'var(--surface-card)',
           }}>
             <CalendarDays size={15} />{weeklyLabel}
-          </div>
-          <Menu
+          </div>}
+          {showBookings && <Menu
             trigger={<Button variant="secondary"><Download size={15} /> تصدير تقرير</Button>}
             items={[
               { label: 'Excel — آخر أسبوع', icon: <FileSpreadsheet size={14} />, onClick: () => exportExcel('week') },
@@ -527,50 +555,72 @@ export function DashboardV2Home() {
               { label: 'PDF — آخر أسبوع', icon: <Printer size={14} />, onClick: () => exportPdf('week') },
               { label: 'PDF — الكل', icon: <Printer size={14} />, onClick: () => exportPdf('all') },
             ]}
-          />
+          />}
+          <Button variant="secondary" size="md" onClick={() => setTicketDialogOpen(true)}><Ticket size={15} /> تذكرة جديدة</Button>
+          {showBookings && <Button variant="primary" size="md" onClick={() => navigate(`${base}/bookings?new=1`)}><Plus size={16} /> حجز جديد</Button>}
         </div>
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-        <Button variant="primary" size="md" onClick={() => navigate(`${base}/bookings?new=1`)}><Plus size={16} /> حجز جديد</Button>
-        <Button variant="secondary" size="md" onClick={() => setTicketDialogOpen(true)}><Ticket size={15} /> تذكرة جديدة</Button>
-        <Button variant="secondary" size="md" onClick={() => requestOpenSearch()}><Search size={15} /> بحث</Button>
-        <Button variant="secondary" size="md" onClick={() => navigate(`${base}/patients`)}><UserPlus size={15} /> العملاء</Button>
-        <Button variant="secondary" size="md" onClick={() => navigate(`${base}/services`)}><WrenchIcon size={15} /> الخدمات</Button>
-        <Button variant="secondary" size="md" onClick={() => navigate(`${base}/settings`)}><SettingsIcon size={15} /> الإعدادات</Button>
       </div>
 
       {appointmentsLoading ? <KpiCardSkeleton /> : (
         <>
-          <div className="dv2-kpi-hero-grid" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16, marginBottom: 16 }}>
-            <AgentHeroCard todayCalls={todayCalls.length} todayBookings={todayBookings.length} escalatedToday={escalatedToday} lastCall={lastCall} />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignContent: 'start' }}>
-              <KpiCard k={kpis[0]} index={0} />
-              <KpiCard k={kpis[1]} index={1} />
-              <KpiCard k={kpis[2]} index={2} />
-              <Card delay={0.18} style={{ display: 'flex', flexDirection: 'column', padding: 'var(--space-4)' }}>
-                <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 6, fontWeight: 600 }}>معدل الحضور</div>
-                <RadialDial pct={kpis[3].numeric ?? 0} sublabel={kpis[3].ready === false ? 'بانتظار بيانات' : undefined} />
-                <div style={{ borderTop: '1px dashed var(--border-default)', marginTop: 14, paddingTop: 12, textAlign: 'center' }}>
-                  <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>الحجوزات المكتملة</div>
-                  <div style={{ fontFamily: 'var(--font-numeral)', fontWeight: 800, fontSize: 'var(--text-heading-lg)', marginTop: 2 }}><CountUp value={completed} /></div>
+          {/* The agent card takes the wide column when the company has a voice agent; otherwise the
+              tiles spread across the full width. */}
+          <div className="dv2-kpi-hero-grid" style={{ display: 'grid', gridTemplateColumns: showVoice ? '1.4fr 1fr' : '1fr', gap: 16, marginBottom: 16 }}>
+            {showVoice && (
+              <AgentHeroCard
+                todayCalls={todayCalls.length} todayBookings={todayBookings.length} escalatedToday={escalatedToday} lastCall={lastCall}
+                onViewCalls={() => navigate(`${base}/call-logs`)}
+                showBookings={showBookings}
+              />
+            )}
+            <div style={{ display: 'grid', gridTemplateColumns: showVoice ? '1fr 1fr' : `repeat(${showBookings ? 4 : genericKpis.length}, minmax(0, 1fr))`, gap: 12, alignContent: 'start' }}>
+              {showBookings ? (
+                <>
+                  <KpiCard k={kpis[0]} index={0} />
+                  <KpiCard k={kpis[1]} index={1} />
+                  <KpiCard k={kpis[2]} index={2} />
+                  <Card delay={0.18} style={{ display: 'flex', flexDirection: 'column', padding: 'var(--space-4)' }}>
+                    <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 6, fontWeight: 600 }}>معدل الحضور</div>
+                    <RadialDial pct={kpis[3].numeric ?? 0} sublabel={kpis[3].ready === false ? 'بانتظار بيانات' : undefined} />
+                    {/* Completed bookings already has its own tile; show what the rate is computed from instead. */}
+                    <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', textAlign: 'center', marginTop: 10 }}>
+                      {attendanceBase > 0 ? `حضر ${completed} من أصل ${attendanceBase}` : 'يظهر بعد أول المواعيد المنتهية'}
+                    </div>
+                    <Button variant="secondary" size="sm" style={{ width: '100%', marginTop: 'auto' }} onClick={() => navigate(`${base}/bookings`)}>عرض الحجوزات</Button>
+                  </Card>
+                </>
+              ) : (
+                // No bookings for this industry: lead with the numbers every company has.
+                genericKpis.map((k, i) => <KpiCard key={k.label} k={k} index={i} />)
+              )}
+              {/* Revenue has no data source yet: a compact call to connect one, not a greyed-out headline number. */}
+              <Card delay={0.24} style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 12, padding: 'var(--space-4)' }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 'var(--radius-md)', background: 'var(--slate-100)', color: 'var(--slate-600)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                }}><Wallet size={17} /></div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>الإيرادات</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>اربط نظام الدفع أو الفوترة عشان تظهر إيراداتك هنا.</div>
                 </div>
-                <Button variant="secondary" size="sm" style={{ width: '100%', marginTop: 12 }} onClick={() => navigate(`${base}/bookings`)}>عرض الحجوزات</Button>
+                <Button variant="secondary" size="sm" onClick={() => navigate(`${base}/integrations`)}>ربط</Button>
               </Card>
-              {/* 5 tiles in a 2-col grid would leave an empty cell — the revenue tile spans the full row instead */}
-              <div style={{ gridColumn: '1 / -1', display: 'flex' }}>
-                <KpiCard k={kpis[4]} index={4} />
-              </div>
             </div>
           </div>
 
-          <div style={{ marginBottom: 20 }}>
-            <InsightBanner weeklyData={weeklyData} prevWeeklyData={prevWeeklyData} topSource={topSource} delay={0.16} />
-          </div>
+          {showBookings && (
+            <div style={{ marginBottom: 20 }}>
+              <InsightBanner weeklyData={weeklyData} prevWeeklyData={prevWeeklyData} topSource={topSource} delay={0.16} />
+            </div>
+          )}
         </>
       )}
 
-      <div className="dv2-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr', gap: 16, marginBottom: 20 }}>
+      {(showBookings || showVoice) && (
+      <div className="dv2-responsive-grid" style={{
+        display: 'grid', gap: 16, marginBottom: 20,
+        gridTemplateColumns: showBookings && showVoice ? '1.6fr 1fr 1fr' : showBookings ? '1.6fr 1fr' : '1fr',
+      }}>
         {chartRowLoading ? (
           <>
             <SectionSkeleton delay={0.24} lines={5} />
@@ -579,10 +629,10 @@ export function DashboardV2Home() {
           </>
         ) : (
           <>
-        <Card delay={0.24}>
+        {showBookings && <Card delay={0.24}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ fontWeight: 700 }}>الحجوزات</div>
+              <div style={{ fontWeight: 700 }}>{bookingsLabel(businessType)}</div>
               <LiveDot live={appointmentsLive} />
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -609,20 +659,26 @@ export function DashboardV2Home() {
               </div>
             </div>
           </div>
-          <BarChart data={weeklyData} labels={weeklyLabels} compareData={compare ? prevWeeklyData : null} />
-        </Card>
+          {/* Reversed so time runs right-to-left like the page (and the today timeline): oldest day on the right. */}
+          <BarChart
+            data={[...weeklyData].reverse()}
+            labels={[...weeklyLabels].reverse()}
+            compareData={compare ? [...prevWeeklyData].reverse() : null}
+          />
+        </Card>}
 
-        <Card delay={0.3}>
+        {showBookings && <Card delay={0.3}>
           <div style={{ fontWeight: 700, marginBottom: 10 }}>مصادر الحجوزات</div>
           <Donut sources={sources} onSelect={goToBookingsBySource} total={appts.length} centerLabel="حجز" />
-        </Card>
+        </Card>}
 
-        <AiPerformanceCard calls={calls} delay={0.36} />
+        {showVoice && <AiPerformanceCard calls={calls} delay={0.36} />}
           </>
         )}
       </div>
+      )}
 
-      <div className="dv2-responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, marginBottom: 20 }}>
+      <div className="dv2-responsive-grid" style={{ display: 'grid', gridTemplateColumns: showBookings ? '2fr 1fr' : '1fr', gap: 16, marginBottom: 20 }}>
         {timelineRowLoading ? (
           <>
             <SectionSkeleton delay={0.42} lines={1} />
@@ -630,13 +686,13 @@ export function DashboardV2Home() {
           </>
         ) : (
           <>
-        <TodayTimeline appointments={appts} delay={0.42} />
+        {showBookings && <TodayTimeline appointments={appts} delay={0.42} />}
         <SystemHealthRow integrations={integrationsList} delay={0.46} />
           </>
         )}
       </div>
 
-      <div className="dv2-responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16, marginBottom: 20 }}>
+      <div className="dv2-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16, marginBottom: 20 }}>
         {feedRowLoading ? (
           <>
             <SectionSkeleton delay={0.5} lines={6} />
@@ -655,23 +711,24 @@ export function DashboardV2Home() {
         )}
       </div>
 
-      <div className="dv2-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-        <Card delay={0.5}>
+      {bottomCards > 0 && (
+      <div className="dv2-responsive-grid" style={{ display: 'grid', gridTemplateColumns: `repeat(${bottomCards}, 1fr)`, gap: 16 }}>
+        {showBookings && <Card delay={0.5}>
           <div style={{ fontWeight: 700, marginBottom: 14 }}>أعلى الخدمات حجوزاً</div>
           {services.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>لا توجد بيانات بعد</div>}
           {services.map(([label, value]) => <Bar key={label} label={label} value={value} max={maxService} />)}
-        </Card>
+        </Card>}
 
-        <Card delay={0.5}>
+        {showReviews && <Card delay={0.5}>
           <div style={{ fontWeight: 700, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Star size={16} style={{ color: 'var(--warning-500)' }} /> AI Google Reviews
+            <Star size={16} style={{ color: 'var(--warning-500)' }} /> تقييمات Google
           </div>
           <div style={{ fontSize: 13, color: 'var(--text-tertiary)', padding: '18px 0', textAlign: 'center' }}>
             جاهزة لاستقبال بيانات Google — يُربط عند تفعيل تكامل Google Business Profile.
           </div>
-        </Card>
+        </Card>}
 
-        <Card delay={0.5}>
+        {showConversations && <Card delay={0.5}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div style={{ fontWeight: 700 }}>آخر المحادثات</div>
             <LiveDot live={messagesLive} />
@@ -687,8 +744,9 @@ export function DashboardV2Home() {
               </div>
             </div>
           ))}
-        </Card>
+        </Card>}
       </div>
+      )}
 
       <Dialog
         open={ticketDialogOpen} title="تذكرة جديدة" onClose={() => setTicketDialogOpen(false)}

@@ -10,5 +10,6 @@ import type { BusinessType } from '../types'
 export const SERVICE_NAME_EXAMPLE: Record<BusinessType, string> = {
   clinic: 'مثال: كشف عام',
   real_estate: 'مثال: معاينة عقار',
+  ecommerce: 'مثال: توصيل الطلب',
   other: 'مثال: استشارة',
 }

@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useMemo, useCallback, type ReactNode } from 'react'
+import { resolveModules, parseOverrides, isBusinessType, type ModuleId, type ModuleOverrides } from '../dashboard/modules'
 import type { PackageType } from '../types/dashboard'
 import type { BusinessType } from '../types'
 import { supabase, signOut } from '../lib/supabase'
@@ -21,6 +22,9 @@ interface WorkspaceContextValue {
   /** Which industry this workspace is. Terminology is neutral everywhere, so this
    *  steers example copy and provisioning rather than labels. */
   businessType: BusinessType
+  /** Sections this company can see: the industry preset plus admin overrides. */
+  modules: ReadonlySet<ModuleId>
+  hasModule: (id: ModuleId) => boolean
   packageType: PackageType
   setPackageType: (p: PackageType) => void
   companyName: string
@@ -66,6 +70,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
   const [companyEmail, setCompanyEmail] = useState('')
   const [companyCity, setCompanyCity] = useState('')
   const [businessType, setBusinessType] = useState<BusinessType>('other')
+  const [moduleOverrides, setModuleOverrides] = useState<ModuleOverrides>({})
   const [companyLogoUrl, setCompanyLogoUrl] = useState('')
   const [companySettings, setCompanySettings] = useState<Record<string, unknown>>({})
   const [companyId, setCompanyId] = useState<string | null>(null)
@@ -98,7 +103,13 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
           setCompanyPhone(DEMO_CLINIC.phone)
           setCompanyEmail(DEMO_CLINIC.email)
           setCompanyCity(DEMO_CLINIC.city)
-          setBusinessType('clinic')
+          // The demo previews any industry with ?industry=real_estate|ecommerce; it sticks for the
+          // session so in-app links (which drop the query) keep the same preset.
+          const demoIndustry = new URLSearchParams(location.search).get('industry')
+          if (isBusinessType(demoIndustry)) sessionStorage.setItem('madar_demo_industry', demoIndustry)
+          const storedIndustry = sessionStorage.getItem('madar_demo_industry')
+          setBusinessType(isBusinessType(storedIndustry) ? storedIndustry : 'clinic')
+          setModuleOverrides({})
           setCompanyLogoUrl('')
           setCompanySettings({})
           setIsOwner(true)
@@ -180,7 +191,16 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         setCompanyPhone(company?.owner_phone || '')
         setCompanyEmail(company?.owner_email || user.email || '')
         setCompanyCity(company?.city || '')
-        setBusinessType((company?.business_type as BusinessType) || 'other')
+        setBusinessType(isBusinessType(company?.business_type) ? company.business_type : 'other')
+        // Read on its own so the dashboard still loads (with the plain industry preset) if the
+        // dashboard_modules column hasn't been migrated yet.
+        if (company?.id) {
+          const { data: modRow, error: modErr } = await supabase
+            .from('companies').select('dashboard_modules').eq('id', company.id).maybeSingle()
+          setModuleOverrides(modErr ? {} : parseOverrides((modRow as { dashboard_modules?: unknown } | null)?.dashboard_modules))
+        } else {
+          setModuleOverrides({})
+        }
         setCompanyLogoUrl(company?.logo_url || '')
         setCompanySettings((company?.clinic_settings as Record<string, unknown>) || {})
         setSubscriptionStatus(company?.subscription_status || null)
@@ -240,6 +260,9 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem(PACKAGE_KEY, p)
   }
 
+  const modules = useMemo(() => resolveModules(businessType, moduleOverrides), [businessType, moduleOverrides])
+  const hasModule = useCallback((id: ModuleId) => modules.has(id), [modules])
+
   const logout = async () => {
     await signOut()
     localStorage.removeItem(PACKAGE_KEY)
@@ -247,7 +270,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <WorkspaceContext.Provider value={{ businessType, packageType, setPackageType, companyName, userName, userEmail, companyPhone, companyEmail, companyCity, companyLogoUrl, companySettings, companyId, isOwner, staffRole, accountLoading, accountError, isDemo, isSubscribed, subscriptionStatus, subscriptionStartDate, subscriptionEndDate, usageCycleStart, usageCycleEnd, usageMetrics, usageSummary, refreshAccount: load, logout }}>
+    <WorkspaceContext.Provider value={{ businessType, modules, hasModule, packageType, setPackageType, companyName, userName, userEmail, companyPhone, companyEmail, companyCity, companyLogoUrl, companySettings, companyId, isOwner, staffRole, accountLoading, accountError, isDemo, isSubscribed, subscriptionStatus, subscriptionStartDate, subscriptionEndDate, usageCycleStart, usageCycleEnd, usageMetrics, usageSummary, refreshAccount: load, logout }}>
       <ToastProvider>
         {children}
       </ToastProvider>

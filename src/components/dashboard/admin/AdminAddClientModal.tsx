@@ -1,6 +1,6 @@
 ﻿import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Check, Loader2, Eye, EyeOff, Building2, Stethoscope, Briefcase } from 'lucide-react'
+import { X, Check, Loader2, Eye, EyeOff, Building2, Stethoscope, Briefcase, ShoppingBag } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import type { Plan, BusinessType } from '../../../types'
 
@@ -29,6 +29,7 @@ const PLANS: Array<{
 const BUSINESS_TYPES: Array<{ id: BusinessType; label: string; icon: typeof Building2 }> = [
   { id: 'clinic',      label: 'عيادة طبية',       icon: Stethoscope },
   { id: 'real_estate', label: 'شركة عقارية',       icon: Building2 },
+  { id: 'ecommerce',   label: 'تجارة إلكترونية',   icon: ShoppingBag },
   { id: 'other',       label: 'أخرى',              icon: Briefcase },
 ]
 
@@ -134,7 +135,7 @@ export function AdminAddClientModal({ onClose, onSuccess }: Props) {
                 <div>
                   <label className="text-xs text-slate-500 font-tajawal mb-1.5 block">اسم الشركة *</label>
                   <input value={form.company_name} onChange={set('company_name')} dir="rtl"
-                    placeholder="مثال: مغسلة النجوم"
+                    placeholder="مثال: عيادة النجوم"
                     className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 outline-none focus:border-indigo-500/50 font-tajawal transition-colors" />
                 </div>
 

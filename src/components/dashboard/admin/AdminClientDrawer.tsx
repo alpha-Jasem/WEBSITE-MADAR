@@ -15,18 +15,14 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { logAudit } from '../../../lib/auditLog'
+import { AdminModulesSection } from './AdminModulesSection'
+import { BUSINESS_TYPE_LABELS } from '../../../dashboard/modules'
 import type { Company, CompanyStatus, Plan } from '../../../types'
 
 const PLAN_CONFIG: Record<Plan, { label: string; color: string; limit: number; price: string }> = {
   starter: { label: 'Starter', color: '#06B6D4', limit: 2000, price: '299' },
   growth: { label: 'Pro', color: '#4F6EF7', limit: 10000, price: '799' },
   enterprise: { label: 'Premium', color: '#F59E0B', limit: 50000, price: '1,999' },
-}
-
-const BUSINESS_LABELS: Record<string, string> = {
-  clinic: 'عيادة',
-  real_estate: 'عقاري',
-  other: 'أخرى',
 }
 
 const STATUS_LABELS: Record<CompanyStatus, string> = {
@@ -154,7 +150,7 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
           <div className="space-y-5 p-6">
             <section className="rounded-3xl p-5" style={{ background: 'linear-gradient(135deg, #F8FBFF, #FFFFFF)', border: '1px solid #E2E8F0' }}>
               <div className="grid grid-cols-2 gap-3">
-                <Info label="النشاط" value={BUSINESS_LABELS[company.business_type ?? 'other'] || 'أخرى'} />
+                <Info label="النشاط" value={BUSINESS_TYPE_LABELS[company.business_type ?? 'other'] || 'أخرى'} />
                 <Info label="الحالة" value={STATUS_LABELS[company.status]} />
                 <Info label="الباقة الحالية" value={PLAN_CONFIG[company.plan].label} />
                 <Info label="حد الرسائل" value={messageLimit.toLocaleString('en-US')} />
@@ -224,6 +220,8 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
                 </div>
               </section>
             )}
+
+            <AdminModulesSection company={company} onUpdated={onUpdated} />
 
             {/* Activate CTA — prominent for trial clinic accounts */}
             {company.status === 'trial' && (

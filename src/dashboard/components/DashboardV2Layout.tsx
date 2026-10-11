@@ -18,6 +18,7 @@ import { OnboardingWizard } from './OnboardingWizard'
 import {
   ToastProvider, requestOpenSearch, TopProgressBar, ShortcutsOverlay, WhatsNewBadge, Fab, Tooltip,
 } from './uiExtras'
+import { bookingsLabel, type ModuleId } from '@/dashboard/modules'
 import '@/styles/dashboardV2Tokens.css'
 
 const THEME_KEY = 'dv2_theme'
@@ -29,12 +30,15 @@ interface NavItem {
   icon: ReactNode
   badge?: number
   soon?: boolean
+  /** Shown only when the company has this module; items without one are always shown. */
+  module?: ModuleId
 }
 
 export function DashboardV2Layout() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { companyId, companyName, userName, isDemo, accountError, refreshAccount, logout } = useWorkspace()
+  const { companyId, companyName, userName, isDemo, accountError, refreshAccount, logout, businessType, hasModule } = useWorkspace()
+  const showBookings = hasModule('bookings')
   const [profileOpen, setProfileOpen] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem(THEME_KEY) as 'dark') || 'light')
@@ -65,31 +69,35 @@ export function DashboardV2Layout() {
   }, [])
 
   const base = isDemo ? '/demo-review' : '/clinic-os/dashboard'
-  const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
+  const ALL_NAV_GROUPS: { title: string; items: NavItem[] }[] = [
     { title: '', items: [
       { label: 'الرئيسية', path: base, icon: <LayoutDashboard size={17} /> },
     ] },
     // Grouped by how often it's opened, not by internal architecture: the daily
     // operational work sits at the top, configuration further down.
     { title: 'التشغيل اليومي', items: [
-      { label: 'الحجوزات', path: `${base}/bookings`, icon: <CalendarDays size={17} /> },
-      { label: 'المحادثات', path: `${base}/conversations`, icon: <MessageSquare size={17} /> },
-      { label: 'العملاء', path: `${base}/patients`, icon: <Users size={17} /> },
-      { label: 'التذاكر', path: `${base}/tickets`, icon: <Ticket size={17} />, badge: openTicketCount || undefined },
-      { label: 'AI Google Reviews', path: `${base}/reviews`, icon: <Star size={17} /> },
-      { label: 'سجل المكالمات', path: `${base}/call-logs`, icon: <ClipboardList size={17} /> },
+      { label: bookingsLabel(businessType), path: `${base}/bookings`, icon: <CalendarDays size={17} />, module: 'bookings' },
+      { label: 'المحادثات', path: `${base}/conversations`, icon: <MessageSquare size={17} />, module: 'conversations' },
+      { label: 'العملاء', path: `${base}/patients`, icon: <Users size={17} />, module: 'customers' },
+      { label: 'التذاكر', path: `${base}/tickets`, icon: <Ticket size={17} />, badge: openTicketCount || undefined, module: 'tickets' },
+      { label: 'تقييمات Google', path: `${base}/reviews`, icon: <Star size={17} />, module: 'reviews' },
+      { label: 'سجل المكالمات', path: `${base}/call-logs`, icon: <ClipboardList size={17} />, module: 'voice' },
     ] },
     { title: 'التقارير', items: [
-      { label: 'التقارير والتحليلات', path: `${base}/reports`, icon: <BarChart3 size={17} /> },
-      { label: 'الإيرادات', path: `${base}/revenue`, icon: <Wallet size={17} /> },
+      { label: 'التقارير والتحليلات', path: `${base}/reports`, icon: <BarChart3 size={17} />, module: 'reports' },
+      { label: 'الإيرادات', path: `${base}/revenue`, icon: <Wallet size={17} />, module: 'revenue' },
     ] },
     { title: 'الإعداد', items: [
-      { label: 'قاعدة المعرفة', path: `${base}/knowledge-base`, icon: <BookOpen size={17} /> },
-      { label: 'الخدمات', path: `${base}/services`, icon: <Wrench size={17} /> },
-      { label: 'المتابعات', path: `${base}/reminders`, icon: <BellRing size={17} /> },
+      { label: 'قاعدة المعرفة', path: `${base}/knowledge-base`, icon: <BookOpen size={17} />, module: 'knowledge_base' },
+      { label: 'الخدمات', path: `${base}/services`, icon: <Wrench size={17} />, module: 'services' },
+      { label: 'المتابعات', path: `${base}/reminders`, icon: <BellRing size={17} />, module: 'reminders' },
       { label: 'الإعدادات', path: `${base}/settings`, icon: <Settings size={17} /> },
     ] },
   ]
+  // Drop items for modules this company doesn't have, then any group left empty.
+  const NAV_GROUPS = ALL_NAV_GROUPS
+    .map((g) => ({ ...g, items: g.items.filter((it) => !it.module || hasModule(it.module)) }))
+    .filter((g) => g.items.length > 0)
 
   return (
     <ToastProvider>
@@ -219,7 +227,7 @@ export function DashboardV2Layout() {
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '.09em', textTransform: 'uppercase' }}>المنشأة</div>
                 <div style={{ fontSize: 14, fontWeight: 400, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {companyName || (isDemo ? 'عرض تجريبي' : 'عيادتي')}
+                  {companyName || (isDemo ? 'عرض تجريبي' : 'منشأتي')}
                 </div>
               </div>
             )}
@@ -318,18 +326,20 @@ export function DashboardV2Layout() {
             <div className="dv2-global-search" style={{ flex: 1, minWidth: 0 }}><GlobalSearch base={base} /></div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
-            <Tooltip label="حجوزات اليوم">
-              <span
-                onClick={() => navigate(`${base}/bookings`)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6, padding: '5px 11px', cursor: 'pointer',
-                  borderRadius: 'var(--radius-full)', background: 'var(--brand-50)', color: 'var(--brand-700)',
-                  fontSize: 12.5, fontWeight: 700,
-                }}
-              >
-                <CalendarCheck2 size={14} /> {todayCount}
-              </span>
-            </Tooltip>
+            {showBookings && (
+              <Tooltip label={`${bookingsLabel(businessType)} اليوم`}>
+                <span
+                  onClick={() => navigate(`${base}/bookings`)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6, padding: '5px 11px', cursor: 'pointer',
+                    borderRadius: 'var(--radius-full)', background: 'var(--brand-50)', color: 'var(--brand-700)',
+                    fontSize: 12.5, fontWeight: 700,
+                  }}
+                >
+                  <CalendarCheck2 size={14} /> {todayCount}
+                </span>
+              </Tooltip>
+            )}
             <motion.span
               onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
               whileHover={{ scale: 1.12 }}
@@ -381,7 +391,9 @@ export function DashboardV2Layout() {
       <SupportChat />
       <OnboardingWizard />
       <ShortcutsOverlay />
-      <Fab actions={[{ label: 'حجز جديد', icon: <Plus size={15} />, onClick: () => navigate(`${base}/bookings?new=1`) }]} />
+      {showBookings && (
+        <Fab actions={[{ label: 'حجز جديد', icon: <Plus size={15} />, onClick: () => navigate(`${base}/bookings?new=1`) }]} />
+      )}
     </div>
     </ToastProvider>
   )
