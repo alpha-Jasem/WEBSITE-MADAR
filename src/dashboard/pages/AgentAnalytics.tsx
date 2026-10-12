@@ -1,9 +1,10 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Sparkles, Phone, MessageCircle, Globe, BarChart3, ClipboardCheck, Tags, X } from 'lucide-react'
+import { Sparkles, Phone, MessageCircle, Globe, BarChart3, ClipboardCheck, Tags, X, LogOut } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useConversationData } from '@/lib/queries/conversations'
-import { SENTIMENT_LABEL, sentimentTone } from '@/lib/callAnalysis'
+import { SENTIMENT_LABEL, sentimentTone, TERMINATION_LABEL, type SentimentKind } from '@/lib/callAnalysis'
+import { useAgentInsights, successPct, type PlatformTopic } from '@/lib/queries/insights'
 import { NightPage, PageHead, CardTitle, Seg, Meter, EmptyLine } from './shared/night'
 import { AreaChart, BarChart } from './shared/charts'
 import { PERIOD_OPTIONS, PERIOD_PHRASE, type Period } from './shared/periods'
@@ -27,6 +28,29 @@ function readDismissed(): string[] {
 function writeDismissed(ids: string[]) {
   try { localStorage.setItem(DISMISS_KEY, JSON.stringify(ids)) } catch { /* private mode */ }
 }
+const END_REASON_LABEL: Record<string, string> = {
+  ...TERMINATION_LABEL,
+  websocket_disconnect: 'أغلق العميل',
+  last_agent_message_timeout: 'انتهت المهلة بدون رد',
+}
+
+/** Renders **bold** spans from the platform's markdown-ish titles; everything else stays plain text. */
+function renderBold(text: string): ReactNode[] {
+  return text.split(/\*\*(.+?)\*\*/g).map((part, i) => (i % 2 ? <strong key={i}>{part}</strong> : part))
+}
+
+function platformTopicRow(t: PlatformTopic): TopicRow {
+  const top = Math.max(t.positive, t.neutral, t.negative)
+  const dominant: SentimentKind | null = top > 0
+    ? (t.positive === top ? 'positive' : t.negative === top ? 'negative' : 'neutral')
+    : typeof t.sentiment === 'number' ? (t.sentiment > 0.2 ? 'positive' : t.sentiment < -0.2 ? 'negative' : 'neutral') : null
+  const pct = successPct(t.success_rate)
+  return {
+    topic: t.label, description: t.description || '', count: t.count, successRate: pct == null ? null : pct / 100,
+    positive: t.positive, neutral: t.neutral, negative: t.negative, avgScore: t.sentiment, dominant,
+  }
+}
+
 const HIGHLIGHT_FIELDS: [string[], string][] = [
   [['contact_number', 'phone'], 'تركوا رقم تواصل'],
   [['visit_preference'], 'طلبوا موعد زيارة'],
@@ -44,6 +68,12 @@ export function DashboardV2AgentAnalytics() {
   const [channel, setChannel] = useState<ChannelFilter>('all')
   const [metricId, setMetricId] = useState<MetricId>('count')
   const [dismissed, setDismissed] = useState<string[]>(readDismissed)
+  const [expanded, setExpanded] = useState(false)
+  const insightsQ = useAgentInsights(period === 'month' ? 30 : 7, isDemo)
+  const platform = insightsQ.data?.available ? insightsQ.data : null
+  const platformSummary = platform?.summaries.find((x) => x.title || x.short) || null
+  // Platform topics cover every channel, so a channel filter falls back to the computed ones.
+  const platformTopics = platform && channel === 'all' && platform.topics.length ? platform.topics.map(platformTopicRow) : null
 
   const channelsPresent = useMemo(() => {
     const s = new Set(calls.map((c) => c.channel || 'phone'))
@@ -58,7 +88,11 @@ export function DashboardV2AgentAnalytics() {
 
   const recs = useMemo(() => recommendations(inRange, calls, fieldStats.fields), [inRange, calls, fieldStats])
   const cards: InsightCard[] = [
-    ...(insight ? [{
+    ...(platformSummary ? [{
+      id: 'summary', tag: 'ملخص الذكاء الاصطناعي', tone: 'ai' as const, dismissible: false,
+      title: platformSummary.title || '', text: platformSummary.short || '',
+      actions: [{ label: 'عرض المحادثات', to: 'conversations' }],
+    }] : insight ? [{
       id: 'summary', tag: 'ملخص الفترة', tone: 'ai' as const, dismissible: false,
       title: `${inRange.length.toLocaleString('en-US')} محادثة ${PERIOD_PHRASE[period]}`, text: insight,
       actions: [{ label: 'عرض المحادثات', to: 'conversations' }],
@@ -70,6 +104,15 @@ export function DashboardV2AgentAnalytics() {
     setDismissed(next)
     writeDismissed(next)
   }
+
+  const endReasons = useMemo(() => {
+    const src: Record<string, number> = {}
+    if (platformSummary?.termination_reasons) Object.assign(src, platformSummary.termination_reasons)
+    else for (const c of inRange) { const r = c.analysis?.termination_reason?.trim(); if (r) src[r] = (src[r] || 0) + 1 }
+    const total = Object.values(src).reduce((a, b) => a + (Number(b) || 0), 0)
+    return { total, rows: Object.entries(src).map(([k, n]) => ({ key: k, label: END_REASON_LABEL[k] || k, n: Number(n) || 0 })).sort((a, b) => b.n - a.n) }
+  }, [platformSummary, inRange])
+  const topicRows = platformTopics || topics
 
   const shown = metrics.filter((m) => m.available)
   const selected = shown.find((m) => m.id === metricId) || shown[0]
@@ -116,12 +159,18 @@ export function DashboardV2AgentAnalytics() {
                       <button type="button" className="nx-icon-btn ax-x" aria-label="إخفاء" title="إخفاء" onClick={() => dismiss(c.id)}><X size={13} /></button>
                     )}
                   </header>
-                  <b>{c.title}</b>
+                  {c.title && <b>{renderBold(c.title)}</b>}
                   <p>{c.text}</p>
+                  {c.id === 'summary' && platformSummary?.long && expanded && <p className="ax-long">{platformSummary.long}</p>}
                   <div className="ax-ins-acts">
                     {c.actions.map((a, i) => (
                       <button key={a.to} type="button" className={`nx-btn sm${i === 0 ? '' : ' ghost'}`} onClick={() => navigate(`${base}/${a.to}`)}>{a.label}</button>
                     ))}
+                    {c.id === 'summary' && platformSummary?.long && (
+                      <button type="button" className="nx-btn sm ghost" aria-expanded={expanded} onClick={() => setExpanded((v) => !v)}>
+                        {expanded ? 'إخفاء التفاصيل' : 'عرض التفاصيل'}
+                      </button>
+                    )}
                   </div>
                 </article>
               ))}
@@ -151,14 +200,17 @@ export function DashboardV2AgentAnalytics() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             <div className="nx-card">
-              <CardTitle aside={topics.length ? `${topics.length} موضوع` : undefined}><Tags size={16} style={{ color: 'var(--ai)' }} /> المواضيع</CardTitle>
-              {topics.length === 0 ? <EmptyLine>ما فيه مواضيع في هذه الفترة.</EmptyLine> : (
+              <CardTitle aside={topicRows.length ? `${topicRows.length} موضوع` : undefined}>
+                <Tags size={16} style={{ color: 'var(--ai)' }} /> المواضيع
+                {platformTopics && <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--dim)' }}>مصنّف تلقائيًا</span>}
+              </CardTitle>
+              {topicRows.length === 0 ? <EmptyLine>ما فيه مواضيع في هذه الفترة.</EmptyLine> : (
                 <>
-                  {narrow ? <TopicList rows={topics.slice(0, TOPIC_LIMIT)} max={topics[0].count} onOpen={openTopic} />
-                    : <TopicTable rows={topics.slice(0, TOPIC_LIMIT)} max={topics[0].count} onOpen={openTopic} />}
+                  {narrow ? <TopicList rows={topicRows.slice(0, TOPIC_LIMIT)} max={topicRows[0].count} onOpen={platformTopics ? undefined : openTopic} />
+                    : <TopicTable rows={topicRows.slice(0, TOPIC_LIMIT)} max={topicRows[0].count} onOpen={platformTopics ? undefined : openTopic} />}
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', marginTop: 12, alignItems: 'center' }}>
                     <SentimentLegend />
-                    {topics.length > TOPIC_LIMIT && <small style={{ color: 'var(--dim)' }}>+{topics.length - TOPIC_LIMIT} مواضيع أخرى</small>}
+                    {topicRows.length > TOPIC_LIMIT && <small style={{ color: 'var(--dim)' }}>+{topicRows.length - TOPIC_LIMIT} مواضيع أخرى</small>}
                   </div>
                 </>
               )}
@@ -192,6 +244,17 @@ export function DashboardV2AgentAnalytics() {
                 </>
               )}
             </div>
+
+            {endReasons.total > 0 && (
+              <div className="nx-card">
+                <CardTitle aside={`${endReasons.total} محادثة`}><LogOut size={16} style={{ color: 'var(--sky)' }} /> سبب انتهاء المحادثة</CardTitle>
+                <div className="ax-fields">
+                  {endReasons.rows.map((r) => (
+                    <Meter key={r.key} label={r.label} value={r.n} max={endReasons.total} display={`${r.n} · ${Math.round((r.n / endReasons.total) * 100)}%`} />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -232,7 +295,7 @@ function rateText(r: number | null) {
   return r == null ? '—' : `${Math.round(r * 100)}%`
 }
 
-function TopicTable({ rows, max, onOpen }: { rows: TopicRow[]; max: number; onOpen: (t: TopicRow) => void }) {
+function TopicTable({ rows, max, onOpen }: { rows: TopicRow[]; max: number; onOpen?: (t: TopicRow) => void }) {
   return (
     <div className="np-table-wrap">
       <table className="np-table ax-topics" style={{ minWidth: 0 }}>
@@ -241,7 +304,8 @@ function TopicTable({ rows, max, onOpen }: { rows: TopicRow[]; max: number; onOp
         </thead>
         <tbody>
           {rows.map((t) => (
-            <tr key={t.topic} className="clickable" tabIndex={0} onClick={() => onOpen(t)} onKeyDown={(e) => { if (e.key === 'Enter') onOpen(t) }}>
+            <tr key={t.topic} className={onOpen ? 'clickable' : undefined} tabIndex={onOpen ? 0 : undefined}
+              onClick={onOpen ? () => onOpen(t) : undefined} onKeyDown={onOpen ? (e) => { if (e.key === 'Enter') onOpen(t) } : undefined}>
               <td style={{ maxWidth: 260, overflowWrap: 'anywhere' }}><TopicName t={t} /></td>
               <td style={{ width: '28%' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -259,12 +323,12 @@ function TopicTable({ rows, max, onOpen }: { rows: TopicRow[]; max: number; onOp
   )
 }
 
-function TopicList({ rows, max, onOpen }: { rows: TopicRow[]; max: number; onOpen: (t: TopicRow) => void }) {
+function TopicList({ rows, max, onOpen }: { rows: TopicRow[]; max: number; onOpen?: (t: TopicRow) => void }) {
   return (
     <div className="ax-topic-list">
       {rows.map((t) => (
-        <button key={t.topic} type="button" className="ax-topic-row" onClick={() => onOpen(t)}
-          style={{ background: 'none', border: 0, borderBottom: '1px solid var(--line)', textAlign: 'start', color: 'var(--ink)', cursor: 'pointer', fontFamily: 'inherit' }}>
+        <button key={t.topic} type="button" className="ax-topic-row" onClick={onOpen ? () => onOpen(t) : undefined} disabled={!onOpen}
+          style={{ background: 'none', border: 0, borderBottom: '1px solid var(--line)', textAlign: 'start', color: 'var(--ink)', cursor: onOpen ? 'pointer' : 'default', fontFamily: 'inherit', opacity: 1 }}>
           <span style={{ minWidth: 0 }}><TopicName t={t} /></span>
           <small className="nx-num">{t.count} محادثة · نجاح {rateText(t.successRate)}</small>
           <div className="ax-bar-track"><div className="ax-bar" style={{ width: `${(t.count / max) * 100}%`, height: 6 }} /></div>

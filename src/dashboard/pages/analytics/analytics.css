@@ -134,3 +134,5 @@
   .ax-date { flex: 1 1 calc(50% - 10px); flex-direction: column; align-items: stretch; gap: 4px; }
   .ax-date .nx-input { width: 100%; }
 }
+.ax-ins > p.ax-long { color: var(--ink); background: var(--hover-bg); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; flex: none; }
+.ax-ins > b strong { color: var(--sky); font-weight: 800; }
