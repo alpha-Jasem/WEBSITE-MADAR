@@ -13,6 +13,7 @@ import {
   type ConvChannel, type ConvItem,
 } from './model'
 import { Chip, ChannelIcon, ConvRow, Sk } from './ui'
+import { RecordingPlayer } from './RecordingPlayer'
 
 type Filter = 'all' | 'needs' | ConvChannel
 
@@ -259,7 +260,7 @@ function ConversationDetail({ item, isDemo, showTickets, tickets, onTicket }: {
       <div className="nx-detail">
         <div className="nx-card">
           <h3><ChannelIcon channel={item.channel} size={14} /> {call ? (item.channel === 'phone' ? 'نص المكالمة' : 'المحادثة') : 'رسائل واتساب'}</h3>
-          {/* No recording URL is stored for calls yet, so there is no audio player. */}
+          {call && !isDemo && call.provider === 'elevenlabs' && call.external_id && item.channel !== 'whatsapp' && <RecordingPlayer callId={call.id} />}
           {call ? (
             call.transcript && call.transcript.length > 0 ? (
               <div className="nx-thread">

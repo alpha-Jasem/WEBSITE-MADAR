@@ -59,3 +59,21 @@ export function useConversationData(companyId: string | null, isDemo: boolean) {
     refetch: () => { callsQ.refetch(); msgsQ.refetch() },
   }
 }
+
+/** Fetches a call's recording through the agent-call-audio function and returns a playable blob URL. */
+export async function fetchCallRecording(callId: string): Promise<string | null> {
+  const { data: sessionData } = await supabase.auth.getSession()
+  const token = sessionData.session?.access_token
+  if (!token) return null
+  const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-call-audio`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      apikey: import.meta.env.VITE_SUPABASE_ANON_KEY ?? '',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ call_id: callId }),
+  })
+  if (!res.ok) return null
+  return URL.createObjectURL(await res.blob())
+}
