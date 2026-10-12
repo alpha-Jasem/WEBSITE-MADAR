@@ -30,10 +30,11 @@ export const DATA_FIELD_LABEL: Record<string, string> = {
   city: 'المدينة',
   email: 'البريد الإلكتروني',
   service: 'الخدمة المطلوبة',
+  preferred_time: 'الوقت المفضل',
 }
 
 export const TERMINATION_LABEL: Record<string, string> = {
-  'end_call tool was called.': 'أنهى الموظف المحادثة',
+  'end_call tool was called.': 'أنهى الوكيل المحادثة',
   'Client disconnected': 'قطع العميل الاتصال',
   'Remote party ended call': 'أنهى العميل المكالمة',
 }
