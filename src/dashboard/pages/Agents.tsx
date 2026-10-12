@@ -7,6 +7,8 @@ import {
   WEEK_DAYS, defaultAgentSettings, saveAgentSettings, syncKnowledgeToVoicePlatforms, useAgentLinks, useAgentSettings, useOpsCaps, webAgentUrl,
   type AgentChannels, type AgentSettings, type WorkingDay,
 } from '@/lib/queries/ops'
+import { useShellPrimaryAction } from '@/dashboard/components/shellActions'
+import { useSearchParams } from 'react-router-dom'
 import { TestCallDialog } from './agent/TestCallDialog'
 import { relTime } from './tickets/ticketModel'
 import './tickets/ops.css'
@@ -62,7 +64,7 @@ export function DashboardV2Agents() {
       const sync = isDemo ? null : await syncKnowledgeToVoicePlatforms(next.company_id, 'settings')
       pushToast({
         kind: 'success', title: okTitle,
-        description: isDemo ? undefined : sync?.synced ? 'وصلت التغييرات للموظف.' : 'انحفظت، وتنطبق على الموظف بعد ربطه بحسابك.',
+        description: isDemo ? undefined : sync?.synced ? 'وصلت التغييرات للوكيل.' : 'انحفظت، وتنطبق على الوكيل بعد ربطه بحسابك.',
       })
     } catch (e) {
       pushToast({ kind: 'danger', title: 'تعذّر الحفظ', description: e instanceof Error ? e.message : undefined })
@@ -74,7 +76,7 @@ export function DashboardV2Agents() {
   function togglePause() {
     const next = { ...draft, paused: !draft.paused }
     setDraft(next)
-    persist(next, next.paused ? 'توقف الموظف مؤقتًا' : 'رجع الموظف يرد')
+    persist(next, next.paused ? 'توقف الوكيل مؤقتًا' : 'رجع الوكيل يرد')
   }
 
   function testCall() {
@@ -83,6 +85,23 @@ export function DashboardV2Agents() {
   }
 
   const name = draft.agent_name || 'الوكيل الذكي'
+
+  useShellPrimaryAction({
+    label: saving ? 'جارِ الحفظ...' : 'حفظ', icon: <Check />,
+    onClick: () => persist(draft, 'انحفظت الإعدادات'), disabled: !canStore || saving || !dirty,
+  })
+
+  // ?test=1 (the top bar's "معاينة الوكيل") opens the test call once the agent's links are known.
+  const [params, setParams] = useSearchParams()
+  useEffect(() => {
+    if (params.get('test') !== '1' || (!isDemo && caps.agentLinks && links == null)) return
+    const next = new URLSearchParams(params)
+    next.delete('test')
+    setParams(next, { replace: true })
+    if (isDemo) setTestOpen(true)
+    else if (testUrl) window.open(testUrl, '_blank', 'noopener,noreferrer')
+    else pushToast({ kind: 'info', title: 'المعاينة تتفعّل بعد ربط الوكيل', description: 'اربط حسابك بمنصة الوكيل من صفحة التكاملات، وبعدها تقدر تجرّبه من هنا.' })
+  }, [params, setParams, isDemo, caps.agentLinks, links, testUrl, pushToast])
 
   return (
     <div className="ops-page">
@@ -98,10 +117,10 @@ export function DashboardV2Agents() {
       </div>
 
       {ready && !canStore && (
-        <div className="ops-note"><Info size={14} /><span>حفظ إعدادات الموظف يتفعّل بعد تحديث قاعدة البيانات. تقدر تشوف الإعدادات الافتراضية الحين.</span></div>
+        <div className="ops-note"><Info size={14} /><span>حفظ إعدادات الوكيل يتفعّل بعد تحديث قاعدة البيانات. تقدر تشوف الإعدادات الافتراضية الحين.</span></div>
       )}
       {canStore && !isDemo && (
-        <div className="ops-note"><Info size={14} /><span>الإعدادات تنحفظ هنا، والتغييرات تنطبق على الموظف بعد الربط.</span></div>
+        <div className="ops-note"><Info size={14} /><span>الإعدادات تنحفظ هنا، والتغييرات تنطبق على الوكيل بعد الربط.</span></div>
       )}
 
       <section className="ops-card ops-agent">
@@ -125,7 +144,7 @@ export function DashboardV2Agents() {
               <h3>الشخصية والترحيب</h3>
               <div className="ops-form-grid">
                 <div className="ops-field">
-                  <label htmlFor="ag-name">اسم الموظف</label>
+                  <label htmlFor="ag-name">اسم الوكيل</label>
                   <input className="ops-input" id="ag-name" value={draft.agent_name} onChange={(e) => edit({ agent_name: e.target.value })} />
                 </div>
                 <div className="ops-field">

@@ -15,12 +15,12 @@ const RECENT_KEY = 'dv2_recent_searches'
 interface QuickAction { id: string; label: string; icon: React.ReactNode; run: (navigate: ReturnType<typeof useNavigate>, base: string) => void; module?: ModuleId }
 
 const QUICK_ACTIONS: QuickAction[] = [
-  { id: 'new-booking', label: 'حجز جديد', icon: <Plus size={14} />, run: (nav, base) => nav(`${base}/bookings?new=1`), module: 'bookings' },
+  { id: 'new-booking', label: 'موعد جديد', icon: <Plus size={14} />, run: (nav, base) => nav(`${base}/bookings?new=1`), module: 'bookings' },
   { id: 'nav-home', label: 'الرئيسية', icon: <LayoutDashboard size={14} />, run: (nav, base) => nav(base) },
   { id: 'nav-bookings', label: 'الحجوزات', icon: <CalendarDays size={14} />, run: (nav, base) => nav(`${base}/bookings`), module: 'bookings' },
   { id: 'nav-patients', label: 'العملاء', icon: <Users size={14} />, run: (nav, base) => nav(`${base}/patients`), module: 'customers' },
   { id: 'nav-conversations', label: 'المحادثات', icon: <MessageSquare size={14} />, run: (nav, base) => nav(`${base}/conversations`), module: 'conversations' },
-  { id: 'nav-agent-analytics', label: 'تحليلات الموظف', icon: <Sparkles size={14} />, run: (nav, base) => nav(`${base}/agent-analytics`), module: 'voice' },
+  { id: 'nav-agent-analytics', label: 'تحليلات الوكيل', icon: <Sparkles size={14} />, run: (nav, base) => nav(`${base}/agent-analytics`), module: 'voice' },
   { id: 'nav-agent-users', label: 'العملاء من المحادثات', icon: <Contact size={14} />, run: (nav, base) => nav(`${base}/agent-users`), module: 'voice' },
   { id: 'nav-reviews', label: 'تقييمات Google', icon: <Star size={14} />, run: (nav, base) => nav(`${base}/reviews`), module: 'reviews' },
   { id: 'nav-services', label: 'الخدمات', icon: <Wrench size={14} />, run: (nav, base) => nav(`${base}/services`), module: 'services' },

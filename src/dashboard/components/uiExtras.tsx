@@ -3,7 +3,7 @@ import {
   type CSSProperties, type ReactNode,
 } from 'react'
 import { AnimatePresence, motion, useMotionValue, useTransform, animate } from 'framer-motion'
-import { CheckCircle2, XCircle, Info, X, Keyboard, Sparkles, Plus, ArrowUpDown, Phone, MessageCircle } from 'lucide-react'
+import { CheckCircle2, XCircle, Info, X, Keyboard, Plus, ArrowUpDown, Phone, MessageCircle } from 'lucide-react'
 import { sendWhatsAppMessage } from '@/lib/whatsapp'
 import { SPRING_SMOOTH, DURATION_SLOW, EASE_OUT } from './motionTokens'
 
@@ -585,8 +585,10 @@ export function ShortcutsOverlay() {
       if (e.key === '?' && !isTypingTarget(e.target) && !(e.metaKey || e.ctrlKey)) { e.preventDefault(); setOpen(true) }
       else if (e.key === 'Escape') setOpen(false)
     }
+    const onOpen = () => setOpen(true)
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    window.addEventListener('dv2:open-shortcuts', onOpen)
+    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('dv2:open-shortcuts', onOpen) }
   }, [])
 
   return (
@@ -621,68 +623,6 @@ export function ShortcutsOverlay() {
         </motion.div>
       )}
     </AnimatePresence>
-  )
-}
-
-// ─── "What's New" badge ─────────────────────────────────────────────────────
-
-const WHATS_NEW_VERSION = 'dv2-2026-07-29'
-const WHATS_NEW_SEEN_KEY = 'dv2_whats_new_seen'
-const WHATS_NEW_ITEMS = [
-  'بحث سريع مطوّر: اكتب "حجز جديد" أو اضغط ⌘K لتنفيذ إجراءات مباشرة',
-  'تحديد جماعي بالحجوزات والعملاء مع إمكانية التراجع',
-  'رسوم بيانية تفاعلية مع مقارنة بالأسبوع الماضي',
-  'قائمة جانبية قابلة للطي لمساحة عرض أكبر',
-]
-
-export function WhatsNewBadge() {
-  const [open, setOpen] = useState(false)
-  const [seen, setSeen] = useState(true)
-
-  useEffect(() => {
-    setSeen(localStorage.getItem(WHATS_NEW_SEEN_KEY) === WHATS_NEW_VERSION)
-  }, [])
-
-  function toggle() {
-    setOpen((v) => !v)
-    if (!seen) { localStorage.setItem(WHATS_NEW_SEEN_KEY, WHATS_NEW_VERSION); setSeen(true) }
-  }
-
-  return (
-    <div style={{ position: 'relative' }}>
-      <button type="button" className="dv2-icon-btn" aria-label="الجديد بالداشبورد" onClick={toggle}>
-        <Sparkles size={18} />
-        {!seen && (
-          <span style={{ position: 'absolute', top: 8, insetInlineEnd: 9, width: 8, height: 8, borderRadius: '50%', background: 'var(--sky)', boxShadow: '0 0 0 2px var(--panel)' }} />
-        )}
-      </button>
-      <AnimatePresence>
-        {open && (
-          <>
-            <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1200 }} />
-            <motion.div
-              initial={{ opacity: 0, y: -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6, scale: 0.98 }}
-              transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
-              style={{
-                position: 'absolute', top: '130%', insetInlineEnd: 0, width: 280, background: 'var(--surface-raised)', borderRadius: 'var(--radius-lg)',
-                boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-default)', zIndex: 1300, padding: 14,
-              }}
-            >
-              <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Sparkles size={14} style={{ color: 'var(--brand-500)' }} /> جديد بالداشبورد
-              </div>
-              <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {WHATS_NEW_ITEMS.map((item, i) => (
-                  <li key={i} style={{ display: 'flex', gap: 8, fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                    <span style={{ color: 'var(--brand-500)', flexShrink: 0 }}>•</span>{item}
-                  </li>
-                ))}
-              </ul>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </div>
   )
 }
 
