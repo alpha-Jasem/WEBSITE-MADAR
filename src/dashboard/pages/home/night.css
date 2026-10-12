@@ -180,3 +180,8 @@
 @media (prefers-reduced-motion: reduce) {
   .nx-sk { animation: none; }
 }
+
+/* Automatic topic tags on conversations */
+.nx-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.nx-tag { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 500; line-height: 1.5;
+  color: var(--ink); background: color-mix(in srgb, var(--ink) 8%, transparent); border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); white-space: nowrap; }

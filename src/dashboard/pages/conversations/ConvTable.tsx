@@ -4,13 +4,13 @@ import { VERDICT_LABEL, verdictTone, sentimentKind, SENTIMENT_LABEL, sentimentTo
 import { NightStyles } from '../shared/night'
 import { SortTh, nextSort, type SortDir } from '../analytics/ui'
 import { CHANNEL_LABEL, fmtDuration, fmtWhen, type ConvItem } from './model'
-import { Chip, ChannelIcon } from './ui'
+import { Chip, ChannelIcon, TagChips } from './ui'
 
 type Key = 'title' | 'time' | 'duration' | 'messages'
-type Col = 'channel' | 'time' | 'duration' | 'messages' | 'verdict' | 'sentiment'
+type Col = 'tags' | 'channel' | 'time' | 'duration' | 'messages' | 'verdict' | 'sentiment'
 
 const COLS: [Col, string][] = [
-  ['channel', 'القناة'], ['time', 'التاريخ'], ['duration', 'المدة'], ['messages', 'الرسائل'], ['verdict', 'التقييم'], ['sentiment', 'المشاعر'],
+  ['tags', 'الوسوم'], ['channel', 'القناة'], ['time', 'التاريخ'], ['duration', 'المدة'], ['messages', 'الرسائل'], ['verdict', 'التقييم'], ['sentiment', 'المشاعر'],
 ]
 const COLS_KEY = 'conv_table_hidden_cols'
 
@@ -59,6 +59,7 @@ export function ConvTable({ items, onOpen }: { items: ConvItem[]; onOpen: (i: Co
         <thead>
           <tr>
             <SortTh k="title" label="العنوان" sort={sort} onSort={onSort} />
+            {show('tags') && <th>الوسوم</th>}
             {show('channel') && <th>القناة</th>}
             {show('time') && <SortTh k="time" label="التاريخ" sort={sort} onSort={onSort} />}
             {show('duration') && <SortTh k="duration" label="المدة" sort={sort} onSort={onSort} />}
@@ -76,6 +77,7 @@ export function ConvTable({ items, onOpen }: { items: ConvItem[]; onOpen: (i: Co
                   <span className="ax-title-cell" style={{ display: 'block' }} title={i.title}>{i.title}</span>
                   <span className="ax-sub">{i.name}</span>
                 </td>
+                {show('tags') && <td>{i.tags.length ? <TagChips tags={i.tags} /> : <span style={{ color: 'var(--dim)' }}>—</span>}</td>}
                 {show('channel') && (
                   <td>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>

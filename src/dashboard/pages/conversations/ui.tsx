@@ -13,6 +13,15 @@ export function ChannelIcon({ channel, size = 16 }: { channel: ConvChannel; size
   return <span className={cls} aria-hidden="true"><Icon size={size} /></span>
 }
 
+/** The automatic topic tags of a conversation, as small chips. */
+export function TagChips({ tags }: { tags: { id: string; label: string }[] }) {
+  return (
+    <span className="nx-tags">
+      {tags.map((t) => <span key={t.id} className="nx-tag">{t.label}</span>)}
+    </span>
+  )
+}
+
 export function ConvRow({ item, onOpen }: { item: ConvItem; onOpen: (item: ConvItem) => void }) {
   const [label, tone] = itemChip(item)
   return (
@@ -21,6 +30,7 @@ export function ConvRow({ item, onOpen }: { item: ConvItem; onOpen: (item: ConvI
       <span style={{ minWidth: 0, display: 'block' }}>
         <span className="nx-who">{item.name}</span>
         <span className="nx-sum">{item.summary || '—'}</span>
+        {item.tags.length > 0 && <TagChips tags={item.tags} />}
       </span>
       <span className="nx-end">
         <Chip tone={tone}>{label}</Chip>

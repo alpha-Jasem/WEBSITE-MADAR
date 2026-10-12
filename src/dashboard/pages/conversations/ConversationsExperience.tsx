@@ -15,7 +15,7 @@ import {
   buildConversations, itemChip, fmtFull, fmtDay, fmtDuration, copyText, CHANNEL_LABEL, MSG_TYPE_LABEL, MSG_STATUS_LABEL,
   type ConvChannel, type ConvItem,
 } from './model'
-import { Chip, ChannelIcon, ConvRow, Sk } from './ui'
+import { Chip, ChannelIcon, ConvRow, Sk, TagChips } from './ui'
 import { RecordingPlayer } from './RecordingPlayer'
 import { ConvTable } from './ConvTable'
 import { ConversationAnalysis, ConversationOverview, VerdictCard } from './DetailTabs'
@@ -52,13 +52,14 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
   const openId = params.get('id')
   const filter = (params.get('filter') as Filter) || 'all'
   const evalFilter = (params.get('eval') as EvalFilter) || 'all'
+  const tagFilter = params.get('tag') || 'all'
   const view: View = params.get('view') === 'table' ? 'table' : 'list'
   const search = params.get('q') || ''
   const [limit, setLimit] = useState(PAGE)
 
   function setParam(key: string, value: string | null, replace = false) {
     const next = new URLSearchParams(params)
-    const isDefault = ((key === 'filter' || key === 'eval') && value === 'all') || (key === 'view' && value === 'list')
+    const isDefault = ((key === 'filter' || key === 'eval' || key === 'tag') && value === 'all') || (key === 'view' && value === 'list')
     if (value == null || value === '' || isDefault) next.delete(key)
     else next.set(key, value)
     if (key === 'id') next.delete('tab')
@@ -80,18 +81,27 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
     ['all', 'كل التقييمات'], ['success', VERDICT_LABEL.success], ['failure', VERDICT_LABEL.failure], ['none', 'بدون تقييم'],
   ]
 
+  const tagOptions = useMemo(() => {
+    const map = new Map<string, { id: string; label: string; count: number }>()
+    for (const i of items) for (const t of i.tags) {
+      const e = map.get(t.id)
+      if (e) e.count += 1; else map.set(t.id, { ...t, count: 1 })
+    }
+    return [...map.values()].sort((a, b) => b.count - a.count)
+  }, [items])
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     const qPhone = /^[\d\s+()-]{6,}$/.test(q) ? normalizePhone(q) : ''
     return items.filter((i) => {
       if (filter === 'needs' && !i.needsAction) return false
       if (filter !== 'all' && filter !== 'needs' && i.channel !== filter) return false
+      if (tagFilter !== 'all' && !i.tags.some((t) => t.id === tagFilter)) return false
       if (evalFilter === 'success' || evalFilter === 'failure') { if (i.verdict !== evalFilter) return false }
       else if (evalFilter === 'none' && (i.verdict === 'success' || i.verdict === 'failure')) return false
       if (q && !i.haystack.includes(q) && !(qPhone && i.haystack.includes(qPhone))) return false
       return true
     })
-  }, [items, filter, evalFilter, search])
+  }, [items, filter, evalFilter, tagFilter, search])
 
   function open(item: ConvItem) { setParam('id', item.key) }
 
@@ -190,6 +200,15 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
             </button>
           ))}
         </div>
+        {tagOptions.length > 0 && (
+          <select
+            className="nx-input" style={{ width: 'auto', minWidth: 130 }} aria-label="الوسم" value={tagFilter}
+            onChange={(e) => { setParam('tag', e.target.value); setLimit(PAGE) }}
+          >
+            <option value="all">كل الوسوم</option>
+            {tagOptions.map((t) => <option key={t.id} value={t.id}>{t.label} ({t.count})</option>)}
+          </select>
+        )}
         {hasVerdicts && (
           <select
             className="nx-input" style={{ width: 'auto', minWidth: 140 }} aria-label="التقييم" value={evalFilter}
@@ -343,6 +362,7 @@ function ConversationDetail({ item, isDemo, showTickets, tickets, onTicket, tab,
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {item.tags.length > 0 && <TagChips tags={item.tags} />}
           <Chip tone={chipTone}>{chipLabel}</Chip>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import type { AICallLog, AICallChannel, MessageLog, MessageStatus } from '@/types/dashboard'
 import { aiCallIntentLabel, aiCallResultLabel } from '@/lib/aiCallLabels'
+import { callTags, type CallTag } from '@/lib/callTags'
 import { callTitle, callTopic, callVerdict, collectedValue, normalizePhone, type Verdict } from '@/lib/callAnalysis'
 import { timeAgo } from '../HomeWidgets'
 
@@ -25,6 +26,8 @@ export interface ConvItem {
   /** Lower-cased text the search box matches against. */
   haystack: string
   needsAction: boolean
+  /** Automatic topic tags (مبيعات، زيارة…). Empty for WhatsApp threads. */
+  tags: CallTag[]
   call?: AICallLog
   /** Thread messages, oldest first. */
   messages?: MessageLog[]
@@ -86,8 +89,8 @@ export function buildConversations(calls: AICallLog[], messages: MessageLog[], o
     items.push({
       key: `call:${c.id}`, kind: 'call', channel: ch, name, phone: c.phone || '', time: c.call_time,
       summary, title, verdict: callVerdict(c), messageCount: c.transcript?.length || 0,
-      haystack: `${name} ${c.phone || ''} ${normalizePhone(c.phone)} ${summary} ${title} ${callTopic(c)} ${c.analysis?.user_id || ''}`.toLowerCase(),
-      needsAction: callNeedsAction(c), call: c,
+      haystack: `${callTags(c).map((t) => t.label).join(' ')} ${name} ${c.phone || ''} ${normalizePhone(c.phone)} ${summary} ${title} ${callTopic(c)} ${c.analysis?.user_id || ''}`.toLowerCase(),
+      needsAction: callNeedsAction(c), tags: callTags(c), call: c,
     })
   }
   if (opts.includeMessages) {
@@ -106,7 +109,7 @@ export function buildConversations(calls: AICallLog[], messages: MessageLog[], o
         key: `wa:${phone}`, kind: 'thread', channel: 'whatsapp', name, phone: last.recipient_phone || '',
         time: last.created_at, summary, title: MSG_TYPE_LABEL[last.message_type] || 'رسائل واتساب', verdict: 'none', messageCount: sorted.length,
         haystack: `${name} ${last.recipient_phone || ''} ${normalizePhone(last.recipient_phone)} ${summary}`.toLowerCase(),
-        needsAction: false, messages: sorted,
+        needsAction: false, tags: [], messages: sorted,
       })
     }
   }
