@@ -4,6 +4,7 @@ import type {
   Branch, GoogleReview, SupportTicket,
   ReminderRule, Integration, CompanyStaff, AppNotification, AuditLogEntry,
 } from '../types/dashboard'
+import { DEMO_AGENT_CALLS, DEMO_CALL_ANALYSIS } from './demoAgentCalls'
 
 const TODAY = new Date().toISOString().split('T')[0]
 const YESTERDAY = new Date(Date.now() - 86400000).toISOString().split('T')[0]
@@ -193,7 +194,7 @@ export const DEMO_MESSAGES: MessageLog[] = [
   { id: 'msg-012', company_id: 'demo-clinic-001', appointment_id: 'apt-103', patient_id: 'pat-005', channel: 'whatsapp', message_type: 'confirmation', recipient_phone: '0505678901', recipient_name: 'فهد الشمري', body: 'تم تأكيد موعدك.', status: 'failed', sent_at: D4 + 'T11:10:00Z', failed_reason: 'فشل الإرسال — جرب مجدداً', created_at: D4 + 'T11:10:00Z' },
 ]
 
-export const DEMO_AI_CALLS: AICallLog[] = [
+const BASE_AI_CALLS: AICallLog[] = [
   {
     id: 'call-001', company_id: 'demo-clinic-001', patient_name: 'ليلى الغامدي', phone: '0506789012', call_time: TODAY + 'T08:10:00Z', duration_seconds: 87, intent: 'new_booking', result: 'booked', status: 'completed',
     transcript: [
@@ -243,6 +244,12 @@ export const DEMO_AI_CALLS: AICallLog[] = [
     summary: 'حجز تنظيف أسنان مساءً مع د. أحمد الزهراني.', service_requested: 'تنظيف الأسنان', preferred_date: TODAY, appointment_id: 'apt-017', needs_review: false, created_at: D3 + 'T18:55:00Z',
   },
 ]
+
+// Older clinic calls plus the agent conversations with full analysis, newest first.
+export const DEMO_AI_CALLS: AICallLog[] = [
+  ...BASE_AI_CALLS.map((c) => (DEMO_CALL_ANALYSIS[c.id] ? { ...c, analysis: DEMO_CALL_ANALYSIS[c.id] } : c)),
+  ...DEMO_AGENT_CALLS,
+].sort((a, b) => b.call_time.localeCompare(a.call_time))
 
 export const DEMO_WAITLIST: Waitlist[] = [
   { id: 'wl-001', company_id: 'demo-clinic-001', patient_name: 'عبدالله الرشيد', patient_phone: '0501122334', service_name: 'تنظيف الأسنان', doctor_name: 'د. سارة الحربي', preferred_date: TODAY, preferred_time_range: 'صباحاً', priority: 'high', status: 'waiting', created_at: TODAY + 'T07:00:00Z' },

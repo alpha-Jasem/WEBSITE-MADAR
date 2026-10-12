@@ -1,5 +1,6 @@
 import type { AICallLog, AICallChannel, MessageLog, MessageStatus } from '@/types/dashboard'
 import { aiCallIntentLabel, aiCallResultLabel } from '@/lib/aiCallLabels'
+import { callTitle, callTopic, callVerdict, collectedValue, normalizePhone, type Verdict } from '@/lib/callAnalysis'
 import { timeAgo } from '../HomeWidgets'
 
 // One row in the unified conversation list: an AI call (phone, web or WhatsApp chat
@@ -16,6 +17,13 @@ export interface ConvItem {
   phone: string
   time: string
   summary: string
+  /** Short heading: the platform's title, or the first words of the summary. */
+  title: string
+  verdict: Verdict
+  /** Transcript lines for a call, messages for a thread. */
+  messageCount: number
+  /** Lower-cased text the search box matches against. */
+  haystack: string
   needsAction: boolean
   call?: AICallLog
   /** Thread messages, oldest first. */
@@ -43,7 +51,7 @@ export function callNeedsAction(c: AICallLog): boolean {
 }
 
 export function callDisplayName(c: AICallLog): string {
-  return c.patient_name || c.caller_name || c.phone || 'متصل غير معروف'
+  return c.patient_name || c.caller_name || collectedValue(c, 'customer_name') || c.phone || (c.channel === 'web' ? 'زائر الموقع' : 'متصل غير معروف')
 }
 
 /** Status chip for a call: what happened, coloured by whether it needs someone. */
@@ -72,9 +80,14 @@ export function buildConversations(calls: AICallLog[], messages: MessageLog[], o
   for (const c of calls) {
     const ch = callChannel(c)
     if (ch === 'phone' && !opts.includePhone) continue
+    const name = callDisplayName(c)
+    const summary = c.summary || c.review_reason || aiCallIntentLabel(c.intent) || ''
+    const title = callTitle(c)
     items.push({
-      key: `call:${c.id}`, kind: 'call', channel: ch, name: callDisplayName(c), phone: c.phone || '', time: c.call_time,
-      summary: c.summary || c.review_reason || aiCallIntentLabel(c.intent) || '', needsAction: callNeedsAction(c), call: c,
+      key: `call:${c.id}`, kind: 'call', channel: ch, name, phone: c.phone || '', time: c.call_time,
+      summary, title, verdict: callVerdict(c), messageCount: c.transcript?.length || 0,
+      haystack: `${name} ${c.phone || ''} ${normalizePhone(c.phone)} ${summary} ${title} ${callTopic(c)} ${c.analysis?.user_id || ''}`.toLowerCase(),
+      needsAction: callNeedsAction(c), call: c,
     })
   }
   if (opts.includeMessages) {
@@ -87,9 +100,13 @@ export function buildConversations(calls: AICallLog[], messages: MessageLog[], o
     for (const [phone, list] of byPhone) {
       const sorted = [...list].sort((a, b) => a.created_at.localeCompare(b.created_at))
       const last = sorted[sorted.length - 1]
+      const name = last.recipient_name || phone
+      const summary = `${MSG_TYPE_LABEL[last.message_type] || 'رسالة'}: ${last.body}`
       items.push({
-        key: `wa:${phone}`, kind: 'thread', channel: 'whatsapp', name: last.recipient_name || phone, phone: last.recipient_phone || '',
-        time: last.created_at, summary: `${MSG_TYPE_LABEL[last.message_type] || 'رسالة'}: ${last.body}`, needsAction: false, messages: sorted,
+        key: `wa:${phone}`, kind: 'thread', channel: 'whatsapp', name, phone: last.recipient_phone || '',
+        time: last.created_at, summary, title: MSG_TYPE_LABEL[last.message_type] || 'رسائل واتساب', verdict: 'none', messageCount: sorted.length,
+        haystack: `${name} ${last.recipient_phone || ''} ${normalizePhone(last.recipient_phone)} ${summary}`.toLowerCase(),
+        needsAction: false, messages: sorted,
       })
     }
   }
@@ -118,6 +135,17 @@ export function fmtFull(iso: string): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
   return d.toLocaleString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' })
+}
+
+/** Day separator label: اليوم / أمس / a date. */
+export function fmtDay(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  const now = new Date()
+  if (d.toDateString() === now.toDateString()) return 'اليوم'
+  const y = new Date(now); y.setDate(now.getDate() - 1)
+  if (d.toDateString() === y.toDateString()) return 'أمس'
+  return d.toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long' })
 }
 
 export function fmtDuration(sec: number | null | undefined): string {

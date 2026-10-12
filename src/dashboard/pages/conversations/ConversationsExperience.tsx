@@ -1,6 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ChevronRight, Search, CheckCircle2, Ticket, Copy, Sparkles, Download, Phone, MessageCircle, Globe, Inbox } from 'lucide-react'
+import {
+  ChevronRight, ChevronUp, ChevronDown, Search, CheckCircle2, Ticket, Copy, Download, Phone, MessageCircle, Globe, Inbox, List, Table2,
+  ClipboardCheck, ScrollText, LayoutGrid,
+} from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useSupportTickets } from '@/lib/dashboardQueries'
 import { useConversationData, markCallReviewed } from '@/lib/queries/conversations'
@@ -9,16 +12,23 @@ import { exportRowsToExcel } from '@/lib/exportExcel'
 import { useToast, ContactActions } from '@/dashboard/components/uiExtras'
 import type { AICallLog, SupportTicket } from '@/types/dashboard'
 import {
-  buildConversations, itemChip, fmtFull, fmtDuration, copyText, CHANNEL_LABEL, MSG_TYPE_LABEL, MSG_STATUS_LABEL,
+  buildConversations, itemChip, fmtFull, fmtDay, fmtDuration, copyText, CHANNEL_LABEL, MSG_TYPE_LABEL, MSG_STATUS_LABEL,
   type ConvChannel, type ConvItem,
 } from './model'
 import { Chip, ChannelIcon, ConvRow, Sk } from './ui'
 import { RecordingPlayer } from './RecordingPlayer'
+import { ConvTable } from './ConvTable'
+import { ConversationAnalysis, ConversationOverview, VerdictCard } from './DetailTabs'
+import { VERDICT_LABEL, normalizePhone } from '@/lib/callAnalysis'
+import '../analytics/analytics.css'
 
 type Filter = 'all' | 'needs' | ConvChannel
+type EvalFilter = 'all' | 'success' | 'failure' | 'none'
+type View = 'list' | 'table'
+type DetailTab = 'overview' | 'transcript' | 'analysis'
 
 const PAGE = 40
-const PROVIDER_LABEL: Record<string, string> = { nabrah: 'نبرة', elevenlabs: 'ElevenLabs' }
+const PROVIDER_LABEL: Record<string, string> = { nabrah: 'نبرة', elevenlabs: 'المنصة الصوتية' }
 
 /** The unified conversations experience. `calls` mode backs /call-logs: the same list
  *  and detail, limited to the agent's calls, with an Excel export. */
@@ -41,14 +51,18 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
 
   const openId = params.get('id')
   const filter = (params.get('filter') as Filter) || 'all'
-  const [search, setSearch] = useState('')
+  const evalFilter = (params.get('eval') as EvalFilter) || 'all'
+  const view: View = params.get('view') === 'table' ? 'table' : 'list'
+  const search = params.get('q') || ''
   const [limit, setLimit] = useState(PAGE)
 
-  function setParam(key: string, value: string | null) {
+  function setParam(key: string, value: string | null, replace = false) {
     const next = new URLSearchParams(params)
-    if (value == null || value === '' || (key === 'filter' && value === 'all')) next.delete(key)
+    const isDefault = ((key === 'filter' || key === 'eval') && value === 'all') || (key === 'view' && value === 'list')
+    if (value == null || value === '' || isDefault) next.delete(key)
     else next.set(key, value)
-    setParams(next)
+    if (key === 'id') next.delete('tab')
+    setParams(next, { replace })
   }
 
   const channelsPresent = useMemo(() => new Set(items.map((i) => i.channel)), [items])
@@ -61,15 +75,23 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
     ...((mode === 'all' || channelsPresent.has('web')) ? [['web', 'الموقع'] as [Filter, string]] : []),
   ]
 
+  const hasVerdicts = useMemo(() => items.some((i) => i.verdict !== 'none'), [items])
+  const evalOptions: [EvalFilter, string][] = [
+    ['all', 'كل التقييمات'], ['success', VERDICT_LABEL.success], ['failure', VERDICT_LABEL.failure], ['none', 'بدون تقييم'],
+  ]
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
+    const qPhone = /^[\d\s+()-]{6,}$/.test(q) ? normalizePhone(q) : ''
     return items.filter((i) => {
       if (filter === 'needs' && !i.needsAction) return false
       if (filter !== 'all' && filter !== 'needs' && i.channel !== filter) return false
-      if (q && !`${i.name} ${i.phone} ${i.summary}`.toLowerCase().includes(q)) return false
+      if (evalFilter === 'success' || evalFilter === 'failure') { if (i.verdict !== evalFilter) return false }
+      else if (evalFilter === 'none' && (i.verdict === 'success' || i.verdict === 'failure')) return false
+      if (q && !i.haystack.includes(q) && !(qPhone && i.haystack.includes(qPhone))) return false
       return true
     })
-  }, [items, filter, search])
+  }, [items, filter, evalFilter, search])
 
   function open(item: ConvItem) { setParam('id', item.key) }
 
@@ -91,10 +113,24 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
   // ─── detail ───
   if (openId) {
     const item = items.find((i) => i.key === openId)
+    // Step through the same list the person came from (filters and search stay in the URL).
+    const seq = filtered.some((i) => i.key === openId) ? filtered : items
+    const pos = seq.findIndex((i) => i.key === openId)
     const back = (
-      <button type="button" className="nx-link" style={{ alignSelf: 'flex-start' }} onClick={() => setParam('id', null)}>
-        <ChevronRight size={16} /> {mode === 'calls' ? 'سجل المكالمات' : 'المحادثات'}
-      </button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <button type="button" className="nx-link" onClick={() => setParam('id', null)}>
+          <ChevronRight size={16} /> {mode === 'calls' ? 'سجل المكالمات' : 'المحادثات'}
+        </button>
+        {pos >= 0 && seq.length > 1 && (
+          <span className="ax-pager">
+            <button type="button" className="nx-icon-btn" aria-label="المحادثة السابقة" title="السابقة" disabled={pos === 0}
+              onClick={() => setParam('id', seq[pos - 1].key, true)}><ChevronUp size={15} /></button>
+            <span className="nx-num">{pos + 1} / {seq.length}</span>
+            <button type="button" className="nx-icon-btn" aria-label="المحادثة التالية" title="التالية" disabled={pos === seq.length - 1}
+              onClick={() => setParam('id', seq[pos + 1].key, true)}><ChevronDown size={15} /></button>
+          </span>
+        )}
+      </div>
     )
     if (!item) {
       return (
@@ -112,6 +148,7 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
         <ConversationDetail
           item={item} isDemo={isDemo} showTickets={showTickets} tickets={tickets || []}
           onTicket={(path) => navigate(`${base}/tickets${path}`)}
+          tab={(params.get('tab') as DetailTab) || null} onTab={(t) => setParam('tab', t, true)}
         />
       </div>
     )
@@ -130,9 +167,15 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
           <h1 className="nx-h1">{title}</h1>
           <p className="nx-h1-sub">{subtitle}</p>
         </div>
-        {mode === 'calls' && (
-          <button type="button" className="nx-btn" onClick={handleExport}><Download /> تصدير Excel</button>
-        )}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div className="nx-seg" role="group" aria-label="طريقة العرض">
+            <button type="button" aria-pressed={view === 'list'} onClick={() => setParam('view', 'list', true)}><List size={13} /> قائمة</button>
+            <button type="button" aria-pressed={view === 'table'} onClick={() => setParam('view', 'table', true)}><Table2 size={13} /> جدول</button>
+          </div>
+          {mode === 'calls' && (
+            <button type="button" className="nx-btn" onClick={handleExport}><Download /> تصدير Excel</button>
+          )}
+        </div>
       </div>
 
       <div className="nx-filters">
@@ -147,11 +190,19 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
             </button>
           ))}
         </div>
+        {hasVerdicts && (
+          <select
+            className="nx-input" style={{ width: 'auto', minWidth: 140 }} aria-label="التقييم" value={evalFilter}
+            onChange={(e) => { setParam('eval', e.target.value); setLimit(PAGE) }}
+          >
+            {evalOptions.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+          </select>
+        )}
         <label className="nx-search">
           <Search size={14} />
           <input
-            className="nx-input" placeholder="ابحث بالاسم أو الرقم" value={search} aria-label="بحث"
-            onChange={(e) => { setSearch(e.target.value); setLimit(PAGE) }}
+            className="nx-input" placeholder="ابحث بالاسم أو الرقم أو الموضوع" value={search} aria-label="بحث"
+            onChange={(e) => { setParam('q', e.target.value, true); setLimit(PAGE) }}
           />
         </label>
       </div>
@@ -170,9 +221,13 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
           </div>
         ) : (
           <>
-            <div className="nx-list">
-              {filtered.slice(0, limit).map((i) => <ConvRow key={i.key} item={i} onOpen={open} />)}
-            </div>
+            {view === 'table'
+              ? <ConvTable items={filtered.slice(0, limit)} onOpen={open} />
+              : (
+                <div className="nx-list">
+                  {filtered.slice(0, limit).map((i) => <ConvRow key={i.key} item={i} onOpen={open} />)}
+                </div>
+              )}
             {filtered.length > limit && (
               <div className="nx-more">
                 <button type="button" className="nx-btn sm" onClick={() => setLimit((l) => l + PAGE)}>
@@ -189,17 +244,23 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
 
 // ─── detail view ──────────────────────────────────────────────────────────────
 
-function ConversationDetail({ item, isDemo, showTickets, tickets, onTicket }: {
+function ConversationDetail({ item, isDemo, showTickets, tickets, onTicket, tab, onTab }: {
   item: ConvItem
   isDemo: boolean
   showTickets: boolean
   tickets: SupportTicket[]
   onTicket: (path: string) => void
+  tab: DetailTab | null
+  onTab: (t: DetailTab) => void
 }) {
   const pushToast = useToast()
   const [saving, setSaving] = useState(false)
   const call = item.call
   const [chipLabel, chipTone] = itemChip(item)
+  const tabs: [DetailTab, string, ReactNode][] = call
+    ? [['overview', 'نظرة عامة', <LayoutGrid key="o" size={14} />], ['transcript', item.channel === 'phone' ? 'نص المكالمة' : 'المحادثة', <ScrollText key="t" size={14} />], ['analysis', 'التحليل', <ClipboardCheck key="a" size={14} />]]
+    : [['transcript', 'الرسائل', <ScrollText key="t" size={14} />], ['overview', 'نظرة عامة', <LayoutGrid key="o" size={14} />]]
+  const active: DetailTab = tab && tabs.some(([k]) => k === tab) ? tab : tabs[0][0]
 
   async function copyPhone() {
     if (!item.phone) return
@@ -221,6 +282,7 @@ function ConversationDetail({ item, isDemo, showTickets, tickets, onTicket }: {
 
   const ticket = call ? tickets.find((t) => t.ai_call_id === call.id) : undefined
   const subParts = [
+    item.call?.analysis?.title ? item.name : null,
     item.phone ? <span key="p" className="nx-num" dir="ltr">{item.phone}</span> : null,
     CHANNEL_LABEL[item.channel],
     fmtFull(item.time),
@@ -228,7 +290,6 @@ function ConversationDetail({ item, isDemo, showTickets, tickets, onTicket }: {
   ].filter(Boolean)
 
   const fields: [string, string][] = call ? ([
-    ['القناة', CHANNEL_LABEL[item.channel]],
     ['النية', aiCallIntentLabel(call.intent)],
     ['النتيجة', call.result ? aiCallResultLabel(call.result) : ''],
     ['الخدمة المطلوبة', call.service_requested || ''],
@@ -243,11 +304,40 @@ function ConversationDetail({ item, isDemo, showTickets, tickets, onTicket }: {
     ['سبب الفشل', item.messages?.find((m) => m.status === 'failed')?.failed_reason || ''],
   ] as [string, string][]).filter(([, v]) => v)
 
+  const transcript = call ? (
+    <>
+      {!isDemo && call.provider === 'elevenlabs' && call.external_id && item.channel !== 'whatsapp' && call.analysis?.has_audio !== false && <RecordingPlayer callId={call.id} />}
+      {call.transcript && call.transcript.length > 0 ? (
+        <div className="nx-thread">
+          <div className="ax-started">بدأت المحادثة عبر {CHANNEL_LABEL[item.channel]}</div>
+          <span className="ax-day">{fmtDay(item.time)}</span>
+          {call.transcript.map((m, i) => (
+            <div key={i} className={`nx-msg ${m.speaker === 'agent' ? 'a' : 'c'}`}>
+              <span className="nx-msg-who">{m.speaker === 'agent' ? 'الموظف الذكي' : item.name}</span>
+              {m.text}
+              {m.time && <small className="nx-num">{m.time}</small>}
+            </div>
+          ))}
+        </div>
+      ) : <div className="nx-empty">ما فيه نص محفوظ لهذه {item.channel === 'phone' ? 'المكالمة' : 'المحادثة'}.</div>}
+    </>
+  ) : (
+    <div className="nx-thread">
+      {(item.messages || []).map((m) => (
+        <div key={m.id} className="nx-msg a">
+          <span className="nx-msg-who">{MSG_TYPE_LABEL[m.message_type] || 'رسالة'}</span>
+          {m.body}
+          <small>{fmtFull(m.sent_at || m.created_at)} · {MSG_STATUS_LABEL[m.status]}</small>
+        </div>
+      ))}
+    </div>
+  )
+
   return (
     <>
       <div className="nx-head">
         <div style={{ minWidth: 0 }}>
-          <h1 className="nx-h1">{item.name}</h1>
+          <h1 className="nx-h1">{item.call?.analysis?.title ? item.title : item.name}</h1>
           <p className="nx-h1-sub">
             {subParts.map((p, i) => <span key={i}>{i > 0 && ' · '}{p}</span>)}
           </p>
@@ -259,43 +349,18 @@ function ConversationDetail({ item, isDemo, showTickets, tickets, onTicket }: {
 
       <div className="nx-detail">
         <div className="nx-card">
-          <h3><ChannelIcon channel={item.channel} size={14} /> {call ? (item.channel === 'phone' ? 'نص المكالمة' : 'المحادثة') : 'رسائل واتساب'}</h3>
-          {call && !isDemo && call.provider === 'elevenlabs' && call.external_id && item.channel !== 'whatsapp' && <RecordingPlayer callId={call.id} />}
-          {call ? (
-            call.transcript && call.transcript.length > 0 ? (
-              <div className="nx-thread">
-                {call.transcript.map((m, i) => (
-                  <div key={i} className={`nx-msg ${m.speaker === 'agent' ? 'a' : 'c'}`}>
-                    <span className="nx-msg-who">{m.speaker === 'agent' ? 'الموظف الذكي' : item.name}</span>
-                    {m.text}
-                    {m.time && <small className="nx-num">{m.time}</small>}
-                  </div>
-                ))}
-              </div>
-            ) : <div className="nx-empty">ما فيه نص محفوظ لهذه {item.channel === 'phone' ? 'المكالمة' : 'المحادثة'}.</div>
-          ) : (
-            <div className="nx-thread">
-              {(item.messages || []).map((m) => (
-                <div key={m.id} className="nx-msg a">
-                  <span className="nx-msg-who">{MSG_TYPE_LABEL[m.message_type] || 'رسالة'}</span>
-                  {m.body}
-                  <small>{fmtFull(m.sent_at || m.created_at)} · {MSG_STATUS_LABEL[m.status]}</small>
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="ax-tabs" role="tablist" aria-label="تفاصيل المحادثة">
+            {tabs.map(([k, l, icon]) => (
+              <button key={k} type="button" role="tab" aria-selected={active === k} onClick={() => onTab(k)}>{icon}{l}</button>
+            ))}
+          </div>
+          {active === 'transcript' && transcript}
+          {active === 'overview' && <ConversationOverview item={item} fields={fields} status={<Chip tone={chipTone}>{chipLabel}</Chip>} onCopy={copyText} />}
+          {active === 'analysis' && call && <ConversationAnalysis call={call} />}
         </div>
 
         <div className="nx-stack">
-          <div className="nx-card">
-            <h3><Sparkles size={16} style={{ color: 'var(--ai)' }} /> الملخص</h3>
-            {call?.summary && <p style={{ margin: '0 0 14px', lineHeight: 1.7 }}>{call.summary}</p>}
-            {fields.length > 0 ? (
-              <dl className="nx-kv">
-                {fields.map(([k, v]) => <FieldRow key={k} k={k} v={v} />)}
-              </dl>
-            ) : !call?.summary && <div className="nx-empty">ما فيه تفاصيل مستخرجة.</div>}
-          </div>
+          {call && <VerdictCard call={call} onAnalysis={() => onTab('analysis')} />}
 
           <div className="nx-card">
             <h3>الإجراءات</h3>
@@ -329,10 +394,6 @@ function ConversationDetail({ item, isDemo, showTickets, tickets, onTicket }: {
       </div>
     </>
   )
-}
-
-function FieldRow({ k, v }: { k: string; v: string }) {
-  return <><dt>{k}</dt><dd>{v}</dd></>
 }
 
 function DetailSkeleton() {

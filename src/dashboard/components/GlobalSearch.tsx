@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   Search, User, CalendarDays, X, LayoutDashboard, Users, MessageSquare, Star,
-  Wrench, BarChart3, Wallet, BellRing, Plug, History, Settings, Plus, Clock,
+  Wrench, BarChart3, Wallet, BellRing, Plug, History, Settings, Plus, Clock, Sparkles, Contact,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useCustomers, useBookings } from '@/lib/dashboardQueries'
@@ -20,6 +20,8 @@ const QUICK_ACTIONS: QuickAction[] = [
   { id: 'nav-bookings', label: 'الحجوزات', icon: <CalendarDays size={14} />, run: (nav, base) => nav(`${base}/bookings`), module: 'bookings' },
   { id: 'nav-patients', label: 'العملاء', icon: <Users size={14} />, run: (nav, base) => nav(`${base}/patients`), module: 'customers' },
   { id: 'nav-conversations', label: 'المحادثات', icon: <MessageSquare size={14} />, run: (nav, base) => nav(`${base}/conversations`), module: 'conversations' },
+  { id: 'nav-agent-analytics', label: 'تحليلات الموظف', icon: <Sparkles size={14} />, run: (nav, base) => nav(`${base}/agent-analytics`), module: 'voice' },
+  { id: 'nav-agent-users', label: 'العملاء من المحادثات', icon: <Contact size={14} />, run: (nav, base) => nav(`${base}/agent-users`), module: 'voice' },
   { id: 'nav-reviews', label: 'تقييمات Google', icon: <Star size={14} />, run: (nav, base) => nav(`${base}/reviews`), module: 'reviews' },
   { id: 'nav-services', label: 'الخدمات', icon: <Wrench size={14} />, run: (nav, base) => nav(`${base}/services`), module: 'services' },
   { id: 'nav-reports', label: 'التقارير والتحليلات', icon: <BarChart3 size={14} />, run: (nav, base) => nav(`${base}/reports`), module: 'reports' },

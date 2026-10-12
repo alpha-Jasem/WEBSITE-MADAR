@@ -5,7 +5,7 @@ import { DURATION_MEDIUM, EASE_OUT } from './motionTokens'
 import {
   LayoutDashboard, CalendarDays, Users, MessageSquare, Star, BarChart3,
   Wallet, BellRing, Settings, AlertTriangle, ChevronsRight, ChevronsLeft, Plus, CalendarCheck2, Ticket,
-  ClipboardList, BookOpen, Sun, Moon, MoreHorizontal, X, Wrench,
+  ClipboardList, BookOpen, Sun, Moon, MoreHorizontal, X, Wrench, Sparkles, Contact,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useSupportTickets, useTodayBookings } from '@/lib/dashboardQueries'
@@ -214,6 +214,8 @@ export function DashboardV2Layout() {
       { label: 'التذاكر', path: `${base}/tickets`, icon: <Ticket size={18} />, badge: openTicketCount || undefined, module: 'tickets' },
       { label: 'تقييمات Google', path: `${base}/reviews`, icon: <Star size={18} />, module: 'reviews' },
       { label: 'سجل المكالمات', path: `${base}/call-logs`, icon: <ClipboardList size={18} />, module: 'voice' },
+      { label: 'تحليلات الموظف', short: 'التحليلات', path: `${base}/agent-analytics`, icon: <Sparkles size={18} />, module: 'voice' },
+      { label: 'العملاء من المحادثات', short: 'عملاء المحادثات', path: `${base}/agent-users`, icon: <Contact size={18} />, module: 'voice' },
     ] },
     { title: 'التقارير', items: [
       { label: 'التقارير والتحليلات', path: `${base}/reports`, icon: <BarChart3 size={18} />, module: 'reports' },

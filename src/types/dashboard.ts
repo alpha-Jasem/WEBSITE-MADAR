@@ -205,7 +205,27 @@ export interface AICallLog {
   appointment_id?: string
   needs_review: boolean
   review_reason?: string
+  /** Post-call analysis from the agent platform. Null for most Nabrah rows. */
+  analysis?: AICallAnalysis | null
   created_at: string
+}
+
+export type AICallVerdict = 'success' | 'failure' | 'unknown'
+
+export interface AICallAnalysis {
+  call_successful?: AICallVerdict | null
+  title?: string | null
+  success_score?: number | null
+  evaluation?: Record<string, { result?: string | null; rationale?: string | null }> | null
+  /** Collected fields. Entries are normally { value, rationale }; older rows may hold the raw value. */
+  data?: Record<string, { value?: unknown; rationale?: string | null; data_collection_id?: string | null } | string | number | boolean | null> | null
+  sentiment?: { label?: string | null; score?: number | null; frustration?: number | null } | null
+  cost_credits?: number | null
+  has_audio?: boolean | null
+  user_id?: string | null
+  warnings?: string[] | null
+  termination_reason?: string | null
+  language?: string | null
 }
 
 export interface AITranscriptLine {

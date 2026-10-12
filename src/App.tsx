@@ -80,6 +80,8 @@ const DashboardV2AnalysisGroups    = lazy(() => import('./dashboard/pages/Coming
 const DashboardV2InboundServices   = lazy(() => import('./dashboard/pages/ComingSoon').then(m => ({ default: m.DashboardV2InboundServices })))
 const DashboardV2OutboundServices  = lazy(() => import('./dashboard/pages/ComingSoon').then(m => ({ default: m.DashboardV2OutboundServices })))
 const DashboardV2CallLogs          = lazy(() => import('./dashboard/pages/CallLogs').then(m => ({ default: m.DashboardV2CallLogs })))
+const DashboardV2AgentAnalytics    = lazy(() => import('./dashboard/pages/AgentAnalytics').then(m => ({ default: m.DashboardV2AgentAnalytics })))
+const DashboardV2AgentUsers        = lazy(() => import('./dashboard/pages/AgentUsers').then(m => ({ default: m.DashboardV2AgentUsers })))
 
 // The dashboard is mounted twice — once for real tenants and once for the
 // unauthenticated sales tour — and both render the identical tree. isDemo is
@@ -110,6 +112,8 @@ const dashboardChildRoutes = (
     <Route path="inbound-services" element={<DashboardV2InboundServices />} />
     <Route path="outbound-services" element={<DashboardV2OutboundServices />} />
     <Route path="call-logs" element={<ModuleRoute module="voice"><DashboardV2CallLogs /></ModuleRoute>} />
+    <Route path="agent-analytics" element={<ModuleRoute module="voice"><DashboardV2AgentAnalytics /></ModuleRoute>} />
+    <Route path="agent-users" element={<ModuleRoute module="voice"><DashboardV2AgentUsers /></ModuleRoute>} />
     <Route path="settings" element={<DashboardV2Settings />} />
     {/* Retired pages keep their links alive instead of rendering a blank outlet. */}
     <Route path="*" element={<Navigate to="." replace />} />
