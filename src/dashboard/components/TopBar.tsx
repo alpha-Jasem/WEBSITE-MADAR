@@ -10,8 +10,9 @@ import { AccountMenu } from './AccountMenu'
 import { TopProgressBar, Tooltip, requestOpenSearch, useToast } from './uiExtras'
 import { requestOpenShortcuts, requestOpenSupport, useShellPrimary } from './shellActions'
 import { openWhatsNew, useWhatsNewUnread } from './WhatsNew'
+import { MADAR_WHATSAPP_NUMBER } from '@/lib/constants'
 
-const SUPPORT_WHATSAPP = 'https://wa.me/966546666005'
+const SUPPORT_WHATSAPP = `https://wa.me/${MADAR_WHATSAPP_NUMBER}`
 
 export const TOPBAR_CSS = `
   .dv2-top { position: sticky; top: 0; z-index: 30; flex: none; background: var(--topbar-bg); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
