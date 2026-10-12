@@ -258,6 +258,7 @@ export function normalizeNabrahCall(call, companyId) {
     duration_seconds: Math.max(0, Math.round(Number(call.duration) || 0)),
     transcript,
     summary: info.summary,
+    analysis: call.analysis_results ? { data: call.analysis_results } : null,
     ...outcome,
   }
 }
@@ -324,6 +325,26 @@ export function normalizeElevenLabsConversation(data, companyId) {
     duration_seconds: Math.max(0, Math.round(Number(meta.call_duration_secs) || 0)),
     transcript,
     summary: str(analysis.transcript_summary) || info.summary,
+    analysis: {
+      call_successful: str(analysis.call_successful),
+      title: str(analysis.call_summary_title),
+      evaluation: analysis.evaluation_criteria_results || null,
+      data: analysis.data_collection_results || null,
+      termination_reason: str(meta.termination_reason),
+      language: str(meta.main_language),
+      success_score: typeof analysis.call_success_score === 'number' ? analysis.call_success_score : null,
+      sentiment: analysis.sentiment_analysis
+        ? {
+          label: str(analysis.sentiment_analysis.overall_label),
+          score: analysis.sentiment_analysis.overall_sentiment_score ?? null,
+          frustration: analysis.sentiment_analysis.overall_frustration_score ?? null,
+        }
+        : null,
+      cost_credits: typeof meta.cost === 'number' ? meta.cost : null,
+      has_audio: data.has_audio ?? null,
+      user_id: str(data.user_id),
+      warnings: Array.isArray(meta.warnings) ? meta.warnings.map((w) => str(w?.message ?? w)).filter(Boolean) : [],
+    },
     ...outcome,
   }
 }
