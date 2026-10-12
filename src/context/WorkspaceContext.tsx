@@ -108,7 +108,10 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
           const demoIndustry = new URLSearchParams(location.search).get('industry')
           if (isBusinessType(demoIndustry)) sessionStorage.setItem('madar_demo_industry', demoIndustry)
           const storedIndustry = sessionStorage.getItem('madar_demo_industry')
-          setBusinessType(isBusinessType(storedIndustry) ? storedIndustry : 'clinic')
+          const demoType = isBusinessType(storedIndustry) ? storedIndustry : 'clinic'
+          setBusinessType(demoType)
+          if (demoType === 'real_estate') setCompanyName('الأفق العقارية')
+          else if (demoType === 'ecommerce') setCompanyName('متجر أناقة')
           setModuleOverrides({})
           setCompanyLogoUrl('')
           setCompanySettings({})

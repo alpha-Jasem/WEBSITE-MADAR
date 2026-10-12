@@ -5,10 +5,6 @@ import { WorkspaceProvider } from './context/WorkspaceContext'
 import { ProtectedRoute } from './components/shared/ProtectedRoute'
 import { ModuleRoute } from './dashboard/components/ModuleRoute'
 import { ErrorBoundary, reloadForFreshAssets } from './components/shared/ErrorBoundary'
-const ClinicAILanding = lazy(() => import('./pages/ClinicAILanding').then((m) => ({ default: m.ClinicAILanding })))
-const RazCaseStudy = lazy(() => import('./pages/RazCaseStudy'))
-const RazNabrahDemo = lazy(() => import('./pages/RazNabrahDemo'))
-import { Lumora } from './pages/Lumora'
 import { Login } from './pages/Login'
 import { ForgotPassword } from './pages/ForgotPassword'
 import { ResetPassword } from './pages/ResetPassword'
@@ -16,7 +12,6 @@ import { TrialSignup } from './pages/TrialSignup'
 import { AuthCallback } from './pages/AuthCallback'
 import { Privacy } from './pages/Privacy'
 import { Terms } from './pages/Terms'
-import { BookACallPage } from './pages/BookACallPage'
 import { NotFound } from './pages/NotFound'
 // Note: WorkspaceProvider wraps only /clinic-os/dashboard/* routes (protected)
 
@@ -26,12 +21,12 @@ function ScrollToTop() {
   return null
 }
 
-// The old React homepage was replaced by THE SIGNAL cinematic landing
-// (public/signal/index.html, forced at "/" in production via public/_redirects).
-// This mirrors that behavior in local dev, where _redirects isn't honored.
-function SignalRedirect() {
-  useEffect(() => { window.location.replace('/signal/index.html') }, [])
-  return null
+// The old sales demo links (/demo/#clinic, #realestate, #store) now open the real dashboard demo.
+const DEMO_HASH_INDUSTRY: Record<string, string> = { clinic: 'clinic', realestate: 'real_estate', store: 'ecommerce' }
+function DemoRedirect() {
+  const { hash } = useLocation()
+  const industry = DEMO_HASH_INDUSTRY[hash.replace('#', '')]
+  return <Navigate to={industry ? `/demo-review?industry=${industry}` : '/demo-review'} replace />
 }
 
 // Strip ?fresh= from URL without reload
@@ -53,7 +48,6 @@ const DemoSignupPage       = lazy(() => import('./pages/clinicOS/DemoSignup').th
 const DemoConfirmPage      = lazy(() => import('./pages/clinicOS/DemoConfirm').then(m => ({ default: m.DemoConfirm })))
 const PackageSelectorPage  = lazy(() => import('./pages/clinicOS/PackageSelector').then(m => ({ default: m.PackageSelector })))
 const MfaChallengePage     = lazy(() => import('./pages/clinicOS/MfaChallenge').then(m => ({ default: m.MfaChallenge })))
-const ClinicOSAdminPage    = lazy(() => import('./pages/clinicOS/admin/ClinicOSAdmin').then(m => ({ default: m.ClinicOSAdmin })))
 
 // The dashboard, shared by real tenants and the /demo-review sales tour.
 const DashboardV2Layout        = lazy(() => import('./dashboard/components/DashboardV2Layout').then(m => ({ default: m.DashboardV2Layout })))
@@ -137,13 +131,8 @@ function App() {
         <ScrollToTop />
         <Suspense fallback={null}>
           <Routes>
-            <Route path="/" element={<SignalRedirect />} />
-            <Route path="/clinic-ai" element={<ClinicAILanding />} />
-            <Route path="/case-studies/raz" element={<RazCaseStudy />} />
-            <Route path="/demo/raz" element={<RazNabrahDemo />} />
-            <Route path="/lumora" element={<Lumora />} />
-            <Route path="/car-wash" element={<Navigate to="/" replace />} />
-            <Route path="/clinic" element={<Navigate to="/" replace />} />
+            <Route path="/" element={<Navigate to="/clinic-os/login" replace />} />
+            <Route path="/demo/*" element={<DemoRedirect />} />
             <Route path="/clinic-os" element={<Navigate to="/clinic-os/login" replace />} />
 
             {/* ── ClinicOS Auth & Onboarding ── */}
@@ -152,8 +141,7 @@ function App() {
             <Route path="/clinic-os/signup"   element={<ClinicOSSignupPage />} />
             <Route path="/clinic-os/demo"     element={<DemoSignupPage />} />
             <Route path="/clinic-os/demo/confirm" element={<DemoConfirmPage />} />
-            <Route path="/demo-review/internal-admin" element={<ClinicOSAdminPage embedded />} />
-            <Route path="/clinic-os/admin" element={<ClinicOSAdminPage />} />
+            <Route path="/clinic-os/admin" element={<Navigate to="/admin" replace />} />
             <Route path="/clinic-os/select"   element={
               <WorkspaceProvider><PackageSelectorPage /></WorkspaceProvider>
             } />
@@ -175,7 +163,6 @@ function App() {
               {dashboardChildRoutes}
             </Route>
 
-            <Route path="/real-estate" element={<Navigate to="/#products" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
@@ -192,7 +179,6 @@ function App() {
             <Route path="/client/*" element={<Navigate to="/clinic-os/dashboard" replace />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
-            <Route path="/book-a-call" element={<BookACallPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
