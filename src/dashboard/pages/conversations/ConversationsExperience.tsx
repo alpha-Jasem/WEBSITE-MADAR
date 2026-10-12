@@ -16,6 +16,9 @@ import {
   type ConvChannel, type ConvItem,
 } from './model'
 import { Chip, ChannelIcon, ConvRow, Sk, TagChips } from './ui'
+import { TagManager } from './TagManager'
+import { useTagRules } from '@/lib/queries/tagRules'
+import { Dialog } from '@/dashboard/components/primitives'
 import { RecordingPlayer } from './RecordingPlayer'
 import { ConvTable } from './ConvTable'
 import { ConversationAnalysis, ConversationOverview, VerdictCard } from './DetailTabs'
@@ -44,10 +47,13 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
   const { calls, messages, loading } = useConversationData(companyId, isDemo)
   const { data: tickets } = useSupportTickets(showTickets ? companyId : null, isDemo && showTickets)
 
+  const { rules: tagRules } = useTagRules(companyId, isDemo)
+  const [tagsOpen, setTagsOpen] = useState(false)
   const items = useMemo(() => buildConversations(calls, messages, {
     includePhone: mode === 'calls' || showVoice,
     includeMessages: mode === 'all',
-  }), [calls, messages, mode, showVoice])
+    tagRules,
+  }), [calls, messages, mode, showVoice, tagRules])
 
   const openId = params.get('id')
   const filter = (params.get('filter') as Filter) || 'all'
@@ -188,6 +194,10 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
         </div>
       </div>
 
+      <Dialog open={tagsOpen} title="إدارة الوسوم" onClose={() => setTagsOpen(false)}>
+        <TagManager />
+      </Dialog>
+
       <div className="nx-filters">
         <div className="nx-seg" role="group" aria-label="تصفية">
           {filterOptions.map(([k, l]) => (
@@ -200,6 +210,7 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
             </button>
           ))}
         </div>
+        <button type="button" className="nx-btn" onClick={() => setTagsOpen(true)}>إدارة الوسوم</button>
         {tagOptions.length > 0 && (
           <select
             className="nx-input" style={{ width: 'auto', minWidth: 130 }} aria-label="الوسم" value={tagFilter}

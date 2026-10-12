@@ -11,6 +11,7 @@ import { CLINIC_PLANS, getUsageMetrics, usagePercentage } from '@/lib/clinicOSPr
 import { isIntegrationVisible } from '@/dashboard/modules'
 import { Card, Button, Input, Select, Badge, Dialog, type BadgeTone } from '@/dashboard/components/primitives'
 import { useToast, Avatar } from '@/dashboard/components/uiExtras'
+import { TagManager } from './conversations/TagManager'
 import { NightPage, PageHead, CardTitle, Meter, Toggle, Chip, EmptyLine, fmtNum } from './shared/night'
 
 const DAYS: { key: string; label: string }[] = [
@@ -338,6 +339,11 @@ export function DashboardV2Settings() {
           )}
         </Card>
       </div>
+
+      <Card>
+        <CardTitle aside="الموظف يوسم المحادثات تلقائيًا">وسوم المحادثات</CardTitle>
+        <TagManager />
+      </Card>
 
       <div className="np-grid-2 even">
         <Card>

@@ -1,6 +1,6 @@
 import type { AICallLog, AICallChannel, MessageLog, MessageStatus } from '@/types/dashboard'
 import { aiCallIntentLabel, aiCallResultLabel } from '@/lib/aiCallLabels'
-import { callTags, type CallTag } from '@/lib/callTags'
+import { callTags, type CallTag, type TagRule } from '@/lib/callTags'
 import { callTitle, callTopic, callVerdict, collectedValue, normalizePhone, type Verdict } from '@/lib/callAnalysis'
 import { timeAgo } from '../HomeWidgets'
 
@@ -78,7 +78,8 @@ export function itemChip(item: ConvItem): [string, Tone] {
   return item.call ? callChip(item.call) : threadChip(item)
 }
 
-export function buildConversations(calls: AICallLog[], messages: MessageLog[], opts: { includePhone: boolean; includeMessages: boolean }): ConvItem[] {
+export function buildConversations(calls: AICallLog[], messages: MessageLog[], opts: { includePhone: boolean; includeMessages: boolean; tagRules?: TagRule[] }): ConvItem[] {
+  const rules = opts.tagRules || []
   const items: ConvItem[] = []
   for (const c of calls) {
     const ch = callChannel(c)
@@ -89,8 +90,8 @@ export function buildConversations(calls: AICallLog[], messages: MessageLog[], o
     items.push({
       key: `call:${c.id}`, kind: 'call', channel: ch, name, phone: c.phone || '', time: c.call_time,
       summary, title, verdict: callVerdict(c), messageCount: c.transcript?.length || 0,
-      haystack: `${callTags(c).map((t) => t.label).join(' ')} ${name} ${c.phone || ''} ${normalizePhone(c.phone)} ${summary} ${title} ${callTopic(c)} ${c.analysis?.user_id || ''}`.toLowerCase(),
-      needsAction: callNeedsAction(c), tags: callTags(c), call: c,
+      haystack: `${callTags(c, rules).map((t) => t.label).join(' ')} ${name} ${c.phone || ''} ${normalizePhone(c.phone)} ${summary} ${title} ${callTopic(c)} ${c.analysis?.user_id || ''}`.toLowerCase(),
+      needsAction: callNeedsAction(c), tags: callTags(c, rules), call: c,
     })
   }
   if (opts.includeMessages) {

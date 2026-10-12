@@ -4,6 +4,14 @@ import { collectedData } from './callAnalysis'
 /** One automatic tag: what the conversation was about, read from its summary and collected data. */
 export interface CallTag { id: string; label: string }
 
+/** A company's override of the automatic tags (conversation_tag_rules): rename or turn off a built-in tag, or a custom tag matched by keywords. */
+export interface TagRule { tag_key: string; label: string; keywords?: string | null; enabled: boolean }
+
+export const CUSTOM_TAG_PREFIX = 'custom_'
+
+/** The built-in tags, for the settings screen (filled right after RULES). */
+export const BUILT_IN_TAGS: CallTag[] = []
+
 interface Rule { id: string; label: string; re: RegExp }
 
 // Order is display order. Matching is on Arabic and English wording, so Nabrah and ElevenLabs rows both work.
@@ -20,7 +28,14 @@ const RULES: Rule[] = [
   { id: 'transfer', label: 'تحويل لموظف', re: /تحويل لموظف|موظف مبيعات|التواصل مع الموظف|transfer|human agent|escalat/i },
 ]
 
-const MAX_TAGS = 3
+export const MAX_TAGS = 3
+
+BUILT_IN_TAGS.push(...RULES.map(({ id, label }) => ({ id, label })), { id: 'inquiry', label: 'استفسار عام' })
+
+/** Keywords typed in settings: separated by commas, Arabic commas or new lines. */
+export function parseKeywords(raw?: string | null): string[] {
+  return String(raw || '').split(/[,،\n]+/).map((k) => k.trim().toLowerCase()).filter(Boolean)
+}
 
 /** Collected fields that, when filled, say something on their own (e.g. a budget means a sales lead). */
 const FIELD_TAGS: Record<string, string> = {
@@ -37,8 +52,10 @@ function textOf(c: AICallLog): string {
  * dashboard from the summary, the platform title and the data the agent collected, so it
  * works on every row already saved. A conversation that matches nothing gets "استفسار عام".
  */
-export function callTags(c: AICallLog): CallTag[] {
+export function callTags(c: AICallLog, rules: TagRule[] = []): CallTag[] {
   const text = textOf(c)
+  const lower = text.toLowerCase()
+  const byKey = new Map(rules.map((r) => [r.tag_key, r]))
   const hit = new Set<string>()
   for (const r of RULES) if (r.re.test(text)) hit.add(r.id)
   for (const f of collectedData(c)) {
@@ -54,14 +71,22 @@ export function callTags(c: AICallLog): CallTag[] {
   if (hit.has('visit')) hit.delete('booking')
   // Pricing questions are part of sales interest.
   if (hit.has('sales')) hit.delete('pricing')
-  const tags = RULES.filter((r) => hit.has(r.id)).slice(0, MAX_TAGS).map(({ id, label }) => ({ id, label }))
-  return tags.length ? tags : [{ id: 'inquiry', label: 'استفسار عام' }]
+  // The company's own tags come first, then the built-in ones it has not turned off (renamed ones use its label).
+  const custom: CallTag[] = rules
+    .filter((r) => r.tag_key.startsWith(CUSTOM_TAG_PREFIX) && r.enabled && parseKeywords(r.keywords).some((k) => lower.includes(k)))
+    .map((r) => ({ id: r.tag_key, label: r.label }))
+  const builtIn: CallTag[] = RULES.filter((r) => hit.has(r.id) && byKey.get(r.id)?.enabled !== false)
+    .map((r) => ({ id: r.id, label: byKey.get(r.id)?.label || r.label }))
+  const tags = [...custom, ...builtIn].slice(0, MAX_TAGS)
+  if (tags.length) return tags
+  const general = byKey.get('inquiry')
+  return general?.enabled === false ? [] : [{ id: 'inquiry', label: general?.label || 'استفسار عام' }]
 }
 
 /** Every tag present in a list of calls, with counts, for the filter. */
-export function tagCounts(calls: AICallLog[]): Array<CallTag & { count: number }> {
+export function tagCounts(calls: AICallLog[], rules: TagRule[] = []): Array<CallTag & { count: number }> {
   const map = new Map<string, CallTag & { count: number }>()
-  for (const c of calls) for (const t of callTags(c)) {
+  for (const c of calls) for (const t of callTags(c, rules)) {
     const e = map.get(t.id)
     if (e) e.count += 1; else map.set(t.id, { ...t, count: 1 })
   }
