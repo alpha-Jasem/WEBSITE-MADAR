@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Bot, Check, Globe, Info, MessageCircle, Pause, Phone, Play } from 'lucide-react'
+import { AudioLines, Bot, Check, Globe, Info, MessageCircle, Pause, Phone, Play } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { Button } from '@/dashboard/components/primitives'
 import { useToast, Skeleton } from '@/dashboard/components/uiExtras'
@@ -46,7 +46,6 @@ export function DashboardV2Agents() {
   }, [saved, defaults, dirty])
 
   const testUrl = (links || []).map(webAgentUrl).find(Boolean) || null
-  const showTest = isDemo || !!testUrl
 
   const edit = (patch: Partial<AgentSettings>) => { setDraft((d) => ({ ...d, ...patch })); setDirty(true) }
   const editDay = (i: number, patch: Partial<WorkingDay>) => {
@@ -82,6 +81,7 @@ export function DashboardV2Agents() {
   function testCall() {
     if (isDemo) { setTestOpen(true); return }
     if (testUrl) window.open(testUrl, '_blank', 'noopener,noreferrer')
+    else pushToast({ kind: 'info', title: 'المعاينة تتفعّل بعد ربط الوكيل', description: 'اربط حسابك بمنصة الوكيل من صفحة التكاملات، وبعدها تقدر تجرّبه من هنا.' })
   }
 
   const name = draft.agent_name || 'الوكيل الذكي'
@@ -91,7 +91,7 @@ export function DashboardV2Agents() {
     onClick: () => persist(draft, 'انحفظت الإعدادات'), disabled: !canStore || saving || !dirty,
   })
 
-  // ?test=1 (the top bar's "معاينة الوكيل") opens the test call once the agent's links are known.
+  // ?test=1 (links into "معاينة الوكيل") opens the test call once the agent's links are known.
   const [params, setParams] = useSearchParams()
   useEffect(() => {
     if (params.get('test') !== '1' || (!isDemo && caps.agentLinks && links == null)) return
@@ -111,7 +111,7 @@ export function DashboardV2Agents() {
           <p className="ops-sub">كيف يرد {name}، ومتى، ولمين يحوّل</p>
         </div>
         <div className="ops-actions">
-          {showTest && <Button variant="secondary" onClick={testCall}><Phone size={15} /> جرّب مكالمة</Button>}
+          <Button variant="secondary" onClick={testCall}><AudioLines size={15} /> معاينة الوكيل</Button>
           <span className="shell-dup"><Button onClick={() => persist(draft, 'انحفظت الإعدادات')} disabled={!canStore || saving || !dirty}><Check size={15} /> {saving ? 'جارِ الحفظ...' : 'حفظ'}</Button></span>
         </div>
       </div>

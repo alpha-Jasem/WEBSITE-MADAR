@@ -1,9 +1,18 @@
-import { useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Settings, Users, CreditCard, LogOut } from 'lucide-react'
+import {
+  Settings, CreditCard, BarChart3, Palette, Sun, Moon, Monitor, LifeBuoy, Gift, Keyboard, MessageCircle,
+  ScrollText, FileText, Shield, LogOut,
+} from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
-import { getOverallUsage, getUsageMetrics } from '@/lib/clinicOSProduct'
-import { OrbAvatar } from './OrbAvatar'
+import { CLINIC_PLANS, getOverallUsage, getUsageMetrics } from '@/lib/clinicOSProduct'
+import { MADAR_WHATSAPP_NUMBER } from '@/lib/constants'
+import { ShellMenu, type MenuEntry } from './ShellMenu'
+import { UsageRingAvatar } from './UsageRingAvatar'
+import { openWhatsNew } from './WhatsNew'
+import { requestOpenShortcuts } from './shellActions'
+
+export type ThemePref = 'light' | 'dark' | 'system'
 
 /** Seed for the person's orb: stable per signed-in user. */
 export function useOrbSeed() {
@@ -11,87 +20,131 @@ export function useOrbSeed() {
   return userEmail || companyId || companyName || 'madar'
 }
 
-export function AccountMenu({ base }: { base: string }) {
-  const navigate = useNavigate()
-  const { companyName, userName, userEmail, packageType, isDemo, usageMetrics, logout } = useWorkspace()
-  const seed = useOrbSeed()
-  const [open, setOpen] = useState(false)
-  const [hover, setHover] = useState(false)
-
+/** Share of the plan used this cycle (the metric closest to its limit), 0–100. */
+export function usePlanUsage() {
+  const { packageType, isDemo, usageMetrics } = useWorkspace()
   const metrics = isDemo ? getUsageMetrics(packageType) : usageMetrics
-  const overall = getOverallUsage(packageType, metrics)
+  return getOverallUsage(packageType, metrics)
+}
 
-  function go(path: string) {
+export const ACCOUNT_MENU_CSS = `
+  .am-btn { width: 40px; height: 40px; border-radius: 8px; border: 0; padding: 0; background: transparent; display: grid; place-items: center;
+    cursor: pointer; flex: none; transition: background-color 150ms cubic-bezier(.4,0,.2,1) !important; }
+  .am-btn:hover, .am-btn[aria-expanded="true"] { background: var(--hover-bg); }
+  .am-card { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 4px; background: color-mix(in srgb, var(--panel-2) 70%, transparent); }
+  .am-card-head { display: flex; align-items: center; gap: 8px; min-height: 28px; }
+  .am-card-head b { font-size: 14.5px; font-weight: 500; color: var(--ink); }
+  .am-mini-ring { width: 18px; height: 18px; flex: none; }
+  .am-mini-ring circle { fill: none; stroke-width: 12; stroke-linecap: round; }
+  .am-upgrade { margin-inline-start: auto; height: 28px; padding: 0 10px; border-radius: 6px; border: 0; background: var(--pri-bg); color: var(--pri-fg);
+    font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: background-color 150ms cubic-bezier(.4,0,.2,1) !important; }
+  .am-upgrade:hover, .am-upgrade:focus-visible { background: var(--pri-hover); }
+  .am-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13.5px; margin-top: 6px; }
+  .am-row span { color: var(--muted); }
+  .am-row b { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .am-ws-label { font-size: 12px; color: var(--dim); }
+  .am-ws-name { font-size: 14.5px; font-weight: 600; color: var(--ink); margin-top: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .am-ws-plan { font-size: 12.5px; color: var(--muted); margin-top: 1px; }
+`
+
+function MiniRing({ pct }: { pct: number }) {
+  const c = 2 * Math.PI * 42
+  return (
+    <svg className="am-mini-ring" viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="50" r="42" stroke="var(--line-2)" />
+      <circle cx="50" cy="50" r="42" stroke="var(--ink)" transform="rotate(-90 50 50)" strokeDasharray={`${(Math.max(1, pct) / 100) * c} ${c}`} />
+    </svg>
+  )
+}
+
+export function AccountMenu({ base, themePref, onThemeChange }: {
+  base: string
+  themePref: ThemePref
+  onThemeChange: (pref: ThemePref) => void
+}) {
+  const navigate = useNavigate()
+  const { companyName, packageType, logout } = useWorkspace()
+  const seed = useOrbSeed()
+  const overall = usePlanUsage()
+  const [open, setOpen] = useState(false)
+  const [viaKey, setViaKey] = useState(false)
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const planName = CLINIC_PLANS[packageType]?.name
+
+  const close = useCallback((returnFocus: boolean) => {
     setOpen(false)
-    navigate(path)
-  }
+    if (returnFocus) btnRef.current?.focus({ preventScroll: true })
+  }, [])
+
+  const go = (path: string) => () => navigate(path)
+  const ext = (url: string) => () => window.open(url, '_blank', 'noopener,noreferrer')
+
+  const items: MenuEntry[] = [
+    {
+      kind: 'node', id: 'usage', node: (
+        <div className="am-card">
+          <div className="am-card-head">
+            <MiniRing pct={overall} />
+            <b>باقتك</b>
+            <button type="button" role="menuitem" data-mi className="am-upgrade" onClick={() => { close(false); navigate(`${base}/plan-usage`) }}>ترقية</button>
+          </div>
+          <div className="am-row"><span>الاستهلاك الكلي</span><b dir="ltr">{overall}%</b></div>
+          <div className="am-row"><span>المتبقي</span><b dir="ltr">{Math.max(0, 100 - overall)}%</b></div>
+        </div>
+      ),
+    },
+    {
+      kind: 'node', id: 'workspace', node: (
+        <div className="am-card">
+          <div className="am-ws-label">المنشأة الحالية</div>
+          <div className="am-ws-name">{companyName || 'منشأتك'}</div>
+          <div className="am-ws-plan">{planName ? `باقة ${planName}` : 'بدون باقة'}</div>
+        </div>
+      ),
+    },
+    { kind: 'item', id: 'settings', label: 'الإعدادات', icon: <Settings />, onSelect: go(`${base}/settings`) },
+    { kind: 'item', id: 'billing', label: 'الفوترة والاشتراك', icon: <CreditCard />, onSelect: go(`${base}/plan-usage`) },
+    { kind: 'item', id: 'usage-analytics', label: 'تحليلات الاستخدام', icon: <BarChart3 />, onSelect: go(`${base}/plan-usage`) },
+    {
+      kind: 'sub', id: 'theme', label: 'المظهر', icon: <Palette />, items: [
+        { kind: 'radio', id: 'light', label: 'فاتح', icon: <Sun />, checked: themePref === 'light', onSelect: () => onThemeChange('light') },
+        { kind: 'radio', id: 'dark', label: 'داكن', icon: <Moon />, checked: themePref === 'dark', onSelect: () => onThemeChange('dark') },
+        { kind: 'radio', id: 'system', label: 'تلقائي', icon: <Monitor />, checked: themePref === 'system', onSelect: () => onThemeChange('system') },
+      ],
+    },
+    { kind: 'sep', id: 's1' },
+    {
+      kind: 'sub', id: 'docs', label: 'الدليل والموارد', icon: <LifeBuoy />, items: [
+        { kind: 'item', id: 'news', label: 'ما الجديد', icon: <Gift />, onSelect: openWhatsNew },
+        { kind: 'item', id: 'keys', label: 'اختصارات لوحة المفاتيح', icon: <Keyboard />, onSelect: requestOpenShortcuts },
+        { kind: 'item', id: 'wa', label: 'الدعم عبر واتساب', icon: <MessageCircle />, onSelect: ext(`https://wa.me/${MADAR_WHATSAPP_NUMBER}`) },
+      ],
+    },
+    {
+      kind: 'sub', id: 'legal', label: 'الشروط والخصوصية', icon: <ScrollText />, items: [
+        { kind: 'item', id: 'terms', label: 'الشروط والأحكام', icon: <FileText />, onSelect: ext('/terms') },
+        { kind: 'item', id: 'privacy', label: 'سياسة الخصوصية', icon: <Shield />, onSelect: ext('/privacy') },
+      ],
+    },
+    { kind: 'sep', id: 's2' },
+    { kind: 'item', id: 'logout', label: 'تسجيل الخروج', icon: <LogOut />, onSelect: () => { void logout() } },
+  ]
 
   return (
-    <div style={{ position: 'relative' }}>
+    <>
       <button
+        ref={btnRef}
         type="button"
-        aria-label="قائمة الحساب"
+        className="am-btn"
+        aria-label={`الحساب — مستهلك ${overall}% من الباقة`}
+        aria-haspopup="menu"
         aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-        onMouseEnter={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
-        style={{
-          width: 30, height: 30, borderRadius: '50%', cursor: 'pointer', flexShrink: 0, padding: 0,
-          border: 0, background: 'none', display: 'grid', placeItems: 'center',
-        }}
-      ><OrbAvatar seed={seed} size={28} /></button>
-
-      {hover && !open && (
-        <div style={{
-          position: 'absolute', top: '130%', insetInlineEnd: 0, whiteSpace: 'nowrap', zIndex: 1300,
-          background: 'var(--surface-inverse)', color: '#fff', padding: '6px 10px', borderRadius: 'var(--radius-md)',
-          fontSize: 11.5, boxShadow: 'var(--shadow-lg)',
-        }}>
-          {overall}% من الاستخدام الشهري مستهلك
-        </div>
-      )}
-
-      {open && (
-        <>
-          <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1200 }} />
-          <div style={{
-            position: 'absolute', top: '130%', insetInlineEnd: 0, width: 240,
-            background: 'var(--surface-raised)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', zIndex: 1300,
-            border: '1px solid var(--border-default)', overflow: 'hidden',
-          }}>
-            <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border-default)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <OrbAvatar seed={seed} size={32} />
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userName || companyName || 'حسابي'}</div>
-                  {userEmail && <div dir="ltr" style={{ fontSize: 11.5, color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'end' }}>{userEmail}</div>}
-                </div>
-              </div>
-              <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 8 }}>{overall}% من الاستخدام الشهري</div>
-            </div>
-            {[
-              { icon: Settings, label: 'الإعدادات', action: () => go(`${base}/settings`) },
-              { icon: Users, label: 'الفريق', action: () => go(`${base}/settings`) },
-              { icon: CreditCard, label: 'الاشتراك والاستخدام', action: () => go(`${base}/plan-usage`) },
-            ].map((item) => (
-              <div
-                key={item.label}
-                onClick={item.action}
-                className="dv2-menu-row"
-                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', fontSize: 13, cursor: 'pointer', color: 'var(--text-secondary)' }}
-              >
-                <item.icon size={15} /> {item.label}
-              </div>
-            ))}
-            <div
-              onClick={logout}
-              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', fontSize: 13, cursor: 'pointer', color: 'var(--danger-500)', borderTop: '1px solid var(--border-default)' }}
-            >
-              <LogOut size={15} /> تسجيل الخروج
-            </div>
-          </div>
-        </>
-      )}
-    </div>
+        onClick={(e) => { setViaKey(e.detail === 0); setOpen((v) => !v) }}
+        onKeyDown={(e) => { if (e.key === 'ArrowDown') { e.preventDefault(); setViaKey(true); setOpen(true) } }}
+      >
+        <UsageRingAvatar percent={overall} open={open} seed={seed} />
+      </button>
+      <ShellMenu open={open} anchorRef={btnRef} onClose={close} items={items} label="قائمة الحساب" width={264} focusFirst={viaKey} />
+    </>
   )
 }

@@ -10,13 +10,14 @@ import {
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useSupportTickets } from '@/lib/dashboardQueries'
 import { CLINIC_PLANS, getUsageMetrics, usagePercentage } from '@/lib/clinicOSProduct'
-import { useOrbSeed } from './AccountMenu'
+import { useOrbSeed, type ThemePref } from './AccountMenu'
 import { OrbAvatar } from './OrbAvatar'
 import { SupportChat } from './SupportChat'
 import { GlobalSearch } from './GlobalSearch'
 import { OnboardingWizard } from './OnboardingWizard'
 import { TopBar, TOPBAR_CSS } from './TopBar'
 import { WhatsNew } from './WhatsNew'
+import { RELEASES } from '@/dashboard/whatsNew'
 import {
   ToastProvider, requestOpenSearch, ShortcutsOverlay, Fab, Tooltip,
 } from './uiExtras'
@@ -168,7 +169,24 @@ export function DashboardV2Layout() {
   const location = useLocation()
   const { companyId, isDemo, accountError, refreshAccount, businessType, hasModule, packageType, usageMetrics, companyName, companyLogoUrl } = useWorkspace()
   const showBookings = hasModule('bookings')
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => (readStored(THEME_KEY) === 'light' ? 'light' : 'dark'))
+  // Theme preference: light / dark / follow the system ("تلقائي"), set from the account menu.
+  const [themePref, setThemePref] = useState<ThemePref>(() => {
+    const v = readStored(THEME_KEY)
+    return v === 'light' || v === 'system' ? v : 'dark'
+  })
+  const [systemDark, setSystemDark] = useState(() => {
+    try { return window.matchMedia('(prefers-color-scheme: dark)').matches } catch { return true }
+  })
+  useEffect(() => {
+    if (themePref !== 'system') return
+    let mq: MediaQueryList
+    try { mq = window.matchMedia('(prefers-color-scheme: dark)') } catch { return }
+    const onChange = () => setSystemDark(mq.matches)
+    onChange()
+    mq.addEventListener?.('change', onChange)
+    return () => mq.removeEventListener?.('change', onChange)
+  }, [themePref])
+  const theme: 'light' | 'dark' = themePref === 'system' ? (systemDark ? 'dark' : 'light') : themePref
   const [collapsed, setCollapsed] = useState(() => readStored(COLLAPSE_KEY) === '1')
   const [moreOpen, setMoreOpen] = useState(false)
   const colRef = useRef<HTMLDivElement>(null)
@@ -195,12 +213,9 @@ export function DashboardV2Layout() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  function toggleTheme() {
-    setTheme((t) => {
-      const next = t === 'dark' ? 'light' : 'dark'
-      writeStored(THEME_KEY, next)
-      return next
-    })
+  function changeTheme(pref: ThemePref) {
+    setThemePref(pref)
+    writeStored(THEME_KEY, pref)
   }
   function toggleCollapsed() {
     setCollapsed((v) => {
@@ -275,11 +290,12 @@ export function DashboardV2Layout() {
   const planName = CLINIC_PLANS[packageType]?.name
   const ctxTone = topPct >= 100 ? 'bad' : topPct >= 80 ? 'warn' : ''
 
-  // Breadcrumb: company › current page.
+  // Top-bar title: the current page.
   const activeItem = allItems.find((it) => isActive(it.path))
   const subPath = location.pathname.slice(base.length + 1).split('/')[0]
   const pageTitle = activeItem?.label || EXTRA_TITLES[subPath] || 'الرئيسية'
   const company = companyName || 'مدار'
+  const hasPageNews = RELEASES.some((r) => r.link && r.link === subPath)
 
   const navButton = (item: NavItem) => {
     const btn = (
@@ -350,10 +366,10 @@ export function DashboardV2Layout() {
         <TopBar
           base={base}
           routeKey={location.pathname}
-          company={company}
           pageTitle={pageTitle}
-          theme={theme}
-          onToggleTheme={toggleTheme}
+          hasPageNews={hasPageNews}
+          themePref={themePref}
+          onThemeChange={changeTheme}
           sidebarCollapsed={collapsed}
           onToggleSidebar={toggleSidebar}
         />
