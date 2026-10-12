@@ -347,7 +347,7 @@ export function DashboardV2Bookings() {
       <PageHead
         title={label}
         sub={loading ? 'جارِ التحميل…' : `${fmtNum(todayRows.length)} اليوم · ${fmtNum(todayPending)} بانتظار التأكيد`}
-        actions={<Button onClick={() => setOpen(true)}><Plus size={15} /> {word} جديد</Button>}
+        actions={<span className="shell-dup"><Button onClick={() => setOpen(true)}><Plus size={15} /> {word} جديد</Button></span>}
       />
 
       {/* Week strip + the chosen day's list, as in the prototype */}

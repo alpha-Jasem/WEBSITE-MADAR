@@ -112,7 +112,7 @@ export function DashboardV2Agents() {
         </div>
         <div className="ops-actions">
           {showTest && <Button variant="secondary" onClick={testCall}><Phone size={15} /> جرّب مكالمة</Button>}
-          <Button onClick={() => persist(draft, 'انحفظت الإعدادات')} disabled={!canStore || saving || !dirty}><Check size={15} /> {saving ? 'جارِ الحفظ...' : 'حفظ'}</Button>
+          <span className="shell-dup"><Button onClick={() => persist(draft, 'انحفظت الإعدادات')} disabled={!canStore || saving || !dirty}><Check size={15} /> {saving ? 'جارِ الحفظ...' : 'حفظ'}</Button></span>
         </div>
       </div>
 

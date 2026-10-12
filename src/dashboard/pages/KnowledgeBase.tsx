@@ -58,7 +58,7 @@ export function DashboardV2KnowledgeBase() {
           <h1 className="ops-h1">قاعدة المعرفة</h1>
           <p className="ops-sub">اللي يعرفه {agentName} عن {biz}. أضف الأسئلة اللي يسألها عملاؤك مع جوابها.</p>
         </div>
-        <Button onClick={() => setTarget({ mode: 'new' })}><Plus size={15} /> سؤال جديد</Button>
+        <span className="shell-dup"><Button onClick={() => setTarget({ mode: 'new' })}><Plus size={15} /> سؤال جديد</Button></span>
       </div>
 
       {ready && caps.unanswered && pend.length > 0 && (

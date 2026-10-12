@@ -154,3 +154,6 @@
   .dv2-scope * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
   .dv2-scope, .dv2-scope * { transition-duration: 0.001ms !important; }
 }
+
+/* The top bar carries the page's primary action on desktop; the page header copy is for phones. */
+@media (min-width: 901px) { .shell-dup { display: none; } }

@@ -124,7 +124,7 @@ export function DashboardV2Tickets() {
           <h1 className="ops-h1">التذاكر</h1>
           <p className="ops-sub">طلبات العملاء اللي تحتاج متابعة من فريقك. الوكيل الذكي يفتحها تلقائيًا من المكالمات</p>
         </div>
-        <Button onClick={() => { setCallId(null); setNewOpen(true) }}><Plus size={15} /> تذكرة جديدة</Button>
+        <span className="shell-dup"><Button onClick={() => { setCallId(null); setNewOpen(true) }}><Plus size={15} /> تذكرة جديدة</Button></span>
       </div>
 
       <div className="ops-kpis">
