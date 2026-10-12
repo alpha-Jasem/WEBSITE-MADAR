@@ -9,6 +9,7 @@ import {
   type OpsTicket,
 } from '@/lib/queries/ops'
 import type { TicketStatus } from '@/types/dashboard'
+import { useShellPrimaryAction } from '@/dashboard/components/shellActions'
 import { NewTicketDialog } from './tickets/NewTicketDialog'
 import { TicketDialog } from './tickets/TicketDialog'
 import { PRIORITY, STATUS, customerOf, dueLabel, isAiOpened, isLate, relTime, shortId, typeOf } from './tickets/ticketModel'
@@ -58,6 +59,7 @@ export function DashboardV2Tickets() {
   const [callId, setCallId] = useState<string | null>(null)
   const [params, setParams] = useSearchParams()
   const handledParams = useRef(false)
+  useShellPrimaryAction({ label: 'تذكرة جديدة', icon: <Plus />, onClick: () => { setCallId(null); setNewOpen(true) } })
 
   const all = useMemo(() => tickets || [], [tickets])
   const members = team || []

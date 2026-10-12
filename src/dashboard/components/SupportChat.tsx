@@ -1,15 +1,16 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { MessageCircle, X, Send, Sparkles } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { supabase } from '@/lib/supabase'
+import { useOnOpenSupportRequest } from './shellActions'
 
 interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
 }
 
-const DEMO_REPLY = 'هذا عرض تجريبي — سجّل دخولك بحساب عيادتك عشان تتكلم فعلياً مع دعم مدار الذكي المرتبط ببيانات حسابك.'
+const DEMO_REPLY = 'هذا عرض تجريبي — سجّل دخولك بحسابك عشان تتكلم فعلياً مع دعم مدار الذكي المرتبط ببيانات حسابك.'
 
 export function SupportChat() {
   const location = useLocation()
@@ -23,6 +24,8 @@ export function SupportChat() {
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [remaining, setRemaining] = useState<number | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  // The top bar's "اسأل مدار" and help menu open the panel.
+  useOnOpenSupportRequest(useCallback(() => setOpen(true), []))
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
@@ -132,7 +135,7 @@ export function SupportChat() {
           </div>
         </div>
       )}
-      <div style={{ position: 'relative', width: 44, height: 44, marginInlineStart: 'auto' }}>
+      <div className={open ? undefined : 'dv2-chat-launcher'} style={{ position: 'relative', width: 44, height: 44, marginInlineStart: 'auto' }}>
         <div
           className="dv2-agent-btn"
           role="button"

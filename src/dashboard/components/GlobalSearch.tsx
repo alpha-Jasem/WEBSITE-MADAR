@@ -15,7 +15,7 @@ const RECENT_KEY = 'dv2_recent_searches'
 interface QuickAction { id: string; label: string; icon: React.ReactNode; run: (navigate: ReturnType<typeof useNavigate>, base: string) => void; module?: ModuleId }
 
 const QUICK_ACTIONS: QuickAction[] = [
-  { id: 'new-booking', label: 'حجز جديد', icon: <Plus size={14} />, run: (nav, base) => nav(`${base}/bookings?new=1`), module: 'bookings' },
+  { id: 'new-booking', label: 'موعد جديد', icon: <Plus size={14} />, run: (nav, base) => nav(`${base}/bookings?new=1`), module: 'bookings' },
   { id: 'nav-home', label: 'الرئيسية', icon: <LayoutDashboard size={14} />, run: (nav, base) => nav(base) },
   { id: 'nav-bookings', label: 'الحجوزات', icon: <CalendarDays size={14} />, run: (nav, base) => nav(`${base}/bookings`), module: 'bookings' },
   { id: 'nav-patients', label: 'العملاء', icon: <Users size={14} />, run: (nav, base) => nav(`${base}/patients`), module: 'customers' },

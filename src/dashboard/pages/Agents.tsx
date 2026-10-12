@@ -7,6 +7,8 @@ import {
   WEEK_DAYS, defaultAgentSettings, saveAgentSettings, syncKnowledgeToVoicePlatforms, useAgentLinks, useAgentSettings, useOpsCaps, webAgentUrl,
   type AgentChannels, type AgentSettings, type WorkingDay,
 } from '@/lib/queries/ops'
+import { useShellPrimaryAction } from '@/dashboard/components/shellActions'
+import { useSearchParams } from 'react-router-dom'
 import { TestCallDialog } from './agent/TestCallDialog'
 import { relTime } from './tickets/ticketModel'
 import './tickets/ops.css'
@@ -83,6 +85,23 @@ export function DashboardV2Agents() {
   }
 
   const name = draft.agent_name || 'الوكيل الذكي'
+
+  useShellPrimaryAction({
+    label: saving ? 'جارِ الحفظ...' : 'حفظ', icon: <Check />,
+    onClick: () => persist(draft, 'انحفظت الإعدادات'), disabled: !canStore || saving || !dirty,
+  })
+
+  // ?test=1 (the top bar's "معاينة الوكيل") opens the test call once the agent's links are known.
+  const [params, setParams] = useSearchParams()
+  useEffect(() => {
+    if (params.get('test') !== '1' || (!isDemo && caps.agentLinks && links == null)) return
+    const next = new URLSearchParams(params)
+    next.delete('test')
+    setParams(next, { replace: true })
+    if (isDemo) setTestOpen(true)
+    else if (testUrl) window.open(testUrl, '_blank', 'noopener,noreferrer')
+    else pushToast({ kind: 'info', title: 'المعاينة تتفعّل بعد ربط الوكيل', description: 'اربط حسابك بمنصة الوكيل من صفحة التكاملات، وبعدها تقدر تجرّبه من هنا.' })
+  }, [params, setParams, isDemo, caps.agentLinks, links, testUrl, pushToast])
 
   return (
     <div className="ops-page">

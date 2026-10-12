@@ -7,6 +7,7 @@ import {
   setKnowledgeActive, useKnowledgeItems, useOpsCaps, useUnansweredQuestions,
   type OpsKnowledgeItem,
 } from '@/lib/queries/ops'
+import { useShellPrimaryAction } from '@/dashboard/components/shellActions'
 import { TeachDialog, type TeachTarget } from './knowledge/TeachDialog'
 import { DEFAULT_CATEGORIES, categoryOf } from './knowledge/kbModel'
 import './tickets/ops.css'
@@ -20,6 +21,7 @@ export function DashboardV2KnowledgeBase() {
   const { data: items, loading, error, refetch } = useKnowledgeItems(companyId, isDemo)
   const { data: pending, refetch: refetchPending } = useUnansweredQuestions(companyId, isDemo, caps.unanswered)
   const [target, setTarget] = useState<TeachTarget | null>(null)
+  useShellPrimaryAction({ label: 'إضافة معلومة', icon: <Plus />, onClick: () => setTarget({ mode: 'new' }) })
   const agentName = isDemo ? 'مها' : 'الوكيل الذكي'
   const biz = companyName || (isDemo ? 'شركة نموذجية' : 'منشأتك')
 

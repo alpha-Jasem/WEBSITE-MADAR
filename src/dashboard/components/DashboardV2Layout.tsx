@@ -4,19 +4,21 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { DURATION_MEDIUM, EASE_OUT } from './motionTokens'
 import {
   LayoutDashboard, CalendarDays, Users, MessageSquare, Star, BarChart3,
-  Wallet, BellRing, Settings, AlertTriangle, Plus, CalendarCheck2, Ticket,
-  ClipboardList, BookOpen, Sun, Moon, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Search, ChevronLeft as ChevronLeftIcon, PanelRightClose, PanelRightOpen,
+  Wallet, BellRing, Settings, AlertTriangle, Plus, Ticket,
+  ClipboardList, BookOpen, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Search,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
-import { useSupportTickets, useTodayBookings } from '@/lib/dashboardQueries'
+import { useSupportTickets } from '@/lib/dashboardQueries'
 import { CLINIC_PLANS, getUsageMetrics, usagePercentage } from '@/lib/clinicOSProduct'
-import { NotificationCenter } from './NotificationCenter'
-import { AccountMenu } from './AccountMenu'
+import { useOrbSeed } from './AccountMenu'
+import { OrbAvatar } from './OrbAvatar'
 import { SupportChat } from './SupportChat'
 import { GlobalSearch } from './GlobalSearch'
 import { OnboardingWizard } from './OnboardingWizard'
+import { TopBar, TOPBAR_CSS } from './TopBar'
+import { WhatsNew } from './WhatsNew'
 import {
-  ToastProvider, requestOpenSearch, TopProgressBar, ShortcutsOverlay, WhatsNewBadge, Fab, Tooltip,
+  ToastProvider, requestOpenSearch, ShortcutsOverlay, Fab, Tooltip,
 } from './uiExtras'
 import { bookingsLabel, type ModuleId } from '@/dashboard/modules'
 import '@/styles/dashboardV2Tokens.css'
@@ -76,9 +78,6 @@ const SHELL_CSS = `
   .dv2-side.is-collapsed .dv2-side-search { justify-content: center; padding: 0; }
   .dv2-ctx { display: flex; align-items: center; gap: 10px; padding: 8px; margin-bottom: 4px; border-radius: 10px; border: 1px solid var(--line);
     background: var(--panel); min-width: 0; flex: none; }
-  .dv2-ctx-av { width: 30px; height: 30px; border-radius: 8px; flex: none; display: grid; place-items: center; background: var(--raise); color: var(--ink);
-    font-weight: 600; font-size: 13px; overflow: hidden; }
-  .dv2-ctx-av img { width: 100%; height: 100%; object-fit: cover; }
   .dv2-ctx-txt { min-width: 0; flex: 1; }
   .dv2-ctx b { display: block; font-size: 13px; font-weight: 600; color: var(--ink); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; line-height: 1.4; }
   .dv2-ctx small { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--dim); line-height: 1.4; white-space: nowrap; overflow: hidden; }
@@ -105,40 +104,16 @@ const SHELL_CSS = `
   .dv2-meter.is-hot i { background: var(--warn); }
   .dv2-link { background: none; border: 0; color: var(--muted); font-weight: 500; padding: 0; cursor: pointer; font-size: 12px; margin-top: 8px; }
   .dv2-link:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
-  .dv2-collapse { display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px; margin-top: 6px; border: 0; background: none;
-    border-radius: 8px; cursor: pointer; color: var(--dim); font-size: 12.5px; width: 100%; flex: none; }
-  .dv2-collapse:hover { color: var(--ink); background: var(--hover-bg); }
-  .dv2-side.is-collapsed .dv2-collapse { justify-content: center; padding: 0; }
 
   /* main column — the scroller, so the top bar can stay sticky over it */
   .dv2-col { flex: 1; min-width: 0; height: 100%; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; }
-  .dv2-top { position: sticky; top: 0; z-index: 30; flex: none; background: var(--topbar-bg); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-    border-bottom: 1px solid var(--line); padding: env(safe-area-inset-top, 0px) 28px 0; min-height: 56px; box-sizing: border-box;
-    display: flex; align-items: center; gap: 10px; }
-  .dv2-mlogo { display: none; }
-  .dv2-crumbs { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 13.5px; color: var(--dim); }
-  .dv2-crumbs > span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 220px; }
-  .dv2-crumbs b { color: var(--ink); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .dv2-crumbs svg { flex: none; color: var(--dim); }
-  .dv2-top-actions { margin-inline-start: auto; display: flex; align-items: center; gap: 4px; flex: none; }
-  .dv2-icon-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid;
-    place-items: center; position: relative; color: var(--muted); cursor: pointer; padding: 0; flex: none; }
-  .dv2-icon-btn svg { width: 17px; height: 17px; }
-  .dv2-icon-btn:hover { color: var(--ink); background: var(--hover-bg); }
-  .dv2-today { height: 32px; border-radius: 8px; border: 1px solid var(--line); background: transparent; display: inline-flex; align-items: center;
-    gap: 6px; padding: 0 10px; color: var(--muted); font-weight: 500; font-size: 12.5px; cursor: pointer; font-variant-numeric: tabular-nums; }
-  .dv2-today b { color: var(--ink); font-weight: 600; }
-  .dv2-today:hover { border-color: var(--line-2); color: var(--ink); }
-  .dv2-pri { height: 32px; border-radius: 8px; border: 0; background: var(--pri-bg); color: var(--pri-fg); display: inline-flex; align-items: center;
-    gap: 6px; padding: 0 12px; font-weight: 500; font-size: 13px; cursor: pointer; white-space: nowrap; }
-  .dv2-pri:hover { background: var(--pri-hover); }
-  .dv2-sep { width: 1px; height: 20px; background: var(--line); margin: 0 4px; flex: none; }
   .dv2-content { flex: 1; width: 100%; max-width: 1360px; padding: 28px 32px 110px; box-sizing: border-box; position: relative; }
 
   /* phone tab bar + "more" sheet */
   .dv2-tabbar { display: none; }
-  .dv2-sheet-scrim { position: fixed; inset: 0; z-index: 1350; background: var(--scrim); }
-  .dv2-sheet { position: fixed; inset-inline: 0; bottom: 0; z-index: 1360; background: var(--panel); border-top: 1px solid var(--line-2);
+  /* above the floating chat launcher (1400) so the sheet is never covered */
+  .dv2-sheet-scrim { position: fixed; inset: 0; z-index: 1405; background: var(--scrim); }
+  .dv2-sheet { position: fixed; inset-inline: 0; bottom: 0; z-index: 1410; background: var(--panel); border-top: 1px solid var(--line-2);
     border-radius: 16px 16px 0 0; padding: 10px 12px calc(18px + env(safe-area-inset-bottom, 0px)); max-height: 78vh; overflow-y: auto; }
   .dv2-sheet-grip { width: 36px; height: 4px; border-radius: 99px; background: var(--line-2); margin: 0 auto 8px; }
   .dv2-sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 4px 6px; }
@@ -148,12 +123,6 @@ const SHELL_CSS = `
 
   @media (max-width: 900px) {
     .dv2-side { display: none; }
-    .dv2-top { padding: env(safe-area-inset-top, 0px) 12px 0; min-height: 52px; gap: 8px; }
-    .dv2-mlogo { display: flex; align-items: center; flex: none; }
-    .dv2-mlogo img { width: 24px; height: 24px; object-fit: contain; }
-    .dv2-crumbs > span, .dv2-crumbs > svg { display: none; }
-    .dv2-crumbs b { font-size: 15px; font-weight: 600; }
-    .dv2-top-actions { gap: 2px; }
     .dv2-content { padding: 18px 16px calc(150px + env(safe-area-inset-bottom, 0px)); }
     .dv2-tabbar { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); position: fixed; bottom: 0; inset-inline: 0; z-index: 1300;
       background: var(--tabbar-bg); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-top: 1px solid var(--line);
@@ -173,8 +142,9 @@ const SHELL_CSS = `
     .dv2-responsive-grid-2 { grid-template-columns: 1fr 1fr !important; }
     .dv2-kpi-hero-grid { grid-template-columns: 1fr !important; }
   }
-  @media (max-width: 380px) {
-    .dv2-today { display: none; }
+  /* the top bar's "اسأل مدار" replaces the floating chat launcher on wide screens */
+  @media (min-width: 901px) {
+    .dv2-chat-launcher { display: none !important; }
   }
   @media (prefers-reduced-motion: reduce) {
     .dv2-side, .dv2-nav { transition: none; }
@@ -204,8 +174,9 @@ export function DashboardV2Layout() {
   const colRef = useRef<HTMLDivElement>(null)
   const { data: tickets } = useSupportTickets(companyId, isDemo)
   const openTicketCount = (tickets || []).filter((t) => t.status === 'open').length
-  const { data: todayAppointments } = useTodayBookings(companyId, isDemo)
-  const todayCount = (todayAppointments || []).length
+  const orbSeed = useOrbSeed()
+  // The phone sheet: "more" (items not in the tab bar) or the full menu (from the top-bar toggle).
+  const [sheetMode, setSheetMode] = useState<'more' | 'all'>('more')
   useViewportFitCover()
 
   useEffect(() => {
@@ -237,13 +208,19 @@ export function DashboardV2Layout() {
       return !v
     })
   }
+  /** Top-bar toggle: collapses the sidebar on desktop, opens the full menu on phones. */
+  function toggleSidebar() {
+    let phone = false
+    try { phone = window.matchMedia('(max-width: 900px)').matches } catch { /* old browser: treat as desktop */ }
+    if (phone) { setSheetMode('all'); setMoreOpen(true) } else toggleCollapsed()
+  }
 
   const base = isDemo ? '/demo-review' : '/clinic-os/dashboard'
   // Grouped like a product console: overview, daily operations, the AI agent, setup.
   const ALL_NAV_GROUPS: { title: string; items: NavItem[] }[] = [
     { title: 'نظرة عامة', items: [
       { label: 'الرئيسية', path: base, icon: <LayoutDashboard size={16} /> },
-      { label: 'تحليلات الموظف', short: 'التحليلات', path: `${base}/agent-analytics`, icon: <Sparkles size={16} />, module: 'voice' },
+      { label: 'تحليلات الوكيل', short: 'التحليلات', path: `${base}/agent-analytics`, icon: <Sparkles size={16} />, module: 'voice' },
       { label: 'التقارير والتحليلات', short: 'التقارير', path: `${base}/reports`, icon: <BarChart3 size={16} />, module: 'reports' },
       { label: 'الإيرادات', path: `${base}/revenue`, icon: <Wallet size={16} />, module: 'revenue' },
     ] },
@@ -256,7 +233,7 @@ export function DashboardV2Layout() {
       { label: 'المتابعات', path: `${base}/reminders`, icon: <BellRing size={16} />, module: 'reminders' },
     ] },
     { title: 'الوكيل الذكي', items: [
-      { label: 'إعدادات الموظف', short: 'الموظف', path: `${base}/agents`, icon: <Bot size={16} /> },
+      { label: 'إعدادات الوكيل', short: 'الوكيل', path: `${base}/agents`, icon: <Bot size={16} /> },
       { label: 'قاعدة المعرفة', short: 'المعرفة', path: `${base}/knowledge-base`, icon: <BookOpen size={16} />, module: 'knowledge_base' },
       { label: 'سجل المكالمات', path: `${base}/call-logs`, icon: <ClipboardList size={16} />, module: 'voice' },
       { label: 'العملاء من المحادثات', short: 'عملاء المحادثات', path: `${base}/agent-users`, icon: <Contact size={16} />, module: 'voice' },
@@ -328,7 +305,7 @@ export function DashboardV2Layout() {
     // ToastProvider sits inside the scope so its toast stack inherits the tokens.
     <div className="dv2-scope dv2-app" dir="rtl" data-theme={theme} style={{ ['--side-w' as string]: collapsed ? '64px' : '252px' }}>
     <ToastProvider>
-      <style>{SHELL_CSS}</style>
+      <style>{SHELL_CSS + TOPBAR_CSS}</style>
 
       <aside className={`dv2-side${collapsed ? ' is-collapsed' : ''}`} aria-label="القائمة الرئيسية">
         <div className="dv2-logo">
@@ -340,9 +317,7 @@ export function DashboardV2Layout() {
           {!collapsed && <><span>ابحث أو أنشئ</span><kbd className="dv2-kbd">⌘K</kbd></>}
         </button>
         <div className="dv2-ctx" title={company}>
-          <div className="dv2-ctx-av">
-            {companyLogoUrl ? <img src={companyLogoUrl} alt="" /> : (company.trim()[0] || 'م')}
-          </div>
+          <OrbAvatar seed={orbSeed} size={collapsed ? 26 : 28} imageUrl={companyLogoUrl || null} />
           {!collapsed && (
             <div className="dv2-ctx-txt">
               <b>{company}</b>
@@ -369,56 +344,19 @@ export function DashboardV2Layout() {
             <button type="button" className="dv2-link" onClick={() => navigate(`${base}/plan-usage`)}>تفاصيل الباقة</button>
           </div>
         )}
-        <button type="button" className="dv2-collapse" onClick={toggleCollapsed} style={collapsed || !topMetric ? { marginTop: 'auto' } : undefined} aria-label={collapsed ? 'توسيع القائمة' : 'طي القائمة'}>
-          {collapsed ? <PanelRightOpen size={16} /> : <><PanelRightClose size={16} /> طي القائمة</>}
-        </button>
       </aside>
 
       <div className="dv2-col" ref={colRef}>
-        <header className="dv2-top">
-          <TopProgressBar triggerKey={location.pathname} />
-          <div className="dv2-mlogo"><img src="/logo-main.png" alt="مدار" /></div>
-          <div className="dv2-crumbs" aria-label="المسار">
-            <span>{company}</span>
-            <ChevronLeftIcon size={14} />
-            <b aria-current="page">{pageTitle}</b>
-          </div>
-          <div className="dv2-top-actions">
-            <button type="button" className="dv2-icon-btn dv2-mobile-only" onClick={() => requestOpenSearch()} aria-label="بحث"><Search size={17} /></button>
-            {showBookings && (
-              <Tooltip label={`${bookingsLabel(businessType)} اليوم`}>
-                <button type="button" className="dv2-today" onClick={() => navigate(`${base}/bookings`)} aria-label={`${bookingsLabel(businessType)} اليوم: ${todayCount}`}>
-                  <CalendarCheck2 size={15} /> <span className="dv2-desktop-only">اليوم</span> <b>{todayCount}</b>
-                </button>
-              </Tooltip>
-            )}
-            <button type="button" className="dv2-icon-btn" onClick={toggleTheme} aria-label={theme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن'} style={{ overflow: 'hidden' }}>
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.span
-                  key={theme}
-                  initial={{ rotate: -90, scale: 0.4, opacity: 0 }}
-                  animate={{ rotate: 0, scale: 1, opacity: 1 }}
-                  exit={{ rotate: 90, scale: 0.4, opacity: 0 }}
-                  transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                  style={{ display: 'flex' }}
-                >
-                  {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
-                </motion.span>
-              </AnimatePresence>
-            </button>
-            <span className="dv2-desktop-only" style={{ display: 'contents' }}><WhatsNewBadge /></span>
-            <NotificationCenter />
-            {showBookings && (
-              <span className="dv2-desktop-only" style={{ display: 'contents' }}>
-                <span className="dv2-sep" />
-                <button type="button" className="dv2-pri" onClick={() => navigate(`${base}/bookings?new=1`)}>
-                  <Plus size={15} /> حجز جديد
-                </button>
-              </span>
-            )}
-            <span style={{ marginInlineStart: 6, display: 'flex' }}><AccountMenu base={base} /></span>
-          </div>
-        </header>
+        <TopBar
+          base={base}
+          routeKey={location.pathname}
+          company={company}
+          pageTitle={pageTitle}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          sidebarCollapsed={collapsed}
+          onToggleSidebar={toggleSidebar}
+        />
         {!isDemo && accountError && (
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flex: 'none',
@@ -459,7 +397,7 @@ export function DashboardV2Layout() {
           </button>
         ))}
         {moreGroups.length > 0 && (
-          <button type="button" className={moreActive || moreOpen ? 'is-active' : undefined} onClick={() => setMoreOpen(true)} aria-haspopup="dialog" aria-expanded={moreOpen}>
+          <button type="button" className={moreActive || moreOpen ? 'is-active' : undefined} onClick={() => { setSheetMode('more'); setMoreOpen(true) }} aria-haspopup="dialog" aria-expanded={moreOpen}>
             <MoreHorizontal size={18} />
             <span className="dv2-tab-label">المزيد</span>
             {moreBadge > 0 && <i className="dv2-badge">{moreBadge}</i>}
@@ -474,15 +412,15 @@ export function DashboardV2Layout() {
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
             />
             <motion.div
-              key="sheet" className="dv2-sheet" role="dialog" aria-modal="true" aria-label="المزيد"
+              key="sheet" className="dv2-sheet" role="dialog" aria-modal="true" aria-label={sheetMode === 'all' ? 'القائمة' : 'المزيد'}
               initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 420, damping: 40 }}
             >
               <div className="dv2-sheet-grip" />
               <div className="dv2-sheet-head">
-                <h3>المزيد</h3>
+                <h3>{sheetMode === 'all' ? 'القائمة' : 'المزيد'}</h3>
                 <button type="button" className="dv2-icon-btn" onClick={() => setMoreOpen(false)} aria-label="إغلاق"><X size={18} /></button>
               </div>
-              {moreGroups.map((g, gi) => (
+              {(sheetMode === 'all' ? NAV_GROUPS : moreGroups).map((g, gi) => (
                 <div key={g.title || gi} style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   {g.title && <div className="dv2-nav-group">{g.title}</div>}
                   {g.items.map((it) => (
@@ -501,10 +439,11 @@ export function DashboardV2Layout() {
 
       <GlobalSearch base={base} />
       <SupportChat />
+      <WhatsNew base={base} />
       <OnboardingWizard />
       <ShortcutsOverlay />
       {showBookings && (
-        <span className="dv2-mobile-only"><Fab actions={[{ label: 'حجز جديد', icon: <Plus size={15} />, onClick: () => navigate(`${base}/bookings?new=1`) }]} /></span>
+        <span className="dv2-mobile-only"><Fab actions={[{ label: 'موعد جديد', icon: <Plus size={15} />, onClick: () => navigate(`${base}/bookings?new=1`) }]} /></span>
       )}
     </ToastProvider>
     </div>

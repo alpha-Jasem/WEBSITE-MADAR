@@ -73,22 +73,9 @@ export function NotificationCenter() {
 
   return (
     <div style={{ position: 'relative' }}>
-      <button type="button" className="dv2-icon-btn" aria-label="الإشعارات" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
-        <Bell size={18} />
-        {unreadCount > 0 && (
-          <span style={{ position: 'absolute', top: 5, insetInlineEnd: 5, width: 14, height: 14 }}>
-            <motion.span
-              animate={{ scale: [1, 1.9], opacity: [0.55, 0] }}
-              transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut' }}
-              style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--danger-500)' }}
-            />
-            <span style={{
-              position: 'absolute', inset: 0, background: 'var(--danger-500)', color: '#fff',
-              borderRadius: 'var(--radius-full)', fontSize: 9, fontWeight: 700,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>{unreadCount > 9 ? '9+' : unreadCount}</span>
-          </span>
-        )}
+      <button type="button" className="dv2-icon-btn" aria-label={unreadCount > 0 ? `الإشعارات: ${unreadCount} غير مقروءة` : 'الإشعارات'} aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+        <Bell size={17} />
+        {unreadCount > 0 && <span className="dv2-udot" style={{ background: 'var(--bad)' }} />}
       </button>
       <AnimatePresence>
         {open && (

@@ -13,6 +13,7 @@ import { Card, Badge, Button, Dialog, Input, Select, type BadgeTone } from '@/da
 import { EmptyState, SkeletonRows, Pagination, useToast, Avatar, SortableHeader, ContactActions, Skeleton } from '@/dashboard/components/uiExtras'
 import { NightPage, PageHead, CardTitle, Seg, EmptyLine, Chip, useIsNarrow, fmtNum } from './shared/night'
 import { AR_GREG, toISODate } from './shared/periods'
+import { useShellPrimaryAction } from '@/dashboard/components/shellActions'
 
 type SortKey = 'patient_name' | 'appointment_date' | 'start_time'
 const PAGE_SIZE = 10
@@ -195,6 +196,8 @@ export function DashboardV2Bookings() {
   const pageRows = useMemo(() => shown.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [shown, page])
 
   useEffect(() => { setPage(1) }, [filter, serviceFilter, sourceFilter, selectedDate, query, sort])
+
+  useShellPrimaryAction({ label: 'موعد جديد', icon: <Plus />, onClick: () => setOpen(true) })
 
   const [searchParams, setSearchParams] = useSearchParams()
   useEffect(() => {
