@@ -472,16 +472,22 @@ export async function markQuestionAnswered(id: string, knowledgeItemId: string, 
 }
 
 /**
- * STUB — pushing the knowledge base to the voice platforms is a later step.
- * Today the answers live only in clinic_os_knowledge_items; neither Nabrah nor the
- * ElevenLabs agent reads them yet. When this is built it should run server-side (an
- * edge function holding the platform keys), e.g. update the ElevenLabs agent's
- * knowledge base documents and the Nabrah agent's prompt/FAQ for every agent_links row
- * of the company. Do not call platform APIs from the browser.
+ * Pushes the company's settings and knowledge base to its linked ElevenLabs agents through the
+ * agent-platform-sync edge function (it holds the platform key; the browser never calls the platform).
+ * Resolves with synced:false and a reason when nothing could be pushed (no linked agent, function
+ * not deployed) so callers can ignore it silently. Nabrah agents are not synced yet.
  */
-export async function syncKnowledgeToVoicePlatforms(companyId: string): Promise<{ synced: false; reason: 'not_implemented' }> {
+export async function syncKnowledgeToVoicePlatforms(
+  companyId: string, action: 'settings' | 'knowledge' | 'all' = 'knowledge',
+): Promise<{ synced: boolean; reason?: string }> {
   void companyId
-  return { synced: false, reason: 'not_implemented' }
+  try {
+    const { data, error } = await supabase.functions.invoke('agent-platform-sync', { body: { action } })
+    if (error) return { synced: false, reason: 'unavailable' }
+    return { synced: !!data?.synced, reason: data?.reason }
+  } catch {
+    return { synced: false, reason: 'unavailable' }
+  }
 }
 
 // ─── Agent settings ────────────────────────────────────────────────────────────

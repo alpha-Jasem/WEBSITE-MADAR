@@ -4,7 +4,7 @@ import { useWorkspace } from '@/context/WorkspaceContext'
 import { Button } from '@/dashboard/components/primitives'
 import { useToast, Skeleton } from '@/dashboard/components/uiExtras'
 import {
-  WEEK_DAYS, defaultAgentSettings, saveAgentSettings, useAgentLinks, useAgentSettings, useOpsCaps, webAgentUrl,
+  WEEK_DAYS, defaultAgentSettings, saveAgentSettings, syncKnowledgeToVoicePlatforms, useAgentLinks, useAgentSettings, useOpsCaps, webAgentUrl,
   type AgentChannels, type AgentSettings, type WorkingDay,
 } from '@/lib/queries/ops'
 import { TestCallDialog } from './agent/TestCallDialog'
@@ -59,7 +59,11 @@ export function DashboardV2Agents() {
       await saveAgentSettings(next, isDemo)
       setDirty(false)
       refetch()
-      pushToast({ kind: 'success', title: okTitle, description: isDemo ? undefined : 'تنطبق على الموظف بعد ربط الإعدادات به.' })
+      const sync = isDemo ? null : await syncKnowledgeToVoicePlatforms(next.company_id, 'settings')
+      pushToast({
+        kind: 'success', title: okTitle,
+        description: isDemo ? undefined : sync?.synced ? 'وصلت التغييرات للموظف.' : 'انحفظت، وتنطبق على الموظف بعد ربطه بحسابك.',
+      })
     } catch (e) {
       pushToast({ kind: 'danger', title: 'تعذّر الحفظ', description: e instanceof Error ? e.message : undefined })
     } finally {
