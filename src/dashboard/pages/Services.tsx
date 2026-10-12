@@ -121,7 +121,7 @@ export function DashboardV2Services() {
                   <span style={{ fontWeight: 700, fontSize: 14.5, color: 'var(--text-primary)' }}>{category}</span>
                   <Badge tone="neutral">{items.length} خدمة</Badge>
                   {aiCount > 0 && (
-                    <Chip tone="ai"><Sparkles size={12} /> {aiCount} متاحة للموظف الذكي</Chip>
+                    <Chip tone="ai"><Sparkles size={12} /> {aiCount} متاحة للوكيل الذكي</Chip>
                   )}
                 </div>
                 <ChevronDown size={16} style={{ color: 'var(--text-tertiary)', flexShrink: 0, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 150ms ease' }} />

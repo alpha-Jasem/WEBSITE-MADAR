@@ -322,7 +322,7 @@ export function DashboardV2Settings() {
         <Card>
           <CardTitle><SparklesIcon size={16} style={{ color: 'var(--ai)' }} /> التنبيهات والتفضيلات</CardTitle>
           <div className="np-row">
-            <div className="np-row-main"><b>الرد الآلي على واتساب والمكالمات</b><small>{hasModule('bookings') ? 'يتيح للموظف الذكي حجز المواعيد تلقائياً' : 'يتيح للموظف الذكي الرد على العملاء تلقائياً'}</small></div>
+            <div className="np-row-main"><b>الرد الآلي على واتساب والمكالمات</b><small>{hasModule('bookings') ? 'يتيح للوكيل الذكي حجز المواعيد تلقائياً' : 'يتيح للوكيل الذكي الرد على العملاء تلقائياً'}</small></div>
             <Toggle checked={prefs.ai} label="الرد الآلي" onChange={(v) => setPrefs((p) => ({ ...p, ai: v }))} />
           </div>
           {hasModule('reviews') && (

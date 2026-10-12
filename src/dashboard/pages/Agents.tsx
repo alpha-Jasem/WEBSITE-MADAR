@@ -62,7 +62,7 @@ export function DashboardV2Agents() {
       const sync = isDemo ? null : await syncKnowledgeToVoicePlatforms(next.company_id, 'settings')
       pushToast({
         kind: 'success', title: okTitle,
-        description: isDemo ? undefined : sync?.synced ? 'وصلت التغييرات للموظف.' : 'انحفظت، وتنطبق على الوكيل بعد ربطه بحسابك.',
+        description: isDemo ? undefined : sync?.synced ? 'وصلت التغييرات للوكيل.' : 'انحفظت، وتنطبق على الوكيل بعد ربطه بحسابك.',
       })
     } catch (e) {
       pushToast({ kind: 'danger', title: 'تعذّر الحفظ', description: e instanceof Error ? e.message : undefined })
