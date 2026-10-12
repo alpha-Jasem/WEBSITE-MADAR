@@ -1,10 +1,22 @@
 import { useState } from 'react'
 import { Plus, Trash2, RotateCcw } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
-import { BUILT_IN_TAGS, CUSTOM_TAG_PREFIX, parseKeywords, type TagRule } from '@/lib/callTags'
+import { BUILT_IN_TAGS, CUSTOM_TAG_PREFIX, TAG_COLORS, parseKeywords, type TagRule } from '@/lib/callTags'
 import { deleteTagRule, newCustomTagKey, saveTagRule, useTagRules } from '@/lib/queries/tagRules'
 import { useToast } from '@/dashboard/components/uiExtras'
 import { NightStyles } from '../shared/night'
+
+/** A row of colour swatches; the picked colour is what the tag chip uses everywhere. */
+function Swatches({ value, onPick, disabled }: { value: string; onPick: (c: string) => void; disabled?: boolean }) {
+  return (
+    <span className="nx-swatches" role="group" aria-label="لون الوسم">
+      {TAG_COLORS.map((c) => (
+        <button key={c.id} type="button" className="nx-swatch" data-c={c.id} aria-pressed={value === c.id} aria-label={c.label} title={c.label}
+          disabled={disabled} onClick={() => onPick(c.id)} />
+      ))}
+    </span>
+  )
+}
 
 /** Settings for the automatic conversation tags: turn built-in tags off, rename them, add your own with keywords. */
 export function TagManager() {
@@ -13,6 +25,7 @@ export function TagManager() {
   const { rules, available } = useTagRules(companyId, isDemo)
   const [label, setLabel] = useState('')
   const [keywords, setKeywords] = useState('')
+  const [color, setColor] = useState('blue')
   const [busy, setBusy] = useState(false)
   const byKey = new Map(rules.map((r) => [r.tag_key, r]))
   const custom = rules.filter((r) => r.tag_key.startsWith(CUSTOM_TAG_PREFIX))
@@ -42,6 +55,7 @@ export function TagManager() {
             onBlur={(e) => { const v = e.target.value.trim(); if (v && v !== r.label) void run(() => saveTagRule(companyId, isDemo, { ...r, label: v }), 'انحفظ الوسم') }} />
           <input className="nx-input" defaultValue={r.keywords || ''} aria-label="كلمات الوسم" placeholder="كلمات مفصولة بفاصلة، مثل: تمويل، بنك، قرض" disabled={busy}
             onBlur={(e) => { const v = e.target.value.trim(); if (v !== (r.keywords || '')) void run(() => saveTagRule(companyId, isDemo, { ...r, keywords: v }), 'انحفظ الوسم') }} />
+          <Swatches value={r.color || 'blue'} disabled={busy} onPick={(c) => void run(() => saveTagRule(companyId, isDemo, { ...r, color: c }))} />
           <label className="nx-tagon"><input type="checkbox" checked={r.enabled} disabled={busy}
             onChange={(e) => void run(() => saveTagRule(companyId, isDemo, { ...r, enabled: e.target.checked }))} /> مفعّل</label>
           <button type="button" className="nx-btn sm" aria-label="حذف الوسم" disabled={busy}
@@ -52,13 +66,15 @@ export function TagManager() {
         e.preventDefault()
         if (!label.trim() || parseKeywords(keywords).length === 0) { pushToast({ kind: 'danger', title: 'اكتب اسم الوسم وكلمة وحدة على الأقل' }); return }
         void run(async () => {
-          await saveTagRule(companyId, isDemo, { tag_key: newCustomTagKey(), label: label.trim(), keywords: keywords.trim(), enabled: true })
+          await saveTagRule(companyId, isDemo, { tag_key: newCustomTagKey(), label: label.trim(), keywords: keywords.trim(), enabled: true, color })
           setLabel('')
           setKeywords('')
+          setColor('blue')
         }, 'انضاف الوسم')
       }}>
         <input className="nx-input" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="اسم الوسم، مثل: تمويل بنكي" aria-label="اسم الوسم الجديد" />
         <input className="nx-input" value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder="كلمات مفصولة بفاصلة" aria-label="كلمات الوسم الجديد" />
+        <Swatches value={color} onPick={setColor} />
         <button type="submit" className="nx-btn" disabled={busy}><Plus size={14} /> إضافة</button>
       </form>
 
@@ -70,6 +86,7 @@ export function TagManager() {
           <div key={t.id} className="nx-tagrow builtin">
             <input className="nx-input" defaultValue={r?.label || t.label} aria-label={`اسم وسم ${t.label}`} disabled={busy}
               onBlur={(e) => { const v = e.target.value.trim(); if (v && v !== (r?.label || t.label)) void patchBuiltIn(t.id, t.label, { label: v }) }} />
+            <Swatches value={r?.color || t.color} disabled={busy} onPick={(c) => void patchBuiltIn(t.id, t.label, { color: c })} />
             <label className="nx-tagon"><input type="checkbox" checked={on} disabled={busy}
               onChange={(e) => void patchBuiltIn(t.id, t.label, { enabled: e.target.checked })} /> مفعّل</label>
             {r

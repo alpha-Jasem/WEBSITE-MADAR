@@ -14,10 +14,10 @@ export function ChannelIcon({ channel, size = 16 }: { channel: ConvChannel; size
 }
 
 /** The automatic topic tags of a conversation, as small chips. */
-export function TagChips({ tags }: { tags: { id: string; label: string }[] }) {
+export function TagChips({ tags }: { tags: { id: string; label: string; color?: string }[] }) {
   return (
     <span className="nx-tags">
-      {tags.map((t) => <span key={t.id} className="nx-tag">{t.label}</span>)}
+      {tags.map((t) => <span key={t.id} className="nx-tag" data-c={t.color || 'gray'}>{t.label}</span>)}
     </span>
   )
 }

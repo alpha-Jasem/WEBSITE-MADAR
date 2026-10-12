@@ -16,7 +16,7 @@ export function useTagRules(companyId: string | null, isDemo: boolean) {
     if (isDemo) { setRules([...demoRules]); return }
     if (!companyId) return
     const { data, error } = await supabase.from('conversation_tag_rules')
-      .select('tag_key, label, keywords, enabled').eq('company_id', companyId).order('created_at')
+      .select('tag_key, label, keywords, enabled, color').eq('company_id', companyId).order('created_at')
     if (error) { setAvailable(false); setRules([]); return }
     setAvailable(true)
     setRules((data || []) as TagRule[])
@@ -41,7 +41,7 @@ export async function saveTagRule(companyId: string | null, isDemo: boolean, rul
   if (!companyId) throw new Error('no company')
   const { error } = await supabase.from('conversation_tag_rules').upsert({
     company_id: companyId, tag_key: rule.tag_key, label: rule.label.trim(),
-    keywords: rule.keywords?.trim() || null, enabled: rule.enabled,
+    keywords: rule.keywords?.trim() || null, enabled: rule.enabled, color: rule.color || null,
   }, { onConflict: 'company_id,tag_key' })
   if (error) throw error
   notify()

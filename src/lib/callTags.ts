@@ -2,15 +2,29 @@ import type { AICallLog } from '@/types/dashboard'
 import { collectedData } from './callAnalysis'
 
 /** One automatic tag: what the conversation was about, read from its summary and collected data. */
-export interface CallTag { id: string; label: string }
+export interface CallTag { id: string; label: string; color: TagColor }
+
+/** The palette a tag colour is picked from (rendered by the nx-tag[data-c] styles). */
+export const TAG_COLORS = [
+  { id: 'blue', label: 'أزرق' }, { id: 'green', label: 'أخضر' }, { id: 'amber', label: 'برتقالي' }, { id: 'red', label: 'أحمر' },
+  { id: 'purple', label: 'بنفسجي' }, { id: 'teal', label: 'تركوازي' }, { id: 'pink', label: 'وردي' }, { id: 'gray', label: 'رمادي' },
+] as const
+export type TagColor = (typeof TAG_COLORS)[number]['id']
+
+/** Default colour of each built-in tag; a company can change it in settings. */
+const DEFAULT_COLOR: Record<string, TagColor> = {
+  complaint: 'red', refund: 'red', sales: 'green', investment: 'purple', pricing: 'amber', visit: 'blue',
+  booking: 'teal', followup: 'amber', support: 'pink', transfer: 'pink', inquiry: 'gray',
+}
+const isColor = (v?: string | null): v is TagColor => TAG_COLORS.some((c) => c.id === v)
 
 /** A company's override of the automatic tags (conversation_tag_rules): rename or turn off a built-in tag, or a custom tag matched by keywords. */
-export interface TagRule { tag_key: string; label: string; keywords?: string | null; enabled: boolean }
+export interface TagRule { tag_key: string; label: string; keywords?: string | null; enabled: boolean; color?: string | null }
 
 export const CUSTOM_TAG_PREFIX = 'custom_'
 
 /** The built-in tags, for the settings screen (filled right after RULES). */
-export const BUILT_IN_TAGS: CallTag[] = []
+export const BUILT_IN_TAGS: Array<{ id: string; label: string; color: TagColor }> = []
 
 interface Rule { id: string; label: string; re: RegExp }
 
@@ -30,7 +44,7 @@ const RULES: Rule[] = [
 
 export const MAX_TAGS = 3
 
-BUILT_IN_TAGS.push(...RULES.map(({ id, label }) => ({ id, label })), { id: 'inquiry', label: 'استفسار عام' })
+BUILT_IN_TAGS.push(...RULES.map(({ id, label }) => ({ id, label, color: DEFAULT_COLOR[id] ?? 'gray' })), { id: 'inquiry', label: 'استفسار عام', color: 'gray' })
 
 /** Keywords typed in settings: separated by commas, Arabic commas or new lines. */
 export function parseKeywords(raw?: string | null): string[] {
@@ -74,13 +88,13 @@ export function callTags(c: AICallLog, rules: TagRule[] = []): CallTag[] {
   // The company's own tags come first, then the built-in ones it has not turned off (renamed ones use its label).
   const custom: CallTag[] = rules
     .filter((r) => r.tag_key.startsWith(CUSTOM_TAG_PREFIX) && r.enabled && parseKeywords(r.keywords).some((k) => lower.includes(k)))
-    .map((r) => ({ id: r.tag_key, label: r.label }))
+    .map((r) => ({ id: r.tag_key, label: r.label, color: isColor(r.color) ? r.color : 'blue' }))
   const builtIn: CallTag[] = RULES.filter((r) => hit.has(r.id) && byKey.get(r.id)?.enabled !== false)
-    .map((r) => ({ id: r.id, label: byKey.get(r.id)?.label || r.label }))
+    .map((r) => { const o = byKey.get(r.id); return { id: r.id, label: o?.label || r.label, color: isColor(o?.color) ? o.color : DEFAULT_COLOR[r.id] ?? 'gray' } })
   const tags = [...custom, ...builtIn].slice(0, MAX_TAGS)
   if (tags.length) return tags
   const general = byKey.get('inquiry')
-  return general?.enabled === false ? [] : [{ id: 'inquiry', label: general?.label || 'استفسار عام' }]
+  return general?.enabled === false ? [] : [{ id: 'inquiry', label: general?.label || 'استفسار عام', color: isColor(general?.color) ? general.color : 'gray' }]
 }
 
 /** Every tag present in a list of calls, with counts, for the filter. */
