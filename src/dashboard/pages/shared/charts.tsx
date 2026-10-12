@@ -50,13 +50,14 @@ function Tip({ x, y, text, width }: { x: number; y: number; text: string; width:
   const left = Math.min(Math.max(x - w / 2, 2), width - w - 2)
   return (
     <g pointerEvents="none">
-      <rect x={left} y={Math.max(0, y - 34)} width={w} height={24} rx={7} style={{ fill: 'var(--surface-inverse)' }} />
-      <text x={left + w / 2} y={Math.max(0, y - 34) + 16} fontSize={11.5} fontWeight={700} textAnchor="middle" style={{ fill: '#FFFFFF' }}>{text}</text>
+      <rect x={left} y={Math.max(0, y - 34)} width={w} height={24} rx={6} style={{ fill: 'var(--surface-inverse)' }} />
+      <text x={left + w / 2} y={Math.max(0, y - 34) + 16} fontSize={11.5} fontWeight={500} textAnchor="middle" style={{ fill: '#F5F5F5' }}>{text}</text>
     </g>
   )
 }
 
-export function AreaChart({ values, labels, height = 210, ariaLabel, format = (n: number) => n.toLocaleString('en-US') }: {
+export function AreaChart({ values, labels, height = 210, ariaLabel, color = 'var(--sky)', format = (n: number) => n.toLocaleString('en-US') }: {
+  color?: string
   values: number[]
   labels: string[]
   height?: number
@@ -81,12 +82,8 @@ export function AreaChart({ values, labels, height = 210, ariaLabel, format = (n
         <svg width={W} height={H} role="img" aria-label={ariaLabel} style={{ display: 'block', overflow: 'visible' }} onMouseLeave={() => setHover(null)}>
           <defs>
             <linearGradient id={`af-${uid}`} x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0" style={{ stopColor: 'var(--sky)', stopOpacity: 0.32 }} />
-              <stop offset="1" style={{ stopColor: 'var(--sky)', stopOpacity: 0 }} />
-            </linearGradient>
-            <linearGradient id={`al-${uid}`} x1="1" x2="0" y1="0" y2="0">
-              <stop offset="0" style={{ stopColor: 'var(--sky)' }} />
-              <stop offset="1" style={{ stopColor: 'var(--violet)' }} />
+              <stop offset="0" style={{ stopColor: color, stopOpacity: 0.16 }} />
+              <stop offset="1" style={{ stopColor: color, stopOpacity: 0 }} />
             </linearGradient>
           </defs>
           {ticks.map((v) => (
@@ -96,14 +93,14 @@ export function AreaChart({ values, labels, height = 210, ariaLabel, format = (n
             </g>
           ))}
           {n > 1 && <path d={`${line} L${x(n - 1)},${H - PAD.bottom} L${x(0)},${H - PAD.bottom} Z`} fill={`url(#af-${uid})`} />}
-          <path d={line} fill="none" stroke={`url(#al-${uid})`} strokeWidth={2.6} strokeLinejoin="round" strokeLinecap="round" style={n > 1 ? undefined : { display: 'none' }} />
+          <path d={line} fill="none" stroke={color} strokeWidth={1.6} strokeLinejoin="round" strokeLinecap="round" style={n > 1 ? undefined : { display: 'none' }} />
           {labels.map((l, i) => ((n - 1 - i) % step === 0 && l ? (
             <text key={i} x={x(i)} y={H - 6} fontSize={10.5} textAnchor="middle" style={{ fill: 'var(--dim)' }}>{l}</text>
           ) : null))}
           {hover != null && <line x1={x(hover)} x2={x(hover)} y1={PAD.top} y2={H - PAD.bottom} style={{ stroke: 'var(--line-2)' }} strokeDasharray="3 3" />}
           <circle
-            cx={x(hover ?? n - 1)} cy={y(values[hover ?? n - 1])} r={5} strokeWidth={2.5}
-            style={{ fill: 'var(--panel)', stroke: 'var(--violet)' }}
+            cx={x(hover ?? n - 1)} cy={y(values[hover ?? n - 1])} r={3.5} strokeWidth={1.6}
+            style={{ fill: 'var(--panel)', stroke: color }}
           />
           {values.map((_, i) => (
             <rect
@@ -132,7 +129,6 @@ export function BarChart({ values, labels, height = 200, ariaLabel, highlightLas
 }) {
   const [ref, W] = useWidth<HTMLDivElement>()
   const [hover, setHover] = useState<number | null>(null)
-  const uid = useId().replace(/:/g, '')
   const n = values.length
   const H = height
   const plotW = Math.max(1, W - PAD.left - PAD.right)
@@ -148,16 +144,6 @@ export function BarChart({ values, labels, height = 200, ariaLabel, highlightLas
     <div ref={ref} style={{ width: '100%', minWidth: 0 }}>
       {W > 0 && n > 0 && (
         <svg width={W} height={H} role="img" aria-label={ariaLabel} style={{ display: 'block', overflow: 'visible' }} onMouseLeave={() => setHover(null)}>
-          <defs>
-            <linearGradient id={`bf-${uid}`} x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0" style={{ stopColor: 'var(--sky)' }} />
-              <stop offset="1" style={{ stopColor: 'var(--royal-2)' }} />
-            </linearGradient>
-            <linearGradient id={`bp-${uid}`} x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0" style={{ stopColor: 'var(--sky)' }} />
-              <stop offset="1" style={{ stopColor: 'var(--violet)' }} />
-            </linearGradient>
-          </defs>
           {ticks.map((v) => (
             <g key={v}>
               <line x1={PAD.left} x2={W - PAD.right} y1={y(v)} y2={y(v)} style={{ stroke: 'var(--line)' }} />
@@ -172,7 +158,7 @@ export function BarChart({ values, labels, height = 200, ariaLabel, highlightLas
                 <rect x={cx(i) - band / 2} y={0} width={band} height={H} fill="transparent" />
                 <rect
                   x={cx(i) - barW / 2} y={H - PAD.bottom - Math.max(h, v > 0 ? 2 : 0)} width={barW} height={Math.max(h, v > 0 ? 2 : 0)}
-                  rx={Math.min(5, barW / 3)} fill={`url(#${isLast ? 'bp' : 'bf'}-${uid})`}
+                  rx={Math.min(3, barW / 3)} fill={isLast ? 'var(--sky)' : 'color-mix(in srgb, var(--sky) 45%, transparent)'}
                   style={{ opacity: hover == null || hover === i ? 1 : 0.55 }}
                 >
                   <title>{`${labels[i] || ''}: ${format(v)}`}</title>

@@ -29,9 +29,9 @@ export function AccountMenu({ base }: { base: string }) {
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
         style={{
-          width: 40, height: 40, borderRadius: 12, cursor: 'pointer', flexShrink: 0, border: 0, padding: 0,
-          background: 'var(--gradient-brand)', color: '#fff', fontFamily: 'var(--font-display)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700,
+          width: 32, height: 32, borderRadius: '50%', cursor: 'pointer', flexShrink: 0, padding: 0,
+          border: '1px solid var(--border-strong)', background: 'var(--raise)', color: 'var(--text-primary)', fontFamily: 'var(--font-display)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600,
         }}
       >{initial}</button>
 
@@ -54,7 +54,7 @@ export function AccountMenu({ base }: { base: string }) {
             border: '1px solid var(--border-default)', overflow: 'hidden',
           }}>
             <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border-default)' }}>
-              <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>{companyName || 'حسابي'}</div>
+              <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-primary)' }}>{companyName || 'حسابي'}</div>
               <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>{overall}% من الاستخدام الشهري</div>
             </div>
             {[
@@ -65,7 +65,8 @@ export function AccountMenu({ base }: { base: string }) {
               <div
                 key={item.label}
                 onClick={item.action}
-                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', fontSize: 13, cursor: 'pointer', color: 'var(--text-secondary)' }}
+                className="dv2-menu-row"
+                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', fontSize: 13, cursor: 'pointer', color: 'var(--text-secondary)' }}
               >
                 <item.icon size={15} /> {item.label}
               </div>

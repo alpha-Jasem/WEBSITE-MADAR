@@ -143,7 +143,7 @@ export function PillBar({ label, value, max }: { label: string; value: number; m
           transition={SPRING_SNAPPY}
           style={{
             width: '100%', height: '100%', borderRadius: 'var(--radius-full)', transformOrigin: 'left',
-            backgroundImage: 'linear-gradient(90deg, var(--slate-900), var(--slate-500))',
+            backgroundColor: 'var(--ink)',
           }}
         />
       </div>

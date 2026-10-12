@@ -4,12 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { DURATION_MEDIUM, EASE_OUT } from './motionTokens'
 import {
   LayoutDashboard, CalendarDays, Users, MessageSquare, Star, BarChart3,
-  Wallet, BellRing, Settings, AlertTriangle, ChevronsRight, ChevronsLeft, Plus, CalendarCheck2, Ticket,
-  ClipboardList, BookOpen, Sun, Moon, MoreHorizontal, X, Wrench, Sparkles, Contact,
+  Wallet, BellRing, Settings, AlertTriangle, Plus, CalendarCheck2, Ticket,
+  ClipboardList, BookOpen, Sun, Moon, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Search, ChevronLeft as ChevronLeftIcon, PanelRightClose, PanelRightOpen,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useSupportTickets, useTodayBookings } from '@/lib/dashboardQueries'
-import { getUsageMetrics, usagePercentage } from '@/lib/clinicOSProduct'
+import { CLINIC_PLANS, getUsageMetrics, usagePercentage } from '@/lib/clinicOSProduct'
 import { NotificationCenter } from './NotificationCenter'
 import { AccountMenu } from './AccountMenu'
 import { SupportChat } from './SupportChat'
@@ -59,106 +59,144 @@ const SHELL_CSS = `
   .dv2-app { display: flex; height: 100vh; height: 100dvh; overflow: hidden; background: var(--surface-canvas);
     padding-inline: env(safe-area-inset-right, 0px) env(safe-area-inset-left, 0px); }
 
-  /* sidebar */
-  .dv2-side { flex: none; width: 240px; height: 100%; overflow-y: auto; background: var(--panel);
-    border-inline-end: 1px solid var(--line); padding: 20px 14px 14px; display: flex; flex-direction: column; gap: 3px;
-    transition: width 200ms var(--ease-out); scrollbar-width: thin; }
-  .dv2-side.is-collapsed { width: 76px; padding-inline: 12px; }
-  .dv2-logo { display: flex; align-items: center; gap: 10px; padding: 2px 10px 18px; font-family: var(--font-display);
-    font-weight: 700; font-size: 17px; color: var(--ink); }
-  .dv2-logo img { width: 32px; height: 32px; object-fit: contain; flex: none; }
+  /* sidebar — compact, a shade darker than the canvas, grouped rows */
+  .dv2-side { flex: none; width: 252px; height: 100%; overflow-y: auto; background: var(--side);
+    border-inline-end: 1px solid var(--line); padding: 14px 10px 10px; display: flex; flex-direction: column; gap: 1px;
+    transition: width 200ms var(--ease-out); scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; box-sizing: border-box; }
+  .dv2-side.is-collapsed { width: 64px; padding-inline: 10px; }
+  .dv2-logo { display: flex; align-items: center; gap: 9px; padding: 2px 8px 12px; font-family: var(--font-display);
+    font-weight: 600; font-size: 15px; color: var(--ink); }
+  .dv2-logo img { width: 24px; height: 24px; object-fit: contain; flex: none; }
   .dv2-side.is-collapsed .dv2-logo { justify-content: center; padding-inline: 0; }
-  .dv2-nav-group { font-size: 11px; letter-spacing: .05em; color: var(--dim); padding: 14px 12px 4px; font-weight: 600; }
-  .dv2-side.is-collapsed .dv2-nav-group { height: 1px; padding: 0; margin: 10px 8px; background: var(--line); overflow: hidden; color: transparent; }
-  .dv2-nav { display: flex; align-items: center; gap: 11px; padding: 9px 12px; border-radius: 11px; color: var(--muted);
-    font-weight: 500; font-size: 14px; border: 0; background: none; text-align: start; width: 100%; cursor: pointer; position: relative; }
-  .dv2-nav svg { flex: none; }
+  .dv2-side-search { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 10px; margin: 0 0 8px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--panel); color: var(--dim); font-size: 13px; cursor: pointer; width: 100%; text-align: start; flex: none; }
+  .dv2-side-search:hover { border-color: var(--line-2); color: var(--muted); }
+  .dv2-side-search > span { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .dv2-kbd { font-size: 10.5px; font-weight: 500; color: var(--dim); border: 1px solid var(--line-2); border-radius: 5px; padding: 0 5px; line-height: 17px; font-family: var(--font-body); direction: ltr; }
+  .dv2-side.is-collapsed .dv2-side-search { justify-content: center; padding: 0; }
+  .dv2-ctx { display: flex; align-items: center; gap: 10px; padding: 8px; margin-bottom: 4px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--panel); min-width: 0; flex: none; }
+  .dv2-ctx-av { width: 30px; height: 30px; border-radius: 8px; flex: none; display: grid; place-items: center; background: var(--raise); color: var(--ink);
+    font-weight: 600; font-size: 13px; overflow: hidden; }
+  .dv2-ctx-av img { width: 100%; height: 100%; object-fit: cover; }
+  .dv2-ctx-txt { min-width: 0; flex: 1; }
+  .dv2-ctx b { display: block; font-size: 13px; font-weight: 600; color: var(--ink); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; line-height: 1.4; }
+  .dv2-ctx small { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--dim); line-height: 1.4; white-space: nowrap; overflow: hidden; }
+  .dv2-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); flex: none; }
+  .dv2-dot.warn { background: var(--warn); }
+  .dv2-dot.bad { background: var(--bad); }
+  .dv2-side.is-collapsed .dv2-ctx { padding: 4px 0; justify-content: center; border-color: transparent; background: none; }
+  .dv2-nav-group { font-size: 11.5px; color: var(--dim); padding: 14px 10px 4px; font-weight: 500; }
+  .dv2-side.is-collapsed .dv2-nav-group { height: 1px; padding: 0; margin: 10px 6px; background: var(--line); overflow: hidden; color: transparent; }
+  .dv2-nav { display: flex; align-items: center; gap: 10px; height: 34px; padding: 0 10px; border-radius: 8px; color: var(--muted);
+    font-weight: 500; font-size: 13.5px; border: 0; background: none; text-align: start; width: 100%; cursor: pointer; position: relative; flex: none; }
+  .dv2-nav svg { flex: none; width: 16px; height: 16px; }
   .dv2-nav:hover { background: var(--hover-bg); color: var(--ink); }
-  .dv2-nav.is-active { background: var(--nav-active-bg); color: var(--ink); font-weight: 600; box-shadow: inset -3px 0 0 var(--sky); }
-  .dv2-nav.is-active svg { color: var(--sky); }
-  .dv2-side.is-collapsed .dv2-nav { justify-content: center; padding: 10px 0; }
-  .dv2-badge { font-style: normal; font-size: 11px; background: var(--bad); color: #FFFFFF; border-radius: 999px; padding: 0 7px;
-    font-weight: 700; min-width: 20px; text-align: center; line-height: 18px; font-variant-numeric: tabular-nums; }
+  .dv2-nav.is-active { background: var(--nav-active-bg); color: var(--ink); }
+  .dv2-side.is-collapsed .dv2-nav { justify-content: center; padding: 0; }
+  .dv2-badge { font-style: normal; font-size: 11px; background: var(--raise); color: var(--ink); border-radius: 999px; padding: 0 6px;
+    font-weight: 500; min-width: 18px; text-align: center; line-height: 17px; font-variant-numeric: tabular-nums; border: 1px solid var(--line-2); box-sizing: border-box; }
   .dv2-nav .dv2-badge { margin-inline-start: auto; }
-  .dv2-side.is-collapsed .dv2-nav .dv2-badge { position: absolute; top: 3px; inset-inline-end: 6px; min-width: 0; padding: 0 5px; font-size: 10px; line-height: 15px; }
-  .dv2-side-foot { margin-top: auto; padding: 12px; border-radius: 13px; background: var(--panel-2); border: 1px solid var(--line); font-size: 12.5px; color: var(--muted); }
-  .dv2-side-foot b { color: var(--ink); font-variant-numeric: tabular-nums; }
-  .dv2-meter { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; margin-top: 6px; }
-  .dv2-meter i { display: block; height: 100%; background: var(--grad); border-radius: 99px; }
-  .dv2-meter.is-hot i { background: linear-gradient(90deg, var(--warn), var(--bad)); }
-  .dv2-link { background: none; border: 0; color: var(--sky); font-weight: 600; padding: 0; cursor: pointer; font-size: 12px; margin-top: 8px; }
-  .dv2-collapse { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; margin-top: 8px; border: 0; background: none;
-    border-radius: 11px; cursor: pointer; color: var(--dim); font-size: 11.5px; width: 100%; }
+  .dv2-side.is-collapsed .dv2-nav .dv2-badge { position: absolute; top: 1px; inset-inline-end: 2px; min-width: 0; padding: 0 4px; font-size: 9.5px; line-height: 14px; }
+  .dv2-side-foot { margin-top: auto; padding: 10px 12px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line); font-size: 12px; color: var(--muted); flex: none; }
+  .dv2-side-foot b { color: var(--ink); font-variant-numeric: tabular-nums; font-weight: 500; }
+  .dv2-meter { height: 4px; background: var(--raise); border-radius: 99px; overflow: hidden; margin-top: 8px; }
+  .dv2-meter i { display: block; height: 100%; background: var(--ink); border-radius: 99px; }
+  .dv2-meter.is-hot i { background: var(--warn); }
+  .dv2-link { background: none; border: 0; color: var(--muted); font-weight: 500; padding: 0; cursor: pointer; font-size: 12px; margin-top: 8px; }
+  .dv2-link:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+  .dv2-collapse { display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px; margin-top: 6px; border: 0; background: none;
+    border-radius: 8px; cursor: pointer; color: var(--dim); font-size: 12.5px; width: 100%; flex: none; }
   .dv2-collapse:hover { color: var(--ink); background: var(--hover-bg); }
+  .dv2-side.is-collapsed .dv2-collapse { justify-content: center; padding: 0; }
 
-  /* main column — the scroller, so the top bar can stay sticky and translucent over it */
+  /* main column — the scroller, so the top bar can stay sticky over it */
   .dv2-col { flex: 1; min-width: 0; height: 100%; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; }
-  .dv2-top { position: sticky; top: 0; z-index: 30; flex: none; background: var(--topbar-bg); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--line); padding: calc(12px + env(safe-area-inset-top, 0px)) 28px 12px; display: flex; align-items: center; gap: 12px; }
+  .dv2-top { position: sticky; top: 0; z-index: 30; flex: none; background: var(--topbar-bg); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line); padding: env(safe-area-inset-top, 0px) 28px 0; min-height: 56px; box-sizing: border-box;
+    display: flex; align-items: center; gap: 10px; }
   .dv2-mlogo { display: none; }
-  .dv2-search { flex: 1; max-width: 420px; min-width: 0; }
-  .dv2-top-actions { margin-inline-start: auto; display: flex; align-items: center; gap: 8px; flex: none; }
-  .dv2-icon-btn { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); display: grid;
+  .dv2-crumbs { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 13.5px; color: var(--dim); }
+  .dv2-crumbs > span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 220px; }
+  .dv2-crumbs b { color: var(--ink); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dv2-crumbs svg { flex: none; color: var(--dim); }
+  .dv2-top-actions { margin-inline-start: auto; display: flex; align-items: center; gap: 4px; flex: none; }
+  .dv2-icon-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid;
     place-items: center; position: relative; color: var(--muted); cursor: pointer; padding: 0; flex: none; }
-  .dv2-icon-btn:hover { color: var(--ink); border-color: var(--line-2); }
-  .dv2-today { height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); display: inline-flex; align-items: center;
-    gap: 7px; padding: 0 12px; color: var(--ink); font-weight: 700; font-size: 13px; cursor: pointer; font-variant-numeric: tabular-nums; }
-  .dv2-today svg { color: var(--sky); }
-  .dv2-today:hover { border-color: var(--line-2); }
-  .dv2-content { flex: 1; width: 100%; max-width: 1360px; padding: 24px 28px 110px; box-sizing: border-box; position: relative; }
+  .dv2-icon-btn svg { width: 17px; height: 17px; }
+  .dv2-icon-btn:hover { color: var(--ink); background: var(--hover-bg); }
+  .dv2-today { height: 32px; border-radius: 8px; border: 1px solid var(--line); background: transparent; display: inline-flex; align-items: center;
+    gap: 6px; padding: 0 10px; color: var(--muted); font-weight: 500; font-size: 12.5px; cursor: pointer; font-variant-numeric: tabular-nums; }
+  .dv2-today b { color: var(--ink); font-weight: 600; }
+  .dv2-today:hover { border-color: var(--line-2); color: var(--ink); }
+  .dv2-pri { height: 32px; border-radius: 8px; border: 0; background: var(--pri-bg); color: var(--pri-fg); display: inline-flex; align-items: center;
+    gap: 6px; padding: 0 12px; font-weight: 500; font-size: 13px; cursor: pointer; white-space: nowrap; }
+  .dv2-pri:hover { background: var(--pri-hover); }
+  .dv2-sep { width: 1px; height: 20px; background: var(--line); margin: 0 4px; flex: none; }
+  .dv2-content { flex: 1; width: 100%; max-width: 1360px; padding: 28px 32px 110px; box-sizing: border-box; position: relative; }
 
   /* phone tab bar + "more" sheet */
   .dv2-tabbar { display: none; }
-  .dv2-sheet-scrim { position: fixed; inset: 0; z-index: 1350; background: var(--scrim); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
-  .dv2-sheet { position: fixed; inset-inline: 0; bottom: 0; z-index: 1360; background: var(--panel-2); border-top: 1px solid var(--line-2);
-    border-radius: 20px 20px 0 0; padding: 10px 14px calc(18px + env(safe-area-inset-bottom, 0px)); max-height: 78vh; overflow-y: auto;
-    box-shadow: 0 -24px 50px -20px rgba(0,0,0,.6); }
-  .dv2-sheet-grip { width: 40px; height: 4px; border-radius: 99px; background: var(--line-2); margin: 0 auto 8px; }
+  .dv2-sheet-scrim { position: fixed; inset: 0; z-index: 1350; background: var(--scrim); }
+  .dv2-sheet { position: fixed; inset-inline: 0; bottom: 0; z-index: 1360; background: var(--panel); border-top: 1px solid var(--line-2);
+    border-radius: 16px 16px 0 0; padding: 10px 12px calc(18px + env(safe-area-inset-bottom, 0px)); max-height: 78vh; overflow-y: auto; }
+  .dv2-sheet-grip { width: 36px; height: 4px; border-radius: 99px; background: var(--line-2); margin: 0 auto 8px; }
   .dv2-sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 4px 6px; }
-  .dv2-sheet-head h3 { margin: 0; font-size: 17px; font-weight: 700; color: var(--ink); }
-  .dv2-sheet .dv2-nav { padding: 12px; }
+  .dv2-sheet-head h3 { margin: 0; font-size: 15px; font-weight: 600; color: var(--ink); }
+  .dv2-sheet .dv2-nav { height: 44px; font-size: 14px; }
+  .dv2-mobile-only { display: none !important; }
 
   @media (max-width: 900px) {
     .dv2-side { display: none; }
-    .dv2-top { padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px; }
-    .dv2-mlogo { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--ink); flex: none; }
-    .dv2-mlogo img { width: 28px; height: 28px; object-fit: contain; }
-    .dv2-search { display: none; }
-    .dv2-top-actions { gap: 6px; }
-    .dv2-content { padding: 16px 16px calc(150px + env(safe-area-inset-bottom, 0px)); }
+    .dv2-top { padding: env(safe-area-inset-top, 0px) 12px 0; min-height: 52px; gap: 8px; }
+    .dv2-mlogo { display: flex; align-items: center; flex: none; }
+    .dv2-mlogo img { width: 24px; height: 24px; object-fit: contain; }
+    .dv2-crumbs > span, .dv2-crumbs > svg { display: none; }
+    .dv2-crumbs b { font-size: 15px; font-weight: 600; }
+    .dv2-top-actions { gap: 2px; }
+    .dv2-content { padding: 18px 16px calc(150px + env(safe-area-inset-bottom, 0px)); }
     .dv2-tabbar { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); position: fixed; bottom: 0; inset-inline: 0; z-index: 1300;
-      background: var(--tabbar-bg); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-top: 1px solid var(--line);
-      padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px)); }
-    .dv2-tabbar button { background: none; border: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px;
-      color: var(--dim); padding: 6px 0; position: relative; cursor: pointer; min-width: 0; font-weight: 500; }
+      background: var(--tabbar-bg); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-top: 1px solid var(--line);
+      padding: 4px 6px calc(4px + env(safe-area-inset-bottom, 0px)); }
+    .dv2-tabbar button { background: none; border: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10.5px;
+      color: var(--dim); padding: 7px 0 5px; position: relative; cursor: pointer; min-width: 0; font-weight: 500; border-radius: 8px; }
+    .dv2-tabbar button svg { width: 19px; height: 19px; }
     .dv2-tabbar button span.dv2-tab-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .dv2-tabbar button.is-active { color: var(--ink); }
-    .dv2-tabbar button.is-active svg { color: var(--sky); }
-    .dv2-tabbar .dv2-badge { position: absolute; top: 2px; inset-inline-end: 22%; font-size: 10px; min-width: 18px; padding: 0 5px; line-height: 16px; }
+    .dv2-tabbar .dv2-badge { position: absolute; top: 2px; inset-inline-end: 22%; font-size: 9.5px; min-width: 16px; padding: 0 4px; line-height: 15px; }
     /* floating buttons and toasts clear the tab bar */
-    .dv2-floating { bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important; }
+    .dv2-floating { bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important; }
     .dv2-desktop-only { display: none !important; }
+    .dv2-mobile-only { display: grid !important; }
     .dv2-header-subtitle { display: none; }
     .dv2-responsive-grid { grid-template-columns: 1fr !important; }
     .dv2-responsive-grid-2 { grid-template-columns: 1fr 1fr !important; }
     .dv2-kpi-hero-grid { grid-template-columns: 1fr !important; }
   }
-  /* desktop: the quick-add button clears the sidebar instead of covering its footer */
-  @media (min-width: 901px) {
-    .dv2-fab { inset-inline-start: calc(var(--side-w, 240px) + 24px) !important; }
-  }
   @media (max-width: 380px) {
-    .dv2-mlogo span { display: none; }
+    .dv2-today { display: none; }
   }
   @media (prefers-reduced-motion: reduce) {
     .dv2-side, .dv2-nav { transition: none; }
   }
 `
 
+/** Titles for routes that aren't in the sidebar, for the top-bar breadcrumb. */
+const EXTRA_TITLES: Record<string, string> = {
+  'plan-usage': 'الباقة والاستخدام',
+  'audit-log': 'سجل التدقيق',
+  'calls-analytics': 'تحليلات المكالمات',
+  'whatsapp-analytics': 'تحليلات واتساب',
+  tools: 'الأدوات',
+  'analysis-groups': 'مجموعات التحليل',
+  'inbound-services': 'الخدمات الواردة',
+  'outbound-services': 'الخدمات الصادرة',
+}
+
 export function DashboardV2Layout() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { companyId, isDemo, accountError, refreshAccount, businessType, hasModule, packageType, usageMetrics } = useWorkspace()
+  const { companyId, isDemo, accountError, refreshAccount, businessType, hasModule, packageType, usageMetrics, companyName, companyLogoUrl } = useWorkspace()
   const showBookings = hasModule('bookings')
   const [theme, setTheme] = useState<'light' | 'dark'>(() => (readStored(THEME_KEY) === 'light' ? 'light' : 'dark'))
   const [collapsed, setCollapsed] = useState(() => readStored(COLLAPSE_KEY) === '1')
@@ -201,31 +239,32 @@ export function DashboardV2Layout() {
   }
 
   const base = isDemo ? '/demo-review' : '/clinic-os/dashboard'
+  // Grouped like a product console: overview, daily operations, the AI agent, setup.
   const ALL_NAV_GROUPS: { title: string; items: NavItem[] }[] = [
-    { title: '', items: [
-      { label: 'الرئيسية', path: base, icon: <LayoutDashboard size={18} /> },
+    { title: 'نظرة عامة', items: [
+      { label: 'الرئيسية', path: base, icon: <LayoutDashboard size={16} /> },
+      { label: 'تحليلات الموظف', short: 'التحليلات', path: `${base}/agent-analytics`, icon: <Sparkles size={16} />, module: 'voice' },
+      { label: 'التقارير والتحليلات', short: 'التقارير', path: `${base}/reports`, icon: <BarChart3 size={16} />, module: 'reports' },
+      { label: 'الإيرادات', path: `${base}/revenue`, icon: <Wallet size={16} />, module: 'revenue' },
     ] },
-    // Grouped by how often it's opened, not by internal architecture: the daily
-    // operational work sits at the top, configuration further down.
-    { title: 'التشغيل اليومي', items: [
-      { label: bookingsLabel(businessType), path: `${base}/bookings`, icon: <CalendarDays size={18} />, module: 'bookings' },
-      { label: 'المحادثات', path: `${base}/conversations`, icon: <MessageSquare size={18} />, module: 'conversations' },
-      { label: 'العملاء', path: `${base}/patients`, icon: <Users size={18} />, module: 'customers' },
-      { label: 'التذاكر', path: `${base}/tickets`, icon: <Ticket size={18} />, badge: openTicketCount || undefined, module: 'tickets' },
-      { label: 'تقييمات Google', path: `${base}/reviews`, icon: <Star size={18} />, module: 'reviews' },
-      { label: 'سجل المكالمات', path: `${base}/call-logs`, icon: <ClipboardList size={18} />, module: 'voice' },
-      { label: 'تحليلات الموظف', short: 'التحليلات', path: `${base}/agent-analytics`, icon: <Sparkles size={18} />, module: 'voice' },
-      { label: 'العملاء من المحادثات', short: 'عملاء المحادثات', path: `${base}/agent-users`, icon: <Contact size={18} />, module: 'voice' },
+    { title: 'التشغيل', items: [
+      { label: 'المحادثات', path: `${base}/conversations`, icon: <MessageSquare size={16} />, module: 'conversations' },
+      { label: bookingsLabel(businessType), path: `${base}/bookings`, icon: <CalendarDays size={16} />, module: 'bookings' },
+      { label: 'العملاء', path: `${base}/patients`, icon: <Users size={16} />, module: 'customers' },
+      { label: 'التذاكر', path: `${base}/tickets`, icon: <Ticket size={16} />, badge: openTicketCount || undefined, module: 'tickets' },
+      { label: 'تقييمات Google', path: `${base}/reviews`, icon: <Star size={16} />, module: 'reviews' },
+      { label: 'المتابعات', path: `${base}/reminders`, icon: <BellRing size={16} />, module: 'reminders' },
     ] },
-    { title: 'التقارير', items: [
-      { label: 'التقارير والتحليلات', path: `${base}/reports`, icon: <BarChart3 size={18} />, module: 'reports' },
-      { label: 'الإيرادات', path: `${base}/revenue`, icon: <Wallet size={18} />, module: 'revenue' },
+    { title: 'الموظف الذكي', items: [
+      { label: 'إعدادات الموظف', short: 'الموظف', path: `${base}/agents`, icon: <Bot size={16} /> },
+      { label: 'قاعدة المعرفة', short: 'المعرفة', path: `${base}/knowledge-base`, icon: <BookOpen size={16} />, module: 'knowledge_base' },
+      { label: 'سجل المكالمات', path: `${base}/call-logs`, icon: <ClipboardList size={16} />, module: 'voice' },
+      { label: 'العملاء من المحادثات', short: 'عملاء المحادثات', path: `${base}/agent-users`, icon: <Contact size={16} />, module: 'voice' },
     ] },
     { title: 'الإعداد', items: [
-      { label: 'قاعدة المعرفة', short: 'المعرفة', path: `${base}/knowledge-base`, icon: <BookOpen size={18} />, module: 'knowledge_base' },
-      { label: 'الخدمات', path: `${base}/services`, icon: <Wrench size={18} />, module: 'services' },
-      { label: 'المتابعات', path: `${base}/reminders`, icon: <BellRing size={18} />, module: 'reminders' },
-      { label: 'الإعدادات', path: `${base}/settings`, icon: <Settings size={18} /> },
+      { label: 'الخدمات', path: `${base}/services`, icon: <Wrench size={16} />, module: 'services' },
+      { label: 'التكاملات', path: `${base}/integrations`, icon: <Plug size={16} /> },
+      { label: 'الإعدادات', path: `${base}/settings`, icon: <Settings size={16} /> },
     ] },
   ]
   // Drop items for modules this company doesn't have, then any group left empty.
@@ -256,6 +295,14 @@ export function DashboardV2Layout() {
   const metrics = (isDemo ? getUsageMetrics(packageType) : usageMetrics).filter((m) => m.limit > 0)
   const topMetric = metrics.reduce<typeof metrics[number] | null>((best, m) => (!best || usagePercentage(m) > usagePercentage(best) ? m : best), null)
   const topPct = topMetric ? usagePercentage(topMetric) : 0
+  const planName = CLINIC_PLANS[packageType]?.name
+  const ctxTone = topPct >= 100 ? 'bad' : topPct >= 80 ? 'warn' : ''
+
+  // Breadcrumb: company › current page.
+  const activeItem = allItems.find((it) => isActive(it.path))
+  const subPath = location.pathname.slice(base.length + 1).split('/')[0]
+  const pageTitle = activeItem?.label || EXTRA_TITLES[subPath] || 'الرئيسية'
+  const company = companyName || 'مدار'
 
   const navButton = (item: NavItem) => {
     const btn = (
@@ -268,7 +315,7 @@ export function DashboardV2Layout() {
         onClick={() => navigate(item.path)}
       >
         {item.icon}
-        {!collapsed && <span style={{ flex: 1, minWidth: 0 }}>{item.label}</span>}
+        {!collapsed && <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>}
         {item.badge != null && <i className="dv2-badge">{item.badge}</i>}
       </button>
     )
@@ -279,7 +326,7 @@ export function DashboardV2Layout() {
 
   return (
     // ToastProvider sits inside the scope so its toast stack inherits the tokens.
-    <div className="dv2-scope dv2-app" dir="rtl" data-theme={theme} style={{ ['--side-w' as string]: collapsed ? '76px' : '240px' }}>
+    <div className="dv2-scope dv2-app" dir="rtl" data-theme={theme} style={{ ['--side-w' as string]: collapsed ? '64px' : '252px' }}>
     <ToastProvider>
       <style>{SHELL_CSS}</style>
 
@@ -288,9 +335,24 @@ export function DashboardV2Layout() {
           <img src="/logo-main.png" alt="" />
           {!collapsed && 'مدار'}
         </div>
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <button type="button" className="dv2-side-search" onClick={() => requestOpenSearch()} aria-label="ابحث أو أنشئ">
+          <Search size={15} />
+          {!collapsed && <><span>ابحث أو أنشئ</span><kbd className="dv2-kbd">⌘K</kbd></>}
+        </button>
+        <div className="dv2-ctx" title={company}>
+          <div className="dv2-ctx-av">
+            {companyLogoUrl ? <img src={companyLogoUrl} alt="" /> : (company.trim()[0] || 'م')}
+          </div>
+          {!collapsed && (
+            <div className="dv2-ctx-txt">
+              <b>{company}</b>
+              <small><i className={`dv2-dot${ctxTone ? ` ${ctxTone}` : ''}`} />{planName ? `باقة ${planName}` : 'مساحة العمل'}</small>
+            </div>
+          )}
+        </div>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           {NAV_GROUPS.map((group, gi) => (
-            <div key={group.title || gi} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <div key={group.title || gi} style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               {group.title && <div className="dv2-nav-group">{group.title}</div>}
               {group.items.map(navButton)}
             </div>
@@ -298,7 +360,7 @@ export function DashboardV2Layout() {
         </nav>
 
         {topMetric && !collapsed && (
-          <div className="dv2-side-foot">
+          <div className="dv2-side-foot" style={{ marginTop: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
               <span>{topMetric.label}</span>
               <b dir="ltr">{topMetric.used.toLocaleString('en')} / {topMetric.limit.toLocaleString('en')}</b>
@@ -307,21 +369,26 @@ export function DashboardV2Layout() {
             <button type="button" className="dv2-link" onClick={() => navigate(`${base}/plan-usage`)}>تفاصيل الباقة</button>
           </div>
         )}
-        <button type="button" className="dv2-collapse" onClick={toggleCollapsed} style={collapsed ? { marginTop: 'auto' } : undefined}>
-          {collapsed ? <ChevronsLeft size={15} /> : <><ChevronsRight size={15} /> طي القائمة</>}
+        <button type="button" className="dv2-collapse" onClick={toggleCollapsed} style={collapsed || !topMetric ? { marginTop: 'auto' } : undefined} aria-label={collapsed ? 'توسيع القائمة' : 'طي القائمة'}>
+          {collapsed ? <PanelRightOpen size={16} /> : <><PanelRightClose size={16} /> طي القائمة</>}
         </button>
       </aside>
 
       <div className="dv2-col" ref={colRef}>
         <header className="dv2-top">
           <TopProgressBar triggerKey={location.pathname} />
-          <div className="dv2-mlogo"><img src="/logo-main.png" alt="" /><span>مدار</span></div>
-          <div className="dv2-search"><GlobalSearch base={base} /></div>
+          <div className="dv2-mlogo"><img src="/logo-main.png" alt="مدار" /></div>
+          <div className="dv2-crumbs" aria-label="المسار">
+            <span>{company}</span>
+            <ChevronLeftIcon size={14} />
+            <b aria-current="page">{pageTitle}</b>
+          </div>
           <div className="dv2-top-actions">
+            <button type="button" className="dv2-icon-btn dv2-mobile-only" onClick={() => requestOpenSearch()} aria-label="بحث"><Search size={17} /></button>
             {showBookings && (
               <Tooltip label={`${bookingsLabel(businessType)} اليوم`}>
                 <button type="button" className="dv2-today" onClick={() => navigate(`${base}/bookings`)} aria-label={`${bookingsLabel(businessType)} اليوم: ${todayCount}`}>
-                  <CalendarCheck2 size={16} /> {todayCount}
+                  <CalendarCheck2 size={15} /> <span className="dv2-desktop-only">اليوم</span> <b>{todayCount}</b>
                 </button>
               </Tooltip>
             )}
@@ -335,20 +402,28 @@ export function DashboardV2Layout() {
                   transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
                   style={{ display: 'flex' }}
                 >
-                  {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                  {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
                 </motion.span>
               </AnimatePresence>
             </button>
-            <span className="dv2-desktop-only"><WhatsNewBadge /></span>
+            <span className="dv2-desktop-only" style={{ display: 'contents' }}><WhatsNewBadge /></span>
             <NotificationCenter />
-            <AccountMenu base={base} />
+            {showBookings && (
+              <span className="dv2-desktop-only" style={{ display: 'contents' }}>
+                <span className="dv2-sep" />
+                <button type="button" className="dv2-pri" onClick={() => navigate(`${base}/bookings?new=1`)}>
+                  <Plus size={15} /> حجز جديد
+                </button>
+              </span>
+            )}
+            <span style={{ marginInlineStart: 6, display: 'flex' }}><AccountMenu base={base} /></span>
           </div>
         </header>
         {!isDemo && accountError && (
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flex: 'none',
             padding: '10px 20px', background: 'var(--bad-bg)', borderBottom: '1px solid var(--danger-200)',
-            color: 'var(--bad)', fontSize: 13, fontWeight: 600,
+            color: 'var(--bad)', fontSize: 13, fontWeight: 500,
           }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><AlertTriangle size={16} /> {accountError}</span>
             <button type="button" className="dv2-link" onClick={() => refreshAccount()} style={{ color: 'inherit', textDecoration: 'underline', marginTop: 0, fontSize: 13 }}>إعادة المحاولة</button>
@@ -358,7 +433,7 @@ export function DashboardV2Layout() {
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.div
               key={location.pathname}
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: DURATION_MEDIUM, ease: EASE_OUT }}
@@ -408,7 +483,7 @@ export function DashboardV2Layout() {
                 <button type="button" className="dv2-icon-btn" onClick={() => setMoreOpen(false)} aria-label="إغلاق"><X size={18} /></button>
               </div>
               {moreGroups.map((g, gi) => (
-                <div key={g.title || gi} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <div key={g.title || gi} style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   {g.title && <div className="dv2-nav-group">{g.title}</div>}
                   {g.items.map((it) => (
                     <button key={it.path} type="button" className={`dv2-nav${isActive(it.path) ? ' is-active' : ''}`} onClick={() => navigate(it.path)}>
@@ -424,11 +499,12 @@ export function DashboardV2Layout() {
         )}
       </AnimatePresence>
 
+      <GlobalSearch base={base} />
       <SupportChat />
       <OnboardingWizard />
       <ShortcutsOverlay />
       {showBookings && (
-        <Fab actions={[{ label: 'حجز جديد', icon: <Plus size={15} />, onClick: () => navigate(`${base}/bookings?new=1`) }]} />
+        <span className="dv2-mobile-only"><Fab actions={[{ label: 'حجز جديد', icon: <Plus size={15} />, onClick: () => navigate(`${base}/bookings?new=1`) }]} /></span>
       )}
     </ToastProvider>
     </div>

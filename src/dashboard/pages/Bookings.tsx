@@ -60,9 +60,9 @@ const BOOKINGS_CSS = `
 .bk-cal-cell { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: var(--radius-md); cursor: pointer; font-size: 12px; border: 1px solid transparent; background: transparent; color: var(--text-primary); padding: 0; font-variant-numeric: tabular-nums; }
 .bk-cal-cell:hover { background: var(--hover-bg); }
 .bk-cal-cell.is-today { border-color: var(--sky); }
-.bk-cal-cell[aria-pressed="true"] { background: var(--royal-2); color: #FFFFFF; border-color: transparent; }
+.bk-cal-cell[aria-pressed="true"] { background: var(--pri-bg); color: var(--pri-fg); border-color: transparent; }
 .bk-cal-cell i { width: 4px; height: 4px; border-radius: 50%; margin-top: 2px; background: var(--sky); }
-.bk-cal-cell[aria-pressed="true"] i { background: #FFFFFF; }
+.bk-cal-cell[aria-pressed="true"] i { background: var(--pri-fg); }
 .bk-filter-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; cursor: pointer; padding: 5px 10px; border-radius: 999px; background: var(--info-bg); color: var(--info); border: 0; }
 @media (max-width: 900px) {
   .bk-cal-grid { grid-template-columns: minmax(0, 1fr); }

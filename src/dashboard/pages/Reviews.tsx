@@ -186,7 +186,7 @@ export function DashboardV2Reviews() {
                 <div style={{
                   position: 'absolute', inset: 0, backfaceVisibility: 'hidden', borderRadius: 'var(--radius-lg)',
                   padding: 18, display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-                  background: active ? 'var(--gradient-brand)' : 'var(--surface-card)',
+                  background: active ? 'var(--pri-bg)' : 'var(--surface-card)',
                   border: '1px solid ' + (active ? 'transparent' : 'var(--border-default)'),
                   boxShadow: active ? 'var(--shadow-lg)' : 'var(--shadow-sm)',
                 }}>
@@ -230,7 +230,7 @@ export function DashboardV2Reviews() {
                     position: 'absolute', inset: 0, backfaceVisibility: 'hidden', transform: 'rotateY(180deg)',
                     borderRadius: 'var(--radius-lg)', padding: 18, display: 'flex', flexDirection: 'column',
                     alignItems: 'center', justifyContent: 'center', gap: 10, textAlign: 'center',
-                    background: 'var(--gradient-brand)', color: '#fff', boxShadow: 'var(--shadow-lg)',
+                    background: 'var(--pri-bg)', color: 'var(--pri-fg)', boxShadow: 'var(--shadow-lg)',
                   }}>
                     <MapIcon size={26} />
                     <div style={{ fontWeight: 700, fontSize: 13.5 }}>{b.name}</div>
@@ -265,7 +265,7 @@ export function DashboardV2Reviews() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{
                     width: 38, height: 38, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: 'var(--gradient-brand)', color: '#fff', fontWeight: 700, fontSize: 14,
+                    background: 'var(--pri-bg)', color: 'var(--pri-fg)', fontWeight: 700, fontSize: 14,
                   }}>{r.reviewer_name.trim()[0] || '؟'}</div>
                   <div>
                     <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)' }}>{r.reviewer_name}</div>

@@ -12,9 +12,9 @@ import { SPRING_SMOOTH, DURATION_SLOW, EASE_OUT } from './motionTokens'
 // Deterministic shades of the logo blues/violet; every pair reads on both the
 // Night panels and the light theme's white cards.
 const AVATAR_PALETTE = [
-  ['#1131A8', '#FFFFFF'], ['#2A4BD1', '#FFFFFF'], ['#48A8F0', '#04122E'],
-  ['#8053F8', '#FFFFFF'], ['#17234D', '#A6D7FC'], ['#1E3A8A', '#E8EBF4'],
-  ['#3B2A86', '#D9CCFF'], ['#0E5A8A', '#E4F2FE'],
+  ['#2A2A2A', '#E5E5E5'], ['#303030', '#D4D4D4'], ['#1E3A5F', '#BFDBFE'],
+  ['#2E2A4F', '#DDD6FE'], ['#1F3D2E', '#BBF7D0'], ['#4A3220', '#FED7AA'],
+  ['#3F2A2A', '#FECACA'], ['#26363B', '#A5F3FC'],
 ]
 
 function hashStr(s: string) {
@@ -310,7 +310,7 @@ export function TopProgressBar({ triggerKey }: { triggerKey: string }) {
   }, [triggerKey])
 
   return (
-    <div style={{ position: 'absolute', top: 0, insetInlineStart: 0, insetInlineEnd: 0, height: 2.5, zIndex: 50, overflow: 'hidden', pointerEvents: 'none' }}>
+    <div style={{ position: 'absolute', top: 0, insetInlineStart: 0, insetInlineEnd: 0, height: 2, zIndex: 50, overflow: 'hidden', pointerEvents: 'none' }}>
       <AnimatePresence>
         {visible && (
           <motion.div
@@ -321,8 +321,8 @@ export function TopProgressBar({ triggerKey }: { triggerKey: string }) {
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             style={{
               height: '100%',
-              background: 'linear-gradient(90deg, var(--brand-400), var(--brand-600))',
-              boxShadow: '0 0 8px rgba(0,191,255,.65), 0 0 2px rgba(0,191,255,.9)',
+              background: 'var(--ink)',
+              opacity: 0.7,
             }}
           />
         )}
@@ -710,7 +710,7 @@ export function Fab({ actions }: { actions: { label: string; icon: ReactNode; on
                 onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-sunken)' }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
               >
-                <span style={{ color: 'var(--brand-500)', display: 'flex' }}>{a.icon}</span>
+                <span style={{ color: 'var(--text-tertiary)', display: 'flex' }}>{a.icon}</span>
                 {a.label}
               </div>
             ))}
@@ -723,9 +723,9 @@ export function Fab({ actions }: { actions: { label: string; icon: ReactNode; on
         animate={{ rotate: open ? 45 : 0 }}
         transition={{ duration: 0.2 }}
         style={{
-          width: 52, height: 52, borderRadius: '50%', background: 'var(--gradient-brand)', color: '#fff', border: 'none',
+          width: 48, height: 48, borderRadius: '50%', background: 'var(--pri-bg)', color: 'var(--pri-fg)', border: 'none',
           display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-          boxShadow: '0 8px 24px rgba(0,191,255,.4), var(--shadow-lg)',
+          boxShadow: 'var(--shadow-md)',
         }}
       >
         <Plus size={22} />

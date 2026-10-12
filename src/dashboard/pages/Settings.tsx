@@ -266,7 +266,7 @@ export function DashboardV2Settings() {
               <Meter
                 key={m.key} label={m.label} value={p}
                 display={<span dir="ltr">{fmtNum(m.used)} / {m.limit ? fmtNum(m.limit) : '—'}</span>}
-                color={p >= 100 ? 'var(--bad)' : p >= 80 ? 'linear-gradient(90deg, var(--warn), var(--bad))' : undefined}
+                color={p >= 100 ? 'var(--bad)' : p >= 80 ? 'var(--warn)' : undefined}
               />
             )
           })}

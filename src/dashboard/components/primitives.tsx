@@ -19,22 +19,12 @@ export function Card({ children, emphasis, interactive, glow, glass, delay = 0, 
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: DURATION_MEDIUM, delay: Math.min(delay, 0.5), ease: EASE_OUT }}
       whileHover={interactive ? {
-        y: -2,
-        boxShadow: glow
-          ? 'var(--shadow-md), 0 0 0 1px var(--card-border-emphasis)'
-          : 'var(--shadow-md)',
+        borderColor: 'var(--line-2)',
       } : undefined}
       style={{
         // Night panel: flat navy on the abyss, separated by a hairline. Emphasis adds
         // the logo gradient as a thin top rule plus a faint blue/violet wash.
-        backgroundColor: emphasis || glass ? 'var(--panel-2)' : 'var(--surface-card)',
-        backgroundImage: emphasis
-          ? 'var(--grad), radial-gradient(120% 140% at 100% 0%, rgba(128,83,248,.14), transparent 55%), radial-gradient(90% 120% at 0% 100%, rgba(72,168,240,.10), transparent 60%)'
-          : glass
-          ? 'radial-gradient(120% 140% at 100% 0%, rgba(72,168,240,.08), transparent 60%)'
-          : undefined,
-        backgroundSize: emphasis ? '100% 2px, 100% 100%, 100% 100%' : undefined,
-        backgroundRepeat: 'no-repeat',
+        backgroundColor: 'var(--surface-card)',
         borderRadius: 'var(--radius-xl)',
         border: emphasis ? '1px solid var(--card-border-emphasis)' : '1px solid var(--card-border)',
         boxShadow: 'var(--shadow-sm)',
@@ -74,7 +64,7 @@ export function Badge({ tone = 'brand', children, style }: {
       display: 'inline-flex', alignItems: 'center', gap: 5, padding: '0 9px', height: 22, boxSizing: 'border-box',
       borderRadius: 'var(--radius-full)', background: bg, color: fg,
       border: tone === 'neutral' ? '1px solid var(--border-default)' : '1px solid transparent',
-      fontSize: 11.5, fontWeight: 700, fontFamily: 'var(--font-body)', whiteSpace: 'nowrap',
+      fontSize: 11.5, fontWeight: 500, fontFamily: 'var(--font-body)', whiteSpace: 'nowrap',
       lineHeight: 1, ...style,
     }}>
       {children}
@@ -88,36 +78,36 @@ export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
 export type ButtonSize = 'sm' | 'md' | 'lg'
 
 const SIZE_STYLES: Record<ButtonSize, CSSProperties> = {
-  sm: { padding: '0 11px', height: 30, fontSize: 12, borderRadius: 'var(--radius-sm)' },
-  md: { padding: '0 14px', height: 36, fontSize: 13, borderRadius: 'var(--radius-md)' },
-  lg: { padding: '0 20px', height: 42, fontSize: 14, borderRadius: 'var(--radius-lg)' },
+  sm: { padding: '0 10px', height: 28, fontSize: 12, borderRadius: 'var(--radius-md)' },
+  md: { padding: '0 14px', height: 34, fontSize: 13, borderRadius: 'var(--radius-md)' },
+  lg: { padding: '0 18px', height: 40, fontSize: 14, borderRadius: 'var(--radius-lg)' },
 }
 
 // Primary carries the logo gradient (reserved for primary actions); the rest stay
 // quiet navy/outline so the one gradient button on a screen is the obvious next step.
 const VARIANT_STYLES: Record<ButtonVariant, CSSProperties> = {
-  primary: { backgroundColor: 'var(--royal-2)', backgroundImage: 'var(--grad)', color: '#fff', border: '1px solid transparent' },
+  primary: { backgroundColor: 'var(--pri-bg)', backgroundImage: 'none', color: 'var(--pri-fg)', border: '1px solid transparent' },
   secondary: { backgroundColor: 'var(--panel-2)', backgroundImage: 'none', color: 'var(--text-primary)', border: '1px solid var(--border-strong)' },
-  ghost: { backgroundColor: 'transparent', backgroundImage: 'none', color: 'var(--sky)', border: '1px solid color-mix(in srgb, var(--sky) 35%, transparent)' },
+  ghost: { backgroundColor: 'transparent', backgroundImage: 'none', color: 'var(--text-secondary)', border: '1px solid transparent' },
   danger: { backgroundColor: 'var(--bad-bg)', backgroundImage: 'none', color: 'var(--bad)', border: '1px solid transparent' },
 }
 
 const HOVER_BG: Record<ButtonVariant, string> = {
-  primary: 'var(--royal-2)',
+  primary: 'var(--pri-hover)',
   secondary: 'var(--raise)',
-  ghost: 'var(--info-bg)',
+  ghost: 'var(--hover-bg)',
   danger: 'color-mix(in srgb, var(--bad) 22%, transparent)',
 }
 
 const RESTING_SHADOW: Record<ButtonVariant, string> = {
-  primary: 'var(--shadow-brand)',
+  primary: 'none',
   secondary: 'none',
   ghost: 'none',
   danger: 'none',
 }
 
 const HOVER_SHADOW: Record<ButtonVariant, string> = {
-  primary: '0 10px 26px -10px rgba(128,83,248,.95)',
+  primary: 'none',
   secondary: 'none',
   ghost: 'none',
   danger: 'none',
@@ -142,10 +132,9 @@ export function Button({ variant = 'primary', size = 'md', disabled, children, o
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       whileTap={disabled ? undefined : { scale: 0.98 }}
-      whileHover={disabled ? undefined : { y: -1 }}
       transition={{ duration: DURATION_FAST }}
       style={{
-        fontFamily: 'var(--font-body)', fontWeight: 600,
+        fontFamily: 'var(--font-body)', fontWeight: 500,
         cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.45 : 1,
         transition: 'background-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out)',
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, whiteSpace: 'nowrap',
@@ -280,7 +269,7 @@ export function Switch({ checked, onChange, label, style }: {
         onClick={() => onChange && onChange(!checked)}
         style={{
           width: 42, height: 24, borderRadius: 'var(--radius-full)',
-          background: checked ? 'var(--royal-2)' : 'var(--border-strong)',
+          background: checked ? 'var(--pri-bg)' : 'var(--border-strong)',
           position: 'relative', transition: 'background var(--duration-normal) var(--ease-out)', flexShrink: 0,
         }}
       >
@@ -289,7 +278,7 @@ export function Switch({ checked, onChange, label, style }: {
           transition={{ type: 'spring', stiffness: 600, damping: 32 }}
           style={{
             position: 'absolute', top: 3, width: 18, height: 18,
-            borderRadius: 'var(--radius-full)', background: '#fff', boxShadow: 'var(--shadow-sm)',
+            borderRadius: 'var(--radius-full)', background: checked ? 'var(--pri-fg)' : '#fff', boxShadow: 'var(--shadow-sm)',
           }}
         />
       </span>
@@ -335,13 +324,13 @@ export function Dialog({ open, title, children, onClose, footer }: {
             exit={{ opacity: 0, y: 8, scale: 0.97 }}
             transition={{ type: 'spring', stiffness: 420, damping: 34 }}
             style={{
-              background: 'var(--surface-raised)', borderRadius: 20, boxShadow: '0 40px 80px -30px rgba(0,0,0,.8)',
+              background: 'var(--surface-raised)', borderRadius: 14, boxShadow: 'var(--shadow-lg)',
               border: '1px solid var(--border-strong)',
               width: 460, maxWidth: '100%', padding: 22, fontFamily: 'var(--font-body)', maxHeight: 'calc(100vh - 32px)', overflowY: 'auto',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <h3 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>{title}</h3>
+              <h3 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>{title}</h3>
               <button type="button" onClick={onClose} aria-label="إغلاق" style={{ cursor: 'pointer', color: 'var(--text-tertiary)', fontSize: 22, lineHeight: 1, background: 'none', border: 0, padding: 4 }}>×</button>
             </div>
             <div style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{children}</div>

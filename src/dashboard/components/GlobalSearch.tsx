@@ -108,52 +108,54 @@ export function GlobalSearch({ base }: { base: string }) {
     if (e.key === 'Enter') { e.preventDefault(); const entry = flatResults[activeIndex]; if (entry) go(entry) }
   }
 
+  // A command palette: the trigger lives in the sidebar / top bar and calls
+  // requestOpenSearch(); this renders only the floating panel.
   return (
-    <div style={{ position: 'relative', flex: 1, maxWidth: 420 }}>
-      <div style={{ position: 'relative' }}>
-        <Search size={16} style={{ position: 'absolute', insetInlineStart: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
-        <input
-          ref={inputRef}
-          value={query}
-          onChange={(e) => { setQuery(e.target.value); setOpen(true); setActiveIndex(0) }}
-          onFocus={() => { setOpen(true); setRecent(loadRecent()) }}
-          onKeyDown={onKeyDown}
-          placeholder="ابحث أو اكتب أمرًا سريعًا..."
-          style={{
-            width: '100%', boxSizing: 'border-box', height: 40, paddingBlock: 0, paddingInlineStart: 36, paddingInlineEnd: 44, borderRadius: 12,
-            border: '1px solid var(--border-default)', fontSize: 13.5, outline: 'none', background: 'var(--panel)', color: 'var(--text-primary)',
-          }}
-        />
-        {query ? (
-          <span onClick={close} style={{ position: 'absolute', insetInlineEnd: 10, top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', color: 'var(--text-tertiary)' }}>
-            <X size={14} />
-          </span>
-        ) : (
-          <span style={{
-            position: 'absolute', insetInlineEnd: 8, top: '50%', transform: 'translateY(-50%)',
-            fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', border: '1px solid var(--border-strong)',
-            borderRadius: 6, padding: '0 6px', pointerEvents: 'none',
-          }}>⌘K</span>
-        )}
-      </div>
-      <AnimatePresence>
-        {open && (
-          <>
-            <div onClick={close} style={{ position: 'fixed', inset: 0, zIndex: 1200 }} />
-            <motion.div
-              initial={{ opacity: 0, y: -6, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -6, scale: 0.98 }}
-              transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
-              style={{
-                position: 'absolute', top: '115%', insetInlineStart: 0, insetInlineEnd: 0, background: 'var(--surface-raised)',
-                borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-default)',
-                zIndex: 1300, maxHeight: 400, overflowY: 'auto',
-              }}
-            >
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            key="gs-scrim" onClick={close}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.12 }}
+            style={{ position: 'fixed', inset: 0, zIndex: 1390, background: 'var(--scrim)' }}
+          />
+          <motion.div
+            key="gs-panel" role="dialog" aria-modal="true" aria-label="البحث"
+            initial={{ opacity: 0, y: -6, scale: 0.985 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.985 }}
+            transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
+            style={{
+              position: 'fixed', top: 'min(14vh, 120px)', insetInlineStart: 0, insetInlineEnd: 0, margin: '0 auto',
+              width: 'min(580px, calc(100vw - 24px))', background: 'var(--surface-raised)', color: 'var(--text-primary)',
+              borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-strong)',
+              zIndex: 1400, overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: 'min(520px, 76vh)',
+            }}
+          >
+            <div style={{ position: 'relative', borderBottom: '1px solid var(--border-default)', flex: 'none' }}>
+              <Search size={16} style={{ position: 'absolute', insetInlineStart: 16, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
+              <input
+                ref={inputRef}
+                value={query}
+                onChange={(e) => { setQuery(e.target.value); setActiveIndex(0) }}
+                onKeyDown={onKeyDown}
+                placeholder="ابحث عن عميل أو حجز، أو اكتب أمرًا..."
+                aria-label="البحث"
+                style={{
+                  width: '100%', boxSizing: 'border-box', height: 50, paddingBlock: 0, paddingInlineStart: 44, paddingInlineEnd: 56,
+                  border: 0, fontSize: 14, outline: 'none', background: 'transparent', color: 'var(--text-primary)',
+                }}
+              />
+              <button type="button" onClick={close} aria-label="إغلاق" style={{
+                position: 'absolute', insetInlineEnd: 12, top: '50%', transform: 'translateY(-50%)', cursor: 'pointer',
+                fontSize: 11, fontWeight: 500, color: 'var(--text-tertiary)', border: '1px solid var(--border-strong)', background: 'transparent',
+                borderRadius: 6, padding: '1px 6px',
+              }}>{query ? <X size={12} style={{ display: 'block' }} /> : 'Esc'}</button>
+            </div>
+            <div style={{ overflowY: 'auto', padding: '6px 0' }}>
               {!query.trim() && recent.length > 0 && (
                 <div>
-                  <div style={{ padding: '8px 14px', fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)' }}>عمليات بحث سابقة</div>
+                  <div style={{ padding: '8px 18px 4px', fontSize: 11.5, fontWeight: 500, color: 'var(--text-tertiary)' }}>عمليات بحث سابقة</div>
                   {recent.map((r, i) => (
                     <div key={i} onClick={() => setQuery(r)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', cursor: 'pointer' }}>
                       <Clock size={13} style={{ color: 'var(--text-tertiary)' }} />
@@ -167,7 +169,7 @@ export function GlobalSearch({ base }: { base: string }) {
 
               {actionMatches.length > 0 && (
                 <div>
-                  <div style={{ padding: '8px 14px', fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)' }}>{query.trim() ? 'إجراءات' : 'إجراءات سريعة'}</div>
+                  <div style={{ padding: '8px 18px 4px', fontSize: 11.5, fontWeight: 500, color: 'var(--text-tertiary)' }}>{query.trim() ? 'إجراءات' : 'إجراءات سريعة'}</div>
                   {actionMatches.map((a) => {
                     const idx = flatResults.findIndex((r) => r.kind === 'action' && r.item.id === a.id)
                     return (
@@ -177,11 +179,11 @@ export function GlobalSearch({ base }: { base: string }) {
                         onMouseEnter={() => setActiveIndex(idx)}
                         style={{
                           display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', cursor: 'pointer',
-                          background: activeIndex === idx ? 'var(--surface-sunken)' : 'transparent',
+                          background: activeIndex === idx ? 'var(--nav-active-bg)' : 'transparent', borderRadius: 8, margin: '0 6px',
                         }}
                       >
-                        <span style={{ color: 'var(--brand-500)', display: 'flex' }}>{a.icon}</span>
-                        <div style={{ fontSize: 13, fontWeight: 600 }}>{a.label}</div>
+                        <span style={{ color: 'var(--text-tertiary)', display: 'flex' }}>{a.icon}</span>
+                        <div style={{ fontSize: 13, fontWeight: 500 }}>{a.label}</div>
                       </div>
                     )
                   })}
@@ -190,7 +192,7 @@ export function GlobalSearch({ base }: { base: string }) {
 
               {patientMatches.length > 0 && (
                 <div>
-                  <div style={{ padding: '8px 14px', fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)' }}>العملاء</div>
+                  <div style={{ padding: '8px 18px 4px', fontSize: 11.5, fontWeight: 500, color: 'var(--text-tertiary)' }}>العملاء</div>
                   {patientMatches.map((p) => {
                     const idx = flatResults.findIndex((r) => r.kind === 'patient' && r.item.id === p.id)
                     return (
@@ -200,11 +202,11 @@ export function GlobalSearch({ base }: { base: string }) {
                         onMouseEnter={() => setActiveIndex(idx)}
                         style={{
                           display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', cursor: 'pointer',
-                          background: activeIndex === idx ? 'var(--surface-sunken)' : 'transparent',
+                          background: activeIndex === idx ? 'var(--nav-active-bg)' : 'transparent', borderRadius: 8, margin: '0 6px',
                         }}
                       >
-                        <User size={14} style={{ color: 'var(--brand-500)' }} />
-                        <div style={{ fontSize: 13, fontWeight: 600 }}>{p.name}</div>
+                        <User size={14} style={{ color: 'var(--text-tertiary)' }} />
+                        <div style={{ fontSize: 13, fontWeight: 500 }}>{p.name}</div>
                         <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginInlineStart: 'auto' }}>{p.phone}</div>
                       </div>
                     )
@@ -213,7 +215,7 @@ export function GlobalSearch({ base }: { base: string }) {
               )}
               {bookingMatches.length > 0 && (
                 <div>
-                  <div style={{ padding: '8px 14px', fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)' }}>الحجوزات</div>
+                  <div style={{ padding: '8px 18px 4px', fontSize: 11.5, fontWeight: 500, color: 'var(--text-tertiary)' }}>الحجوزات</div>
                   {bookingMatches.map((a) => {
                     const idx = flatResults.findIndex((r) => r.kind === 'booking' && r.item.id === a.id)
                     return (
@@ -223,21 +225,21 @@ export function GlobalSearch({ base }: { base: string }) {
                         onMouseEnter={() => setActiveIndex(idx)}
                         style={{
                           display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', cursor: 'pointer',
-                          background: activeIndex === idx ? 'var(--surface-sunken)' : 'transparent',
+                          background: activeIndex === idx ? 'var(--nav-active-bg)' : 'transparent', borderRadius: 8, margin: '0 6px',
                         }}
                       >
-                        <CalendarDays size={14} style={{ color: 'var(--brand-500)' }} />
-                        <div style={{ fontSize: 13, fontWeight: 600 }}>{a.patient_name}</div>
+                        <CalendarDays size={14} style={{ color: 'var(--text-tertiary)' }} />
+                        <div style={{ fontSize: 13, fontWeight: 500 }}>{a.patient_name}</div>
                         <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginInlineStart: 'auto' }}>{a.service_name} · {a.appointment_date}</div>
                       </div>
                     )
                   })}
                 </div>
               )}
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   )
 }
