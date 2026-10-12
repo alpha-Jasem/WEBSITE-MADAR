@@ -225,7 +225,7 @@ export function DashboardV2Home() {
       { title: `اربط رقم الواتساب${showVoice ? ' أو الهاتف' : ''}`, sub: 'عشان يبدأ يرد على عملائك', action: 'ربط', done: channelConnected, onClick: () => go('integrations') },
       { title: 'أضف أول الأسئلة وأجوبتها', sub: 'الأسعار، الدوام، الموقع، وأكثر شي يسألون عنه', action: 'افتح قاعدة المعرفة', done: (knowledge || []).length > 0, onClick: () => go('knowledge-base') },
       { title: 'اضبط شخصية الموظف وتعليماته', sub: 'الاسم، طريقة الرد، ومتى يحوّل لموظف', action: 'إعدادات الموظف', done: false, onClick: () => go('agents') },
-      { title: 'شغّل الموظف الذكي', sub: 'يبدأ يرد من الدقيقة الأولى، وتظهر شغله هنا', action: 'تشغيل', done: false, onClick: () => go('agents') },
+      { title: 'شغّل الوكيل الذكي', sub: 'يبدأ يرد من الدقيقة الأولى، وتظهر شغله هنا', action: 'تشغيل', done: false, onClick: () => go('agents') },
     ]
     return (
       <Onboarding

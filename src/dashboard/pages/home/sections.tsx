@@ -43,7 +43,7 @@ export function AgentCard({ status, statusTone, active, channels, stats, onCalls
       <div className="nx-agent-top">
         <div className={`nx-orb ${active ? '' : 'off'}`}><Bot size={26} /></div>
         <div style={{ minWidth: 0 }}>
-          <h4>موظف الاستقبال الذكي</h4>
+          <h4>وكيل الاستقبال الذكي</h4>
           <span className="nx-status" style={{ color: statusTone === 'ok' ? 'var(--ok)' : 'var(--dim)' }}>{status}</span>
         </div>
         {channels.length > 0 && (
@@ -279,7 +279,7 @@ export function Onboarding({ greeting, sub, steps, bookingsWord }: { greeting: s
       </div>
       <div className="nx-onboard">
         <div className="nx-card">
-          <h3><Sparkles size={17} style={{ color: 'var(--ai)' }} /> جهّز موظفك الذكي <span className="nx-aside nx-num">{done} من {steps.length}</span></h3>
+          <h3><Sparkles size={17} style={{ color: 'var(--ai)' }} /> جهّز وكيلك الذكي <span className="nx-aside nx-num">{done} من {steps.length}</span></h3>
           <div className="nx-meter" style={{ margin: '-4px 0 16px' }}><i style={{ width: `${Math.round((done / steps.length) * 100)}%` }} /></div>
           <div className="nx-steps">
             {steps.map((s, i) => (
@@ -295,7 +295,7 @@ export function Onboarding({ greeting, sub, steps, bookingsWord }: { greeting: s
         </div>
         <div className="nx-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 12, textAlign: 'center' }}>
           <div className="nx-orb off" style={{ margin: '0 auto', width: 72, height: 72 }}><ListChecks size={32} /></div>
-          <h3 style={{ justifyContent: 'center', margin: 0 }}>هنا بتشوف شغل موظفك</h3>
+          <h3 style={{ justifyContent: 'center', margin: 0 }}>هنا بتشوف شغل وكيلك</h3>
           <p style={{ margin: 0, color: 'var(--muted)', lineHeight: 1.7 }}>
             أول ما يبدأ يرد، تظهر هنا المكالمات والمحادثات و{bookingsWord} اللي سجّلها، والأشياء اللي تحتاج تدخلك.
           </p>

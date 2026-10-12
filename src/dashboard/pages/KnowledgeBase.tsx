@@ -20,7 +20,7 @@ export function DashboardV2KnowledgeBase() {
   const { data: items, loading, error, refetch } = useKnowledgeItems(companyId, isDemo)
   const { data: pending, refetch: refetchPending } = useUnansweredQuestions(companyId, isDemo, caps.unanswered)
   const [target, setTarget] = useState<TeachTarget | null>(null)
-  const agentName = isDemo ? 'مها' : 'الموظف الذكي'
+  const agentName = isDemo ? 'مها' : 'الوكيل الذكي'
   const biz = companyName || (isDemo ? 'عيادات نور للأسنان' : 'منشأتك')
 
   const groups = useMemo(() => {

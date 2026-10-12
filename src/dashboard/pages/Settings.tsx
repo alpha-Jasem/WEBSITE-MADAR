@@ -276,7 +276,7 @@ export function DashboardV2Settings() {
       </div>
 
       <Card>
-        <CardTitle aside="يستخدمها الموظف الذكي عند الرد على العملاء">ساعات العمل</CardTitle>
+        <CardTitle aside="يستخدمها الوكيل الذكي عند الرد على العملاء">ساعات العمل</CardTitle>
         <div>
           {DAYS.map((d) => {
             const day = hours[d.key] || DEFAULT_HOURS[d.key]

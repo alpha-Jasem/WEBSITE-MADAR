@@ -119,7 +119,7 @@ export function DashboardV2Customers() {
     <NightPage>
       <PageHead
         title="العملاء"
-        sub={loading ? 'جارِ التحميل…' : `${fmtNum(rows.length)} عميل · ${fmtNum(returning)} عائد · كل من تواصل مع الموظف الذكي يُحفظ هنا تلقائيًا`}
+        sub={loading ? 'جارِ التحميل…' : `${fmtNum(rows.length)} عميل · ${fmtNum(returning)} عائد · كل من تواصل مع الوكيل الذكي يُحفظ هنا تلقائيًا`}
       />
 
       <div className="np-filters">

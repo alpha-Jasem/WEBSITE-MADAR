@@ -255,7 +255,7 @@ export function DashboardV2Layout() {
       { label: 'تقييمات Google', path: `${base}/reviews`, icon: <Star size={16} />, module: 'reviews' },
       { label: 'المتابعات', path: `${base}/reminders`, icon: <BellRing size={16} />, module: 'reminders' },
     ] },
-    { title: 'الموظف الذكي', items: [
+    { title: 'الوكيل الذكي', items: [
       { label: 'إعدادات الموظف', short: 'الموظف', path: `${base}/agents`, icon: <Bot size={16} /> },
       { label: 'قاعدة المعرفة', short: 'المعرفة', path: `${base}/knowledge-base`, icon: <BookOpen size={16} />, module: 'knowledge_base' },
       { label: 'سجل المكالمات', path: `${base}/call-logs`, icon: <ClipboardList size={16} />, module: 'voice' },

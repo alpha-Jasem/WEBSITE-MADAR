@@ -25,7 +25,7 @@ function TicketCard({ t, onOpen }: { t: OpsTicket; onOpen: () => void }) {
       <span className="id">
         <span style={{ fontFamily: 'var(--font-numeral)' }}>{shortId(t)}</span>
         {isAiOpened(t) && (
-          <span className="ops-chip" style={{ color: 'var(--ai)', background: 'var(--ai-bg)' }}><Bot size={12} />الموظف الذكي</span>
+          <span className="ops-chip" style={{ color: 'var(--ai)', background: 'var(--ai-bg)' }}><Bot size={12} />الوكيل الذكي</span>
         )}
         <span style={{ marginInlineStart: 'auto' }}>{relTime(t.created_at)}</span>
       </span>
@@ -63,7 +63,7 @@ export function DashboardV2Tickets() {
   const members = team || []
   const meMember = members.find((m) => m.auth_user_id && m.auth_user_id === me)
   const authorName = meMember?.full_name || userName || 'الفريق'
-  const agentName = isDemo ? 'مها' : 'الموظف الذكي'
+  const agentName = isDemo ? 'مها' : 'الوكيل الذكي'
 
   // ?new=1[&call=<id>] opens the new-ticket dialog (prefilled from that call). If the AI
   // already opened a ticket for the call, show that one instead of creating a duplicate.
@@ -120,7 +120,7 @@ export function DashboardV2Tickets() {
       <div className="ops-head">
         <div>
           <h1 className="ops-h1">التذاكر</h1>
-          <p className="ops-sub">طلبات العملاء اللي تحتاج متابعة من فريقك. الموظف الذكي يفتحها تلقائيًا من المكالمات</p>
+          <p className="ops-sub">طلبات العملاء اللي تحتاج متابعة من فريقك. الوكيل الذكي يفتحها تلقائيًا من المكالمات</p>
         </div>
         <Button onClick={() => { setCallId(null); setNewOpen(true) }}><Plus size={15} /> تذكرة جديدة</Button>
       </div>
@@ -129,7 +129,7 @@ export function DashboardV2Tickets() {
         <div className="ops-kpi"><span>مفتوحة</span><b>{count('open')}</b><i>{caps.ticketExtras ? `${unassignedOpen} بدون مسؤول` : 'بانتظار فريقك'}</i></div>
         <div className="ops-kpi"><span>قيد المعالجة</span><b>{count('in_progress')}</b><i>يتابعها فريقك</i></div>
         <div className="ops-kpi"><span>متأخرة</span><b style={{ color: lateCount ? 'var(--bad)' : undefined }}>{lateCount}</b><i>تجاوزت وقت الرد</i></div>
-        <div className="ops-kpi"><span>فتحها الموظف الذكي</span><b>{aiShare}%</b><i>والباقي فتحها فريقك</i></div>
+        <div className="ops-kpi"><span>فتحها الوكيل الذكي</span><b>{aiShare}%</b><i>والباقي فتحها فريقك</i></div>
       </div>
 
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>

@@ -82,13 +82,13 @@ export function DashboardV2Agents() {
     if (testUrl) window.open(testUrl, '_blank', 'noopener,noreferrer')
   }
 
-  const name = draft.agent_name || 'الموظف الذكي'
+  const name = draft.agent_name || 'الوكيل الذكي'
 
   return (
     <div className="ops-page">
       <div className="ops-head">
         <div>
-          <h1 className="ops-h1">إعدادات الموظف الذكي</h1>
+          <h1 className="ops-h1">إعدادات الوكيل الذكي</h1>
           <p className="ops-sub">كيف يرد {name}، ومتى، ولمين يحوّل</p>
         </div>
         <div className="ops-actions">

@@ -131,7 +131,7 @@ export function DashboardV2AgentAnalytics() {
     <NightPage>
       <PageHead
         title="تحليلات الموظف"
-        sub={`كيف يتعامل الموظف الذكي مع عملائك، ${PERIOD_PHRASE[period]}`}
+        sub={`كيف يتعامل الوكيل الذكي مع عملائك، ${PERIOD_PHRASE[period]}`}
         actions={<Seg label="الفترة" value={period} onChange={setPeriod} options={PERIOD_OPTIONS} />}
       />
 

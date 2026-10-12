@@ -497,9 +497,9 @@ export const WEEK_DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', '�
 export function defaultAgentSettings(companyId: string, companyName: string): AgentSettings {
   return {
     company_id: companyId,
-    agent_name: 'الموظف الذكي',
+    agent_name: 'الوكيل الذكي',
     voice_label: 'نسائي سعودي (نجدي)',
-    greeting: `هلا وغلا، معك الموظف الذكي من ${companyName || 'منشأتنا'}، كيف أقدر أخدمك؟`,
+    greeting: `هلا وغلا، معك الوكيل الذكي من ${companyName || 'منشأتنا'}، كيف أقدر أخدمك؟`,
     transfer_number: '',
     channels: { phone: true, whatsapp: true, web: false },
     working_hours: WEEK_DAYS.map((_, day) => (

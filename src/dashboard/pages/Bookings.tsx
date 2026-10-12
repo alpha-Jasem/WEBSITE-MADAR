@@ -388,7 +388,7 @@ export function DashboardV2Bookings() {
               <small>{[b.service_name, b.doctor_name, SOURCE_LABELS[b.source] || b.source].filter(Boolean).join(' · ')}</small>
             </div>
             <div className="bk-acts">
-              {b.source === 'ai_booking' && <Chip tone="ai">سجّله الموظف الذكي</Chip>}
+              {b.source === 'ai_booking' && <Chip tone="ai">سجّله الوكيل الذكي</Chip>}
               <Badge tone={STATUS_TONE[b.status]}>{STATUS_LABEL[b.status]}</Badge>
               <ContactActions size={contactSize} phone={b.patient_phone} message={`مرحباً ${b.patient_name}، بخصوص موعدك بتاريخ ${b.appointment_date}.`} />
             </div>

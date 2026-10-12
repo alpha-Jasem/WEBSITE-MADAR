@@ -94,8 +94,8 @@ export function DashboardV2AgentUsers() {
       <PageHead
         title="العملاء من المحادثات"
         sub={contacts.length
-          ? `${contacts.length} عميل تواصلوا مع الموظف الذكي${returning ? `، منهم ${returning} رجعوا أكثر من مرة` : ''}`
-          : 'كل من تواصل مع الموظف الذكي، مجمّعين حسب الرقم'}
+          ? `${contacts.length} عميل تواصلوا مع الوكيل الذكي${returning ? `، منهم ${returning} رجعوا أكثر من مرة` : ''}`
+          : 'كل من تواصل مع الوكيل الذكي، مجمّعين حسب الرقم'}
       />
 
       <div className="np-filters">

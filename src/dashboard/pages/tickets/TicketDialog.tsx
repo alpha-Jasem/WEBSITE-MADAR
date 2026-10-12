@@ -99,7 +99,7 @@ export function TicketDialog({ ticket, onClose, caps, team, isDemo, base, agentN
         <span style={{ color: 'var(--dim)', fontFamily: 'var(--font-numeral)' }}>{shortId(t)}</span>
         <Chip label={st.label} color={st.color} bg="var(--hover-bg)" />
         <Chip label={p.label} color={p.color} bg={p.bg} />
-        {isAiOpened(t) && <Chip label="فتحها الموظف الذكي" color="var(--ai)" bg="var(--ai-bg)" />}
+        {isAiOpened(t) && <Chip label="فتحها الوكيل الذكي" color="var(--ai)" bg="var(--ai-bg)" />}
       </div>
       <p style={{ margin: '0 0 14px', color: 'var(--muted)', fontSize: 13 }}>{customerOf(t)} · {typeOf(t)} · {relTime(t.created_at)}</p>
 

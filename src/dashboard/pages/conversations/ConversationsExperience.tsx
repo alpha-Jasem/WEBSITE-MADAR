@@ -173,8 +173,8 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
   // ─── list ───
   const title = mode === 'calls' ? 'سجل المكالمات' : 'المحادثات'
   const subtitle = mode === 'calls'
-    ? 'كل مكالمة رد عليها الموظف الذكي، بالنص والملخص والنتيجة'
-    : `كل اللي رد عليه الموظف الذكي، ${showVoice ? 'مكالمات وواتساب وموقع' : 'واتساب وموقع'} في مكان واحد`
+    ? 'كل مكالمة رد عليها الوكيل الذكي، بالنص والملخص والنتيجة'
+    : `كل اللي رد عليه الوكيل الذكي، ${showVoice ? 'مكالمات وواتساب وموقع' : 'واتساب وموقع'} في مكان واحد`
 
   return (
     <div className="nx-page">
@@ -343,7 +343,7 @@ function ConversationDetail({ item, isDemo, showTickets, tickets, onTicket, tab,
           <span className="ax-day">{fmtDay(item.time)}</span>
           {call.transcript.map((m, i) => (
             <div key={i} className={`nx-msg ${m.speaker === 'agent' ? 'a' : 'c'}`}>
-              <span className="nx-msg-who">{m.speaker === 'agent' ? 'الموظف الذكي' : item.name}</span>
+              <span className="nx-msg-who">{m.speaker === 'agent' ? 'الوكيل الذكي' : item.name}</span>
               {m.text}
               {m.time && <small className="nx-num">{m.time}</small>}
             </div>

@@ -91,7 +91,7 @@ export function DashboardV2Services() {
     <NightPage>
       <PageHead
         title="الخدمات"
-        sub={`${fmtNum(rows.length)} خدمة · ${fmtNum(rows.filter((s) => s.active).length)} مفعّلة — تُستخدم بالحجوزات والإيرادات وخيارات الموظف الذكي`}
+        sub={`${fmtNum(rows.length)} خدمة · ${fmtNum(rows.filter((s) => s.active).length)} مفعّلة — تُستخدم بالحجوزات والإيرادات وخيارات الوكيل الذكي`}
         actions={<Button onClick={openNew}><Plus size={15} /> خدمة جديدة</Button>}
       />
 
@@ -130,7 +130,7 @@ export function DashboardV2Services() {
                 <div className="np-table-wrap" style={{ borderTop: '1px solid var(--line)' }}>
                   <table className="np-table">
                     <thead>
-                      <tr><th style={{ paddingInlineStart: 20 }}>الخدمة</th><th>المدة</th><th>السعر</th><th>الموظف الذكي</th><th>الحالة</th><th aria-label="إجراءات" /></tr>
+                      <tr><th style={{ paddingInlineStart: 20 }}>الخدمة</th><th>المدة</th><th>السعر</th><th>الوكيل الذكي</th><th>الحالة</th><th aria-label="إجراءات" /></tr>
                     </thead>
                     <tbody>
                       {items.map((s) => (

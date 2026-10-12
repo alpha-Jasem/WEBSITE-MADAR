@@ -165,7 +165,7 @@ export function DashboardV2Reports() {
     <NightPage>
       <PageHead
         title="التقارير"
-        sub={`أداء الموظف الذكي · ${PERIOD_PHRASE[period]}${isDemo ? ' · عرض تجريبي' : ''}`}
+        sub={`أداء الوكيل الذكي · ${PERIOD_PHRASE[period]}${isDemo ? ' · عرض تجريبي' : ''}`}
         actions={<>
           <Seg label="الفترة" options={PERIOD_OPTIONS} value={period} onChange={setPeriod} />
           <Button variant="secondary" onClick={exportReport}><Download size={15} /> تصدير Excel</Button>
