@@ -6,7 +6,7 @@ import { supabase, signOut } from '../lib/supabase'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ToastProvider } from '../components/clinicOS/ui/Toast'
 import { CLINIC_PLANS, AI_RECEPTIONIST_DEMO, getUsageMetrics, type UsageMetric } from '../lib/clinicOSProduct'
-import { DEMO_CLINIC } from '../lib/demoData'
+import { DEMO_COMPANY } from '../lib/demoData'
 
 export interface ClinicUsageSummary {
   bookings: number
@@ -96,22 +96,20 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         setIsDemo(demoRoute)
 
         if (demoRoute) {
-          setCompanyId(DEMO_CLINIC.id)
-          setCompanyName(DEMO_CLINIC.name)
+          setCompanyId(DEMO_COMPANY.id)
+          setCompanyName(DEMO_COMPANY.name)
           setUserName('مستخدم تجريبي')
-          setUserEmail(DEMO_CLINIC.email)
-          setCompanyPhone(DEMO_CLINIC.phone)
-          setCompanyEmail(DEMO_CLINIC.email)
-          setCompanyCity(DEMO_CLINIC.city)
-          // The demo previews any industry with ?industry=real_estate|ecommerce; it sticks for the
-          // session so in-app links (which drop the query) keep the same preset.
+          setUserEmail(DEMO_COMPANY.email)
+          setCompanyPhone(DEMO_COMPANY.phone)
+          setCompanyEmail(DEMO_COMPANY.email)
+          setCompanyCity(DEMO_COMPANY.city)
+          // The demo previews any industry's module set with ?industry=real_estate|ecommerce; it sticks for
+          // the session so in-app links (which drop the query) keep the same preset. The data is the same neutral company.
           const demoIndustry = new URLSearchParams(location.search).get('industry')
           if (isBusinessType(demoIndustry)) sessionStorage.setItem('madar_demo_industry', demoIndustry)
           const storedIndustry = sessionStorage.getItem('madar_demo_industry')
           const demoType = isBusinessType(storedIndustry) ? storedIndustry : 'clinic'
           setBusinessType(demoType)
-          if (demoType === 'real_estate') setCompanyName('الأفق العقارية')
-          else if (demoType === 'ecommerce') setCompanyName('متجر أناقة')
           setModuleOverrides({})
           setCompanyLogoUrl('')
           setCompanySettings({})
