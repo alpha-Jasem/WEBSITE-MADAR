@@ -43,7 +43,7 @@ function getErrorMessage(error: unknown) {
 
 const SIDEBAR_CONTENT = {
   clinic: {
-    badge: 'مدار OS للعيادات',
+    badge: 'مدار OS',
     heading: 'عيادتك تستحق نظاماً يحجز ويذكّر ويتابع بدلاً عنك.',
     body: 'مها تحجز المواعيد على واتساب ٢٤/٧، ترسل تذكيرات تلقائية، وتعطيك تقارير يومية عن كل شيء.',
     features: ['حجز تلقائي بدون موظف استقبال ٢٤/٧', 'تذكيرات واتساب تقلّل الغياب ٧٨٪', 'رمز تحقق آمن على بريدك الإلكتروني'],
@@ -336,7 +336,7 @@ export function TrialSignup() {
                     exit={{ opacity: 0, x: -12 }}
                     transition={{ duration: 0.22 }}
                   >
-                    <Field icon={Building2} label="اسم المنشأة *"      value={form.company_name}     onChange={set('company_name')}     placeholder="مثال: عيادة نور للأسنان" />
+                    <Field icon={Building2} label="اسم المنشأة *"      value={form.company_name}     onChange={set('company_name')}     placeholder="اسم شركتك" />
                     <Field icon={User}      label="اسم المالك *"        value={form.owner_name}       onChange={set('owner_name')}       placeholder="الاسم الأول والأخير" />
                     <Field icon={MapPin}    label="المدينة"              value={form.city}             onChange={set('city')}             placeholder="جدة، الرياض، الدمام..." />
                     <Field icon={Phone}     label="رقم الجوال"           value={form.phone}            onChange={set('phone')}            placeholder="05xxxxxxxx" dir="ltr" inputMode="tel" />

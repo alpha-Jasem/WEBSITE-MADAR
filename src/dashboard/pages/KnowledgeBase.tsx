@@ -21,7 +21,7 @@ export function DashboardV2KnowledgeBase() {
   const { data: pending, refetch: refetchPending } = useUnansweredQuestions(companyId, isDemo, caps.unanswered)
   const [target, setTarget] = useState<TeachTarget | null>(null)
   const agentName = isDemo ? 'مها' : 'الوكيل الذكي'
-  const biz = companyName || (isDemo ? 'عيادات نور للأسنان' : 'منشأتك')
+  const biz = companyName || (isDemo ? 'شركة نموذجية' : 'منشأتك')
 
   const groups = useMemo(() => {
     const map = new Map<string, OpsKnowledgeItem[]>()

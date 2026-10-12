@@ -35,7 +35,7 @@ const RULES: Rule[] = [
   { id: 'sales', label: 'مبيعات', re: /شراء|اشتري|أشتري|يشتري|حجز وحدة|وحدة|شقة|شقق|فيلا|ميزانية|تمويل|دفعة|تقسيط|استثمار|عرض سعر|مهتم|اهتمام|للبيع|buy|purchase|unit|apartment|budget|investment|interested|lead/i },
   { id: 'investment', label: 'استثمار', re: /استثمار|عائد|عوائد|investment|roi/i },
   { id: 'pricing', label: 'أسعار', re: /سعر|أسعار|اسعار|تكلفة|كم يكلف|price|pricing|cost/i },
-  { id: 'visit', label: 'زيارة / معاينة', re: /زيارة|معاينة|أزور|ازور|يزور|موقع المشروع|visit|viewing|tour/i },
+  { id: 'visit', label: 'زيارة', re: /زيارة|معاينة|أزور|ازور|يزور|موقع المشروع|visit|viewing|tour/i },
   { id: 'booking', label: 'حجز موعد', re: /حجز موعد|موعد|حجز|booking|appointment|reservation/i },
   { id: 'followup', label: 'متابعة', re: /متابعة|يتصل|اتصال لاحق|معاودة|follow.?up|call.?back|callback/i },
   { id: 'support', label: 'دعم', re: /مشكلة|عطل|ما يشتغل|لا يعمل|دعم|support|issue|problem|error/i },

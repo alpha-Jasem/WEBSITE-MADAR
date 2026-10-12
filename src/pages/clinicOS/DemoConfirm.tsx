@@ -31,10 +31,10 @@ export const DemoConfirm = () => {
           <div style={{ background: '#F8FAFC', borderRadius: 14, padding: '20px', marginBottom: 28, border: '1px solid #E2E8F0' }}>
             <div style={{ fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif', marginBottom: 12 }}>ما ستشاهده في الداشبورد:</div>
             {[
-              'لوحة تحكم مع بيانات عيادة حقيقية',
-              'إدارة المواعيد والمرضى والأطباء',
+              'لوحة تحكم ببيانات تجريبية جاهزة',
+              'إدارة المواعيد والعملاء والمحادثات',
               'سجل رسائل واتساب التلقائية',
-              'وكيل الحجز الذكي (باقة AI Pro)',
+              'وكيل ذكي يرد ويحجز (باقة AI Pro)',
             ].map((f, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: i < 3 ? '1px solid #F1F5F9' : 'none' }}>
                 <CheckCircle size={13} style={{ color: '#10B981', flexShrink: 0 }} />

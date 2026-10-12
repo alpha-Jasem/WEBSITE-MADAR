@@ -234,7 +234,7 @@ export const Login = () => {
                     </div>
                     <div>
                       <p className="font-cairo font-bold text-[#0D1B3E] text-sm">بوابة العملاء</p>
-                      <p className="font-tajawal text-xs text-slate-400">عيادات مدار OS</p>
+                      <p className="font-tajawal text-xs text-slate-400">مدار OS</p>
                     </div>
                   </div>
 
@@ -306,16 +306,16 @@ export const Login = () => {
                       </div>
                       <div>
                         <p className="font-cairo font-bold text-[#0D1B3E] text-sm">حساب جديد</p>
-                        <p className="font-tajawal text-xs text-slate-400">عيادة — Workspace OS</p>
+                        <p className="font-tajawal text-xs text-slate-400">Workspace OS</p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-bold text-slate-600 font-tajawal mb-1.5">اسم العيادة</label>
+                        <label className="block text-xs font-bold text-slate-600 font-tajawal mb-1.5">اسم المنشأة</label>
                         <div className="relative">
                           <Building2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                          <input value={signupForm.clinic} onChange={sf('clinic')} placeholder="عيادة الدكتور..."
+                          <input value={signupForm.clinic} onChange={sf('clinic')} placeholder="اسم شركتك"
                             required className={`${FIELD} text-right pr-8 py-2.5 text-xs`} />
                         </div>
                       </div>

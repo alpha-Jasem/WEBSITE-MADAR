@@ -152,7 +152,7 @@ export const PackageSelector = () => {
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
           style={{ textAlign: 'center', fontSize: 13, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', margin: 0 }}
         >
-          التجربة مجانية بالكامل — ستشاهد بيانات تجريبية من "عيادات نور للأسنان — جدة"
+          التجربة مجانية بالكامل — ستشاهد بيانات تجريبية لشركة نموذجية
         </motion.p>
       </div>
     </div>

@@ -97,7 +97,7 @@ export const ClinicOSSignup = () => {
 
         <div style={{ marginBottom: 36 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#4F46E5', letterSpacing: '0.1em', marginBottom: 10, fontFamily: 'Cairo, sans-serif' }}>
-            نظام إدارة العيادة
+            منصة مدار للأعمال
           </div>
           <h2 style={{ fontSize: 32, fontWeight: 900, color: TEXT, margin: 0, lineHeight: 1.35, fontFamily: 'Cairo, sans-serif' }}>
             حجوزات تلقائية<br />
@@ -134,7 +134,7 @@ export const ClinicOSSignup = () => {
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <div style={{ position: 'relative' }}>
                     <Building2 size={15} style={{ position: 'absolute', right: 13, top: '50%', transform: 'translateY(-50%)', color: MUTED, pointerEvents: 'none' }} />
-                    <input style={inputStyle} placeholder="اسم العيادة" value={companyName}
+                    <input style={inputStyle} placeholder="اسم المنشأة" value={companyName}
                       onChange={e => { setCompanyName(e.target.value); setError('') }}
                       onFocus={e => (e.currentTarget.style.borderColor = '#4F46E5')}
                       onBlur={e => (e.currentTarget.style.borderColor = BORDER)} />
