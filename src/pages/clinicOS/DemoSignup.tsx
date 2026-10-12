@@ -139,7 +139,7 @@ export const DemoSignup = () => {
           </p>
 
           <div style={{ textAlign: 'center' }}>
-            <button type="button" onClick={() => navigate('/clinic-os/login')} style={{ background: 'none', border: 'none', fontSize: 13, color: '#4F46E5', cursor: 'pointer', fontFamily: 'Cairo, sans-serif', fontWeight: 600 }}>
+            <button type="button" onClick={() => navigate('/login')} style={{ background: 'none', border: 'none', fontSize: 13, color: '#4F46E5', cursor: 'pointer', fontFamily: 'Cairo, sans-serif', fontWeight: 600 }}>
               لديك حساب بالفعل؟ سجل الدخول
             </button>
           </div>

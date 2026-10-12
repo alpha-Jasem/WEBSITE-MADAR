@@ -131,14 +131,17 @@ function App() {
         <ScrollToTop />
         <Suspense fallback={null}>
           <Routes>
-            <Route path="/" element={<Navigate to="/clinic-os/login" replace />} />
+            <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/demo/*" element={<DemoRedirect />} />
-            <Route path="/clinic-os" element={<Navigate to="/clinic-os/login" replace />} />
+            <Route path="/clinic-os" element={<Navigate to="/login" replace />} />
 
             {/* ── ClinicOS Auth & Onboarding ── */}
-            <Route path="/clinic-os/login"    element={<ClinicOSLoginPage />} />
+            <Route path="/login" element={<ClinicOSLoginPage />} />
+            <Route path="/clinic-os/login" element={<Navigate to="/login" replace />} />
+            <Route path="/admin/login" element={<Login />} />
             <Route path="/clinic-os/mfa-challenge" element={<MfaChallengePage />} />
-            <Route path="/clinic-os/signup"   element={<ClinicOSSignupPage />} />
+            <Route path="/signup" element={<ClinicOSSignupPage />} />
+            <Route path="/clinic-os/signup" element={<Navigate to="/signup" replace />} />
             <Route path="/clinic-os/demo"     element={<DemoSignupPage />} />
             <Route path="/clinic-os/demo/confirm" element={<DemoConfirmPage />} />
             <Route path="/clinic-os/admin" element={<Navigate to="/admin" replace />} />
@@ -163,7 +166,6 @@ function App() {
               {dashboardChildRoutes}
             </Route>
 
-            <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/trial" element={<TrialSignup />} />

@@ -141,7 +141,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         const { data: authData } = await supabase.auth.getUser()
         const user = authData?.user
         if (!user) {
-          navigate(`/clinic-os/login?redirect=${encodeURIComponent(location.pathname)}`, { replace: true })
+          navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`, { replace: true })
           return
         }
 

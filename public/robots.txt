@@ -16,8 +16,8 @@ Disallow: /status/
 Disallow: /solar/
 Disallow: /solar
 Disallow: /demo-review
-Disallow: /clinic-os/login
-Disallow: /clinic-os/signup
+Disallow: /login
+Disallow: /signup
 Disallow: /clinic-os/dashboard/
 Disallow: /clinic-os/admin
 Disallow: /clinic-os/select

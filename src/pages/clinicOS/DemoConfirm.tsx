@@ -52,7 +52,7 @@ export const DemoConfirm = () => {
           </motion.button>
 
           <button
-            onClick={() => navigate('/clinic-os/login')}
+            onClick={() => navigate('/login')}
             style={{ marginTop: 12, background: 'none', border: 'none', fontSize: 13, color: '#64748B', cursor: 'pointer', fontFamily: 'Cairo, sans-serif' }}
           >
             أو سجل الدخول بحسابك

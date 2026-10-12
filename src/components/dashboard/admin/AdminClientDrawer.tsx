@@ -269,7 +269,7 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
             {/* WhatsApp notify button — shown after activation */}
             {company.owner_phone && (
               <a
-                href={`https://wa.me/966${company.owner_phone.replace(/^0/, '')}?text=${encodeURIComponent(`مرحباً ${company.owner_name} 👋\nتم تفعيل حسابك في نظام مدار بنجاح!\n\nيمكنك الدخول الآن على:\nhttps://madar.ai/clinic-os/login\n\nللدعم والمساعدة تواصل معنا في أي وقت.`)}`}
+                href={`https://wa.me/966${company.owner_phone.replace(/^0/, '')}?text=${encodeURIComponent(`مرحباً ${company.owner_name} 👋\nتم تفعيل حسابك في نظام مدار بنجاح!\n\nيمكنك الدخول الآن على:\nhttps://madar.ai/login\n\nللدعم والمساعدة تواصل معنا في أي وقت.`)}`}
                 target="_blank"
                 rel="noreferrer"
                 className="w-full inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold font-cairo"

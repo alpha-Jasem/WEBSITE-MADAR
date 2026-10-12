@@ -73,17 +73,17 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
   if (!isAuthed) {
     // Workspace OS dashboard → go to clinic login
     if (location.pathname.startsWith('/clinic-os/dashboard')) {
-      return <Navigate to="/clinic-os/login" replace />
+      return <Navigate to="/login" replace />
     }
     const redirect = encodeURIComponent(`${location.pathname}${location.search}`)
     const portal = requiredRole ? `&portal=${requiredRole}` : ''
-    return <Navigate to={`/login?redirect=${redirect}${portal}`} replace />
+    return <Navigate to={`/admin/login?redirect=${redirect}${portal}`} replace />
   }
 
   if (requiredRole && userRole !== requiredRole && userRole !== 'admin') {
     // Workspace users trying to access wrong portal → redirect to clinic dashboard
     if (location.pathname.startsWith('/clinic-os/')) {
-      return <Navigate to="/clinic-os/login" replace />
+      return <Navigate to="/login" replace />
     }
     return <Navigate to="/client" replace />
   }

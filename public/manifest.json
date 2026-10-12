@@ -44,7 +44,7 @@
       "name": "دخول المنصة",
       "short_name": "دخول",
       "description": "الدخول إلى لوحة مدار",
-      "url": "/clinic-os/login",
+      "url": "/login",
       "icons": [{ "src": "/favicon-logo.png", "sizes": "96x96" }]
     }
   ]

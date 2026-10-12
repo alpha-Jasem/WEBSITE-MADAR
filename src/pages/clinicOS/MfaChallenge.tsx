@@ -66,7 +66,7 @@ export const MfaChallenge = () => {
 
   const cancel = async () => {
     await signOut()
-    navigate('/clinic-os/login', { replace: true })
+    navigate('/login', { replace: true })
   }
 
   if (checking) return null
