@@ -57,7 +57,7 @@ export function AgentCard({ status, statusTone, active, channels, stats, onCalls
       </div>
       <div className="nx-agent-acts">
         <button type="button" className="nx-btn pri" onClick={onCalls}><Phone /> سجل المكالمات</button>
-        <button type="button" className="nx-btn" onClick={onSettings}><Settings /> إعدادات الموظف</button>
+        <button type="button" className="nx-btn" onClick={onSettings}><Settings /> إعدادات الوكيل</button>
       </div>
     </div>
   )

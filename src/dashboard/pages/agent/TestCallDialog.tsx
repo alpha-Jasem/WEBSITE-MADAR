@@ -12,7 +12,7 @@ export function TestCallDialog({ open, onClose, agentName }: { open: boolean; on
   }, [open])
   return (
     <Dialog open={open} title={`مكالمة تجريبية مع ${agentName}`} onClose={onClose} footer={<Button variant="secondary" onClick={onClose}>إنهاء</Button>}>
-      <p style={{ margin: '0 0 14px', color: 'var(--muted)', fontSize: 13 }}>هذي محاكاة لشكل الرد في العرض التجريبي. في حسابك تقدر تكلم الموظف مباشرة من المتصفح.</p>
+      <p style={{ margin: '0 0 14px', color: 'var(--muted)', fontSize: 13 }}>هذي محاكاة لشكل الرد في العرض التجريبي. في حسابك تقدر تكلم الوكيل مباشرة من المتصفح.</p>
       <div className="ops-thread">
         {DEMO_TEST_LINES.slice(0, shown).map(([w, text], i) => (
           <div key={i} className={`ops-msg ${w}`}><span className="who">{w === 'a' ? agentName : 'أنت'}</span>{text}</div>

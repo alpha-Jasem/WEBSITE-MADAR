@@ -120,7 +120,7 @@ export function DashboardV2AgentUsers() {
         ) : rows.length === 0 ? (
           <EmptyLine>
             <Users size={22} style={{ display: 'block', margin: '0 auto 6px' }} />
-            {contacts.length === 0 ? 'ما فيه عملاء بعد. أول ما يرد الموظف على أحد يظهر هنا.' : 'ما فيه عملاء يطابقون البحث.'}
+            {contacts.length === 0 ? 'ما فيه عملاء بعد. أول ما يرد الوكيل على أحد يظهر هنا.' : 'ما فيه عملاء يطابقون البحث.'}
           </EmptyLine>
         ) : narrow ? (
           <div className="nx-list">

@@ -341,7 +341,7 @@ export function DashboardV2Settings() {
       </div>
 
       <Card>
-        <CardTitle aside="الموظف يوسم المحادثات تلقائيًا">وسوم المحادثات</CardTitle>
+        <CardTitle aside="الوكيل يوسم المحادثات تلقائيًا">وسوم المحادثات</CardTitle>
         <TagManager />
       </Card>
 

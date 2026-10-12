@@ -62,7 +62,7 @@ export function DashboardV2Agents() {
       const sync = isDemo ? null : await syncKnowledgeToVoicePlatforms(next.company_id, 'settings')
       pushToast({
         kind: 'success', title: okTitle,
-        description: isDemo ? undefined : sync?.synced ? 'وصلت التغييرات للموظف.' : 'انحفظت، وتنطبق على الموظف بعد ربطه بحسابك.',
+        description: isDemo ? undefined : sync?.synced ? 'وصلت التغييرات للموظف.' : 'انحفظت، وتنطبق على الوكيل بعد ربطه بحسابك.',
       })
     } catch (e) {
       pushToast({ kind: 'danger', title: 'تعذّر الحفظ', description: e instanceof Error ? e.message : undefined })
@@ -74,7 +74,7 @@ export function DashboardV2Agents() {
   function togglePause() {
     const next = { ...draft, paused: !draft.paused }
     setDraft(next)
-    persist(next, next.paused ? 'توقف الموظف مؤقتًا' : 'رجع الموظف يرد')
+    persist(next, next.paused ? 'توقف الوكيل مؤقتًا' : 'رجع الوكيل يرد')
   }
 
   function testCall() {
@@ -98,10 +98,10 @@ export function DashboardV2Agents() {
       </div>
 
       {ready && !canStore && (
-        <div className="ops-note"><Info size={14} /><span>حفظ إعدادات الموظف يتفعّل بعد تحديث قاعدة البيانات. تقدر تشوف الإعدادات الافتراضية الحين.</span></div>
+        <div className="ops-note"><Info size={14} /><span>حفظ إعدادات الوكيل يتفعّل بعد تحديث قاعدة البيانات. تقدر تشوف الإعدادات الافتراضية الحين.</span></div>
       )}
       {canStore && !isDemo && (
-        <div className="ops-note"><Info size={14} /><span>الإعدادات تنحفظ هنا، والتغييرات تنطبق على الموظف بعد الربط.</span></div>
+        <div className="ops-note"><Info size={14} /><span>الإعدادات تنحفظ هنا، والتغييرات تنطبق على الوكيل بعد الربط.</span></div>
       )}
 
       <section className="ops-card ops-agent">
@@ -125,7 +125,7 @@ export function DashboardV2Agents() {
               <h3>الشخصية والترحيب</h3>
               <div className="ops-form-grid">
                 <div className="ops-field">
-                  <label htmlFor="ag-name">اسم الموظف</label>
+                  <label htmlFor="ag-name">اسم الوكيل</label>
                   <input className="ops-input" id="ag-name" value={draft.agent_name} onChange={(e) => edit({ agent_name: e.target.value })} />
                 </div>
                 <div className="ops-field">

@@ -130,7 +130,7 @@ export function DashboardV2AgentAnalytics() {
   return (
     <NightPage>
       <PageHead
-        title="تحليلات الموظف"
+        title="تحليلات الوكيل"
         sub={`كيف يتعامل الوكيل الذكي مع عملائك، ${PERIOD_PHRASE[period]}`}
         actions={<Seg label="الفترة" value={period} onChange={setPeriod} options={PERIOD_OPTIONS} />}
       />
@@ -218,10 +218,10 @@ export function DashboardV2AgentAnalytics() {
 
             <div className="nx-card">
               <CardTitle aside={fieldStats.withData ? `من ${fieldStats.withData} محادثة` : undefined}>
-                <ClipboardCheck size={16} style={{ color: 'var(--ok)' }} /> أهم ما جمعه الموظف
+                <ClipboardCheck size={16} style={{ color: 'var(--ok)' }} /> أهم ما جمعه الوكيل
               </CardTitle>
               {fieldStats.fields.length === 0 ? (
-                <EmptyLine>ما جمع الموظف بيانات منظمة في هذه الفترة.</EmptyLine>
+                <EmptyLine>ما جمع الوكيل بيانات منظمة في هذه الفترة.</EmptyLine>
               ) : (
                 <>
                   <div className="ax-hl">

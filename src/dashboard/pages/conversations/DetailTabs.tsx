@@ -98,7 +98,7 @@ export function ConversationAnalysis({ call }: { call: AICallLog }) {
   const criteria = evaluationCriteria(call)
   const data = collectedData(call)
   if (!criteria.length && !data.length) {
-    return <div className="nx-empty">ما فيه تحليل لهذه المحادثة. يظهر هنا تقييم الموظف والبيانات اللي جمعها لما تتوفر.</div>
+    return <div className="nx-empty">ما فيه تحليل لهذه المحادثة. يظهر هنا تقييم الوكيل والبيانات اللي جمعها لما تتوفر.</div>
   }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>

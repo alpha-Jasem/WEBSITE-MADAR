@@ -45,7 +45,7 @@ export function TagManager() {
   return (
     <div className="nx-tagmgr">
       <NightStyles />
-      <p className="nx-tagmgr-hint">الموظف يوسم كل محادثة تلقائيًا من ملخصها. هنا تقدر تطفي وسم، تغيّر اسمه، أو تضيف وسومك أنت بكلمات تدل عليها.</p>
+      <p className="nx-tagmgr-hint">الوكيل يوسم كل محادثة تلقائيًا من ملخصها. هنا تقدر تطفي وسم، تغيّر اسمه، أو تضيف وسومك أنت بكلمات تدل عليها.</p>
 
       <h4>وسومك الخاصة</h4>
       {custom.length === 0 && <div className="nx-empty" style={{ marginBottom: 10 }}>ما أضفت وسوم بعد.</div>}

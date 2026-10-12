@@ -40,7 +40,7 @@ export function TeachDialog({ target, onClose, categories, companyId, isDemo, ag
     setNewCat('')
   }, [target, categories])
 
-  const title = !target ? '' : target.mode === 'answer' ? 'علّم الموظف الجواب' : target.mode === 'edit' ? 'تعديل الجواب' : 'سؤال جديد'
+  const title = !target ? '' : target.mode === 'answer' ? 'علّم الوكيل الجواب' : target.mode === 'edit' ? 'تعديل الجواب' : 'سؤال جديد'
   const catOptions = target?.mode === 'edit' && !categories.includes(cat) && cat !== NEW_CAT ? [cat, ...categories] : categories
 
   async function save() {

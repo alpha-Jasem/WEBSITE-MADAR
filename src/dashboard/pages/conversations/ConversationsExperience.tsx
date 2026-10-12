@@ -246,7 +246,7 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
           <div className="nx-empty">
             <Inbox size={22} style={{ display: 'block', margin: '0 auto 6px' }} />
             {items.length === 0
-              ? (mode === 'calls' ? 'ما فيه مكالمات بعد. أول ما يرد الموظف على مكالمة تظهر هنا.' : 'ما فيه محادثات بعد. أول ما يرد الموظف على عميل تظهر هنا.')
+              ? (mode === 'calls' ? 'ما فيه مكالمات بعد. أول ما يرد الوكيل على مكالمة تظهر هنا.' : 'ما فيه محادثات بعد. أول ما يرد الوكيل على عميل تظهر هنا.')
               : filter === 'needs' && !search ? 'كل شي تمام، ما فيه شي ينتظرك.' : 'ما فيه محادثات تطابق البحث.'}
           </div>
         ) : (

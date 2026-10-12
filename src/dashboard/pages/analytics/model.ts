@@ -225,7 +225,7 @@ export function insightText(inRange: AICallLog[], topics: TopicRow[], metrics: M
   const n = inRange.length
   if (n === 0) return ''
   const parts: string[] = []
-  const lead = `تعامل الموظف مع ${n.toLocaleString('en-US')} ${n === 1 ? 'محادثة' : n <= 10 ? 'محادثات' : 'محادثة'} ${PERIOD_INSIGHT[period]}`
+  const lead = `تعامل الوكيل مع ${n.toLocaleString('en-US')} ${n === 1 ? 'محادثة' : n <= 10 ? 'محادثات' : 'محادثة'} ${PERIOD_INSIGHT[period]}`
   const top = topics.find((x) => !x.short)
   if (top && top.count > 1 && topics.length > 1) {
     const word = top.count / n >= 0.4 ? 'أغلبها عن' : 'وأكثر موضوع تكرر'
@@ -268,7 +268,7 @@ export function recommendations(inRange: AICallLog[], allCalls: AICallLog[], fie
     out.push({
       id: 'review', tag: 'متابعة', tone: 'warn', dismissible: false,
       title: review === 1 ? 'محادثة تنتظر مراجعتك' : `${review} محادثات تنتظر مراجعتك`,
-      text: 'الموظف علّمها لأنها تحتاج قرار منك أو من فريقك.',
+      text: 'الوكيل علّمها لأنها تحتاج قرار منك أو من فريقك.',
       actions: [{ label: 'راجعها', to: 'conversations?filter=needs' }],
     })
   }
@@ -287,7 +287,7 @@ export function recommendations(inRange: AICallLog[], allCalls: AICallLog[], fie
       id: 'ask-phone', tag: 'اقتراح', tone: 'info', dismissible: true,
       title: 'اطلب رقم التواصل أبكر',
       text: `${phone.total - phone.filled} من ${phone.total} محادثات انتهت بدون رقم تواصل.`,
-      actions: [{ label: 'إعدادات الموظف', to: 'agents' }],
+      actions: [{ label: 'إعدادات الوكيل', to: 'agents' }],
     })
   }
   const negative = inRange.filter((c) => sentimentKind(c) === 'negative').length
@@ -302,7 +302,7 @@ export function recommendations(inRange: AICallLog[], allCalls: AICallLog[], fie
   if (allCalls.length > 0 && !allCalls.some((c) => c.channel === 'whatsapp')) {
     out.push({
       id: 'connect-wa', tag: 'قناة', tone: 'ok', dismissible: true,
-      title: 'اربط واتساب', text: 'خل الموظف يرد على عملائك في واتساب كمان.',
+      title: 'اربط واتساب', text: 'خل الوكيل يرد على عملائك في واتساب كمان.',
       actions: [{ label: 'التكاملات', to: 'integrations' }],
     })
   }

@@ -173,12 +173,12 @@ export function DashboardV2Home() {
   const alert: HomeAlert | null = useMemo(() => {
     const relevant = usageMetrics.filter(metricVisible)
     const over = relevant.find((m) => m.used >= m.limit)
-    if (over) return { tone: 'bad', title: `خلص رصيد ${over.label}.`, text: 'زوّد الباقة عشان يرجع الموظف يرد على هالقناة.', action: 'تفاصيل الباقة', onAction: () => go('plan-usage') }
+    if (over) return { tone: 'bad', title: `خلص رصيد ${over.label}.`, text: 'زوّد الباقة عشان يرجع الوكيل يرد على هالقناة.', action: 'تفاصيل الباقة', onAction: () => go('plan-usage') }
     const low = relevant.find((m) => m.used / m.limit >= 0.9)
     if (low) return { tone: 'warn', title: `باقي ${fmtN(low.limit - low.used)} من ${low.label}.`, text: 'لما يخلص يوقف الرد على هالقناة.', action: 'تفاصيل الباقة', onAction: () => go('plan-usage') }
     const wa = integrations.find((i) => i.provider === 'whatsapp')
     if (showConversations && wa && wa.status !== 'connected' && (agentCalls.length > 0 || messages.length > 0)) {
-      return { tone: 'warn', title: 'رقم الواتساب مو مربوط.', text: 'الموظف ما يقدر يرد على رسائل الواتساب لين تربطه.', action: 'ربط', onAction: () => go('integrations') }
+      return { tone: 'warn', title: 'رقم الواتساب مو مربوط.', text: 'الوكيل ما يقدر يرد على رسائل الواتساب لين تربطه.', action: 'ربط', onAction: () => go('integrations') }
     }
     return null
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -224,7 +224,7 @@ export function DashboardV2Home() {
     const steps: OnboardStep[] = [
       { title: `اربط رقم الواتساب${showVoice ? ' أو الهاتف' : ''}`, sub: 'عشان يبدأ يرد على عملائك', action: 'ربط', done: channelConnected, onClick: () => go('integrations') },
       { title: 'أضف أول الأسئلة وأجوبتها', sub: 'الأسعار، الدوام، الموقع، وأكثر شي يسألون عنه', action: 'افتح قاعدة المعرفة', done: (knowledge || []).length > 0, onClick: () => go('knowledge-base') },
-      { title: 'اضبط شخصية الموظف وتعليماته', sub: 'الاسم، طريقة الرد، ومتى يحوّل لموظف', action: 'إعدادات الموظف', done: false, onClick: () => go('agents') },
+      { title: 'اضبط شخصية الوكيل وتعليماته', sub: 'الاسم، طريقة الرد، ومتى يحوّل لموظف', action: 'إعدادات الوكيل', done: false, onClick: () => go('agents') },
       { title: 'شغّل الوكيل الذكي', sub: 'يبدأ يرد من الدقيقة الأولى، وتظهر شغله هنا', action: 'تشغيل', done: false, onClick: () => go('agents') },
     ]
     return (
@@ -244,11 +244,11 @@ export function DashboardV2Home() {
       value: callN ? `${Math.round((p.resolved / callN) * 100)}%` : '—',
       note: callN ? `${fmtN(p.resolved)} من ${fmtN(callN)} مكالمة` : `ما فيه مكالمات ${periodWord}`,
     })
-    tiles.push({ label: 'وقت تولاه الموظف', value: fmtMinutes(p.talkSeconds), note: `مدة المكالمات ${periodWord}` })
+    tiles.push({ label: 'وقت تولاه الوكيل', value: fmtMinutes(p.talkSeconds), note: `مدة المكالمات ${periodWord}` })
   } else {
     const sent = p.msgs.filter((m) => m.status !== 'pending').length
     const reached = p.msgs.filter((m) => m.status === 'delivered' || m.status === 'read').length
-    tiles.push({ label: `رسائل ${periodWord}`, value: fmtN(p.msgs.length), ...(delta(p.msgs.length, p.msgsPrev) || { note: 'رسائل واتساب أرسلها الموظف' }) })
+    tiles.push({ label: `رسائل ${periodWord}`, value: fmtN(p.msgs.length), ...(delta(p.msgs.length, p.msgsPrev) || { note: 'رسائل واتساب أرسلها الوكيل' }) })
     tiles.push({ label: 'نسبة الوصول', value: sent ? `${Math.round((reached / sent) * 100)}%` : '—', note: sent ? `${fmtN(reached)} من ${fmtN(sent)} رسالة وصلت` : `ما فيه رسائل ${periodWord}` })
   }
   if (showBookings) {

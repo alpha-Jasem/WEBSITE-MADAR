@@ -75,7 +75,7 @@ export function DashboardV2KnowledgeBase() {
         <div className="ops-note"><Sparkles size={14} /><span>ما فيه أسئلة معلّقة. لما يُسأل {agentName} سؤال ما يعرف جوابه، يطلع هنا عشان تعلّمه.</span></div>
       )}
       {ready && !caps.unanswered && (
-        <div className="ops-note"><Info size={14} /><span>تتبّع الأسئلة اللي ما عرف يجاوبها الموظف يتفعّل بعد تحديث قاعدة البيانات.</span></div>
+        <div className="ops-note"><Info size={14} /><span>تتبّع الأسئلة اللي ما عرف يجاوبها الوكيل يتفعّل بعد تحديث قاعدة البيانات.</span></div>
       )}
 
       {error && <div className="ops-note" style={{ background: 'var(--bad-bg)', color: 'var(--bad)' }}>تعذّر تحميل قاعدة المعرفة: {error}</div>}
@@ -86,7 +86,7 @@ export function DashboardV2KnowledgeBase() {
         <div className="ops-card">
           <EmptyState
             icon={<BookOpen size={20} />} title="ما فيه أسئلة بعد"
-            description="أضف الأسئلة اللي يتكرر سؤالها، مثل الأسعار والدوام والموقع، مع الجواب اللي تبي الموظف يقوله."
+            description="أضف الأسئلة اللي يتكرر سؤالها، مثل الأسعار والدوام والموقع، مع الجواب اللي تبي الوكيل يقوله."
             action={<Button size="sm" onClick={() => setTarget({ mode: 'new' })}><Plus size={14} /> سؤال جديد</Button>}
           />
         </div>
