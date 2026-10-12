@@ -34,7 +34,7 @@ export async function ingestCall(store, row) {
 
 export function createAgentCallWebhook({ env, store, fetchImpl = fetch, log = console }) {
   async function handleNabrah(req, url) {
-    const secret = env.get('NABRAH_WEBHOOK_SECRET')
+    const secret = env.get('NABRAH_WEBHOOK_SECRET')?.trim()
     const apiKey = env.get('NABRAH_API_KEY')
     if (!secret || !apiKey) return json({ error: 'server misconfigured' }, 500)
     if (!timingSafeEqual(req.headers.get(NABRAH_SECRET_HEADER) ?? '', secret)) return json({ error: 'unauthorized' }, 401)
@@ -68,7 +68,7 @@ export function createAgentCallWebhook({ env, store, fetchImpl = fetch, log = co
   }
 
   async function handleElevenLabs(req) {
-    const secret = env.get('ELEVENLABS_WEBHOOK_SECRET')
+    const secret = env.get('ELEVENLABS_WEBHOOK_SECRET')?.trim()
     if (!secret) return json({ error: 'server misconfigured' }, 500)
 
     const raw = await req.text()
