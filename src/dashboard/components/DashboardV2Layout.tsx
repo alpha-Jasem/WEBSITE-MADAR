@@ -14,7 +14,6 @@ import { useOrbSeed, type ThemePref } from './AccountMenu'
 import { OrbAvatar } from './OrbAvatar'
 import { SupportChat } from './SupportChat'
 import { GlobalSearch } from './GlobalSearch'
-import { OnboardingWizard } from './OnboardingWizard'
 import { TopBar, TOPBAR_CSS } from './TopBar'
 import { WhatsNew } from './WhatsNew'
 import { RELEASES } from '@/dashboard/whatsNew'
@@ -456,7 +455,6 @@ export function DashboardV2Layout() {
       <GlobalSearch base={base} />
       <SupportChat />
       <WhatsNew base={base} />
-      <OnboardingWizard />
       <ShortcutsOverlay />
       {showBookings && (
         <span className="dv2-mobile-only"><Fab actions={[{ label: 'موعد جديد', icon: <Plus size={15} />, onClick: () => navigate(`${base}/bookings?new=1`) }]} /></span>
