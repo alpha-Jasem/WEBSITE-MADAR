@@ -113,13 +113,14 @@ const HOVER_SHADOW: Record<ButtonVariant, string> = {
   danger: 'none',
 }
 
-export function Button({ variant = 'primary', size = 'md', disabled, children, onClick, style }: {
+export function Button({ variant = 'primary', size = 'md', disabled, children, onClick, style, 'aria-label': ariaLabel }: {
   variant?: ButtonVariant
   size?: ButtonSize
   disabled?: boolean
   children: ReactNode
   onClick?: () => void
   style?: CSSProperties
+  'aria-label'?: string
 }) {
   const v = VARIANT_STYLES[variant] || VARIANT_STYLES.primary
   const s = SIZE_STYLES[size] || SIZE_STYLES.md
@@ -128,6 +129,7 @@ export function Button({ variant = 'primary', size = 'md', disabled, children, o
   return (
     <motion.button
       onClick={onClick}
+      aria-label={ariaLabel}
       disabled={disabled}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}

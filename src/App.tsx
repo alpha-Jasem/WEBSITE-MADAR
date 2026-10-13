@@ -71,6 +71,7 @@ const DashboardV2KnowledgeBase      = lazy(() => import('./dashboard/pages/Knowl
 const DashboardV2Tools             = lazy(() => import('./dashboard/pages/ComingSoon').then(m => ({ default: m.DashboardV2Tools })))
 const DashboardV2AnalysisGroups    = lazy(() => import('./dashboard/pages/ComingSoon').then(m => ({ default: m.DashboardV2AnalysisGroups })))
 const DashboardV2InboundServices   = lazy(() => import('./dashboard/pages/ComingSoon').then(m => ({ default: m.DashboardV2InboundServices })))
+const DashboardV2Outreach         = lazy(() => import('./dashboard/pages/Outreach').then(m => ({ default: m.DashboardV2Outreach })))
 const DashboardV2OutboundServices  = lazy(() => import('./dashboard/pages/ComingSoon').then(m => ({ default: m.DashboardV2OutboundServices })))
 const DashboardV2CallLogs          = lazy(() => import('./dashboard/pages/CallLogs').then(m => ({ default: m.DashboardV2CallLogs })))
 const DashboardV2AgentAnalytics    = lazy(() => import('./dashboard/pages/AgentAnalytics').then(m => ({ default: m.DashboardV2AgentAnalytics })))
@@ -102,6 +103,7 @@ const dashboardChildRoutes = (
     <Route path="tools" element={<DashboardV2Tools />} />
     <Route path="analysis-groups" element={<DashboardV2AnalysisGroups />} />
     <Route path="inbound-services" element={<DashboardV2InboundServices />} />
+    <Route path="outreach" element={<ModuleRoute module="conversations"><DashboardV2Outreach /></ModuleRoute>} />
     <Route path="outbound-services" element={<DashboardV2OutboundServices />} />
     <Route path="call-logs" element={<ModuleRoute module="voice"><DashboardV2CallLogs /></ModuleRoute>} />
     <Route path="agent-analytics" element={<ModuleRoute module="voice"><DashboardV2AgentAnalytics /></ModuleRoute>} />
