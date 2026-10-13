@@ -3,6 +3,7 @@ import { aiCallIntentLabel, aiCallResultLabel } from '@/lib/aiCallLabels'
 import { callTags, type CallTag, type TagRule } from '@/lib/callTags'
 import { callTitle, callTopic, callVerdict, collectedValue, normalizePhone, type Verdict } from '@/lib/callAnalysis'
 import { timeAgo } from '../HomeWidgets'
+import { SAUDI_TZ, saudiDayKey } from '@/lib/saudiTime'
 
 // One row in the unified conversation list: an AI call (phone, web or WhatsApp chat
 // handled by the agent) or the WhatsApp messages sent to one number, grouped.
@@ -130,30 +131,27 @@ export function fmtWhen(iso: string): string {
   if (Number.isNaN(d.getTime())) return ''
   const diff = Date.now() - d.getTime()
   if (diff >= 0 && diff < 12 * 3600000) return timeAgo(iso)
-  const now = new Date()
-  const sameDay = d.toDateString() === now.toDateString()
-  const time = d.toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' })
-  if (sameDay) return `اليوم ${time}`
-  const y = new Date(now); y.setDate(now.getDate() - 1)
-  if (d.toDateString() === y.toDateString()) return `أمس ${time}`
-  return d.toLocaleDateString(LOCALE, { day: 'numeric', month: 'short' })
+  const key = saudiDayKey(d)
+  const time = d.toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit', timeZone: SAUDI_TZ })
+  if (key === saudiDayKey(Date.now())) return `اليوم ${time}`
+  if (key === saudiDayKey(Date.now() - 86_400_000)) return `أمس ${time}`
+  return d.toLocaleDateString(LOCALE, { day: 'numeric', month: 'short', timeZone: SAUDI_TZ })
 }
 
 export function fmtFull(iso: string): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
-  return d.toLocaleString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' })
+  return d.toLocaleString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit', timeZone: SAUDI_TZ })
 }
 
 /** Day separator label: اليوم / أمس / a date. */
 export function fmtDay(iso: string): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
-  const now = new Date()
-  if (d.toDateString() === now.toDateString()) return 'اليوم'
-  const y = new Date(now); y.setDate(now.getDate() - 1)
-  if (d.toDateString() === y.toDateString()) return 'أمس'
-  return d.toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long' })
+  const key = saudiDayKey(d)
+  if (key === saudiDayKey(Date.now())) return 'اليوم'
+  if (key === saudiDayKey(Date.now() - 86_400_000)) return 'أمس'
+  return d.toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long', timeZone: SAUDI_TZ })
 }
 
 export function fmtDuration(sec: number | null | undefined): string {

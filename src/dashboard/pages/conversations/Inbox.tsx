@@ -294,7 +294,7 @@ function ThreadLine({ line, prev, itemTime }: { line: Line; prev?: Line; itemTim
   const day = fmtDay(e.created_at)
   const prevDay = prev?.k === 'event' ? fmtDay(prev.e.created_at) : fmtDay(itemTime)
   const sep = day !== prevDay ? <div className="ib-day">{day}</div> : null
-  const when = new Date(e.created_at).toLocaleTimeString('ar-SA-u-ca-gregory-nu-latn', { hour: 'numeric', minute: '2-digit' })
+  const when = new Date(e.created_at).toLocaleTimeString('ar-SA-u-ca-gregory-nu-latn', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Riyadh' })
   if (e.kind === 'note') {
     return (<>{sep}<div className="ib-note"><span className="ib-msg-who"><StickyNote size={12} /> ملاحظة داخلية · {e.author_name || 'فريقك'}</span>{e.body}<small className="nx-num">{when}</small></div></>)
   }

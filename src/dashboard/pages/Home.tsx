@@ -1,3 +1,4 @@
+import { SAUDI_TZ, saudiHour, saudiStartOfDay } from '@/lib/saudiTime'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWorkspace } from '@/context/WorkspaceContext'
@@ -134,10 +135,9 @@ export function DashboardV2Home() {
 
   // ─── hourly chart (today) ───
   const hourly = useMemo(() => {
-    const today = new Date(); today.setHours(0, 0, 0, 0)
-    const start = today.getTime()
+    const start = saudiStartOfDay()
     const times = [...agentCalls.map((c) => c.call_time), ...messages.map((m) => m.created_at)]
-    const hours = times.filter((t) => inRange(t, start, start + DAY)).map((t) => new Date(t).getHours())
+    const hours = times.filter((t) => inRange(t, start, start + DAY)).map((t) => saudiHour(t))
     const lo = Math.min(8, ...hours)
     const hi = Math.max(20, ...hours)
     const counts = Array.from({ length: hi - lo + 1 }, () => 0)
@@ -206,10 +206,10 @@ export function DashboardV2Home() {
   }
 
   // ─── header ───
-  const hour = new Date().getHours()
+  const hour = saudiHour(Date.now())
   const firstName = (userName || '').trim().split(/\s+/)[0]
   const greeting = `${hour < 12 ? 'صباح الخير' : 'مساء الخير'}${firstName ? `، ${firstName}` : ''}`
-  const dateLine = new Date().toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long' })
+  const dateLine = new Date().toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long', timeZone: SAUDI_TZ })
   const sub = [companyName, dateLine].filter(Boolean).join(' · ')
 
   const initialLoading = accountLoading || (callsLoading && messagesLoading && calls.length === 0 && messages.length === 0)

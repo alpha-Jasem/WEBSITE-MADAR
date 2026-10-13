@@ -1,3 +1,4 @@
+import { saudiHour } from '@/lib/saudiTime'
 import { useMemo, useState } from 'react'
 import { PhoneCall } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
@@ -47,7 +48,7 @@ export function DashboardV2CallsAnalytics() {
 
   const hourBuckets = useMemo(() => {
     const hours = Array.from({ length: 24 }, (_, h) => h)
-    return hours.map((h) => ({ h, count: inRange.filter((c: AICallLog) => new Date(c.call_time).getHours() === h).length }))
+    return hours.map((h) => ({ h, count: inRange.filter((c: AICallLog) => saudiHour(c.call_time) === h).length }))
   }, [inRange])
 
   if (loading) return <KpiCardSkeleton />

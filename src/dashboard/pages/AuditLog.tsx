@@ -29,7 +29,7 @@ const TONE_BY_ACTOR: Record<string, BadgeTone> = { user: 'brand', admin: 'warnin
 const ACTOR_LABEL: Record<string, string> = { user: 'فريقك', admin: 'إدارة مدار', system: 'النظام' }
 
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleString('ar-SA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleString('ar-SA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Riyadh' })
 }
 
 export function DashboardV2AuditLog() {

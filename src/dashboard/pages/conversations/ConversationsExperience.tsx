@@ -139,7 +139,7 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
       name: 'المكالمات',
       rows: rows.map((c) => ({
         العميل: c.patient_name || '', الهاتف: c.phone, القناة: CHANNEL_LABEL[c.channel || 'phone'],
-        الوقت: new Date(c.call_time).toLocaleString('ar-SA'), 'المدة (ث)': c.duration_seconds,
+        الوقت: new Date(c.call_time).toLocaleString('ar-SA', { timeZone: 'Asia/Riyadh' }), 'المدة (ث)': c.duration_seconds,
         النية: aiCallIntentLabel(c.intent), النتيجة: aiCallResultLabel(c.result),
         'تحتاج مراجعة': c.needs_review ? 'نعم' : 'لا', 'سبب المراجعة': c.review_reason || '', الملخص: c.summary || '',
       })),
