@@ -1,5 +1,5 @@
 import { Component, type ReactNode } from 'react'
-import { Loader2, RefreshCw } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 interface Props {
   children: ReactNode
@@ -51,7 +51,7 @@ export class ErrorBoundary extends Component<Props, State> {
       return
     }
 
-    recoverFromRuntimeError(error)
+    if (!recoverFromRuntimeError(error)) window.setTimeout(() => this.setState({ error: null }), 4000)
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -65,78 +65,11 @@ export class ErrorBoundary extends Component<Props, State> {
       return this.props.children
     }
 
-    if (isChunkLoadError(this.state.error)) {
-      return (
-        <div
-          dir="rtl"
-          style={{
-            minHeight: '100vh',
-            display: 'grid',
-            placeItems: 'center',
-            background: '#F4F8FC',
-            color: '#0D1B3E',
-            fontFamily: 'Tajawal, Cairo, sans-serif',
-            padding: 24,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontWeight: 800 }}>
-            <Loader2 size={18} style={{ animation: 'spin 0.8s linear infinite', color: '#00BFFF' }} />
-            جاري تحديث ملفات الصفحة...
-          </div>
-        </div>
-      )
-    }
-
+    // No error screen: the page reloads by itself (componentDidCatch) and this quiet
+    // spinner is all that shows in the meantime.
     return (
-      <div
-        dir="rtl"
-        style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center',
-          justifyContent: 'center', minHeight: '100vh', gap: 16,
-          background: '#F4F6FB', fontFamily: 'Tajawal, Cairo, sans-serif',
-          padding: 24, textAlign: 'center',
-        }}
-      >
-        <div style={{
-          width: 64, height: 64, borderRadius: 18,
-          background: 'rgba(11,99,246,0.1)', border: '1px solid rgba(11,99,246,0.18)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <RefreshCw size={28} color="#0B63F6" />
-        </div>
-
-        <div>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#0F172A' }}>
-            نعيد تجهيز الصفحة
-          </h2>
-          <p style={{ margin: '8px 0 0', fontSize: 14, color: '#64748B', maxWidth: 320 }}>
-            حدث انقطاع مؤقت في تحميل الواجهة. اضغط تحديث أو ارجع للرئيسية وسيكمل النظام بشكل طبيعي.
-          </p>
-        </div>
-
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
-          <button
-            onClick={() => window.location.reload()}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '12px 24px', borderRadius: 12, border: 'none',
-              background: 'linear-gradient(135deg, #0B63F6, #00BFFF)',
-              color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer',
-            }}
-          >
-            <RefreshCw size={16} />
-            تحديث الصفحة
-          </button>
-          <button
-            onClick={() => { window.location.href = window.location.pathname.startsWith('/admin') ? '/admin' : '/client' }}
-            style={{
-              padding: '12px 24px', borderRadius: 12, border: '1px solid #D7E1F0',
-              background: '#fff', color: '#0D1B3E', fontSize: 14, fontWeight: 700, cursor: 'pointer',
-            }}
-          >
-            الرجوع للرئيسية
-          </button>
-        </div>
+      <div dir="rtl" style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: 'var(--bg, #0b0b0c)' }}>
+        <Loader2 size={20} style={{ animation: 'spin 0.8s linear infinite', color: '#7a8699' }} />
       </div>
     )
   }
