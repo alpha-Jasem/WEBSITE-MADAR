@@ -99,3 +99,41 @@ export async function syncPlatformConversations(force = false): Promise<{ synced
     return { synced: Number(out.synced) || 0, pending: Number(out.pending) || 0 }
   } catch { return null }
 }
+
+export interface LiveConversation {
+  id: string
+  status: string
+  started: number
+  channel: 'whatsapp' | 'phone' | 'web'
+  phone: string
+  transcript: { role: string; text: string; secs: number }[]
+}
+
+/** Conversations that are still running on the voice platform (not stored until they finish). */
+export async function fetchLiveConversations(): Promise<LiveConversation[]> {
+  try {
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData.session?.access_token
+    if (!token) return []
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-conversations-sync`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, apikey: import.meta.env.VITE_SUPABASE_ANON_KEY ?? '', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ live: true }),
+    })
+    if (!res.ok) return []
+    const out = await res.json()
+    return Array.isArray(out.live) ? out.live : []
+  } catch { return [] }
+}
+
+/** Turns a live conversation into the same shape as a stored call so the inbox can show it. */
+export function liveToCall(l: LiveConversation, companyId: string): AICallLog {
+  const started = new Date((l.started || Math.floor(Date.now() / 1000)) * 1000).toISOString()
+  const mm = (n: number) => `${String(Math.floor(n / 60)).padStart(2, '0')}:${String(Math.floor(n % 60)).padStart(2, '0')}`
+  return {
+    id: `live-${l.id}`, company_id: companyId, phone: l.phone, call_time: started, created_at: started,
+    duration_seconds: Math.max(0, Math.floor(Date.now() / 1000) - (l.started || 0)), status: 'completed', needs_review: false,
+    provider: 'elevenlabs', external_id: l.id, channel: l.channel, summary: 'محادثة جارية الآن',
+    transcript: l.transcript.map((t) => ({ speaker: t.role === 'agent' ? 'agent' : 'patient', text: t.text, time: mm(t.secs) })),
+  } as AICallLog
+}

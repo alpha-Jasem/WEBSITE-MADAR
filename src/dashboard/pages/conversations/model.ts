@@ -33,6 +33,8 @@ export interface ConvItem {
   messages?: MessageLog[]
   /** For a WhatsApp chat: every platform conversation with this number, oldest first. */
   group?: ConvItem[]
+  /** Still running on the platform; not stored yet. */
+  live?: boolean
 }
 
 export const CHANNEL_LABEL: Record<ConvChannel, string> = { phone: 'هاتف', whatsapp: 'واتساب', web: 'الموقع' }

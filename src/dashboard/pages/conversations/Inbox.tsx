@@ -5,7 +5,7 @@ import {
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useCustomers } from '@/lib/dashboardQueries'
 import { useCurrentUserId, useTeam } from '@/lib/queries/ops'
-import { markCallReviewed, syncPlatformConversations } from '@/lib/queries/conversations'
+import { fetchLiveConversations, liveToCall, markCallReviewed, syncPlatformConversations, type LiveConversation } from '@/lib/queries/conversations'
 import {
   addConversationEvent, convState, deleteCannedReply, saveCannedReply, seedDemoInboxEvents, useCannedReplies, useConversationEvents,
   type ConvEvent,
@@ -14,7 +14,7 @@ import { collectedData, contactKey, normalizePhone, sentimentKind, SENTIMENT_LAB
 import { sendWhatsAppMessage } from '@/lib/whatsapp'
 import { useToast } from '@/dashboard/components/uiExtras'
 import type { SupportTicket } from '@/types/dashboard'
-import { CHANNEL_LABEL, copyText, fmtDay, fmtDuration, fmtFull, fmtWhen, itemChip, type ConvItem } from './model'
+import { buildConversations, CHANNEL_LABEL, copyText, fmtDay, fmtDuration, fmtFull, fmtWhen, itemChip, type ConvItem } from './model'
 import { ChannelIcon, Chip, Sk, TagChips } from './ui'
 import { RecordingPlayer } from './RecordingPlayer'
 import { MSG_TYPE_LABEL } from './model'
@@ -63,11 +63,32 @@ function groupChats(list: ConvItem[]): ConvItem[] {
   }
   return out.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
 }
-export function Inbox({ items: flat, allItems, loading, tickets, showTickets, selectedKey, onSelect, onOpenFull, onTicket }: Props) {
+export function Inbox({ items: baseItems, allItems, loading, tickets, showTickets, selectedKey, onSelect, onOpenFull, onTicket }: Props) {
   const { companyId, isDemo, userName } = useWorkspace()
   const { events } = useConversationEvents(companyId, isDemo)
-  const items = useMemo(() => groupChats(flat), [flat])
+  const [live, setLive] = useState<LiveConversation[]>([])
   const [syncing, setSyncing] = useState(false)
+
+  // Conversations still running on the platform show up here right away, before they are saved.
+  useEffect(() => {
+    if (isDemo || !companyId) return
+    let alive = true
+    const tick = async () => {
+      if (document.visibilityState === 'hidden') return
+      const l = await fetchLiveConversations()
+      if (alive) setLive(l)
+    }
+    void tick()
+    const t = window.setInterval(tick, 12000)
+    return () => { alive = false; window.clearInterval(t) }
+  }, [isDemo, companyId])
+
+  const items = useMemo(() => {
+    const stored = new Set(allItems.map((i) => i.call?.external_id).filter(Boolean))
+    const liveCalls = live.filter((l) => !stored.has(l.id) && l.transcript.length > 0).map((l) => liveToCall(l, companyId || ''))
+    const liveItems = buildConversations(liveCalls, [], { includePhone: true, includeMessages: false }).map((i) => ({ ...i, live: true }))
+    return groupChats([...liveItems, ...baseItems])
+  }, [live, baseItems, allItems, companyId])
   const pushToast = useToast()
 
   // Pull anything the live webhook missed, quietly, when the inbox opens.
@@ -133,7 +154,7 @@ function ListPane({ items, loading, selectedKey, onSelect, events, onSync, synci
                 <span className="ib-row-top"><b>{i.name}</b><time>{fmtWhen(i.time)}</time></span>
                 <span className="ib-row-sum">{i.summary || '—'}</span>
                 <span className="ib-row-meta">
-                  <Chip tone={st.status === 'closed' ? 'dim' : tone}>{st.status === 'closed' ? 'مغلقة' : label}</Chip>
+                  <Chip tone={i.live ? 'ok' : st.status === 'closed' ? 'dim' : tone}>{i.live ? '● جارية الآن' : st.status === 'closed' ? 'مغلقة' : label}</Chip>
                   {st.assigneeName && <span className="ib-assignee" title="المسؤول"><UserRound size={11} /> {st.assigneeName}</span>}
                   {i.tags.slice(0, 2).map((t) => <span key={t.id} className="nx-tag" data-c={t.color || 'gray'}>{t.label}</span>)}
                 </span>
@@ -188,11 +209,13 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
     }
     if (item.tags.length) out.push({ k: 'sys', text: `صنّف الوكيل المحادثة: ${item.tags.map((t) => t.label).join('، ')}` })
     if (call?.needs_review || call?.status === 'needs_review') out.push({ k: 'sys', text: `تحتاج مراجعة: ${call.review_reason || 'بدون سبب مذكور'}` })
+    else if (item.live) out.push({ k: 'sys', text: 'المحادثة جارية الآن، تتحدث تلقائيًا' })
     else out.push({ k: 'sys', text: `انتهت المحادثة · ${chipLabel}` })
     if (ticket) out.push({ k: 'sys', text: `فُتحت تذكرة: ${ticket.subject}` })
     for (const e of events) out.push({ k: 'event', e })
     return out
   }, [item, call, ticket, chipLabel, events])
+  const isLive = !!item.live
 
   useEffect(() => { bottom.current?.scrollIntoView({ block: 'end' }) }, [events.length, item.key])
 
@@ -220,7 +243,7 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
           <span className="ib-avatar lg" aria-hidden="true">{initials(item.name)}</span>
           <div style={{ minWidth: 0 }}>
             <h2>{item.name}</h2>
-            <p>{CHANNEL_LABEL[item.channel]}{item.phone ? <> · <span dir="ltr" className="nx-num">{item.phone}</span></> : null} · <Chip tone={state.status === 'closed' ? 'dim' : chipTone}>{state.status === 'closed' ? 'مغلقة' : chipLabel}</Chip></p>
+            <p>{CHANNEL_LABEL[item.channel]}{item.phone ? <> · <span dir="ltr" className="nx-num">{item.phone}</span></> : null} · <Chip tone={item.live ? 'ok' : state.status === 'closed' ? 'dim' : chipTone}>{item.live ? '● جارية الآن' : state.status === 'closed' ? 'مغلقة' : chipLabel}</Chip></p>
           </div>
         </div>
         <div className="ib-thread-acts">
@@ -235,8 +258,8 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
               {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </label>
-          {needsReview && <button type="button" className="nx-btn" disabled={busy} onClick={reviewed}><CheckCircle2 /> تمت المراجعة</button>}
-          {showTickets && call && (ticket
+          {needsReview && !isLive && <button type="button" className="nx-btn" disabled={busy} onClick={reviewed}><CheckCircle2 /> تمت المراجعة</button>}
+          {showTickets && call && !isLive && (ticket
             ? <button type="button" className="nx-btn" onClick={() => onTicket(`?ticket=${encodeURIComponent(ticket.id)}`)}><Ticket /> التذكرة</button>
             : <button type="button" className="nx-btn" onClick={() => onTicket(`?new=1&call=${encodeURIComponent(call.id)}`)}><Ticket /> افتح تذكرة</button>)}
           <button type="button" className="nx-btn" disabled={busy} onClick={() => log('status', state.status === 'closed' ? 'open' : 'closed')}>

@@ -49,9 +49,33 @@ Deno.serve(async (req) => {
   const { data: companyId } = await asUser.rpc('get_my_clinic_company_id')
   if (!companyId) return json({ error: 'unauthorized' }, 401)
 
+  const body0 = await req.json().catch(() => ({}))
   const db = createClient(url, serviceKey, { auth: { persistSession: false } })
   const { data: links } = await db.from('agent_links').select('agent_id').eq('company_id', companyId).eq('provider', 'elevenlabs')
-  if (!links?.length) return json({ synced: 0, pending: 0, checked: 0, reason: 'no_linked_agent' })
+  if (!links?.length) return json(body0?.live ? { live: [] } : { synced: 0, pending: 0, checked: 0, reason: 'no_linked_agent' })
+
+  // Live mode: conversations still running on the platform. Nothing is stored; the dashboard shows
+  // them as "live" until the platform finishes them and the normal webhook saves them.
+  if (body0?.live) {
+    const live: unknown[] = []
+    for (const { agent_id } of links) {
+      const list = await get(`/conversations?agent_id=${encodeURIComponent(agent_id)}&page_size=10`, apiKey)
+      for (const c of list?.conversations ?? []) {
+        if (!c.conversation_id || c.status === 'done' || c.status === 'failed') continue
+        const d = await get(`/conversations/${encodeURIComponent(c.conversation_id)}`, apiKey)
+        if (!d) continue
+        const wa = d.metadata?.whatsapp
+        const phone = wa?.whatsapp_user_id || d.metadata?.phone_call?.external_number || ''
+        live.push({
+          id: c.conversation_id, status: d.status, started: d.metadata?.start_time_unix_secs ?? c.start_time_unix_secs,
+          channel: wa ? 'whatsapp' : d.metadata?.phone_call ? 'phone' : 'web', phone,
+          transcript: (d.transcript ?? []).filter((t: { message?: string }) => t.message)
+            .map((t: { role: string; message: string; time_in_call_secs?: number }) => ({ role: t.role, text: t.message, secs: t.time_in_call_secs ?? 0 })),
+        })
+      }
+    }
+    return json({ live })
+  }
 
   const { data: known } = await db.from('clinic_os_ai_calls').select('external_id').eq('company_id', companyId).eq('provider', 'elevenlabs')
   const have = new Set((known ?? []).map((r: { external_id: string | null }) => r.external_id))
