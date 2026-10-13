@@ -1,12 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Search, Users, UserCheck } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useCustomers, updateCustomer } from '@/lib/dashboardQueries'
+import { useConversationData } from '@/lib/queries/conversations'
+import { buildContacts } from './AgentUsers'
 import type { Customer } from '@/types/dashboard'
 import { Card, Badge, Button, Dialog, Input, Select } from '@/dashboard/components/primitives'
 import { NightPage, PageHead, Seg, useIsNarrow, fmtNum } from './shared/night'
 import { EmptyState, SkeletonRows, useToast, Avatar, SortableHeader, ContactActions } from '@/dashboard/components/uiExtras'
+
+/** A person known only from the agent's conversations; saved customers keep their own row. */
+type Row = Customer & { fromConversation?: boolean; openId?: string }
 
 type SortKey = 'name' | 'last_visit_at' | 'total_visits'
 
@@ -23,7 +29,11 @@ const TYPE_OPTIONS = [
 
 export function DashboardV2Customers() {
   const { companyId, isDemo, hasModule } = useWorkspace()
-  const { data: patients, loading, refetch } = useCustomers(companyId, isDemo)
+  const navigate = useNavigate()
+  const base = isDemo ? '/demo-review' : '/clinic-os/dashboard'
+  const { data: patients, loading: customersLoading, refetch } = useCustomers(companyId, isDemo)
+  const { calls, callsLoading } = useConversationData(companyId, isDemo)
+  const loading = customersLoading || callsLoading
   const pushToast = useToast()
   const [q, setQ] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
@@ -98,7 +108,18 @@ export function DashboardV2Customers() {
     setSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: 1 }))
   }
 
-  const rows = patients || []
+  const rows = useMemo<Row[]>(() => {
+    const saved: Row[] = patients || []
+    const phones = new Set(saved.map((p) => p.phone.replace(/D/g, '')).filter(Boolean))
+    const fromChats: Row[] = buildContacts(calls || [])
+      .filter((c) => !c.phone || !phones.has(c.phone.replace(/D/g, '')))
+      .map((c) => ({
+        id: `chat:${c.key}`, company_id: companyId || '', name: c.name, phone: c.phone, patient_type: c.count > 1 ? 'returning' : 'new',
+        tags: [], no_show_count: 0, total_visits: c.count, last_visit_at: c.last, created_at: c.last,
+        fromConversation: true, openId: `call:${c.lastCall.id}`,
+      }))
+    return [...saved, ...fromChats]
+  }, [patients, calls, companyId])
   const shown = useMemo(() => {
     let filtered = rows.filter((p) => p.name.includes(q) || p.phone.includes(q))
     if (typeFilter !== 'all') filtered = filtered.filter((p) => p.patient_type === typeFilter)
@@ -113,7 +134,7 @@ export function DashboardV2Customers() {
 
   const narrow = useIsNarrow()
   const returning = rows.filter((p) => p.patient_type === 'returning').length
-  const visitsLabel = hasModule('bookings') ? 'عدد الزيارات' : 'عدد الطلبات'
+  const visitsLabel = hasModule('bookings') ? 'عدد الزيارات' : 'عدد التواصل'
 
   return (
     <NightPage>
@@ -160,18 +181,18 @@ export function DashboardV2Customers() {
               </thead>
               <tbody>
                 {shown.map((p) => (
-                  <tr key={p.id} className={`clickable${checked.has(p.id) ? ' is-selected' : ''}`} onClick={() => setSelected(p)}>
+                  <tr key={p.id} className={`clickable${checked.has(p.id) ? ' is-selected' : ''}`} onClick={() => (p.fromConversation ? navigate(`${base}/conversations?id=${encodeURIComponent(p.openId || '')}`) : setSelected(p))}>
                     <td onClick={(e) => e.stopPropagation()}>
-                      <label className="np-check"><input type="checkbox" aria-label={`تحديد ${p.name}`} checked={checked.has(p.id)} onChange={() => toggleCheck(p.id)} /></label>
+                      {!p.fromConversation && <label className="np-check"><input type="checkbox" aria-label={`تحديد ${p.name}`} checked={checked.has(p.id)} onChange={() => toggleCheck(p.id)} /></label>}
                     </td>
                     <td className="strong">
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}><Avatar name={p.name} size={32} />{p.name}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}><Avatar name={p.name} size={32} />{p.name}{p.fromConversation && <Badge tone="neutral">من المحادثات</Badge>}</span>
                     </td>
-                    <td className="np-num" dir="ltr" style={{ textAlign: 'end' }}>{p.phone}</td>
+                    <td className="np-num" dir="ltr" style={{ textAlign: 'end' }}>{p.phone || '—'}</td>
                     <td className="np-num">{p.last_visit_at ? p.last_visit_at.split('T')[0] : '—'}</td>
                     <td className="np-num">{p.total_visits}</td>
                     <td><Badge tone={p.patient_type === 'returning' ? 'success' : 'brand'}>{p.patient_type === 'returning' ? 'عائد' : 'جديد'}</Badge></td>
-                    <td><ContactActions size={narrow ? 40 : 28} phone={p.phone} message={`مرحباً ${p.name}`} /></td>
+                    <td>{p.phone ? <ContactActions size={narrow ? 40 : 28} phone={p.phone} message={`مرحباً ${p.name}`} /> : null}</td>
                   </tr>
                 ))}
               </tbody>

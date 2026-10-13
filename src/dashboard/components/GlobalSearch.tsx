@@ -21,7 +21,6 @@ const QUICK_ACTIONS: QuickAction[] = [
   { id: 'nav-patients', label: 'العملاء', icon: <Users size={14} />, run: (nav, base) => nav(`${base}/patients`), module: 'customers' },
   { id: 'nav-conversations', label: 'المحادثات', icon: <MessageSquare size={14} />, run: (nav, base) => nav(`${base}/conversations`), module: 'conversations' },
   { id: 'nav-agent-analytics', label: 'تحليلات الوكيل', icon: <Sparkles size={14} />, run: (nav, base) => nav(`${base}/agent-analytics`), module: 'voice' },
-  { id: 'nav-agent-users', label: 'العملاء من المحادثات', icon: <Contact size={14} />, run: (nav, base) => nav(`${base}/agent-users`), module: 'voice' },
   { id: 'nav-reviews', label: 'تقييمات Google', icon: <Star size={14} />, run: (nav, base) => nav(`${base}/reviews`), module: 'reviews' },
   { id: 'nav-services', label: 'الخدمات', icon: <Wrench size={14} />, run: (nav, base) => nav(`${base}/services`), module: 'services' },
   { id: 'nav-reports', label: 'التقارير والتحليلات', icon: <BarChart3 size={14} />, run: (nav, base) => nav(`${base}/reports`), module: 'reports' },

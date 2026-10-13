@@ -250,7 +250,6 @@ export function DashboardV2Layout() {
       { label: 'إعدادات الوكيل', short: 'الوكيل', path: `${base}/agents`, icon: <Bot size={16} /> },
       { label: 'قاعدة المعرفة', short: 'المعرفة', path: `${base}/knowledge-base`, icon: <BookOpen size={16} />, module: 'knowledge_base' },
       { label: 'سجل المكالمات', path: `${base}/call-logs`, icon: <ClipboardList size={16} />, module: 'voice' },
-      { label: 'العملاء من المحادثات', short: 'عملاء المحادثات', path: `${base}/agent-users`, icon: <Contact size={16} />, module: 'voice' },
     ] },
     { title: 'الإعداد', items: [
       { label: 'الخدمات', path: `${base}/services`, icon: <Wrench size={16} />, module: 'services' },

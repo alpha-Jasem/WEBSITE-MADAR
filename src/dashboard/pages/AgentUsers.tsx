@@ -14,7 +14,7 @@ import { SortTh, nextSort, type SortDir } from './analytics/ui'
 import './home/night.css'
 import './analytics/analytics.css'
 
-interface Contact {
+export interface Contact {
   key: string
   name: string
   phone: string
@@ -29,7 +29,7 @@ interface Contact {
 
 type SortKey = 'name' | 'last' | 'count'
 
-function buildContacts(calls: AICallLog[]): Contact[] {
+export function buildContacts(calls: AICallLog[]): Contact[] {
   const groups = new Map<string, AICallLog[]>()
   for (const c of calls) {
     const k = contactKey(c)
@@ -40,8 +40,9 @@ function buildContacts(calls: AICallLog[]): Contact[] {
   for (const [key, list] of groups) {
     const sorted = [...list].sort((a, b) => b.call_time.localeCompare(a.call_time))
     const latest = sorted[0]
-    const name = sorted.map(contactName).find(Boolean) || ''
-    const phone = sorted.map((c) => c.phone || collectedValue(c, 'contact_number', 'phone')).find(Boolean) || ''
+    const known = (v: string) => (v && v.toLowerCase() !== 'unknown' ? v : '')
+    const name = sorted.map((c) => known(contactName(c))).find(Boolean) || ''
+    const phone = sorted.map((c) => known(c.phone || collectedValue(c, 'contact_number', 'phone'))).find(Boolean) || ''
     const userId = sorted.map((c) => c.analysis?.user_id || '').find(Boolean) || ''
     const sentiment = sorted.map(sentimentKind).find((s) => s != null) ?? null
     const channels = [...new Set(sorted.map((c) => c.channel || 'phone'))] as AICallChannel[]
