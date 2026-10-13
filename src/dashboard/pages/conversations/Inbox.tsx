@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  Inbox as InboxIcon, Phone, Copy, ExternalLink, CheckCircle2, Lock, Unlock, Ticket, Send, StickyNote, Bot, UserRound, Tag, Sparkles, X, Plus,
+  Inbox as InboxIcon, RefreshCw, Phone, Copy, ExternalLink, CheckCircle2, Lock, Unlock, Ticket, Send, StickyNote, Bot, UserRound, Tag, Sparkles, X, Plus,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useCustomers } from '@/lib/dashboardQueries'
 import { useCurrentUserId, useTeam } from '@/lib/queries/ops'
-import { markCallReviewed } from '@/lib/queries/conversations'
+import { markCallReviewed, syncPlatformConversations } from '@/lib/queries/conversations'
 import {
   addConversationEvent, convState, deleteCannedReply, saveCannedReply, seedDemoInboxEvents, useCannedReplies, useConversationEvents,
   type ConvEvent,
@@ -40,9 +40,47 @@ interface Props {
 const initials = (name: string) => (name.trim().match(/[\p{L}\p{N}]/u)?.[0] || '؟').toUpperCase()
 
 /** Three-pane inbox: list, the conversation with a reply box, and the customer profile. */
-export function Inbox({ items, allItems, loading, tickets, showTickets, selectedKey, onSelect, onOpenFull, onTicket }: Props) {
+/** One chat per WhatsApp number (like the phone app): its platform conversations become one thread. */
+function groupChats(list: ConvItem[]): ConvItem[] {
+  const chats = new Map<string, ConvItem[]>()
+  const out: ConvItem[] = []
+  for (const i of list) {
+    const p = i.channel === 'whatsapp' && i.call ? normalizePhone(i.phone) : ''
+    if (!p) { out.push(i); continue }
+    const g = chats.get(p)
+    if (g) g.push(i); else chats.set(p, [i])
+  }
+  for (const [p, members] of chats) {
+    const sorted = [...members].sort((a, b) => a.time.localeCompare(b.time))
+    const latest = sorted[sorted.length - 1]
+    const tags = new Map<string, ConvItem['tags'][number]>()
+    for (const m of sorted) for (const t of m.tags) tags.set(t.id, t)
+    out.push({
+      ...latest, key: `chat:${p}`, name: [...sorted].reverse().map((m) => m.name).find((n) => n && n !== latest.phone && n.toLowerCase() !== 'unknown') || latest.name,
+      messageCount: sorted.reduce((n, m) => n + m.messageCount, 0), needsAction: sorted.some((m) => m.needsAction),
+      tags: [...tags.values()], group: sorted,
+    })
+  }
+  return out.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+}
+export function Inbox({ items: flat, allItems, loading, tickets, showTickets, selectedKey, onSelect, onOpenFull, onTicket }: Props) {
   const { companyId, isDemo, userName } = useWorkspace()
   const { events } = useConversationEvents(companyId, isDemo)
+  const items = useMemo(() => groupChats(flat), [flat])
+  const [syncing, setSyncing] = useState(false)
+  const pushToast = useToast()
+
+  // Pull anything the live webhook missed, quietly, when the inbox opens.
+  useEffect(() => { if (!isDemo) void syncPlatformConversations() }, [isDemo])
+
+  async function syncNow() {
+    setSyncing(true)
+    const r = await syncPlatformConversations(true)
+    setSyncing(false)
+    pushToast(r
+      ? { kind: 'success', title: r.synced > 0 ? `جلبنا ${r.synced} محادثة جديدة` : 'كل المحادثات محدّثة', description: r.pending > 0 ? `باقي ${r.pending}، اضغط تحديث مرة ثانية` : undefined }
+      : { kind: 'info', title: 'التحديث غير متاح الآن', description: 'المحادثات الجديدة تنضاف تلقائيًا أول ما تنتهي.' })
+  }
 
   // Pick the first conversation so the middle pane is never empty.
   useEffect(() => {
@@ -55,7 +93,8 @@ export function Inbox({ items, allItems, loading, tickets, showTickets, selected
 
   return (
     <div className="ib">
-      <ListPane items={items} loading={loading} selectedKey={item?.key || null} onSelect={onSelect} events={events} />
+      <ListPane items={items} loading={loading} selectedKey={item?.key || null} onSelect={onSelect} events={events}
+        onSync={isDemo ? undefined : syncNow} syncing={syncing} />
       {item ? (
         <>
           <ThreadPane key={item.key} item={item} events={events.get(item.key) || []} tickets={tickets} showTickets={showTickets}
@@ -71,12 +110,16 @@ export function Inbox({ items, allItems, loading, tickets, showTickets, selected
 
 // ─── list ─────────────────────────────────────────────────────────────────────
 
-function ListPane({ items, loading, selectedKey, onSelect, events }: {
+function ListPane({ items, loading, selectedKey, onSelect, events, onSync, syncing }: {
   items: ConvItem[]; loading: boolean; selectedKey: string | null; onSelect: (k: string) => void; events: Map<string, ConvEvent[]>
+  onSync?: () => void; syncing?: boolean
 }) {
   return (
     <aside className="ib-list" aria-label="المحادثات">
-      <div className="ib-list-head"><b>المحادثات</b><span className="nx-num">{items.length}</span></div>
+      <div className="ib-list-head">
+        <b>المحادثات <span className="nx-num">{items.length}</span></b>
+        {onSync && <button type="button" className="nx-icon-btn" aria-label="تحديث من المنصة" title="جلب المحادثات الجديدة" disabled={syncing} onClick={onSync}><RefreshCw size={14} className={syncing ? 'ib-spin' : undefined} /></button>}
+      </div>
       <div className="ib-list-body">
         {loading && items.length === 0 && Array.from({ length: 6 }).map((_, i) => <div key={i} style={{ padding: '10px 14px' }}><Sk h={44} /></div>)}
         {!loading && items.length === 0 && <div className="nx-empty">ما فيه محادثات تطابق الفلاتر.</div>}
@@ -128,8 +171,17 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
 
   const lines = useMemo<Line[]>(() => {
     const out: Line[] = []
-    out.push({ k: 'sys', text: `بدأت المحادثة عبر ${CHANNEL_LABEL[item.channel]} · ${fmtFull(item.time)}` })
-    if (call?.transcript?.length) {
+    if (item.group) {
+      item.group.forEach((g, gi) => {
+        out.push({ k: 'sys', text: gi === 0 ? `بدأت المحادثة عبر واتساب · ${fmtFull(g.time)}` : `محادثة جديدة · ${fmtFull(g.time)}` })
+        for (const m of g.call?.transcript || []) out.push({ k: 'msg', who: m.speaker === 'agent' ? 'a' : 'c', name: m.speaker === 'agent' ? 'الوكيل الذكي' : item.name, text: m.text, time: m.time })
+        if (gi < item.group!.length - 1) out.push({ k: 'sys', text: `انتهت · ${itemChip(g)[0]}` })
+      })
+    } else {
+      out.push({ k: 'sys', text: `بدأت المحادثة عبر ${CHANNEL_LABEL[item.channel]} · ${fmtFull(item.time)}` })
+    }
+    if (item.group) { /* transcripts added above */ }
+    else if (call?.transcript?.length) {
       for (const m of call.transcript) out.push({ k: 'msg', who: m.speaker === 'agent' ? 'a' : 'c', name: m.speaker === 'agent' ? 'الوكيل الذكي' : item.name, text: m.text, time: m.time })
     } else if (item.messages?.length) {
       for (const m of item.messages) out.push({ k: 'msg', who: 'a', name: MSG_TYPE_LABEL[m.message_type] || 'رسالة', text: m.body, time: fmtWhen(m.sent_at || m.created_at) })
@@ -286,7 +338,7 @@ function Composer({ item, authorName }: { item: ConvItem; authorName: string }) 
       )}
       <div className="ib-modes" role="tablist" aria-label="نوع الرسالة">
         <button type="button" role="tab" aria-selected={effectiveMode === 'reply'} disabled={!canReply} onClick={() => setMode('reply')} title={canReply ? '' : 'ما فيه رقم لهذا العميل'}>
-          <Send size={13} /> رد للعميل
+          <Send size={13} /> واتساب من جوالك
         </button>
         <button type="button" role="tab" aria-selected={effectiveMode === 'note'} onClick={() => setMode('note')}><StickyNote size={13} /> ملاحظة داخلية</button>
       </div>
@@ -297,11 +349,11 @@ function Composer({ item, authorName }: { item: ConvItem; authorName: string }) 
         onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void send() } }}
       />
       <div className="ib-composer-foot">
-        <span>{effectiveMode === 'reply' ? 'يفتح الرد في واتساب جاهزًا للإرسال، ويتسجل هنا.' : 'الملاحظة داخلية ولا تُرسل للعميل.'}</span>
+        <span>{effectiveMode === 'reply' ? 'الوكيل يرد تلقائيًا من رقم الأعمال. هذا يفتح واتساب على جوالك لو تبغى تتواصل بنفسك، ويتسجل هنا.' : 'الملاحظة داخلية ولا تُرسل للعميل.'}</span>
         <div>
           <button type="button" className="nx-btn sm" onClick={saveAsReply} title="احفظ النص كرد جاهز"><Plus size={13} /> رد جاهز</button>
           <button type="button" className="nx-btn pri" disabled={busy || !text.trim() || text.startsWith('/')} onClick={send}>
-            {effectiveMode === 'reply' ? <><Send /> إرسال عبر واتساب</> : <><StickyNote /> حفظ الملاحظة</>}
+            {effectiveMode === 'reply' ? <><Send /> فتح واتساب</> : <><StickyNote /> حفظ الملاحظة</>}
           </button>
         </div>
       </div>
@@ -324,10 +376,12 @@ function ProfilePane({ item, allItems, tickets, showTickets, onSelect, onOpenFul
   const mood = call ? sentimentKind(call) : null
   const data = call ? collectedData(call).filter((f) => f.filled).slice(0, 6) : []
   const myKey = call ? contactKey(call) : ''
-  const previous = allItems.filter((i) => i.key !== item.key && (
+  const own = new Set([item.key, ...(item.group || []).map((g) => g.key)])
+  const previous = allItems.filter((i) => !own.has(i.key) && (
     (i.call && myKey && contactKey(i.call) === myKey) || (phone && normalizePhone(i.phone) === phone)
   )).slice(0, 5)
-  const related = tickets.filter((t) => (call && t.ai_call_id === call.id) || (previous.some((p) => p.call && t.ai_call_id === p.call.id))).slice(0, 4)
+  const ownCalls = new Set([call?.id, ...(item.group || []).map((g) => g.call?.id)].filter(Boolean))
+  const related = tickets.filter((t) => (t.ai_call_id && ownCalls.has(t.ai_call_id)) || previous.some((p) => p.call && t.ai_call_id === p.call.id)).slice(0, 4)
 
   async function copyPhone() {
     if (!item.phone) return
@@ -389,7 +443,7 @@ function ProfilePane({ item, allItems, tickets, showTickets, onSelect, onOpenFul
         </Section>
       )}
 
-      <button type="button" className="nx-btn ib-full" onClick={() => onOpenFull(item.key)}><ExternalLink /> التحليل والتفاصيل الكاملة</button>
+      <button type="button" className="nx-btn ib-full" onClick={() => onOpenFull(item.group ? item.group[item.group.length - 1].key : item.key)}><ExternalLink /> التحليل والتفاصيل الكاملة</button>
     </aside>
   )
 }

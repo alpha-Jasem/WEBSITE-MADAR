@@ -77,3 +77,25 @@ export async function fetchCallRecording(callId: string): Promise<string | null>
   if (!res.ok) return null
   return URL.createObjectURL(await res.blob())
 }
+
+let lastSync = 0
+
+/** Asks the platform for conversations the dashboard has not stored yet. Quiet by default:
+ *  at most once a minute unless forced, and never throws (the live webhook is the main path). */
+export async function syncPlatformConversations(force = false): Promise<{ synced: number; pending: number } | null> {
+  if (!force && Date.now() - lastSync < 60_000) return null
+  lastSync = Date.now()
+  try {
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData.session?.access_token
+    if (!token) return null
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-conversations-sync`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, apikey: import.meta.env.VITE_SUPABASE_ANON_KEY ?? '', 'Content-Type': 'application/json' },
+      body: '{}',
+    })
+    if (!res.ok) return null
+    const out = await res.json()
+    return { synced: Number(out.synced) || 0, pending: Number(out.pending) || 0 }
+  } catch { return null }
+}

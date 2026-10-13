@@ -96,3 +96,8 @@
 
 @media (max-width: 1280px) { .ib { grid-template-columns: 300px minmax(0, 1fr) 260px; } }
 @media (prefers-reduced-motion: reduce) { .ib * { transition: none !important; } }
+
+.ib-spin { animation: ib-rot .9s linear infinite; }
+@keyframes ib-rot { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ib-spin { animation: none; } }
+.ib-list-head b { display: flex; gap: 8px; align-items: baseline; }

@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   if (req.method !== 'POST') return fail('method not allowed', 405)
 
-  const apiKey = Deno.env.get('ELEVENLABS_API_KEY')
+  const apiKey = Deno.env.get('ELEVENLABS_API_KEY')?.trim()
   const url = Deno.env.get('SUPABASE_URL')
   const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
   if (!apiKey || !url || !anonKey) return fail('server misconfigured', 500)

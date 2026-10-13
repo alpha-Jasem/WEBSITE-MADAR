@@ -31,6 +31,8 @@ export interface ConvItem {
   call?: AICallLog
   /** Thread messages, oldest first. */
   messages?: MessageLog[]
+  /** For a WhatsApp chat: every platform conversation with this number, oldest first. */
+  group?: ConvItem[]
 }
 
 export const CHANNEL_LABEL: Record<ConvChannel, string> = { phone: 'هاتف', whatsapp: 'واتساب', web: 'الموقع' }
