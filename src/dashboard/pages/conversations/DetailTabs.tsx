@@ -5,7 +5,7 @@ import {
   callVerdict, VERDICT_LABEL, verdictTone, sentimentKind, SENTIMENT_LABEL, sentimentTone, sentimentScore, callCost,
   evaluationCriteria, collectedData, formatValue, callWarnings, terminationLabel,
 } from '@/lib/callAnalysis'
-import { CHANNEL_LABEL, fmtDuration, fmtFull, type ConvItem } from './model'
+import { CHANNEL_LABEL, callLengthLabel, fmtFull, type ConvItem } from './model'
 import { Chip } from './ui'
 
 const LANG_LABEL: Record<string, string> = { ar: 'العربية', en: 'الإنجليزية' }
@@ -45,7 +45,7 @@ export function ConversationOverview({ item, fields, status, onCopy }: {
     ) : ''],
     ['التاريخ', fmtFull(item.time)],
     ['القناة', CHANNEL_LABEL[item.channel]],
-    ['المدة', call && call.duration_seconds > 0 ? fmtDuration(call.duration_seconds) : ''],
+    ['المدة', callLengthLabel(call)],
     ['الرسائل', item.messageCount ? String(item.messageCount) : ''],
     ['الاستهلاك', cost != null ? `${cost.toLocaleString('en-US')} رصيد` : ''],
     ['معرّف العميل', call?.analysis?.user_id || '', true],

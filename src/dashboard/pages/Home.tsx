@@ -136,16 +136,14 @@ export function DashboardV2Home() {
   const hourly = useMemo(() => {
     const today = new Date(); today.setHours(0, 0, 0, 0)
     const start = today.getTime()
-    const times = showVoice
-      ? phoneCalls.map((c) => c.call_time)
-      : [...agentCalls.map((c) => c.call_time), ...messages.map((m) => m.created_at)]
+    const times = [...agentCalls.map((c) => c.call_time), ...messages.map((m) => m.created_at)]
     const hours = times.filter((t) => inRange(t, start, start + DAY)).map((t) => new Date(t).getHours())
     const lo = Math.min(8, ...hours)
     const hi = Math.max(20, ...hours)
     const counts = Array.from({ length: hi - lo + 1 }, () => 0)
     hours.forEach((h) => { counts[h - lo] += 1 })
     return { counts, startHour: lo }
-  }, [showVoice, phoneCalls, agentCalls, messages])
+  }, [agentCalls, messages])
 
   const recent = useMemo(
     () => buildConversations(agentCalls, messages, { includePhone: showVoice, includeMessages: true }).slice(0, 5),
@@ -320,7 +318,7 @@ export function DashboardV2Home() {
           onOpenCall={openCall} onReviewed={reviewed} onOpenTicket={openTicket} onCopy={copyPhone}
           onViewAll={() => go('conversations?filter=needs')}
         />
-        <HourlyChart title={showVoice ? 'المكالمات حسب الساعة' : 'المحادثات حسب الساعة'} counts={hourly.counts} startHour={hourly.startHour} />
+        <HourlyChart title="المحادثات حسب الساعة" counts={hourly.counts} startHour={hourly.startHour} />
       </div>
 
       <div className="nx-grid-3">

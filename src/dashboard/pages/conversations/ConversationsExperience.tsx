@@ -12,7 +12,7 @@ import { exportRowsToExcel } from '@/lib/exportExcel'
 import { useToast, ContactActions } from '@/dashboard/components/uiExtras'
 import type { AICallLog, SupportTicket } from '@/types/dashboard'
 import {
-  buildConversations, itemChip, fmtFull, fmtDay, fmtDuration, copyText, CHANNEL_LABEL, MSG_TYPE_LABEL, MSG_STATUS_LABEL,
+  buildConversations, itemChip, fmtFull, fmtDay, callLengthLabel, transcriptHasTimes, copyText, CHANNEL_LABEL, MSG_TYPE_LABEL, MSG_STATUS_LABEL,
   type ConvChannel, type ConvItem,
 } from './model'
 import { Chip, ChannelIcon, ConvRow, Sk, TagChips } from './ui'
@@ -346,7 +346,7 @@ function ConversationDetail({ item, isDemo, showTickets, tickets, onTicket, tab,
     item.phone ? <span key="p" className="nx-num" dir="ltr">{item.phone}</span> : null,
     CHANNEL_LABEL[item.channel],
     fmtFull(item.time),
-    call && call.duration_seconds > 0 ? `المدة ${fmtDuration(call.duration_seconds)}` : null,
+    callLengthLabel(call) ? `المدة ${callLengthLabel(call)}` : null,
   ].filter(Boolean)
 
   const fields: [string, string][] = call ? ([
@@ -375,7 +375,7 @@ function ConversationDetail({ item, isDemo, showTickets, tickets, onTicket, tab,
             <div key={i} className={`nx-msg ${m.speaker === 'agent' ? 'a' : 'c'}`}>
               <span className="nx-msg-who">{m.speaker === 'agent' ? 'الوكيل الذكي' : item.name}</span>
               {m.text}
-              {m.time && <small className="nx-num">{m.time}</small>}
+              {m.time && transcriptHasTimes(call.transcript) && <small className="nx-num">{m.time}</small>}
             </div>
           ))}
         </div>

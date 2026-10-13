@@ -176,3 +176,13 @@ export async function copyText(text: string): Promise<boolean> {
     return false
   }
 }
+
+/** Only phone calls have a meaningful length; for chats the platform reports bot time, not the chat span. */
+export function callLengthLabel(c: { channel?: string | null; duration_seconds?: number | null } | undefined | null): string {
+  return c && (c.channel || 'phone') === 'phone' && (c.duration_seconds || 0) > 0 ? fmtDuration(c.duration_seconds) : ''
+}
+
+/** The platform stamps every chat message 00:00; show per-message times only when they differ. */
+export function transcriptHasTimes(lines: { time?: string }[] | undefined): boolean {
+  return !!lines && lines.some((l) => l.time && l.time !== '00:00')
+}

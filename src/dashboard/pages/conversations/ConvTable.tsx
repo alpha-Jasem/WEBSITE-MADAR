@@ -3,7 +3,7 @@ import { Columns3 } from 'lucide-react'
 import { VERDICT_LABEL, verdictTone, sentimentKind, SENTIMENT_LABEL, sentimentTone } from '@/lib/callAnalysis'
 import { NightStyles } from '../shared/night'
 import { SortTh, nextSort, type SortDir } from '../analytics/ui'
-import { CHANNEL_LABEL, fmtDuration, fmtWhen, type ConvItem } from './model'
+import { CHANNEL_LABEL, callLengthLabel, fmtWhen, type ConvItem } from './model'
 import { Chip, ChannelIcon, TagChips } from './ui'
 
 type Key = 'title' | 'time' | 'duration' | 'messages'
@@ -86,7 +86,7 @@ export function ConvTable({ items, onOpen }: { items: ConvItem[]; onOpen: (i: Co
                   </td>
                 )}
                 {show('time') && <td style={{ whiteSpace: 'nowrap' }}>{fmtWhen(i.time)}</td>}
-                {show('duration') && <td className="nx-num">{i.call && i.call.duration_seconds > 0 ? fmtDuration(i.call.duration_seconds) : '—'}</td>}
+                {show('duration') && <td className="nx-num">{callLengthLabel(i.call) || '—'}</td>}
                 {show('messages') && <td className="nx-num">{i.messageCount || '—'}</td>}
                 {show('verdict') && <td>{i.verdict === 'none' ? <span style={{ color: 'var(--dim)' }}>—</span> : <Chip tone={verdictTone(i.verdict)}>{VERDICT_LABEL[i.verdict]}</Chip>}</td>}
                 {show('sentiment') && <td>{mood ? <Chip tone={sentimentTone(mood)}>{SENTIMENT_LABEL[mood]}</Chip> : <span style={{ color: 'var(--dim)' }}>—</span>}</td>}

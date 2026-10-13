@@ -14,7 +14,7 @@ import { collectedData, contactKey, normalizePhone, sentimentKind, SENTIMENT_LAB
 import { sendWhatsAppMessage } from '@/lib/whatsapp'
 import { useToast } from '@/dashboard/components/uiExtras'
 import type { SupportTicket } from '@/types/dashboard'
-import { buildConversations, CHANNEL_LABEL, copyText, fmtDay, fmtDuration, fmtFull, fmtWhen, itemChip, type ConvItem } from './model'
+import { buildConversations, callLengthLabel, transcriptHasTimes, CHANNEL_LABEL, copyText, fmtDay, fmtFull, fmtWhen, itemChip, type ConvItem } from './model'
 import { ChannelIcon, Chip, Sk, TagChips } from './ui'
 import { RecordingPlayer } from './RecordingPlayer'
 import { MSG_TYPE_LABEL } from './model'
@@ -195,7 +195,7 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
     if (item.group) {
       item.group.forEach((g, gi) => {
         out.push({ k: 'sys', text: gi === 0 ? `بدأت المحادثة عبر واتساب · ${fmtFull(g.time)}` : `محادثة جديدة · ${fmtFull(g.time)}` })
-        for (const m of g.call?.transcript || []) out.push({ k: 'msg', who: m.speaker === 'agent' ? 'a' : 'c', name: m.speaker === 'agent' ? 'الوكيل الذكي' : item.name, text: m.text, time: m.time })
+        for (const m of g.call?.transcript || []) out.push({ k: 'msg', who: m.speaker === 'agent' ? 'a' : 'c', name: m.speaker === 'agent' ? 'الوكيل الذكي' : item.name, text: m.text, time: transcriptHasTimes(g.call?.transcript) ? m.time : undefined })
         if (gi < item.group!.length - 1) out.push({ k: 'sys', text: `انتهت · ${itemChip(g)[0]}` })
       })
     } else {
@@ -203,7 +203,7 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
     }
     if (item.group) { /* transcripts added above */ }
     else if (call?.transcript?.length) {
-      for (const m of call.transcript) out.push({ k: 'msg', who: m.speaker === 'agent' ? 'a' : 'c', name: m.speaker === 'agent' ? 'الوكيل الذكي' : item.name, text: m.text, time: m.time })
+      for (const m of call.transcript) out.push({ k: 'msg', who: m.speaker === 'agent' ? 'a' : 'c', name: m.speaker === 'agent' ? 'الوكيل الذكي' : item.name, text: m.text, time: transcriptHasTimes(call.transcript) ? m.time : undefined })
     } else if (item.messages?.length) {
       for (const m of item.messages) out.push({ k: 'msg', who: 'a', name: MSG_TYPE_LABEL[m.message_type] || 'رسالة', text: m.body, time: fmtWhen(m.sent_at || m.created_at) })
     }
@@ -429,7 +429,7 @@ function ProfilePane({ item, allItems, tickets, showTickets, onSelect, onOpenFul
       <Section title="تفاصيل المحادثة">
         <Row k="القناة" v={CHANNEL_LABEL[item.channel]} />
         <Row k="بدأت" v={fmtFull(item.time)} />
-        {call && call.duration_seconds > 0 && <Row k="المدة" v={fmtDuration(call.duration_seconds)} />}
+        {callLengthLabel(call) && <Row k="المدة" v={callLengthLabel(call)} />}
         {mood && <Row k="المشاعر" v={<Chip tone={sentimentTone(mood)}>{SENTIMENT_LABEL[mood]}</Chip>} />}
         <Row k="الرسائل" v={String(item.messageCount || 0)} />
       </Section>
