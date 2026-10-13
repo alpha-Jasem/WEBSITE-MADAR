@@ -12,7 +12,7 @@ const RUNTIME_RECOVERY_PREFIX = 'madar_runtime_recovery'
 
 export function isChunkLoadError(error: Error | string) {
   const message = typeof error === 'string' ? error : error.message
-  return /Failed to fetch dynamically imported module|Importing a module script failed|Loading chunk|ChunkLoadError|dynamically imported module/i.test(message)
+  return /Failed to fetch dynamically imported module|Importing a module script failed|Loading chunk|ChunkLoadError|dynamically imported module|MIME type|module script|Unexpected token '<'|error loading dynamically/i.test(message)
 }
 
 export function reloadForFreshAssets(reason = 'chunk') {

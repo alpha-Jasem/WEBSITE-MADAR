@@ -5,13 +5,6 @@
 [build.environment]
   NODE_VERSION = "20"
 
-# Root now serves THE SIGNAL cinematic film site (the new official landing)
-[[redirects]]
-  from = "/"
-  to = "/signal/index.html"
-  status = 200
-  force = true
-
 [[redirects]]
   from = "/*"
   to = "/index.html"
