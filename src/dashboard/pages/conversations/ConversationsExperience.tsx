@@ -1,8 +1,8 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ChevronRight, ChevronUp, ChevronDown, Search, CheckCircle2, Ticket, Copy, Download, Phone, MessageCircle, Globe, Inbox, List, Table2,
-  ClipboardCheck, ScrollText, LayoutGrid,
+  ClipboardCheck, ScrollText, LayoutGrid, PanelsLeftRight,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useSupportTickets } from '@/lib/dashboardQueries'
@@ -21,16 +21,31 @@ import { useTagRules } from '@/lib/queries/tagRules'
 import { Dialog } from '@/dashboard/components/primitives'
 import { RecordingPlayer } from './RecordingPlayer'
 import { ConvTable } from './ConvTable'
+import { Inbox as InboxView } from './Inbox'
 import { ConversationAnalysis, ConversationOverview, VerdictCard } from './DetailTabs'
 import { VERDICT_LABEL, normalizePhone } from '@/lib/callAnalysis'
 import '../analytics/analytics.css'
 
 type Filter = 'all' | 'needs' | ConvChannel
 type EvalFilter = 'all' | 'success' | 'failure' | 'none'
-type View = 'list' | 'table'
+type View = 'inbox' | 'list' | 'table'
 type DetailTab = 'overview' | 'transcript' | 'analysis'
 
 const PAGE = 40
+
+/** True from the given width up; the three-pane inbox needs room, narrower screens keep the list. */
+function useWide(min: number) {
+  const q = `(min-width: ${min}px)`
+  const [wide, setWide] = useState(() => typeof window !== 'undefined' && window.matchMedia(q).matches)
+  useEffect(() => {
+    const m = window.matchMedia(q)
+    const on = () => setWide(m.matches)
+    on()
+    m.addEventListener('change', on)
+    return () => m.removeEventListener('change', on)
+  }, [q])
+  return wide
+}
 const PROVIDER_LABEL: Record<string, string> = { nabrah: 'نبرة', elevenlabs: 'المنصة الصوتية' }
 
 /** The unified conversations experience. `calls` mode backs /call-logs: the same list
@@ -59,13 +74,16 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
   const filter = (params.get('filter') as Filter) || 'all'
   const evalFilter = (params.get('eval') as EvalFilter) || 'all'
   const tagFilter = params.get('tag') || 'all'
-  const view: View = params.get('view') === 'table' ? 'table' : 'list'
+  const wide = useWide(1100)
+  const viewParam = params.get('view')
+  const view: View = viewParam === 'table' ? 'table' : viewParam === 'list' ? 'list' : (wide && mode === 'all' ? 'inbox' : 'list')
+  const selKey = params.get('sel')
   const search = params.get('q') || ''
   const [limit, setLimit] = useState(PAGE)
 
   function setParam(key: string, value: string | null, replace = false) {
     const next = new URLSearchParams(params)
-    const isDefault = ((key === 'filter' || key === 'eval' || key === 'tag') && value === 'all') || (key === 'view' && value === 'list')
+    const isDefault = (key === 'filter' || key === 'eval' || key === 'tag') && value === 'all'
     if (value == null || value === '' || isDefault) next.delete(key)
     else next.set(key, value)
     if (key === 'id') next.delete('tab')
@@ -110,6 +128,9 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
   }, [items, filter, evalFilter, tagFilter, search])
 
   function open(item: ConvItem) { setParam('id', item.key) }
+  const selectInbox = useCallback((key: string) => {
+    setParams((p) => { const n = new URLSearchParams(p); n.set('sel', key); return n }, { replace: true })
+  }, [setParams])
 
   function handleExport() {
     const rows = filtered.filter((i) => i.call).map((i) => i.call!)
@@ -185,6 +206,7 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <div className="nx-seg" role="group" aria-label="طريقة العرض">
+            {wide && mode === 'all' && <button type="button" aria-pressed={view === 'inbox'} onClick={() => setParam('view', 'inbox', true)}><PanelsLeftRight size={13} /> صندوق</button>}
             <button type="button" aria-pressed={view === 'list'} onClick={() => setParam('view', 'list', true)}><List size={13} /> قائمة</button>
             <button type="button" aria-pressed={view === 'table'} onClick={() => setParam('view', 'table', true)}><Table2 size={13} /> جدول</button>
           </div>
@@ -237,6 +259,13 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
         </label>
       </div>
 
+      {view === 'inbox' ? (
+        <InboxView
+          items={filtered} allItems={items} loading={loading} tickets={tickets || []} showTickets={showTickets}
+          selectedKey={selKey} onSelect={selectInbox} onOpenFull={(k) => setParam('id', k)}
+          onTicket={(path) => navigate(`${base}/tickets${path}`)}
+        />
+      ) : (
       <div className="nx-card">
         {loading && items.length === 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -268,6 +297,7 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
           </>
         )}
       </div>
+      )}
     </div>
   )
 }
