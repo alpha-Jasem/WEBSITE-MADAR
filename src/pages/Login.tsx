@@ -102,7 +102,7 @@ export const Login = () => {
       <div className="al-aurora" aria-hidden="true" />
       <div className="al-grid" aria-hidden="true" />
 
-      <motion.div className="al-float" animate={reduce ? undefined : { y: [0, -7, 0] }} transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }} style={{ position: 'relative', zIndex: 1, width: 'min(100%,420px)' }}>
+      <motion.div className="al-float" style={{ position: 'relative', zIndex: 1, width: 'min(100%,420px)' }}>
       <motion.section className="al-card"
         initial={reduce ? false : { opacity: 0, y: 22, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
