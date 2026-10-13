@@ -11,10 +11,18 @@ const css = `
 .al-orb{position:absolute;border-radius:50%;filter:blur(70px);pointer-events:none;opacity:.55}
 .al-orb.a{width:380px;height:380px;background:rgba(48,120,255,.35);top:-120px;right:-80px}
 .al-orb.b{width:320px;height:320px;background:rgba(110,80,255,.30);bottom:-110px;left:-60px}
-.al-grid{position:absolute;inset:0;pointer-events:none;opacity:.5;
+.al-aurora{position:absolute;inset:-30%;pointer-events:none;opacity:.55;filter:blur(60px);background:conic-gradient(from 0deg at 50% 50%,rgba(58,120,255,.55),rgba(122,92,255,.5),rgba(40,200,230,.4),rgba(58,120,255,.55));animation:alspin 24s linear infinite}
+@keyframes alspin{to{transform:rotate(360deg)}}
+@keyframes aldrift{to{background-position:44px 44px}}
+@keyframes alfloat{50%{transform:translateY(-6px)}}
+@keyframes alborder{to{--ang:360deg}}
+@keyframes alshine{0%{transform:translateX(120%)}60%,100%{transform:translateX(-120%)}}
+@property --ang{syntax:'<angle>';initial-value:0deg;inherits:false}
+.al-grid{position:absolute;inset:0;pointer-events:none;opacity:.5;animation:aldrift 6s linear infinite;
   background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);
   background-size:44px 44px;mask-image:radial-gradient(ellipse 70% 60% at 50% 45%,#000 30%,transparent 75%);-webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 45%,#000 30%,transparent 75%)}
-.al-card{position:relative;z-index:1;width:min(100%,420px);padding:34px 30px 28px;border-radius:20px;
+.al-card::before{content:'';position:absolute;inset:-1px;border-radius:21px;padding:1px;pointer-events:none;background:conic-gradient(from var(--ang),transparent 0 70%,rgba(122,162,255,.9) 85%,transparent 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:alborder 6s linear infinite}
+.al-card{position:relative;z-index:1;width:100%;padding:34px 30px 28px;border-radius:20px;
   background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.10);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
   box-shadow:0 24px 64px rgba(0,0,0,.6),0 0 80px rgba(40,100,255,.12)}
 .al-brand{display:flex;align-items:center;gap:10px;margin-bottom:26px;direction:ltr;width:max-content}
@@ -35,12 +43,13 @@ const css = `
 .al-eye:hover{color:#fff}.al-eye:focus-visible,.al-submit:focus-visible{outline:2px solid #7aa2ff;outline-offset:2px}
 .al-eye svg{width:17px;height:17px}
 .al-error{padding:10px 13px;border-radius:10px;font-size:12.5px;line-height:1.7;color:#ffb4a8;background:rgba(240,80,60,.14);border:1px solid rgba(240,80,60,.3)}
-.al-submit{height:50px;border:0;border-radius:11px;color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;
+.al-submit{position:relative;overflow:hidden;height:50px;border:0;border-radius:11px;color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;
   background:linear-gradient(135deg,#3a78ff,#6b4dff);box-shadow:0 10px 28px rgba(58,120,255,.38);transition:filter .18s,box-shadow .18s}
 .al-submit:hover:not(:disabled){filter:brightness(1.1);box-shadow:0 12px 34px rgba(58,120,255,.5)}
+.al-submit::after{content:'';position:absolute;inset:0;width:45%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.28),transparent);animation:alshine 4.5s ease-in-out infinite}
 .al-submit:disabled{opacity:.7;cursor:wait}.al-submit svg{width:17px;height:17px}
 .al-foot{margin:20px 0 0;text-align:center;font-size:11.5px;color:rgba(232,238,252,.42)}
-@media (prefers-reduced-motion:reduce){.al *{transition:none!important}}
+@media (prefers-reduced-motion:reduce){.al *,.al *::before,.al *::after{transition:none!important;animation:none!important}}
 `
 
 export const Login = () => {
@@ -87,11 +96,13 @@ export const Login = () => {
     <main className="al" dir="rtl">
       <style>{css}</style>
       <motion.div className="al-orb a" aria-hidden="true"
-        animate={reduce ? undefined : { x: [0, -30, 0], y: [0, 24, 0] }} transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }} />
+        animate={reduce ? undefined : { x: [0, -90, 20, 0], y: [0, 70, -20, 0], scale: [1, 1.2, 0.95, 1] }} transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut' }} />
       <motion.div className="al-orb b" aria-hidden="true"
-        animate={reduce ? undefined : { x: [0, 28, 0], y: [0, -22, 0] }} transition={{ duration: 17, repeat: Infinity, ease: 'easeInOut' }} />
+        animate={reduce ? undefined : { x: [0, 80, -20, 0], y: [0, -60, 20, 0], scale: [1, 0.9, 1.15, 1] }} transition={{ duration: 13, repeat: Infinity, ease: 'easeInOut' }} />
+      <div className="al-aurora" aria-hidden="true" />
       <div className="al-grid" aria-hidden="true" />
 
+      <motion.div className="al-float" animate={reduce ? undefined : { y: [0, -7, 0] }} transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }} style={{ position: 'relative', zIndex: 1, width: 'min(100%,420px)' }}>
       <motion.section className="al-card"
         initial={reduce ? false : { opacity: 0, y: 22, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
@@ -141,6 +152,7 @@ export const Login = () => {
 
         <motion.p className="al-foot" {...item(5)}>للدعم: info@madar.software</motion.p>
       </motion.section>
+      </motion.div>
     </main>
   )
 }
