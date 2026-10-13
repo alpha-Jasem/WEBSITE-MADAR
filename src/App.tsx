@@ -8,7 +8,6 @@ import { ErrorBoundary, reloadForFreshAssets } from './components/shared/ErrorBo
 import { Login } from './pages/Login'
 import { ForgotPassword } from './pages/ForgotPassword'
 import { ResetPassword } from './pages/ResetPassword'
-import { TrialSignup } from './pages/TrialSignup'
 import { AuthCallback } from './pages/AuthCallback'
 import { Privacy } from './pages/Privacy'
 import { Terms } from './pages/Terms'
@@ -141,6 +140,7 @@ function App() {
             <Route path="/admin/login" element={<Login />} />
             <Route path="/clinic-os/mfa-challenge" element={<MfaChallengePage />} />
             <Route path="/signup" element={<ClinicOSSignupPage />} />
+            <Route path="/trial" element={<Navigate to="/signup" replace />} />
             <Route path="/clinic-os/signup" element={<Navigate to="/signup" replace />} />
             <Route path="/clinic-os/demo"     element={<DemoSignupPage />} />
             <Route path="/clinic-os/demo/confirm" element={<DemoConfirmPage />} />
@@ -168,7 +168,6 @@ function App() {
 
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/trial" element={<TrialSignup />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route
               path="/admin/*"

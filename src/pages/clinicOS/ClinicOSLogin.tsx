@@ -69,7 +69,6 @@ export const ClinicOSLogin = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45 }}
         >
-          <button className="clinic-login-back" onClick={() => navigate('/')}><ArrowLeft /> العودة للموقع</button>
           <span className="clinic-login-label">تسجيل الدخول</span>
           <h2>مرحباً بعودتك</h2>
           <p>أدخل بيانات حسابك للوصول إلى لوحة التشغيل.</p>
@@ -77,7 +76,7 @@ export const ClinicOSLogin = () => {
           <form onSubmit={handleLogin}>
             <label>
               <span>البريد الإلكتروني</span>
-              <div className="clinic-login-input"><Mail /><input type="email" value={email} onChange={event => { setEmail(event.target.value); setError('') }} placeholder="email@clinic.sa" autoComplete="email" autoFocus /></div>
+              <div className="clinic-login-input"><Mail /><input type="email" value={email} onChange={event => { setEmail(event.target.value); setError('') }} placeholder="name@company.com" autoComplete="email" autoFocus /></div>
             </label>
             <label>
               <span>كلمة المرور</span>
@@ -89,7 +88,7 @@ export const ClinicOSLogin = () => {
             <button className="clinic-login-submit" type="submit" disabled={loading}>{loading ? 'جاري الدخول...' : <>دخول لوحة التحكم <ArrowLeft /></>}</button>
           </form>
 
-          <div className="clinic-login-signup">ليس لديك حساب؟ <button onClick={() => navigate('/trial')}>أنشئ حساب</button></div>
+          <div className="clinic-login-signup">ليس لديك حساب؟ <button onClick={() => navigate('/signup')}>أنشئ حساب</button></div>
         </motion.div>
       </section>
     </main>
