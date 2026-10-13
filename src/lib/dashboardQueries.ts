@@ -149,7 +149,8 @@ export function useCustomers(companyId: string | null, isDemo = false) {
       .eq('company_id', companyId)
       .order('name')
     if (error) throw error
-    return (data ?? []).map((row: any) => ({ ...row, total_visits: row.total_appointments || 0 })) as Customer[]
+    // The table stores new | regular | vip | blocked; the dashboard shows new | returning.
+    return (data ?? []).map((row: any) => ({ ...row, patient_type: row.patient_type === 'new' ? 'new' : 'returning', total_visits: row.total_appointments || 0 })) as Customer[]
   }, [companyId, isDemo])
 }
 
@@ -157,6 +158,7 @@ export async function updateCustomer(id: string, data: Partial<Customer>) {
   const { company_id: clinicId, total_visits, ...rest } = data
   const payload: Record<string, unknown> = { ...rest }
   if (total_visits != null) payload.total_appointments = total_visits
+  if (payload.patient_type === 'returning') payload.patient_type = 'regular'
   const { error } = await supabase
     .from(TABLES.customers)
     .update(payload)
