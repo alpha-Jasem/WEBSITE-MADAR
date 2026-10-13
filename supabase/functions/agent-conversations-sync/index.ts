@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
       const list = await get(`/conversations?agent_id=${encodeURIComponent(agent_id)}&page_size=50${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`, apiKey)
       for (const c of list?.conversations ?? []) {
         checked += 1
-        if (c.conversation_id && !have.has(c.conversation_id) && (!c.status || c.status === 'done')) missing.push(c.conversation_id)
+        if (c.conversation_id && !have.has(c.conversation_id) && (!c.status || c.status === 'done' || c.status === 'failed')) missing.push(c.conversation_id)
       }
       if (!list?.has_more || !list?.next_cursor) break
       cursor = list.next_cursor
@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
   let synced = 0
   for (const id of missing.slice(0, MAX_NEW)) {
     const detail = await get(`/conversations/${encodeURIComponent(id)}`, apiKey)
-    if (!detail || (detail.status && detail.status !== 'done')) continue
+    if (!detail || (detail.status && detail.status !== 'done' && detail.status !== 'failed')) continue
     const body = JSON.stringify({ type: 'post_call_transcription', data: detail })
     const res = await fetch(`${url}/functions/v1/agent-call-webhook?provider=elevenlabs`, {
       method: 'POST',
