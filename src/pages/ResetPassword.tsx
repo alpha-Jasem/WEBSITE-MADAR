@@ -48,7 +48,12 @@ export const ResetPassword = () => {
     const { error: updateError } = await supabase.auth.updateUser({ password })
     setLoading(false)
     if (updateError) {
-      setError('تعذر تحديث كلمة المرور. اطلب رابط استعادة جديد وحاول مرة أخرى.')
+      const code = (updateError as { code?: string }).code || ''
+      const msg = updateError.message.toLowerCase()
+      if (code === 'same_password' || msg.includes('different from the old')) setError('كلمة المرور الجديدة هي نفسها الحالية. اكتب كلمة مختلفة.')
+      else if (code === 'weak_password' || msg.includes('weak') || msg.includes('pwned') || msg.includes('at least')) setError('كلمة المرور ضعيفة أو شائعة. اختر كلمة أطول وأصعب.')
+      else if (code === 'session_not_found' || msg.includes('session') || msg.includes('jwt')) setError('انتهت صلاحية الرابط. اطلب رابطًا جديدًا من صفحة «نسيت كلمة المرور».')
+      else setError('تعذّر تحديث كلمة المرور: ' + updateError.message)
       return
     }
     setDone(true)
