@@ -12,7 +12,7 @@ import { exportRowsToExcel } from '@/lib/exportExcel'
 import { useToast, ContactActions } from '@/dashboard/components/uiExtras'
 import type { AICallLog, SupportTicket } from '@/types/dashboard'
 import {
-  buildConversations, itemChip, fmtFull, fmtDay, callLengthLabel, transcriptHasTimes, copyText, CHANNEL_LABEL, MSG_TYPE_LABEL, MSG_STATUS_LABEL,
+  buildConversations, itemChip, fmtFull, fmtDay, callLengthLabel, msgClock, copyText, CHANNEL_LABEL, MSG_TYPE_LABEL, MSG_STATUS_LABEL,
   type ConvChannel, type ConvItem,
 } from './model'
 import { Chip, ChannelIcon, ConvRow, Sk, TagChips } from './ui'
@@ -375,7 +375,7 @@ function ConversationDetail({ item, isDemo, showTickets, tickets, onTicket, tab,
             <div key={i} className={`nx-msg ${m.speaker === 'agent' ? 'a' : 'c'}`}>
               <span className="nx-msg-who">{m.speaker === 'agent' ? 'الوكيل الذكي' : item.name}</span>
               {m.text}
-              {m.time && transcriptHasTimes(call.transcript, item.channel) && <small className="nx-num">{m.time}</small>}
+              <small className="nx-num">{msgClock(item.time, m.time)}</small>
             </div>
           ))}
         </div>

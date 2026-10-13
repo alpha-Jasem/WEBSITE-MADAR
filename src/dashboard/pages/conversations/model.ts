@@ -185,3 +185,20 @@ export function transcriptHasTimes(lines: { time?: string }[] | undefined, chann
   if (channel === 'whatsapp') return false
   return !!lines && lines.some((l) => l.time && l.time !== '00:00')
 }
+
+/** Wall-clock time of one message: the conversation start plus the platform's offset ("mm:ss"), in Saudi time, like WhatsApp. */
+export function msgClock(startIso: string, offset?: string): string {
+  const base = new Date(startIso).getTime()
+  if (Number.isNaN(base)) return ''
+  const parts = (offset || '00:00').split(':').map((n) => Number(n) || 0)
+  const secs = parts.length === 3 ? parts[0] * 3600 + parts[1] * 60 + parts[2] : (parts[0] || 0) * 60 + (parts[1] || 0)
+  return new Date(base + secs * 1000).toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit', timeZone: SAUDI_TZ })
+}
+
+/** Same offset as an ISO instant, so messages can be grouped by day. */
+export function msgInstant(startIso: string, offset?: string): string {
+  const base = new Date(startIso).getTime()
+  const parts = (offset || '00:00').split(':').map((n) => Number(n) || 0)
+  const secs = parts.length === 3 ? parts[0] * 3600 + parts[1] * 60 + parts[2] : (parts[0] || 0) * 60 + (parts[1] || 0)
+  return new Date((Number.isNaN(base) ? Date.now() : base) + secs * 1000).toISOString()
+}

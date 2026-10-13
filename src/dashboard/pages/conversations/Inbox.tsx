@@ -3,6 +3,7 @@ import {
   Inbox as InboxIcon, RefreshCw, Phone, Copy, ExternalLink, CheckCircle2, Lock, Unlock, Ticket, Send, StickyNote, Bot, UserRound, Tag, Sparkles, X, Plus,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
+import { saudiDayKey } from '@/lib/saudiTime'
 import { useCustomers } from '@/lib/dashboardQueries'
 import { useCurrentUserId, useTeam } from '@/lib/queries/ops'
 import { fetchLiveConversations, liveToCall, markCallReviewed, syncPlatformConversations, type LiveConversation } from '@/lib/queries/conversations'
@@ -14,14 +15,15 @@ import { collectedData, contactKey, normalizePhone, sentimentKind, SENTIMENT_LAB
 import { sendWhatsAppMessage } from '@/lib/whatsapp'
 import { useToast } from '@/dashboard/components/uiExtras'
 import type { SupportTicket } from '@/types/dashboard'
-import { buildConversations, callLengthLabel, transcriptHasTimes, CHANNEL_LABEL, copyText, fmtDay, fmtFull, fmtWhen, itemChip, type ConvItem } from './model'
+import { buildConversations, callLengthLabel, msgClock, msgInstant, CHANNEL_LABEL, copyText, fmtDay, fmtFull, fmtWhen, itemChip, type ConvItem } from './model'
 import { ChannelIcon, Chip, Sk, TagChips } from './ui'
 import { RecordingPlayer } from './RecordingPlayer'
 import { MSG_TYPE_LABEL } from './model'
 import './inbox.css'
 
 type Line =
-  | { k: 'msg'; who: 'a' | 'c'; name: string; text: string; time?: string }
+  | { k: 'msg'; who: 'a' | 'c'; name: string; text: string; time?: string; at?: string }
+  | { k: 'day'; text: string }
   | { k: 'sys'; text: string; at?: string }
   | { k: 'event'; e: ConvEvent }
 
@@ -195,7 +197,7 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
     if (item.group) {
       item.group.forEach((g, gi) => {
         out.push({ k: 'sys', text: gi === 0 ? `بدأت المحادثة عبر واتساب · ${fmtFull(g.time)}` : `محادثة جديدة · ${fmtFull(g.time)}` })
-        for (const m of g.call?.transcript || []) out.push({ k: 'msg', who: m.speaker === 'agent' ? 'a' : 'c', name: m.speaker === 'agent' ? 'الوكيل الذكي' : item.name, text: m.text, time: transcriptHasTimes(g.call?.transcript, g.channel) ? m.time : undefined })
+        for (const m of g.call?.transcript || []) out.push({ k: 'msg', who: m.speaker === 'agent' ? 'a' : 'c', name: m.speaker === 'agent' ? 'الوكيل الذكي' : item.name, text: m.text, time: msgClock(g.time, m.time), at: msgInstant(g.time, m.time) })
         if (gi < item.group!.length - 1) out.push({ k: 'sys', text: `انتهت · ${itemChip(g)[0]}` })
       })
     } else {
@@ -203,7 +205,7 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
     }
     if (item.group) { /* transcripts added above */ }
     else if (call?.transcript?.length) {
-      for (const m of call.transcript) out.push({ k: 'msg', who: m.speaker === 'agent' ? 'a' : 'c', name: m.speaker === 'agent' ? 'الوكيل الذكي' : item.name, text: m.text, time: transcriptHasTimes(call.transcript, item.channel) ? m.time : undefined })
+      for (const m of call.transcript) out.push({ k: 'msg', who: m.speaker === 'agent' ? 'a' : 'c', name: m.speaker === 'agent' ? 'الوكيل الذكي' : item.name, text: m.text, time: msgClock(item.time, m.time), at: msgInstant(item.time, m.time) })
     } else if (item.messages?.length) {
       for (const m of item.messages) out.push({ k: 'msg', who: 'a', name: MSG_TYPE_LABEL[m.message_type] || 'رسالة', text: m.body, time: fmtWhen(m.sent_at || m.created_at) })
     }
@@ -213,7 +215,17 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
     else out.push({ k: 'sys', text: `انتهت المحادثة · ${chipLabel}` })
     if (ticket) out.push({ k: 'sys', text: `فُتحت تذكرة: ${ticket.subject}` })
     for (const e of events) out.push({ k: 'event', e })
-    return out
+    // WhatsApp-style day labels between messages sent on different days.
+    const withDays: Line[] = []
+    let lastDay = ''
+    for (const l of out) {
+      if (l.k === 'msg' && l.at) {
+        const d = saudiDayKey(l.at)
+        if (d !== lastDay) { withDays.push({ k: 'day', text: fmtDay(l.at) }); lastDay = d }
+      }
+      withDays.push(l)
+    }
+    return withDays
   }, [item, call, ticket, chipLabel, events])
   const isLive = !!item.live
 
@@ -281,6 +293,7 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
 
 function ThreadLine({ line, prev, itemTime }: { line: Line; prev?: Line; itemTime: string }) {
   if (line.k === 'sys') return <div className="ib-sys">{line.text}</div>
+  if (line.k === 'day') return <div className="ib-day">{line.text}</div>
   if (line.k === 'msg') {
     return (
       <div className={`ib-msg ${line.who}`}>
