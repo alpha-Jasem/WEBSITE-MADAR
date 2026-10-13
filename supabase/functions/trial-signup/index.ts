@@ -28,29 +28,35 @@ Deno.serve(async (req) => {
       )
       if (userErr || !user) return json({ error: 'unauthorized' }, 401)
 
-      const { company_name, owner_name, city, phone, email, business_type } = body
+      const { company_name, owner_name, city, phone } = body
       const btype = 'clinic'
 
-      if (!company_name?.trim() || !owner_name?.trim() || !email?.trim()) {
+      if (!company_name?.trim() || !owner_name?.trim() || !user.email) {
         return json({ error: 'missing_required_fields' }, 400)
       }
 
-      // rate limit: one company per auth user
+      const ownerEmail = (user.email || '').toLowerCase()
+      const ok = (companyId: string) => json({ success: true, company_id: companyId, redirect_to: '/clinic-os/dashboard' })
+
+      // already has a company: finishing twice (retry, double tap) must not fail
       const { data: existingByUser } = await supabaseAdmin
-        .from('companies')
-        .select('id')
-        .eq('auth_user_id', user.id)
-        .maybeSingle()
-      if (existingByUser) return json({ error: 'email_already_registered' }, 409)
+        .from('companies').select('id').eq('auth_user_id', user.id).maybeSingle()
+      if (existingByUser) return ok(existingByUser.id)
 
-      // check duplicate email
+      // a company with this email whose login no longer exists is adopted by the new login
       const { data: existing } = await supabaseAdmin
-        .from('companies')
-        .select('id')
-        .eq('owner_email', email.trim().toLowerCase())
-        .maybeSingle()
-
-      if (existing) return json({ error: 'email_already_registered' }, 409)
+        .from('companies').select('id, auth_user_id').eq('owner_email', ownerEmail).maybeSingle()
+      if (existing) {
+        let ownerAlive = false
+        if (existing.auth_user_id) {
+          const { data: owner } = await supabaseAdmin.auth.admin.getUserById(existing.auth_user_id)
+          ownerAlive = Boolean(owner?.user)
+        }
+        if (ownerAlive) return json({ error: 'email_already_registered' }, 409)
+        await supabaseAdmin.from('companies').update({ auth_user_id: user.id }).eq('id', existing.id)
+        await supabaseAdmin.from('users').upsert({ id: user.id, email: ownerEmail, full_name: owner_name.trim(), role: 'client' })
+        return ok(existing.id)
+      }
 
       const now = new Date()
       const planResetAt = new Date(now)
@@ -67,7 +73,7 @@ Deno.serve(async (req) => {
         .insert({
           name: company_name.trim(),
           owner_name: owner_name.trim(),
-          owner_email: email.trim().toLowerCase(),
+          owner_email: ownerEmail,
           owner_phone: phone?.trim() || '',
           city: city?.trim() || '',
           industry: btype,
@@ -98,7 +104,7 @@ Deno.serve(async (req) => {
       // create user profile
       await supabaseAdmin.from('users').upsert({
         id: user.id,
-        email: email.trim().toLowerCase(),
+        email: ownerEmail,
         full_name: owner_name.trim(),
         role: 'client',
       })
