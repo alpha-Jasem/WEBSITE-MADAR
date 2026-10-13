@@ -183,6 +183,7 @@ export function callLengthLabel(c: { channel?: string | null; duration_seconds?:
 }
 
 /** The platform stamps every chat message 00:00; show per-message times only when they differ. */
-export function transcriptHasTimes(lines: { time?: string }[] | undefined): boolean {
+export function transcriptHasTimes(lines: { time?: string }[] | undefined, channel?: string | null): boolean {
+  if (channel === 'whatsapp') return false
   return !!lines && lines.some((l) => l.time && l.time !== '00:00')
 }

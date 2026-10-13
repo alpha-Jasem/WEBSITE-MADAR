@@ -195,7 +195,7 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
     if (item.group) {
       item.group.forEach((g, gi) => {
         out.push({ k: 'sys', text: gi === 0 ? `بدأت المحادثة عبر واتساب · ${fmtFull(g.time)}` : `محادثة جديدة · ${fmtFull(g.time)}` })
-        for (const m of g.call?.transcript || []) out.push({ k: 'msg', who: m.speaker === 'agent' ? 'a' : 'c', name: m.speaker === 'agent' ? 'الوكيل الذكي' : item.name, text: m.text, time: transcriptHasTimes(g.call?.transcript) ? m.time : undefined })
+        for (const m of g.call?.transcript || []) out.push({ k: 'msg', who: m.speaker === 'agent' ? 'a' : 'c', name: m.speaker === 'agent' ? 'الوكيل الذكي' : item.name, text: m.text, time: transcriptHasTimes(g.call?.transcript, g.channel) ? m.time : undefined })
         if (gi < item.group!.length - 1) out.push({ k: 'sys', text: `انتهت · ${itemChip(g)[0]}` })
       })
     } else {
@@ -203,7 +203,7 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
     }
     if (item.group) { /* transcripts added above */ }
     else if (call?.transcript?.length) {
-      for (const m of call.transcript) out.push({ k: 'msg', who: m.speaker === 'agent' ? 'a' : 'c', name: m.speaker === 'agent' ? 'الوكيل الذكي' : item.name, text: m.text, time: transcriptHasTimes(call.transcript) ? m.time : undefined })
+      for (const m of call.transcript) out.push({ k: 'msg', who: m.speaker === 'agent' ? 'a' : 'c', name: m.speaker === 'agent' ? 'الوكيل الذكي' : item.name, text: m.text, time: transcriptHasTimes(call.transcript, item.channel) ? m.time : undefined })
     } else if (item.messages?.length) {
       for (const m of item.messages) out.push({ k: 'msg', who: 'a', name: MSG_TYPE_LABEL[m.message_type] || 'رسالة', text: m.body, time: fmtWhen(m.sent_at || m.created_at) })
     }

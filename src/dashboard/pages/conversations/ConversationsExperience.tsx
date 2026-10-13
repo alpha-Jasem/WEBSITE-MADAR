@@ -375,7 +375,7 @@ function ConversationDetail({ item, isDemo, showTickets, tickets, onTicket, tab,
             <div key={i} className={`nx-msg ${m.speaker === 'agent' ? 'a' : 'c'}`}>
               <span className="nx-msg-who">{m.speaker === 'agent' ? 'الوكيل الذكي' : item.name}</span>
               {m.text}
-              {m.time && transcriptHasTimes(call.transcript) && <small className="nx-num">{m.time}</small>}
+              {m.time && transcriptHasTimes(call.transcript, item.channel) && <small className="nx-num">{m.time}</small>}
             </div>
           ))}
         </div>
