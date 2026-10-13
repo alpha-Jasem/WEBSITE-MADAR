@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { ArrowLeft, Eye, EyeOff, Loader2, Lock, Mail, ShieldCheck } from 'lucide-react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { signInWithPassword, getCurrentUser, signOut } from '../lib/supabase'
 
 const css = `
@@ -48,6 +48,7 @@ const css = `
 .al-submit:hover:not(:disabled){filter:brightness(1.1);box-shadow:0 12px 34px rgba(58,120,255,.5)}
 .al-submit::after{content:'';position:absolute;inset:0;width:45%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.28),transparent);animation:alshine 4.5s ease-in-out infinite}
 .al-submit:disabled{opacity:.7;cursor:wait}.al-submit svg{width:17px;height:17px}
+.al-forgot{justify-self:start;font-size:12px;color:#9bbcff;text-decoration:none;margin-top:-6px}.al-forgot:hover{text-decoration:underline}.al-forgot:focus-visible{outline:2px solid #7aa2ff;outline-offset:3px;border-radius:4px}
 .al-foot{margin:20px 0 0;text-align:center;font-size:11.5px;color:rgba(232,238,252,.42)}
 @media (prefers-reduced-motion:reduce){.al *,.al *::before,.al *::after{transition:none!important;animation:none!important}}
 `
@@ -134,6 +135,8 @@ export const Login = () => {
               </button>
             </div>
           </label>
+
+          <Link to="/forgot-password" className="al-forgot">نسيت كلمة المرور؟</Link>
 
           {error && (
             <motion.div key={shake} className="al-error" role="alert"

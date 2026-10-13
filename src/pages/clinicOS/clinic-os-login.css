@@ -5,3 +5,5 @@
 @media(max-width:880px){.clinic-login{grid-template-columns:1fr}.clinic-login-brand{min-height:250px;padding:28px 24px}.clinic-login-message{margin:35px 0 10px}.clinic-login-message h1{font-size:34px}.clinic-login-message p{font-size:13px}.clinic-login-benefits{display:none}.clinic-login-panel{padding:24px 16px 34px}.clinic-login-card{padding:28px 22px}.clinic-login-back{margin-bottom:26px}}
 @media(max-width:480px){.clinic-login-brand{min-height:220px}.clinic-login-logo img{width:40px;height:40px}.clinic-login-message h1{font-size:29px}.clinic-login-message p{line-height:1.7}.clinic-login-card h2{font-size:26px}}
 @media(prefers-reduced-motion:reduce){.clinic-login *{animation:none!important;transition:none!important}}
+
+.clinic-login-ok{display:flex;gap:12px;padding:14px;border:1px solid #bfe6cf;border-radius:8px;background:#f0faf4;color:#1f6b45;line-height:1.7}.clinic-login-ok svg{width:22px;flex:none;margin-top:2px}.clinic-login-ok strong{display:block;font-size:13px}.clinic-login-ok span{font-size:12px}.clinic-login-note{padding:12px;border:1px solid #d7e0ec;border-radius:7px;background:#f5f8fc;color:#5b6b82;font-size:12px}
