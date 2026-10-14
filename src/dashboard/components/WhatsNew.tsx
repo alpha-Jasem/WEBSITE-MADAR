@@ -124,7 +124,9 @@ export function WhatsNew({ base }: { base: string }) {
     }
     if (accountLoading || !companyId) return
     autoTried.current = true
-    if (forced || readSeen() !== RELEASES[0].id) {
+    // On a phone the popup would cover the page on every first visit; it stays one tap away in the menu.
+    const phone = typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches
+    if (forced || (!phone && readSeen() !== RELEASES[0].id)) {
       const t = window.setTimeout(show, 700)
       return () => window.clearTimeout(t)
     }

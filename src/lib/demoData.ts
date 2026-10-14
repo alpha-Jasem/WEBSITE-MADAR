@@ -2,7 +2,7 @@ import type {
   Workspace, Customer, StaffMember, Service, Booking,
   MessageLog, AICallLog, Waitlist, DashboardStats,
   Branch, GoogleReview, SupportTicket,
-  ReminderRule, Integration, CompanyStaff, AppNotification, AuditLogEntry,
+  ReminderRule, Integration, CompanyStaff, AppNotification, AuditLogEntry, SallaOrder, SallaCart,
 } from '../types/dashboard'
 import { DEMO_AGENT_CALLS, DEMO_CALL_ANALYSIS } from './demoAgentCalls'
 
@@ -378,3 +378,54 @@ export function getAvailableSlots(date: string, doctorId: string, durationMinute
   }
   return slots.slice(0, 12)
 }
+
+// ─── Orders and abandoned carts (the sample company's Salla account) ──────────
+
+const hoursAgo = (h: number) => new Date(Date.now() - h * 3600_000).toISOString()
+
+function demoOrder(
+  n: number, ref: string, name: string, mobile: string, total: number,
+  status: [string, string], pay: string, ageHours: number, tracking: string | null = null,
+): SallaOrder {
+  return {
+    merchant_id: 0, order_id: 9000 + n, company_id: 'demo-company-001', reference_id: ref,
+    status_name: status[0], status_slug: status[1], total, currency: 'SAR', payment_method: pay,
+    customer_name: name, customer_mobile: mobile, customer_email: null, customer_url: null,
+    tracking_number: tracking, tracking_link: null, order_created_at: hoursAgo(ageHours),
+    deleted: false, updated_at: hoursAgo(ageHours),
+  }
+}
+
+export const DEMO_SALLA_ORDERS: SallaOrder[] = [
+  demoOrder(1, '100482', 'نورة العتيبي', '+966 55 ••• 4821', 389, ['بانتظار المراجعة', 'under_review'], 'mada', 1.5),
+  demoOrder(2, '100481', 'خالد الدوسري', '+966 50 ••• 1937', 1240, ['قيد التنفيذ', 'in_progress'], 'visa', 4),
+  demoOrder(3, '100480', 'ريم القحطاني', '+966 54 ••• 6620', 215, ['تم الشحن', 'delivering'], 'apple_pay', 9, 'SA48201937'),
+  demoOrder(4, '100479', 'فهد الشمري', '+966 56 ••• 3085', 760, ['تم التوصيل', 'delivered'], 'cod', 20, 'SA48201455'),
+  demoOrder(5, '100478', 'هيفاء المطيري', '+966 53 ••• 7714', 94, ['تم التوصيل', 'delivered'], 'mada', 27, 'SA48200982'),
+  demoOrder(6, '100477', 'سلطان الغامدي', '+966 59 ••• 2290', 1865, ['تم الشحن', 'delivering'], 'visa', 33, 'SA48200417'),
+  demoOrder(7, '100476', 'منيرة الزهراني', '+966 55 ••• 9156', 430, ['ملغي', 'canceled'], 'mada', 41),
+  demoOrder(8, '100475', 'عبدالله الحربي', '+966 50 ••• 5403', 298, ['تم التوصيل', 'delivered'], 'apple_pay', 52, 'SA48199876'),
+  demoOrder(9, '100474', 'لمى السبيعي', '+966 54 ••• 8841', 670, ['تم التوصيل', 'delivered'], 'stc_pay', 70, 'SA48199120'),
+  demoOrder(10, '100473', 'ماجد البلوي', '+966 56 ••• 1178', 152, ['مسترجع', 'restored'], 'cod', 96),
+]
+
+function demoCart(n: number, name: string, mobile: string, total: number, items: number, ageHours: number, purchased = false): SallaCart {
+  return {
+    merchant_id: 0, cart_id: 7000 + n, company_id: 'demo-company-001', status: purchased ? 'purchased' : 'active',
+    total, currency: 'SAR', checkout_url: `https://sample-company.example/checkout/${7000 + n}`,
+    customer_name: name, customer_mobile: mobile, customer_email: null, items_count: items,
+    cart_created_at: hoursAgo(ageHours), purchased_at: purchased ? hoursAgo(Math.max(ageHours - 2, 0.5)) : null,
+    updated_at: hoursAgo(ageHours),
+  }
+}
+
+export const DEMO_SALLA_CARTS: SallaCart[] = [
+  demoCart(1, 'جواهر الراشد', '+966 55 ••• 3347', 520, 3, 0.8),
+  demoCart(2, 'بدر العنزي', '+966 50 ••• 6012', 185, 1, 2.5),
+  demoCart(3, 'أمل الشهري', '+966 54 ••• 2759', 940, 4, 6),
+  demoCart(4, 'يوسف التميمي', '+966 56 ••• 4486', 312, 2, 11, true),
+  demoCart(5, 'دلال السليم', '+966 53 ••• 9921', 77, 1, 18),
+  demoCart(6, 'تركي القرني', '+966 59 ••• 1530', 1430, 5, 26, true),
+  demoCart(7, 'رغد الجهني', '+966 55 ••• 8264', 268, 2, 31),
+  demoCart(8, 'سعد المالكي', '+966 50 ••• 7703', 410, 3, 47, true),
+]

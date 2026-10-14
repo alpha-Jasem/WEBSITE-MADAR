@@ -12,7 +12,7 @@ import { exportRowsToExcel } from '@/lib/exportExcel'
 import { useToast, ContactActions } from '@/dashboard/components/uiExtras'
 import type { AICallLog, SupportTicket } from '@/types/dashboard'
 import {
-  buildConversations, itemChip, fmtFull, fmtDay, callLengthLabel, msgClock, copyText, CHANNEL_LABEL, MSG_TYPE_LABEL, MSG_STATUS_LABEL,
+  buildConversations, itemChip, fmtFull, fmtDay, callLengthLabel, msgClock, arReason, copyText, CHANNEL_LABEL, MSG_TYPE_LABEL, MSG_STATUS_LABEL,
   type ConvChannel, type ConvItem,
 } from './model'
 import { Chip, ChannelIcon, ConvRow, Sk, TagChips } from './ui'
@@ -141,7 +141,7 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
         العميل: c.patient_name || '', الهاتف: c.phone, القناة: CHANNEL_LABEL[c.channel || 'phone'],
         الوقت: new Date(c.call_time).toLocaleString('ar-SA', { timeZone: 'Asia/Riyadh' }), 'المدة (ث)': c.duration_seconds,
         النية: aiCallIntentLabel(c.intent), النتيجة: aiCallResultLabel(c.result),
-        'تحتاج مراجعة': c.needs_review ? 'نعم' : 'لا', 'سبب المراجعة': c.review_reason || '', الملخص: c.summary || '',
+        'تحتاج مراجعة': c.needs_review ? 'نعم' : 'لا', 'سبب المراجعة': arReason(c.review_reason), الملخص: c.summary || '',
       })),
     }])
     pushToast({ kind: 'success', title: 'تم تصدير السجل' })
@@ -355,7 +355,7 @@ function ConversationDetail({ item, isDemo, showTickets, tickets, onTicket, tab,
     ['الخدمة المطلوبة', call.service_requested || ''],
     ['المختص المطلوب', call.doctor_requested || ''],
     ['الموعد المفضّل', [call.preferred_date, call.preferred_time].filter(Boolean).join(' · ')],
-    ['سبب المراجعة', call.needs_review || call.status !== 'completed' ? call.review_reason || '' : ''],
+    ['سبب المراجعة', call.needs_review || call.status !== 'completed' ? arReason(call.review_reason) : ''],
     ['المزوّد', call.provider ? PROVIDER_LABEL[call.provider] || call.provider : ''],
   ] as [string, string][]).filter(([, v]) => v) : ([
     ['القناة', 'واتساب'],

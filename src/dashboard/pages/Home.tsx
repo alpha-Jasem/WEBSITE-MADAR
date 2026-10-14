@@ -1,3 +1,4 @@
+import { arReason } from './conversations/model'
 import { SAUDI_TZ, saudiHour, saudiStartOfDay } from '@/lib/saudiTime'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -112,12 +113,12 @@ export function DashboardV2Home() {
     agentCalls.filter((c) => c.needs_review || c.status === 'needs_review').sort(byNewest).forEach((c) => {
       entries.push({
         key: `h:${c.id}`, kind: 'human', call: c, linkedTicket: ticketByCall.get(c.id),
-        title: `${callDisplayName(c)}: ${c.review_reason || 'تحتاج مراجعة من موظف'}`, sub: sub(c),
+        title: `${callDisplayName(c)}: ${arReason(c.review_reason) || 'تحتاج مراجعة من فريقك'}`, sub: sub(c),
       })
     })
     // Failed calls from the last two weeks: someone tried to reach you and the agent couldn't finish.
     agentCalls.filter((c) => c.status === 'failed' && !c.needs_review && ts(c.call_time) >= now - 14 * DAY).sort(byNewest).forEach((c) => {
-      entries.push({ key: `l:${c.id}`, kind: 'lost', call: c, title: `${callDisplayName(c)}: ${c.review_reason || 'مكالمة ما اكتملت'}`, sub: sub(c) })
+      entries.push({ key: `l:${c.id}`, kind: 'lost', call: c, title: `${callDisplayName(c)}: ${arReason(c.review_reason) || 'مكالمة ما اكتملت'}`, sub: sub(c) })
     })
     const linked = new Set(entries.map((e) => e.linkedTicket?.id).filter(Boolean))
     // There is no assignee on tickets yet, so "unowned" means still open (not picked up).
@@ -268,7 +269,7 @@ export function DashboardV2Home() {
     : lastActive ? `شغّال · آخر نشاط ${fmtWhen(new Date(lastActivity).toISOString())}` : `آخر نشاط ${fmtWhen(new Date(lastActivity).toISOString())}`
   const agentStats = [
     { value: fmtN(callN), label: `مكالمة ${periodWord}` },
-    { value: fmtN(p.chats), label: 'محادثة ورسالة واتساب' },
+    { value: fmtN(p.chats), label: 'محادثات اليوم' },
     showBookings
       ? { value: fmtN(p.bookings.filter((b) => b.source === 'ai_booking').length), label: `${bookWord === 'المواعيد' ? 'موعد' : 'حجز'} سجّله` }
       : { value: callN ? `${Math.round((p.resolved / callN) * 100)}%` : '—', label: 'انحلت بدون موظف' },

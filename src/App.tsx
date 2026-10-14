@@ -56,6 +56,7 @@ const DashboardV2Customers      = lazy(() => import('./dashboard/pages/Customers
 const DashboardV2Conversations = lazy(() => import('./dashboard/pages/Conversations').then(m => ({ default: m.DashboardV2Conversations })))
 const DashboardV2Reviews       = lazy(() => import('./dashboard/pages/Reviews').then(m => ({ default: m.DashboardV2Reviews })))
 const DashboardV2Revenue       = lazy(() => import('./dashboard/pages/Revenue').then(m => ({ default: m.DashboardV2Revenue })))
+const DashboardV2Orders        = lazy(() => import('./dashboard/pages/Orders').then(m => ({ default: m.DashboardV2Orders })))
 const DashboardV2Reports       = lazy(() => import('./dashboard/pages/Reports').then(m => ({ default: m.DashboardV2Reports })))
 const DashboardV2Reminders     = lazy(() => import('./dashboard/pages/Reminders').then(m => ({ default: m.DashboardV2Reminders })))
 const DashboardV2Integrations  = lazy(() => import('./dashboard/pages/Integrations').then(m => ({ default: m.DashboardV2Integrations })))
@@ -96,6 +97,7 @@ const dashboardChildRoutes = (
     <Route path="services" element={<ModuleRoute module="services"><DashboardV2Services /></ModuleRoute>} />
     <Route path="audit-log" element={<DashboardV2AuditLog />} />
     <Route path="tickets" element={<ModuleRoute module="tickets"><DashboardV2Tickets /></ModuleRoute>} />
+    <Route path="orders" element={<ModuleRoute module="orders"><DashboardV2Orders /></ModuleRoute>} />
     <Route path="calls-analytics" element={<ModuleRoute module="voice"><DashboardV2CallsAnalytics /></ModuleRoute>} />
     <Route path="whatsapp-analytics" element={<ModuleRoute module="conversations"><DashboardV2WhatsAppAnalytics /></ModuleRoute>} />
     <Route path="agents" element={<DashboardV2Agents />} />

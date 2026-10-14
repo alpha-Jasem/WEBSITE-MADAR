@@ -5,12 +5,13 @@ import {
   DEMO_MESSAGES, DEMO_AI_CALLS, DEMO_WAITLIST, DEMO_STATS,
   DEMO_BRANCHES, DEMO_GOOGLE_REVIEWS, DEMO_SUPPORT_TICKETS,
   DEMO_REMINDER_RULES, DEMO_INTEGRATIONS, DEMO_STAFF, DEMO_NOTIFICATIONS, DEMO_AUDIT_LOG,
+  DEMO_SALLA_ORDERS, DEMO_SALLA_CARTS,
 } from './demoData'
 import type {
   StaffMember, Service, Customer, Booking, MessageLog, AICallLog, Waitlist, BookingStatus,
   Branch, GoogleReview, SupportTicket, ReviewStatus, TicketPriority, TicketStatus,
   ReminderRule, Integration, IntegrationStatus, CompanyStaff, AppNotification, NotificationSeverity,
-  AuditLogEntry,
+  AuditLogEntry, SallaOrder, SallaCart,
 } from '../types/dashboard'
 
 // Physical table names live here and nowhere else, so the dashboard never names a
@@ -1058,4 +1059,37 @@ export async function logAuditEvent(input: {
     old_value: input.old_value,
   })
   if (error) throw error
+}
+
+// ─── Orders and abandoned carts synced from Salla ─────────────────────────────
+
+export function useSallaOrders(companyId: string | null, isDemo = false) {
+  return useFetchRealtime<SallaOrder[]>(async () => {
+    if (isDemo) return DEMO_SALLA_ORDERS
+    if (!companyId) return []
+    const { data, error } = await supabase
+      .from('salla_orders')
+      .select('merchant_id, order_id, company_id, reference_id, status_name, status_slug, total, currency, payment_method, customer_name, customer_mobile, customer_email, customer_url, tracking_number, tracking_link, order_created_at, deleted, updated_at')
+      .eq('company_id', companyId)
+      .eq('deleted', false)
+      .order('order_created_at', { ascending: false })
+      .limit(500)
+    if (error) throw error
+    return (data ?? []) as SallaOrder[]
+  }, [companyId, isDemo], 'salla_orders', companyId, isDemo)
+}
+
+export function useSallaCarts(companyId: string | null, isDemo = false) {
+  return useFetchRealtime<SallaCart[]>(async () => {
+    if (isDemo) return DEMO_SALLA_CARTS
+    if (!companyId) return []
+    const { data, error } = await supabase
+      .from('salla_abandoned_carts')
+      .select('merchant_id, cart_id, company_id, status, total, currency, checkout_url, customer_name, customer_mobile, customer_email, items_count, cart_created_at, purchased_at, updated_at')
+      .eq('company_id', companyId)
+      .order('cart_created_at', { ascending: false })
+      .limit(500)
+    if (error) throw error
+    return (data ?? []) as SallaCart[]
+  }, [companyId, isDemo], 'salla_abandoned_carts', companyId, isDemo)
 }

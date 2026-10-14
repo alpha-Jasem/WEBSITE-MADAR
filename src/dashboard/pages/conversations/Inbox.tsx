@@ -15,7 +15,7 @@ import { collectedData, contactKey, normalizePhone, sentimentKind, SENTIMENT_LAB
 import { sendWhatsAppMessage } from '@/lib/whatsapp'
 import { useToast } from '@/dashboard/components/uiExtras'
 import type { SupportTicket } from '@/types/dashboard'
-import { buildConversations, callLengthLabel, msgClock, msgInstant, CHANNEL_LABEL, copyText, fmtDay, fmtFull, fmtWhen, itemChip, type ConvItem } from './model'
+import { arReason, buildConversations, callLengthLabel, msgClock, msgInstant, CHANNEL_LABEL, copyText, fmtDay, fmtFull, fmtWhen, itemChip, type ConvItem } from './model'
 import { ChannelIcon, Chip, Sk, TagChips } from './ui'
 import { RecordingPlayer } from './RecordingPlayer'
 import { MSG_TYPE_LABEL } from './model'
@@ -210,7 +210,7 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
       for (const m of item.messages) out.push({ k: 'msg', who: 'a', name: MSG_TYPE_LABEL[m.message_type] || 'رسالة', text: m.body, time: fmtWhen(m.sent_at || m.created_at) })
     }
     if (item.tags.length) out.push({ k: 'sys', text: `صنّف الوكيل المحادثة: ${item.tags.map((t) => t.label).join('، ')}` })
-    if (call?.needs_review || call?.status === 'needs_review') out.push({ k: 'sys', text: `تحتاج مراجعة: ${call.review_reason || 'بدون سبب مذكور'}` })
+    if (call?.needs_review || call?.status === 'needs_review') out.push({ k: 'sys', text: `تحتاج مراجعة: ${arReason(call.review_reason) || 'بدون سبب مذكور'}` })
     else if (item.live) out.push({ k: 'sys', text: call?.transcript?.length ? 'المحادثة جارية الآن، تتحدث تلقائيًا' : 'وصلت رسالة من العميل وبانتظار رد الوكيل' })
     else out.push({ k: 'sys', text: `انتهت المحادثة · ${chipLabel}` })
     if (ticket) out.push({ k: 'sys', text: `فُتحت تذكرة: ${ticket.subject}` })

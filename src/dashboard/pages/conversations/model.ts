@@ -50,6 +50,18 @@ export const MSG_TYPE_LABEL: Record<string, string> = {
   cancellation: 'إلغاء', follow_up: 'متابعة', review_request: 'طلب تقييم', waitlist_offer: 'عرض قائمة انتظار', manual: 'يدوي',
 }
 
+/** Platform failure reasons arrive in English; show them in Arabic. */
+export function arReason(r?: string | null): string {
+  const t = (r || '').trim()
+  if (!t) return ''
+  if (/conversation failed|payment issue/i.test(t)) return 'تعذّر على الوكيل الرد (مشكلة في المنصة)'
+  if (/busy/i.test(t)) return 'الخط مشغول'
+  if (/no[- ]?answer|not answered/i.test(t)) return 'ما رد العميل'
+  if (/voicemail/i.test(t)) return 'وصلت للبريد الصوتي'
+  if (/call failed|failed/i.test(t)) return 'ما اكتملت المكالمة'
+  return t
+}
+
 export function callChannel(c: AICallLog): ConvChannel {
   return c.channel || 'phone'
 }
@@ -90,7 +102,7 @@ export function buildConversations(calls: AICallLog[], messages: MessageLog[], o
     const ch = callChannel(c)
     if (ch === 'phone' && !opts.includePhone) continue
     const name = callDisplayName(c)
-    const summary = c.summary || c.review_reason || aiCallIntentLabel(c.intent) || ''
+    const summary = c.summary || arReason(c.review_reason) || aiCallIntentLabel(c.intent) || ''
     const title = callTitle(c)
     items.push({
       key: `call:${c.id}`, kind: 'call', channel: ch, name, phone: c.phone || '', time: c.call_time,

@@ -17,10 +17,11 @@ export type ModuleId =
   | 'reports'
   | 'revenue'
   | 'knowledge_base'
+  | 'orders'
 
 export const ALL_MODULES: ModuleId[] = [
   'conversations', 'customers', 'bookings', 'reminders', 'services', 'voice',
-  'reviews', 'tickets', 'reports', 'revenue', 'knowledge_base',
+  'reviews', 'tickets', 'reports', 'revenue', 'knowledge_base', 'orders',
 ]
 
 /** Arabic names, shown on the admin toggles. */
@@ -36,6 +37,7 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   reports: 'التقارير',
   revenue: 'الإيرادات',
   knowledge_base: 'قاعدة المعرفة',
+  orders: 'الطلبات والسلات المتروكة',
 }
 
 export const BUSINESS_TYPE_LABELS: Record<BusinessType, string> = {
@@ -50,7 +52,7 @@ const ALWAYS: ModuleId[] = ['conversations', 'customers', 'tickets', 'reports', 
 export const INDUSTRY_PRESETS: Record<BusinessType, ModuleId[]> = {
   clinic: [...ALWAYS, 'bookings', 'reminders', 'services', 'voice', 'reviews'],
   real_estate: [...ALWAYS, 'bookings', 'reminders', 'voice'],
-  ecommerce: [...ALWAYS],
+  ecommerce: [...ALWAYS, 'orders'],
   // Unknown businesses get the booking toolkit without the clinic-only pieces.
   other: [...ALWAYS, 'bookings', 'reminders', 'voice'],
 }

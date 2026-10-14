@@ -389,3 +389,43 @@ export interface DashboardStats {
   calls_handled?: number
   human_review_needed?: number
 }
+
+/** An order synced from the customer's Salla account (one row per order, kept current by Salla webhooks). */
+export interface SallaOrder {
+  merchant_id: number
+  order_id: number
+  company_id: string | null
+  reference_id: string | null
+  status_name: string | null
+  status_slug: string | null
+  total: number | null
+  currency: string | null
+  payment_method: string | null
+  customer_name: string | null
+  customer_mobile: string | null
+  customer_email: string | null
+  customer_url: string | null
+  tracking_number: string | null
+  tracking_link: string | null
+  order_created_at: string | null
+  deleted: boolean
+  updated_at: string
+}
+
+/** A cart a visitor left without paying, synced from Salla. `purchased` means it later became an order. */
+export interface SallaCart {
+  merchant_id: number
+  cart_id: number
+  company_id: string | null
+  status: string
+  total: number | null
+  currency: string | null
+  checkout_url: string | null
+  customer_name: string | null
+  customer_mobile: string | null
+  customer_email: string | null
+  items_count: number | null
+  cart_created_at: string | null
+  purchased_at: string | null
+  updated_at: string
+}

@@ -5,7 +5,7 @@ import { DURATION_MEDIUM, EASE_OUT } from './motionTokens'
 import {
   LayoutDashboard, CalendarDays, Users, MessageSquare, Star, BarChart3,
   Wallet, BellRing, Settings, AlertTriangle, Plus, Ticket,
-  ClipboardList, BookOpen, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Search, Send,
+  ClipboardList, BookOpen, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Search, Send, ShoppingBag,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useSupportTickets } from '@/lib/dashboardQueries'
@@ -136,6 +136,9 @@ const SHELL_CSS = `
     /* floating buttons and toasts clear the tab bar */
     .dv2-floating { bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important; }
     .dv2-desktop-only { display: none !important; }
+    /* the quick-create button covered page content; search (top bar) already creates things */
+    .dv2-fab { display: none !important; }
+    .dv2-chat-launcher button, .dv2-chat-launcher { transform: scale(.85); transform-origin: bottom left; }
     .dv2-mobile-only { display: grid !important; }
     .dv2-header-subtitle { display: none; }
     .dv2-responsive-grid { grid-template-columns: 1fr !important; }
@@ -186,6 +189,14 @@ export function DashboardV2Layout() {
     return () => mq.removeEventListener?.('change', onChange)
   }, [themePref])
   const theme: 'light' | 'dark' = themePref === 'system' ? (systemDark ? 'dark' : 'light') : themePref
+  // Paint the page itself in the dashboard colour so phones never show a white strip under the tab bar.
+  useEffect(() => {
+    const app = document.querySelector('.dv2-app') as HTMLElement | null
+    const color = app ? getComputedStyle(app).backgroundColor : ''
+    const prev = [document.documentElement.style.background, document.body.style.background]
+    if (color) { document.documentElement.style.background = color; document.body.style.background = color }
+    return () => { document.documentElement.style.background = prev[0]; document.body.style.background = prev[1] }
+  }, [theme])
   const [collapsed, setCollapsed] = useState(() => readStored(COLLAPSE_KEY) === '1')
   const [moreOpen, setMoreOpen] = useState(false)
   const colRef = useRef<HTMLDivElement>(null)
@@ -242,6 +253,7 @@ export function DashboardV2Layout() {
       { label: 'المحادثات', path: `${base}/conversations`, icon: <MessageSquare size={16} />, module: 'conversations' },
       { label: bookingsLabel(businessType), path: `${base}/bookings`, icon: <CalendarDays size={16} />, module: 'bookings' },
       { label: 'العملاء', path: `${base}/patients`, icon: <Users size={16} />, module: 'customers' },
+      { label: 'الطلبات', path: `${base}/orders`, icon: <ShoppingBag size={16} />, module: 'orders' },
       { label: 'التذاكر', path: `${base}/tickets`, icon: <Ticket size={16} />, badge: openTicketCount || undefined, module: 'tickets' },
       { label: 'تقييمات Google', path: `${base}/reviews`, icon: <Star size={16} />, module: 'reviews' },
       { label: 'المتابعات', path: `${base}/reminders`, icon: <BellRing size={16} />, module: 'reminders' },
