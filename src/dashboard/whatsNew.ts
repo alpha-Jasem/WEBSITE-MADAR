@@ -22,13 +22,6 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
-    id: '2026-10-orders',
-    date: '2026-10-14',
-    title: 'الطلبات والسلات المتروكة',
-    description: 'اربط حسابك في سلة وتظهر لك طلباتك وسلاتك المتروكة في صفحة وحدة، تتحدث لحظة بلحظة، مع زر اتصال وواتساب لكل عميل.',
-    link: 'orders',
-  },
-  {
     id: '2026-10-agent-analytics',
     date: '2026-10-12',
     title: 'تحليلات الوكيل',
