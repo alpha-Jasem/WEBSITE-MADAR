@@ -61,6 +61,8 @@ function ReleaseMedia({ item }: { item: Release }) {
         key={item.id}
         className="wn-video"
         controls
+        autoPlay
+        muted
         playsInline
         preload="metadata"
         poster={item.poster}
