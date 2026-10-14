@@ -230,7 +230,7 @@ export function useAICalls(companyId: string | null, isDemo = false) {
       .select('*')
       .eq('company_id', companyId)
       .order('call_time', { ascending: false })
-      .limit(100)
+      .limit(300)
     if (error) throw error
     // Ingested calls store the caller's name in caller_name; the pages read patient_name.
     return ((data ?? []) as AICallLog[]).map((c) => ({ ...c, patient_name: c.patient_name ?? c.caller_name ?? undefined }))
