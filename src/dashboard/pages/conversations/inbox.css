@@ -101,3 +101,29 @@
 @keyframes ib-rot { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .ib-spin { animation: none; } }
 .ib-list-head b { display: flex; gap: 8px; align-items: baseline; }
+
+/* Phones and tablets: list first, the chat opens full-screen, the profile is a bottom sheet. */
+.ib-back, .ib-sheet-close { display: none; }
+.ib-narrow { display: block; height: auto; min-height: 60vh; border-radius: 12px; }
+.ib-narrow .ib-list { border-inline-end: 0; }
+.ib-narrow .ib-list-body { max-height: none; overflow: visible; }
+.ib-narrow .ib-row { padding: 14px 14px; }
+.ib-narrow .ib-thread, .ib-narrow .ib-profile-wrap { display: none; }
+.ib-narrow.is-open .ib-list { display: none; }
+.ib-narrow.is-open .ib-thread { display: flex; position: fixed; inset: 0; z-index: 1360; background: var(--panel);
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.ib-narrow .ib-thread-head { padding: 10px 12px; gap: 8px; flex-wrap: nowrap; }
+.ib-narrow .ib-thread-who h2 { font-size: 14.5px; }
+.ib-narrow .ib-thread-acts { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 2px; }
+.ib-narrow .ib-thread-acts > * { flex: none; }
+.ib-narrow.is-open .ib-thread-head { flex-wrap: wrap; }
+.ib-narrow .ib-back { display: grid; place-items: center; width: 40px; height: 40px; flex: none; border: 0; border-radius: 10px; background: none; color: var(--ink); cursor: pointer; }
+.ib-narrow .ib-back:active { background: var(--hover-bg); }
+.ib-narrow .ib-msg, .ib-narrow .ib-note { max-width: 88%; }
+.ib-narrow .ib-input { font-size: 16px; }
+.ib-narrow .ib-composer { padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+.ib-narrow .ib-profile-wrap.is-open { display: block; position: fixed; inset-inline: 0; bottom: 0; z-index: 1380; max-height: 82vh; overflow-y: auto;
+  background: var(--panel); border-top: 1px solid var(--line-2); border-radius: 16px 16px 0 0; box-shadow: 0 -12px 40px rgba(0,0,0,.45);
+  padding-bottom: env(safe-area-inset-bottom, 0px); }
+.ib-narrow .ib-profile { border-inline-start: 0; overflow: visible; }
+.ib-narrow .ib-sheet-close { display: flex; align-items: center; gap: 6px; margin: 10px 16px 0; padding: 8px 12px; border: 1px solid var(--line-2); border-radius: 9px; background: none; color: var(--ink); font: inherit; font-size: 13px; cursor: pointer; }

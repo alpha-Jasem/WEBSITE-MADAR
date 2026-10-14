@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  Inbox as InboxIcon, RefreshCw, Phone, Copy, ExternalLink, CheckCircle2, Lock, Unlock, Ticket, Send, StickyNote, Bot, UserRound, Tag, Sparkles, X, Plus,
+  ChevronRight, Inbox as InboxIcon, RefreshCw, Phone, Copy, ExternalLink, CheckCircle2, Lock, Unlock, Ticket, Send, StickyNote, Bot, UserRound, Tag, Sparkles, X, Plus,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { saudiDayKey } from '@/lib/saudiTime'
@@ -70,6 +70,17 @@ export function Inbox({ items: baseItems, allItems, loading, tickets, showTicket
   const { events } = useConversationEvents(companyId, isDemo)
   const [live, setLive] = useState<LiveConversation[]>([])
   const [syncing, setSyncing] = useState(false)
+  // Phones: the list fills the screen; opening a chat shows it full-screen with a back button, the profile is a sheet.
+  const [narrow, setNarrow] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 1099px)').matches)
+  const [chatOpen, setChatOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
+  useEffect(() => {
+    const m = window.matchMedia('(max-width: 1099px)')
+    const on = () => setNarrow(m.matches)
+    m.addEventListener('change', on)
+    return () => m.removeEventListener('change', on)
+  }, [])
+  const pick = (key: string) => { onSelect(key); if (narrow) setChatOpen(true) }
 
   // Conversations still running on the platform show up here right away, before they are saved.
   useEffect(() => {
@@ -107,22 +118,26 @@ export function Inbox({ items: baseItems, allItems, loading, tickets, showTicket
 
   // Pick the first conversation so the middle pane is never empty.
   useEffect(() => {
-    if (!selectedKey && items.length > 0) onSelect(items[0].key)
-  }, [selectedKey, items, onSelect])
+    if (!narrow && !selectedKey && items.length > 0) onSelect(items[0].key)
+  }, [narrow, selectedKey, items, onSelect])
 
   useEffect(() => { if (isDemo) seedDemoInboxEvents(items.slice(0, 1).map((i) => i.key)) }, [isDemo, items])
 
   const item = items.find((i) => i.key === selectedKey) || allItems.find((i) => i.key === selectedKey) || null
 
   return (
-    <div className="ib">
-      <ListPane items={items} loading={loading} selectedKey={item?.key || null} onSelect={onSelect} events={events}
+    <div className={`ib${narrow ? ' ib-narrow' : ''}${narrow && chatOpen && item ? ' is-open' : ''}`}>
+      <ListPane items={items} loading={loading} selectedKey={item?.key || null} onSelect={pick} events={events}
         onSync={isDemo ? undefined : syncNow} syncing={syncing} />
       {item ? (
         <>
           <ThreadPane key={item.key} item={item} events={events.get(item.key) || []} tickets={tickets} showTickets={showTickets}
-            authorName={userName || 'أنت'} onOpenFull={onOpenFull} onTicket={onTicket} />
-          <ProfilePane item={item} allItems={allItems} tickets={tickets} showTickets={showTickets} onSelect={onSelect} onOpenFull={onOpenFull} onTicket={onTicket} />
+            authorName={userName || 'أنت'} onOpenFull={onOpenFull} onTicket={onTicket}
+            onBack={narrow ? () => { setChatOpen(false); setProfileOpen(false) } : undefined} onProfile={narrow ? () => setProfileOpen(true) : undefined} />
+          <div className={`ib-profile-wrap${profileOpen ? ' is-open' : ''}`}>
+            {narrow && <button type="button" className="ib-sheet-close" onClick={() => setProfileOpen(false)} aria-label="إغلاق ملف العميل"><X size={16} /> إغلاق</button>}
+            <ProfilePane item={item} allItems={allItems} tickets={tickets} showTickets={showTickets} onSelect={(k) => { setProfileOpen(false); pick(k) }} onOpenFull={onOpenFull} onTicket={onTicket} />
+          </div>
         </>
       ) : (
         <div className="ib-empty ib-span2"><InboxIcon size={26} /><b>اختر محادثة</b><span>اضغط على أي محادثة من القائمة لتشوف تفاصيلها وترد عليها.</span></div>
@@ -171,9 +186,9 @@ function ListPane({ items, loading, selectedKey, onSelect, events, onSync, synci
 
 // ─── conversation ─────────────────────────────────────────────────────────────
 
-function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull, onTicket }: {
+function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull, onTicket, onBack, onProfile }: {
   item: ConvItem; events: ConvEvent[]; tickets: SupportTicket[]; showTickets: boolean; authorName: string
-  onOpenFull: (k: string) => void; onTicket: (path: string) => void
+  onOpenFull: (k: string) => void; onTicket: (path: string) => void; onBack?: () => void; onProfile?: () => void
 }) {
   const { companyId, isDemo } = useWorkspace()
   const pushToast = useToast()
@@ -252,6 +267,7 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
     <section className="ib-thread" aria-label="المحادثة">
       <header className="ib-thread-head">
         <div className="ib-thread-who">
+          {onBack && <button type="button" className="ib-back" onClick={onBack} aria-label="رجوع للمحادثات"><ChevronRight size={20} /></button>}
           <span className="ib-avatar lg" aria-hidden="true">{initials(item.name)}</span>
           <div style={{ minWidth: 0 }}>
             <h2>{item.name}</h2>
@@ -270,6 +286,7 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
               {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </label>
+          {onProfile && <button type="button" className="nx-btn" onClick={onProfile}><UserRound /> الملف</button>}
           {needsReview && !isLive && <button type="button" className="nx-btn" disabled={busy} onClick={reviewed}><CheckCircle2 /> تمت المراجعة</button>}
           {showTickets && call && !isLive && (ticket
             ? <button type="button" className="nx-btn" onClick={() => onTicket(`?ticket=${encodeURIComponent(ticket.id)}`)}><Ticket /> التذكرة</button>

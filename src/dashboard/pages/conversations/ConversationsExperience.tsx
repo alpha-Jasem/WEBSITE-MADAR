@@ -76,7 +76,7 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
   const tagFilter = params.get('tag') || 'all'
   const wide = useWide(1100)
   const viewParam = params.get('view')
-  const view: View = viewParam === 'table' ? 'table' : viewParam === 'list' ? 'list' : (wide && mode === 'all' ? 'inbox' : 'list')
+  const view: View = viewParam === 'table' ? 'table' : viewParam === 'list' ? 'list' : (mode === 'all' ? 'inbox' : 'list')
   const selKey = params.get('sel')
   const search = params.get('q') || ''
   const [limit, setLimit] = useState(PAGE)
@@ -206,7 +206,7 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <div className="nx-seg" role="group" aria-label="طريقة العرض">
-            {wide && mode === 'all' && <button type="button" aria-pressed={view === 'inbox'} onClick={() => setParam('view', 'inbox', true)}><PanelsLeftRight size={13} /> صندوق</button>}
+            {mode === 'all' && <button type="button" aria-pressed={view === 'inbox'} onClick={() => setParam('view', 'inbox', true)}><PanelsLeftRight size={13} /> صندوق</button>}
             <button type="button" aria-pressed={view === 'list'} onClick={() => setParam('view', 'list', true)}><List size={13} /> قائمة</button>
             <button type="button" aria-pressed={view === 'table'} onClick={() => setParam('view', 'table', true)}><Table2 size={13} /> جدول</button>
           </div>
