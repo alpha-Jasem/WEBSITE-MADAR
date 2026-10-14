@@ -5,7 +5,7 @@ import { DURATION_MEDIUM, EASE_OUT } from './motionTokens'
 import {
   LayoutDashboard, CalendarDays, Users, MessageSquare, Star, BarChart3,
   Wallet, BellRing, Settings, AlertTriangle, Plus, Ticket,
-  ClipboardList, BookOpen, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Search, Send, ShoppingBag,
+  ClipboardList, BookOpen, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Search, Send, ShoppingBag, UsersRound,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useSupportTickets } from '@/lib/dashboardQueries'
@@ -37,6 +37,7 @@ interface NavItem {
   short?: string
   /** Shown only when the company has this module; items without one are always shown. */
   module?: ModuleId
+  perm?: string
 }
 
 function readStored(key: string) {
@@ -169,7 +170,7 @@ const EXTRA_TITLES: Record<string, string> = {
 export function DashboardV2Layout() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { companyId, isDemo, accountError, refreshAccount, businessType, hasModule, packageType, usageMetrics, companyName, companyLogoUrl } = useWorkspace()
+  const { companyId, isDemo, accountError, refreshAccount, businessType, hasModule, canOpen, can, packageType, usageMetrics, companyName, companyLogoUrl } = useWorkspace()
   const showBookings = hasModule('bookings')
   // Theme preference: light / dark / follow the system ("تلقائي"), set from the account menu.
   const [themePref, setThemePref] = useState<ThemePref>(() => {
@@ -259,20 +260,21 @@ export function DashboardV2Layout() {
       { label: 'المتابعات', path: `${base}/reminders`, icon: <BellRing size={16} />, module: 'reminders' },
     ] },
     { title: 'الوكيل الذكي', items: [
-      { label: 'إعدادات الوكيل', short: 'الوكيل', path: `${base}/agents`, icon: <Bot size={16} /> },
+      { label: 'إعدادات الوكيل', short: 'الوكيل', path: `${base}/agents`, icon: <Bot size={16} />, perm: 'agent.settings' },
       { label: 'قاعدة المعرفة', short: 'المعرفة', path: `${base}/knowledge-base`, icon: <BookOpen size={16} />, module: 'knowledge_base' },
       { label: 'سجل المكالمات', path: `${base}/call-logs`, icon: <ClipboardList size={16} />, module: 'voice' },
-      { label: 'الرسائل الصادرة', short: 'الصادر', path: `${base}/outreach`, icon: <Send size={16} />, module: 'conversations' },
+      { label: 'الرسائل الصادرة', short: 'الصادر', path: `${base}/outreach`, icon: <Send size={16} />, module: 'conversations', perm: 'outreach.send' },
     ] },
     { title: 'الإعداد', items: [
       { label: 'الخدمات', path: `${base}/services`, icon: <Wrench size={16} />, module: 'services' },
-      { label: 'التكاملات', path: `${base}/integrations`, icon: <Plug size={16} /> },
+      { label: 'التكاملات', path: `${base}/integrations`, icon: <Plug size={16} />, perm: 'integrations.manage' },
+      { label: 'الفريق والصلاحيات', short: 'الفريق', path: `${base}/team`, icon: <UsersRound size={16} />, perm: 'team.manage' },
       { label: 'الإعدادات', path: `${base}/settings`, icon: <Settings size={16} /> },
     ] },
   ]
   // Drop items for modules this company doesn't have, then any group left empty.
   const NAV_GROUPS = ALL_NAV_GROUPS
-    .map((g) => ({ ...g, items: g.items.filter((it) => !it.module || hasModule(it.module)) }))
+    .map((g) => ({ ...g, items: g.items.filter((it) => (!it.module || canOpen(it.module)) && (!it.perm || can(it.perm))) }))
     .filter((g) => g.items.length > 0)
   const allItems = NAV_GROUPS.flatMap((g) => g.items)
 

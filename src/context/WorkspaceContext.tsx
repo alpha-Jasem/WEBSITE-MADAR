@@ -7,6 +7,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { ToastProvider } from '../components/clinicOS/ui/Toast'
 import { CLINIC_PLANS, AI_RECEPTIONIST_DEMO, getUsageMetrics, type UsageMetric } from '../lib/clinicOSProduct'
 import { DEMO_COMPANY } from '../lib/demoData'
+import { effectivePermissions, MODULE_VIEW_PERMISSION } from '../lib/permissions'
 
 export interface ClinicUsageSummary {
   bookings: number
@@ -25,6 +26,10 @@ interface WorkspaceContextValue {
   /** Sections this company can see: the industry preset plus admin overrides. */
   modules: ReadonlySet<ModuleId>
   hasModule: (id: ModuleId) => boolean
+  /** The section exists for this company and this member may open it. */
+  canOpen: (id: ModuleId) => boolean
+  /** Whether this member holds a permission (the account owner holds all). */
+  can: (permission: string) => boolean
   packageType: PackageType
   setPackageType: (p: PackageType) => void
   companyName: string
@@ -76,6 +81,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
   const [companyId, setCompanyId] = useState<string | null>(null)
   const [isOwner, setIsOwner] = useState(false)
   const [staffRole, setStaffRole] = useState<string | null>(null)
+  const [staffPermissions, setStaffPermissions] = useState<unknown>(null)
   const [isDemo, setIsDemo] = useState(false)
   const [accountLoading, setAccountLoading] = useState(true)
   const [accountError, setAccountError] = useState<string | null>(null)
@@ -115,6 +121,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
           setCompanySettings({})
           setIsOwner(true)
           setStaffRole(null)
+          setStaffPermissions(null)
           setIsSubscribed(true)
           setSubscriptionStatus('active')
           const cycleStart = new Date().toISOString().slice(0, 10)
@@ -161,15 +168,17 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         const userRow = userRes.status === 'fulfilled' ? userRes.value.data : null
         let ownerAccount = Boolean(company)
         let resolvedStaffRole: string | null = null
+        let resolvedPermissions: unknown = null
 
         if (!company) {
           const { data: staffRow } = await supabase
             .from('company_users')
-            .select('company_id, role, full_name')
+            .select('company_id, role, full_name, permissions')
             .eq('auth_user_id', user.id)
             .maybeSingle()
           if (staffRow?.company_id) {
             resolvedStaffRole = staffRow.role
+            resolvedPermissions = staffRow.permissions
             const { data: staffCompany } = await supabase
               .from('companies')
               .select(companyColumns)
@@ -182,6 +191,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         }
         setIsOwner(ownerAccount)
         setStaffRole(resolvedStaffRole)
+        setStaffPermissions(resolvedPermissions)
 
         if (!company) {
           setAccountError('تعذر تحميل بيانات الحساب. تواصل مع فريق دعم مدار.')
@@ -263,6 +273,9 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
 
   const modules = useMemo(() => resolveModules(businessType, moduleOverrides), [businessType, moduleOverrides])
   const hasModule = useCallback((id: ModuleId) => modules.has(id), [modules])
+  const myPermissions = useMemo(() => effectivePermissions(staffRole, staffPermissions), [staffRole, staffPermissions])
+  const can = useCallback((permission: string) => isOwner || isDemo || myPermissions.has(permission), [isOwner, isDemo, myPermissions])
+  const canOpen = useCallback((id: ModuleId) => modules.has(id) && can(MODULE_VIEW_PERMISSION[id]), [modules, can])
 
   const logout = async () => {
     await signOut()
@@ -271,7 +284,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <WorkspaceContext.Provider value={{ businessType, modules, hasModule, packageType, setPackageType, companyName, userName, userEmail, companyPhone, companyEmail, companyCity, companyLogoUrl, companySettings, companyId, isOwner, staffRole, accountLoading, accountError, isDemo, isSubscribed, subscriptionStatus, subscriptionStartDate, subscriptionEndDate, usageCycleStart, usageCycleEnd, usageMetrics, usageSummary, refreshAccount: load, logout }}>
+    <WorkspaceContext.Provider value={{ businessType, modules, hasModule, canOpen, can, packageType, setPackageType, companyName, userName, userEmail, companyPhone, companyEmail, companyCity, companyLogoUrl, companySettings, companyId, isOwner, staffRole, accountLoading, accountError, isDemo, isSubscribed, subscriptionStatus, subscriptionStartDate, subscriptionEndDate, usageCycleStart, usageCycleEnd, usageMetrics, usageSummary, refreshAccount: load, logout }}>
       <ToastProvider>
         {children}
       </ToastProvider>

@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  ChevronRight, Inbox as InboxIcon, RefreshCw, Phone, Copy, ExternalLink, CheckCircle2, Lock, Unlock, Ticket, Send, StickyNote, Bot, UserRound, Tag, Sparkles, X, Plus,
+  ChevronRight, Inbox as InboxIcon, RefreshCw, Phone, Copy, ExternalLink, CheckCircle2, Lock, Unlock, Ticket, Send, StickyNote, Bot, UserRound, Users, Tag, Sparkles, X, Plus,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { saudiDayKey } from '@/lib/saudiTime'
 import { useCustomers } from '@/lib/dashboardQueries'
 import { useCurrentUserId, useTeam } from '@/lib/queries/ops'
+import { useTeams, type CompanyTeam } from '@/lib/queries/teams'
 import { fetchLiveConversations, liveToCall, markCallReviewed, syncPlatformConversations, type LiveConversation } from '@/lib/queries/conversations'
 import {
   addConversationEvent, convState, deleteCannedReply, saveCannedReply, seedDemoInboxEvents, useCannedReplies, useConversationEvents,
@@ -66,8 +67,11 @@ function groupChats(list: ConvItem[]): ConvItem[] {
   return out.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
 }
 export function Inbox({ items: baseItems, allItems, loading, tickets, showTickets, selectedKey, onSelect, onOpenFull, onTicket }: Props) {
-  const { companyId, isDemo, userName } = useWorkspace()
+  const { companyId, isDemo, userName, can } = useWorkspace()
   const { events } = useConversationEvents(companyId, isDemo)
+  const { teams, myTeamIds } = useTeams(companyId, isDemo)
+  const myId = useCurrentUserId(isDemo)
+  const [filter, setFilter] = useState<string>('all')
   const [live, setLive] = useState<LiveConversation[]>([])
   const [syncing, setSyncing] = useState(false)
   // Phones: the list fills the screen; opening a chat shows it full-screen with a back button, the profile is a sheet.
@@ -102,6 +106,22 @@ export function Inbox({ items: baseItems, allItems, loading, tickets, showTicket
     const liveItems = buildConversations(liveCalls, [], { includePhone: true, includeMessages: false }).map((i) => ({ ...i, live: true }))
     return groupChats([...liveItems, ...baseItems])
   }, [live, baseItems, allItems, companyId])
+
+  // Who sees what: everyone with view_all sees every conversation; others only the ones assigned to them or to their teams.
+  const mine = useMemo(() => myTeamIds(myId), [myTeamIds, myId])
+  const seeAll = can('conversations.view_all')
+  const visible = useMemo(() => items.filter((i) => {
+    const st = convState(events.get(i.key))
+    const isMine = !!myId && st.assigneeId === myId
+    const inMyTeam = !!st.teamId && mine.has(st.teamId)
+    if (!seeAll && !isMine && !inMyTeam) return false
+    if (filter === 'all') return true
+    if (filter === 'mine') return isMine
+    if (filter === 'myteams') return inMyTeam
+    if (filter === 'unassigned') return !st.assigneeId && !st.teamId
+    if (filter.startsWith('team:')) return st.teamId === filter.slice(5)
+    return true
+  }), [items, events, filter, seeAll, mine, myId])
   const pushToast = useToast()
 
   // Pull anything the live webhook missed, quietly, when the inbox opens.
@@ -118,16 +138,17 @@ export function Inbox({ items: baseItems, allItems, loading, tickets, showTicket
 
   // Pick the first conversation so the middle pane is never empty.
   useEffect(() => {
-    if (!narrow && !selectedKey && items.length > 0) onSelect(items[0].key)
-  }, [narrow, selectedKey, items, onSelect])
+    if (!narrow && !selectedKey && visible.length > 0) onSelect(visible[0].key)
+  }, [narrow, selectedKey, visible, onSelect])
 
   useEffect(() => { if (isDemo) seedDemoInboxEvents(items.slice(0, 1).map((i) => i.key)) }, [isDemo, items])
 
-  const item = items.find((i) => i.key === selectedKey) || allItems.find((i) => i.key === selectedKey) || null
+  const item = visible.find((i) => i.key === selectedKey) || (seeAll ? allItems.find((i) => i.key === selectedKey) : null) || null
 
   return (
     <div className={`ib${narrow ? ' ib-narrow' : ''}${narrow && chatOpen && item ? ' is-open' : ''}`}>
-      <ListPane items={items} loading={loading} selectedKey={item?.key || null} onSelect={pick} events={events}
+      <ListPane items={visible} loading={loading} selectedKey={item?.key || null} onSelect={pick} events={events}
+        filter={filter} onFilter={setFilter} teams={teams}
         onSync={isDemo ? undefined : syncNow} syncing={syncing} />
       {item ? (
         <>
@@ -148,15 +169,24 @@ export function Inbox({ items: baseItems, allItems, loading, tickets, showTicket
 
 // ─── list ─────────────────────────────────────────────────────────────────────
 
-function ListPane({ items, loading, selectedKey, onSelect, events, onSync, syncing }: {
+function ListPane({ items, loading, selectedKey, onSelect, events, onSync, syncing, filter, onFilter, teams }: {
   items: ConvItem[]; loading: boolean; selectedKey: string | null; onSelect: (k: string) => void; events: Map<string, ConvEvent[]>
-  onSync?: () => void; syncing?: boolean
+  onSync?: () => void; syncing?: boolean; filter: string; onFilter: (f: string) => void; teams: CompanyTeam[]
 }) {
   return (
     <aside className="ib-list" aria-label="المحادثات">
       <div className="ib-list-head">
         <b>المحادثات <span className="nx-num">{items.length}</span></b>
         {onSync && <button type="button" className="nx-icon-btn" aria-label="تحديث من المنصة" title="جلب المحادثات الجديدة" disabled={syncing} onClick={onSync}><RefreshCw size={14} className={syncing ? 'ib-spin' : undefined} /></button>}
+      </div>
+      <div className="ib-list-filter">
+        <select aria-label="تصفية حسب الإسناد" value={filter} onChange={(e) => onFilter(e.target.value)}>
+          <option value="all">كل المحادثات</option>
+          <option value="mine">المسندة لي</option>
+          <option value="myteams">محادثات فرقي</option>
+          <option value="unassigned">غير مسندة</option>
+          {teams.map((t) => <option key={t.id} value={`team:${t.id}`}>فريق: {t.name}</option>)}
+        </select>
       </div>
       <div className="ib-list-body">
         {loading && items.length === 0 && Array.from({ length: 6 }).map((_, i) => <div key={i} style={{ padding: '10px 14px' }}><Sk h={44} /></div>)}
@@ -172,6 +202,7 @@ function ListPane({ items, loading, selectedKey, onSelect, events, onSync, synci
                 <span className="ib-row-sum">{i.summary || '—'}</span>
                 <span className="ib-row-meta">
                   <Chip tone={i.live ? 'ok' : st.status === 'closed' ? 'dim' : tone}>{i.live ? '● جارية الآن' : st.status === 'closed' ? 'مغلقة' : label}</Chip>
+                  {st.teamName && <span className="ib-assignee" title="الفريق"><Users size={11} /> {st.teamName}</span>}
                   {st.assigneeName && <span className="ib-assignee" title="المسؤول"><UserRound size={11} /> {st.assigneeName}</span>}
                   {i.tags.slice(0, 2).map((t) => <span key={t.id} className="nx-tag" data-c={t.color || 'gray'}>{t.label}</span>)}
                 </span>
@@ -194,6 +225,9 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
   const pushToast = useToast()
   const { data: team } = useTeam(companyId, isDemo)
   const myId = useCurrentUserId(isDemo)
+  const { can } = useWorkspace()
+  const { teams, byTeam } = useTeams(companyId, isDemo)
+  const [xfer, setXfer] = useState<{ open: boolean; teamId: string; userId: string; reason: string }>({ open: false, teamId: '', userId: '', reason: '' })
   // The signed-in person can always take a conversation, even when the team list is empty.
   const people = useMemo(() => {
     const list = (team || []).filter((t) => t.auth_user_id).map((t) => ({ id: t.auth_user_id as string, name: t.full_name }))
@@ -253,6 +287,20 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
     finally { setBusy(false) }
   }
 
+  async function transfer() {
+    const t = teams.find((x) => x.id === xfer.teamId)
+    if (!t) return
+    const person = people.find((p) => p.id === xfer.userId)
+    setBusy(true)
+    try {
+      await addConversationEvent(companyId, isDemo, { key: item.key, kind: 'transfer', body: xfer.reason.trim(), teamId: t.id, teamName: t.name, assigneeId: person?.id || null, assigneeName: person?.name || null, authorName })
+      pushToast({ kind: 'success', title: `حُوّلت المحادثة إلى ${t.name}` })
+      setXfer({ open: false, teamId: '', userId: '', reason: '' })
+    } catch (e) { pushToast({ kind: 'danger', title: 'ما قدرنا نحوّل المحادثة', description: e instanceof Error ? e.message : undefined }) }
+    finally { setBusy(false) }
+  }
+  const teamPeople = people.filter((p) => (byTeam.get(xfer.teamId) || []).includes(p.id))
+
   async function reviewed() {
     if (!call) return
     setBusy(true)
@@ -286,6 +334,7 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
               {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </label>
+          {can('conversations.transfer') && teams.length > 0 && <button type="button" className="nx-btn" disabled={busy} onClick={() => setXfer({ open: true, teamId: state.teamId || teams[0].id, userId: '', reason: '' })}><Users /> حوّل لفريق</button>}
           {onProfile && <button type="button" className="nx-btn" onClick={onProfile}><UserRound /> الملف</button>}
           {needsReview && !isLive && <button type="button" className="nx-btn" disabled={busy} onClick={reviewed}><CheckCircle2 /> تمت المراجعة</button>}
           {showTickets && call && !isLive && (ticket
@@ -304,6 +353,32 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
       </div>
 
       <Composer item={item} authorName={authorName} />
+
+      {xfer.open && (
+        <div className="ib-modal" role="dialog" aria-label="تحويل المحادثة" onClick={(e) => { if (e.target === e.currentTarget) setXfer((x) => ({ ...x, open: false })) }}>
+          <div className="ib-modal-card">
+            <h3>حوّل المحادثة لفريق</h3>
+            <label>الفريق
+              <select value={xfer.teamId} onChange={(e) => setXfer((x) => ({ ...x, teamId: e.target.value, userId: '' }))}>
+                {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </label>
+            <label>أو لشخص معيّن داخله (اختياري)
+              <select value={xfer.userId} onChange={(e) => setXfer((x) => ({ ...x, userId: e.target.value }))}>
+                <option value="">أي أحد من الفريق</option>
+                {teamPeople.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </label>
+            <label>سبب التحويل (يشوفه الفريق)
+              <textarea rows={3} value={xfer.reason} placeholder="مثال: العميل يبي عرض سعر للشركات" onChange={(e) => setXfer((x) => ({ ...x, reason: e.target.value }))} />
+            </label>
+            <div className="ib-modal-acts">
+              <button type="button" className="nx-btn" onClick={() => setXfer((x) => ({ ...x, open: false }))}>إلغاء</button>
+              <button type="button" className="nx-btn primary" disabled={busy || !xfer.teamId} onClick={transfer}>تحويل</button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   )
 }
@@ -331,7 +406,9 @@ function ThreadLine({ line, prev, itemTime }: { line: Line; prev?: Line; itemTim
   if (e.kind === 'reply') {
     return (<>{sep}<div className="ib-msg team"><span className="ib-msg-who">{e.author_name || 'فريقك'} · عبر واتساب</span>{e.body}<small className="nx-num">{when}</small></div></>)
   }
-  const text = e.kind === 'assign'
+  const text = e.kind === 'transfer'
+    ? `${e.author_name || 'فريقك'} حوّل المحادثة إلى فريق ${e.team_name || ''}${e.assignee_user_id && e.assignee_name ? ` (${e.assignee_name})` : ''}${e.body ? ` · ${e.body}` : ''}`
+    : e.kind === 'assign'
     ? (e.assignee_user_id ? `${e.author_name || 'فريقك'} أسند المحادثة إلى ${e.body}` : `${e.author_name || 'فريقك'} ألغى الإسناد`)
     : `${e.author_name || 'فريقك'} ${e.body === 'closed' ? 'أغلق المحادثة' : 'أعاد فتح المحادثة'}`
   return (<>{sep}<div className="ib-sys">{text} · {when}</div></>)

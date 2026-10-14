@@ -13,7 +13,7 @@ function json(body: Record<string, unknown>, status = 200) {
   })
 }
 
-const ALLOWED_ROLES = ['manager', 'staff']
+const ALLOWED_ROLES = ['manager', 'agent', 'staff', 'viewer']
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })

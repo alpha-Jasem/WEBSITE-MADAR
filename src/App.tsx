@@ -3,7 +3,7 @@ import { Suspense, lazy, useEffect } from 'react'
 import { LanguageProvider } from './context/LanguageContext'
 import { WorkspaceProvider } from './context/WorkspaceContext'
 import { ProtectedRoute } from './components/shared/ProtectedRoute'
-import { ModuleRoute } from './dashboard/components/ModuleRoute'
+import { ModuleRoute, PermissionRoute } from './dashboard/components/ModuleRoute'
 import { ErrorBoundary, reloadForFreshAssets } from './components/shared/ErrorBoundary'
 import { Login } from './pages/Login'
 import { ForgotPassword } from './pages/ForgotPassword'
@@ -60,6 +60,7 @@ const DashboardV2Orders        = lazy(() => import('./dashboard/pages/Orders').t
 const DashboardV2Reports       = lazy(() => import('./dashboard/pages/Reports').then(m => ({ default: m.DashboardV2Reports })))
 const DashboardV2Reminders     = lazy(() => import('./dashboard/pages/Reminders').then(m => ({ default: m.DashboardV2Reminders })))
 const DashboardV2Integrations  = lazy(() => import('./dashboard/pages/Integrations').then(m => ({ default: m.DashboardV2Integrations })))
+const DashboardV2Team             = lazy(() => import('./dashboard/pages/Team').then(m => ({ default: m.DashboardV2Team })))
 const DashboardV2Settings      = lazy(() => import('./dashboard/pages/Settings').then(m => ({ default: m.DashboardV2Settings })))
 const DashboardV2Services      = lazy(() => import('./dashboard/pages/Services').then(m => ({ default: m.DashboardV2Services })))
 const DashboardV2AuditLog      = lazy(() => import('./dashboard/pages/AuditLog').then(m => ({ default: m.DashboardV2AuditLog })))
@@ -89,16 +90,17 @@ const dashboardChildRoutes = (
     <Route path="reports" element={<ModuleRoute module="reports"><DashboardV2Reports /></ModuleRoute>} />
     <Route path="plan-usage" element={<DashboardV2MadarAgentUsage />} />
     <Route path="reminders" element={<ModuleRoute module="reminders"><DashboardV2Reminders /></ModuleRoute>} />
-    <Route path="integrations" element={<DashboardV2Integrations />} />
+    <Route path="integrations" element={<PermissionRoute permission="integrations.manage"><DashboardV2Integrations /></PermissionRoute>} />
+    <Route path="team" element={<PermissionRoute permission="team.manage"><DashboardV2Team /></PermissionRoute>} />
     <Route path="services" element={<ModuleRoute module="services"><DashboardV2Services /></ModuleRoute>} />
-    <Route path="audit-log" element={<DashboardV2AuditLog />} />
+    <Route path="audit-log" element={<PermissionRoute permission="audit.view"><DashboardV2AuditLog /></PermissionRoute>} />
     <Route path="tickets" element={<ModuleRoute module="tickets"><DashboardV2Tickets /></ModuleRoute>} />
     <Route path="orders" element={<ModuleRoute module="orders"><DashboardV2Orders /></ModuleRoute>} />
     <Route path="calls-analytics" element={<ModuleRoute module="voice"><DashboardV2CallsAnalytics /></ModuleRoute>} />
     <Route path="whatsapp-analytics" element={<ModuleRoute module="conversations"><DashboardV2WhatsAppAnalytics /></ModuleRoute>} />
-    <Route path="agents" element={<DashboardV2Agents />} />
+    <Route path="agents" element={<PermissionRoute permission="agent.settings"><DashboardV2Agents /></PermissionRoute>} />
     <Route path="knowledge-base" element={<ModuleRoute module="knowledge_base"><DashboardV2KnowledgeBase /></ModuleRoute>} />
-    <Route path="outreach" element={<ModuleRoute module="conversations"><DashboardV2Outreach /></ModuleRoute>} />
+    <Route path="outreach" element={<ModuleRoute module="conversations"><PermissionRoute permission="outreach.send"><DashboardV2Outreach /></PermissionRoute></ModuleRoute>} />
     <Route path="call-logs" element={<ModuleRoute module="voice"><DashboardV2CallLogs /></ModuleRoute>} />
     <Route path="agent-analytics" element={<ModuleRoute module="voice"><DashboardV2AgentAnalytics /></ModuleRoute>} />
     <Route path="agent-users" element={<Navigate to="../patients" replace />} />

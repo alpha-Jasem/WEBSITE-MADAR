@@ -5,7 +5,7 @@ import { supabase } from '../supabase'
 // replies. Backed by conversation_events / canned_replies (migration 20261013120000).
 // Demo mode keeps both in memory so the sales tour stays clickable.
 
-export type EventKind = 'note' | 'status' | 'assign' | 'reply'
+export type EventKind = 'note' | 'status' | 'assign' | 'reply' | 'transfer'
 
 export interface ConvEvent {
   id: string
@@ -13,6 +13,9 @@ export interface ConvEvent {
   kind: EventKind
   body: string
   assignee_user_id?: string | null
+  assignee_name?: string | null
+  team_id?: string | null
+  team_name?: string | null
   author_name?: string | null
   created_at: string
 }
@@ -21,6 +24,8 @@ export interface ConvState {
   status: 'open' | 'closed'
   assigneeId: string | null
   assigneeName: string | null
+  teamId: string | null
+  teamName: string | null
 }
 
 export interface CannedReply { id: string; shortcut: string; body: string; builtIn?: boolean }
@@ -46,11 +51,18 @@ export function convState(events: ConvEvent[] | undefined): ConvState {
   let status: ConvState['status'] = 'open'
   let assigneeId: string | null = null
   let assigneeName: string | null = null
+  let teamId: string | null = null
+  let teamName: string | null = null
   for (const e of events || []) {
     if (e.kind === 'status') status = e.body === 'closed' ? 'closed' : 'open'
     if (e.kind === 'assign') { assigneeId = e.assignee_user_id || null; assigneeName = assigneeId ? e.body : null }
+    // A transfer hands the conversation to a team; a person inside it is optional.
+    if (e.kind === 'transfer') {
+      teamId = e.team_id || null; teamName = e.team_name || null
+      assigneeId = e.assignee_user_id || null; assigneeName = assigneeId ? e.assignee_name || null : null
+    }
   }
-  return { status, assigneeId, assigneeName }
+  return { status, assigneeId, assigneeName, teamId, teamName }
 }
 
 /** Every event of the company grouped by conversation key, oldest first. */
@@ -64,7 +76,7 @@ export function useConversationEvents(companyId: string | null, isDemo: boolean)
     else {
       if (!companyId) return
       const { data, error } = await supabase.from('conversation_events')
-        .select('id, conversation_key, kind, body, assignee_user_id, author_name, created_at')
+        .select('id, conversation_key, kind, body, assignee_user_id, assignee_name, team_id, team_name, author_name, created_at')
         .eq('company_id', companyId).order('created_at').limit(2000)
       if (error) { setAvailable(false); setMap(new Map()); return }
       setAvailable(true)
@@ -89,12 +101,13 @@ export function useConversationEvents(companyId: string | null, isDemo: boolean)
 
 export async function addConversationEvent(
   companyId: string | null, isDemo: boolean,
-  input: { key: string; kind: EventKind; body: string; assigneeId?: string | null; authorName?: string },
+  input: { key: string; kind: EventKind; body: string; assigneeId?: string | null; assigneeName?: string | null; teamId?: string | null; teamName?: string | null; authorName?: string },
 ) {
   if (isDemo) {
     demoEvents = [...demoEvents, {
       id: demoId(), conversation_key: input.key, kind: input.kind, body: input.body,
-      assignee_user_id: input.assigneeId ?? null, author_name: input.authorName || 'أنت', created_at: new Date().toISOString(),
+      assignee_user_id: input.assigneeId ?? null, assignee_name: input.assigneeName ?? null, team_id: input.teamId ?? null, team_name: input.teamName ?? null,
+      author_name: input.authorName || 'أنت', created_at: new Date().toISOString(),
     }]
     notify()
     return
@@ -102,7 +115,8 @@ export async function addConversationEvent(
   if (!companyId) throw new Error('no company')
   const { error } = await supabase.from('conversation_events').insert({
     company_id: companyId, conversation_key: input.key, kind: input.kind, body: input.body,
-    assignee_user_id: input.assigneeId ?? null, author_name: input.authorName || null,
+    assignee_user_id: input.assigneeId ?? null, assignee_name: input.assigneeName ?? null, team_id: input.teamId ?? null, team_name: input.teamName ?? null,
+    author_name: input.authorName || null,
   })
   if (error) throw error
   notify()
