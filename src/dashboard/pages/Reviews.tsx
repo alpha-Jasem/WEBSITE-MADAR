@@ -194,7 +194,7 @@ export function DashboardV2Reviews() {
                     onClick={(e) => { e.stopPropagation(); toggleFavorite(b) }}
                     style={{
                       position: 'absolute', top: 12, insetInlineEnd: 12, cursor: 'pointer', display: 'flex',
-                      color: b.is_favorite ? 'var(--warning-500)' : (active ? 'rgba(255,255,255,.6)' : 'var(--slate-300)'),
+                      color: b.is_favorite ? 'var(--warning-500)' : (active ? 'color-mix(in srgb, var(--pri-fg) 55%, transparent)' : 'var(--slate-300)'),
                     }}
                   >
                     <Star size={18} fill={b.is_favorite ? 'currentColor' : 'none'} />
@@ -202,19 +202,19 @@ export function DashboardV2Reviews() {
                   <div style={{
                     width: 44, height: 44, borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 17,
-                    background: active ? 'rgba(255,255,255,.18)' : 'var(--brand-50)',
-                    color: active ? '#fff' : 'var(--brand-600)',
+                    background: active ? 'color-mix(in srgb, var(--pri-fg) 14%, transparent)' : 'var(--brand-50)',
+                    color: active ? 'var(--pri-fg)' : 'var(--brand-600)',
                   }}>{b.name.trim()[0] || 'ف'}</div>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: 14.5, color: active ? '#fff' : 'var(--text-primary)', marginBottom: 4 }}>{b.name}</div>
+                    <div style={{ fontWeight: 700, fontSize: 14.5, color: active ? 'var(--pri-fg)' : 'var(--text-primary)', marginBottom: 4 }}>{b.name}</div>
                     {b.address && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11.5, color: active ? 'rgba(255,255,255,.75)' : 'var(--text-tertiary)', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11.5, color: active ? 'color-mix(in srgb, var(--pri-fg) 70%, transparent)' : 'var(--text-tertiary)', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         <MapPin size={11} /> {b.address}
                         {hasMap && <MapIcon size={11} style={{ marginInlineStart: 'auto', flexShrink: 0, opacity: 0.8 }} />}
                       </div>
                     )}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: active ? '#fff' : 'var(--text-primary)' }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: active ? 'var(--pri-fg)' : 'var(--text-primary)' }}>
                         {stats?.avg != null ? `${stats.avg} ★` : '—'}
                       </span>
                       {!!stats?.pending && (
@@ -238,8 +238,8 @@ export function DashboardV2Reviews() {
                       href={b.google_maps_url} target="_blank" rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
                       style={{
-                        display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#fff',
-                        background: 'rgba(255,255,255,.18)', padding: '8px 14px', borderRadius: 'var(--radius-full)',
+                        display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--pri-fg)',
+                        background: 'color-mix(in srgb, var(--pri-fg) 14%, transparent)', padding: '8px 14px', borderRadius: 'var(--radius-full)',
                         textDecoration: 'none',
                       }}
                     >
