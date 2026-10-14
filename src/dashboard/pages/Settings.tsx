@@ -31,6 +31,13 @@ const ROLE_TONE: Record<string, BadgeTone> = { owner: 'brand', manager: 'success
 const ROLE_OPTIONS = [{ value: 'staff', label: 'موظف' }, { value: 'manager', label: 'مدير' }]
 
 const SETTINGS_CSS = `
+  @media (max-width: 700px) {
+    [data-fold] > h3.np-h3 { cursor: pointer; margin-bottom: 0; }
+    [data-fold] > h3.np-h3::after { content: ''; width: 8px; height: 8px; margin-inline-start: auto; border: solid var(--text-tertiary); border-width: 0 2px 2px 0; transform: rotate(45deg); transition: transform .2s; flex: none; }
+    [data-fold='1'] > :not(h3.np-h3) { display: none !important; }
+    [data-fold='0'] > h3.np-h3 { margin-bottom: 12px; }
+    [data-fold='0'] > h3.np-h3::after { transform: rotate(-135deg); }
+  }
 .st-logo { width: 64px; height: 64px; border-radius: var(--radius-lg); background-color: var(--panel-2); background-size: cover; background-position: center;
   border: 1px solid var(--line-2); display: grid; place-items: center; cursor: pointer; flex-shrink: 0; padding: 0; overflow: hidden; }
 .st-hour-row { display: grid; grid-template-columns: 90px auto minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
@@ -49,6 +56,22 @@ const SETTINGS_CSS = `
 `
 
 export function DashboardV2Settings() {
+  // Phones: each settings card folds under its title so the page is not one endless scroll.
+  useEffect(() => {
+    if (!window.matchMedia('(max-width: 700px)').matches) return
+    const fold = () => document.querySelectorAll<HTMLElement>('h3.np-h3').forEach((h, i) => {
+      const card = h.parentElement
+      if (card && !card.hasAttribute('data-fold')) card.setAttribute('data-fold', i === 0 ? '0' : '1')
+    })
+    const t = window.setTimeout(fold, 250)
+    const click = (e: MouseEvent) => {
+      const h = (e.target as HTMLElement).closest('h3.np-h3')
+      const card = h?.parentElement
+      if (h && card?.hasAttribute('data-fold') && !(e.target as HTMLElement).closest('button, a')) card.setAttribute('data-fold', card.getAttribute('data-fold') === '1' ? '0' : '1')
+    }
+    document.addEventListener('click', click)
+    return () => { window.clearTimeout(t); document.removeEventListener('click', click) }
+  }, [])
   const {
     companyId, companyName, companyPhone, companyEmail, companyCity, companyLogoUrl, companySettings,
     isDemo, isOwner, refreshAccount, hasModule, packageType, isSubscribed, usageMetrics, usageCycleStart, usageCycleEnd,
