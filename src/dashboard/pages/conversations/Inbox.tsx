@@ -87,7 +87,7 @@ export function Inbox({ items: baseItems, allItems, loading, tickets, showTicket
 
   const items = useMemo(() => {
     const stored = new Set(allItems.map((i) => i.call?.external_id).filter(Boolean))
-    const liveCalls = live.filter((l) => !stored.has(l.id) && l.transcript.length > 0).map((l) => liveToCall(l, companyId || ''))
+    const liveCalls = live.filter((l) => !stored.has(l.id)).map((l) => liveToCall(l, companyId || ''))
     const liveItems = buildConversations(liveCalls, [], { includePhone: true, includeMessages: false }).map((i) => ({ ...i, live: true }))
     return groupChats([...liveItems, ...baseItems])
   }, [live, baseItems, allItems, companyId])
@@ -211,7 +211,7 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
     }
     if (item.tags.length) out.push({ k: 'sys', text: `صنّف الوكيل المحادثة: ${item.tags.map((t) => t.label).join('، ')}` })
     if (call?.needs_review || call?.status === 'needs_review') out.push({ k: 'sys', text: `تحتاج مراجعة: ${call.review_reason || 'بدون سبب مذكور'}` })
-    else if (item.live) out.push({ k: 'sys', text: 'المحادثة جارية الآن، تتحدث تلقائيًا' })
+    else if (item.live) out.push({ k: 'sys', text: call?.transcript?.length ? 'المحادثة جارية الآن، تتحدث تلقائيًا' : 'وصلت رسالة من العميل وبانتظار رد الوكيل' })
     else out.push({ k: 'sys', text: `انتهت المحادثة · ${chipLabel}` })
     if (ticket) out.push({ k: 'sys', text: `فُتحت تذكرة: ${ticket.subject}` })
     for (const e of events) out.push({ k: 'event', e })
