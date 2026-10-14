@@ -5,6 +5,13 @@
 [build.environment]
   NODE_VERSION = "20"
 
+# The official landing page is the static film site in public/signal.
+[[redirects]]
+  from = "/"
+  to = "/signal/index.html"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
