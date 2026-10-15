@@ -36,14 +36,20 @@ Deno.serve(async (req) => {
   const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
   if (!apiKey || !url || !serviceKey || !anonKey) return json({ error: 'server misconfigured' }, 500)
 
-  const asUser = createClient(url, anonKey, {
-    global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } },
-    auth: { persistSession: false },
-  })
-  const { data: companyId } = await asUser.rpc('get_my_clinic_company_id')
-  if (!companyId) return json({ error: 'unauthorized' }, 401)
-
   const body = await req.json().catch(() => ({}))
+  // Trusted server-side callers (the public API, automations) authenticate with the service key and name the company.
+  const bearer = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '')
+  let companyId: string | null = null
+  if (bearer && bearer === serviceKey && typeof body?.company_id === 'string') companyId = body.company_id
+  else {
+    const asUser = createClient(url, anonKey, {
+      global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } },
+      auth: { persistSession: false },
+    })
+    const { data } = await asUser.rpc('get_my_clinic_company_id')
+    companyId = data as string | null
+  }
+  if (!companyId) return json({ error: 'unauthorized' }, 401)
   const recipients = Array.isArray(body?.recipients) ? body.recipients : []
   if (!body?.template_id || recipients.length === 0) return json({ error: 'bad request' }, 400)
   if (recipients.length > MAX) return json({ error: `at most ${MAX} recipients per send` }, 400)

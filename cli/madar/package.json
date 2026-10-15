@@ -1,0 +1,9 @@
+{
+  "name": "madar-cli",
+  "version": "1.0.0",
+  "description": "Command line for the Madar platform: conversations, transfers, customers, tickets, bookings.",
+  "type": "module",
+  "bin": { "madar": "bin/madar.mjs" },
+  "engines": { "node": ">=18" },
+  "license": "MIT"
+}

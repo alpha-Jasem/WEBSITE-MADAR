@@ -5,7 +5,7 @@ import { DURATION_MEDIUM, EASE_OUT } from './motionTokens'
 import {
   LayoutDashboard, CalendarDays, Users, MessageSquare, Star, BarChart3,
   Wallet, BellRing, Settings, AlertTriangle, Plus, Ticket,
-  ClipboardList, BookOpen, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Search, Send, ShoppingBag, UsersRound,
+  ClipboardList, BookOpen, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Search, Send, ShoppingBag, UsersRound, Zap,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useSupportTickets } from '@/lib/dashboardQueries'
@@ -268,6 +268,7 @@ export function DashboardV2Layout() {
     { title: 'الإعداد', items: [
       { label: 'الخدمات', path: `${base}/services`, icon: <Wrench size={16} />, module: 'services' },
       { label: 'التكاملات', path: `${base}/integrations`, icon: <Plug size={16} />, perm: 'integrations.manage' },
+      { label: 'الربط والأتمتة', short: 'الربط', path: `${base}/connect`, icon: <Zap size={16} />, perm: 'integrations.manage' },
       { label: 'الفريق والصلاحيات', short: 'الفريق', path: `${base}/team`, icon: <UsersRound size={16} />, perm: 'team.manage' },
       { label: 'الإعدادات', path: `${base}/settings`, icon: <Settings size={16} /> },
     ] },
