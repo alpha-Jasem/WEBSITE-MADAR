@@ -13,6 +13,7 @@ import { AdminAIAgents } from '../components/dashboard/admin/AdminAIAgents'
 import { AdminClinicAccounts } from '../components/dashboard/admin/AdminClinicAccounts'
 import { AdminAPI } from '../components/dashboard/admin/AdminAPI'
 import { AdminSalesBlitz } from '../components/dashboard/admin/AdminSalesBlitz'
+import { AdminOutreach } from '../components/dashboard/admin/AdminOutreach'
 
 export const AdminDashboard = () => {
   return (
@@ -31,6 +32,7 @@ export const AdminDashboard = () => {
         <Route path="ai-agents" element={<AdminAIAgents />} />
         <Route path="api" element={<AdminAPI />} />
         <Route path="sales-blitz" element={<AdminSalesBlitz />} />
+        <Route path="outreach" element={<AdminOutreach />} />
         <Route path="*" element={<AdminCommandDeck />} />
       </Routes>
     </PlasmaAdminShell>
