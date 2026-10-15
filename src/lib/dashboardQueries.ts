@@ -871,6 +871,15 @@ export async function toggleReminderRule(id: string, enabled: boolean) {
   if (error) throw error
 }
 
+/** Which approved WhatsApp template a reminder rule sends, and how its {{n}} values are filled. */
+export async function setReminderTemplate(id: string, templateId: string | null, params: string[]) {
+  const { error } = await supabase
+    .from(TABLES.reminderRules)
+    .update({ template_id: templateId, params, updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
 // ─── Integrations ───────────────────────────────────────────────────────────
 
 const DEFAULT_INTEGRATIONS: { provider: string; name: string }[] = [

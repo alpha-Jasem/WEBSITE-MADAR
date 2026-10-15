@@ -36,6 +36,8 @@ const DESC_BY_PROVIDER: Record<string, string> = {
 // OAuth self-serve connect isn't wired for any provider yet — this stays a manual
 // status flag until a provider's Client ID/Secret is registered.
 const OAUTH_READY: Record<string, boolean> = {}
+// Channels the Madar team connects on the voice platform; the rest need a self-serve OAuth link that is not live yet.
+const MANAGED = new Set(['whatsapp', 'voip'])
 
 export function DashboardV2Integrations() {
   const { companyId, isDemo, hasModule } = useWorkspace()
@@ -94,13 +96,12 @@ export function DashboardV2Integrations() {
                 </div>
                 <Chip tone={i.status === 'connected' ? 'ok' : 'muted'}>{i.status === 'connected' ? 'متصل' : 'غير متصل'}</Chip>
               </div>
-              <Button size="sm" variant={i.status === 'connected' ? 'secondary' : 'primary'} onClick={() => toggle(i.id, i.status)} style={{ marginTop: 14, alignSelf: 'flex-start' }}>
-                {i.status === 'connected' ? 'قطع الاتصال' : 'ربط الآن'}
-              </Button>
-              {!oauthReady && i.status !== 'connected' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 8, fontSize: 11, color: 'var(--text-tertiary)' }}>
-                  <Lock size={11} /> الربط التلقائي (OAuth) قيد الإعداد — التبديل هنا يحدّث الحالة يدوياً حتى ذلك الحين
+              {MANAGED.has(i.provider) ? (
+                <div style={{ marginTop: 14, fontSize: 12, color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Lock size={11} /> يُربط ويُدار من فريق مدار. للتغيير كلمنا.
                 </div>
+              ) : (
+                <Button size="sm" variant="secondary" disabled style={{ marginTop: 14, alignSelf: 'flex-start' }}>قريبًا</Button>
               )}
             </Card>
           )

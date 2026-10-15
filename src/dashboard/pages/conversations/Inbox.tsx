@@ -334,6 +334,7 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
               {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </label>
+          {can('conversations.transfer') && myId && state.assigneeId !== myId && <button type="button" className="nx-btn" disabled={busy} onClick={() => void log('assign', authorName, myId)}><UserRound /> استلمها</button>}
           {can('conversations.transfer') && teams.length > 0 && <button type="button" className="nx-btn" disabled={busy} onClick={() => setXfer({ open: true, teamId: state.teamId || teams[0].id, userId: '', reason: '' })}><Users /> حوّل لفريق</button>}
           {onProfile && <button type="button" className="nx-btn" onClick={onProfile}><UserRound /> الملف</button>}
           {needsReview && !isLive && <button type="button" className="nx-btn" disabled={busy} onClick={reviewed}><CheckCircle2 /> تمت المراجعة</button>}
