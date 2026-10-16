@@ -53,6 +53,7 @@ export const Privacy = () => {
     title: 'سياسة الخصوصية — مدار',
     description: 'كيف يتعامل مدار مع بيانات عملك وعملائك: التشفير، الملكية، وعدم المشاركة مع أي طرف ثالث.',
     canonical: 'https://madar.software/privacy',
+    noindex: true,
   })
 
   useEffect(() => {

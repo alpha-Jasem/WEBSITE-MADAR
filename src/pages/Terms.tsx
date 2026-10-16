@@ -55,6 +55,7 @@ export const Terms = () => {
     title: 'شروط الاستخدام — مدار',
     description: 'شروط استخدام منصة مدار: الاشتراك، الالتزامات، وحدود المسؤولية بين مدار والمنشأة المشتركة.',
     canonical: 'https://madar.software/terms',
+    noindex: true,
   })
 
   useEffect(() => {
