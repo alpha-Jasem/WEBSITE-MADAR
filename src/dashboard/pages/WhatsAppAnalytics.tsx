@@ -15,7 +15,7 @@ export function DashboardV2WhatsAppAnalytics() {
   const { data: integrations, loading: intLoading } = useIntegrations(companyId, isDemo)
   const [period, setPeriod] = useState<Period>(7)
   const navigate = useNavigate()
-  const base = isDemo ? '/demo-review' : '/clinic-os/dashboard'
+  const base = isDemo ? '/demo-review' : '/dashboard'
 
   const wa = (integrations || []).find((i) => i.provider === 'whatsapp')
   const connected = wa?.status === 'connected'

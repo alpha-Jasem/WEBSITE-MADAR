@@ -334,9 +334,9 @@ export const DEMO_STAFF: CompanyStaff[] = [
 ]
 
 export const DEMO_NOTIFICATIONS: AppNotification[] = [
-  { id: 'notif-1', company_id: 'demo-company-001', notification_type: 'new_booking', title: 'حجز جديد', message: 'سارة أحمد حجزت موعد زيارة الساعة 4 عصراً', severity: 'success', route: '/clinic-os/dashboard/bookings', created_at: TODAY + 'T10:40:00Z' },
-  { id: 'notif-2', company_id: 'demo-company-001', notification_type: 'negative_review', title: 'تقييم سلبي جديد', message: 'خالد الرشيد قيّم خدمتك بنجمتين — يحتاج ردك', severity: 'warning', route: '/clinic-os/dashboard/reviews', created_at: YESTERDAY + 'T14:10:00Z' },
-  { id: 'notif-3', company_id: 'demo-company-001', notification_type: 'no_show', title: 'عميل لم يحضر', message: 'بدر الحربي لم يحضر موعده الساعة 1:00 ظهراً', severity: 'critical', route: '/clinic-os/dashboard/bookings', read_at: YESTERDAY + 'T16:00:00Z', created_at: YESTERDAY + 'T13:10:00Z' },
+  { id: 'notif-1', company_id: 'demo-company-001', notification_type: 'new_booking', title: 'حجز جديد', message: 'سارة أحمد حجزت موعد زيارة الساعة 4 عصراً', severity: 'success', route: '/dashboard/bookings', created_at: TODAY + 'T10:40:00Z' },
+  { id: 'notif-2', company_id: 'demo-company-001', notification_type: 'negative_review', title: 'تقييم سلبي جديد', message: 'خالد الرشيد قيّم خدمتك بنجمتين — يحتاج ردك', severity: 'warning', route: '/dashboard/reviews', created_at: YESTERDAY + 'T14:10:00Z' },
+  { id: 'notif-3', company_id: 'demo-company-001', notification_type: 'no_show', title: 'عميل لم يحضر', message: 'بدر الحربي لم يحضر موعده الساعة 1:00 ظهراً', severity: 'critical', route: '/dashboard/bookings', read_at: YESTERDAY + 'T16:00:00Z', created_at: YESTERDAY + 'T13:10:00Z' },
 ]
 
 export const DEMO_AUDIT_LOG: AuditLogEntry[] = [

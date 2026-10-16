@@ -52,7 +52,7 @@ export function DashboardV2Home() {
   } = useWorkspace()
   const navigate = useNavigate()
   const pushToast = useToast()
-  const base = isDemo ? '/demo-review' : '/clinic-os/dashboard'
+  const base = isDemo ? '/demo-review' : '/dashboard'
   const go = (path: string) => navigate(`${base}/${path}`)
 
   const showBookings = hasModule('bookings')

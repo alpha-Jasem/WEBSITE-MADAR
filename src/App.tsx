@@ -12,7 +12,7 @@ import { AuthCallback } from './pages/AuthCallback'
 import { Privacy } from './pages/Privacy'
 import { Terms } from './pages/Terms'
 import { NotFound } from './pages/NotFound'
-// Note: WorkspaceProvider wraps only /clinic-os/dashboard/* routes (protected)
+// Note: WorkspaceProvider wraps only /dashboard/* routes (protected)
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -112,6 +112,13 @@ const dashboardChildRoutes = (
   </>
 )
 
+// Old links (emails, saved notifications, bookmarks) used /clinic-os/dashboard/...; keep them working.
+function LegacyDashboardRedirect() {
+  const loc = useLocation()
+  const rest = loc.pathname.replace(/^\/clinic-os\/dashboard/, '')
+  return <Navigate to={`/dashboard${rest}${loc.search}${loc.hash}`} replace />
+}
+
 function App() {
   useEffect(() => {
     const handlePreloadError = (event: Event) => {
@@ -137,19 +144,22 @@ function App() {
             <Route path="/login" element={<ClinicOSLoginPage />} />
             <Route path="/clinic-os/login" element={<Navigate to="/login" replace />} />
             <Route path="/admin/login" element={<Login />} />
-            <Route path="/clinic-os/mfa-challenge" element={<MfaChallengePage />} />
+            <Route path="/mfa-challenge" element={<MfaChallengePage />} />
+            <Route path="/clinic-os/mfa-challenge" element={<Navigate to="/mfa-challenge" replace />} />
             <Route path="/signup" element={<ClinicOSSignupPage />} />
             <Route path="/trial" element={<Navigate to="/signup" replace />} />
             <Route path="/clinic-os/signup" element={<Navigate to="/signup" replace />} />
             <Route path="/clinic-os/demo"     element={<DemoSignupPage />} />
             <Route path="/clinic-os/demo/confirm" element={<DemoConfirmPage />} />
             <Route path="/clinic-os/admin" element={<Navigate to="/admin" replace />} />
-            <Route path="/clinic-os/select"   element={
+            <Route path="/select"   element={
               <WorkspaceProvider><PackageSelectorPage /></WorkspaceProvider>
             } />
+            <Route path="/clinic-os/select" element={<Navigate to="/select" replace />} />
 
             {/* ── ClinicOS Dashboard v2 (Madar Software Design System — official dashboard) ── */}
-            <Route path="/clinic-os/dashboard/*" element={
+            <Route path="/clinic-os/dashboard/*" element={<LegacyDashboardRedirect />} />
+            <Route path="/dashboard/*" element={
               <WorkspaceProvider>
                 <DashboardV2Layout />
               </WorkspaceProvider>
@@ -176,7 +186,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/client/*" element={<Navigate to="/clinic-os/dashboard" replace />} />
+            <Route path="/client/*" element={<Navigate to="/dashboard" replace />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="*" element={<NotFound />} />

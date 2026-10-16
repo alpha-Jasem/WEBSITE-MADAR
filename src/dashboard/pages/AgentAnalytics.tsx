@@ -61,7 +61,7 @@ const HIGHLIGHT_FIELDS: [string[], string][] = [
 export function DashboardV2AgentAnalytics() {
   const { companyId, isDemo } = useWorkspace()
   const navigate = useNavigate()
-  const base = isDemo ? '/demo-review' : '/clinic-os/dashboard'
+  const base = isDemo ? '/demo-review' : '/dashboard'
   const narrow = useIsNarrow()
   const { calls, callsLoading } = useConversationData(companyId, isDemo)
   const [period, setPeriod] = useState<Period>('week')

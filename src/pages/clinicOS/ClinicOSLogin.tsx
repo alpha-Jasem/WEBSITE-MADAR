@@ -11,7 +11,7 @@ export const ClinicOSLogin = () => {
   const [searchParams] = useSearchParams()
   const redirectTo = useMemo(() => {
     const r = searchParams.get('redirect')
-    return r?.startsWith('/clinic-os/') ? r : '/clinic-os/dashboard'
+    return r && (r.startsWith('/dashboard') || r.startsWith('/select') || r.startsWith('/clinic-os/')) ? r : '/dashboard'
   }, [searchParams])
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -41,7 +41,7 @@ export const ClinicOSLogin = () => {
 
     const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
     if (aal && aal.nextLevel === 'aal2' && aal.currentLevel !== 'aal2') {
-      navigate(`/clinic-os/mfa-challenge?redirect=${encodeURIComponent(redirectTo)}`, { replace: true })
+      navigate(`/mfa-challenge?redirect=${encodeURIComponent(redirectTo)}`, { replace: true })
       return
     }
 

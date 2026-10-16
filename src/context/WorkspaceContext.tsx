@@ -146,13 +146,13 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         const { data: authData } = await supabase.auth.getUser()
         const user = authData?.user
         if (!user) {
-          navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`, { replace: true })
+          navigate(`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`, { replace: true })
           return
         }
 
         const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
         if (aal && aal.nextLevel === 'aal2' && aal.currentLevel !== 'aal2') {
-          navigate(`/clinic-os/mfa-challenge?redirect=${encodeURIComponent(location.pathname)}`, { replace: true })
+          navigate(`/mfa-challenge?redirect=${encodeURIComponent(location.pathname)}`, { replace: true })
           return
         }
 

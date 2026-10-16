@@ -241,7 +241,7 @@ export function DashboardV2Layout() {
     if (phone) { setSheetMode('all'); setMoreOpen(true) } else toggleCollapsed()
   }
 
-  const base = isDemo ? '/demo-review' : '/clinic-os/dashboard'
+  const base = isDemo ? '/demo-review' : '/dashboard'
   // Grouped like a product console: overview, daily operations, the AI agent, setup.
   const ALL_NAV_GROUPS: { title: string; items: NavItem[] }[] = [
     { title: 'نظرة عامة', items: [

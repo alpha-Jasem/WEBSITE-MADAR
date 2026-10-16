@@ -10,7 +10,7 @@ export const MfaChallenge = () => {
   const [searchParams] = useSearchParams()
   const redirectTo = useMemo(() => {
     const r = searchParams.get('redirect')
-    return r?.startsWith('/clinic-os/') ? r : '/clinic-os/dashboard'
+    return r && (r.startsWith('/dashboard') || r.startsWith('/select') || r.startsWith('/clinic-os/')) ? r : '/dashboard'
   }, [searchParams])
 
   const [code, setCode] = useState('')

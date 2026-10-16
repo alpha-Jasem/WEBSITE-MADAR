@@ -79,7 +79,7 @@ export function DashboardV2Settings() {
   const { data: staff, refetch: refetchStaff } = useCompanyStaff(companyId, isDemo)
   const { data: rawIntegrations } = useIntegrations(companyId, isDemo)
   const navigate = useNavigate()
-  const base = isDemo ? '/demo-review' : '/clinic-os/dashboard'
+  const base = isDemo ? '/demo-review' : '/dashboard'
 
   const [form, setForm] = useState({ name: companyName, phone: companyPhone, email: companyEmail, city: companyCity })
   const [prefs, setPrefs] = useState({ ai: true, reviews: true, sms: false })

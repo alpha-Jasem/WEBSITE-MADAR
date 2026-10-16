@@ -72,8 +72,9 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
 
   if (!isAuthed) {
     // Workspace OS dashboard → go to clinic login
-    if (location.pathname.startsWith('/clinic-os/dashboard')) {
-      return <Navigate to="/login" replace />
+    if (location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/clinic-os/dashboard')) {
+      // keep the deep link (e.g. one conversation) so it opens after sign-in
+      return <Navigate to={`/login?redirect=${encodeURIComponent(`${location.pathname}${location.search}`)}`} replace />
     }
     const redirect = encodeURIComponent(`${location.pathname}${location.search}`)
     const portal = requiredRole ? `&portal=${requiredRole}` : ''

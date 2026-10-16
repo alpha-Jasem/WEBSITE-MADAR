@@ -56,7 +56,7 @@ export const PackageSelector = () => {
 
   const select = (pkg: PackageType) => {
     setPackageType(pkg)
-    navigate('/clinic-os/dashboard')
+    navigate('/dashboard')
   }
 
   return (

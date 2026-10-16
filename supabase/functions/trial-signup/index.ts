@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
       }
 
       const ownerEmail = (user.email || '').toLowerCase()
-      const ok = (companyId: string) => json({ success: true, company_id: companyId, redirect_to: '/clinic-os/dashboard' })
+      const ok = (companyId: string) => json({ success: true, company_id: companyId, redirect_to: '/dashboard' })
 
       // already has a company: finishing twice (retry, double tap) must not fail
       const { data: existingByUser } = await supabaseAdmin
@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
         role: 'client',
       })
 
-      const redirectTo = btype === 'clinic' ? '/clinic-os/dashboard' : '/client'
+      const redirectTo = btype === 'clinic' ? '/dashboard' : '/client'
       return json({ success: true, company_id: company.id, redirect_to: redirectTo })
     }
 

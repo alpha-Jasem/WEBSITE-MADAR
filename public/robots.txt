@@ -15,8 +15,10 @@ Disallow: /checkin/
 Disallow: /status/
 Disallow: /demo-review
 Disallow: /signup
+Disallow: /dashboard/
 Disallow: /clinic-os/dashboard/
 Disallow: /clinic-os/admin
+Disallow: /select
 Disallow: /clinic-os/select
 
 User-agent: GPTBot

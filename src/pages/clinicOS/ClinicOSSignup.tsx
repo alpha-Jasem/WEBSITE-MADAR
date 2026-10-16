@@ -104,7 +104,7 @@ export const ClinicOSSignup = () => {
       const { error: pwErr } = await supabase.auth.updateUser({ password })
       if (pwErr) console.warn('Password update failed (non-fatal):', pwErr.message)
 
-      navigate('/clinic-os/dashboard?welcome=1', { replace: true })
+      navigate('/dashboard?welcome=1', { replace: true })
     } catch (err) {
       setError(explain(err))
     } finally {

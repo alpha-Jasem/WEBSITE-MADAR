@@ -48,7 +48,7 @@ function TicketCard({ t, onOpen }: { t: OpsTicket; onOpen: () => void }) {
 export function DashboardV2Tickets() {
   const { companyId, isDemo, userName, hasModule, accountLoading } = useWorkspace()
   const pushToast = useToast()
-  const base = isDemo ? '/demo-review' : '/clinic-os/dashboard'
+  const base = isDemo ? '/demo-review' : '/dashboard'
   const { caps, ready } = useOpsCaps(isDemo, accountLoading)
   const { data: tickets, loading, error, refetch } = useOpsTickets(companyId, isDemo)
   const { data: team } = useTeam(companyId, isDemo)

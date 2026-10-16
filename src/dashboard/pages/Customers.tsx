@@ -30,7 +30,7 @@ const TYPE_OPTIONS = [
 export function DashboardV2Customers() {
   const { companyId, isDemo, hasModule } = useWorkspace()
   const navigate = useNavigate()
-  const base = isDemo ? '/demo-review' : '/clinic-os/dashboard'
+  const base = isDemo ? '/demo-review' : '/dashboard'
   const { data: patients, loading: customersLoading, refetch } = useCustomers(companyId, isDemo)
   const { calls, callsLoading } = useConversationData(companyId, isDemo)
   const loading = customersLoading || callsLoading

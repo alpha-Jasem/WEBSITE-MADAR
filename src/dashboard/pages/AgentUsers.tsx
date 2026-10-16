@@ -55,7 +55,7 @@ export function buildContacts(calls: AICallLog[]): Contact[] {
 export function DashboardV2AgentUsers() {
   const { companyId, isDemo } = useWorkspace()
   const navigate = useNavigate()
-  const base = isDemo ? '/demo-review' : '/clinic-os/dashboard'
+  const base = isDemo ? '/demo-review' : '/dashboard'
   const narrow = useIsNarrow()
   const { calls, callsLoading } = useConversationData(companyId, isDemo)
   const [search, setSearch] = useState('')

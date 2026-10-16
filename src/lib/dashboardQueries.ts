@@ -572,7 +572,7 @@ export async function createBooking(data: Partial<Booking>) {
       title: 'حجز جديد',
       message: `${data.patient_name || 'عميل'} حجز موعد ${data.service_name || ''} بتاريخ ${data.appointment_date}`,
       severity: 'success',
-      route: '/clinic-os/dashboard/bookings',
+      route: '/dashboard/bookings',
     }).catch(() => {})
   }
   return result as Booking

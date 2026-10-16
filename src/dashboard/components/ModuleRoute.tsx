@@ -11,12 +11,12 @@ import type { ModuleId } from '@/dashboard/modules'
 export function ModuleRoute({ module, children }: { module: ModuleId; children: ReactNode }) {
   const { canOpen, accountLoading, isDemo } = useWorkspace()
   if (accountLoading || canOpen(module)) return <>{children}</>
-  return <Navigate to={isDemo ? '/demo-review' : '/clinic-os/dashboard'} replace />
+  return <Navigate to={isDemo ? '/demo-review' : '/dashboard'} replace />
 }
 
 /** Like ModuleRoute, for pages gated by a single permission rather than an industry module. */
 export function PermissionRoute({ permission, children }: { permission: string; children: ReactNode }) {
   const { can, accountLoading, isDemo } = useWorkspace()
   if (accountLoading || can(permission)) return <>{children}</>
-  return <Navigate to={isDemo ? '/demo-review' : '/clinic-os/dashboard'} replace />
+  return <Navigate to={isDemo ? '/demo-review' : '/dashboard'} replace />
 }

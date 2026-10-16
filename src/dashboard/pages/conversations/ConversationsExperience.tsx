@@ -55,7 +55,7 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const pushToast = useToast()
-  const base = isDemo ? '/demo-review' : '/clinic-os/dashboard'
+  const base = isDemo ? '/demo-review' : '/dashboard'
   const showVoice = hasModule('voice')
   const showTickets = hasModule('tickets')
 
