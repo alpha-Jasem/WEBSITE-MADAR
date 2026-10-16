@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../supabase'
+import { useRealtimeRefetch } from '../realtime'
 
 // Team activity on a conversation (notes, status, assignment, replies) and saved quick
 // replies. Backed by conversation_events / canned_replies (migration 20261013120000).
@@ -95,6 +96,10 @@ export function useConversationEvents(companyId: string | null, isDemo: boolean)
     listeners.add(load)
     return () => { listeners.delete(load) }
   }, [load])
+
+  // Notes, status, assignment and transfers made by teammates arrive live.
+  useRealtimeRefetch(`events_${companyId}`, [{ table: 'conversation_events', filter: `company_id=eq.${companyId}` }],
+    () => { void load() }, !isDemo && !!companyId)
 
   return { events: map, available }
 }

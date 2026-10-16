@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { useRealtimeRefetch } from './realtime'
 import { supabase } from './supabase'
 import {
   DEMO_DOCTORS, DEMO_SERVICES, DEMO_PATIENTS, DEMO_APPOINTMENTS,
@@ -71,15 +72,17 @@ function useFetchRealtime<T>(
   const [data, setData] = useState<T | undefined>(undefined)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [live, setLive] = useState(false)
-  const instanceId = useState(() => Math.random().toString(36).slice(2))[0]
+  const loaded = useRef(false)
 
-  const run = useCallback(async () => {
-    setLoading(true)
+  // A background refetch (from a live event) keeps the current rows on screen: no
+  // skeleton flash. Only the first load and a changed query show the loading state.
+  const runWith = useCallback(async (background: boolean) => {
+    if (!background || !loaded.current) setLoading(true)
     try {
       const result = await fetcher()
       setData(result)
       setError(null)
+      loaded.current = true
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'خطأ غير متوقع')
     } finally {
@@ -88,20 +91,17 @@ function useFetchRealtime<T>(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)
 
-  useEffect(() => { run() }, [run])
+  const run = useCallback(() => runWith(false), [runWith])
+  const background = useCallback(() => { void runWith(true) }, [runWith])
 
-  useEffect(() => {
-    if (isDemo || !companyId) { setLive(false); return }
-    const channel = supabase
-      .channel(`rt_${realtimeTable}_${companyId}_${instanceId}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: realtimeTable, filter: `company_id=eq.${companyId}` },
-        () => { run() },
-      )
-      .subscribe((status) => { setLive(status === 'SUBSCRIBED') })
-    return () => { supabase.removeChannel(channel); setLive(false) }
-  }, [realtimeTable, companyId, isDemo, run, instanceId])
+  useEffect(() => { loaded.current = false; run() }, [run])
+
+  const live = useRealtimeRefetch(
+    `${realtimeTable}_${companyId}`,
+    [{ table: realtimeTable, filter: `company_id=eq.${companyId}` }],
+    background,
+    !isDemo && !!companyId,
+  )
 
   return { data, loading, error, refetch: run, live }
 }
