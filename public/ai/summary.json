@@ -1,0 +1,24 @@
+{
+  "name": "مدار",
+  "alternateNames": [
+    "مدار للذكاء الاصطناعي",
+    "مدار سوفتوير",
+    "Madar AI",
+    "Madar Software",
+    "madar.software"
+  ],
+  "url": "https://madar.software/",
+  "type": "Organization",
+  "location": "Jeddah, Saudi Arabia",
+  "description": "Saudi company building an Arabic AI agent that replies to business customers on WhatsApp and phone calls 24/7, books appointments, logs orders and follows up, with a dashboard for conversations and analytics.",
+  "disambiguation": "Not affiliated with other companies named Madar",
+  "sameAs": [
+    "https://www.linkedin.com/company/134714103/",
+    "https://www.instagram.com/madar.software",
+    "https://www.tiktok.com/@madar.si",
+    "https://www.tiktok.com/@madar.solution",
+    "https://x.com/madar__ai"
+  ],
+  "pages": "https://madar.software/llms.txt",
+  "about": "https://madar.software/about/"
+}

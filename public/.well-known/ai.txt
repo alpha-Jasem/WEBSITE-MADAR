@@ -1,0 +1,14 @@
+# madar.software
+Name: مدار للذكاء الاصطناعي (Madar AI)
+Description: Saudi company in Jeddah building an Arabic AI agent for WhatsApp and phone calls
+Canonical: https://madar.software/
+llms: https://madar.software/llms.txt
+Summary: https://madar.software/ai/summary.json
+About: https://madar.software/about/
+Contact: Jasemaltubaishi@gmail.com
+Social: https://www.linkedin.com/company/134714103/
+Social: https://x.com/madar__ai
+Social: https://www.instagram.com/madar.software
+Social: https://www.tiktok.com/@madar.si
+Social: https://www.tiktok.com/@madar.solution
+Disambiguation: Not affiliated with other companies named Madar

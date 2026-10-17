@@ -28,6 +28,21 @@
     Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
+  for = "/signal/frames/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/privacy"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+
+[[headers]]
+  for = "/terms"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+
+[[headers]]
   for = "/commercial-registration.pdf"
   [headers.values]
     Content-Type = "application/pdf"
