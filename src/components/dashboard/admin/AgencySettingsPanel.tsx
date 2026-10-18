@@ -5,6 +5,7 @@ import { dateShort, nf, timeShort } from '../../../lib/format'
 
 interface Settings { vat_rate: number; vat_registered: boolean; min_margin_pct: number; renewal_alert_days: number; payroll_enabled: boolean; attribution_window_days: number | null; attribution_priority: string | null }
 interface Source { id: string; name: string; feed_url: string; active: boolean }
+interface TodoistState { configured: boolean; projects: { id: string; name: string; inbox: boolean }[]; selected: string[]; last_ok_at?: string | null; last_error?: string | null }
 interface Backup { id: string; status: string; tables: Record<string, number>; bytes: number | null; storage_path: string | null; started_at: string; error: string | null; restore_tested_at: string | null; restore_test_note: string }
 
 // Agency-wide settings: tax, margin guard, renewal alerts, attribution terms, news sources and backups.
@@ -15,6 +16,7 @@ export function AgencySettingsPanel() {
   const [src, setSrc] = useState({ name: '', feed_url: '' })
   const [msg, setMsg] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
+  const [td, setTd] = useState<TodoistState | null>(null)
 
   const load = useCallback(async () => {
     const [a, b, c] = await Promise.all([
@@ -26,6 +28,21 @@ export function AgencySettingsPanel() {
     setSources((b.data ?? []) as Source[]); setBackups((c.data ?? []) as Backup[])
   }, [])
   useEffect(() => { load() }, [load])
+  useEffect(() => {
+    supabase.functions.invoke('todoist-sync', { body: { action: 'status' } }).then(({ data }) => { if (data) setTd({ configured: !!data.configured, projects: data.projects ?? [], selected: data.selected ?? [], last_ok_at: data.last_ok_at, last_error: data.last_error }) })
+  }, [])
+  const toggleProject = async (id: string) => {
+    if (!td) return
+    const selected = td.selected.includes(id) ? td.selected.filter(x => x !== id) : [...td.selected, id]
+    setTd({ ...td, selected })
+    await supabase.from('agency_settings').update({ todoist_project_ids: selected }).eq('id', 1)
+  }
+  const syncTodoist = async () => {
+    setBusy('todoist')
+    const { data, error } = await supabase.functions.invoke('todoist-sync', { body: { action: 'sync' } })
+    setMsg(error || !data?.ok ? `تعذّرت المزامنة: ${data?.error ?? ''}` : data.needs_project ? 'اختر مشروعًا واحدًا على الأقل ثم زامن.' : `تمت المزامنة: ${nf(data.pulled)} جديدة من Todoist، ${nf(data.pushed)} أُرسلت إليه، ${nf(data.closed + data.completed_remotely)} مكتملة`)
+    setBusy(null)
+  }
 
   const save = async (patch: Partial<Settings>) => {
     if (!s) return
@@ -78,6 +95,24 @@ export function AgencySettingsPanel() {
           <label style={{ display: 'flex', gap: 10, alignItems: 'center', opacity: .7 }}>
             <input type="checkbox" disabled checked={s.payroll_enabled} style={{ width: 'auto' }} /> الرواتب <span className="mc-st mc-n2">قريبًا</span> <span className="mc-delta">معطلة افتراضيًا ولا تظهر في التقارير؛ تكاليف AI والأدوات تُسجل كمصروفات تشغيل.</span>
           </label>
+        </div>
+      </article>
+
+      <article className="mc-card" style={{ marginBottom: 14 }}>
+        <div className="mc-ph"><h3>Todoist</h3><button className="mc-btn2 p" disabled={busy === 'todoist' || !td?.configured || (td?.selected.length ?? 0) === 0} onClick={syncTodoist}>{busy === 'todoist' ? 'جاري المزامنة…' : 'زامن الآن'}</button></div>
+        <div className="mc-delta" style={{ padding: '0 20px 10px', lineHeight: 1.8 }}>مزامنة باتجاهين لمهامك الشخصية فقط: ما تضيفه في Todoist يظهر في «مهام اليوم»، وما تضيفه هنا يُنشأ في Todoist. إكمالها من أي طرف ينعكس على الآخر. لا تُرسل مهام العملاء ولا الإيجنتات إلى Todoist. كل 10 دقائق تلقائيًا.</div>
+        <div style={{ padding: '0 20px 16px', display: 'grid', gap: 8 }}>
+          {!td ? <div className="mc-flat">جاري الفحص…</div> : !td.configured ? <div className="mc-flat">غير مهيأ: التوكن غير مضبوط على الخادم.</div> : (
+            <>
+              <div className="mc-delta">اختر المشاريع التي تتزامن (لن يُستورد شيء قبل اختيارك):</div>
+              {td.projects.map(p => (
+                <label key={p.id} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <input type="checkbox" style={{ width: 'auto' }} checked={td.selected.includes(p.id)} onChange={() => toggleProject(p.id)} />{p.name}{p.inbox && <span className="mc-st mc-n2">Inbox</span>}
+                </label>
+              ))}
+              <div className="mc-delta">{td.last_error ? `آخر خطأ: ${td.last_error}` : td.last_ok_at ? `آخر مزامنة ناجحة: ${dateShort(td.last_ok_at)} ${timeShort(td.last_ok_at)}` : 'لم تتم مزامنة بعد.'}</div>
+            </>
+          )}
         </div>
       </article>
 

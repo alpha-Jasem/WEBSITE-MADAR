@@ -11,6 +11,7 @@ import { dateShort, monthKey, nf, riyadhDayStart, sar, timeShort } from '../../.
 
 interface Task { id: string; title: string; due_at: string | null; priority: 'high' | 'medium' | 'low'; done: boolean; done_at: string | null }
 interface Check { key: string; label: string; status: string }
+interface TdState { ids: string[]; ok: string | null; err: string | null }
 interface NewsItem { id: string; title: string; link: string; published_at: string | null; news_sources: { name: string } | null }
 interface AgentRow { id: string; name: string; status: string; daily_message_cap: number }
 interface Extras { overdueInvoices: number; draftsToReview: number; bankNotices: number; blockedItems: number; renewals: { customer_name: string; renews_at: string }[]; sources: number; news: NewsItem[]; agents: AgentRow[]; sentToday: Record<string, number> }
@@ -50,6 +51,7 @@ export const AdminCommandDeck = () => {
   const [hover, setHover] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [refunds, setRefunds] = useState<RefundRow[]>([])
+  const [tdState, setTdState] = useState<TdState>({ ids: [], ok: null, err: null })
   const [x, setX] = useState<Extras>(NO_EXTRAS)
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
@@ -73,6 +75,9 @@ export const AdminCommandDeck = () => {
     setTasks((t.data ?? []) as Task[])
     setGoal(g.data ? Number(g.data.target) : null)
     setChecks((c.data ?? []) as Check[])
+
+    const st = await supabase.from('agency_settings').select('todoist_project_ids, todoist_last_ok_at, todoist_last_error').eq('id', 1).maybeSingle()
+    if (st.data) setTdState({ ids: st.data.todoist_project_ids ?? [], ok: st.data.todoist_last_ok_at, err: st.data.todoist_last_error })
 
     const dayStart = riyadhDayStart().toISOString()
     const horizon = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10)
@@ -173,13 +178,15 @@ export const AdminCommandDeck = () => {
     setTasks(ts => [data as Task, ...ts])
     setTaskTitle('')
     setAdding(false)
+    if (tdState.ids.length > 0) void supabase.functions.invoke('todoist-sync', { body: { action: 'sync' } }).then(load)
   }
   const toggleTask = async (t: Task) => {
     const done = !t.done
     const done_at = done ? new Date().toISOString() : null
     setTasks(ts => ts.map(x => (x.id === t.id ? { ...x, done, done_at } : x)))
-    const { error: e } = await supabase.from('admin_tasks').update({ done, done_at }).eq('id', t.id)
+    const { error: e } = await supabase.from('admin_tasks').update({ done, done_at, updated_at: new Date().toISOString() }).eq('id', t.id)
     if (e) load()
+    else if (tdState.ids.length > 0) void supabase.functions.invoke('todoist-sync', { body: { action: 'sync' } })
   }
   const saveGoal = async () => {
     const target = Number(goalInput)
@@ -262,7 +269,7 @@ export const AdminCommandDeck = () => {
       {/* tasks + Jarvis */}
       <section className="mc-g2">
         <article className="mc-card">
-          <div className="mc-ph"><h3>مهام اليوم</h3><div className="mc-sub"><span className="mc-live mc-off" />Todoist غير متصل</div></div>
+          <div className="mc-ph"><h3>مهام اليوم</h3><div className="mc-sub"><span className={`mc-live ${tdState.ids.length > 0 && !tdState.err && tdState.ok ? '' : 'mc-off'}`} />{tdState.ids.length === 0 ? <button className="mc-linkbtn" onClick={() => navigate('/admin/settings')}>Todoist: اختر مشروعًا</button> : tdState.err ? `Todoist: خطأ في المزامنة` : tdState.ok ? `Todoist متزامن · ${timeShort(tdState.ok)}` : 'Todoist: لم يُزامَن بعد'}</div></div>
           {visibleTasks.length === 0 && <div className="mc-flat">لا توجد مهام لليوم.</div>}
           {visibleTasks.map(t => (
             <div key={t.id} className={`mc-task ${t.done ? 'mc-done' : ''}`}>

@@ -127,6 +127,16 @@ Deno.serve(async req => {
     return value.ok ? { status: 'ok', detail: 'المفتاح صالح', latency_ms: ms } : { status: 'failed', detail: `HTTP ${value.status}`, latency_ms: ms }
   })
 
+  await guard('todoist', 'Todoist', async () => {
+    const tk = Deno.env.get('TODOIST_API_TOKEN')
+    if (!tk) return { status: 'not_configured', detail: 'TODOIST_API_TOKEN غير مضبوط' }
+    const { value, ms } = await timed(() => fetch('https://api.todoist.com/api/v1/projects?limit=1', { headers: { Authorization: `Bearer ${tk}` } }))
+    if (!value.ok) return { status: 'failed', detail: `HTTP ${value.status}`, latency_ms: ms }
+    const { data: st } = await service.from('agency_settings').select('todoist_project_ids, todoist_last_error').eq('id', 1).maybeSingle()
+    if (!st?.todoist_project_ids?.length) return { status: 'degraded', detail: 'التوكن صالح لكن لم تُختر مشاريع للمزامنة', latency_ms: ms }
+    return st.todoist_last_error ? { status: 'degraded', detail: `آخر مزامنة فشلت: ${st.todoist_last_error}`, latency_ms: ms } : { status: 'ok', detail: 'التوكن صالح والمزامنة تعمل', latency_ms: ms }
+  })
+
   await guard('moyasar', 'Moyasar (المدفوعات)', async () => {
     if (!Deno.env.get('MOYASAR_SECRET_KEY')) return { status: 'not_configured', detail: 'MOYASAR_SECRET_KEY غير مضبوط' }
     return { status: 'unchecked', detail: 'المفتاح موجود، لم تُجرَ مكالمة اختبار ولم تُستدع الدفعات من الواجهة بعد' }
