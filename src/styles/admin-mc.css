@@ -204,3 +204,13 @@
 .mc-card button.mc-act,.mc-card button.mc-tile{font:inherit}
 .mc-tip{position:absolute;pointer-events:none;background:#0a1740;border:1px solid var(--line-2);border-radius:10px;padding:8px 14px;font-size:12.5px;z-index:2;white-space:nowrap}
 .mc-tip b{font:700 15px var(--head)}
+
+/* Modal fields must never be wider than the modal (inputs have an intrinsic width) */
+.mc-modal{grid-template-columns:minmax(0,1fr)}
+.mc-modal > *{min-width:0}
+.mc-field{min-width:0}
+.mc-field input,.mc-field select,.mc-field textarea{width:100%;min-width:0;box-sizing:border-box}
+.mc-grid2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.mc-modal-bg{overflow-y:auto}
+.mc-modal{overflow-x:hidden}
+@media (max-width:860px){.mc-grid2{grid-template-columns:minmax(0,1fr)}}
