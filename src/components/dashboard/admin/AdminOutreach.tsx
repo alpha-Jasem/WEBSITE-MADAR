@@ -51,6 +51,9 @@ const QUICK_QUERIES = [
   { ar: 'مطاعم', en: 'restaurant' },
   { ar: 'مكاتب عقارية', en: 'real estate office' },
   { ar: 'صالونات', en: 'salon' },
+  { ar: 'مقاولات', en: 'contracting company' },
+  { ar: 'متاجر', en: 'store' },
+  { ar: 'مغاسل سيارات', en: 'car wash' },
 ]
 const CITIES = [
   { ar: 'جدة', en: 'Jeddah' }, { ar: 'الرياض', en: 'Riyadh' }, { ar: 'مكة المكرمة', en: 'Makkah' },
@@ -67,6 +70,13 @@ const DEFAULT_TEMPLATES: Record<TemplateKey, string> = {
   reminder: 'مرحباً مرة ثانية 👋 أتابع معك بخصوص {name}. ودي أعرض عليك كيف نخلي واتساب يرد ويحجز عنك تلقائياً. متى يناسبك؟',
   meeting: 'يسعدني نجلس 15 دقيقة نوريك النظام على {name}. وش الوقت المناسب لك هالأسبوع؟',
   offer: 'هذا عرضنا لـ {name}: {offer_link}\nأي سؤال أنا حاضر.',
+  confirm: 'تم تأكيد اجتماعنا {time} 🗓\nرابط الاجتماع: {meet_link}\nنتشرف بك.',
+}
+const SITE_TEMPLATES: Record<TemplateKey, string> = {
+  first: 'مرحباً، أنا جاسم من مادار. لاحظت أن {name} ما عنده موقع إلكتروني، ونبني مواقع جاهزة للمطاعم والعقارات والمتاجر تستقبل الطلبات والحجوزات. تحب أرسل لك نموذجاً تجريبياً لنشاطك؟',
+  reminder: 'مرحباً مرة ثانية 👋 بخصوص موقع {name}. جهزنا لك فكرة سريعة وأقدر أوريك نموذجها. متى يناسبك؟',
+  meeting: 'يسعدني أعرض عليك نموذج موقع {name} في 10 دقائق. وش الوقت المناسب لك هالأسبوع؟',
+  offer: 'هذا عرض موقع {name}: {offer_link}\nأي سؤال أنا حاضر.',
   confirm: 'تم تأكيد اجتماعنا {time} 🗓\nرابط الاجتماع: {meet_link}\nنتشرف بك.',
 }
 const STORE = { templates: 'madar_outreach_templates', settings: 'madar_outreach_settings' }
@@ -218,7 +228,9 @@ const CSS = `
 @media(prefers-reduced-motion:reduce){.ol *{transition:none!important}}
 `
 
-export const AdminOutreach = () => {
+export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' }) => {
+  const siteMode = mode === 'no-website'
+  const storeKey = siteMode ? STORE.templates + '_site' : STORE.templates
   const [leads, setLeads] = useState<OutreachLead[]>([])
   const [loading, setLoading] = useState(true)
   const [todayCount, setTodayCount] = useState(0)
@@ -239,12 +251,13 @@ export const AdminOutreach = () => {
   const [search, setSearch] = useState(initialQ)
   const [statusFilter, setStatusFilter] = useState<'all' | Status>(initialQ ? 'all' : 'new')
   const [mobileOnly, setMobileOnly] = useState(!initialQ)
+  const [catFilter, setCatFilter] = useState('all')
   const [sort, setSort] = useState<'priority' | 'newest'>('priority')
   const [limit, setLimit] = useState(PAGE_SIZE)
   const [openId, setOpenId] = useState<string | null>(null)
 
   // settings / templates
-  const [templates, setTemplates] = useState<Record<TemplateKey, string>>(() => loadJson(STORE.templates, DEFAULT_TEMPLATES))
+  const [templates, setTemplates] = useState<Record<TemplateKey, string>>(() => loadJson(storeKey, siteMode ? SITE_TEMPLATES : DEFAULT_TEMPLATES))
   const [settings, setSettings] = useState<Settings>(() => loadJson(STORE.settings, { meetLink: '', offerLink: '' }))
   const [showSettings, setShowSettings] = useState(false)
   const [showStats, setShowStats] = useState(false)
@@ -334,7 +347,7 @@ export const AdminOutreach = () => {
   const updateTemplate = (key: TemplateKey, value: string) => {
     const next = { ...templates, [key]: value }
     setTemplates(next)
-    saveJson(STORE.templates, next)
+    saveJson(storeKey, next)
   }
 
   /* ---------- fetching new leads ---------- */
@@ -487,9 +500,16 @@ export const AdminOutreach = () => {
     const base = sort === 'priority' ? scored.sorted : leads
     return base.filter(l =>
       (statusFilter === 'all' || l.status === statusFilter) &&
+      (!siteMode || !l.website) &&
+      (catFilter === 'all' || l.category === catFilter) &&
       (!mobileOnly || l.is_mobile) &&
       (!q || l.name.toLowerCase().includes(q) || l.phone.includes(q) || l.category.toLowerCase().includes(q) || l.city.toLowerCase().includes(q)))
-  }, [leads, scored, search, statusFilter, mobileOnly, sort])
+  }, [leads, scored, search, statusFilter, mobileOnly, sort, siteMode, catFilter])
+
+  const categories = useMemo(() => {
+    const pool = siteMode ? leads.filter(l => !l.website) : leads
+    return [...new Set(pool.map(l => l.category).filter(Boolean))].sort()
+  }, [leads, siteMode])
 
   const totals = useMemo(() => {
     const c = (f: (l: OutreachLead) => boolean) => leads.filter(f).length
@@ -532,7 +552,7 @@ export const AdminOutreach = () => {
     return (
       <div key={l.id} className={`lead ${scored.hotIds.has(l.id) && l.status === 'new' ? 'hot' : ''}`}>
         <div className="c-name">
-          <div className="nm">{l.name}{scored.hotIds.has(l.id) && l.status === 'new' && <span className="hotb">أولوية عالية</span>}</div>
+          <div className="nm">{l.name}{scored.hotIds.has(l.id) && l.status === 'new' && <span className="hotb">أولوية عالية</span>}{!l.website && <span className="hotb" style={{ background: '#6d3fb8' }}>بدون موقع</span>}</div>
           <div className="cat">{l.category}{l.city ? ` · ${l.city}` : ''}{l.rating ? ` · ★ ${l.rating} (${l.reviews ?? 0})` : ''}</div>
         </div>
         <div>
@@ -601,7 +621,7 @@ export const AdminOutreach = () => {
       <div className="row2">
         {/* ---- order slip ---- */}
         <aside className={`slip ${panelOpen ? '' : 'closed'}`}>
-          <div><div className="eb">OUTREACH · طلب جلب</div><h2>كم عميل تبغى اليوم؟</h2></div>
+          <div><div className="eb">{siteMode ? 'WEBSITES · عملاء بدون موقع' : 'OUTREACH · طلب جلب'}</div><h2>{siteMode ? 'جيب أنشطة ما عندها موقع' : 'كم عميل تبغى اليوم؟'}</h2>{siteMode && <div className="note" style={{ marginTop: 6 }}>اختر القطاع والمدينة. الجلب يستورد كل الأنشطة، وهذه الصفحة تعرض منها اللي ما فيها موقع فقط.</div>}</div>
           <div><div className="lbl">المصدر</div>
             <div className="chips">
               <button className="chip" aria-pressed={source === 'google_maps'} disabled={fetching} onClick={() => setSource('google_maps')}>خرائط قوقل</button>
@@ -667,6 +687,12 @@ export const AdminOutreach = () => {
                 <option value="priority">الأولوية أولاً</option>
                 <option value="newest">الأحدث</option>
               </select>
+              {categories.length > 1 && (
+                <select aria-label="القطاع" value={catFilter} onChange={e => { setCatFilter(e.target.value); setLimit(PAGE_SIZE) }}>
+                  <option value="all">كل القطاعات</option>
+                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              )}
               <button className="chip" aria-pressed={mobileOnly} onClick={() => setMobileOnly(m => !m)}>جوالات فقط</button>
               <button className="chip" aria-pressed={showStats} onClick={() => setShowStats(s => !s)}>📊 النتائج</button>
               <button className="chip" aria-pressed="false" onClick={() => exportCsv(filtered)}>⬇ تصدير Excel</button>

@@ -22,6 +22,8 @@ export interface Deal {
   source: string
   sourced_by: string
   closed_by: string
+  owner_type?: 'owner' | 'agent'
+  agent_paused?: boolean
   service: string
   value_net: number | null
   last_contact_at: string | null

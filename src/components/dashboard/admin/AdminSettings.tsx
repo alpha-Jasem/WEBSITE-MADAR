@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState } from 'react'
 import { IntegrationHealthPanel } from './IntegrationHealthPanel'
+import { AgencySettingsPanel } from './AgencySettingsPanel'
 import { supabase } from '../../../lib/supabase'
 import type { Company, Plan } from '../../../types'
 import { PLAN_LABELS, PLAN_PRICES } from '../../../lib/constants'
@@ -177,6 +178,7 @@ export const AdminSettings = () => {
             </div>
           </div>
           <IntegrationHealthPanel />
+          <AgencySettingsPanel />
         </div>
       )}
     </div>

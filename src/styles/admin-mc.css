@@ -256,3 +256,7 @@ body.plasma-admin[data-mc-theme="light"]{background:#eef2fb !important}
 .mc-root[data-mc-theme="light"] .page input,.mc-root[data-mc-theme="light"] .page select,.mc-root[data-mc-theme="light"] .page textarea{color:var(--ink)}
 .mc-theme{width:34px;height:34px;display:grid;place-items:center;color:var(--ink-2);border-radius:10px}
 .mc-theme:hover{background:var(--fill)}
+
+.mc-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.mc-chipbtn{height:34px;padding:0 14px;border-radius:99px;border:1px solid var(--line);background:var(--fill);color:var(--ink-2);font:600 13px var(--head)}
+.mc-chipbtn.mc-on{background:rgba(47,107,255,.2);border-color:var(--blue);color:var(--ink)}

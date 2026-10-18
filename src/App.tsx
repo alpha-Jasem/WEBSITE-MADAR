@@ -38,6 +38,7 @@ if (typeof window !== 'undefined') {
 }
 
 
+const MarketerPortal    = lazy(() => import('./pages/MarketerPortal'))
 const AdminDashboard    = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
 
 // ClinicOS
@@ -186,6 +187,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/marketer" element={<ProtectedRoute requiredRole="marketer"><MarketerPortal /></ProtectedRoute>} />
             <Route path="/client/*" element={<Navigate to="/dashboard" replace />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />

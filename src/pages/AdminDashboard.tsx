@@ -16,6 +16,12 @@ import { AdminOutreach } from '../components/dashboard/admin/AdminOutreach'
 import { AdminFinance } from '../components/dashboard/admin/AdminFinance'
 import { AdminCampaigns } from '../components/dashboard/admin/AdminCampaigns'
 import { AdminMarketers } from '../components/dashboard/admin/AdminMarketers'
+import { AdminQuotes } from '../components/dashboard/admin/AdminQuotes'
+import { AdminExpenses } from '../components/dashboard/admin/AdminExpenses'
+import { AdminBankNotices } from '../components/dashboard/admin/AdminBankNotices'
+import { AdminOnboarding } from '../components/dashboard/admin/AdminOnboarding'
+import { AdminAgentsControl } from '../components/dashboard/admin/AdminAgentsControl'
+import { AdminCallAssistant } from '../components/dashboard/admin/AdminCallAssistant'
 
 export const AdminDashboard = () => {
   return (
@@ -35,9 +41,16 @@ export const AdminDashboard = () => {
         <Route path="api" element={<AdminAPI />} />
         <Route path="sales-blitz" element={<AdminSalesBlitz />} />
         <Route path="outreach" element={<AdminOutreach />} />
+        <Route path="no-website" element={<AdminOutreach mode="no-website" />} />
         <Route path="finance" element={<AdminFinance />} />
         <Route path="campaigns" element={<AdminCampaigns />} />
         <Route path="marketers" element={<AdminMarketers />} />
+        <Route path="quotes" element={<AdminQuotes />} />
+        <Route path="expenses" element={<AdminExpenses />} />
+        <Route path="bank" element={<AdminBankNotices />} />
+        <Route path="onboarding" element={<AdminOnboarding />} />
+        <Route path="agents-control" element={<AdminAgentsControl />} />
+        <Route path="call-assistant" element={<AdminCallAssistant />} />
         <Route path="*" element={<AdminCommandDeck />} />
       </Routes>
     </PlasmaAdminShell>

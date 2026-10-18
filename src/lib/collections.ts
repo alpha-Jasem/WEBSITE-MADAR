@@ -34,11 +34,11 @@ export function sumConfirmed(rows: PaymentRow[], from: Date, to: Date) {
 }
 
 /** Confirmed collection per Riyadh day for the last `days` days, oldest first. */
-export function dailyCollection(rows: PaymentRow[], days: number, now: Date = new Date()) {
+export function dailyCollection(rows: PaymentRow[], days: number, now: Date = new Date(), refunds: RefundRow[] = []) {
   const today = riyadhDayStart(now).getTime()
   return Array.from({ length: days }, (_, i) => {
     const start = new Date(today - (days - 1 - i) * 86400000)
-    return { start, total: sumConfirmed(rows, start, new Date(start.getTime() + 86400000)) }
+    return { start, total: netCollection(rows, refunds, start, new Date(start.getTime() + 86400000)) }
   })
 }
 
@@ -76,7 +76,7 @@ export function bucketWindow(period: Period, k: number, now: Date = new Date()) 
 }
 
 /** Collection per bucket for the latest n buckets, plus the same buckets one whole series earlier. */
-export function collectionSeries(rows: PaymentRow[], period: Period, now: Date = new Date()) {
+export function collectionSeries(rows: PaymentRow[], period: Period, now: Date = new Date(), refunds: RefundRow[] = []) {
   const n = period === 'day' ? 7 : period === 'week' ? 8 : 6
   const out = Array.from({ length: n }, (_, i) => {
     const k = -(n - 1 - i)
@@ -84,9 +84,23 @@ export function collectionSeries(rows: PaymentRow[], period: Period, now: Date =
     const prev = bucketWindow(period, k - n, now)
     return {
       start: cur.start,
-      current: sumConfirmed(rows, cur.start, cur.end),
-      previous: sumConfirmed(rows, prev.start, prev.end),
+      current: netCollection(rows, refunds, cur.start, cur.end),
+      previous: netCollection(rows, refunds, prev.start, prev.end),
     }
   })
   return out
+}
+
+export interface RefundRow { id: string; payment_id: string; amount: number; status: 'requested' | 'approved' | 'executed' | 'rejected'; executed_at: string | null }
+
+/** Refunds executed inside a window. Requested or approved refunds do not reduce collection until executed. */
+export function sumRefunds(refunds: RefundRow[], from: Date, to: Date) {
+  return refunds
+    .filter(r => r.status === 'executed' && r.executed_at && new Date(r.executed_at) >= from && new Date(r.executed_at) < to)
+    .reduce((s, r) => s + Number(r.amount), 0)
+}
+
+/** Net collection: confirmed payments minus refunds executed in the same window. The original rows are never removed. */
+export function netCollection(payments: PaymentRow[], refunds: RefundRow[], from: Date, to: Date) {
+  return sumConfirmed(payments, from, to) - sumRefunds(refunds, from, to)
 }

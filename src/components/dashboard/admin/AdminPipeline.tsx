@@ -50,6 +50,13 @@ export const AdminPipeline = () => {
       { type: 'stage_change', data: { from: deal.stage, to: stage } })
   }
 
+  // "I take the deal": the owner holds it, the agent stops, and scheduled drafts for it are cancelled until it is handed back.
+  const takeDeal = async (deal: Deal) => {
+    await patchDeal(deal, { owner_type: 'owner', agent_paused: true } as Partial<Deal>, { type: 'handover_to_owner', data: {} })
+    await supabase.from('agent_drafts').update({ status: 'cancelled' }).eq('deal_id', deal.id).in('status', ['draft', 'approved'])
+  }
+  const giveBack = (deal: Deal) => patchDeal(deal, { owner_type: 'agent', agent_paused: false } as Partial<Deal>, { type: 'handover_to_agent', data: {} })
+
   const openDeal = async (deal: Deal) => {
     if (openId === deal.id) { setOpenId(null); return }
     setOpenId(deal.id)
@@ -98,6 +105,9 @@ export const AdminPipeline = () => {
         {DEAL_STAGES.map(s => <option key={s} value={s}>{STAGE_LABEL[s]}</option>)}
       </select>
       {d.lost_reason && <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>السبب: {d.lost_reason}</div>}
+      {d.agent_paused || d.owner_type === 'owner'
+        ? <button className="btn btn-ghost" onClick={() => giveBack(d)} style={{ fontSize: 12 }}>بيدك الآن · أعدها للإيجنت</button>
+        : <button className="btn btn-ghost" onClick={() => takeDeal(d)} style={{ fontSize: 12 }}>أتولى الصفقة</button>}
       {openId === d.id && (
         <div style={{ borderTop: '1px solid var(--line)', paddingTop: 8, display: 'grid', gap: 4, fontSize: 12, color: 'var(--ink-3)' }}>
           {d.last_contact_at && <div>آخر تواصل: {dateShort(d.last_contact_at)} {timeShort(d.last_contact_at)}</div>}

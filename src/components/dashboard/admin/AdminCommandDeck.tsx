@@ -6,11 +6,15 @@ import { McIcon, type McIconName } from './mcIcons'
 import type { Deal } from '../../../lib/deals'
 import { STAGE_LABEL, isClosed, stageRank, type DealStage } from '../../../lib/dealStages'
 import { buildBrief } from '../../../lib/jarvis'
-import { bucketWindow, collectionSeries, dailyCollection, goalProgress, pctChange, sumConfirmed, type PaymentRow, type Period } from '../../../lib/collections'
+import { bucketWindow, collectionSeries, dailyCollection, goalProgress, netCollection, pctChange, type PaymentRow, type Period, type RefundRow } from '../../../lib/collections'
 import { dateShort, monthKey, nf, riyadhDayStart, sar, timeShort } from '../../../lib/format'
 
 interface Task { id: string; title: string; due_at: string | null; priority: 'high' | 'medium' | 'low'; done: boolean; done_at: string | null }
 interface Check { key: string; label: string; status: string }
+interface NewsItem { id: string; title: string; link: string; published_at: string | null; news_sources: { name: string } | null }
+interface AgentRow { id: string; name: string; status: string; daily_message_cap: number }
+interface Extras { overdueInvoices: number; draftsToReview: number; bankNotices: number; blockedItems: number; renewals: { customer_name: string; renews_at: string }[]; sources: number; news: NewsItem[]; agents: AgentRow[]; sentToday: Record<string, number> }
+const NO_EXTRAS: Extras = { overdueInvoices: 0, draftsToReview: 0, bankNotices: 0, blockedItems: 0, renewals: [], sources: 0, news: [], agents: [], sentToday: {} }
 
 const PRIORITY = {
   high: { label: '', color: '#ff6b6b' },
@@ -45,6 +49,8 @@ export const AdminCommandDeck = () => {
   const [period, setPeriod] = useState<Period>('day')
   const [hover, setHover] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [refunds, setRefunds] = useState<RefundRow[]>([])
+  const [x, setX] = useState<Extras>(NO_EXTRAS)
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
   const [taskTitle, setTaskTitle] = useState('')
@@ -67,6 +73,30 @@ export const AdminCommandDeck = () => {
     setTasks((t.data ?? []) as Task[])
     setGoal(g.data ? Number(g.data.target) : null)
     setChecks((c.data ?? []) as Check[])
+
+    const dayStart = riyadhDayStart().toISOString()
+    const horizon = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10)
+    const [rf, ib, dr, bn, ob, ct, ni, ns, ag, sent] = await Promise.all([
+      supabase.from('refunds').select('id, payment_id, amount, status, executed_at').eq('status', 'executed').limit(1000),
+      supabase.from('invoice_balances').select('grand_total, paid, refunded, due_at, status').eq('status', 'issued').limit(500),
+      supabase.from('agent_drafts').select('id', { count: 'exact', head: true }).eq('status', 'draft'),
+      supabase.from('bank_notifications').select('id', { count: 'exact', head: true }).eq('status', 'awaiting_verification'),
+      supabase.from('onboarding_items').select('id', { count: 'exact', head: true }).eq('status', 'blocked'),
+      supabase.from('contracts').select('customer_name, renews_at').in('status', ['signed', 'active']).not('renews_at', 'is', null).lte('renews_at', horizon).order('renews_at').limit(5),
+      supabase.from('news_items').select('id, title, link, published_at, news_sources(name)').order('published_at', { ascending: false, nullsFirst: false }).limit(3),
+      supabase.from('news_sources').select('id', { count: 'exact', head: true }).eq('active', true),
+      supabase.from('sales_agents').select('id, name, status, daily_message_cap').order('created_at').limit(3),
+      supabase.from('agent_drafts').select('agent_id').eq('status', 'sent').gte('sent_at', dayStart),
+    ])
+    setRefunds(((rf.data ?? []) as RefundRow[]).map(r => ({ ...r, amount: Number(r.amount) })))
+    const sentToday: Record<string, number> = {}
+    ;(sent.data ?? []).forEach(r => { sentToday[r.agent_id as string] = (sentToday[r.agent_id as string] ?? 0) + 1 })
+    setX({
+      overdueInvoices: ((ib.data ?? []) as { grand_total: number; paid: number; refunded: number; due_at: string | null }[]).filter(b => b.due_at && new Date(b.due_at) < new Date() && Number(b.paid) - Number(b.refunded) < Number(b.grand_total) - 0.01).length,
+      draftsToReview: dr.count ?? 0, bankNotices: bn.count ?? 0, blockedItems: ob.count ?? 0,
+      renewals: (ct.data ?? []) as { customer_name: string; renews_at: string }[], sources: ns.count ?? 0,
+      news: (ni.data ?? []) as unknown as NewsItem[], agents: (ag.data ?? []) as AgentRow[], sentToday,
+    })
     setLoading(false)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -76,12 +106,12 @@ export const AdminCommandDeck = () => {
   const now = new Date()
   const today = riyadhDayStart(now)
   const tomorrow = new Date(today.getTime() + DAY)
-  const collectedToday = sumConfirmed(payments, today, tomorrow)
-  const collectedYesterday = sumConfirmed(payments, new Date(today.getTime() - DAY), today)
+  const collectedToday = netCollection(payments, refunds, today, tomorrow)
+  const collectedYesterday = netCollection(payments, refunds, new Date(today.getTime() - DAY), today)
   const month = bucketWindow('month', 0, now)
-  const collectedMonth = sumConfirmed(payments, month.start, month.end)
+  const collectedMonth = netCollection(payments, refunds, month.start, month.end)
   const progress = goalProgress(collectedMonth, goal)
-  const spark = dailyCollection(payments, 7, now).map(d => d.total)
+  const spark = dailyCollection(payments, 7, now, refunds).map(d => d.total)
 
   const wonDays = Array.from({ length: 8 }, (_, i) => {
     const s = new Date(today.getTime() - (7 - i) * DAY)
@@ -114,7 +144,7 @@ export const AdminCommandDeck = () => {
   const closest = open.filter(x => stageRank(x.stage) >= stageRank('qualified'))
     .sort((a, b) => stageRank(b.stage) - stageRank(a.stage)).slice(0, 3)
 
-  const series = useMemo(() => collectionSeries(payments, period, now), [payments, period]) // eslint-disable-line react-hooks/exhaustive-deps
+  const series = useMemo(() => collectionSeries(payments, period, now, refunds), [payments, refunds, period]) // eslint-disable-line react-hooks/exhaustive-deps
   const chartMax = Math.max(1000, ...series.flatMap(s => [s.current, s.previous]))
   const niceMax = Math.ceil((chartMax * 1.2) / 1000) * 1000
   const chartEmpty = series.every(s => s.current === 0 && s.previous === 0)
@@ -123,8 +153,13 @@ export const AdminCommandDeck = () => {
   pending.slice(0, 2).forEach(p => actions.push({ id: p.id, icon: 'bank', title: 'مراجعة حوالة واردة', sub: `${p.customer_name} · ${sar(p.total_amount)}`, chip: 'بانتظار التحقق', tone: 'a', to: '/admin/finance' }))
   if (overdue > 0) actions.push({ id: 'ov', icon: 'phone', title: 'متابعات متأخرة', sub: `${nf(overdue)} عميل موعد متابعته فات`, chip: 'متأخرة', tone: 'a', to: '/admin/outreach' })
   if (noNextStep > 0) actions.push({ id: 'ns', icon: 'doc', title: 'صفقات بلا خطوة قادمة', sub: `${nf(noNextStep)} صفقة مفتوحة`, chip: 'تحتاج تحديد', tone: 'b', to: '/admin/pipeline' })
+  if (x.overdueInvoices > 0) actions.push({ id: 'inv', icon: 'doc', title: 'فواتير متأخرة', sub: `${nf(x.overdueInvoices)} فاتورة تجاوزت الاستحقاق`, chip: 'متأخرة', tone: 'a', to: '/admin/quotes' })
+  if (x.draftsToReview > 0) actions.push({ id: 'dr', icon: 'bot', title: 'رسائل الإيجنت للمراجعة', sub: `${nf(x.draftsToReview)} مسودة بانتظار اعتمادك`, chip: 'للمراجعة', tone: 'b', to: '/admin/agents-control' })
+  if (x.bankNotices > 0) actions.push({ id: 'bn', icon: 'bank', title: 'إشعارات تحويل بنكي', sub: `${nf(x.bankNotices)} إشعار بانتظار التحقق`, chip: 'بانتظار التحقق', tone: 'a', to: '/admin/bank' })
+  if (x.blockedItems > 0) actions.push({ id: 'ob', icon: 'layers', title: 'خطوات تجهيز متعثرة', sub: `${nf(x.blockedItems)} خطوة متعثرة عند العملاء`, chip: 'متعثرة', tone: 'a', to: '/admin/onboarding' })
+  x.renewals.slice(0, 1).forEach(r => actions.push({ id: 'rn', icon: 'cal', title: 'عقد يقترب تجديده', sub: `${r.customer_name} · ${dateShort(r.renews_at)}`, chip: 'تجديد', tone: 'b', to: '/admin/quotes' }))
   if (failing.length > 0) actions.push({ id: 'ig', icon: 'gear', title: 'تكاملات تحتاج مراجعة', sub: failing.slice(0, 2).join('، '), chip: 'يحتاج مراجعة', tone: 'a', to: '/admin/settings' })
-  const shownActions = actions.slice(0, 4)
+  const shownActions = actions.slice(0, 5)
 
   const visibleTasks = tasks.filter(t => !t.done || (t.done_at && new Date(t.done_at) >= today)).slice(0, 5)
 
@@ -334,7 +369,13 @@ export const AdminCommandDeck = () => {
       <section className="mc-g4">
         <article className="mc-card">
           <div className="mc-ph mc-sm"><h3><McIcon name="news" size={20} />أخبار AI</h3></div>
-          <div className="mc-news"><div className="mc-ico"><McIcon name="doc" /></div><div><b>لا يوجد مصدر مضبوط</b><small>لن تُعرض أخبار بلا رابط وتاريخ نشر. يحتاج تحديد مصادر موثقة.</small></div></div>
+          {x.sources === 0 ? (
+            <div className="mc-news"><div className="mc-ico"><McIcon name="doc" /></div><div><b>لا يوجد مصدر مضبوط</b><small>أضف مصادر RSS موثقة من الإعدادات. لن تُعرض أخبار بلا رابط وتاريخ نشر.</small></div></div>
+          ) : x.news.length === 0 ? <div className="mc-flat">لم تُجلب أخبار بعد.</div> : x.news.map(n => (
+            <a key={n.id} className="mc-news" href={n.link} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <div><b style={{ lineHeight: 1.5 }}>{n.title}</b><small>{n.news_sources?.name ?? ''}{n.published_at ? ` · ${dateShort(n.published_at)}` : ''}</small></div>
+            </a>
+          ))}
         </article>
 
         <article className="mc-card">
@@ -361,16 +402,21 @@ export const AdminCommandDeck = () => {
         </article>
 
         <article className="mc-card">
-          <div className="mc-ph mc-sm"><h3><McIcon name="users" size={20} />فريق مبيعات AI</h3></div>
-          {['01', '02', '03'].map(k => (
-            <div key={k} className="mc-agent">
-              <div className="mc-rb"><McIcon name="bot" size={20} /></div>
-              <div className="mc-n">{k} إيجنت</div>
-              <span className="mc-st mc-n2">غير مفعّل</span>
-              <div className="mc-pb"><i style={{ width: '0%' }} /></div>
-              <span className="mc-pct">0%</span>
-            </div>
-          ))}
+          <div className="mc-ph mc-sm"><h3><McIcon name="users" size={20} />فريق مبيعات AI</h3><button className="mc-linkbtn" onClick={() => navigate('/admin/agents-control')}>التحكم</button></div>
+          {x.agents.length === 0 && <div className="mc-flat">لا يوجد إيجنت بيع. أنشئ إيجنتًا واحدًا من «التحكم بالإيجنتات».</div>}
+          {x.agents.map((a, i) => {
+            const sent = x.sentToday[a.id] ?? 0
+            const pctUsed = a.daily_message_cap ? Math.min(100, Math.round((sent / a.daily_message_cap) * 100)) : 0
+            return (
+              <div key={a.id} className="mc-agent">
+                <div className="mc-rb"><McIcon name="bot" size={20} /></div>
+                <div className="mc-n">{String(i + 1).padStart(2, '0')} {a.name}</div>
+                <span className={`mc-st ${a.status === 'active' ? 'mc-g' : 'mc-n2'}`}>{a.status === 'active' ? 'يعمل' : a.status === 'paused' ? 'متوقف' : a.status === 'stopped' ? 'مُوقف' : 'مسودة'}</span>
+                <div className="mc-pb"><i style={{ width: `${pctUsed}%` }} /></div>
+                <span className="mc-pct">{sent}/{a.daily_message_cap}</span>
+              </div>
+            )
+          })}
         </article>
       </section>
     </div>

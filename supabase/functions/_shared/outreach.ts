@@ -125,6 +125,8 @@ export async function advanceRun(service: SupabaseClient, token: string, run: an
   }
 
   const items = await datasetItems(activeDs, token)
+  // Real Apify spend of the runs so far (USD), stored on the run so profitability can use it
+  const cost = Number(run.cost_usd ?? 0) + Number(info.data.usageTotalUsd ?? 0)
 
   /* ---- LinkedIn stage 1: companies; those with a phone import now, the rest go to a Maps phone lookup ---- */
   if (run.stage === 'linkedin') {
@@ -151,7 +153,7 @@ export async function advanceRun(service: SupabaseClient, token: string, run: an
     const added = await insertLeads(service, rows.slice(0, run.requested))
     const todo = lookup.slice(0, 300)
     if (todo.length === 0) {
-      await service.from('outreach_runs').update({ status: 'done', imported: true, found: rows.length, added }).eq('id', run.id)
+      await service.from('outreach_runs').update({ status: 'done', imported: true, cost_usd: cost, found: rows.length, added }).eq('id', run.id)
       return { status: 'done' as const, added, found: rows.length }
     }
     const second = await apify(`/acts/${MAPS_ACTOR}/runs`, token, post({
@@ -161,7 +163,7 @@ export async function advanceRun(service: SupabaseClient, token: string, run: an
       language: 'en',
     }))
     await service.from('outreach_runs').update({
-      stage: 'maps', second_run_id: second.data.id, second_dataset_id: second.data.defaultDatasetId,
+      stage: 'maps', cost_usd: cost, second_run_id: second.data.id, second_dataset_id: second.data.defaultDatasetId,
       added, found: rows.length, meta: { lookup: todo },
     }).eq('id', run.id)
     return { status: 'running' as const, progress: rows.length }
@@ -191,7 +193,7 @@ export async function advanceRun(service: SupabaseClient, token: string, run: an
     const remaining = Math.max(0, run.requested - (run.added || 0))
     const added2 = await insertLeads(service, rows.slice(0, remaining))
     const total = (run.added || 0) + added2
-    await service.from('outreach_runs').update({ status: 'done', imported: true, found: (run.found || 0) + rows.length, added: total }).eq('id', run.id)
+    await service.from('outreach_runs').update({ status: 'done', imported: true, cost_usd: cost, found: (run.found || 0) + rows.length, added: total }).eq('id', run.id)
     return { status: 'done' as const, added: total, found: (run.found || 0) + rows.length }
   }
 
@@ -214,6 +216,6 @@ export async function advanceRun(service: SupabaseClient, token: string, run: an
   rows.sort((a, b) => Number(b.is_mobile) - Number(a.is_mobile))
   const wanted = rows.slice(0, run.requested)
   const added = await insertLeads(service, wanted)
-  await service.from('outreach_runs').update({ status: 'done', imported: true, found: wanted.length, added }).eq('id', run.id)
+  await service.from('outreach_runs').update({ status: 'done', imported: true, cost_usd: cost, found: wanted.length, added }).eq('id', run.id)
   return { status: 'done' as const, added, found: wanted.length }
 }

@@ -77,3 +77,18 @@ describe('collectionSeries', () => {
     expect(w.end.toISOString()).toBe('2026-10-31T21:00:00.000Z')
   })
 })
+
+import { netCollection, sumRefunds, type RefundRow } from './collections'
+
+describe('refunds reduce net collection only once executed', () => {
+  const from = new Date('2026-10-17T21:00:00Z')
+  const to = new Date('2026-10-18T21:00:00Z')
+  const ref = (over: Partial<RefundRow>): RefundRow => ({ id: 'r', payment_id: 'x', amount: 500, status: 'executed', executed_at: '2026-10-18T10:00:00Z', ...over })
+  it('ignores requested and approved refunds', () => {
+    expect(sumRefunds([ref({ status: 'requested' }), ref({ status: 'approved' })], from, to)).toBe(0)
+  })
+  it('subtracts an executed refund and keeps the original payment', () => {
+    expect(netCollection([pay({})], [ref({})], from, to)).toBe(650)
+    expect(sumConfirmed([pay({})], from, to)).toBe(1150)
+  })
+})
