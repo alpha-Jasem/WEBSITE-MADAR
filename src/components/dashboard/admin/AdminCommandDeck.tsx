@@ -1,237 +1,328 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import NumberFlow from '@number-flow/react'
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { supabase } from '../../../lib/supabase'
 import type { Company } from '../../../types'
-import { PLAN_LABELS } from '../../../lib/constants'
+import { useAdminPulse } from './adminPulse'
+import { Icon } from './PlasmaAdminShell'
+import type { Deal } from '../../../lib/deals'
+import { STAGE_LABEL, isClosed, stageRank, type DealStage } from '../../../lib/dealStages'
+import { buildBrief } from '../../../lib/jarvis'
+import { dateLong, dateShort, greetingFor, monthKey, nf, riyadhDayStart, sar, timeShort } from '../../../lib/format'
 
-type AutomationRow = {
-  id: string
-  name: string
-  type: string
-  status: string
+interface Check { key: string; label: string; status: 'not_configured' | 'unchecked' | 'ok' | 'degraded' | 'failed'; detail: string; latency_ms: number | null; last_checked_at: string | null }
+interface Goal { id: string; target: number }
+interface ActivityRow { created_at: string; last_contacted_at: string | null }
+type Period = 'day' | 'week' | 'month'
+
+const CHECK_BADGE: Record<Check['status'], { label: string; badge: string }> = {
+  ok: { label: 'متصل', badge: 'green' },
+  degraded: { label: 'متدهور', badge: 'amber' },
+  failed: { label: 'فشل', badge: 'red' },
+  unchecked: { label: 'غير مفحوص', badge: 'amber' },
+  not_configured: { label: 'غير مهيأ', badge: 'amber' },
 }
 
-const PLAN_VALUE: Record<string, number> = {
-  starter: 299,
-  growth: 799,
-  enterprise: 1999,
-}
+const PLAN_VALUE: Record<string, number> = { starter: 299, growth: 799, enterprise: 1999 }
+const usageOf = (c: Company) => (c.message_limit ? Math.round(((c.messages_used || 0) / c.message_limit) * 100) : 0)
 
-function formatSar(value: number) {
-  return `${Math.round(value).toLocaleString('ar-SA')} ر.س`
-}
-
-function planPrice(plan: string) {
-  return PLAN_VALUE[plan] ?? 0
-}
-
-function getMessageUsage(company: Company) {
-  const limit = company.message_limit || 0
-  if (!limit) return 0
-  return Math.round(((company.messages_used || 0) / limit) * 100)
+function buildSeries(rows: ActivityRow[], period: Period) {
+  const now = new Date()
+  if (period === 'day') {
+    const start = riyadhDayStart(now).getTime()
+    const hours = Array.from({ length: 24 }, (_, h) => ({ label: `${h}:00`, added: 0, contacted: 0 }))
+    const idx = (iso: string) => Math.floor((new Date(iso).getTime() - start) / 3600000)
+    rows.forEach(r => {
+      const a = idx(r.created_at); if (a >= 0 && a < 24) hours[a].added++
+      if (r.last_contacted_at) { const c = idx(r.last_contacted_at); if (c >= 0 && c < 24) hours[c].contacted++ }
+    })
+    return hours.slice(0, Math.max(6, Math.floor((now.getTime() - start) / 3600000) + 1))
+  }
+  const days = period === 'week' ? 7 : 30
+  const today = riyadhDayStart(now).getTime()
+  const buckets = Array.from({ length: days }, (_, i) => {
+    const t = today - (days - 1 - i) * 86400000
+    return { t, label: dateShort(new Date(t + 3600000)), added: 0, contacted: 0 }
+  })
+  const idx = (iso: string) => Math.floor((new Date(iso).getTime() - buckets[0].t) / 86400000)
+  rows.forEach(r => {
+    const a = idx(r.created_at); if (a >= 0 && a < days) buckets[a].added++
+    if (r.last_contacted_at) { const c = idx(r.last_contacted_at); if (c >= 0 && c < days) buckets[c].contacted++ }
+  })
+  return buckets
 }
 
 export const AdminCommandDeck = () => {
+  const navigate = useNavigate()
+  const pulse = useAdminPulse()
+  const [deals, setDeals] = useState<Deal[]>([])
   const [companies, setCompanies] = useState<Company[]>([])
-  const [automations, setAutomations] = useState<AutomationRow[]>([])
-  const [search, setSearch] = useState('')
+  const [checks, setChecks] = useState<Check[]>([])
+  const [goal, setGoal] = useState<Goal | null>(null)
+  const [activity, setActivity] = useState<ActivityRow[]>([])
+  const [period, setPeriod] = useState<Period>('week')
   const [loading, setLoading] = useState(true)
+  const [checking, setChecking] = useState(false)
+  const [editGoal, setEditGoal] = useState(false)
+  const [goalInput, setGoalInput] = useState('')
+  const [loadError, setLoadError] = useState<string | null>(null)
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true)
-    const [{ data: companyRows }, { data: automationRows }] = await Promise.all([
-      supabase.from('companies').select('*').order('created_at', { ascending: false }),
-      supabase.from('automations').select('id, name, type, status').limit(80),
+    pulse.reload()
+    const since = new Date(Date.now() - 31 * 86400000).toISOString()
+    const [d, c, k, g, a] = await Promise.all([
+      supabase.from('deals').select('*').limit(1000),
+      supabase.from('companies').select('*'),
+      supabase.from('integration_checks').select('*').order('key'),
+      supabase.from('agency_goals').select('id, target').eq('period', monthKey()).eq('kind', 'collections').maybeSingle(),
+      supabase.from('outreach_leads').select('created_at, last_contacted_at').or(`created_at.gte.${since},last_contacted_at.gte.${since}`).limit(5000),
     ])
-    setCompanies((companyRows || []) as Company[])
-    setAutomations((automationRows || []) as AutomationRow[])
+    const failed = [d, c, k].some(r => r.error)
+    setLoadError(failed ? 'تعذّر تحميل جزء من البيانات. الأرقام المعروضة قد تكون ناقصة.' : null)
+    setDeals((d.data ?? []) as Deal[])
+    setCompanies((c.data ?? []) as Company[])
+    setChecks((k.data ?? []) as Check[])
+    setGoal((g.data ?? null) as Goal | null)
+    setActivity((a.data ?? []) as ActivityRow[])
     setLoading(false)
-  }
+  }, [pulse.reload])
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load() }, [])
 
-  const activeCompanies = companies.filter(company => company.status === 'active').length
-  const nearLimitCompanies = companies.filter(company => getMessageUsage(company) >= 80)
-  const nearLimit = nearLimitCompanies.length
+  const runChecks = async () => {
+    setChecking(true)
+    await supabase.functions.invoke('integration-health', { body: {} })
+    const { data } = await supabase.from('integration_checks').select('*').order('key')
+    setChecks((data ?? []) as Check[])
+    setChecking(false)
+  }
 
-  const billing = useMemo(() => {
-    const mrr = companies.reduce((sum, company) => sum + planPrice(company.plan), 0)
-    const activeMrr = companies.filter(company => company.status !== 'suspended').reduce((sum, company) => sum + planPrice(company.plan), 0)
-    const upgradeCandidates = companies.filter(company => company.plan !== 'enterprise' && getMessageUsage(company) >= 70)
-    const renewals = companies
-      .filter(company => company.plan_reset_at)
-      .sort((a, b) => new Date(a.plan_reset_at).getTime() - new Date(b.plan_reset_at).getTime())
-      .slice(0, 4)
-    return { mrr, activeMrr, upgradeCandidates, renewals }
-  }, [companies])
+  const saveGoal = async () => {
+    const target = Number(goalInput)
+    if (!Number.isFinite(target) || target < 0) return
+    const { data } = await supabase.from('agency_goals')
+      .upsert({ period: monthKey(), kind: 'collections', target, updated_at: new Date().toISOString() }, { onConflict: 'period,kind' })
+      .select('id, target').single()
+    if (data) setGoal(data as Goal)
+    setEditGoal(false)
+  }
 
-  const integrationHealth = [
-    { name: 'Supabase', desc: 'قاعدة البيانات والمصادقة', status: 'متصل', ok: true, pending: false },
-    { name: 'n8n Cloud', desc: 'تدفقات الأتمتة والويب هوك', status: automations.some(i => i.status === 'active') ? 'نشط' : 'يحتاج مراجعة', ok: automations.some(i => i.status === 'active'), pending: false },
-    { name: 'WhatsApp API', desc: 'رسائل العملاء', status: automations.some(i => i.type === 'whatsapp' && i.status === 'active') ? 'نشط' : 'بانتظار توثيق Meta', ok: true, pending: !automations.some(i => i.type === 'whatsapp' && i.status === 'active') },
-  ]
+  const open = useMemo(() => deals.filter(d => !isClosed(d.stage)), [deals])
+  const monthStart = useMemo(() => new Date(`${monthKey()}-01T00:00:00+03:00`), [])
+  const wonThisMonth = deals.filter(d => d.stage === 'won' && d.closed_at && new Date(d.closed_at) >= monthStart).length
+  const qualified = deals.filter(d => ['qualified', 'offer_sent', 'negotiation', 'awaiting_payment'].includes(d.stage)).length
+  const noNextStep = open.filter(d => !d.next_step && !d.next_step_at).length
+  const closest = useMemo(
+    () => open.filter(d => stageRank(d.stage) >= stageRank('qualified'))
+      .sort((a, b) => stageRank(b.stage) - stageRank(a.stage) || (b.last_contact_at ?? '').localeCompare(a.last_contact_at ?? '')).slice(0, 5),
+    [open],
+  )
 
-  const filteredCompanies = companies
-    .filter(row => !search || row.name.toLowerCase().includes(search.toLowerCase()))
-    .slice(0, 7)
+  const real = companies.filter(c => !(c as Company & { is_demo?: boolean }).is_demo)
+  const demoCount = companies.length - real.length
+  const mrr = real.reduce((s, c) => s + (PLAN_VALUE[c.plan] ?? 0), 0)
+  const nearLimit = real.filter(c => usageOf(c) >= 80).length
 
-  const commandAlerts = useMemo(() => {
-    const alerts: Array<{ id: string; tone: string; badgeClass: string; title: string; desc: string; to: string; action: string }> = []
-    if (nearLimit > 0) alerts.push({ id: 'message-limit', tone: 'var(--red)', badgeClass: 'red', title: 'شركات قريبة من حد الرسائل', desc: `${nearLimit} شركة وصلت 80% أو أكثر. هذه أفضل لحظة لبيع ترقية.`, to: '/admin/settings', action: 'فتح التحكم' })
-    if (!automations.some(i => i.type === 'whatsapp' && i.status === 'active')) alerts.push({ id: 'whatsapp-pending', tone: 'oklch(0.60 0.27 258)', badgeClass: 'blue', title: 'واتساب ينتظر توثيق Meta', desc: 'التشغيل الداخلي جاهز، واتساب خارج نطاق التقييم.', to: '/admin/n8n', action: 'متابعة التكامل' })
-    if (alerts.length === 0) alerts.push({ id: 'all-clear', tone: 'var(--green)', badgeClass: 'green', title: 'النظام جاهز للعرض', desc: 'لا توجد مشاكل حرجة حسب بيانات الشركات الحالية.', to: '/admin/companies', action: 'عرض الشركات' })
-    return alerts
-  }, [automations, nearLimit])
+  const failing = checks.filter(c => c.status === 'failed' || c.status === 'degraded').map(c => c.label)
+  const overdue = pulse.due.filter(l => l.next_follow_up && new Date(l.next_follow_up) < riyadhDayStart()).length
+  const brief = buildBrief({
+    dueToday: pulse.due.length - overdue, overdue, meetingsToday: pulse.meetingsToday.length, waitingFirstContact: pulse.waiting,
+    dealsWithoutNextStep: noNextStep, qualifiedDeals: qualified, activeDeals: open.length, hasMonthlyGoal: !!goal, integrationsFailing: failing,
+  })
+  const series = useMemo(() => buildSeries(activity, period), [activity, period])
+  const now = new Date()
+
+  const dealReason = (d: Deal) => `${STAGE_LABEL[d.stage as DealStage]}${d.next_step ? ` · ${d.next_step}` : ' · بلا خطوة قادمة'}`
 
   return (
-    <div className="page fade-in">
-      {/* Header */}
-      <div className="sec-head" style={{ marginBottom: 24 }}>
+    <div className="page fade-in cd">
+      <div className="cd-hero">
         <div>
-          <div className="sec-title">نظرة عامة</div>
-          <div className="sec-sub">مركز إدارة مدار OS — تحكم يومي في عملاء SaaS</div>
+          <div className="cd-date">{dateLong(now)}</div>
+          <h2>{greetingFor(Number(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hour12: false, timeZone: 'Asia/Riyadh' }).format(now)))}، جاسم</h2>
         </div>
-        <button className="btn btn-ghost" onClick={load}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 4v6h-6" /><path d="M1 20v-6h6" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></svg>
-          تحديث
+        <div className="cd-hero-actions">
+          <button className="btn btn-primary cd-cta" onClick={() => navigate('/admin/outreach')}><Icon id="plus" size={16} /> جيب عملاء</button>
+          <button className="btn btn-ghost" onClick={load} disabled={loading}>{loading ? 'تحديث…' : 'تحديث'}</button>
+        </div>
+      </div>
+
+      {loadError && <div className="card card-pad cd-warn">{loadError}</div>}
+
+      {/* KPIs: every number below is read from a table, or says why it is not available */}
+      <div className="cd-kpis">
+        <div className="cd-kpi static">
+          <span>المحصل هذا الشهر</span>
+          <b className="cd-na">غير مفعّل</b>
+          <small>لا يوجد سجل دفعات بعد. يبدأ مع المرحلة 3 (التحصيل المؤكد).</small>
+        </div>
+        <div className="cd-kpi static">
+          <span>الهدف الشهري</span>
+          {editGoal ? (
+            <div className="cd-goal-edit">
+              <input type="number" min={0} value={goalInput} onChange={e => setGoalInput(e.target.value)} aria-label="الهدف الشهري بالريال" autoFocus />
+              <button className="btn btn-primary" onClick={saveGoal}>حفظ</button>
+            </div>
+          ) : goal ? (
+            <><b className="num">{sar(goal.target)}</b><button className="cd-link" onClick={() => { setGoalInput(String(goal.target)); setEditGoal(true) }}>تعديل الهدف</button></>
+          ) : (
+            <><b className="cd-na">لم يُحدد</b><button className="cd-link" onClick={() => { setGoalInput(''); setEditGoal(true) }}>حدد الهدف</button></>
+          )}
+        </div>
+        <button className="cd-kpi" onClick={() => navigate('/admin/pipeline')}>
+          <span>صفقات مغلقة هذا الشهر</span><b className="num"><NumberFlow value={wonThisMonth} locales="en-US" /></b>
+        </button>
+        <button className="cd-kpi" onClick={() => navigate('/admin/pipeline')}>
+          <span>عملاء مؤهلون (مؤهل فما فوق)</span><b className="num"><NumberFlow value={qualified} locales="en-US" /></b>
         </button>
       </div>
 
-      {/* KPI Stats */}
-      <div className="stat-grid" style={{ marginBottom: 24 }}>
-        {[
-          { label: 'MRR المتوقع', value: formatSar(billing.mrr) },
-          { label: 'شركات نشطة', value: `${activeCompanies} / ${companies.length}` },
-          { label: 'قريبة من الحد', value: nearLimit, warn: nearLimit > 0 },
-          { label: 'فرص ترقية', value: billing.upgradeCandidates.length },
-        ].map((s, i) => (
-          <div key={i} className="stat">
-            <div className="stat-top"><div className="stat-label">{s.label}</div></div>
-            <div className="stat-value num" style={s.warn ? { color: 'var(--red)' } : {}}>{s.value}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Alerts */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
-        {commandAlerts.slice(0, 4).map(alert => (
-          <div key={alert.id} className="card" style={{ padding: '14px 18px', borderInlineStart: `3px solid ${alert.tone}`, display: 'flex', alignItems: 'center', gap: 14 }}>
-            <span className={`badge ${alert.badgeClass}`} style={{ flexShrink: 0 }}>{alert.badgeClass === 'green' ? '✓' : '!'}</span>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, fontSize: 13 }}>{alert.title}</div>
-              <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>{alert.desc}</div>
-            </div>
-            <Link to={alert.to} style={{ fontSize: 12, color: alert.tone, textDecoration: 'none', flexShrink: 0, fontWeight: 600 }}>{alert.action} ←</Link>
-          </div>
-        ))}
-      </div>
-
-      {/* Main Grid: Companies + Billing */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20, marginBottom: 20 }}>
-        {/* Companies Panel */}
-        <div className="card card-pad">
-          <div className="row gap-2" style={{ marginBottom: 16, flexWrap: 'wrap' }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, fontSize: 15 }}>الشركات</div>
-              <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>أحدث الشركات المسجلة بالنظام</div>
-            </div>
-            <div className="card row gap-2" style={{ padding: '7px 12px' }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--ink-3)' }}><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="بحث..." style={{ background: 'none', border: 'none', outline: 'none', fontSize: 12.5, color: 'var(--ink)', width: 120 }} />
-            </div>
-          </div>
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--ink-3)', fontSize: 13 }}>جاري التحميل...</div>
-          ) : filteredCompanies.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--ink-3)', fontSize: 13 }}>لا توجد نتائج مطابقة</div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {filteredCompanies.map(row => {
-                const usage = getMessageUsage(row)
-                const color = usage >= 80 ? 'var(--red)' : usage >= 55 ? 'var(--amber)' : 'var(--green)'
-                return (
-                  <div key={row.id} className="row gap-3" style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <div style={{ width: 40, height: 40, borderRadius: '50%', border: `2px solid ${color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 12, color, flexShrink: 0 }}>{usage}%</div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: 13 }}>{row.name}</div>
-                      <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 2 }}>{PLAN_LABELS[row.plan] ?? row.plan} · {row.status}</div>
-                    </div>
-                    <Link to="/admin/companies" style={{ fontSize: 11.5, color: 'var(--primary)', textDecoration: 'none', flexShrink: 0 }}>فتح ←</Link>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Billing Panel */}
-        <div className="card card-pad">
-          <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>ملخص الفوترة</div>
-          <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 20 }}>قراءة سريعة لقيمة الاشتراكات وفرص الترقية</div>
-          <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: '14px 16px', marginBottom: 14 }}>
-            <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>MRR المتوقع</div>
-            <div className="num" style={{ fontSize: 22, fontWeight: 800, color: 'var(--primary)', margin: '4px 0' }}>{formatSar(billing.mrr)}</div>
-            <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>النشط فعليًا: {formatSar(billing.activeMrr)}</div>
-          </div>
-          <div className="row gap-2" style={{ marginBottom: 16 }}>
-            <div style={{ flex: 1, background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
-              <div className="num" style={{ fontWeight: 700, fontSize: 18, color: 'var(--amber)' }}>{billing.upgradeCandidates.length}</div>
-              <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>فرصة ترقية</div>
-            </div>
-            <div style={{ flex: 1, background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
-              <div className="num" style={{ fontWeight: 700, fontSize: 18, color: 'var(--green)' }}>{billing.renewals.length}</div>
-              <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>تجديد قريب</div>
-            </div>
-          </div>
-          {billing.renewals.length === 0 ? (
-            <div style={{ fontSize: 12, color: 'var(--ink-3)', textAlign: 'center' }}>لا توجد تواريخ تجديد مسجلة</div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {billing.renewals.map(c => (
-                <div key={c.id} className="row gap-2" style={{ fontSize: 12 }}>
-                  <span style={{ flex: 1 }}>{c.name}</span>
-                  <span style={{ color: 'var(--ink-3)', fontFamily: 'var(--mono)' }}>{new Date(c.plan_reset_at).toLocaleDateString('ar-SA')}</span>
-                </div>
+      <div className="cd-grid">
+        {/* Jarvis */}
+        <section className={`card cd-jarvis tone-${brief.tone}`}>
+          <div className="cd-orb" aria-hidden="true"><i /><i /><i /></div>
+          <div className="cd-jarvis-body">
+            <div className="cd-jarvis-title">جارفيس <small>ملخص من بياناتك الفعلية</small></div>
+            <p>{brief.summary}</p>
+            <div className="cd-actions">
+              {brief.actions.length === 0 && <div className="cd-empty">لا توجد إجراءات مقترحة الآن.</div>}
+              {brief.actions.map((a, i) => (
+                <Link key={a.id} to={a.to} className="cd-action">
+                  <span className="cd-action-n">{i + 1}</span>
+                  <span><b>{a.title}</b><small>{a.reason}</small></span>
+                </Link>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        </section>
+
+        {/* Today tasks (Todoist) */}
+        <section className="card card-pad cd-panel">
+          <div className="cd-head"><div><h3>مهام اليوم</h3><small>مزامنة Todoist</small></div><span className="badge amber">غير مهيأ</span></div>
+          <div className="cd-empty">لم يُربط Todoist بعد. يحتاج توكن الحساب والمشروع الذي تختاره، ثم تظهر هنا مهامك وتتزامن في الاتجاهين.</div>
+        </section>
       </div>
 
-      {/* Integration Health */}
-      <div className="card card-pad" style={{ marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>صحة التكاملات</div>
-        <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 18 }}>مؤشرات سريعة للتكاملات الأساسية</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-          {integrationHealth.map(item => (
-            <div key={item.name} className="card" style={{ padding: '12px 14px', borderColor: item.pending ? 'rgba(245,158,11,0.3)' : item.ok ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.3)' }}>
-              <div className="row gap-2" style={{ marginBottom: 4 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: item.pending ? 'var(--amber)' : item.ok ? 'var(--green)' : 'var(--red)', flexShrink: 0, marginTop: 3 }} />
-                <span style={{ fontWeight: 600, fontSize: 12 }}>{item.name}</span>
-              </div>
-              <div style={{ fontSize: 11, color: 'var(--ink-3)', marginBottom: 6 }}>{item.desc}</div>
-              <span className={`badge ${item.pending ? 'amber' : item.ok ? 'green' : 'red'}`} style={{ fontSize: 10 }}>{item.status}</span>
+      <div className="cd-grid">
+        {/* Activity chart */}
+        <section className="card card-pad cd-panel">
+          <div className="cd-head">
+            <div><h3>نشاط العملاء</h3><small>المصدر: outreach_leads (تاريخ الإضافة وآخر تواصل)</small></div>
+            <div className="cd-seg" role="tablist" aria-label="الفترة">
+              {([['day', 'يوم'], ['week', 'أسبوع'], ['month', 'شهر']] as const).map(([k, l]) => (
+                <button key={k} role="tab" aria-selected={period === k} className={period === k ? 'on' : ''} onClick={() => setPeriod(k)}>{l}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{ height: 220, direction: 'ltr' }}>
+            <ResponsiveContainer>
+              <AreaChart data={series} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gAdd" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#4f8dff" stopOpacity={0.45} /><stop offset="100%" stopColor="#4f8dff" stopOpacity={0} /></linearGradient>
+                  <linearGradient id="gCon" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#9b7bff" stopOpacity={0.4} /><stop offset="100%" stopColor="#9b7bff" stopOpacity={0} /></linearGradient>
+                </defs>
+                <CartesianGrid stroke="rgba(255,255,255,.06)" vertical={false} />
+                <XAxis dataKey="label" tick={{ fill: '#8794b3', fontSize: 11 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                <YAxis tick={{ fill: '#8794b3', fontSize: 11 }} tickLine={false} axisLine={false} allowDecimals={false} />
+                <Tooltip contentStyle={{ background: '#0b1530', border: '1px solid rgba(255,255,255,.14)', borderRadius: 10, direction: 'rtl' }} labelStyle={{ color: '#e8eefc' }}
+                  formatter={(v: number, name: string) => [nf(v), name === 'added' ? 'عملاء أُضيفوا' : 'تواصل']} />
+                <Area type="monotone" dataKey="added" stroke="#4f8dff" strokeWidth={2} fill="url(#gAdd)" activeDot={{ r: 5 }} />
+                <Area type="monotone" dataKey="contacted" stroke="#9b7bff" strokeWidth={2} fill="url(#gCon)" activeDot={{ r: 5 }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="cd-legend"><span><i style={{ background: '#4f8dff' }} />عملاء أُضيفوا</span><span><i style={{ background: '#9b7bff' }} />تواصل</span></div>
+        </section>
+
+        {/* Needs the owner */}
+        <section className="card card-pad cd-panel">
+          <div className="cd-head"><div><h3>إجراءات تحتاجك</h3><small>متابعات واجتماعات اليوم</small></div><Link to="/admin/outreach" className="cd-link">الكل ←</Link></div>
+          {pulse.meetingsToday.map(m => (
+            <div key={m.id} className="cd-row meet">
+              <div className="cd-time">{m.meeting_at ? timeShort(m.meeting_at) : ''}</div>
+              <div className="cd-main"><b>{m.name}</b><small>اجتماع اليوم</small></div>
+              <a className="cd-ic call" href={`tel:+${m.phone}`} aria-label={`اتصل بـ ${m.name}`}><Icon id="phone" size={16} /></a>
             </div>
           ))}
-        </div>
+          {pulse.due.slice(0, 5).map(l => (
+            <div key={l.id} className="cd-row">
+              <div className={`cd-dot ${l.next_follow_up && new Date(l.next_follow_up) < riyadhDayStart() ? 'late' : ''}`} />
+              <div className="cd-main"><b>{l.name}</b><small>متابعة {l.next_follow_up ? dateShort(l.next_follow_up) : ''}</small></div>
+              <div className="cd-contact">
+                <a className="cd-ic call" href={`tel:+${l.phone}`} aria-label={`اتصل بـ ${l.name}`}><Icon id="phone" size={16} /></a>
+                {l.is_mobile && <a className="cd-ic wa" href={`https://wa.me/${l.phone}`} target="_blank" rel="noreferrer">واتساب</a>}
+              </div>
+            </div>
+          ))}
+          {pulse.due.length === 0 && pulse.meetingsToday.length === 0 && <div className="cd-empty">لا يوجد شيء معلّق.</div>}
+        </section>
+
       </div>
 
-      {/* Quick Links */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
-        {[
-          { to: '/admin/companies', title: 'إضافة / إدارة شركة', desc: 'افتح حساب عميل أو عدل بياناته.' },
-          { to: '/admin/settings', title: 'إدارة الباقات والاشتراكات', desc: 'ترقية الباقة أو تعديل الحدود.' },
-          { to: '/admin/n8n', title: 'مراجعة الأتمتة', desc: 'أوقف أو شغل تدفقات العميل من n8n.' },
-        ].map(item => (
-          <Link key={item.to} to={item.to} style={{ textDecoration: 'none' }}>
-            <div className="card card-pad" style={{ cursor: 'pointer', transition: 'border-color 0.2s' }}
-              onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.18)'}
-              onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.borderColor = ''}>
-              <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>{item.title}</div>
-              <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>{item.desc}</div>
+      <div className="cd-grid4">
+        <section className="card card-pad cd-panel">
+          <div className="cd-head"><div><h3>فريق مبيعات AI</h3><small>أداء الإيجنتات</small></div><span className="badge amber">لم يبدأ</span></div>
+          <div className="cd-empty">لا يوجد إيجنت بيع يعمل بعد. المرحلة 2: إيجنت واحد وتجربة على 5 شركات قبل أي توسع.</div>
+        </section>
+        <section className="card card-pad cd-panel">
+          <div className="cd-head"><div><h3>الأقرب للإغلاق</h3><small>صفقات من مرحلة «مؤهل» فما فوق</small></div><Link to="/admin/pipeline" className="cd-link">الصفقات ←</Link></div>
+          {loading ? <div className="cd-empty">جاري التحميل…</div> : closest.length === 0 ? (
+            <div className="cd-empty">لا توجد صفقات مؤهلة بعد.</div>
+          ) : closest.map(d => (
+            <div key={d.id} className="cd-row">
+              <div className="cd-main"><b>{d.company_name}</b><small>{dealReason(d)}</small></div>
+              <span className={`badge ${d.stage === 'awaiting_payment' ? 'green' : 'violet'}`}>{STAGE_LABEL[d.stage as DealStage]}</span>
             </div>
-          </Link>
-        ))}
+          ))}
+        </section>
+        <section className="card card-pad cd-panel">
+          <div className="cd-head"><div><h3>تقويم اليوم</h3><small>الاجتماعات المؤكدة</small></div><Link to="/admin/outreach" className="cd-link">عرض الكل ←</Link></div>
+          {pulse.meetingsToday.length === 0 ? <div className="cd-empty">لا توجد اجتماعات اليوم.</div> : pulse.meetingsToday.map(m => (
+            <div key={m.id} className="cd-row">
+              <div className="cd-time">{m.meeting_at ? timeShort(m.meeting_at) : ''}</div>
+              <div className="cd-main"><b>{m.name}</b><small>اجتماع تعريفي</small></div>
+            </div>
+          ))}
+        </section>
+        <section className="card card-pad cd-panel">
+          <div className="cd-head"><div><h3>أخبار AI</h3><small>مصادر موثقة بروابط وتواريخ</small></div><span className="badge amber">غير مهيأ</span></div>
+          <div className="cd-empty">لا يوجد مصدر أخبار مضبوط. لن تُعرض أخبار بلا رابط وتاريخ نشر.</div>
+        </section>
+      </div>
+
+      <div className="cd-grid">
+        {/* Integration health */}
+        <section className="card card-pad cd-panel">
+          <div className="cd-head">
+            <div><h3>صحة التكاملات</h3><small>فحوص فعلية مع وقت آخر تحقق</small></div>
+            <button className="btn btn-ghost" onClick={runChecks} disabled={checking}>{checking ? 'جاري الفحص…' : 'افحص الآن'}</button>
+          </div>
+          {checks.length === 0 ? <div className="cd-empty">لم يُجرَ أي فحص بعد. اضغط «افحص الآن».</div> : checks.map(c => {
+            const st = CHECK_BADGE[c.status]
+            return (
+              <div key={c.key} className="cd-row">
+                <div className={`cd-dot ${c.status === 'ok' ? 'ok' : c.status === 'failed' ? 'late' : 'warn'}`} />
+                <div className="cd-main"><b>{c.label}</b><small>{c.detail}{c.last_checked_at ? ` · ${dateShort(c.last_checked_at)} ${timeShort(c.last_checked_at)}` : ''}</small></div>
+                <span className={`badge ${st.badge}`}>{st.label}</span>
+              </div>
+            )
+          })}
+        </section>
+
+        {/* Business + not configured modules */}
+        <section className="card card-pad cd-panel">
+          <div className="cd-head"><div><h3>الأعمال</h3><small>العملاء التجريبيون مستبعدون من الأرقام المالية</small></div><Link to="/admin/companies" className="cd-link">الشركات ←</Link></div>
+          <div className="cd-mini">
+            <div><b className="num">{nf(real.length)}</b><span>عملاء حقيقيون</span></div>
+            <div><b className="num">{nf(demoCount)}</b><span>شركات تجريبية</span></div>
+            <div><b className="num">{real.length ? sar(mrr) : '—'}</b><span>إيراد شهري متوقع (تقديري)</span></div>
+            <div><b className="num">{nf(nearLimit)}</b><span>قريبة من حد الرسائل</span></div>
+          </div>
+          {real.length === 0 && <div className="cd-empty">لا يوجد عملاء حقيقيون بعد، فلا أرقام مالية لتعرض.</div>}
+        </section>
       </div>
     </div>
   )

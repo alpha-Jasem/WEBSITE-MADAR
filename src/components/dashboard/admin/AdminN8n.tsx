@@ -1,182 +1,142 @@
-﻿import { useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useState } from 'react'
+import { supabase } from '../../../lib/supabase'
+import { dateShort, nf, timeShort } from '../../../lib/format'
 
-const workflowGroups = [
-  {
-    group: 'Voice AI — Vapi / ElevenLabs',
-    color: '#8B5CF6',
-    workflows: [
-      { id: 'SAFOocJXld4vHAfH', name: 'Vapi MCP Server',         active: true,  trigger: 'Webhook (MCP)', runs: null, updatedAt: '2026-05-05' },
-      { id: 'l2aLJ4ost3gBma4V', name: 'ElevenLabs Tool Router',  active: true,  trigger: 'Webhook',       runs: null, updatedAt: '2026-05-06' },
-    ],
-  },
-  {
-    group: 'Calendar & Booking',
-    color: '#00BFFF',
-    workflows: [
-      { id: '5DYHvRiGznpfYToi', name: 'Calendar Slot Finder',  active: true,  trigger: 'Webhook', runs: 280, updatedAt: '2026-05-04' },
-      { id: 'dsWkzzvQNLv87f0I', name: 'Check Availability',    active: true,  trigger: 'Sub-workflow', runs: null, updatedAt: '2026-05-06' },
-      { id: 'GmCJVQwRoVwcnhFv', name: 'Book Event',            active: true,  trigger: 'Sub-workflow', runs: null, updatedAt: '2026-05-06' },
-      { id: 'jhNcO2ELZXr09JYi', name: 'Lookup Booking',    active: true,  trigger: 'Sub-workflow', runs: null, updatedAt: '2026-05-06' },
-      { id: 'xZMhGXVZTdVHjFYg', name: 'Delete Booking',    active: true,  trigger: 'Sub-workflow', runs: null, updatedAt: '2026-05-06' },
-      { id: 'O9ZCKfhOQi42UoXI', name: 'Update Booking',    active: true,  trigger: 'Sub-workflow', runs: null, updatedAt: '2026-05-06' },
-    ],
-  },
-  {
-    group: 'CRM & العملاء',
-    color: '#10B981',
-    workflows: [
-      { id: '4XqKNGFoh9Zrwkuz', name: 'New Client CRM',                  active: true,  trigger: 'Sub-workflow', runs: null, updatedAt: '2026-05-05' },
-      { id: 'HAoPClXp6TKD4AJQ', name: 'Client Lookup',                    active: true,  trigger: 'Sub-workflow', runs: null, updatedAt: '2026-05-06' },
-      { id: 'cZSsBaQgQKXM9wVw', name: 'Hercules Receptionist EOC Report', active: true,  trigger: 'Manual',       runs: null, updatedAt: '2026-05-05' },
-    ],
-  },
-  {
-    group: 'WBOS — WhatsApp Booking System',
-    color: '#F59E0B',
-    workflows: [
-      { id: 'ziFXfmOdX1LHu8Xs', name: 'WBOS — Core Booking Flow',            active: false, trigger: 'Webhook', runs: null, updatedAt: '2026-05-12', note: 'قيد التطوير' },
-      { id: 'HewqaAv6D19XqMfL', name: 'WBOS — Booking Reminder System',  active: false, trigger: 'Schedule (30m)', runs: null, updatedAt: '2026-05-12', note: 'قيد التطوير' },
-      { id: 'UJCSPMgU7th4HHPs', name: 'WBOS — Post-Service Review Request',  active: false, trigger: 'Schedule (1h)',  runs: null, updatedAt: '2026-05-12', note: 'قيد التطوير' },
-      { id: 'kxjAGgwUtB3ZpPL0', name: 'WBOS — No-Show Recovery System',      active: false, trigger: 'Schedule (2h)',  runs: null, updatedAt: '2026-05-12', note: 'قيد التطوير' },
-    ],
-  },
-]
+interface Workflow { id: string; name: string; active: boolean; updated_at: string | null }
+interface Execution { id: string; workflow_id: string; status: string; started_at: string | null; stopped_at: string | null }
+interface Snapshot {
+  configured: boolean
+  fetched_at?: string
+  workflows?: Workflow[]
+  executions?: Execution[]
+  executions_error?: string | null
+  error?: string
+}
 
-const recentExecutions = [
-  { id: '1928', workflow: 'Calendar Slot Finder', status: 'success', mode: 'webhook', startedAt: '2026-05-18T19:01:46Z', duration: '1.3s' },
-  { id: '1927', workflow: 'Calendar Slot Finder', status: 'success', mode: 'webhook', startedAt: '2026-05-18T18:59:46Z', duration: '0.04s' },
-  { id: '1926', workflow: 'Calendar Slot Finder', status: 'success', mode: 'webhook', startedAt: '2026-05-18T18:59:46Z', duration: '0.1s' },
-  { id: '1925', workflow: 'Calendar Slot Finder', status: 'success', mode: 'webhook', startedAt: '2026-05-18T18:59:46Z', duration: '0.13s' },
-  { id: '1924', workflow: 'Calendar Slot Finder', status: 'success', mode: 'webhook', startedAt: '2026-05-18T18:59:46Z', duration: '0.16s' },
-  { id: '1923', workflow: 'Calendar Slot Finder', status: 'success', mode: 'webhook', startedAt: '2026-05-18T18:59:45Z', duration: '0.08s' },
-  { id: '1921', workflow: 'Calendar Slot Finder', status: 'success', mode: 'webhook', startedAt: '2026-05-18T18:59:41Z', duration: '4.0s' },
-  { id: '1912', workflow: 'Calendar Slot Finder', status: 'success', mode: 'webhook', startedAt: '2026-05-18T18:59:17Z', duration: '2.5s' },
-]
+const EXEC_LABEL: Record<string, { label: string; badge: string }> = {
+  success: { label: 'نجح', badge: 'green' },
+  error: { label: 'فشل', badge: 'red' },
+  crashed: { label: 'انهار', badge: 'red' },
+  waiting: { label: 'ينتظر', badge: 'amber' },
+  running: { label: 'يعمل', badge: 'blue' },
+  canceled: { label: 'أُلغي', badge: 'amber' },
+}
 
-const totalWorkflows = workflowGroups.reduce((a, g) => a + g.workflows.length, 0)
-const activeCount = workflowGroups.reduce((a, g) => a + g.workflows.filter(w => w.active).length, 0)
-
+// n8n page: everything shown comes from the n8n REST API through the n8n-status function.
+// Without credentials the page says so and shows no numbers.
 export const AdminN8n = () => {
-  const [tab, setTab] = useState<'workflows' | 'executions'>('workflows')
+  const [snap, setSnap] = useState<Snapshot | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [failure, setFailure] = useState<string | null>(null)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setFailure(null)
+    const { data, error } = await supabase.functions.invoke('n8n-status', { body: {} })
+    if (error || !data) setFailure('تعذّر الاتصال بدالة n8n-status. أعد المحاولة.')
+    else setSnap(data as Snapshot)
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const nameOf = useMemo(() => new Map((snap?.workflows ?? []).map(w => [w.id, w.name])), [snap])
+  const active = (snap?.workflows ?? []).filter(w => w.active).length
+  const total = snap?.workflows?.length ?? 0
 
   return (
     <div className="page fade-in">
       <div className="sec-head" style={{ marginBottom: 24 }}>
         <div>
-          <div className="sec-title">n8n Workflows</div>
-          <div className="sec-sub">بيانات حقيقية — أتمتة العمليات والتكاملات</div>
+          <div className="sec-title">n8n</div>
+          <div className="sec-sub">التدفقات وآخر التشغيلات من واجهة n8n مباشرة</div>
         </div>
-        <a href="https://app.n8n.cloud" target="_blank" rel="noopener noreferrer" className="btn btn-ghost" style={{ textDecoration: 'none' }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-          فتح n8n
-        </a>
+        <button className="btn btn-ghost" onClick={load} disabled={loading}>{loading ? 'جاري الفحص…' : 'تحديث'}</button>
       </div>
 
-      <div className="stat-grid" style={{ marginBottom: 24 }}>
-        {[
-          { label: 'إجمالي الـ Workflows', value: totalWorkflows, color: '#EA580C' },
-          { label: 'نشطة الآن', value: activeCount, color: 'var(--green)' },
-          { label: 'موقفة', value: totalWorkflows - activeCount, color: 'var(--ink-3)' },
-          { label: 'إجمالي التشغيلات', value: '280+', color: 'var(--primary)' },
-        ].map((k, i) => (
-          <div key={i} className="stat">
-            <div className="stat-top">
-              <div className="stat-label">{k.label}</div>
+      {failure && <div className="card card-pad" style={{ borderColor: 'rgba(240,80,60,.4)' }}>{failure}</div>}
+
+      {snap && !snap.configured && (
+        <div className="card card-pad" style={{ maxWidth: 640 }}>
+          <span className="badge amber">غير مهيأ</span>
+          <div style={{ fontWeight: 700, fontSize: 16, margin: '12px 0 6px' }}>n8n غير مربوط بهذه اللوحة</div>
+          <div style={{ color: 'var(--ink-3)', fontSize: 13.5, lineHeight: 1.8 }}>
+            لا تُعرض هنا أي تدفقات أو أرقام قبل الربط الفعلي. للربط أضف في أسرار Supabase:
+            <div style={{ margin: '10px 0', display: 'grid', gap: 6 }}>
+              <code className="mono">N8N_BASE_URL</code>
+              <code className="mono">N8N_API_KEY</code>
             </div>
-            <div className="stat-value" style={{ color: k.color !== 'var(--primary)' ? k.color : undefined }}>{k.value}</div>
+            ثم اضغط «تحديث». المفتاح يبقى على الخادم ولا يصل للمتصفح.
           </div>
-        ))}
-      </div>
-
-      <div className="seg" style={{ marginBottom: 20 }}>
-        <button className={tab === 'workflows' ? 'active' : ''} onClick={() => setTab('workflows')}>التدفقات</button>
-        <button className={tab === 'executions' ? 'active' : ''} onClick={() => setTab('executions')}>سجل التشغيل (280)</button>
-      </div>
-
-      {tab === 'workflows' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {workflowGroups.map((group, gi) => (
-            <div key={gi} className="card" style={{ overflow: 'hidden' }}>
-              <div className="row gap-3 card-pad" style={{
-                padding: '12px 20px', borderBottom: '1px solid var(--border)',
-                background: group.color + '10',
-              }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: group.color, flexShrink: 0 }} />
-                <span style={{ fontWeight: 700, fontSize: 13, color: group.color }}>{group.group}</span>
-                <span style={{ marginInlineStart: 'auto', fontSize: 11, color: group.color, background: group.color + '20', padding: '2px 8px', borderRadius: 99 }}>
-                  {group.workflows.filter(w => w.active).length}/{group.workflows.length} نشط
-                </span>
-              </div>
-              <table className="tbl">
-                <tbody>
-                  {group.workflows.map((w, wi) => (
-                    <tr key={wi}>
-                      <td style={{ width: 20, paddingInlineEnd: 8 }}>
-                        <div style={{
-                          width: 8, height: 8, borderRadius: '50%',
-                          background: w.active ? 'var(--green)' : 'var(--ink-4)',
-                          boxShadow: w.active ? '0 0 6px var(--green)' : 'none',
-                        }} />
-                      </td>
-                      <td style={{ fontWeight: 500 }}>{w.name}</td>
-                      <td>
-                        <span style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-3)', background: 'rgba(255,255,255,0.05)', padding: '2px 7px', borderRadius: 6 }}>
-                          {w.trigger}
-                        </span>
-                      </td>
-                      <td>
-                        {(w as any).note && <span style={{ fontSize: 11, color: '#38BDF8' }}>{(w as any).note}</span>}
-                        {w.runs && <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>{w.runs} تشغيلة</span>}
-                      </td>
-                      <td>
-                        <span className={`badge ${w.active ? 'green' : 'gray'}`}>
-                          {w.active ? 'نشط' : 'موقف'}
-                        </span>
-                      </td>
-                      <td style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-4)' }}>
-                        {w.id.slice(0, 8)}…
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ))}
         </div>
       )}
 
-      {tab === 'executions' && (
-        <div className="card" style={{ overflow: 'hidden' }}>
-          <div className="row gap-3 card-pad" style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
-            <span style={{ fontWeight: 700, fontSize: 14 }}>آخر التشغيلات الحقيقية</span>
-            <span className="badge green" style={{ marginInlineStart: 'auto' }}>280 إجمالي</span>
-            <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>100% نجاح</span>
-          </div>
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>الـ Workflow</th>
-                <th>النوع</th>
-                <th>المدة</th>
-                <th>الوقت</th>
-                <th>الحالة</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentExecutions.map(ex => (
-                <tr key={ex.id}>
-                  <td style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-3)' }}>#{ex.id}</td>
-                  <td style={{ fontWeight: 500 }}>{ex.workflow}</td>
-                  <td style={{ fontSize: 12, color: 'var(--ink-3)' }}>{ex.mode}</td>
-                  <td style={{ fontFamily: 'var(--mono)', fontSize: 12 }}>{ex.duration}</td>
-                  <td style={{ fontSize: 12, color: 'var(--ink-3)' }}>{new Date(ex.startedAt).toLocaleTimeString('ar-SA')}</td>
-                  <td><span className={`badge ${ex.status === 'success' ? 'green' : 'red'}`}>{ex.status === 'success' ? 'نجح' : 'فشل'}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {snap?.configured && snap.error && (
+        <div className="card card-pad" style={{ borderColor: 'rgba(240,80,60,.4)' }}>
+          <span className="badge red">فشل</span>
+          <div style={{ marginTop: 10, fontSize: 13.5 }}>تعذّر قراءة n8n: <code className="mono">{snap.error}</code></div>
         </div>
+      )}
+
+      {snap?.configured && !snap.error && (
+        <>
+          <div className="stat-grid" style={{ marginBottom: 20 }}>
+            <div className="stat"><div className="stat-label">التدفقات</div><div className="stat-value num">{nf(total)}</div></div>
+            <div className="stat"><div className="stat-label">نشطة</div><div className="stat-value num">{nf(active)}</div></div>
+            <div className="stat"><div className="stat-label">موقوفة</div><div className="stat-value num">{nf(total - active)}</div></div>
+            <div className="stat">
+              <div className="stat-label">آخر مزامنة</div>
+              <div className="stat-value" style={{ fontSize: 18 }}>{snap.fetched_at ? `${dateShort(snap.fetched_at)} ${timeShort(snap.fetched_at)}` : '—'}</div>
+            </div>
+          </div>
+
+          <div className="card card-pad" style={{ marginBottom: 20 }}>
+            <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 12 }}>التدفقات</div>
+            {total === 0 ? <div className="muted">لا توجد تدفقات في هذا الحساب.</div> : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead><tr style={{ color: 'var(--ink-3)', textAlign: 'right' }}><th style={{ padding: 8 }}>الاسم</th><th>الحالة</th><th>آخر تعديل</th></tr></thead>
+                  <tbody>
+                    {snap.workflows!.map(w => (
+                      <tr key={w.id} style={{ borderTop: '1px solid rgba(255,255,255,.07)' }}>
+                        <td style={{ padding: 10, fontWeight: 600 }}>{w.name}</td>
+                        <td><span className={`badge ${w.active ? 'green' : 'amber'}`}>{w.active ? 'نشط' : 'موقوف'}</span></td>
+                        <td className="muted">{w.updated_at ? dateShort(w.updated_at) : '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          <div className="card card-pad">
+            <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 12 }}>آخر التشغيلات</div>
+            {snap.executions_error ? (
+              <div className="muted">تعذّر جلب التشغيلات: <code className="mono">{snap.executions_error}</code></div>
+            ) : (snap.executions ?? []).length === 0 ? (
+              <div className="muted">لا توجد تشغيلات مسجلة.</div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead><tr style={{ color: 'var(--ink-3)', textAlign: 'right' }}><th style={{ padding: 8 }}>التدفق</th><th>النتيجة</th><th>البداية</th></tr></thead>
+                  <tbody>
+                    {snap.executions!.map(e => {
+                      const st = EXEC_LABEL[e.status] ?? { label: e.status, badge: 'amber' }
+                      return (
+                        <tr key={e.id} style={{ borderTop: '1px solid rgba(255,255,255,.07)' }}>
+                          <td style={{ padding: 10 }}>{nameOf.get(e.workflow_id) ?? `#${e.workflow_id}`}</td>
+                          <td><span className={`badge ${st.badge}`}>{st.label}</span></td>
+                          <td className="muted">{e.started_at ? `${dateShort(e.started_at)} ${timeShort(e.started_at)}` : '—'}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   )

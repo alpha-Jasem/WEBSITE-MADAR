@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { logAudit } from '../../../lib/auditLog'
+import { writeAudit } from '../../../lib/deals'
 import { AdminModulesSection } from './AdminModulesSection'
 import { BUSINESS_TYPE_LABELS } from '../../../dashboard/modules'
 import type { Company, CompanyStatus, Plan } from '../../../types'
@@ -96,6 +97,21 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
     onUpdated()
   }
 
+  const toggleDemo = async () => {
+    const next = company.is_demo === false
+    setSaving(true)
+    const { data: changed, error } = await supabase.from('companies').update({ is_demo: next }).eq('id', company.id).select('id')
+    setSaving(false)
+    if (error || (changed?.length ?? 0) === 0) {
+      setFeedback('تعذر تغيير نوع الحساب.')
+      return
+    }
+    await writeAudit(next ? 'company_marked_demo' : 'company_marked_real', 'company', company.id, { is_demo: company.is_demo !== false }, { is_demo: next })
+    setFeedback(next ? 'الحساب الآن تجريبي ومستبعد من الأرقام المالية' : 'الحساب الآن حقيقي ويدخل في الأرقام المالية')
+    setTimeout(() => setFeedback(''), 3500)
+    onUpdated()
+  }
+
   const toggleStatus = async () => {
     const next: CompanyStatus = company.status === 'active' ? 'suspended' : 'active'
     setSaving(true)
@@ -148,6 +164,15 @@ export function AdminClientDrawer({ company, onClose, onUpdated }: Props) {
           </div>
 
           <div className="space-y-5 p-6">
+            <section className="flex items-center justify-between gap-3 rounded-3xl p-4" style={{ border: '1px solid #E2E8F0', background: company.is_demo === false ? '#ECFDF5' : '#FFFBEB' }}>
+              <div>
+                <div className="text-sm font-bold text-slate-900 font-cairo">{company.is_demo === false ? 'عميل حقيقي' : 'حساب تجريبي'}</div>
+                <p className="text-xs text-slate-500 font-tajawal">{company.is_demo === false ? 'يدخل في الإيراد المتوقع والتقارير المالية.' : 'مستبعد من كل الأرقام المالية حتى تحوّله إلى حقيقي.'}</p>
+              </div>
+              <button type="button" onClick={toggleDemo} disabled={saving} className="rounded-xl px-4 py-2 text-xs font-bold text-white disabled:opacity-60" style={{ background: company.is_demo === false ? '#64748B' : '#059669' }}>
+                {company.is_demo === false ? 'تحويل إلى تجريبي' : 'تحويل إلى حقيقي'}
+              </button>
+            </section>
             <section className="rounded-3xl p-5" style={{ background: 'linear-gradient(135deg, #F8FBFF, #FFFFFF)', border: '1px solid #E2E8F0' }}>
               <div className="grid grid-cols-2 gap-3">
                 <Info label="النشاط" value={BUSINESS_TYPE_LABELS[company.business_type ?? 'other'] || 'أخرى'} />

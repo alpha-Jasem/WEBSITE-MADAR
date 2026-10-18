@@ -1,283 +1,191 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
-import type { Company } from '../../../types'
+import { logDealEvent, type Deal } from '../../../lib/deals'
+import { DEAL_STAGES, STAGE_LABEL, isClosed, type DealStage } from '../../../lib/dealStages'
+import { dateShort, nf, sar, timeShort } from '../../../lib/format'
 
-type StageKey = 'new_lead' | 'contacted' | 'qualified' | 'meeting_booked' | 'proposal_sent' | 'won'
+const LOST_REASONS = ['السعر', 'عندهم نظام حالياً', 'غير مهتم', 'قرار لاحقاً', 'طلب التوقف', 'أخرى']
+const BOARD_STAGES = DEAL_STAGES.filter(s => s !== 'lost') as DealStage[]
 
-type Deal = {
-  id: string
-  company_name: string | null
-  contact_name: string | null
-  phone: string | null
-  email: string | null
-  sector: string | null
-  source: string | null
-  stage: StageKey
-  price_expected: number | null
-  price_sold: number | null
-  created_at: string | null
-  updated_at: string | null
-}
+interface DealEvent { id: string; type: string; data: Record<string, unknown>; created_at: string }
 
-type NewDealForm = { company_name: string; contact_name: string; phone: string; email: string; sector: string; source: string; price_expected: string }
-
-const stages: Array<{ key: StageKey; label: string; hint: string; color: string; probability: number }> = [
-  { key: 'new_lead',       label: 'جديد',       hint: 'دخل للنظام',      color: '#64748B', probability: 10 },
-  { key: 'contacted',      label: 'تم التواصل', hint: 'مكالمة / واتساب', color: '#00BFFF', probability: 25 },
-  { key: 'qualified',      label: 'مؤهل',       hint: 'مناسب للبيع',     color: '#3078FF', probability: 45 },
-  { key: 'meeting_booked', label: 'اجتماع',     hint: 'عرض مباشر',       color: '#8B5CF6', probability: 65 },
-  { key: 'proposal_sent',  label: 'عرض مرسل',   hint: 'بانتظار القرار',  color: '#F59E0B', probability: 80 },
-  { key: 'won',            label: 'مغلق',        hint: 'تم البيع',        color: '#10B981', probability: 100 },
-]
-
-const stageAliases: Record<string, StageKey> = {
-  new: 'new_lead', new_lead: 'new_lead', contacted: 'contacted', qualified: 'qualified',
-  proposal: 'proposal_sent', proposal_sent: 'proposal_sent', meeting_booked: 'meeting_booked',
-  negotiation: 'proposal_sent', won: 'won', converted: 'won',
-}
-
-function normalizeStage(value?: string | null): StageKey { return stageAliases[value || ''] ?? 'new_lead' }
-function dealValue(deal: Deal) { return Number(deal.price_sold ?? deal.price_expected ?? 0) }
-function formatSar(value: number) { return `${Math.round(value).toLocaleString('ar-SA')} ر.س` }
-function timeAgo(iso?: string | null) {
-  if (!iso) return 'غير محدد'
-  const hours = Math.floor((Date.now() - new Date(iso).getTime()) / 3600000)
-  if (hours < 1) return 'قبل قليل'
-  if (hours < 24) return `قبل ${hours} ساعة`
-  return `قبل ${Math.floor(hours / 24)} يوم`
-}
-
-function mapDeal(row: any): Deal {
-  return {
-    id: row.id,
-    company_name: row.company_name ?? row.company ?? row.name ?? null,
-    contact_name: row.contact_name ?? row.owner_name ?? row.customer_name ?? null,
-    phone: row.phone ?? row.owner_phone ?? null,
-    email: row.email ?? row.owner_email ?? null,
-    sector: row.sector ?? row.industry ?? row.business_type ?? null,
-    source: row.source ?? null,
-    stage: normalizeStage(row.stage ?? row.status),
-    price_expected: row.price_expected ?? row.value ?? null,
-    price_sold: row.price_sold ?? null,
-    created_at: row.created_at ?? null,
-    updated_at: row.updated_at ?? row.created_at ?? null,
-  }
-}
-
-const EMPTY_FORM: NewDealForm = { company_name: '', contact_name: '', phone: '', email: '', sector: '', source: 'إدخال يدوي', price_expected: '799' }
-
+// Deals of the agency's own sales (not the customers' data). Source: public.deals.
 export const AdminPipeline = () => {
   const [deals, setDeals] = useState<Deal[]>([])
-  const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [draggingId, setDraggingId] = useState<string | null>(null)
-  const [dragOverStage, setDragOverStage] = useState<StageKey | null>(null)
-  const [view, setView] = useState<'board' | 'table'>('board')
-  const [showCreate, setShowCreate] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [loadError, setLoadError] = useState('')
-  const [form, setForm] = useState<NewDealForm>(EMPTY_FORM)
+  const [error, setError] = useState<string | null>(null)
+  const [showLost, setShowLost] = useState(false)
+  const [adding, setAdding] = useState(false)
+  const [lostFor, setLostFor] = useState<Deal | null>(null)
+  const [openId, setOpenId] = useState<string | null>(null)
+  const [events, setEvents] = useState<DealEvent[]>([])
+  const [form, setForm] = useState({ company_name: '', contact_name: '', contact_phone: '', service: '' })
 
-  const load = async () => {
-    setLoading(true); setLoadError('')
-    const [{ data, error }, { data: companyRows }] = await Promise.all([
-      supabase.from('crm_leads').select('*').order('updated_at', { ascending: false }).limit(160),
-      supabase.from('companies').select('*').order('created_at', { ascending: false }),
-    ])
-    if (error) { setLoadError(error.message); setDeals([]) }
-    else setDeals(((data ?? []) as any[]).filter(r => r.stage !== 'lost').map(mapDeal))
-    setCompanies((companyRows ?? []) as Company[])
+  const load = useCallback(async () => {
+    const { data, error: e } = await supabase.from('deals').select('*').order('updated_at', { ascending: false }).limit(500)
+    if (e) setError('تعذّر تحميل الصفقات. تحقق من الاتصال وأعد المحاولة.')
+    else { setError(null); setDeals((data ?? []) as Deal[]) }
     setLoading(false)
-  }
-
-  useEffect(() => {
-    load()
-    const ch = supabase.channel('admin_pipeline_live').on('postgres_changes', { event: '*', schema: 'public', table: 'crm_leads' }, load).subscribe()
-    return () => { supabase.removeChannel(ch) }
   }, [])
 
-  const filteredDeals = useMemo(() => {
-    const needle = search.trim().toLowerCase()
-    if (!needle) return deals
-    return deals.filter(d => [d.company_name, d.contact_name, d.phone, d.email, d.sector, d.source].filter(Boolean).some(v => String(v).toLowerCase().includes(needle)))
-  }, [deals, search])
+  useEffect(() => { load() }, [load])
 
-  const totals = useMemo(() => {
-    const open = filteredDeals.filter(d => d.stage !== 'won')
-    const weighted = open.reduce((s, d) => s + dealValue(d) * ((stages.find(st => st.key === d.stage)?.probability ?? 10) / 100), 0)
-    const won = filteredDeals.filter(d => d.stage === 'won')
-    const wonRevenue = won.reduce((s, d) => s + dealValue(d), 0)
-    const stale = open.filter(d => { const u = d.updated_at || d.created_at; return u && Date.now() - new Date(u).getTime() > 7 * 24 * 3600000 }).length
-    return { open, weighted, won, wonRevenue, stale }
-  }, [filteredDeals])
+  const byStage = useMemo(() => {
+    const map = new Map<DealStage, Deal[]>()
+    DEAL_STAGES.forEach(s => map.set(s, []))
+    deals.forEach(d => map.get(d.stage)?.push(d))
+    return map
+  }, [deals])
 
-  const upgradeSignals = useMemo(() => {
-    return companies.map(c => {
-      const msgUsage = c.message_limit ? Math.round(((c.messages_used || 0) / c.message_limit) * 100) : 0
-      const reasons = [msgUsage >= 70 ? `استهلاك الرسائل ${msgUsage}%` : ''].filter(Boolean)
-      return { company: c, reasons, score: Math.min(100, msgUsage + reasons.length * 12 + (c.plan === 'starter' ? 18 : 0)) }
-    }).filter(r => r.reasons.length > 0).sort((a, b) => b.score - a.score).slice(0, 4)
-  }, [companies])
-
-  const moveDeal = async (id: string, stage: StageKey) => {
-    setDeals(prev => prev.map(d => d.id === id ? { ...d, stage, updated_at: new Date().toISOString() } : d))
-    await supabase.from('crm_leads').update({ stage, updated_at: new Date().toISOString() }).eq('id', id)
+  const patchDeal = async (deal: Deal, patch: Partial<Deal>, event?: { type: string; data: Record<string, unknown> }) => {
+    setDeals(ds => ds.map(d => (d.id === deal.id ? { ...d, ...patch } : d)))
+    const { error: e } = await supabase.from('deals').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', deal.id)
+    if (e) { setError('تعذّر حفظ التغيير.'); load(); return }
+    if (event) await logDealEvent(deal.id, event.type, event.data)
   }
 
-  const createDeal = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!form.company_name.trim() && !form.contact_name.trim()) return
-    setSaving(true)
-    const payload = { company_name: form.company_name.trim() || form.contact_name.trim(), contact_name: form.contact_name.trim() || null, phone: form.phone.trim() || null, email: form.email.trim() || null, sector: form.sector.trim() || null, source: form.source.trim() || 'إدخال يدوي', price_expected: Number(form.price_expected || 0), stage: 'new_lead', updated_at: new Date().toISOString() }
-    const { data, error } = await supabase.from('crm_leads').insert(payload).select('*').single()
-    if (!error && data) { setDeals(prev => [mapDeal(data), ...prev]); setShowCreate(false); setForm(EMPTY_FORM) }
-    else if (error) setLoadError(error.message)
-    setSaving(false)
+  const moveStage = (deal: Deal, stage: DealStage) => {
+    if (stage === 'lost') { setLostFor(deal); return }
+    patchDeal(deal, { stage, closed_at: isClosed(stage) ? new Date().toISOString() : null, lost_reason: '' },
+      { type: 'stage_change', data: { from: deal.stage, to: stage } })
   }
 
+  const openDeal = async (deal: Deal) => {
+    if (openId === deal.id) { setOpenId(null); return }
+    setOpenId(deal.id)
+    const { data } = await supabase.from('deal_events').select('id, type, data, created_at').eq('deal_id', deal.id).order('created_at', { ascending: false }).limit(15)
+    setEvents((data ?? []) as DealEvent[])
+  }
+
+  const addDeal = async () => {
+    if (!form.company_name.trim()) return
+    const { data, error: e } = await supabase.from('deals').insert({ ...form, source: 'manual' }).select('*').single()
+    if (e || !data) { setError('تعذّرت إضافة الصفقة.'); return }
+    await logDealEvent(data.id, 'created', { source: 'manual' })
+    setForm({ company_name: '', contact_name: '', contact_phone: '', service: '' })
+    setAdding(false)
+    load()
+  }
+
+  const open = deals.filter(d => !isClosed(d.stage))
+  const stale = open.filter(d => !d.next_step && !d.next_step_at).length
+  const priced = open.filter(d => d.value_net != null)
+  const pipelineValue = priced.reduce((sum, d) => sum + (d.value_net ?? 0), 0)
+
+  const card = (d: Deal) => (
+    <div key={d.id} className="card" style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <button onClick={() => openDeal(d)} style={{ textAlign: 'start', fontWeight: 600, fontSize: 13.5 }}>{d.company_name}</button>
+      <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>
+        {d.contact_name || '—'}
+        {d.contact_phone && <> · <a href={`tel:+${d.contact_phone}`} style={{ color: 'var(--primary-ink)' }} className="mono">+{d.contact_phone}</a></>}
+      </div>
+      <input
+        defaultValue={d.next_step}
+        placeholder="الخطوة القادمة…"
+        aria-label="الخطوة القادمة"
+        onBlur={e => { if (e.target.value !== d.next_step) patchDeal(d, { next_step: e.target.value }, { type: 'next_step', data: { text: e.target.value } }) }}
+        style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, padding: '6px 9px', color: 'var(--ink)', fontSize: 12.5 }}
+      />
+      <input
+        type="date"
+        aria-label="موعد الخطوة"
+        defaultValue={d.next_step_at ? d.next_step_at.slice(0, 10) : ''}
+        onBlur={e => patchDeal(d, { next_step_at: e.target.value ? new Date(`${e.target.value}T10:00:00+03:00`).toISOString() : null })}
+        style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, padding: '5px 9px', color: 'var(--ink)', fontSize: 12.5 }}
+      />
+      <select value={d.stage} onChange={e => moveStage(d, e.target.value as DealStage)} aria-label="المرحلة"
+        style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, padding: '6px 8px', color: 'var(--ink)', fontSize: 12.5 }}>
+        {DEAL_STAGES.map(s => <option key={s} value={s}>{STAGE_LABEL[s]}</option>)}
+      </select>
+      {d.lost_reason && <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>السبب: {d.lost_reason}</div>}
+      {openId === d.id && (
+        <div style={{ borderTop: '1px solid rgba(255,255,255,.08)', paddingTop: 8, display: 'grid', gap: 4, fontSize: 12, color: 'var(--ink-3)' }}>
+          {d.last_contact_at && <div>آخر تواصل: {dateShort(d.last_contact_at)} {timeShort(d.last_contact_at)}</div>}
+          {events.length === 0 ? <div>لا توجد أحداث مسجلة.</div> : events.map(ev => (
+            <div key={ev.id}>{dateShort(ev.created_at)} · {ev.type === 'stage_change' ? `${STAGE_LABEL[ev.data.from as DealStage] ?? ''} ← ${STAGE_LABEL[ev.data.to as DealStage] ?? ''}` : ev.type}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 
   return (
     <div className="page fade-in">
-      <div className="sec-head" style={{ marginBottom: 24 }}>
+      <div className="sec-head" style={{ marginBottom: 20 }}>
         <div>
-          <div className="sec-title">خط المبيعات</div>
-          <div className="sec-sub">تابع الفرص من أول تواصل إلى الإغلاق</div>
+          <div className="sec-title">الصفقات</div>
+          <div className="sec-sub">مبيعات وكالة مدار فقط. المصدر: جدول deals</div>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          فرصة جديدة
-        </button>
-      </div>
-
-      <div className="stat-grid" style={{ marginBottom: 24 }}>
-        {[
-          { label: 'القيمة المرجحة', value: formatSar(totals.weighted) },
-          { label: 'فرص مفتوحة', value: totals.open.length },
-          { label: 'إيراد مغلق', value: formatSar(totals.wonRevenue) },
-          { label: 'تحتاج متابعة', value: totals.stale },
-        ].map((s, i) => (
-          <div key={i} className="stat">
-            <div className="stat-top"><div className="stat-label">{s.label}</div></div>
-            <div className="stat-value num">{s.value}</div>
-          </div>
-        ))}
-      </div>
-
-      {upgradeSignals.length > 0 && (
-        <div className="card card-pad" style={{ marginBottom: 20 }}>
-          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 12 }}>فرص ترقية تلقائية</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
-            {upgradeSignals.map(signal => (
-              <div key={signal.company.id} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 12, background: 'rgba(255,255,255,0.03)' }}>
-                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>{signal.company.name}</div>
-                <div style={{ fontSize: 11, color: 'var(--ink-3)', marginBottom: 8 }}>{signal.reasons.slice(0, 2).join(' · ')}</div>
-                <button className="btn btn-ghost btn-sm" onClick={() => { setForm({ company_name: signal.company.name, contact_name: signal.company.owner_name || '', phone: '', email: signal.company.owner_email || '', sector: signal.company.industry || '', source: `فرصة ترقية: ${signal.reasons[0]}`, price_expected: signal.company.plan === 'starter' ? '799' : '1999' }); setShowCreate(true) }}>
-                  تحويل لفرصة
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="row gap-3" style={{ marginBottom: 16 }}>
-        <div className="card row gap-2" style={{ padding: '9px 14px', flex: 1 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--ink-3)', flexShrink: 0 }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="ابحث عن شركة، عميل، قطاع..." style={{ background: 'none', border: 'none', outline: 'none', fontSize: 13, color: 'var(--ink)', flex: 1 }} />
-        </div>
-        <div className="seg">
-          <button className={view === 'board' ? 'active' : ''} onClick={() => setView('board')}>المراحل</button>
-          <button className={view === 'table' ? 'active' : ''} onClick={() => setView('table')}>جدول</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-ghost" onClick={() => setShowLost(s => !s)}>{showLost ? 'إخفاء الخسائر' : `الخسائر (${nf(byStage.get('lost')!.length)})`}</button>
+          <button className="btn btn-primary" onClick={() => setAdding(true)}>إضافة صفقة</button>
         </div>
       </div>
 
-      {loadError && <div className="badge red" style={{ display: 'block', marginBottom: 16, padding: '8px 12px', borderRadius: 8 }}>{loadError}</div>}
+      {error && <div className="card card-pad" style={{ borderColor: 'rgba(240,80,60,.4)', marginBottom: 14 }}>{error}</div>}
 
-      {view === 'board' ? (
-        <div className="kanban" style={{ gridTemplateColumns: `repeat(${stages.length}, 1fr)` }}>
-          {stages.map(stage => {
-            const colDeals = filteredDeals.filter(d => d.stage === stage.key)
-            const total = colDeals.reduce((s, d) => s + dealValue(d), 0)
-            const isOver = dragOverStage === stage.key
-            return (
-              <div key={stage.key} className={`kcol ${isOver ? 'drop-target' : ''}`}
-                onDragOver={e => { e.preventDefault(); setDragOverStage(stage.key) }}
-                onDragLeave={() => setDragOverStage(null)}
-                onDrop={() => { if (draggingId) moveDeal(draggingId, stage.key); setDraggingId(null); setDragOverStage(null) }}>
-                <div className="kcol-head">
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 13, color: stage.color }}>{stage.label}</div>
-                    <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>{stage.hint}</div>
-                  </div>
-                  <span className="badge gray">{colDeals.length}</span>
-                </div>
-                <div style={{ fontSize: 12, fontFamily: 'var(--mono)', color: 'var(--ink-2)', padding: '0 8px 10px', fontWeight: 600 }}>{formatSar(total)}</div>
-                {colDeals.map(deal => (
-                  <div key={deal.id} className="kcard" draggable onDragStart={() => setDraggingId(deal.id)} onDragEnd={() => setDraggingId(null)}>
-                    <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>{deal.company_name || deal.contact_name || 'فرصة بدون اسم'}</div>
-                    <div style={{ fontSize: 11, color: 'var(--ink-3)', marginBottom: 8 }}>{deal.sector || deal.source || 'مدار OS'}</div>
-                    <div className="row gap-2" style={{ justifyContent: 'space-between' }}>
-                      <span style={{ fontWeight: 700, fontSize: 12, fontFamily: 'var(--mono)', color: stage.color }}>{formatSar(dealValue(deal))}</span>
-                      <span style={{ fontSize: 10, color: 'var(--ink-4)' }}>{stage.probability}%</span>
-                    </div>
-                    <div style={{ fontSize: 11, color: 'var(--ink-4)', marginTop: 6 }}>{timeAgo(deal.updated_at || deal.created_at)}</div>
-                  </div>
-                ))}
-                {colDeals.length === 0 && (
-                  <button onClick={() => setShowCreate(true)} style={{ width: '100%', padding: '12px 8px', textAlign: 'center', fontSize: 12, color: 'var(--ink-4)', border: '1px dashed var(--border)', borderRadius: 8, cursor: 'pointer', background: 'none' }}>
-                    + إضافة فرصة
-                  </button>
-                )}
-              </div>
-            )
-          })}
+      <div className="stat-grid" style={{ marginBottom: 20 }}>
+        <div className="stat"><div className="stat-label">صفقات مفتوحة</div><div className="stat-value num">{nf(open.length)}</div></div>
+        <div className="stat"><div className="stat-label">بلا خطوة قادمة</div><div className="stat-value num" style={stale ? { color: 'var(--red)' } : undefined}>{nf(stale)}</div></div>
+        <div className="stat"><div className="stat-label">مغلقة بنجاح</div><div className="stat-value num">{nf(byStage.get('won')!.length)}</div></div>
+        <div className="stat">
+          <div className="stat-label">قيمة معروضة (صافي)</div>
+          <div className="stat-value" style={{ fontSize: 20 }}>{priced.length ? sar(pipelineValue) : 'لا توجد أسعار'}</div>
         </div>
+      </div>
+
+      {loading ? <div className="muted">جاري التحميل…</div> : deals.length === 0 ? (
+        <div className="card card-pad">لا توجد صفقات بعد. تُنشأ تلقائيًا عند أول تواصل من Outreach، أو أضف صفقة يدويًا.</div>
       ) : (
-        <div className="card" style={{ overflow: 'hidden' }}>
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>الشركة</th><th>القطاع</th><th>القيمة</th><th>المرحلة</th><th>التواصل</th><th>آخر تحديث</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredDeals.map(deal => {
-                const stage = stages.find(s => s.key === deal.stage)
-                return (
-                  <tr key={deal.id}>
-                    <td style={{ fontWeight: 500 }}>{deal.company_name || deal.contact_name || '—'}</td>
-                    <td style={{ fontSize: 12, color: 'var(--ink-2)' }}>{deal.sector || '—'}</td>
-                    <td style={{ fontFamily: 'var(--mono)', fontSize: 12 }}>{formatSar(dealValue(deal))}</td>
-                    <td><span className="badge" style={{ background: (stage?.color ?? '#64748B') + '20', color: stage?.color ?? 'var(--ink-3)' }}>{stage?.label ?? deal.stage}</span></td>
-                    <td style={{ fontSize: 12, color: 'var(--ink-2)' }}>{deal.phone || deal.email || '—'}</td>
-                    <td style={{ fontSize: 12, color: 'var(--ink-3)' }}>{timeAgo(deal.updated_at || deal.created_at)}</td>
-                  </tr>
-                )
-              })}
-              {filteredDeals.length === 0 && <tr><td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: 'var(--ink-3)' }}>لا توجد فرص</td></tr>}
-            </tbody>
-          </table>
+        <div style={{ display: 'grid', gridAutoFlow: 'column', gridAutoColumns: 'minmax(240px, 1fr)', gap: 12, overflowX: 'auto', paddingBottom: 8 }}>
+          {BOARD_STAGES.map(stage => (
+            <div key={stage} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ fontWeight: 700, fontSize: 13, display: 'flex', justifyContent: 'space-between' }}>
+                {STAGE_LABEL[stage]}<span className="muted num">{nf(byStage.get(stage)!.length)}</span>
+              </div>
+              {byStage.get(stage)!.map(card)}
+              {byStage.get(stage)!.length === 0 && <div className="muted" style={{ fontSize: 12 }}>لا شيء هنا</div>}
+            </div>
+          ))}
         </div>
       )}
 
-      {showCreate && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(2,5,18,0.8)', backdropFilter: 'blur(4px)', zIndex: 70, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="card" style={{ width: 480, maxWidth: '95vw', padding: 28, background: 'rgba(8,15,36,0.98)' }}>
-            <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 20 }}>فرصة جديدة</div>
-            <form onSubmit={createDeal} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {([['company_name', 'اسم الشركة'], ['contact_name', 'اسم المسؤول'], ['phone', 'رقم الجوال'], ['email', 'البريد الإلكتروني'], ['price_expected', 'القيمة المتوقعة (ر.س)']]) .map(([k, label]) => (
-                <div key={k}>
-                  <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 4 }}>{label}</div>
-                  <input value={(form as any)[k]} onChange={e => setForm(f => ({ ...f, [k]: e.target.value }))}
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 12px', fontSize: 13, color: 'var(--ink)', outline: 'none', boxSizing: 'border-box' }} />
-                </div>
+      {showLost && (
+        <div style={{ marginTop: 22 }}>
+          <div style={{ fontWeight: 700, marginBottom: 10 }}>الخسائر</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>{byStage.get('lost')!.map(card)}</div>
+        </div>
+      )}
+
+      {adding && (
+        <div className="pal-bg" onClick={() => setAdding(false)}>
+          <div className="pal" style={{ padding: 20, display: 'grid', gap: 10 }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontWeight: 700 }}>صفقة جديدة</div>
+            {([['company_name', 'اسم الشركة'], ['contact_name', 'جهة الاتصال'], ['contact_phone', 'الجوال (966…)'], ['service', 'الخدمة']] as const).map(([k, label]) => (
+              <input key={k} placeholder={label} aria-label={label} value={form[k]} onChange={e => setForm({ ...form, [k]: e.target.value })}
+                style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 10, padding: '10px 12px', color: 'var(--ink)' }} />
+            ))}
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button className="btn btn-ghost" onClick={() => setAdding(false)}>إلغاء</button>
+              <button className="btn btn-primary" onClick={addDeal} disabled={!form.company_name.trim()}>إضافة</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {lostFor && (
+        <div className="pal-bg" onClick={() => setLostFor(null)}>
+          <div className="pal" style={{ padding: 20, display: 'grid', gap: 12 }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontWeight: 700 }}>سبب الخسارة: {lostFor.company_name}</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {LOST_REASONS.map(r => (
+                <button key={r} className="btn btn-ghost" onClick={() => {
+                  patchDeal(lostFor, { stage: 'lost', lost_reason: r, closed_at: new Date().toISOString() }, { type: 'stage_change', data: { from: lostFor.stage, to: 'lost', reason: r } })
+                  setLostFor(null)
+                }}>{r}</button>
               ))}
-              <div className="row gap-3" style={{ marginTop: 8 }}>
-                <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'جاري الحفظ…' : 'إضافة'}</button>
-                <button type="button" className="btn btn-ghost" onClick={() => { setShowCreate(false); setForm(EMPTY_FORM) }}>إلغاء</button>
-              </div>
-            </form>
+            </div>
+            <button className="btn btn-ghost" onClick={() => setLostFor(null)}>إلغاء</button>
           </div>
         </div>
       )}

@@ -1,5 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
-import { fetchLogs } from '../../../lib/supabase'
+import { supabase } from '../../../lib/supabase'
 import type { Log, LogLevel } from '../../../types'
 
 const levelLabels: Record<LogLevel | 'all', string> = {
@@ -22,11 +22,13 @@ export const AdminLogs = () => {
   const [search, setSearch] = useState('')
   const [levelFilter, setLevelFilter] = useState<LogLevel | 'all'>('all')
   const [loading, setLoading] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   const load = async () => {
     setLoading(true)
-    const rows = await fetchLogs(120)
-    setLogs(rows)
+    const { data, error } = await supabase.from('logs').select('*').order('created_at', { ascending: false }).limit(120)
+    setLoadError(error ? 'تعذّر تحميل السجلات: ' + error.message : null)
+    setLogs(error ? [] : ((data ?? []) as Log[]))
     setLoading(false)
   }
 
@@ -51,7 +53,7 @@ export const AdminLogs = () => {
       <div className="sec-head" style={{ marginBottom: 24 }}>
         <div>
           <div className="sec-title">سجل الأحداث</div>
-          <div className="sec-sub">أحداث التشغيل والأخطاء من جميع الأنظمة</div>
+          <div className="sec-sub">إجراءات الإدارة المسجلة في جدول logs</div>
         </div>
         <button className="btn btn-ghost" onClick={load} disabled={loading}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
@@ -62,6 +64,7 @@ export const AdminLogs = () => {
         </button>
       </div>
 
+      {loadError && <div className="card card-pad" style={{ marginBottom: 16, borderColor: 'rgba(240,80,60,.4)' }}>{loadError}</div>}
       <div className="row gap-3" style={{ marginBottom: 20, flexWrap: 'wrap' }}>
         <button className={`pill ${levelFilter === 'all' ? 'active' : ''}`} onClick={() => setLevelFilter('all')}>
           الكل <span className="cnt">{logs.length}</span>
@@ -115,7 +118,7 @@ export const AdminLogs = () => {
             {!loading && filtered.length === 0 && (
               <tr>
                 <td colSpan={5} style={{ textAlign: 'center', padding: '40px 16px', color: 'var(--ink-3)' }}>
-                  لا توجد سجلات مطابقة
+                  {logs.length === 0 ? 'لا توجد بيانات: لم يُسجل أي حدث بعد' : 'لا توجد سجلات مطابقة'}
                 </td>
               </tr>
             )}

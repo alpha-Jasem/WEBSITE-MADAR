@@ -70,7 +70,7 @@ export const AdminOverview = () => {
       const since = new Date(); since.setDate(since.getDate() - 30)
       const [companiesRes, leadsRes] = await Promise.all([
         supabase.from('companies').select('*').order('created_at', { ascending: false }),
-        supabase.from('crm_leads').select('id, created_at, stage').gte('created_at', since.toISOString()),
+        supabase.from('deals').select('id, created_at, stage').gte('created_at', since.toISOString()),
       ])
       setCompanies((companiesRes.data ?? []) as Company[])
       setLeads((leadsRes.data ?? []) as LeadRow[])
@@ -90,8 +90,10 @@ export const AdminOverview = () => {
     })
   }, [leads])
 
-  const activeCompanies = companies.filter(c => c.status === 'active').length
-  const clinicOSCount = companies.length
+  // Demo companies never count in these figures; the owner marks real customers explicitly.
+  const realCompanies = companies.filter(c => c.is_demo === false)
+  const activeCompanies = realCompanies.filter(c => c.status === 'active').length
+  const clinicOSCount = realCompanies.length
   const convertedLeads = leads.filter(l => l.stage === 'won' || l.stage === 'converted').length
   const conversion = leads.length ? Math.round((convertedLeads / leads.length) * 100) : 0
 
@@ -119,7 +121,7 @@ export const AdminOverview = () => {
       <div className="sec-head" style={{ marginBottom: 24 }}>
         <div>
           <div className="sec-title">نظرة عامة على المنصة</div>
-          <div className="sec-sub">إيرادات العيادات، نشاط المواعيد، وحركة العملاء في آخر 30 يوم</div>
+          <div className="sec-sub">العملاء الحقيقيون وصفقات وكالة مدار في آخر 30 يوم (التجريبي مستبعد)</div>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <div className="badge green"><div className="bdot" />مباشر</div>
@@ -129,14 +131,14 @@ export const AdminOverview = () => {
       {/* Stat cards */}
       <div className="stat-grid" style={{ marginBottom: 24 }}>
         <AnimStat
-          label="عملاء محتملون (30 يوم)"
+          label="صفقات جديدة للوكالة (30 يوم)"
           numericValue={leads.length}
         />
         <div className="stat">
-          <div className="stat-top"><div className="stat-label">شركات نشطة</div></div>
-          <div className="stat-value num">{activeCompanies}<span className="cur">/ {companies.length}</span></div>
+          <div className="stat-top"><div className="stat-label">عملاء حقيقيون نشطون</div></div>
+          <div className="stat-value num">{activeCompanies}<span className="cur">/ {realCompanies.length}</span></div>
           <div className="stat-delta up">
-            <span>{Math.round((activeCompanies / Math.max(companies.length, 1)) * 100)}%</span>
+            <span>{realCompanies.length ? `${Math.round((activeCompanies / realCompanies.length) * 100)}%` : '—'}</span>
             <span className="muted" style={{ marginRight: 5 }}>معدل التفعيل</span>
           </div>
         </div>
@@ -191,11 +193,11 @@ export const AdminOverview = () => {
         {/* Company distribution */}
         <div className="card card-pad">
           <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>توزيع الحسابات</div>
-          <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 12 }}>{clinicOSCount} عميل على منصة Workspace OS</div>
+          <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 12 }}>{clinicOSCount} عميل حقيقي (التجريبي مستبعد)</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {[
-              { label: 'شركات نشطة', value: activeCompanies, color: 'var(--green)', pct: Math.round((activeCompanies / Math.max(companies.length, 1)) * 100) },
-              { label: 'تجربة أو موقوفة', value: companies.length - activeCompanies, color: 'var(--amber)', pct: Math.round(((companies.length - activeCompanies) / Math.max(companies.length, 1)) * 100) },
+              { label: 'شركات نشطة', value: activeCompanies, color: 'var(--green)', pct: Math.round((activeCompanies / Math.max(realCompanies.length, 1)) * 100) },
+              { label: 'تجربة أو موقوفة', value: realCompanies.length - activeCompanies, color: 'var(--amber)', pct: Math.round(((realCompanies.length - activeCompanies) / Math.max(realCompanies.length, 1)) * 100) },
               { label: 'عملاء Workspace OS', value: clinicOSCount, color: 'var(--primary)', pct: 100 },
             ].map(row => (
               <div key={row.label}>

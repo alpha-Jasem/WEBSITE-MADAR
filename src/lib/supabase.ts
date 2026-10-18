@@ -70,15 +70,6 @@ export const fetchAllAutomations = async (): Promise<Automation[]> => {
   return data ?? []
 }
 
-export const fetchAllLeads = async (): Promise<Lead[]> => {
-  const { data, error } = await supabase
-    .from('leads')
-    .select('*')
-    .order('created_at', { ascending: false })
-  if (error) return []
-  return data ?? []
-}
-
 export const fetchLogs = async (limit = 100): Promise<Log[]> => {
   const { data, error } = await supabase
     .from('logs')
@@ -124,5 +115,3 @@ export const fetchClientLeads = async (companyId: string): Promise<Lead[]> => {
 export const updateAutomationStatus = async (id: string, status: string) =>
   supabase.from('automations').update({ status }).eq('id', id)
 
-export const updateLeadStatus = async (id: string, status: string) =>
-  supabase.from('leads').update({ status }).eq('id', id)

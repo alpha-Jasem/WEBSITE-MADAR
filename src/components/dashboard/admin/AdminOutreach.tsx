@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
+import { addDoNotContact, loadDoNotContact, recordContact, syncDealForLead } from '../../../lib/deals'
 
 type Status = 'new' | 'contacted' | 'replied' | 'meeting' | 'won' | 'lost' | 'no_answer'
 type TemplateKey = 'first' | 'reminder' | 'meeting' | 'offer' | 'confirm'
@@ -16,6 +18,8 @@ interface OutreachLead {
   rating: number | null
   reviews: number | null
   source: string
+  campaign?: string
+  contact_name?: string
   source_url: string
   status: Status
   notes: string
@@ -37,7 +41,7 @@ const STATUS_META: Record<Status, { label: string; color: string; bg: string }> 
   lost:      { label: 'غير مهتم',   color: '#a33a2f', bg: '#f8dedb' },
 }
 
-const LOST_REASONS = ['السعر', 'عندهم نظام حالياً', 'غير مهتم', 'قرار لاحقاً', 'رقم خاطئ', 'أخرى']
+const LOST_REASONS = ['السعر', 'عندهم نظام حالياً', 'غير مهتم', 'قرار لاحقاً', 'رقم خاطئ', 'طلب التوقف', 'أخرى']
 
 // Google Maps scraping only works with English search terms, so each Arabic label carries its English query.
 const QUICK_QUERIES = [
@@ -138,7 +142,7 @@ const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;500;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
 .ol{--bg:#eef0ed;--paper:#fbfcfa;--ink:#0f1f19;--mute:#5d6b64;--line:#d6dbd5;--line-2:#e6e9e4;--green:#0d5a44;--green-hi:#127055;--mint:#dcebe3;--wa:#17a05d;--late:#b3402f;
   --display:'Readex Pro','IBM Plex Sans Arabic',sans-serif;--body:'IBM Plex Sans Arabic',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace;
-  background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.6;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:18px}
+  background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.6;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:18px;margin:24px 32px 40px}
 .ol *{box-sizing:border-box}
 .ol button{font-family:inherit}
 .ol .row2{display:grid;grid-template-columns:320px minmax(0,1fr);gap:20px;align-items:start}
@@ -200,7 +204,7 @@ const CSS = `
 .ol :focus-visible{outline:2px solid var(--green);outline-offset:2px}
 .ol .mob-toggle{display:none}
 @media(max-width:900px){
-  .ol{padding:12px;border-radius:14px}
+  .ol{padding:12px;border-radius:14px;margin:12px 10px 24px}
   .ol .row2{grid-template-columns:1fr}
   .ol .mob-toggle{display:block}
   .ol .slip.closed{display:none}
@@ -230,9 +234,11 @@ export const AdminOutreach = () => {
   const timer = useRef<number | null>(null)
 
   // list
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | Status>('new')
-  const [mobileOnly, setMobileOnly] = useState(true)
+  const [params] = useSearchParams()
+  const initialQ = params.get('q') ?? ''
+  const [search, setSearch] = useState(initialQ)
+  const [statusFilter, setStatusFilter] = useState<'all' | Status>(initialQ ? 'all' : 'new')
+  const [mobileOnly, setMobileOnly] = useState(!initialQ)
   const [sort, setSort] = useState<'priority' | 'newest'>('priority')
   const [limit, setLimit] = useState(PAGE_SIZE)
   const [openId, setOpenId] = useState<string | null>(null)
@@ -251,6 +257,7 @@ export const AdminOutreach = () => {
   const [daily, setDaily] = useState<DailySettings>(DEFAULT_DAILY)
   const [push, setPush] = useState<{ state: 'unsupported' | 'off' | 'on' | 'denied' | 'busy'; note?: string }>({ state: 'off' })
   const [queue, setQueue] = useState<{ ids: string[]; i: number } | null>(null)
+  const [blocked, setBlocked] = useState<Set<string>>(new Set())
 
   const load = useCallback(async () => {
     const [list, today] = await Promise.all([
@@ -263,6 +270,7 @@ export const AdminOutreach = () => {
   }, [])
 
   useEffect(() => { load() }, [load])
+  useEffect(() => { loadDoNotContact().then(setBlocked).catch(() => undefined) }, [])
 
   // Make this page installable as its own phone app, and register the push service worker.
   useEffect(() => {
@@ -375,9 +383,20 @@ export const AdminOutreach = () => {
 
   /* ---------- lead updates ---------- */
   const updateLead = async (id: string, patch: Partial<OutreachLead>) => {
+    const current = leads.find(x => x.id === id)
     setLeads(l => l.map(x => (x.id === id ? { ...x, ...patch } : x)))
-    await supabase.from('outreach_leads').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id)
+    const { error } = await supabase.from('outreach_leads').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id)
+    if (error) { setToast({ ok: false, text: 'تعذّر حفظ التغيير، أعد المحاولة.' }); return }
+    if (current && patch.status && patch.status !== current.status) {
+      await syncDealForLead(
+        { id, name: current.name, phone: current.phone, contact_name: current.contact_name, campaign: current.campaign, source: current.source },
+        patch.status,
+        patch.status === 'lost' ? { lost_reason: patch.lost_reason ?? '' } : {},
+      )
+    }
   }
+
+  const isBlocked = (l: OutreachLead) => blocked.has(l.phone)
 
   const setStatus = (lead: OutreachLead, status: Status) => {
     if (status === 'lost') { setLostFor(lead); return }
@@ -391,7 +410,9 @@ export const AdminOutreach = () => {
   }
 
   // Any contact attempt is logged, and a follow-up is scheduled for 2 days later unless one is already set.
-  const markContact = (lead: OutreachLead) => {
+  const markContact = (lead: OutreachLead, channel: 'whatsapp' | 'call' = 'whatsapp') => {
+    if (isBlocked(lead)) return
+    recordContact({ id: lead.id, name: lead.name, phone: lead.phone }, channel)
     const patch: Partial<OutreachLead> = {
       last_contacted_at: new Date().toISOString(),
       contact_count: (lead.contact_count || 0) + 1,
@@ -419,6 +440,7 @@ export const AdminOutreach = () => {
       .split('{time}').join(l.meeting_at ? fmtWhen(l.meeting_at) : '')
 
   const sendWhatsApp = (l: OutreachLead, key?: TemplateKey) => {
+    if (isBlocked(l)) { setToast({ ok: false, text: 'هذا الرقم في قائمة ممنوع التواصل.' }); return }
     window.open(`https://wa.me/${l.phone}?text=${encodeURIComponent(buildText(l, key ?? autoTemplate(l)))}`, '_blank', 'noopener')
     markContact(l)
   }
@@ -527,8 +549,9 @@ export const AdminOutreach = () => {
           {fu && !['won', 'lost', 'meeting'].includes(l.status) && <div className={`fu ${fu.late ? 'late' : ''}`}>{fu.text}</div>}
         </div>
         <div className="acts">
-          <a className="btn call" href={`tel:+${l.phone}`} onClick={() => markContact(l)}>📞 اتصال</a>
-          <button className="btn wa" disabled={!l.is_mobile} onClick={() => sendWhatsApp(l)}>واتساب</button>
+          {isBlocked(l) ? <span className="stt" style={{ background: '#f8dedb', color: '#a33a2f' }}>ممنوع التواصل</span> : <>
+          <a className="btn call" href={`tel:+${l.phone}`} onClick={() => markContact(l, 'call')}>📞 اتصال</a>
+          <button className="btn wa" disabled={!l.is_mobile} onClick={() => sendWhatsApp(l)}>واتساب</button></>}
           <button className="btn cal" onClick={() => setMeetingFor(l)}>🗓 اجتماع</button>
           <button className="btn" aria-expanded={open} onClick={() => setOpenId(open ? null : l.id)}>{open ? '▴' : '⋯'}</button>
         </div>
@@ -746,7 +769,7 @@ export const AdminOutreach = () => {
               <div className="ph" style={{ fontSize: 18 }}>+{lead.phone}</div>
               <div className="note" style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 10, padding: 10 }}>{buildText(lead, key)}</div>
               <div className="acts" style={{ justifyContent: 'stretch' }}>
-                <a className="btn call" style={{ flex: 1 }} href={`tel:+${lead.phone}`} onClick={() => markContact(lead)}>📞 اتصال</a>
+                <a className="btn call" style={{ flex: 1 }} href={`tel:+${lead.phone}`} onClick={() => markContact(lead, 'call')}>📞 اتصال</a>
                 <button className="btn wa" style={{ flex: 1 }} disabled={!lead.is_mobile} onClick={() => sendWhatsApp(lead)}>واتساب</button>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -769,7 +792,14 @@ export const AdminOutreach = () => {
             <div className="chips">
               {LOST_REASONS.map(r => (
                 <button key={r} className="chip" aria-pressed="false"
-                  onClick={() => { updateLead(lostFor.id, { status: 'lost', lost_reason: r, next_follow_up: null }); setLostFor(null) }}>{r}</button>
+                  onClick={async () => {
+                    updateLead(lostFor.id, { status: 'lost', lost_reason: r, next_follow_up: null })
+                    if (r === 'طلب التوقف') {
+                      const ok = await addDoNotContact(lostFor.phone, lostFor.name, 'opt_out', 'طلب التوقف من الواجهة')
+                      if (ok) setBlocked(prev => new Set(prev).add(lostFor.phone))
+                    }
+                    setLostFor(null)
+                  }}>{r}</button>
               ))}
             </div>
             <button className="btn" onClick={() => setLostFor(null)}>إلغاء</button>

@@ -176,11 +176,9 @@ export const AdminSettings = () => {
             </div>
           </div>
           <div className="card card-pad">
-            <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 16 }}>بيئة النظام</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {['Supabase: aacnqiuwrpzgxhzdavaq', 'n8n: n8n.madar.software', 'WhatsApp: Meta Cloud API', 'Payments: Moyasar'].map(item => (
-                <code key={item} style={{ display: 'block', fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-2)', background: 'rgba(255,255,255,0.05)', padding: '6px 10px', borderRadius: 7 }}>{item}</code>
-              ))}
+            <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 10 }}>حالة التكاملات</div>
+            <div style={{ fontSize: 13, color: 'var(--ink-3)', lineHeight: 1.7 }}>
+              الحالات الفعلية وآخر وقت تحقق تظهر في صفحة «اليوم» تحت «صحة التكاملات»، وتأتي من فحوص حية لا من نصوص ثابتة.
             </div>
           </div>
         </div>

@@ -1,169 +1,133 @@
-﻿import { useEffect, useRef, useState, type ReactNode } from 'react'
+﻿import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
+import { AdminPulseProvider, useAdminPulse } from './adminPulse'
 import '../../../styles/admin-plasma.css'
+import '../../../styles/admin-shell.css'
 
-const NAV = [
-  { group: 'الرئيسية', items: [
-    { id: 'overview', label: 'نظرة عامة', to: '/admin', exact: true },
-    { id: 'reports', label: 'التقارير', to: '/admin/reports' },
+type IconId =
+  | 'home' | 'target' | 'pipeline' | 'users' | 'bolt' | 'building' | 'badge' | 'chat'
+  | 'bot' | 'flow' | 'log' | 'chart' | 'gear' | 'plug' | 'search' | 'bell' | 'menu' | 'close'
+  | 'out' | 'collapse' | 'more' | 'plus' | 'phone'
+
+interface NavItem { id: string; label: string; to: string; icon: IconId; exact?: boolean; hint?: string }
+
+const NAV: { group: string; items: NavItem[] }[] = [
+  { group: '', items: [
+    { id: 'overview', label: 'اليوم', to: '/admin', icon: 'home', exact: true, hint: 'ملخص يومك' },
   ]},
-  { group: 'إدارة العملاء', items: [
-    { id: 'accounts', label: 'حسابات العيادات 🏥', to: '/admin/accounts' },
-    { id: 'companies', label: 'الشركات', to: '/admin/companies', badge: 0 },
-    { id: 'leads', label: 'العملاء المحتملون', to: '/admin/leads' },
-    { id: 'pipeline', label: 'خط المبيعات', to: '/admin/pipeline' },
-    { id: 'outreach', label: '🎯 Outreach — جلب عملاء', to: '/admin/outreach' },
-    { id: 'sales-blitz', label: '⚡ Sales Blitz جدة', to: '/admin/sales-blitz' },
-    { id: 'chats', label: 'المحادثات', to: '/admin/conversations', badge: 0 },
+  { group: 'المبيعات', items: [
+    { id: 'outreach', label: 'Outreach', to: '/admin/outreach', icon: 'target', hint: 'جلب العملاء والمتابعة' },
+    { id: 'pipeline', label: 'الصفقات', to: '/admin/pipeline', icon: 'pipeline' },
   ]},
-  { group: 'الأتمتة والتشغيل', items: [
-    { id: 'agents', label: 'وكلاء AI', to: '/admin/ai-agents' },
-    { id: 'n8n', label: 'n8n Workflows', to: '/admin/n8n' },
-    { id: 'logs', label: 'السجلات', to: '/admin/logs' },
+  { group: 'العملاء', items: [
+    { id: 'companies', label: 'الشركات', to: '/admin/companies', icon: 'building' },
+    { id: 'accounts', label: 'الحسابات والاشتراكات', to: '/admin/accounts', icon: 'badge' },
+    { id: 'chats', label: 'المحادثات', to: '/admin/conversations', icon: 'chat' },
+  ]},
+  { group: 'التشغيل', items: [
+    { id: 'agents', label: 'الوكلاء', to: '/admin/ai-agents', icon: 'bot' },
+    { id: 'n8n', label: 'n8n Workflows', to: '/admin/n8n', icon: 'flow' },
+    { id: 'logs', label: 'السجلات', to: '/admin/logs', icon: 'log' },
+    { id: 'reports', label: 'التقارير', to: '/admin/reports', icon: 'chart' },
   ]},
   { group: 'النظام', items: [
-    { id: 'settings', label: 'الإعدادات', to: '/admin/settings' },
-    { id: 'api', label: 'API & التكاملات', to: '/admin/api' },
+    { id: 'settings', label: 'الإعدادات', to: '/admin/settings', icon: 'gear' },
+    { id: 'api', label: 'API والتكاملات', to: '/admin/api', icon: 'plug' },
   ]},
 ]
+const ALL_ITEMS = NAV.flatMap(g => g.items)
+const MOBILE_TABS = ['overview', 'outreach', 'companies', 'chats']
 
 const PAGE_META: Record<string, { title: string; sub: string }> = {
-  '/admin': { title: 'نظرة عامة', sub: 'ملخّص أداء منصة مدار' },
+  '/admin': { title: 'اليوم', sub: 'اللي يستاهل وقتك الآن' },
   '/admin/reports': { title: 'التقارير', sub: 'تحليلات الأداء والإيرادات' },
   '/admin/companies': { title: 'الشركات', sub: 'إدارة حسابات العملاء والباقات' },
-  '/admin/accounts': { title: 'حسابات العيادات', sub: 'تحكم باشتراكات Workspace OS وحدود الاستخدام' },
+  '/admin/accounts': { title: 'الحسابات والاشتراكات', sub: 'تحكم باشتراكات Workspace OS وحدود الاستخدام' },
   '/admin/leads': { title: 'العملاء المحتملون', sub: 'متابعة وتحويل الليدز' },
-  '/admin/pipeline': { title: 'خط المبيعات', sub: 'لوحة المراحل البيعية' },
-  '/admin/outreach': { title: 'Outreach', sub: 'اضغط الزر يجيب لك مئات العملاء بأرقامهم وتتواصل واتساب مباشرة' },
-  '/admin/sales-blitz': { title: 'Sales Blitz — جدة الطبية', sub: '26 عيادة مستهدفة في جدة' },
+  '/admin/pipeline': { title: 'الصفقات', sub: 'مراحل صفقات وكالة مدار' },
+  '/admin/outreach': { title: 'Outreach', sub: 'اجلب العملاء وتواصل معهم وحدد الاجتماعات' },
+  '/admin/sales-blitz': { title: 'Sales Blitz — جدة', sub: 'حملة العيادات المستهدفة في جدة' },
   '/admin/conversations': { title: 'المحادثات', sub: 'محادثات واتساب الواردة' },
-  '/admin/ai-agents': { title: 'وكلاء AI', sub: 'الوكلاء الصوتيون الأذكياء' },
+  '/admin/ai-agents': { title: 'الوكلاء', sub: 'الوكلاء الأذكياء للصوت والمحادثة' },
   '/admin/n8n': { title: 'n8n Workflows', sub: 'أتمتة العمليات' },
   '/admin/logs': { title: 'السجلات', sub: 'سجلّ كل العمليات' },
   '/admin/settings': { title: 'الإعدادات', sub: 'إعدادات النظام' },
-  '/admin/api': { title: 'API & التكاملات', sub: 'مفاتيح API والـ Webhooks' },
+  '/admin/api': { title: 'API والتكاملات', sub: 'مفاتيح API والـ Webhooks' },
 }
 
-const NOTIFS = [
-  { id: 1, text: 'عيادة جديدة انضمت: عيادة السلامة للأسنان', time: 'منذ 5 دقائق', unread: true },
-  { id: 2, text: 'تحديث n8n: Workflow الرسائل نشط', time: 'منذ 22 دقيقة', unread: true },
-  { id: 3, text: 'تم تجديد اشتراك: عيادة النور الطبية', time: 'منذ ساعة', unread: true },
-  { id: 4, text: 'تقرير شهري جاهز للتحميل', time: 'أمس', unread: false },
-]
+const P: Record<IconId, string> = {
+  home: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
+  target: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zm0-5a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0-3a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',
+  pipeline: 'M4 5h16M7 10h10M10 15h4M12 20v-0.01',
+  users: 'M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8',
+  bolt: 'M13 2 4 14h7l-1 8 9-12h-7z',
+  building: 'M4 21V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16M14 9h5a1 1 0 0 1 1 1v11M2 21h20M8 8h2M8 12h2M8 16h2',
+  badge: 'M12 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM8.2 13.9 7 22l5-3 5 3-1.2-8.1',
+  chat: 'M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
+  bot: 'M12 8V4M8 4h8M5 8h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2zM9 14h.01M15 14h.01',
+  flow: 'M6 3v6a3 3 0 0 0 3 3h6a3 3 0 0 1 3 3v6M6 3a2 2 0 1 0 0 .01M18 21a2 2 0 1 0 0-.01',
+  log: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5',
+  chart: 'M4 20V10M10 20V4M16 20v-8M22 20H2',
+  gear: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z',
+  plug: 'M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0zM12 18v4',
+  search: 'M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.3-4.3',
+  bell: 'M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0',
+  menu: 'M4 7h16M4 12h16M4 17h16',
+  close: 'M6 6l12 12M18 6 6 18',
+  out: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',
+  collapse: 'M15 6l-6 6 6 6',
+  more: 'M5 12h.01M12 12h.01M19 12h.01',
+  plus: 'M12 5v14M5 12h14',
+  phone: 'M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z',
+}
+
+export function Icon({ id, size = 18 }: { id: IconId; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={P[id]} />
+    </svg>
+  )
+}
 
 function initParticles(canvas: HTMLCanvasElement) {
   const ctx = canvas.getContext('2d')!
-  let W = 0, H = 0
-  const N = 55
-  const COLORS = [
-    'rgba(60,130,255,', 'rgba(40,100,230,',
-    'rgba(80,160,255,', 'rgba(30,80,200,',
-    'rgba(100,180,255,', 'rgba(50,60,180,'
-  ]
-
-  type Pt = { x: number; y: number; r: number; vx: number; vy: number; a: number; col: string; tw: number; ts: number }
-
-  let pts: Pt[] = []
-  let rafId = 0
-
-  function resize() {
-    W = canvas.width = window.innerWidth
-    H = canvas.height = window.innerHeight
-  }
-
-  function mkPt(): Pt {
-    return {
-      x: Math.random() * W, y: Math.random() * H,
-      r: Math.random() * 1.4 + 0.4,
-      vx: (Math.random() - 0.5) * 0.22,
-      vy: (Math.random() - 0.5) * 0.18,
-      a: Math.random() * 0.55 + 0.15,
-      col: COLORS[Math.floor(Math.random() * COLORS.length)],
-      tw: Math.random() * Math.PI * 2,
-      ts: Math.random() * 0.006 + 0.002,
-    }
-  }
-
-  function draw() {
+  let W = 0, H = 0, raf = 0
+  const pts = Array.from({ length: 36 }, () => ({
+    x: Math.random(), y: Math.random(), r: Math.random() * 1.2 + 0.4,
+    vx: (Math.random() - 0.5) * 0.00012, vy: (Math.random() - 0.5) * 0.0001, a: Math.random() * 0.4 + 0.12,
+  }))
+  const resize = () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight }
+  const draw = () => {
     ctx.clearRect(0, 0, W, H)
-    pts.forEach(p => {
-      p.tw += p.ts
-      p.x += p.vx + Math.sin(p.tw) * 0.12
-      p.y += p.vy + Math.cos(p.tw * 0.7) * 0.08
-      if (p.x < -10) p.x = W + 10
-      if (p.x > W + 10) p.x = -10
-      if (p.y < -10) p.y = H + 10
-      if (p.y > H + 10) p.y = -10
-
-      const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 4)
-      g.addColorStop(0, p.col + p.a + ')')
-      g.addColorStop(1, p.col + '0)')
-      ctx.beginPath()
-      ctx.arc(p.x, p.y, p.r * 4, 0, Math.PI * 2)
-      ctx.fillStyle = g
-      ctx.fill()
-
-      ctx.beginPath()
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
-      ctx.fillStyle = p.col + (p.a * 1.5).toFixed(2) + ')'
-      ctx.fill()
-    })
-
-    for (let i = 0; i < pts.length; i++) {
-      for (let j = i + 1; j < pts.length; j++) {
-        const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y
-        const d = Math.sqrt(dx * dx + dy * dy)
-        if (d < 90) {
-          ctx.beginPath()
-          ctx.moveTo(pts[i].x, pts[i].y)
-          ctx.lineTo(pts[j].x, pts[j].y)
-          ctx.strokeStyle = `rgba(60,120,255,${(1 - d / 90) * 0.09})`
-          ctx.lineWidth = 0.6
-          ctx.stroke()
-        }
-      }
+    for (const p of pts) {
+      p.x = (p.x + p.vx + 1) % 1; p.y = (p.y + p.vy + 1) % 1
+      ctx.beginPath(); ctx.arc(p.x * W, p.y * H, p.r, 0, Math.PI * 2)
+      ctx.fillStyle = `rgba(110,170,255,${p.a})`; ctx.fill()
     }
-    rafId = requestAnimationFrame(draw)
+    raf = requestAnimationFrame(draw)
   }
-
-  window.addEventListener('resize', resize)
-  resize()
-  pts = Array.from({ length: N }, mkPt)
-  draw()
-
-  return () => {
-    cancelAnimationFrame(rafId)
-    window.removeEventListener('resize', resize)
-  }
+  window.addEventListener('resize', resize); resize(); draw()
+  return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize) }
 }
 
-interface Props {
-  children: ReactNode
-}
+const nf = (n: number) => n.toLocaleString('ar-SA')
+const LS_COLLAPSED = 'madar_admin_sidebar_collapsed'
 
-export function PlasmaAdminShell({ children }: Props) {
+function Shell({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const pulse = useAdminPulse()
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [showNotif, setShowNotif] = useState(false)
-  const [userInitials, setUserInitials] = useState('مد')
+
+  const [collapsed, setCollapsed] = useState(() => { try { return localStorage.getItem(LS_COLLAPSED) === '1' } catch { return false } })
+  const [drawer, setDrawer] = useState(false)
+  const [bell, setBell] = useState(false)
+  const [palette, setPalette] = useState(false)
+  const [email, setEmail] = useState('')
 
   const meta = PAGE_META[location.pathname] ?? { title: 'مدار', sub: '' }
-
-  const [clock, setClock] = useState(() => {
-    const now = new Date()
-    return now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', hour12: true })
-  })
-
-  useEffect(() => {
-    const tick = () => {
-      const now = new Date()
-      setClock(now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', hour12: true }))
-    }
-    const id = setInterval(tick, 30000)
-    return () => clearInterval(id)
-  }, [])
+  const badges: Record<string, number> = { outreach: pulse.due.length + pulse.meetingsToday.length }
 
   useEffect(() => {
     document.body.classList.add('plasma-admin')
@@ -171,134 +135,237 @@ export function PlasmaAdminShell({ children }: Props) {
   }, [])
 
   useEffect(() => {
-    if (!canvasRef.current) return
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches || window.innerWidth < 900
+    if (calm || !canvasRef.current) return
     return initParticles(canvasRef.current)
   }, [])
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      const email = data.user?.email ?? ''
-      if (email) setUserInitials(email.slice(0, 2).toUpperCase())
-    })
+    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ''))
   }, [])
 
-  function isActive(to: string, exact?: boolean) {
-    if (exact) return location.pathname === to
-    return location.pathname.startsWith(to)
+  useEffect(() => { setDrawer(false); setBell(false) }, [location.pathname])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setPalette(p => !p) }
+      if (e.key === 'Escape') { setPalette(false); setBell(false); setDrawer(false) }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  const toggleCollapsed = () => {
+    setCollapsed(c => {
+      try { localStorage.setItem(LS_COLLAPSED, c ? '0' : '1') } catch { /* storage unavailable */ }
+      return !c
+    })
   }
 
-  const unreadCount = NOTIFS.filter(n => n.unread).length
+  const isActive = (it: NavItem) => (it.exact ? location.pathname === it.to : location.pathname.startsWith(it.to))
+  const signOut = async () => { await supabase.auth.signOut(); navigate('/admin/login') }
+
+  const notifs = useMemo(() => {
+    const list: { id: string; title: string; text: string; to: string }[] = []
+    if (pulse.meetingsToday.length) {
+      list.push({
+        id: 'm', title: `اجتماعات اليوم (${nf(pulse.meetingsToday.length)})`, to: '/admin/outreach',
+        text: pulse.meetingsToday.map(m => `${m.name} ${new Date(m.meeting_at!).toLocaleTimeString('ar-SA', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Riyadh' })}`).join('، '),
+      })
+    }
+    if (pulse.due.length) {
+      const names = pulse.due.slice(0, 4).map(l => l.name).join('، ')
+      list.push({ id: 'd', title: `متابعات اليوم (${nf(pulse.due.length)})`, to: '/admin/outreach', text: pulse.due.length > 4 ? `${names} و${nf(pulse.due.length - 4)} آخرين` : names })
+    }
+    if (pulse.newToday) list.push({ id: 'n', title: `${nf(pulse.newToday)} عميل أُضيف اليوم`, to: '/admin/outreach', text: `بانتظار أول تواصل: ${nf(pulse.waiting)} عميل` })
+    return list
+  }, [pulse])
+
+  const initials = (email.slice(0, 2) || 'مد').toUpperCase()
+  const cls = ['sbx-app', collapsed ? 'is-collapsed' : '', drawer ? 'drawer-open' : ''].join(' ')
 
   return (
-    <div className="plasma-app" dir="rtl">
-      <canvas
-        ref={canvasRef}
-        id="plasma-particles"
-        style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0, opacity: 0.55 }}
-      />
+    <div className={cls} dir="rtl">
+      <canvas ref={canvasRef} className="sbx-particles" aria-hidden="true" />
 
-      <div className="plasma-main">
-        <header className="topbar">
-          <div>
-            <h1>{meta.title}</h1>
-            <div className="topbar-sub">{meta.sub}</div>
+      {/* ---------- sidebar ---------- */}
+      <aside className="sbx" aria-label="القائمة الرئيسية">
+        <div className="sbx-brand">
+          <div className="sbx-logo"><img src="/assets/logo-madar.png" alt="" onError={e => { e.currentTarget.style.display = 'none' }} /><span>م</span></div>
+          <div className="sbx-brand-text">
+            <b>مدار</b>
+            <small>لوحة الإدارة</small>
           </div>
-          <div className="topbar-spacer" />
-          <div className="tb-clock">{clock}</div>
-          <div className="tb-search">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input placeholder="بحث سريع..." />
-          </div>
-          <div style={{ position: 'relative' }}>
-            <button className="tb-icon-btn" onClick={() => setShowNotif(v => !v)}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-              {unreadCount > 0 && <span className="dot" />}
-            </button>
-            {showNotif && (
-              <div className="notif-panel">
-                <div className="notif-head">
-                  <h3>الإشعارات</h3>
-                  <button onClick={() => setShowNotif(false)} style={{ color: 'var(--ink-3)', fontSize: 12 }}>إغلاق</button>
-                </div>
-                {NOTIFS.map(n => (
-                  <div key={n.id} className={`notif-item ${n.unread ? 'unread' : ''}`}>
-                    {n.unread && <div className="notif-dot" />}
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, color: 'var(--ink)', fontWeight: n.unread ? 600 : 400 }}>{n.text}</div>
-                      <div style={{ fontSize: 11.5, color: 'var(--ink-3)', marginTop: 3 }}>{n.time}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          <div className="tb-avatar">{userInitials}</div>
-        </header>
-
-        <div className="plasma-scroll">
-          {children}
-        </div>
-      </div>
-
-      <aside className="sidebar">
-        <div className="sb-brand">
-          <div className="sb-logo-img" title="Madar">
-            <img src="/assets/logo-madar.png" alt="مدار" onError={(e) => {
-              const t = e.currentTarget
-              t.style.display = 'none'
-              t.parentElement!.style.background = 'linear-gradient(150deg, oklch(0.65 0.27 252) 0%, oklch(0.36 0.24 266) 100%)'
-            }} />
-          </div>
-          <div>
-            <div className="sb-brand-name">Madar.software</div>
-            <div className="sb-brand-sub">لوحة الإدارة</div>
-          </div>
+          <button className="sbx-collapse" onClick={toggleCollapsed} aria-label={collapsed ? 'توسيع القائمة' : 'طي القائمة'} title={collapsed ? 'توسيع' : 'طي'}>
+            <Icon id="collapse" size={16} />
+          </button>
+          <button className="sbx-close" onClick={() => setDrawer(false)} aria-label="إغلاق"><Icon id="close" size={18} /></button>
         </div>
 
-        <nav className="sb-nav">
-          {NAV.map(g => (
-            <div className="sb-group" key={g.group}>
-              <div className="sb-group-label">{g.group}</div>
-              {g.items.map(item => (
-                <button
-                  key={item.id}
-                  className={`sb-item ${isActive(item.to, 'exact' in item ? item.exact : undefined) ? 'active' : ''}`}
-                  onClick={() => navigate(item.to)}
-                >
-                  <NavIcon id={item.id} />
-                  <span>{item.label}</span>
-                </button>
-              ))}
+        <button className="sbx-quick" onClick={() => navigate('/admin/outreach')} title="جيب عملاء">
+          <Icon id="plus" size={16} /><span>جيب عملاء</span>
+        </button>
+
+        <nav className="sbx-nav">
+          {NAV.map((g, gi) => (
+            <div className="sbx-group" key={gi}>
+              {g.group && <div className="sbx-group-label">{g.group}</div>}
+              {g.items.map(it => {
+                const b = badges[it.id]
+                return (
+                  <button key={it.id} className={`sbx-item ${isActive(it) ? 'active' : ''}`} onClick={() => navigate(it.to)}
+                    title={collapsed ? it.label : undefined} aria-current={isActive(it) ? 'page' : undefined}>
+                    <span className="sbx-ico"><Icon id={it.icon} /></span>
+                    <span className="sbx-label">{it.label}</span>
+                    {b ? <span className="sbx-badge">{nf(b)}</span> : null}
+                  </button>
+                )
+              })}
             </div>
           ))}
         </nav>
 
-        <div className="sb-foot">
-          <div className="sb-status">
-            <span className="pulse-dot" />
-            جميع الأنظمة تعمل
+        <div className="sbx-foot">
+          <div className="sbx-user">
+            <div className="sbx-avatar">{initials}</div>
+            <div className="sbx-user-text">
+              <b>{email ? email.split('@')[0] : 'مدير النظام'}</b>
+              <small>{email || 'admin'}</small>
+            </div>
+            <button className="sbx-out" onClick={signOut} title="تسجيل الخروج" aria-label="تسجيل الخروج"><Icon id="out" size={16} /></button>
           </div>
         </div>
       </aside>
+      <div className="sbx-scrim" onClick={() => setDrawer(false)} />
+
+      {/* ---------- main ---------- */}
+      <div className="sbx-main">
+        <header className="tbx">
+          <button className="tbx-btn tbx-menu" onClick={() => setDrawer(true)} aria-label="فتح القائمة"><Icon id="menu" /></button>
+          <div className="tbx-title">
+            <h1>{meta.title}</h1>
+            {meta.sub && <div>{meta.sub}</div>}
+          </div>
+          <div className="tbx-spacer" />
+          <button className="tbx-search" onClick={() => setPalette(true)}>
+            <Icon id="search" size={16} /><span>ابحث أو انتقل إلى…</span><kbd>Ctrl K</kbd>
+          </button>
+          <button className="tbx-btn tbx-search-m" onClick={() => setPalette(true)} aria-label="بحث"><Icon id="search" /></button>
+          <div className="tbx-bell-wrap">
+            <button className="tbx-btn" onClick={() => setBell(v => !v)} aria-label="الإشعارات" aria-expanded={bell}>
+              <Icon id="bell" />
+              {notifs.length > 0 && <span className="tbx-dot" />}
+            </button>
+            {bell && (
+              <>
+                <div className="tbx-bell-bg" onClick={() => setBell(false)} />
+                <div className="tbx-panel" role="dialog" aria-label="الإشعارات">
+                  <div className="tbx-panel-head">الإشعارات</div>
+                  {notifs.length === 0 ? (
+                    <div className="tbx-empty">ما عندك شي معلّق. وقتك فاضي للعملاء الجدد.</div>
+                  ) : notifs.map(n => (
+                    <button key={n.id} className="tbx-notif" onClick={() => navigate(n.to)}>
+                      <b>{n.title}</b>
+                      <span>{n.text}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </header>
+
+        <div className="sbx-scroll">{children}</div>
+      </div>
+
+      {/* ---------- mobile tab bar ---------- */}
+      <nav className="mtab" aria-label="تنقل سريع">
+        {MOBILE_TABS.map(id => {
+          const it = ALL_ITEMS.find(i => i.id === id)!
+          const b = badges[id]
+          return (
+            <button key={id} className={isActive(it) ? 'active' : ''} onClick={() => navigate(it.to)}>
+              <span className="mtab-ico"><Icon id={it.icon} size={21} />{b ? <i>{nf(b)}</i> : null}</span>
+              <span>{it.label === 'اليوم' ? 'اليوم' : it.label}</span>
+            </button>
+          )
+        })}
+        <button onClick={() => setDrawer(true)}>
+          <span className="mtab-ico"><Icon id="more" size={21} /></span><span>المزيد</span>
+        </button>
+      </nav>
+
+      {palette && <Palette onClose={() => setPalette(false)} navigate={navigate} />}
     </div>
   )
 }
 
-function NavIcon({ id }: { id: string }) {
-  const s = { width: 18, height: 18 }
-  const p = { fill: 'none', stroke: 'currentColor', strokeWidth: 2 as const }
-  switch (id) {
-    case 'overview': return <svg {...s} viewBox="0 0 24 24" {...p}><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-    case 'reports': return <svg {...s} viewBox="0 0 24 24" {...p}><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-    case 'companies': return <svg {...s} viewBox="0 0 24 24" {...p}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    case 'accounts': return <svg {...s} viewBox="0 0 24 24" {...p}><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/><path d="M17.5 3.5 19 5l3-3"/></svg>
-    case 'leads': return <svg {...s} viewBox="0 0 24 24" {...p}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    case 'pipeline': return <svg {...s} viewBox="0 0 24 24" {...p}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-    case 'chats': return <svg {...s} viewBox="0 0 24 24" {...p}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-    case 'agents': return <svg {...s} viewBox="0 0 24 24" {...p}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-    case 'n8n': return <svg {...s} viewBox="0 0 24 24" {...p}><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-    case 'logs': return <svg {...s} viewBox="0 0 24 24" {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-    case 'settings': return <svg {...s} viewBox="0 0 24 24" {...p}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    default: return <svg {...s} viewBox="0 0 24 24" {...p}><circle cx="12" cy="12" r="10"/></svg>
-  }
+/* ---------- command palette: pages, actions and quick search in leads and companies ---------- */
+function Palette({ onClose, navigate }: { onClose: () => void; navigate: (to: string) => void }) {
+  const [q, setQ] = useState('')
+  const [sel, setSel] = useState(0)
+  const [found, setFound] = useState<{ id: string; label: string; sub: string; to: string }[]>([])
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => { inputRef.current?.focus() }, [])
+
+  useEffect(() => {
+    const term = q.trim()
+    if (term.length < 2) { setFound([]); return }
+    const t = window.setTimeout(async () => {
+      const safe = term.replace(/[%,()]/g, ' ')
+      const [leads, comps] = await Promise.all([
+        supabase.from('outreach_leads').select('id, name, phone, city').or(`name.ilike.%${safe}%,phone.ilike.%${safe}%`).limit(5),
+        supabase.from('companies').select('id, name, plan').ilike('name', `%${safe}%`).limit(4),
+      ])
+      setFound([
+        ...(leads.data ?? []).map(l => ({ id: `l${l.id}`, label: l.name, sub: `عميل محتمل · +${l.phone}`, to: `/admin/outreach?q=${encodeURIComponent(l.name)}` })),
+        ...(comps.data ?? []).map(c => ({ id: `c${c.id}`, label: c.name, sub: 'شركة', to: '/admin/companies' })),
+      ])
+    }, 220)
+    return () => window.clearTimeout(t)
+  }, [q])
+
+  const items = useMemo(() => {
+    const term = q.trim().toLowerCase()
+    const pages = ALL_ITEMS
+      .filter(i => !term || i.label.toLowerCase().includes(term) || (i.hint ?? '').includes(term))
+      .map(i => ({ id: i.id, label: i.label, sub: i.hint ?? 'صفحة', to: i.to }))
+    return [...pages, ...found]
+  }, [q, found])
+
+  const go = (to: string) => { navigate(to); onClose() }
+
+  return (
+    <div className="pal-bg" onClick={onClose}>
+      <div className="pal" role="dialog" aria-label="بحث سريع" onClick={e => e.stopPropagation()}>
+        <div className="pal-input">
+          <Icon id="search" size={18} />
+          <input ref={inputRef} value={q} placeholder="ابحث عن صفحة أو عميل أو شركة…"
+            onChange={e => { setQ(e.target.value); setSel(0) }}
+            onKeyDown={e => {
+              if (e.key === 'ArrowDown') { e.preventDefault(); setSel(s => Math.min(s + 1, items.length - 1)) }
+              if (e.key === 'ArrowUp') { e.preventDefault(); setSel(s => Math.max(s - 1, 0)) }
+              if (e.key === 'Enter' && items[sel]) go(items[sel].to)
+            }} />
+        </div>
+        <div className="pal-list">
+          {items.length === 0 && <div className="tbx-empty">ما لقيت شي</div>}
+          {items.map((it, i) => (
+            <button key={it.id} className={i === sel ? 'sel' : ''} onMouseEnter={() => setSel(i)} onClick={() => go(it.to)}>
+              <b>{it.label}</b><span>{it.sub}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function PlasmaAdminShell({ children }: { children: ReactNode }) {
+  return (
+    <AdminPulseProvider>
+      <Shell>{children}</Shell>
+    </AdminPulseProvider>
+  )
 }

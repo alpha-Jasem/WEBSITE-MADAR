@@ -239,6 +239,9 @@ export const AdminSalesBlitz = () => {
     <div className="page fade-in" dir="rtl">
       {showAdd && <AddModal onClose={() => setShowAdd(false)} onAdd={addLead} />}
 
+      <div className="card card-pad" style={{ marginBottom: 16, borderColor: 'rgba(240,180,60,.4)', fontSize: 13 }}>
+        قديم: نُسخت هذه الحملة إلى Outreach (الحملة jeddah-medical-2026) وصفقاتها إلى «الصفقات». أبقيت هذه الصفحة للمراجعة فقط، والعمل الجديد يتم في Outreach.
+      </div>
       {/* Header */}
       <div className="sec-head" style={{ marginBottom: 24 }}>
         <div>

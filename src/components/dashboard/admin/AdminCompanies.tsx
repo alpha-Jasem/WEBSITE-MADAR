@@ -34,8 +34,8 @@ export const AdminCompanies = () => {
 
   const updateCompany = async (company: Company, patch: Partial<Company>, action: string) => {
     setBusyCompanyId(company.id)
-    const { error } = await supabase.from('companies').update(patch as any).eq('id', company.id)
-    if (!error) {
+    const { data: changed, error } = await supabase.from('companies').update(patch as any).eq('id', company.id).select('id')
+    if (!error && (changed?.length ?? 0) > 0) {
       await supabase.from('logs').insert({ company_id: company.id, level: 'success', event: action, message: `Admin updated company ${company.name}`, meta: patch })
       await load()
     }
@@ -128,7 +128,7 @@ export const AdminCompanies = () => {
                     <div className="row gap-3">
                       <div className="av" style={{ background: `linear-gradient(135deg, ${color}, ${color}99)` }}>{company.name[0]}</div>
                       <div>
-                        <div style={{ fontWeight: 600, fontSize: 13 }}>{company.name}</div>
+                        <div style={{ fontWeight: 600, fontSize: 13 }}>{company.name}{company.is_demo !== false && <span className="badge amber" style={{ marginInlineStart: 8, fontSize: 10 }}>تجريبي</span>}</div>
                         <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>{company.owner_email}</div>
                       </div>
                     </div>

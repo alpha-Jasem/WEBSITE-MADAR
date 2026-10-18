@@ -51,6 +51,8 @@ export interface Company {
   package_type?: string
   city?: string
   google_maps_url?: string
+  /** Demo companies are excluded from every financial figure until the owner marks them real. */
+  is_demo?: boolean
 }
 
 export interface Automation {
