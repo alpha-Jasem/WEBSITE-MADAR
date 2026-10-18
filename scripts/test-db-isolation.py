@@ -78,7 +78,7 @@ out = query(f"begin; set local role authenticated; {claims(client_id)} update pu
 check('client cannot set own role to admin', 'permission denied' in out or 'violates' in out, out[:120])
 
 # 2. Agency tables are invisible to clients and anon, visible to admin.
-for table in ['sales_blitz_leads', 'crm_leads', 'outreach_leads', 'outreach_runs', 'deals', 'deal_events', 'do_not_contact', 'campaigns', 'agency_goals', 'audit_events', 'integration_checks']:
+for table in ['sales_blitz_leads', 'crm_leads', 'outreach_leads', 'outreach_runs', 'deals', 'deal_events', 'do_not_contact', 'campaigns', 'agency_goals', 'audit_events', 'integration_checks', 'payments', 'admin_tasks']:
     c = count_as('authenticated', client_id, table)
     a = count_as('anon', None, table)
     check(f'{table}: client sees nothing', c in (0, 'denied'), str(c))
@@ -102,6 +102,21 @@ blocked = first(f"""begin; set local role authenticated; {claims(admin_id)}
 insert into public.do_not_contact (phone, reason) values ('966500000001', 'opt_out');
 with ins as (insert into public.outreach_leads (name, phone) values ('x', '966500000001') returning id) select count(*) from ins; rollback;""")
 check('blocked number cannot become a lead', blocked == 0, str(blocked))
+
+# 5. The collection ledger refuses inconsistent rows and double-recorded references (all rolled back).
+def as_admin(sql):
+    return query(f"begin; set local role authenticated; {claims(admin_id)} {sql} rollback;")
+
+
+bad_sum = as_admin("insert into public.payments (customer_name, total_amount, net_amount, tax_amount) values ('t', 1000, 800, 100);")
+check('payment whose net + tax != total is rejected', 'payments_amounts_add_up' in bad_sum, bad_sum[:120])
+no_actor = as_admin("insert into public.payments (customer_name, total_amount, net_amount, tax_amount, status) values ('t', 1150, 1000, 150, 'confirmed');")
+check('payment cannot be inserted confirmed without a confirming actor', 'payments_confirmed_has_actor' in no_actor, no_actor[:120])
+dup = as_admin("insert into public.payments (customer_name, total_amount, net_amount, tax_amount, reference) values ('t', 1150, 1000, 150, 'R1'); "
+               "insert into public.payments (customer_name, total_amount, net_amount, tax_amount, reference) values ('t', 1150, 1000, 150, 'R1');")
+check('same bank reference cannot be recorded twice', 'payments_reference_key' in dup, dup[:120])
+client_ins = query(f"begin; set local role authenticated; {claims(client_id)} insert into public.payments (customer_name, total_amount, net_amount, tax_amount) values ('t', 1150, 1000, 150); rollback;")
+check('a client cannot write payments', 'row-level security' in client_ins or 'permission denied' in client_ins, client_ins[:120])
 
 print('\n' + ('ALL CHECKS PASSED' if not failures else f'{len(failures)} FAILED: ' + '; '.join(failures)))
 sys.exit(1 if failures else 0)

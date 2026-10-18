@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState } from 'react'
+import { IntegrationHealthPanel } from './IntegrationHealthPanel'
 import { supabase } from '../../../lib/supabase'
 import type { Company, Plan } from '../../../types'
 import { PLAN_LABELS, PLAN_PRICES } from '../../../lib/constants'
@@ -175,12 +176,7 @@ export const AdminSettings = () => {
               ))}
             </div>
           </div>
-          <div className="card card-pad">
-            <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 10 }}>حالة التكاملات</div>
-            <div style={{ fontSize: 13, color: 'var(--ink-3)', lineHeight: 1.7 }}>
-              الحالات الفعلية وآخر وقت تحقق تظهر في صفحة «اليوم» تحت «صحة التكاملات»، وتأتي من فحوص حية لا من نصوص ثابتة.
-            </div>
-          </div>
+          <IntegrationHealthPanel />
         </div>
       )}
     </div>

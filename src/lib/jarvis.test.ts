@@ -28,6 +28,12 @@ describe('buildBrief', () => {
     expect(b.actions[0].id).toBe('integrations')
   })
 
+  it('asks to verify pending payments before anything is counted', () => {
+    const b = buildBrief({ ...base, pendingPayments: 2 })
+    expect(b.actions[0].id).toBe('payments')
+    expect(b.actions[0].reason).toContain('تحصيلًا')
+  })
+
   it('asks for a monthly goal only when there is room and none is set', () => {
     expect(buildBrief({ ...base, hasMonthlyGoal: false }).actions.map(a => a.id)).toContain('goal')
     expect(buildBrief({ ...base, hasMonthlyGoal: true }).actions.map(a => a.id)).not.toContain('goal')

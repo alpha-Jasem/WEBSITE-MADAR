@@ -20,6 +20,8 @@ export interface Deal {
   lost_reason: string
   campaign: string
   source: string
+  sourced_by: string
+  closed_by: string
   service: string
   value_net: number | null
   last_contact_at: string | null

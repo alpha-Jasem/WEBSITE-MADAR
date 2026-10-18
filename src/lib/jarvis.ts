@@ -10,6 +10,7 @@ export interface BriefFacts {
   activeDeals: number
   hasMonthlyGoal: boolean
   integrationsFailing: string[]
+  pendingPayments?: number
 }
 
 export interface BriefAction {
@@ -35,6 +36,13 @@ export function buildBrief(f: BriefFacts): Brief {
       id: 'meetings', to: '/admin/outreach',
       title: `جهّز ${n(f.meetingsToday)} اجتماع${f.meetingsToday > 1 ? 'ات' : ''} اليوم`,
       reason: 'لديك اجتماعات مؤكدة في التقويم اليوم.',
+    })
+  }
+  if ((f.pendingPayments ?? 0) > 0) {
+    actions.push({
+      id: 'payments', to: '/admin/finance',
+      title: `راجع ${n(f.pendingPayments!)} دفعة بانتظار التحقق`,
+      reason: 'حوالات مسجلة لم تُؤكد، ولا تُحتسب تحصيلًا قبل تأكيدك.',
     })
   }
   if (f.overdue > 0) {

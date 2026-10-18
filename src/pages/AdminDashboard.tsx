@@ -13,6 +13,9 @@ import { AdminClinicAccounts } from '../components/dashboard/admin/AdminClinicAc
 import { AdminAPI } from '../components/dashboard/admin/AdminAPI'
 import { AdminSalesBlitz } from '../components/dashboard/admin/AdminSalesBlitz'
 import { AdminOutreach } from '../components/dashboard/admin/AdminOutreach'
+import { AdminFinance } from '../components/dashboard/admin/AdminFinance'
+import { AdminCampaigns } from '../components/dashboard/admin/AdminCampaigns'
+import { AdminMarketers } from '../components/dashboard/admin/AdminMarketers'
 
 export const AdminDashboard = () => {
   return (
@@ -32,6 +35,9 @@ export const AdminDashboard = () => {
         <Route path="api" element={<AdminAPI />} />
         <Route path="sales-blitz" element={<AdminSalesBlitz />} />
         <Route path="outreach" element={<AdminOutreach />} />
+        <Route path="finance" element={<AdminFinance />} />
+        <Route path="campaigns" element={<AdminCampaigns />} />
+        <Route path="marketers" element={<AdminMarketers />} />
         <Route path="*" element={<AdminCommandDeck />} />
       </Routes>
     </PlasmaAdminShell>
