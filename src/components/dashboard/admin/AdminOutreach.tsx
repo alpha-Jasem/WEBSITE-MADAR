@@ -694,6 +694,8 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
                 </select>
               )}
               <button className="chip" aria-pressed={mobileOnly} onClick={() => setMobileOnly(m => !m)}>جوالات فقط</button>
+              <button className="chip" aria-pressed="false" disabled={filtered.filter(l => l.is_mobile && !isBlocked(l)).length === 0}
+                onClick={() => setQueue({ ids: filtered.filter(l => l.is_mobile && !isBlocked(l)).slice(0, 30).map(l => l.id), i: 0 })}>▶ تواصل سريع ({Math.min(30, filtered.filter(l => l.is_mobile && !isBlocked(l)).length)})</button>
               <button className="chip" aria-pressed={showStats} onClick={() => setShowStats(s => !s)}>📊 النتائج</button>
               <button className="chip" aria-pressed="false" onClick={() => exportCsv(filtered)}>⬇ تصدير Excel</button>
               <button className="chip" aria-pressed={showSettings} onClick={() => setShowSettings(s => !s)}>⚙ الرسائل والروابط</button>
@@ -796,7 +798,7 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
               <div className="note" style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 10, padding: 10 }}>{buildText(lead, key)}</div>
               <div className="acts" style={{ justifyContent: 'stretch' }}>
                 <a className="btn call" style={{ flex: 1 }} href={`tel:+${lead.phone}`} onClick={() => markContact(lead, 'call')}>📞 اتصال</a>
-                <button className="btn wa" style={{ flex: 1 }} disabled={!lead.is_mobile} onClick={() => sendWhatsApp(lead)}>واتساب</button>
+                <button className="btn wa" style={{ flex: 1 }} disabled={!lead.is_mobile || isBlocked(lead)} onClick={() => { sendWhatsApp(lead); setQueue(q => (q && q.i + 1 < q.ids.length ? { ...q, i: q.i + 1 } : null)) }}>افتح واتساب وانتقل للتالي</button>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className="btn" onClick={() => setQueue(null)}>إنهاء</button>
