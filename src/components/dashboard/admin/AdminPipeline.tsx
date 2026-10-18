@@ -84,22 +84,22 @@ export const AdminPipeline = () => {
         placeholder="الخطوة القادمة…"
         aria-label="الخطوة القادمة"
         onBlur={e => { if (e.target.value !== d.next_step) patchDeal(d, { next_step: e.target.value }, { type: 'next_step', data: { text: e.target.value } }) }}
-        style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, padding: '6px 9px', color: 'var(--ink)', fontSize: 12.5 }}
+        style={{ background: 'var(--fill)', border: '1px solid var(--line)', borderRadius: 8, padding: '6px 9px', color: 'var(--ink)', fontSize: 12.5 }}
       />
       <input
         type="date"
         aria-label="موعد الخطوة"
         defaultValue={d.next_step_at ? d.next_step_at.slice(0, 10) : ''}
         onBlur={e => patchDeal(d, { next_step_at: e.target.value ? new Date(`${e.target.value}T10:00:00+03:00`).toISOString() : null })}
-        style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, padding: '5px 9px', color: 'var(--ink)', fontSize: 12.5 }}
+        style={{ background: 'var(--fill)', border: '1px solid var(--line)', borderRadius: 8, padding: '5px 9px', color: 'var(--ink)', fontSize: 12.5 }}
       />
       <select value={d.stage} onChange={e => moveStage(d, e.target.value as DealStage)} aria-label="المرحلة"
-        style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, padding: '6px 8px', color: 'var(--ink)', fontSize: 12.5 }}>
+        style={{ background: 'var(--fill)', border: '1px solid var(--line)', borderRadius: 8, padding: '6px 8px', color: 'var(--ink)', fontSize: 12.5 }}>
         {DEAL_STAGES.map(s => <option key={s} value={s}>{STAGE_LABEL[s]}</option>)}
       </select>
       {d.lost_reason && <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>السبب: {d.lost_reason}</div>}
       {openId === d.id && (
-        <div style={{ borderTop: '1px solid rgba(255,255,255,.08)', paddingTop: 8, display: 'grid', gap: 4, fontSize: 12, color: 'var(--ink-3)' }}>
+        <div style={{ borderTop: '1px solid var(--line)', paddingTop: 8, display: 'grid', gap: 4, fontSize: 12, color: 'var(--ink-3)' }}>
           {d.last_contact_at && <div>آخر تواصل: {dateShort(d.last_contact_at)} {timeShort(d.last_contact_at)}</div>}
           {events.length === 0 ? <div>لا توجد أحداث مسجلة.</div> : events.map(ev => (
             <div key={ev.id}>{dateShort(ev.created_at)} · {ev.type === 'stage_change' ? `${STAGE_LABEL[ev.data.from as DealStage] ?? ''} ← ${STAGE_LABEL[ev.data.to as DealStage] ?? ''}` : ev.type}</div>
@@ -163,7 +163,7 @@ export const AdminPipeline = () => {
             <div style={{ fontWeight: 700 }}>صفقة جديدة</div>
             {([['company_name', 'اسم الشركة'], ['contact_name', 'جهة الاتصال'], ['contact_phone', 'الجوال (966…)'], ['service', 'الخدمة']] as const).map(([k, label]) => (
               <input key={k} placeholder={label} aria-label={label} value={form[k]} onChange={e => setForm({ ...form, [k]: e.target.value })}
-                style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 10, padding: '10px 12px', color: 'var(--ink)' }} />
+                style={{ background: 'var(--fill)', border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', color: 'var(--ink)' }} />
             ))}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button className="btn btn-ghost" onClick={() => setAdding(false)}>إلغاء</button>

@@ -301,13 +301,13 @@ export const AdminCommandDeck = () => {
               </defs>
               {[0, 1, 2, 3, 4].map(i => {
                 const v = (niceMax * i) / 4, y = Y(v)
-                return <g key={i}><line x1={PL} x2={W} y1={y} y2={y} stroke="rgba(100,140,255,.1)" /><text x={PL - 8} y={y + 4} textAnchor="end" fill="#7f8db3" fontSize="12">{nf(v)}</text></g>
+                return <g key={i}><line className="mc-gridline" x1={PL} x2={W} y1={y} y2={y} /><text className="mc-axis" x={PL - 8} y={y + 4} textAnchor="end" fontSize="12">{nf(v)}</text></g>
               })}
-              {series.map((s, i) => <text key={i} x={X(i)} y={H - 8} textAnchor="middle" fill="#7f8db3" fontSize="12">{label(s)}</text>)}
+              {series.map((s, i) => <text key={i} className="mc-axis" x={X(i)} y={H - 8} textAnchor="middle" fontSize="12">{label(s)}</text>)}
               <path d={area('previous')} fill="url(#mcA2)" /><path d={path('previous')} fill="none" stroke="#8b5cf6" strokeWidth="2.2" />
               <path d={area('current')} fill="url(#mcA1)" /><path d={path('current')} fill="none" stroke="#4f86ff" strokeWidth="2.4" />
               {series.map((s, i) => <circle key={i} cx={X(i)} cy={Y(s.current)} r="3.5" fill="#4f86ff" />)}
-              {hover !== null && <><line x1={X(hover)} x2={X(hover)} y1="16" y2={H - PB} stroke="#4f86ff" strokeDasharray="4 4" /><circle cx={X(hover)} cy={Y(series[hover].current)} r="6" fill="#0a1740" stroke="#7aa2ff" strokeWidth="2.5" /></>}
+              {hover !== null && <><line x1={X(hover)} x2={X(hover)} y1="16" y2={H - PB} stroke="#4f86ff" strokeDasharray="4 4" /><circle cx={X(hover)} cy={Y(series[hover].current)} r="6" className="mc-dotfill" stroke="#7aa2ff" strokeWidth="2.5" /></>}
               <rect x="0" y="0" width={W} height={H} fill="transparent"
                 onMouseMove={e => {
                   const r = e.currentTarget.getBoundingClientRect()

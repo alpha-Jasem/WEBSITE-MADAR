@@ -98,7 +98,7 @@ export const AdminN8n = () => {
                   <thead><tr style={{ color: 'var(--ink-3)', textAlign: 'right' }}><th style={{ padding: 8 }}>الاسم</th><th>الحالة</th><th>آخر تعديل</th></tr></thead>
                   <tbody>
                     {snap.workflows!.map(w => (
-                      <tr key={w.id} style={{ borderTop: '1px solid rgba(255,255,255,.07)' }}>
+                      <tr key={w.id} style={{ borderTop: '1px solid var(--line)' }}>
                         <td style={{ padding: 10, fontWeight: 600 }}>{w.name}</td>
                         <td><span className={`badge ${w.active ? 'green' : 'amber'}`}>{w.active ? 'نشط' : 'موقوف'}</span></td>
                         <td className="muted">{w.updated_at ? dateShort(w.updated_at) : '—'}</td>
@@ -124,7 +124,7 @@ export const AdminN8n = () => {
                     {snap.executions!.map(e => {
                       const st = EXEC_LABEL[e.status] ?? { label: e.status, badge: 'amber' }
                       return (
-                        <tr key={e.id} style={{ borderTop: '1px solid rgba(255,255,255,.07)' }}>
+                        <tr key={e.id} style={{ borderTop: '1px solid var(--line)' }}>
                           <td style={{ padding: 10 }}>{nameOf.get(e.workflow_id) ?? `#${e.workflow_id}`}</td>
                           <td><span className={`badge ${st.badge}`}>{st.label}</span></td>
                           <td className="muted">{e.started_at ? `${dateShort(e.started_at)} ${timeShort(e.started_at)}` : '—'}</td>

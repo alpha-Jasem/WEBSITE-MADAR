@@ -31,6 +31,9 @@ const ALL_PAGES: { label: string; to: string; hint: string }[] = [
   ...SECTIONS.flatMap(s => (s.tabs ?? [{ label: s.label, to: s.to }]).map(t => ({ label: t.label, to: t.to, hint: s.label }))),
 ]
 const MOBILE_TABS = ['command', 'sales', 'customers', 'finance']
+const THEME_KEY = 'madar_admin_theme'
+type Theme = 'dark' | 'light'
+const readTheme = (): Theme => { try { return localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark' } catch { return 'dark' } }
 
 const isIn = (s: Section, path: string) => (s.exact ? path === '/admin' : s.match.some(m => path === m || path.startsWith(m + '/')))
 
@@ -44,6 +47,7 @@ function Shell({ children }: { children: ReactNode }) {
   const [menu, setMenu] = useState(false)
   const [palette, setPalette] = useState(false)
   const [email, setEmail] = useState('')
+  const [theme, setTheme] = useState<Theme>(readTheme)
 
   const section = SECTIONS.find(s => isIn(s, location.pathname)) ?? SECTIONS[0]
   const badges: Record<string, number> = { sales: pulse.due.length + pulse.meetingsToday.length }
@@ -64,6 +68,16 @@ function Shell({ children }: { children: ReactNode }) {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
+
+  useEffect(() => {
+    document.body.setAttribute('data-mc-theme', theme)
+    return () => document.body.removeAttribute('data-mc-theme')
+  }, [theme])
+  const toggleTheme = () => setTheme(t => {
+    const next: Theme = t === 'dark' ? 'light' : 'dark'
+    try { localStorage.setItem(THEME_KEY, next) } catch { /* storage unavailable */ }
+    return next
+  })
 
   const signOut = async () => { await supabase.auth.signOut(); navigate('/admin/login') }
 
@@ -86,7 +100,7 @@ function Shell({ children }: { children: ReactNode }) {
   const nav = (to: string) => { navigate(to); setDrawer(false) }
 
   return (
-    <div className="mc-root" dir="rtl">
+    <div className="mc-root" dir="rtl" data-mc-theme={theme}>
       <div className={`mc-app ${drawer ? 'mc-drawer-open' : ''}`}>
         <aside className="mc-sb" aria-label="القائمة الرئيسية">
           <div className="mc-logo">
@@ -120,6 +134,9 @@ function Shell({ children }: { children: ReactNode }) {
                 </>
               )}
             </div>
+            <button className="mc-theme" onClick={toggleTheme} aria-label={theme === 'dark' ? 'تفعيل وضع النهار' : 'تفعيل الوضع الليلي'} title={theme === 'dark' ? 'وضع النهار' : 'الوضع الليلي'}>
+              <McIcon name={theme === 'dark' ? 'sun' : 'moon'} size={20} />
+            </button>
             <div className="mc-bell-wrap">
               <button className="mc-bell" onClick={() => setBell(v => !v)} aria-label="الإشعارات" aria-expanded={bell}>
                 <McIcon name="bell" size={22} />{notifs.length > 0 && <i />}
