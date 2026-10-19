@@ -472,6 +472,19 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
     markContact(l)
   }
 
+  // Proposes two real free times from the owner's calendar and opens WhatsApp with the question.
+  const proposeSlots = async (l: OutreachLead) => {
+    if (isBlocked(l)) { setToast({ ok: false, text: 'هذا الرقم في قائمة ممنوع التواصل.' }); return }
+    const { data, error } = await supabase.functions.invoke('outreach-calendar', { body: { action: 'slots', minutes: 30 } })
+    const slots = (data?.slots ?? []) as { start: string; label: string }[]
+    if (error || slots.length < 2) { setToast({ ok: false, text: 'ما قدرت أجيب أوقات فاضية من التقويم الآن.' }); return }
+    const first = slots[0]
+    const second = slots.find(s => s.start.slice(0, 10) !== first.start.slice(0, 10)) ?? slots[1]
+    const text = `تمام، يناسبك نرتب مكالمة قصيرة 15 دقيقة نوريك فيها كيف يشتغل على ${l.name}؟ عندي ${first.label} أو ${second.label}. وش يناسبك؟`
+    window.open(`https://wa.me/${l.phone}?text=${encodeURIComponent(text)}`, '_blank', 'noopener')
+    markContact(l)
+  }
+
   /* ---------- meeting (Google Calendar + Meet) ---------- */
   const saveMeeting = async (lead: OutreachLead, start: Date, minutes: number) => {
     setMeetingFor(null)
@@ -599,6 +612,10 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
                   <button key={k} className="chip" disabled={!l.is_mobile} aria-pressed="false" onClick={() => sendWhatsApp(l, k)}>{TEMPLATE_LABELS[k]}</button>
                 ))}
               </div>
+            </div>
+            <div>
+              <div className="lbl">اقترح موعدًا</div>
+              <div className="chips"><button className="chip" aria-pressed="false" disabled={!l.is_mobile} onClick={() => proposeSlots(l)}>🗓 أرسل موعدين فاضيين من تقويمي</button></div>
             </div>
             <div>
               <div className="lbl">ذكّرني بالمتابعة</div>

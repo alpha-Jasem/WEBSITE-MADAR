@@ -69,6 +69,44 @@ Deno.serve(async req => {
   if (!saRaw || !calendarId) return json({ error: 'calendar_not_configured' }, 500)
 
   const p = await req.json().catch(() => ({}))
+
+  // Free slots for proposing meeting times: Sunday to Thursday, Riyadh time, checked against the real calendar.
+  if (p.action === 'slots') {
+    try {
+      const accessToken = await googleAccessToken(JSON.parse(saRaw))
+      const minutes = Math.min(Math.max(Number(p.minutes) || 30, 15), 120)
+      const now = Date.now()
+      const horizon = now + 8 * 86400000
+      const fb = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ timeMin: new Date(now).toISOString(), timeMax: new Date(horizon).toISOString(), timeZone: 'Asia/Riyadh', items: [{ id: calendarId }] }),
+      })
+      const fbBody = await fb.json().catch(() => ({}))
+      if (!fb.ok) return json({ error: 'calendar_failed', details: fbBody?.error?.message || fb.status }, 502)
+      const busy = ((fbBody.calendars?.[calendarId]?.busy ?? []) as { start: string; end: string }[]).map(b => [Date.parse(b.start), Date.parse(b.end)])
+      const hours = [10, 11, 12, 16, 17]
+      const out: { start: string; label: string }[] = []
+      const riyadh = new Date(now + 3 * 3600000)
+      for (let d = 0; d < 8 && out.length < 8; d++) {
+        const day = new Date(Date.UTC(riyadh.getUTCFullYear(), riyadh.getUTCMonth(), riyadh.getUTCDate() + d))
+        const dow = day.getUTCDay()
+        if (dow === 5 || dow === 6) continue
+        for (const h of hours) {
+          const s = Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate(), h - 3)
+          const e = s + minutes * 60000
+          if (s < now + 2 * 3600000) continue
+          if (busy.some(([bs, be]) => s < be && e > bs)) continue
+          out.push({ start: new Date(s).toISOString(), label: new Date(s).toLocaleString('ar-SA-u-ca-gregory', { timeZone: 'Asia/Riyadh', weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' }) })
+          if (out.length >= 8) break
+        }
+      }
+      return json({ ok: true, slots: out })
+    } catch (e) {
+      return json({ error: 'calendar_failed', details: (e as Error).message }, 500)
+    }
+  }
+
   const start = new Date(p.start)
   const minutes = Math.min(Math.max(Number(p.minutes) || 30, 10), 240)
   if (Number.isNaN(start.getTime())) return json({ error: 'invalid_start' }, 400)

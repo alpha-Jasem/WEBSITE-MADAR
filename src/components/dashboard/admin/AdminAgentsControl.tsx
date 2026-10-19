@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
-import { loadDoNotContact, writeAudit } from '../../../lib/deals'
+import { loadDoNotContact, writeAudit, syncDealForLead } from '../../../lib/deals'
 import { riyadhDayStart, dateShort, timeShort, nf } from '../../../lib/format'
 import { useRealtimeRefetch } from '../../../lib/realtime'
 
@@ -103,6 +103,25 @@ export const AdminAgentsControl = () => {
 
   const review = async (d: Draft, status: 'approved' | 'rejected', note = '') => {
     await supabase.from('agent_drafts').update({ status, review_note: note, reviewed_at: new Date().toISOString() }).eq('id', d.id)
+    load()
+  }
+  // The owner (or a team member) sends the approved message himself: WhatsApp opens with the text filled in and he presses send.
+  // The draft is then marked sent, which runs the database guards (agent active, daily cap, do-not-contact, owner-held deal).
+  const sendViaWhatsApp = async (d: Draft) => {
+    const lead = leads.find(l => l.id === d.lead_id)
+    const phone = lead?.phone ?? (await supabase.from('outreach_leads').select('phone').eq('id', d.lead_id).maybeSingle()).data?.phone
+    if (!phone) { setError('ما لقيت رقم العميل.'); return }
+    const { error: e } = await supabase.from('agent_drafts').update({ status: 'sent', sent_at: new Date().toISOString() }).eq('id', d.id)
+    if (e) {
+      const why = /agent_not_active/.test(e.message) ? 'فعّل الإيجنت أولًا.' : /daily_cap/.test(e.message) ? 'وصل الحد اليومي للإيجنت.' : /do_not_contact/.test(e.message) ? 'هذا الرقم في قائمة عدم التواصل.' : /owner_has_the_deal/.test(e.message) ? 'أنت مستلم هذي الصفقة.' : 'تعذّر تسجيل الإرسال.'
+      setError(why); return
+    }
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(d.body)}`, '_blank', 'noopener')
+    const now = new Date()
+    const follow = new Date(now.getTime() + 2 * 86400000); follow.setHours(10, 0, 0, 0)
+    await supabase.from('outreach_leads').update({ status: 'contacted', last_contacted_at: now.toISOString(), next_follow_up: follow.toISOString(), updated_at: now.toISOString() }).eq('id', d.lead_id).eq('status', 'new')
+    if (lead) await syncDealForLead({ id: lead.id, name: lead.name, phone: lead.phone }, 'contacted')
+    setInfo('فُتح واتساب بالرسالة. اضغط إرسال هناك، وحُددت متابعة بعد يومين.')
     load()
   }
   const releaseTrial = async (agentId: string) => {
@@ -210,7 +229,7 @@ export const AdminAgentsControl = () => {
                   <td style={{ maxWidth: 420, lineHeight: 1.7 }}>{d.body}</td>
                   <td><span className={`mc-st ${D_STATUS[d.status].cls}`}>{D_STATUS[d.status].label}</span></td>
                   <td>{dateShort(d.created_at)} {timeShort(d.created_at)}</td>
-                  <td>{d.status === 'draft' && <span style={{ display: 'flex', gap: 6 }}><button className="mc-btn2 p" onClick={() => review(d, 'approved')}>اعتماد</button><button className="mc-btn2" onClick={() => review(d, 'rejected')}>رفض</button></span>}</td>
+                  <td>{d.status === 'draft' && <span style={{ display: 'flex', gap: 6 }}><button className="mc-btn2 p" onClick={() => review(d, 'approved')}>اعتماد</button><button className="mc-btn2" onClick={() => review(d, 'rejected')}>رفض</button></span>}{d.status === 'approved' && <button className="mc-btn2 p" onClick={() => sendViaWhatsApp(d)}>افتح واتساب وأرسل</button>}</td>
                 </tr>
               ))}
             </tbody>

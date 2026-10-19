@@ -3,6 +3,7 @@ import { supabase } from '../../../lib/supabase'
 import { dateShort, timeShort } from '../../../lib/format'
 import { useRealtimeRefetch } from '../../../lib/realtime'
 import { JarvisChat } from './JarvisChat'
+import { usePush } from '../../../lib/push'
 
 interface Cmd { id: string; action: string; after: Record<string, unknown> | null; created_at: string }
 interface Preview { title: string; body: string }
@@ -24,6 +25,7 @@ export const AdminAI = () => {
   const [preview, setPreview] = useState<Preview | null>(null)
   const [note, setNote] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
+  const push = usePush()
 
   const load = useCallback(async () => {
     const [c, s] = await Promise.all([
@@ -72,9 +74,11 @@ export const AdminAI = () => {
           <div className="mc-delta" style={{ lineHeight: 1.8 }}>كل صباح الساعة 8 يوصلك ملخص يومك على الجوال. وتوصلك إشعارات فورية عند: دفعة جديدة، تحصيل، صفقة تنتقل لبانتظار الدفع أو تُغلق أو تُخسر، تحويل بنكي جديد، حلول موعد متابعة، واجتماع بعد دقائق.</div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button className="mc-btn2 p" onClick={briefPreview} disabled={busy === 'brief'}>{busy === 'brief' ? 'جاري التجهيز…' : 'عاين ملخص الصباح الآن'}</button>
+            {(push.state === 'off' || push.state === 'busy') && <button className="mc-btn2 p" onClick={push.enable} disabled={push.state === 'busy'}>فعّل الإشعارات على هذا الجهاز</button>}
             <button className="mc-btn2" onClick={testPush} disabled={busy === 'push'}>أرسل لي إشعارًا تجريبيًا</button>
           </div>
-          {note && <div className="mc-delta">{note}</div>}
+          <div className="mc-delta">حالة هذا الجهاز: {({ checking: 'جاري الفحص…', unsupported: 'المتصفح لا يدعم الإشعارات', 'ios-install': 'ثبّت اللوحة على الشاشة الرئيسية أولًا (زر المشاركة ← إضافة إلى الشاشة الرئيسية)', off: 'غير مفعّل', on: 'مفعّل', denied: 'محظور من إعدادات المتصفح', busy: 'جاري التفعيل…' } as Record<string, string>)[push.state]}</div>
+          {(note || push.note) && <div className="mc-delta">{note ?? push.note}</div>}
           {preview && (
             <div style={{ padding: 14, borderRadius: 14, background: 'var(--fill)', border: '1px solid var(--line)', lineHeight: 1.9 }}>
               <b>{preview.title}</b>

@@ -1,5 +1,6 @@
 ﻿import { useSystemChrome } from '../../../hooks/useSystemChrome'
 import { useRealtimeRefetch } from '../../../lib/realtime'
+import { usePush } from '../../../lib/push'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
@@ -111,6 +112,8 @@ function Shell({ children }: { children: ReactNode }) {
     return next
   })
 
+  const push = usePush()
+  const [pushHidden, setPushHidden] = useState(() => { try { return localStorage.getItem('madar_push_banner') === 'hide' } catch { return false } })
   const live = useRealtimeRefetch('admin_shell', [{ table: 'integration_checks' }], () => {}, true)
   const signOut = async () => { await supabase.auth.signOut(); navigate('/admin/login') }
 
@@ -204,6 +207,22 @@ function Shell({ children }: { children: ReactNode }) {
               ))}
             </div>
           )}
+
+          {!pushHidden && ['off', 'busy', 'denied', 'ios-install'].includes(push.state) && (
+            <div className="mc-pushbar" role="status">
+              <div className="mc-pushtxt">
+                <b>فعّل إشعارات الجوال</b>
+                <span>{push.state === 'ios-install'
+                  ? 'على الآيفون: اضغط زر المشاركة، ثم «إضافة إلى الشاشة الرئيسية»، وافتح اللوحة من الأيقونة، وبعدها فعّل الإشعارات.'
+                  : push.state === 'denied'
+                    ? 'الإشعارات محظورة لهذا الموقع. فعّلها من إعدادات المتصفح أو التطبيق ثم أعد تحميل الصفحة.'
+                    : 'يوصلك تنبيه فوري عند دفعة جديدة، صفقة تتحرك، موعد متابعة، أو اجتماع بعد دقائق.'}</span>
+              </div>
+              {(push.state === 'off' || push.state === 'busy') && <button className="mc-btn2 p" onClick={push.enable} disabled={push.state === 'busy'}>فعّل الآن</button>}
+              <button className="mc-pushx" aria-label="إخفاء" onClick={() => { setPushHidden(true); try { localStorage.setItem('madar_push_banner', 'hide') } catch { /* private mode */ } }}>×</button>
+            </div>
+          )}
+          {push.note && push.state === 'on' && <div className="mc-banner" style={{ background: 'rgba(52,211,153,.1)', borderColor: 'rgba(52,211,153,.35)', color: 'var(--green)' }}>{push.note}</div>}
 
           <div className="mc-content" ref={contentRef}>{children}</div>
         </main>
