@@ -262,3 +262,14 @@ body.plasma-admin[data-mc-theme="light"]{background:#eef2fb !important}
 .mc-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
 .mc-chipbtn{height:34px;padding:0 14px;border-radius:99px;border:1px solid var(--line);background:var(--fill);color:var(--ink-2);font:600 13px var(--head)}
 .mc-chipbtn.mc-on{background:rgba(47,107,255,.2);border-color:var(--blue);color:var(--ink)}
+
+/* ===== Phone layout: stack inline multi-column grids, scroll wide tables and tab bars ===== */
+@media (max-width:860px){
+  .mc-main{overflow-x:hidden}
+  .mc-root [style*="grid-template-columns"]{grid-template-columns:minmax(0,1fr)!important}
+  .mc-root table{display:block;overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch}
+  .mc-root [role="tablist"]{overflow-x:auto;max-width:100%;flex-wrap:nowrap;scrollbar-width:none}
+  .mc-root [role="tablist"]>*{flex:0 0 auto}
+  .mc-card,.mc-flat{min-width:0}
+  .mc-modal{max-width:calc(100vw - 24px)}
+}
