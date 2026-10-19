@@ -133,7 +133,7 @@ export const AdminAgentsControl = () => {
 
       <article className="mc-card" style={{ marginBottom: 14 }}>
         <div className="mc-ph"><h3>شاهد الإيجنت يبيع (محاكاة)</h3><span className="mc-st mc-n2">لا يُرسل شيء</span></div>
-        <div className="mc-delta" style={{ padding: '0 20px 10px', lineHeight: 1.8 }}>اختر عميلًا وشاهد محادثة تجريبية: الإيجنت يكتب، والعميل شخصية يلعبها الذكاء الاصطناعي. لا يُرسل أي رسالة ولا يُحفظ شيء. الإيجنت لا يذكر سعرًا إلا من الأسعار المعتمدة، ويعترف أنه آلي، ويتوقف إذا رفض العميل.</div>
+        <div className="mc-delta" style={{ padding: '0 20px 10px', lineHeight: 1.8 }}>اختر عميلًا وشاهد محادثة تجريبية: الإيجنت يكتب، والعميل شخصية يلعبها الذكاء الاصطناعي. لا يُرسل أي رسالة ولا يُحفظ شيء. الإيجنت يتكلم باسمه، ولا يذكر سعرًا إلا من الأسعار المعتمدة، ولا يدّعي أنه إنسان إذا سُئل، ويتوقف إذا رفض العميل.</div>
         <div style={{ padding: '0 20px 18px', display: 'grid', gap: 12 }}>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <select value={simLead} onChange={e => setSimLead(e.target.value)} aria-label="العميل" style={{ flex: '1 1 220px', minHeight: 42 }}>
