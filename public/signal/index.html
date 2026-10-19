@@ -309,6 +309,23 @@
   .foot-bottom a:hover{color:rgba(255,255,255,.7)}
 
   /* ── Saudi ecosystem trust band ── */
+
+  #clients .clients-head{text-align:center;margin-bottom:46px}
+  #clients .clients-head h3{margin:0 auto}
+  #clients .clients-head .lede{margin:22px auto 0;text-align:center}
+  .clients-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+  .client-card{border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:34px 30px;
+    background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));display:flex;flex-direction:column;gap:26px;
+    transition:transform .35s cubic-bezier(.16,1,.3,1),border-color .35s ease}
+  .client-card:hover{transform:translateY(-4px);border-color:rgba(79,163,255,.4)}
+  .client-tag{align-self:flex-start;font-size:12px;color:var(--accent2);border:1px solid rgba(79,163,255,.35);border-radius:999px;padding:5px 14px}
+  .client-logo{height:112px;display:flex;align-items:center;justify-content:center}
+  .client-logo img{max-height:100%;max-width:78%;object-fit:contain}
+  .client-logo.on-white img{background:#fff;border-radius:12px;padding:14px 18px;max-width:84%}
+  .client-list{list-style:none;margin:0;padding:22px 0 0;border-top:1px solid rgba(255,255,255,.1);display:grid;gap:12px}
+  .client-list li{font-size:15px;color:var(--ink2);font-weight:300;line-height:1.8;padding-inline-start:26px;position:relative}
+  .client-list li::before{content:"";position:absolute;inset-inline-start:0;top:.7em;width:12px;height:7px;border-left:2px solid var(--accent);border-bottom:2px solid var(--accent);transform:rotate(-45deg)}
+  @media(max-width:760px){.clients-grid{grid-template-columns:1fr}.client-card{padding:26px 22px}}
   #ecosystem{background:#081120;padding:70px 0 90px;text-align:center}
   #ecosystem .eco-label{font-size:13px;font-weight:500;letter-spacing:.06em;color:var(--ink2);margin-bottom:38px}
   .eco-row{display:flex;align-items:center;justify-content:center;gap:26px;flex-wrap:wrap}
@@ -930,6 +947,36 @@
           <h4>تستقبل أول مكالمة</h4>
           <p>من اللحظة الأولى، كل مكالمة تُجاب وتُحجز تلقائياً — وأنت تشوف كل شي في لوحة واحدة.</p>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="clients">
+    <div class="wrap">
+      <div class="clients-head">
+        <div class="eyebrow">عملاؤنا</div>
+        <h3>علامات سعودية تشتغل مع مدار.</h3>
+        <p class="lede">نفخر بثقة علامتين سعوديتين في حلول مدار.</p>
+      </div>
+      <div class="clients-grid reveal">
+        <article class="client-card">
+          <span class="client-tag">التجارة الإلكترونية · الأزياء الرياضية</span>
+          <div class="client-logo"><img src="/signal/logos/onehardset.png" alt="ONEHARDSET" loading="lazy"></div>
+          <ul class="client-list">
+            <li>أتمتة الرد على استفسارات العملاء عبر واتساب</li>
+            <li>متابعة الطلبات والاستفسارات على مدار الساعة</li>
+            <li>تكامل مباشر مع متجرهم الإلكتروني على سلة</li>
+          </ul>
+        </article>
+        <article class="client-card">
+          <span class="client-tag">العقارات · الإدارة العقارية</span>
+          <div class="client-logo on-white"><img src="/signal/logos/jawdah.png" alt="جودة العقارية" loading="lazy"></div>
+          <ul class="client-list">
+            <li>لوحة تحكم لإدارة العقارات</li>
+            <li>موقع إلكتروني للشركة</li>
+            <li>بوابة لعرض العقارات</li>
+          </ul>
+        </article>
       </div>
     </div>
   </section>
