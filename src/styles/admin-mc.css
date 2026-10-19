@@ -271,5 +271,19 @@ body.plasma-admin[data-mc-theme="light"]{background:#eef2fb !important}
   .mc-root [role="tablist"]{overflow-x:auto;max-width:100%;flex-wrap:nowrap;scrollbar-width:none}
   .mc-root [role="tablist"]>*{flex:0 0 auto}
   .mc-card,.mc-flat{min-width:0}
-  .mc-modal{max-width:calc(100vw - 24px)}
+  .mc-panel,.mc-panel[class]{position:fixed;top:68px;inset-inline:12px;width:auto;max-width:none;max-height:70vh;overflow-y:auto}
+  .mc-subtabs{scrollbar-width:none}.mc-subtabs button{flex:0 0 auto}
+  .mc-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mc-kpi{min-width:0;position:relative;overflow:hidden}
+  .mc-kpi .mc-h span{min-width:0}
+  .mc-kg{flex-direction:column;align-items:flex-start;gap:8px}
+  .mc-bars{position:static;max-width:100%;margin-top:8px;height:40px}
+  .mc-big{flex-wrap:wrap}
+  .mc-ph{flex-wrap:wrap;gap:8px 12px;padding:14px 14px 8px}
+  .mc-ph h3{min-width:0}
+  .mc-phr{width:100%;min-width:0;gap:10px}
+  .mc-tabs{display:flex;max-width:100%;overflow-x:auto;scrollbar-width:none}
+  .mc-tabs button{flex:0 0 auto;padding:8px 14px;white-space:nowrap}
+  .mc-modal{max-width:calc(100vw - 24px);max-height:calc(100dvh - 32px);padding:18px}
+  .mc-panel,.mc-panel[class]{max-height:calc(100dvh - 160px)}
 }

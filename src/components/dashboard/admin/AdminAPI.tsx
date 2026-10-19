@@ -150,7 +150,7 @@ export function AdminAPI() {
 
   const apiBaseUrl = `${SUPABASE_URL}/functions/v1/madar-api`
 
-  const card = { background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 16, padding: '18px 20px' }
+  const card = { background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 16, padding: '18px 20px' }
 
   return (
     <div dir="rtl" style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 1000 }}>
@@ -158,12 +158,12 @@ export function AdminAPI() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 900, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>API & التكاملات</h1>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 900, color: 'var(--ink)', fontFamily: 'Cairo, sans-serif' }}>API & التكاملات</h1>
+          <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--ink-3)', fontFamily: 'Tajawal, sans-serif' }}>
             إدارة مفاتيح API والـ Webhooks لربط المنصات الخارجية بمادار OS
           </p>
         </div>
-        <button onClick={load} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid #E2E8F0', background: '#F8FAFC', cursor: 'pointer', color: '#475569', fontSize: 13, fontFamily: 'Cairo, sans-serif' }}>
+        <button onClick={load} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--fill)', cursor: 'pointer', color: 'var(--ink-2)', fontSize: 13, fontFamily: 'Cairo, sans-serif' }}>
           <RefreshCw size={13} /> تحديث
         </button>
       </div>
@@ -172,29 +172,29 @@ export function AdminAPI() {
       <div style={{ ...card, background: 'rgba(34,211,238,0.04)', border: '1px solid rgba(34,211,238,0.2)' }}>
         <p style={{ margin: '0 0 6px', fontSize: 12, fontWeight: 700, color: '#0099CC', fontFamily: 'Cairo, sans-serif' }}>Base URL للـ API</p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, direction: 'ltr' }}>
-          <code style={{ flex: 1, fontSize: 12, color: '#0F172A', fontFamily: 'monospace', background: '#F1F5F9', padding: '8px 12px', borderRadius: 8, overflowX: 'auto', display: 'block' }}>
+          <code style={{ flex: 1, fontSize: 12, color: 'var(--ink)', fontFamily: 'monospace', background: 'var(--fill-2)', padding: '8px 12px', borderRadius: 8, overflowX: 'auto', display: 'block' }}>
             {apiBaseUrl}
           </code>
           <button onClick={() => { navigator.clipboard.writeText(apiBaseUrl) }}
-            style={{ flexShrink: 0, padding: '8px 12px', borderRadius: 8, border: '1px solid #E2E8F0', background: '#FFF', cursor: 'pointer', color: '#475569', fontSize: 12 }}>
+            style={{ flexShrink: 0, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--card)', cursor: 'pointer', color: 'var(--ink-2)', fontSize: 12 }}>
             <Copy size={13} />
           </button>
         </div>
-        <p style={{ margin: '8px 0 0', fontSize: 11.5, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>
-          أضف <code style={{ background: '#F1F5F9', padding: '1px 5px', borderRadius: 4 }}>Authorization: Bearer mdrc_xxx</code> في كل طلب
+        <p style={{ margin: '8px 0 0', fontSize: 11.5, color: 'var(--ink-3)', fontFamily: 'Tajawal, sans-serif' }}>
+          أضف <code style={{ background: 'var(--fill-2)', padding: '1px 5px', borderRadius: 4 }}>Authorization: Bearer mdrc_xxx</code> في كل طلب
         </p>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid #E2E8F0' }}>
+      <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid var(--line)' }}>
         {[
           { key: 'keys', label: 'مفاتيح API', icon: Key },
           { key: 'webhooks', label: 'Webhooks', icon: Globe },
         ].map(({ key, label, icon: Icon }) => (
           <button key={key} onClick={() => setActiveTab(key as any)}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13, fontFamily: 'Cairo, sans-serif', fontWeight: 700, color: activeTab === key ? '#22D3EE' : '#475569', borderBottom: activeTab === key ? '2px solid #22D3EE' : '2px solid transparent', marginBottom: -1 }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13, fontFamily: 'Cairo, sans-serif', fontWeight: 700, color: activeTab === key ? '#22D3EE' : 'var(--ink-2)', borderBottom: activeTab === key ? '2px solid #22D3EE' : '2px solid transparent', marginBottom: -1 }}>
             <Icon size={14} />{label}
-            <span style={{ background: activeTab === key ? 'rgba(34,211,238,0.12)' : '#F1F5F9', color: activeTab === key ? '#0099CC' : '#94A3B8', fontSize: 11, fontFamily: 'Sora, sans-serif', fontWeight: 700, padding: '1px 7px', borderRadius: 20 }}>
+            <span style={{ background: activeTab === key ? 'rgba(34,211,238,0.12)' : 'var(--fill-2)', color: activeTab === key ? '#0099CC' : 'var(--ink-3)', fontSize: 11, fontFamily: 'Sora, sans-serif', fontWeight: 700, padding: '1px 7px', borderRadius: 20 }}>
               {key === 'keys' ? apiKeys.length : webhooks.length}
             </span>
           </button>
@@ -202,7 +202,7 @@ export function AdminAPI() {
       </div>
 
       {loading ? (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 60, color: '#94A3B8' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 60, color: 'var(--ink-3)' }}>
           <Loader2 size={20} style={{ animation: 'spin 0.8s linear infinite' }} />
           <span style={{ fontFamily: 'Tajawal, sans-serif' }}>جاري التحميل...</span>
         </div>
@@ -216,7 +216,7 @@ export function AdminAPI() {
           </div>
 
           {apiKeys.length === 0 ? (
-            <div style={{ ...card, textAlign: 'center', padding: 48, color: '#94A3B8' }}>
+            <div style={{ ...card, textAlign: 'center', padding: 48, color: 'var(--ink-3)' }}>
               <Key size={36} style={{ marginBottom: 12, opacity: 0.4 }} />
               <p style={{ fontFamily: 'Tajawal, sans-serif', margin: 0 }}>لا توجد مفاتيح API بعد</p>
             </div>
@@ -224,12 +224,12 @@ export function AdminAPI() {
             <div key={k.id} style={{ ...card, opacity: k.active ? 1 : 0.55 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 38, height: 38, borderRadius: 10, background: k.active ? 'rgba(34,211,238,0.1)' : '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Key size={16} color={k.active ? '#22D3EE' : '#94A3B8'} />
+                  <div style={{ width: 38, height: 38, borderRadius: 10, background: k.active ? 'rgba(34,211,238,0.1)' : 'var(--fill-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Key size={16} color={k.active ? '#22D3EE' : 'var(--ink-3)'} />
                   </div>
                   <div>
-                    <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0F172A', fontFamily: 'Cairo, sans-serif' }}>{k.name}</p>
-                    <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--ink)', fontFamily: 'Cairo, sans-serif' }}>{k.name}</p>
+                    <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--ink-3)', fontFamily: 'Tajawal, sans-serif' }}>
                       {(k.company as any)?.name || k.company_id}
                     </p>
                   </div>
@@ -245,19 +245,19 @@ export function AdminAPI() {
                     </button>
                   )}
                   <button onClick={() => deleteKey(k.id)}
-                    style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #E2E8F0', background: '#F8FAFC', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8' }}>
+                    style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--line)', background: 'var(--fill)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-3)' }}>
                     <Trash2 size={12} />
                   </button>
                 </div>
               </div>
               <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-                <code style={{ fontSize: 12, fontFamily: 'monospace', color: '#475569', background: '#F8FAFC', padding: '4px 10px', borderRadius: 6, border: '1px solid #E2E8F0' }}>
+                <code style={{ fontSize: 12, fontFamily: 'monospace', color: 'var(--ink-2)', background: 'var(--fill)', padding: '4px 10px', borderRadius: 6, border: '1px solid var(--line)' }}>
                   {k.key_prefix}
                 </code>
                 {k.permissions.map(p => (
                   <span key={p} style={{ fontSize: 11, padding: '2px 8px', borderRadius: 12, background: 'rgba(99,102,241,0.08)', color: '#6366F1', fontFamily: 'Sora, sans-serif', fontWeight: 700 }}>{p}</span>
                 ))}
-                <span style={{ marginRight: 'auto', fontSize: 11, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif' }}>
+                <span style={{ marginRight: 'auto', fontSize: 11, color: 'var(--ink-3)', fontFamily: 'Tajawal, sans-serif' }}>
                   <Activity size={10} style={{ marginLeft: 3 }} />آخر استخدام: {timeAgo(k.last_used_at)}
                 </span>
               </div>
@@ -274,7 +274,7 @@ export function AdminAPI() {
           </div>
 
           {webhooks.length === 0 ? (
-            <div style={{ ...card, textAlign: 'center', padding: 48, color: '#94A3B8' }}>
+            <div style={{ ...card, textAlign: 'center', padding: 48, color: 'var(--ink-3)' }}>
               <Globe size={36} style={{ marginBottom: 12, opacity: 0.4 }} />
               <p style={{ fontFamily: 'Tajawal, sans-serif', margin: 0 }}>لا توجد Webhooks مضافة</p>
             </div>
@@ -282,8 +282,8 @@ export function AdminAPI() {
             <div key={wh.id} style={{ ...card, opacity: wh.active ? 1 : 0.6 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
                 <div>
-                  <p style={{ margin: 0, fontSize: 13, fontFamily: 'monospace', color: '#0F172A', direction: 'ltr', wordBreak: 'break-all' }}>{wh.url}</p>
-                  <p style={{ margin: '4px 0 0', fontSize: 12, color: '#64748B', fontFamily: 'Tajawal, sans-serif' }}>
+                  <p style={{ margin: 0, fontSize: 13, fontFamily: 'monospace', color: 'var(--ink)', direction: 'ltr', wordBreak: 'break-all' }}>{wh.url}</p>
+                  <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--ink-3)', fontFamily: 'Tajawal, sans-serif' }}>
                     {(wh.company as any)?.name || wh.company_id} — آخر إرسال: {timeAgo(wh.last_triggered_at)}
                   </p>
                 </div>
@@ -293,7 +293,7 @@ export function AdminAPI() {
                     {wh.active ? 'إيقاف' : 'تفعيل'}
                   </button>
                   <button onClick={() => deleteWebhook(wh.id)}
-                    style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #E2E8F0', background: '#F8FAFC', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8' }}>
+                    style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--line)', background: 'var(--fill)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-3)' }}>
                     <Trash2 size={12} />
                   </button>
                 </div>
@@ -312,22 +312,22 @@ export function AdminAPI() {
       {showNewKey && (
         <div onClick={e => e.target === e.currentTarget && setShowNewKey(false)}
           style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ background: '#FFF', borderRadius: 20, width: '100%', maxWidth: 460, overflow: 'hidden' }} dir="rtl">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid #E2E8F0' }}>
-              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, fontFamily: 'Cairo, sans-serif', color: '#0F172A' }}>توليد مفتاح API جديد</h3>
-              <button onClick={() => setShowNewKey(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569' }}><X size={18} /></button>
+          <div style={{ background: 'var(--card)', borderRadius: 20, width: '100%', maxWidth: 460, overflow: 'hidden' }} dir="rtl">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid var(--line)' }}>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, fontFamily: 'Cairo, sans-serif', color: 'var(--ink)' }}>توليد مفتاح API جديد</h3>
+              <button onClick={() => setShowNewKey(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)' }}><X size={18} /></button>
             </div>
             <div style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
               <input value={newKeyName} onChange={e => setNewKeyName(e.target.value)}
                 placeholder="اسم المفتاح"
-                style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #E2E8F0', fontFamily: 'Cairo, sans-serif', fontSize: 14, color: '#0F172A', outline: 'none', boxSizing: 'border-box' }} />
+                style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--line)', fontFamily: 'Cairo, sans-serif', fontSize: 14, color: 'var(--ink)', outline: 'none', boxSizing: 'border-box' }} />
               <div style={{ display: 'flex', gap: 10 }}>
                 <button onClick={createKey} disabled={generatingKey}
-                  style={{ flex: 1, padding: 11, borderRadius: 12, border: 'none', cursor: generatingKey ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, #22D3EE, #06B6D4)', color: '#FFF', fontFamily: 'Cairo, sans-serif', fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  style={{ flex: 1, padding: 11, borderRadius: 12, border: 'none', cursor: generatingKey ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, #22D3EE, #06B6D4)', color: '#fff', fontFamily: 'Cairo, sans-serif', fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                   {generatingKey ? <Loader2 size={15} style={{ animation: 'spin 0.8s linear infinite' }} /> : <Key size={15} />}
                   {generatingKey ? 'جاري التوليد...' : 'توليد'}
                 </button>
-                <button onClick={() => setShowNewKey(false)} style={{ padding: '11px 18px', borderRadius: 12, border: '1px solid #E2E8F0', background: 'transparent', color: '#64748B', cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', fontSize: 13 }}>إلغاء</button>
+                <button onClick={() => setShowNewKey(false)} style={{ padding: '11px 18px', borderRadius: 12, border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-3)', cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', fontSize: 13 }}>إلغاء</button>
               </div>
             </div>
           </div>
@@ -337,26 +337,26 @@ export function AdminAPI() {
       {/* ── Modal: Revealed Key ── */}
       {revealedKey && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ background: '#FFF', borderRadius: 20, width: '100%', maxWidth: 480 }} dir="rtl">
+          <div style={{ background: 'var(--card)', borderRadius: 20, width: '100%', maxWidth: 480 }} dir="rtl">
             <div style={{ padding: '22px 24px', textAlign: 'center' }}>
               <div style={{ width: 56, height: 56, borderRadius: 16, background: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                 <Check size={24} color="#16A34A" />
               </div>
-              <h3 style={{ margin: '0 0 8px', fontSize: 17, fontWeight: 800, fontFamily: 'Cairo, sans-serif', color: '#0F172A' }}>تم توليد المفتاح ✓</h3>
+              <h3 style={{ margin: '0 0 8px', fontSize: 17, fontWeight: 800, fontFamily: 'Cairo, sans-serif', color: 'var(--ink)' }}>تم توليد المفتاح ✓</h3>
               <p style={{ margin: '0 0 18px', fontSize: 13, color: '#EF4444', fontFamily: 'Tajawal, sans-serif', fontWeight: 700 }}>
                 ⚠️ انسخ المفتاح الآن — لن يظهر مرة ثانية!
               </p>
-              <div style={{ background: '#0F172A', borderRadius: 12, padding: '14px 16px', direction: 'ltr', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+              <div style={{ background: 'var(--ink)', borderRadius: 12, padding: '14px 16px', direction: 'ltr', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
                 <code style={{ flex: 1, fontSize: 13, color: '#22D3EE', fontFamily: 'monospace', wordBreak: 'break-all', textAlign: 'left' }}>
                   {revealedKey}
                 </code>
                 <button onClick={() => { navigator.clipboard.writeText(revealedKey); setCopiedKey(true); setTimeout(() => setCopiedKey(false), 2500) }}
-                  style={{ flexShrink: 0, width: 36, height: 36, borderRadius: 9, border: 'none', background: copiedKey ? '#16A34A' : '#1E293B', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF' }}>
+                  style={{ flexShrink: 0, width: 36, height: 36, borderRadius: 9, border: 'none', background: copiedKey ? '#16A34A' : '#1E293B', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
                   {copiedKey ? <Check size={14} /> : <Copy size={14} />}
                 </button>
               </div>
               <button onClick={() => setRevealedKey(null)}
-                style={{ width: '100%', padding: 12, borderRadius: 12, border: 'none', background: '#0F172A', color: '#FFF', fontFamily: 'Cairo, sans-serif', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                style={{ width: '100%', padding: 12, borderRadius: 12, border: 'none', background: 'var(--ink)', color: 'var(--card)', fontFamily: 'Cairo, sans-serif', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
                 فهمت، أغلق النافذة
               </button>
             </div>
@@ -368,24 +368,24 @@ export function AdminAPI() {
       {showNewWebhook && (
         <div onClick={e => e.target === e.currentTarget && setShowNewWebhook(false)}
           style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ background: '#FFF', borderRadius: 20, width: '100%', maxWidth: 460 }} dir="rtl">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid #E2E8F0' }}>
-              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, fontFamily: 'Cairo, sans-serif', color: '#0F172A' }}>إضافة Webhook</h3>
-              <button onClick={() => setShowNewWebhook(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569' }}><X size={18} /></button>
+          <div style={{ background: 'var(--card)', borderRadius: 20, width: '100%', maxWidth: 460 }} dir="rtl">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid var(--line)' }}>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, fontFamily: 'Cairo, sans-serif', color: 'var(--ink)' }}>إضافة Webhook</h3>
+              <button onClick={() => setShowNewWebhook(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)' }}><X size={18} /></button>
             </div>
             <div style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>Webhook URL *</label>
+                <label style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 6 }}>Webhook URL *</label>
                 <input value={newWhUrl} onChange={e => setNewWhUrl(e.target.value)} dir="ltr"
                   placeholder="https://your-platform.com/webhooks/madar"
-                  style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid #E2E8F0', fontFamily: 'monospace', fontSize: 12, color: '#0F172A', outline: 'none', boxSizing: 'border-box' }} />
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid var(--line)', fontFamily: 'monospace', fontSize: 12, color: 'var(--ink)', outline: 'none', boxSizing: 'border-box' }} />
               </div>
               <div>
-                <label style={{ fontSize: 12, color: '#94A3B8', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 8 }}>الأحداث</label>
+                <label style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: 'Tajawal, sans-serif', display: 'block', marginBottom: 8 }}>الأحداث</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {EVENT_OPTIONS.map(e => (
                     <button key={e.value} onClick={() => setNewWhEvents(prev => prev.includes(e.value) ? prev.filter(x => x !== e.value) : [...prev, e.value])}
-                      style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer', border: `1px solid ${newWhEvents.includes(e.value) ? 'rgba(99,102,241,0.4)' : '#E2E8F0'}`, background: newWhEvents.includes(e.value) ? 'rgba(99,102,241,0.08)' : '#F8FAFC', color: newWhEvents.includes(e.value) ? '#6366F1' : '#64748B' }}>
+                      style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'Tajawal, sans-serif', cursor: 'pointer', border: `1px solid ${newWhEvents.includes(e.value) ? 'rgba(99,102,241,0.4)' : 'var(--line)'}`, background: newWhEvents.includes(e.value) ? 'rgba(99,102,241,0.08)' : 'var(--fill)', color: newWhEvents.includes(e.value) ? '#6366F1' : 'var(--ink-3)' }}>
                       {e.label}
                     </button>
                   ))}
@@ -393,11 +393,11 @@ export function AdminAPI() {
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button onClick={createWebhook} disabled={savingWebhook || !newWhUrl.trim()}
-                  style={{ flex: 1, padding: 11, borderRadius: 12, border: 'none', cursor: savingWebhook || !newWhUrl.trim() ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, #6366F1, #818CF8)', color: '#FFF', fontFamily: 'Cairo, sans-serif', fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: !newWhUrl.trim() ? 0.5 : 1 }}>
+                  style={{ flex: 1, padding: 11, borderRadius: 12, border: 'none', cursor: savingWebhook || !newWhUrl.trim() ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, #6366F1, #818CF8)', color: '#fff', fontFamily: 'Cairo, sans-serif', fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: !newWhUrl.trim() ? 0.5 : 1 }}>
                   {savingWebhook ? <Loader2 size={15} style={{ animation: 'spin 0.8s linear infinite' }} /> : <Globe size={15} />}
                   {savingWebhook ? 'جاري الحفظ...' : 'إضافة Webhook'}
                 </button>
-                <button onClick={() => setShowNewWebhook(false)} style={{ padding: '11px 18px', borderRadius: 12, border: '1px solid #E2E8F0', background: 'transparent', color: '#64748B', cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', fontSize: 13 }}>إلغاء</button>
+                <button onClick={() => setShowNewWebhook(false)} style={{ padding: '11px 18px', borderRadius: 12, border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-3)', cursor: 'pointer', fontFamily: 'Tajawal, sans-serif', fontSize: 13 }}>إلغاء</button>
               </div>
             </div>
           </div>

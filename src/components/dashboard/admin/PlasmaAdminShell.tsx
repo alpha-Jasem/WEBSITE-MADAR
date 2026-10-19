@@ -60,6 +60,7 @@ function Shell({ children }: { children: ReactNode }) {
 
   useEffect(() => { supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? '')) }, [])
   useEffect(() => { setDrawer(false); setBell(false); setMenu(false) }, [location.pathname])
+  useEffect(() => { document.querySelector('.mc-subtabs .mc-on')?.scrollIntoView({ inline: 'center', block: 'nearest' }) }, [location.pathname])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
