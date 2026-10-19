@@ -358,3 +358,6 @@ body.plasma-admin[data-mc-theme="light"]{background:#eef2fb !important}
   .mc-board[style]{grid-auto-columns:84%!important;scroll-snap-type:x mandatory;margin:0 -12px;padding:0 12px 8px!important;scroll-padding-inline:12px;scrollbar-width:none}
   .mc-board>*{scroll-snap-align:start}
 }
+.mc-logoimg{width:48px;height:auto;flex:none;object-fit:contain;filter:drop-shadow(0 4px 14px rgba(47,107,255,.35))}
+.mc-barlogo{display:none}
+@media (max-width:860px){.mc-barlogo{display:block;width:30px;height:auto;flex:none}}

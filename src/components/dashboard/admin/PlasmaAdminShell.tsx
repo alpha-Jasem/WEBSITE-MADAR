@@ -133,7 +133,7 @@ function Shell({ children }: { children: ReactNode }) {
       <div className={`mc-app ${drawer ? 'mc-drawer-open' : ''}`}>
         <aside className="mc-sb" aria-label="القائمة الرئيسية">
           <div className="mc-logo">
-            <svg width="46" height="38" viewBox="0 0 46 38" aria-hidden="true"><defs><linearGradient id="mcLg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#4f8dff" /><stop offset="1" stopColor="#6a3df0" /></linearGradient></defs><path d="M3 35 14 5l11 18L36 5l7 30h-8l-3-13-7 12-7-12-3 13z" fill="url(#mcLg)" /></svg>
+            <img className="mc-logoimg" src="/logo-main.png" alt="مدار" width="48" height="36" />
             <div className="mc-t"><b>مدار</b><small>MADAR</small></div>
             <button className="mc-close" onClick={() => setDrawer(false)} aria-label="إغلاق"><McIcon name="close" size={18} /></button>
           </div>
@@ -152,6 +152,7 @@ function Shell({ children }: { children: ReactNode }) {
         <main className="mc-main">
           <header className="mc-top">
             <button className="mc-menu" onClick={() => setDrawer(true)} aria-label="فتح القائمة"><McIcon name="menu" size={22} /></button>
+            <img className="mc-barlogo" src="/logo-main.png" alt="" width="30" height="22" />
             <b className="mc-ptitle">{section.tabs?.find(t => t.to === location.pathname)?.label ?? section.label}</b>
             <div className="mc-who-wrap">
               <button className="mc-who" onClick={() => setMenu(m => !m)} aria-expanded={menu}>
