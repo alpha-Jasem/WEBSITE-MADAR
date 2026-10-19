@@ -12,7 +12,7 @@ const speechCtor = (): (new () => SpeechRec) | null => {
 }
 
 // Jarvis follows what the owner says and edits the dashboard accordingly (tasks, goal, deals, follow-ups, notes).
-export function JarvisChat({ onChanged }: { onChanged: () => void }) {
+export function JarvisChat({ onChanged, context, compact, suggestions }: { onChanged: () => void; context?: { lead_name: string; lead_phone?: string; on_call?: boolean }; compact?: boolean; suggestions?: string[] }) {
   const [msgs, setMsgs] = useState<Msg[]>([])
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
@@ -31,7 +31,7 @@ export function JarvisChat({ onChanged }: { onChanged: () => void }) {
     const history = msgs.filter(m => !m.error).slice(-10).map(m => ({ role: m.role, content: m.content }))
     setMsgs(m => [...m, { role: 'user', content: message }])
     setBusy(true)
-    const { data, error } = await supabase.functions.invoke('jarvis-command', { body: { message, history } })
+    const { data, error } = await supabase.functions.invoke('jarvis-command', { body: { message, history, context } })
     setBusy(false)
     if (error || !data?.reply) {
       setMsgs(m => [...m, { role: 'assistant', content: 'ما قدرت أتصل بالخادم. تأكد من الإنترنت وحاول مرة ثانية.', error: true }])
@@ -60,7 +60,7 @@ export function JarvisChat({ onChanged }: { onChanged: () => void }) {
   }
 
   return (
-    <div className="mc-jc">
+    <div className={`mc-jc ${compact ? 'mc-jc-compact' : ''}`}>
       {msgs.length > 0 && (
         <div className="mc-jc-log" role="log" aria-live="polite">
           {msgs.slice(-6).map((m, i) => (
@@ -75,8 +75,11 @@ export function JarvisChat({ onChanged }: { onChanged: () => void }) {
           <div ref={endRef} />
         </div>
       )}
+      {suggestions && msgs.length === 0 && (
+        <div className="mc-chips">{suggestions.map(x => <button key={x} type="button" className="mc-chipbtn" onClick={() => void send(x)}>{x}</button>)}</div>
+      )}
       <form className="mc-jc-in" onSubmit={e => { e.preventDefault(); void send() }}>
-        <input value={text} onChange={e => setText(e.target.value)} placeholder="قل لجارفيس… مثل: أضف مهمة اتصل بالنخبة بكرة 4 العصر" aria-label="اكتب لجارفيس" maxLength={600} disabled={busy} />
+        <input value={text} onChange={e => setText(e.target.value)} placeholder={context ? `قل لجارفيس عن ${context.lead_name}… مثل: ذكرني بكرة` : 'قل لجارفيس… مثل: أضف مهمة اتصل بالنخبة بكرة 4 العصر'} aria-label="اكتب لجارفيس" maxLength={600} disabled={busy} />
         {canSpeak && (
           <button type="button" className={`mc-jc-mic ${listening ? 'mc-on' : ''}`} onClick={toggleMic} aria-label={listening ? 'إيقاف التسجيل' : 'تحدّث لجارفيس'} aria-pressed={listening}>
             <McIcon name="mic" size={18} />

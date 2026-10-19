@@ -23,6 +23,8 @@ import { AdminBankNotices } from '../components/dashboard/admin/AdminBankNotices
 import { AdminOnboarding } from '../components/dashboard/admin/AdminOnboarding'
 import { AdminAgentsControl } from '../components/dashboard/admin/AdminAgentsControl'
 import { AdminCallAssistant } from '../components/dashboard/admin/AdminCallAssistant'
+import { AdminAI } from '../components/dashboard/admin/AdminAI'
+import { AdminAISettings } from '../components/dashboard/admin/AdminAISettings'
 
 export const AdminDashboard = () => {
   useAppManifest('/admin-manifest.json')
@@ -53,6 +55,8 @@ export const AdminDashboard = () => {
         <Route path="onboarding" element={<AdminOnboarding />} />
         <Route path="agents-control" element={<AdminAgentsControl />} />
         <Route path="call-assistant" element={<AdminCallAssistant />} />
+        <Route path="ai" element={<AdminAI />} />
+        <Route path="ai-settings" element={<AdminAISettings />} />
         <Route path="*" element={<AdminCommandDeck />} />
       </Routes>
     </PlasmaAdminShell>

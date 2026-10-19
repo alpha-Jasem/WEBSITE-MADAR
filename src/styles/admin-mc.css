@@ -384,3 +384,5 @@ body.plasma-admin[data-mc-theme="light"]{background:#eef2fb !important}
 @keyframes jcm{50%{opacity:.7}}
 @media(prefers-reduced-motion:reduce){.mc-jc-dots i,.mc-jc-mic.mc-on{animation:none}}
 @media(max-width:860px){.mc-jc-in input{font-size:16px}}
+.mc-jc-compact{max-width:none}
+.mc-jc>*{min-width:0}.mc-jc .mc-chipbtn{white-space:normal;text-align:start;line-height:1.5;padding-block:8px}

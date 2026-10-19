@@ -18,11 +18,13 @@ const SECTIONS: Section[] = [
   { id: 'command', label: 'مركز القيادة', icon: 'grid', to: '/admin', match: ['/admin'], exact: true },
   { id: 'sales', label: 'المبيعات', icon: 'chart', to: '/admin/outreach', match: ['/admin/outreach', '/admin/no-website', '/admin/pipeline', '/admin/sales-blitz'],
     tabs: [{ label: 'Outreach', to: '/admin/outreach' }, { label: 'بدون موقع', to: '/admin/no-website' }, { label: 'الصفقات', to: '/admin/pipeline' }] },
+  { id: 'ai', label: 'الإيجنت AI', icon: 'bot', to: '/admin/ai', match: ['/admin/ai', '/admin/ai-settings', '/admin/agents-control', '/admin/call-assistant'],
+    tabs: [{ label: 'جارفيس', to: '/admin/ai' }, { label: 'الإيجنت البائع', to: '/admin/agents-control' }, { label: 'مساعد المكالمات', to: '/admin/call-assistant' }, { label: 'الإعدادات', to: '/admin/ai-settings' }] },
   { id: 'campaigns', label: 'الحملات', icon: 'mega', to: '/admin/campaigns', match: ['/admin/campaigns'] },
   { id: 'customers', label: 'العملاء', icon: 'users', to: '/admin/companies', match: ['/admin/companies', '/admin/accounts', '/admin/conversations', '/admin/onboarding'],
     tabs: [{ label: 'الشركات', to: '/admin/companies' }, { label: 'الحسابات والاشتراكات', to: '/admin/accounts' }, { label: 'التجهيز والتسليم', to: '/admin/onboarding' }, { label: 'المحادثات', to: '/admin/conversations' }] },
-  { id: 'ops', label: 'التشغيل', icon: 'layers', to: '/admin/ai-agents', match: ['/admin/ai-agents', '/admin/agents-control', '/admin/call-assistant', '/admin/n8n', '/admin/logs', '/admin/reports'],
-    tabs: [{ label: 'الوكلاء', to: '/admin/ai-agents' }, { label: 'التحكم بالإيجنتات', to: '/admin/agents-control' }, { label: 'مساعد المكالمات', to: '/admin/call-assistant' }, { label: 'n8n', to: '/admin/n8n' }, { label: 'السجلات', to: '/admin/logs' }, { label: 'التقارير', to: '/admin/reports' }] },
+  { id: 'ops', label: 'التشغيل', icon: 'layers', to: '/admin/ai-agents', match: ['/admin/ai-agents', '/admin/n8n', '/admin/logs', '/admin/reports'],
+    tabs: [{ label: 'الوكلاء', to: '/admin/ai-agents' }, { label: 'n8n', to: '/admin/n8n' }, { label: 'السجلات', to: '/admin/logs' }, { label: 'التقارير', to: '/admin/reports' }] },
   { id: 'finance', label: 'المالية', icon: 'card', to: '/admin/finance', match: ['/admin/finance', '/admin/quotes', '/admin/expenses', '/admin/bank'],
     tabs: [{ label: 'الدفعات', to: '/admin/finance' }, { label: 'العروض والفواتير', to: '/admin/quotes' }, { label: 'المصروفات والربحية', to: '/admin/expenses' }, { label: 'إشعارات البنك', to: '/admin/bank' }] },
   { id: 'marketers', label: 'المسوّقون', icon: 'users', to: '/admin/marketers', match: ['/admin/marketers'] },
@@ -33,7 +35,7 @@ const ALL_PAGES: { label: string; to: string; hint: string }[] = [
   { label: 'مركز القيادة', to: '/admin', hint: 'ملخص يومك' },
   ...SECTIONS.flatMap(s => (s.tabs ?? [{ label: s.label, to: s.to }]).map(t => ({ label: t.label, to: t.to, hint: s.label }))),
 ]
-const MOBILE_TABS = ['command', 'sales', 'customers', 'finance']
+const MOBILE_TABS = ['command', 'sales', 'ai', 'finance']
 const THEME_KEY = 'madar_admin_theme'
 type Theme = 'dark' | 'light'
 const readTheme = (): Theme => { try { return localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark' } catch { return 'dark' } }

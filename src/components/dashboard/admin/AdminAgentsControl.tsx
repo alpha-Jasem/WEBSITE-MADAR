@@ -89,8 +89,14 @@ export const AdminAgentsControl = () => {
     if (chosen.length === 0) { setInfo('لا يوجد عملاء مؤهلون متاحون للتجربة.'); return }
     const { error: e1 } = await supabase.from('agent_assignments').insert(chosen.map(l => ({ agent_id: agent.id, lead_id: l.id })))
     if (e1) { setError('تعذّر إسناد العملاء (ربما أُسندوا لإيجنت آخر).'); return }
-    const { error: e2 } = await supabase.from('agent_drafts').insert(chosen.map(l => ({ agent_id: agent.id, lead_id: l.id, body: draftBody(agent.name, l, c), is_trial: true })))
-    if (e2) { setError('تعذّر إنشاء المسودات.'); return }
+    setInfo('الإيجنت يكتب المسودات…')
+    const made = await supabase.functions.invoke('agent-draft', { body: { action: 'draft', agent_id: agent.id, lead_ids: chosen.map(l => l.id), campaign_id: trialCampaign || undefined, trial: true } })
+    const done = new Set(((made.data?.drafts ?? []) as { lead_id: string }[]).map(d => d.lead_id))
+    const missing = chosen.filter(l => !done.has(l.id))
+    if (missing.length > 0) {
+      const { error: e2 } = await supabase.from('agent_drafts').insert(missing.map(l => ({ agent_id: agent.id, lead_id: l.id, body: draftBody(agent.name, l, c), is_trial: true })))
+      if (e2) { setError('تعذّر إنشاء المسودات.'); return }
+    }
     await writeAudit('agent_trial_started', 'sales_agent', agent.id, null, { leads: chosen.length })
     setInfo(`جُهزت ${chosen.length} مسودات للمراجعة. لن يُرسل شيء قبل اعتمادك وتفعيل قناة إرسال رسمية.`); load()
   }
@@ -107,10 +113,47 @@ export const AdminAgentsControl = () => {
 
   const pending = drafts.filter(d => d.status === 'draft')
 
+  // Dry run: the agent talks to a customer played by the model. Nothing is sent and nothing is saved.
+  const [simLead, setSimLead] = useState('')
+  const [simBusy, setSimBusy] = useState(false)
+  const [sim, setSim] = useState<{ from: 'agent' | 'customer'; text: string; flag?: string }[] | null>(null)
+  const runSim = async () => {
+    if (!simLead) return
+    setSimBusy(true); setSim(null)
+    const { data, error: e } = await supabase.functions.invoke('agent-draft', { body: { action: 'simulate', lead_id: simLead, agent_id: trialAgent || agents[0]?.id, campaign_id: trialCampaign || undefined, turns: 4 } })
+    setSimBusy(false)
+    if (e || !data?.transcript) { setError('تعذّرت المحاكاة. تأكد من رصيد OpenAI وأعد المحاولة.'); return }
+    setSim(data.transcript)
+  }
+
   return (
     <div>
       {error && <div className="mc-banner">{error}</div>}
       {info && <div className="mc-banner" style={{ background: 'rgba(52,211,153,.1)', borderColor: 'rgba(52,211,153,.35)', color: 'var(--green)' }}>{info}</div>}
+
+      <article className="mc-card" style={{ marginBottom: 14 }}>
+        <div className="mc-ph"><h3>شاهد الإيجنت يبيع (محاكاة)</h3><span className="mc-st mc-n2">لا يُرسل شيء</span></div>
+        <div className="mc-delta" style={{ padding: '0 20px 10px', lineHeight: 1.8 }}>اختر عميلًا وشاهد محادثة تجريبية: الإيجنت يكتب، والعميل شخصية يلعبها الذكاء الاصطناعي. لا يُرسل أي رسالة ولا يُحفظ شيء. الإيجنت لا يذكر سعرًا إلا من الأسعار المعتمدة، ويعترف أنه آلي، ويتوقف إذا رفض العميل.</div>
+        <div style={{ padding: '0 20px 18px', display: 'grid', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <select value={simLead} onChange={e => setSimLead(e.target.value)} aria-label="العميل" style={{ flex: '1 1 220px', minHeight: 42 }}>
+              <option value="">اختر عميلًا</option>
+              {leads.slice(0, 200).map(l => <option key={l.id} value={l.id}>{l.name}{l.category ? ` · ${l.category}` : ''}</option>)}
+            </select>
+            <button className="mc-btn2 p" onClick={runSim} disabled={!simLead || simBusy}>{simBusy ? 'جاري المحادثة…' : 'ابدأ المحاكاة'}</button>
+          </div>
+          {sim && (
+            <div className="mc-jc-log" style={{ maxHeight: 420 }}>
+              {sim.map((m, i) => (
+                <div key={i} className={`mc-jc-m ${m.from === 'agent' ? 'mc-a' : 'mc-u'}`} style={{ maxWidth: '88%' }}>
+                  <small style={{ display: 'block', opacity: .7, marginBottom: 2 }}>{m.from === 'agent' ? 'الإيجنت' : 'العميل (محاكاة)'}{m.flag === 'escalate' ? ' · يرفع للمسؤول' : m.flag === 'stop' ? ' · توقف' : ''}</small>
+                  {m.text}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </article>
 
       <article className="mc-card" style={{ marginBottom: 14 }}>
         <div className="mc-ph">

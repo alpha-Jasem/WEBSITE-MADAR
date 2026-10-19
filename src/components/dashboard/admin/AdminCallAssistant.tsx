@@ -3,6 +3,7 @@ import { supabase } from '../../../lib/supabase'
 import { logDealEvent, type Deal } from '../../../lib/deals'
 import { dateShort } from '../../../lib/format'
 import { useRealtimeRefetch } from '../../../lib/realtime'
+import { JarvisChat } from './JarvisChat'
 
 interface Lead { id: string; name: string; phone: string; category: string; city: string; notes: string; status: string; last_contacted_at: string | null; contact_name: string }
 interface Price { setup_net: number | null; monthly_net: number | null; packages: { name: string } | null }
@@ -92,6 +93,16 @@ export const AdminCallAssistant = () => {
           )}
         </div>
       </article>
+
+      {lead && (
+        <article className="mc-card" style={{ marginBottom: 14 }}>
+          <div className="mc-ph"><h3>جارفيس أثناء المكالمة</h3><span className="mc-st mc-g">يعرف أنك مع {lead.name}</span></div>
+          <div style={{ padding: '0 20px 18px' }}>
+            <div className="mc-delta" style={{ lineHeight: 1.8 }}>قل له أو اكتب: «ذكرني أتصل بكرة 4»، «سجّل ملاحظة: القرار عند المدير»، «حط موعد المتابعة بعد 3 أيام». يطبقه على هذا العميل مباشرة.</div>
+            <JarvisChat compact context={{ lead_name: lead.name, lead_phone: lead.phone, on_call: true }} onChanged={load} />
+          </div>
+        </article>
+      )}
 
       <article className="mc-card" style={{ marginBottom: 14 }}>
         <div className="mc-ph"><h3>أثناء المكالمة</h3></div>

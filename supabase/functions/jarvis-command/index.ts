@@ -130,6 +130,9 @@ const validDate = (s: unknown) => {
   const d = new Date(s)
   return Number.isNaN(d.getTime()) ? null : d.toISOString()
 }
+const riyadhText = (iso: string | null | undefined) => iso
+  ? new Date(iso).toLocaleString('ar-SA', { timeZone: 'Asia/Riyadh', weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
+  : null
 const riyadhMonthKey = () => {
   const d = new Date(Date.now() + 3 * 3600e3)
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
@@ -194,10 +197,16 @@ Deno.serve(async req => {
   const { data: profile } = await service.from('users').select('role').eq('id', u.user.id).maybeSingle()
   if (profile?.role !== 'admin') return json({ error: 'forbidden' }, 403)
 
+  const { data: cfg } = await service.from('ai_settings').select('jarvis_enabled, jarvis_instructions, jarvis_tools').eq('id', 1).maybeSingle()
+  if (cfg && cfg.jarvis_enabled === false) return json({ ok: true, reply: 'جارفيس موقوف من إعدادات «الإيجنت AI». فعّله من هناك.', changes: [] })
+  const allowed = new Set<string>(cfg?.jarvis_tools ?? ['tasks', 'goal', 'deals', 'leads'])
+  const GROUP: Record<string, string> = { add_task: 'tasks', update_task: 'tasks', set_monthly_goal: 'goal', move_deal: 'deals', set_deal_next_step: 'deals', set_lead_follow_up: 'leads', add_lead_note: 'leads' }
+  const tools = TOOLS.filter(t => allowed.has(GROUP[t.function.name]))
+
   const openaiKey = Deno.env.get('OPENAI_API_KEY')
   if (!openaiKey) return json({ error: 'not_configured', reply: 'جارفيس غير مفعّل: مفتاح OPENAI_API_KEY غير مضبوط على الخادم.' }, 200)
 
-  let body: { message?: string; history?: { role: string; content: string }[] } = {}
+  let body: { message?: string; history?: { role: string; content: string }[]; context?: { lead_name?: string; lead_phone?: string; on_call?: boolean } } = {}
   try { body = await req.json() } catch { return json({ error: 'bad_json' }, 400) }
   const message = String(body.message ?? '').trim().slice(0, 1200)
   if (!message) return json({ error: 'empty' }, 400)
@@ -210,6 +219,7 @@ Deno.serve(async req => {
     service.from('audit_events').insert({ actor_id: u.user!.id, actor_type: 'owner', action: `jarvis:${action}`, entity_type: entity, entity_id: id, before, after })
 
   async function runTool(name: string, a: Record<string, unknown>): Promise<Record<string, unknown>> {
+    if (!allowed.has(GROUP[name])) return { error: 'هذه الصلاحية مقفلة من إعدادات جارفيس' }
     switch (name) {
       case 'add_task': {
         const title = String(a.title ?? '').trim().slice(0, 200)
@@ -219,7 +229,7 @@ Deno.serve(async req => {
         if (error) return { error: error.message }
         await audit('add_task', 'admin_task', data.id, null, data)
         changes.push(`مهمة جديدة: ${data.title}`)
-        return { ok: true, task: data }
+        return { ok: true, task: data.title, due_riyadh: riyadhText(data.due_at) }
       }
       case 'update_task': {
         const q = clean(a.title_contains)
@@ -239,7 +249,7 @@ Deno.serve(async req => {
         if (error) return { error: error.message }
         await audit('update_task', 'admin_task', t.id, t, patch)
         changes.push(`مهمة «${t.title}»: ${patch.done === true ? 'اكتملت' : patch.done === false ? 'أُعيد فتحها' : 'تعدّلت'}`)
-        return { ok: true, task: t.title, patch }
+        return { ok: true, task: t.title, patch: { ...patch, due_at: undefined }, due_riyadh: riyadhText(patch.due_at as string | undefined) }
       }
       case 'set_monthly_goal': {
         const amount = Number(a.amount)
@@ -313,14 +323,22 @@ Deno.serve(async req => {
   }
 
   const nowRiyadh = new Date().toLocaleString('en-GB', { timeZone: 'Asia/Riyadh', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+  const ctx = body.context
+  const callContext = ctx?.lead_name
+    ? `
+- ${ctx.on_call ? 'المالك الآن في مكالمة مع' : 'العميل المفتوح أمام المالك الآن هو'} «${String(ctx.lead_name).slice(0, 80)}»${ctx.lead_phone ? ` (${String(ctx.lead_phone).slice(0, 20)})` : ''}. أي أمر بلا اسم ( «ذكرني»، «سجّل ملاحظة»، «خله اجتماع»، «تابعه بكرة» ) يخص هذا العميل؛ استخدم رقمه أو اسمه في الأدوات. كن مختصرًا جدًا لأن المالك مشغول.`
+    : ''
   const system = `أنت جارفيس، مساعد مالك وكالة مدار داخل لوحة الإدارة. تتبّع كلام المالك وتعدّل على لوحته بالأدوات المتاحة فقط، وما عدا ذلك لا تفعل شيئًا.
 القواعد:
 - الوقت الآن في الرياض: ${nowRiyadh}. حوّل «بكرة»، «الخميس»، «بعد ساعتين» إلى تاريخ ISO بتوقيت +03:00.
 - نفّذ فقط ما طلبه المالك صراحة. لا تخترع أسماء أو أرقام أو مبالغ. إذا نقصتك معلومة ضرورية أو تطابق أكثر من عنصر، اسأل سؤالًا قصيرًا واحدًا.
 - لا ترسل رسائل، ولا تؤكد دفعات، ولا تغلق صفقة كمكسوبة، ولا تحذف. إذا طلب ذلك قل إنه يتم من صفحته يدويًا.
 - بعد كل تعديل أكّد بجملة قصيرة ما الذي تغيّر بالضبط. إذا فشلت الأداة قل السبب كما هو.
+- نتائج الأدوات تعرض المواعيد بتوقيت الرياض (due_riyadh)؛ انقلها للمالك كما هي ولا تعلّق على UTC أو الفروقات التقنية.
 - تكلم بلهجة سعودية بيضاء مختصرة، بدون إيموجي. ما تشرح عملك التقني.
-- تابع سياق المحادثة: «عدّلها» أو «خليها بكرة» تعود لآخر عنصر ذكرناه.`
+- تابع سياق المحادثة: «عدّلها» أو «خليها بكرة» تعود لآخر عنصر ذكرناه.${callContext}${cfg?.jarvis_instructions ? `
+تعليمات إضافية من المالك (التزم بها طالما ما تعارض القواعد أعلاه):
+${String(cfg.jarvis_instructions).slice(0, 1200)}` : ''}`
 
   const history = (Array.isArray(body.history) ? body.history : []).slice(-10)
     .filter(m => (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
@@ -333,7 +351,7 @@ Deno.serve(async req => {
       const res = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: { Authorization: `Bearer ${openaiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model, messages, tools: TOOLS, tool_choice: 'auto' }),
+        body: JSON.stringify({ model, messages, ...(tools.length ? { tools, tool_choice: 'auto' } : {}) }),
       })
       const out = await res.json()
       if (!res.ok) {

@@ -51,10 +51,12 @@ Deno.serve(async req => {
     const { data: profile } = await service.from('users').select('role').eq('id', u.user.id).maybeSingle()
     if (profile?.role !== 'admin') return json({ error: 'forbidden' }, 403)
     adminUserId = u.user.id
-    if (!['test_push', 'digest'].includes(action)) return json({ error: 'forbidden_action' }, 403)
+    if (!['test_push', 'digest', 'brief'].includes(action)) return json({ error: 'forbidden_action' }, 403)
   }
 
+  const preview = payload.preview === true
   async function push(title: string, body: string, url = '/admin/outreach', tag = 'outreach', onlyUser?: string | null) {
+    if (preview) return { sent: 0, preview: { title, body, url } }
     if (!vapidPublic || !vapidPrivate) return { sent: 0, error: 'vapid_not_configured' }
     webpush.setVapidDetails('https://madar.software', vapidPublic, vapidPrivate)
     let q = service.from('push_subscriptions').select('*')
@@ -79,6 +81,16 @@ Deno.serve(async req => {
   try {
     if (action === 'test_push') {
       const r = await push('مدار — تجربة الإشعارات', 'وصلك هذا الإشعار، يعني الإشعارات شغّالة على جوالك. بكرة الصبح يوصلك ملخص المتابعات والعملاء الجدد.', '/admin/outreach', 'test', adminUserId)
+      return json({ ok: true, ...r })
+    }
+
+    if (action === 'notify') {
+      // called by database triggers (payments, deals, bank transfers) with the cron secret
+      if (!fromCron) return json({ error: 'forbidden_action' }, 403)
+      const title = String(payload.title || '').slice(0, 80)
+      const body = String(payload.body || '').slice(0, 240)
+      if (!title || !body) return json({ error: 'empty' }, 400)
+      const r = await push(title, body, String(payload.url || '/admin'), String(payload.tag || 'event'))
       return json({ ok: true, ...r })
     }
 
@@ -123,10 +135,28 @@ Deno.serve(async req => {
           await service.from('outreach_runs').update({ notified: true }).in('id', finished.map(r => r.id))
         }
       }
+
+      // Follow-ups that just came due, and meetings starting within 20 minutes. Each is pushed once.
+      const nowIso = new Date().toISOString()
+      const soon = new Date(Date.now() + 20 * 60000).toISOString()
+      const { data: dueNow } = await service.from('outreach_leads').select('id, name, next_follow_up, followup_pushed_for')
+        .lte('next_follow_up', nowIso).in('status', ['new', 'contacted', 'no_answer', 'replied']).limit(40)
+      const dueFresh = (dueNow ?? []).filter(l => l.followup_pushed_for !== l.next_follow_up)
+      if (dueFresh.length) {
+        await push('حان موعد المتابعة', `${names(dueFresh, 3)}. افتح Outreach واتصل بهم.`, '/admin/outreach', 'followup')
+        for (const l of dueFresh) await service.from('outreach_leads').update({ followup_pushed_for: l.next_follow_up }).eq('id', l.id)
+      }
+      const { data: meetNow } = await service.from('outreach_leads').select('id, name, meeting_at, meeting_pushed_for')
+        .eq('status', 'meeting').gte('meeting_at', nowIso).lte('meeting_at', soon).limit(20)
+      for (const m of (meetNow ?? []).filter(x => x.meeting_pushed_for !== x.meeting_at)) {
+        const at = new Date(m.meeting_at).toLocaleTimeString('ar-SA', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Riyadh' })
+        await push('اجتماع بعد دقائق', `${m.name} الساعة ${at}. جهّز نفسك وافتح رابط الاجتماع.`, '/admin/outreach', 'meeting')
+        await service.from('outreach_leads').update({ meeting_pushed_for: m.meeting_at }).eq('id', m.id)
+      }
       return json({ ok: true })
     }
 
-    if (action === 'digest') {
+    if (action === 'digest' || action === 'brief') {
       const { data: s } = await service.from('outreach_settings').select('digest_enabled').eq('id', 1).maybeSingle()
       if (fromCron && s && !s.digest_enabled) return json({ ok: true, skipped: 'disabled' })
 
@@ -146,6 +176,20 @@ Deno.serve(async req => {
       if (due.data?.length) lines.push(`متابعات اليوم (${nfmt(due.data.length)}): ${names(due.data)}`)
       else lines.push('ما عندك متابعات متأخرة اليوم.')
       lines.push(`بانتظار أول تواصل: ${nfmt(fresh.count ?? 0)} عميل.`)
+      const [pendingPay, noStep, tasksToday, goal, collected] = await Promise.all([
+        service.from('payments').select('id', { count: 'exact', head: true }).eq('status', 'pending_verification'),
+        service.from('deals').select('id', { count: 'exact', head: true }).not('stage', 'in', '(won,lost)').is('next_step', null),
+        service.from('admin_tasks').select('id', { count: 'exact', head: true }).eq('done', false).lte('due_at', endOfToday.toISOString()),
+        service.from('agency_goals').select('target').eq('period', new Date(Date.now() + 3 * 3600000).toISOString().slice(0, 7)).eq('kind', 'collections').maybeSingle(),
+        service.from('payments').select('net_amount').eq('status', 'confirmed').gte('confirmed_at', new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1)).toISOString()),
+      ])
+      if (tasksToday.count) lines.push(`مهامك المفتوحة اليوم: ${nfmt(tasksToday.count)}.`)
+      if (pendingPay.count) lines.push(`دفعات تنتظر تأكيدك: ${nfmt(pendingPay.count)}.`)
+      if (noStep.count) lines.push(`صفقات بلا خطوة قادمة: ${nfmt(noStep.count)}.`)
+      if (goal.data?.target) {
+        const got = (collected.data ?? []).reduce((n, r) => n + Number(r.net_amount || 0), 0)
+        lines.push(`هدف الشهر: ${nfmt(Math.round(got))} من ${nfmt(Number(goal.data.target))} ر.س.`)
+      }
       const title = due.data?.length || meetings.data?.length
         ? `صباح الخير، عندك ${nfmt((due.data?.length ?? 0) + (meetings.data?.length ?? 0))} مهام اليوم`
         : 'صباح الخير، يومك فاضي للعملاء الجدد'
