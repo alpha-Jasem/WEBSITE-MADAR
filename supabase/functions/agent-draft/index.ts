@@ -89,18 +89,25 @@ Deno.serve(async req => {
 
   const url = Deno.env.get('SUPABASE_URL')!
   const service = createClient(url, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false, autoRefreshToken: false } })
+  const cronSecret = Deno.env.get('OUTREACH_CRON_SECRET')
+  const internal = !!cronSecret && req.headers.get('x-cron-secret') === cronSecret
   const token = (req.headers.get('Authorization') || '').replace('Bearer ', '')
-  if (!token) return json({ error: 'missing_auth' }, 401)
-  const { data: u } = await service.auth.getUser(token)
-  if (!u.user) return json({ error: 'invalid_auth' }, 401)
-  const { data: profile } = await service.from('users').select('role').eq('id', u.user.id).maybeSingle()
-  if (profile?.role !== 'admin') return json({ error: 'forbidden' }, 403)
+  if (!internal) {
+    if (!token) return json({ error: 'missing_auth' }, 401)
+    const { data: u } = await service.auth.getUser(token)
+    if (!u.user) return json({ error: 'invalid_auth' }, 401)
+    const { data: profile } = await service.from('users').select('role').eq('id', u.user.id).maybeSingle()
+    if (profile?.role !== 'admin') return json({ error: 'forbidden' }, 403)
+  }
+  const calHeaders: Record<string, string> = internal
+    ? { Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`, 'x-cron-secret': cronSecret!, 'Content-Type': 'application/json' }
+    : { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
 
   const key = Deno.env.get('OPENAI_API_KEY')
   if (!key) return json({ error: 'not_configured' }, 200)
   const model = Deno.env.get('OPENAI_MODEL') || 'gpt-4o-mini'
 
-  let body: { action?: string; agent_id?: string; lead_ids?: string[]; lead_id?: string; campaign_id?: string; turns?: number; trial?: boolean; persona?: string; target?: string; messages?: { role: string; content: string }[]; real_booking?: boolean } = {}
+  let body: { action?: string; agent_id?: string; lead_ids?: string[]; lead_id?: string; campaign_id?: string; turns?: number; trial?: boolean; persona?: string; target?: string; messages?: { role: string; content: string }[]; real_booking?: boolean; live?: boolean } = {}
   try { body = await req.json() } catch { return json({ error: 'bad_json' }, 400) }
 
   const { data: agent } = await service.from('sales_agents').select('id, name, min_price, max_discount_pct').eq('id', body.agent_id ?? '').maybeSingle()
@@ -127,7 +134,7 @@ Deno.serve(async req => {
       const { data: leads } = await service.from('outreach_leads').select(leadCols).in('id', ids)
       const { data: blocked } = await service.from('do_not_contact').select('phone').not('phone', 'is', null)
       const stop = new Set((blocked ?? []).map(b => b.phone))
-      const made: { lead_id: string; name: string; body: string }[] = []
+      const made: { id?: string; lead_id: string; name: string; body: string }[] = []
       const list = ((leads ?? []) as Lead[]).filter(l => !stop.has(l.phone))
       // look up each business's reviews in parallel (cached after the first time)
       await Promise.all(list.slice(0, 8).map(async l => { l.review_notes = await reviewNotes(service, l) }))
@@ -138,8 +145,8 @@ Deno.serve(async req => {
         ])
         const clean = text.replace(/\[(STOP|ESCALATE)\]/g, '').trim()
         if (!clean) continue
-        const { error } = await service.from('agent_drafts').insert({ agent_id: agentRow.id, lead_id: lead.id, body: clean, is_trial: body.trial !== false })
-        if (!error) made.push({ lead_id: lead.id, name: lead.name, body: clean })
+        const { data: ins, error } = await service.from('agent_drafts').insert({ agent_id: agentRow.id, lead_id: lead.id, body: clean, is_trial: body.trial !== false }).select('id').single()
+        if (!error) made.push({ id: ins?.id, lead_id: lead.id, name: lead.name, body: clean })
       }
       return json({ ok: true, drafts: made })
     }
@@ -174,7 +181,7 @@ Deno.serve(async req => {
       ]
       const runTool = async (name: string, a: Record<string, any>) => {
         if (name === 'get_free_slots') {
-          const r = await fetch(`${url}/functions/v1/outreach-calendar`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'slots', minutes: 30 }) })
+          const r = await fetch(`${url}/functions/v1/outreach-calendar`, { method: 'POST', headers: calHeaders, body: JSON.stringify({ action: 'slots', minutes: 30 }) })
           const d = await r.json().catch(() => ({}))
           if (!r.ok || !d.slots) return { error: 'calendar_unavailable' }
           const slots = (d.slots as { start: string; label: string }[]).slice(0, 6)
@@ -186,7 +193,7 @@ Deno.serve(async req => {
           if (Number.isNaN(start.getTime())) return { error: 'invalid_time' }
           const label = start.toLocaleString('ar-SA-u-ca-gregory', { timeZone: 'Asia/Riyadh', weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' })
           if (!body.real_booking) { events.push({ type: 'booking', dry_run: true, label }); return { ok: true, dry_run: true, note: 'اختبار: لم يُنشأ حدث في التقويم', when: label } }
-          const r = await fetch(`${url}/functions/v1/outreach-calendar`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ start: start.toISOString(), minutes: 30, name: `${a.customer_name || lead.name} (اختبار الإيجنت)`, phone: lead.phone, notes: a.notes || '' }) })
+          const r = await fetch(`${url}/functions/v1/outreach-calendar`, { method: 'POST', headers: calHeaders, body: JSON.stringify({ start: start.toISOString(), minutes: 30, name: body.live ? String(a.customer_name || lead.name) : `${a.customer_name || lead.name} (اختبار الإيجنت)`, phone: lead.phone, notes: a.notes || '' }) })
           const d = await r.json().catch(() => ({}))
           if (!r.ok) return { error: 'booking_failed' }
           events.push({ type: 'booking', dry_run: false, label, link: d.link })

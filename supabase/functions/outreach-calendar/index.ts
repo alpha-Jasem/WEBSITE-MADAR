@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cron-secret',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
@@ -58,14 +58,17 @@ Deno.serve(async req => {
   const calendarId = Deno.env.get('GOOGLE_CALENDAR_ID')
   if (!supabaseUrl || !serviceRole) return json({ error: 'missing_server_config' }, 500)
 
+  const cronSecret = Deno.env.get('OUTREACH_CRON_SECRET')
+  const internal = !!cronSecret && req.headers.get('x-cron-secret') === cronSecret
   const token = (req.headers.get('Authorization') || '').replace('Bearer ', '')
-  if (!token) return json({ error: 'missing_auth' }, 401)
-
   const service = createClient(supabaseUrl, serviceRole, { auth: { persistSession: false, autoRefreshToken: false } })
-  const { data: userData, error: userError } = await service.auth.getUser(token)
-  if (userError || !userData.user) return json({ error: 'invalid_auth' }, 401)
-  const { data: profile } = await service.from('users').select('role').eq('id', userData.user.id).maybeSingle()
-  if (profile?.role !== 'admin') return json({ error: 'forbidden' }, 403)
+  if (!internal) {
+    if (!token) return json({ error: 'missing_auth' }, 401)
+    const { data: userData, error: userError } = await service.auth.getUser(token)
+    if (userError || !userData.user) return json({ error: 'invalid_auth' }, 401)
+    const { data: profile } = await service.from('users').select('role').eq('id', userData.user.id).maybeSingle()
+    if (profile?.role !== 'admin') return json({ error: 'forbidden' }, 403)
+  }
   if (!saRaw || !calendarId) return json({ error: 'calendar_not_configured' }, 500)
 
   const p = await req.json().catch(() => ({}))

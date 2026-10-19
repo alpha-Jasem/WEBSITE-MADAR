@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "مدار — مساعد واتساب",
+  "version": "1.0.0",
+  "description": "يربط واتساب ويب بإيجنت مدار: يرسل الرسائل التي يجهزها الإيجنت ويقرأ ردود العملاء ويرد عليها، ضمن حدود وساعات تضبطها من لوحة مدار.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://web.whatsapp.com/*", "https://aacnqiuwrpzgxhzdavaq.supabase.co/*"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    { "matches": ["https://web.whatsapp.com/*"], "js": ["content.js"], "run_at": "document_idle" }
+  ],
+  "action": { "default_title": "مدار — مساعد واتساب", "default_popup": "popup.html" }
+}
