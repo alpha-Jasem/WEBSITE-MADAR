@@ -23,6 +23,7 @@ import {
 import { bookingsLabel, type ModuleId } from '@/dashboard/modules'
 import '@/styles/dashboardV2Tokens.css'
 import { useAppManifest } from '@/hooks/useAppManifest'
+import { useSystemChrome } from '@/hooks/useSystemChrome'
 
 // New keys: the old ones were written on every mount, so every existing user has
 // "light" / "collapsed" stored and would never see the Night defaults.
@@ -170,6 +171,7 @@ const EXTRA_TITLES: Record<string, string> = {
 
 export function DashboardV2Layout() {
   useAppManifest('/dashboard-manifest.json')
+  useSystemChrome('#0F0F0F')
   const navigate = useNavigate()
   const location = useLocation()
   const { companyId, isDemo, accountError, refreshAccount, businessType, hasModule, canOpen, can, packageType, usageMetrics, companyName, companyLogoUrl } = useWorkspace()

@@ -1,4 +1,5 @@
-﻿import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+﻿import { useSystemChrome } from '../../../hooks/useSystemChrome'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
 import { AdminPulseProvider, useAdminPulse } from './adminPulse'
@@ -71,6 +72,7 @@ function Shell({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  useSystemChrome(theme === 'dark' ? '#040815' : '#eef2fb')
   useEffect(() => {
     document.body.setAttribute('data-mc-theme', theme)
     return () => document.body.removeAttribute('data-mc-theme')

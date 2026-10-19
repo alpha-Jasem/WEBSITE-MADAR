@@ -2,11 +2,12 @@ import { useMemo, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { ArrowLeft, Eye, EyeOff, Loader2, Lock, Mail, ShieldCheck } from 'lucide-react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useSystemChrome } from '../hooks/useSystemChrome'
 import { signInWithPassword, getCurrentUser, signOut } from '../lib/supabase'
 
 const css = `
 .al,.al *{box-sizing:border-box;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif}
-.al{min-height:100svh;display:grid;grid-template-columns:minmax(0,1fr);place-items:center;padding:24px;position:relative;overflow:hidden;color:#e8eefc;
+.al{min-height:100vh;min-height:100dvh;display:grid;grid-template-columns:minmax(0,1fr);place-items:center;padding:24px;position:relative;overflow:hidden;color:#e8eefc;
   background:radial-gradient(ellipse 80% 60% at 92% -10%,oklch(.40 .28 252) 0%,transparent 55%),radial-gradient(ellipse 55% 55% at -8% 98%,oklch(.36 .26 265) 0%,transparent 55%),#050a18}
 .al-orb{position:absolute;border-radius:50%;filter:blur(70px);pointer-events:none;opacity:.55}
 .al-orb.a{width:380px;height:380px;background:rgba(48,120,255,.35);top:-120px;right:-80px}
@@ -54,6 +55,7 @@ const css = `
 `
 
 export const Login = () => {
+  useSystemChrome('#050a18')
   const navigate = useNavigate()
   const reduce = useReducedMotion()
   const [searchParams] = useSearchParams()
