@@ -5,7 +5,7 @@ Canonical: https://madar.software/
 llms: https://madar.software/llms.txt
 Summary: https://madar.software/ai/summary.json
 About: https://madar.software/about/
-Contact: Jasemaltubaishi@gmail.com
+Contact: https://cal.eu/jasem-altubaishi-mvxhz5/madar-.-ai
 Social: https://www.linkedin.com/company/134714103/
 Social: https://x.com/madar__ai
 Social: https://www.instagram.com/madar.software

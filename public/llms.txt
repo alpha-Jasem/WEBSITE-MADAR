@@ -21,6 +21,9 @@
 
 - [من نحن: مدار للذكاء الاصطناعي](https://madar.software/about/): شركة سعودية في جدة تبني وكلاء ذكاء اصطناعي للرد على العملاء على واتساب والمكالمات.
 
+- [كم تكلف وكلاء الذكاء الاصطناعي للرد على العملاء؟](https://madar.software/ai-agent-cost-saudi/): العوامل التي تحدد التكلفة وأسئلة تطرحها قبل التوقيع.
+- [وكيل صوتي بالذكاء الاصطناعي أم مركز اتصال تقليدي؟](https://madar.software/voice-agent-vs-call-center/): مقارنة عملية ومتى يناسبك كل خيار.
+
 ## حسابات رسمية
 - لينكدإن: https://www.linkedin.com/company/134714103/
 - X: https://x.com/madar__ai
@@ -30,4 +33,3 @@
 
 ## التواصل
 - جلسة تعريفية: https://cal.eu/jasem-altubaishi-mvxhz5/madar-.-ai
-- البريد: Jasemaltubaishi@gmail.com
