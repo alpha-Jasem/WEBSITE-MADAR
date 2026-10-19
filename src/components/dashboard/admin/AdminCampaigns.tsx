@@ -16,6 +16,7 @@ export const AdminCampaigns = () => {
   const [rows, setRows] = useState<Campaign[]>([])
   const [form, setForm] = useState(EMPTY)
   const [adding, setAdding] = useState(false)
+  const [editing, setEditing] = useState<Campaign | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -30,37 +31,67 @@ export const AdminCampaigns = () => {
 
   const save = async () => {
     if (!form.name.trim()) return
-    const { data: u } = await supabase.auth.getUser()
-    const { error: e } = await supabase.from('campaigns').insert({
+    const fields = {
       name: form.name.trim(), sector: form.sector.trim(), city: form.city.trim(), source: form.source, service: form.service.trim(), offer: form.offer.trim(),
-      price_net: form.price_net ? Number(form.price_net) : null, max_discount_pct: form.max_discount_pct ? Number(form.max_discount_pct) : null, created_by: u.user?.id,
-    })
+      price_net: form.price_net ? Number(form.price_net) : null, max_discount_pct: form.max_discount_pct ? Number(form.max_discount_pct) : null,
+    }
+    let e
+    if (editing) {
+      ;({ error: e } = await supabase.from('campaigns').update({ ...fields, updated_at: new Date().toISOString() }).eq('id', editing.id))
+    } else {
+      const { data: u } = await supabase.auth.getUser()
+      ;({ error: e } = await supabase.from('campaigns').insert({ ...fields, created_by: u.user?.id }))
+    }
     if (e) { setError('تعذّر حفظ الحملة.'); return }
     setForm(EMPTY)
     setAdding(false)
+    setEditing(null)
     load()
   }
+
+  const openEdit = (c: Campaign) => {
+    setEditing(c)
+    setForm({ name: c.name, sector: c.sector, city: c.city, source: c.source, service: c.service, offer: c.offer, price_net: c.price_net != null ? String(c.price_net) : '', max_discount_pct: c.max_discount_pct != null ? String(c.max_discount_pct) : '' })
+    setAdding(true)
+  }
+  const setStatus = async (c: Campaign, status: string) => {
+    const { error: e } = await supabase.from('campaigns').update({ status, updated_at: new Date().toISOString() }).eq('id', c.id)
+    if (e) setError('تعذّر تغيير الحالة.')
+    load()
+  }
+  const remove = async (c: Campaign) => {
+    if (!window.confirm(`حذف الحملة «${c.name}»؟ لا يمكن التراجع.`)) return
+    const { error: e } = await supabase.from('campaigns').delete().eq('id', c.id)
+    if (e) setError('تعذّر الحذف. قد تكون الحملة مرتبطة بسجلات أخرى؛ غيّر حالتها إلى «منتهية» بدل حذفها.')
+    load()
+  }
+  const close = () => { setAdding(false); setEditing(null); setForm(EMPTY) }
 
   return (
     <div>
       {error && <div className="mc-banner">{error}</div>}
       <article className="mc-card">
-        <div className="mc-ph"><h3>الحملات</h3><button className="mc-btn2 p" onClick={() => setAdding(true)}>حملة جديدة</button></div>
+        <div className="mc-ph"><h3>الحملات</h3><button className="mc-btn2 p" onClick={() => { setEditing(null); setForm(EMPTY); setAdding(true) }}>حملة جديدة</button></div>
         <div className="mc-delta" style={{ padding: '0 20px 10px' }}>تُحفظ هنا إعدادات الحملة كمسودة. جلب العملاء الآن من «المبيعات ← Outreach»، وتشغيل الإيجنتات في المرحلة 2.</div>
         <div style={{ overflowX: 'auto' }}>
           <table className="mc-tbl">
-            <thead><tr><th>الحملة</th><th>القطاع</th><th>المدينة</th><th>المصدر</th><th>السعر (صافي)</th><th>أقصى خصم</th><th>الحالة</th><th>الإنشاء</th></tr></thead>
+            <thead><tr><th>الحملة</th><th>القطاع</th><th>المدينة</th><th>المصدر</th><th>السعر (صافي)</th><th>أقصى خصم</th><th>الحالة</th><th>الإنشاء</th><th /></tr></thead>
             <tbody>
-              {loading && <tr><td colSpan={8} className="mc-flat">جاري التحميل…</td></tr>}
-              {!loading && rows.length === 0 && <tr><td colSpan={8} className="mc-flat">لا توجد حملات بعد.</td></tr>}
+              {loading && <tr><td colSpan={9} className="mc-flat">جاري التحميل…</td></tr>}
+              {!loading && rows.length === 0 && <tr><td colSpan={9} className="mc-flat">لا توجد حملات بعد.</td></tr>}
               {rows.map(c => (
                 <tr key={c.id}>
                   <td><b>{c.name}</b><div style={{ color: 'var(--ink-3)', fontSize: 12 }}>{c.service}{c.offer ? ` · ${c.offer}` : ''}</div></td>
                   <td>{c.sector || '—'}</td><td>{c.city || '—'}</td><td>{SOURCE[c.source] ?? c.source}</td>
                   <td>{c.price_net != null ? `${c.price_net.toLocaleString('en-US')} ر.س` : 'غير محدد'}</td>
                   <td>{c.max_discount_pct != null ? `${c.max_discount_pct}%` : 'غير محدد'}</td>
-                  <td><span className={`mc-st ${STATUS[c.status]?.cls ?? ''}`}>{STATUS[c.status]?.label ?? c.status}</span></td>
+                  <td>
+                    <select value={c.status} onChange={e => setStatus(c, e.target.value)} aria-label="حالة الحملة" style={{ minHeight: 34 }}>
+                      {Object.entries(STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                    </select>
+                  </td>
                   <td>{dateShort(c.created_at)}</td>
+                  <td><span style={{ display: 'flex', gap: 6 }}><button className="mc-btn2" onClick={() => openEdit(c)}>تعديل</button><button className="mc-btn2" onClick={() => remove(c)}>حذف</button></span></td>
                 </tr>
               ))}
             </tbody>
@@ -69,9 +100,9 @@ export const AdminCampaigns = () => {
       </article>
 
       {adding && (
-        <div className="mc-modal-bg" onClick={() => setAdding(false)}>
+        <div className="mc-modal-bg" onClick={close}>
           <div className="mc-modal" onClick={e => e.stopPropagation()}>
-            <h3>حملة جديدة (مسودة)</h3>
+            <h3>{editing ? 'تعديل الحملة' : 'حملة جديدة (مسودة)'}</h3>
             <label className="mc-field">اسم الحملة<input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></label>
             <div className="mc-grid2">
               <label className="mc-field">القطاع<input value={form.sector} onChange={e => setForm({ ...form, sector: e.target.value })} /></label>
@@ -85,8 +116,8 @@ export const AdminCampaigns = () => {
               <label className="mc-field">أقصى خصم %<input type="number" min={0} max={100} value={form.max_discount_pct} onChange={e => setForm({ ...form, max_discount_pct: e.target.value })} /></label>
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button className="mc-btn2" onClick={() => setAdding(false)}>إلغاء</button>
-              <button className="mc-btn2 p" disabled={!form.name.trim()} onClick={save}>حفظ كمسودة</button>
+              <button className="mc-btn2" onClick={close}>إلغاء</button>
+              <button className="mc-btn2 p" disabled={!form.name.trim()} onClick={save}>{editing ? 'حفظ التعديل' : 'حفظ كمسودة'}</button>
             </div>
           </div>
         </div>
