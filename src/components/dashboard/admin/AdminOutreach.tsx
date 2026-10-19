@@ -32,13 +32,13 @@ interface OutreachLead {
 }
 
 const STATUS_META: Record<Status, { label: string; color: string; bg: string }> = {
-  new:       { label: 'جديد',       color: '#0d5a44', bg: '#dcebe3' },
-  contacted: { label: 'تم التواصل', color: '#1e5f9e', bg: '#e1edf8' },
-  replied:   { label: 'رد علينا',   color: '#0b7a52', bg: '#d6f1e4' },
-  meeting:   { label: 'اجتماع',     color: '#6d3fb8', bg: '#ece4f8' },
-  won:       { label: 'أُغلق ✓',    color: '#0b5d2f', bg: '#c9eed7' },
-  no_answer: { label: 'لا يرد',     color: '#a86a0c', bg: '#faecd2' },
-  lost:      { label: 'غير مهتم',   color: '#a33a2f', bg: '#f8dedb' },
+  new: { label: 'جديد', color: 'var(--s-new)', bg: 'color-mix(in srgb, var(--s-new) 16%, transparent)' },
+  contacted: { label: 'تم التواصل', color: 'var(--s-contacted)', bg: 'color-mix(in srgb, var(--s-contacted) 16%, transparent)' },
+  replied: { label: 'رد علينا', color: 'var(--s-replied)', bg: 'color-mix(in srgb, var(--s-replied) 16%, transparent)' },
+  meeting: { label: 'اجتماع', color: 'var(--s-meeting)', bg: 'color-mix(in srgb, var(--s-meeting) 16%, transparent)' },
+  won: { label: 'أُغلق ✓', color: 'var(--s-won)', bg: 'color-mix(in srgb, var(--s-won) 16%, transparent)' },
+  no_answer: { label: 'لا يرد', color: 'var(--s-noanswer)', bg: 'color-mix(in srgb, var(--s-noanswer) 16%, transparent)' },
+  lost: { label: 'غير مهتم', color: 'var(--s-lost)', bg: 'color-mix(in srgb, var(--s-lost) 16%, transparent)' },
 }
 
 const LOST_REASONS = ['السعر', 'عندهم نظام حالياً', 'غير مهتم', 'قرار لاحقاً', 'رقم خاطئ', 'طلب التوقف', 'أخرى']
@@ -139,6 +139,11 @@ function fmtFollow(iso: string) {
   return { text: `متابعة ${d.toLocaleDateString('ar-SA', { day: 'numeric', month: 'short' })}`, late: false }
 }
 
+function mapsUrl(l: { name: string; city: string; address: string; source_url: string }) {
+  if (l.source_url && /^https?:\/\/(www\.)?(google\.[a-z.]+\/maps|maps\.google|goo\.gl\/maps|maps\.app\.goo\.gl)/i.test(l.source_url)) return l.source_url
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([l.name, l.address, l.city].filter(Boolean).join(' '))}`
+}
+
 function pad(n: number) { return String(n).padStart(2, '0') }
 function calStamp(d: Date) {
   return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`
@@ -149,76 +154,75 @@ function score(l: OutreachLead) {
 }
 
 const CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;500;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
-.ol{--bg:#eef0ed;--paper:#fbfcfa;--ink:#0f1f19;--mute:#5d6b64;--line:#d6dbd5;--line-2:#e6e9e4;--green:#0d5a44;--green-hi:#127055;--mint:#dcebe3;--wa:#17a05d;--late:#b3402f;
-  --display:'Readex Pro','IBM Plex Sans Arabic',sans-serif;--body:'IBM Plex Sans Arabic',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace;
-  background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.6;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:18px;margin:24px 32px 40px}
+.ol{color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.6;display:flex;flex-direction:column;gap:14px;margin:8px 0 40px}
 .ol *{box-sizing:border-box}
 .ol button{font-family:inherit}
-.ol .row2{display:grid;grid-template-columns:320px minmax(0,1fr);gap:20px;align-items:start}
-.ol .slip{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:16px}
-.ol .slip h2{font-family:var(--display);font-weight:700;font-size:22px;margin:0;line-height:1.3}
-.ol .eb{font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--green)}
-.ol .perf{border-top:2px dashed var(--line)}
-.ol .lbl{font-size:12px;color:var(--mute);margin-bottom:6px}
+.ol .row2{display:grid;grid-template-columns:340px minmax(0,1fr);gap:14px;align-items:start}
+.ol .slip{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:16px}
+.ol .slip h2{font-family:var(--head);font-weight:800;font-size:21px;margin:0;line-height:1.3}
+.ol .eb{font-family:var(--font);font-size:11px;letter-spacing:1px;color:var(--link);font-weight:600}
+.ol .perf{border-top:1px dashed var(--line)}
+.ol .lbl{font-size:12px;color:var(--ink-3);margin-bottom:6px}
 .ol .seg{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.ol .seg button{border:0;background:transparent;font-family:var(--mono);font-size:19px;padding:11px 0;cursor:pointer;color:var(--mute);border-inline-start:1px solid var(--line)}
+.ol .seg button{border:0;background:transparent;font-family:var(--head);font-weight:700;font-size:18px;padding:10px 0;cursor:pointer;color:var(--ink-3);border-inline-start:1px solid var(--line)}
 .ol .seg button:first-child{border:0}
-.ol .seg button[aria-pressed=true]{background:var(--green);color:#fff}
-.ol select,.ol input,.ol textarea{width:100%;border:1px solid var(--line);background:#fff;border-radius:11px;padding:10px 12px;font:inherit;color:var(--ink)}
+.ol .seg button[aria-pressed=true]{background:var(--blue);color:#fff}
+.ol select,.ol input,.ol textarea{width:100%;border:1px solid var(--line);background:var(--fill);border-radius:11px;padding:10px 12px;font:inherit;color:var(--ink)}
 .ol textarea{resize:vertical}
 .ol .chips{display:flex;flex-wrap:wrap;gap:6px}
-.ol .chip{border:1px solid var(--line);background:#fff;border-radius:99px;padding:6px 14px;font-size:13px;cursor:pointer;color:var(--ink)}
-.ol .chip[aria-pressed=true]{background:var(--mint);border-color:var(--green);color:var(--green);font-weight:600}
-.ol .go{border:0;background:var(--green);color:#fff;border-radius:14px;padding:15px;font-family:var(--display);font-weight:700;font-size:17px;cursor:pointer}
-.ol .go:hover{background:var(--green-hi)}.ol .go:disabled{opacity:.6;cursor:wait}
-.ol .note{font-size:12px;color:var(--mute)}
-.ol .msg-ok{color:var(--green);font-size:13px}.ol .msg-bad{color:var(--late);font-size:13px}
+.ol .chip{border:1px solid var(--line);background:var(--fill);border-radius:99px;padding:6px 14px;font-size:13px;cursor:pointer;color:var(--ink-2);font-family:var(--head);font-weight:600}
+.ol .chip[aria-pressed=true]{background:rgba(47,107,255,.2);border-color:var(--blue);color:var(--ink)}
+.ol .go{border:0;background:linear-gradient(90deg,#2f6bff,#4f9bff);color:#fff;border-radius:14px;padding:14px;font-family:var(--head);font-weight:800;font-size:16px;cursor:pointer;box-shadow:0 8px 24px rgba(47,107,255,.35)}
+.ol .go:disabled{opacity:.6;cursor:wait}
+.ol .note{font-size:12px;color:var(--ink-3)}
+.ol .msg-ok{color:var(--green);font-size:13px}.ol .msg-bad{color:var(--red);font-size:13px}
 .ol .main{display:flex;flex-direction:column;gap:14px;min-width:0}
 .ol .head{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end;justify-content:space-between}
-.ol .big{font-family:var(--display);font-weight:300;font-size:56px;line-height:1;letter-spacing:-2px}
-.ol .big small{font-size:14px;letter-spacing:0;color:var(--mute);font-weight:400;margin-inline-start:8px}
-.ol .mini{display:flex;gap:20px;flex-wrap:wrap}.ol .mini b{display:block;font-family:var(--mono);font-size:19px;font-weight:500}.ol .mini span{font-size:12px;color:var(--mute)}
-.ol .panel{background:var(--paper);border:1px solid var(--line);border-radius:16px;overflow:hidden}
-.ol .panel-h{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);font-weight:600;flex-wrap:wrap}
-.ol .due{border-color:#e5b9b2;background:#fff8f6}
-.ol .due .panel-h{color:var(--late);border-color:#efd3ce}
+.ol .big{font-family:var(--head);font-weight:800;font-size:44px;line-height:1;letter-spacing:-1px}
+.ol .big small{font-size:14px;letter-spacing:0;color:var(--ink-3);font-weight:500;margin-inline-start:8px}
+.ol .mini{display:flex;gap:20px;flex-wrap:wrap}.ol .mini b{display:block;font-family:var(--head);font-size:20px;font-weight:700}.ol .mini span{font-size:12px;color:var(--ink-3)}
+.ol .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.ol .panel-h{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);font-family:var(--head);font-weight:700;flex-wrap:wrap}
+.ol .due{border-color:rgba(255,93,93,.4);background:rgba(255,93,93,.06)}
+.ol .due .panel-h{color:var(--red);border-color:rgba(255,93,93,.25)}
 .ol .tools{display:flex;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap;align-items:center}
 .ol .tools input{flex:1 1 200px;width:auto}.ol .tools select{width:auto}
-.ol .lead{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.1fr) auto;gap:14px;align-items:center;padding:13px 16px;border-bottom:1px solid var(--line-2)}
+.ol .lead{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.1fr) auto;gap:14px;align-items:center;padding:13px 16px;border-bottom:1px solid var(--line);transition:background .15s}
+.ol .lead:hover{background:rgba(80,120,255,.05)}
 .ol .lead:last-child{border:0}
-.ol .lead.hot{background:linear-gradient(90deg,transparent,rgba(13,90,68,.05))}
-.ol .nm{font-weight:600;line-height:1.35;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.ol .cat{font-size:12px;color:var(--mute)}
-.ol .hotb{font-size:11px;background:var(--green);color:#fff;border-radius:6px;padding:1px 8px;font-weight:500}
-.ol .ph{font-family:var(--mono);direction:ltr;text-align:right;font-size:13px;white-space:nowrap}
+.ol .lead.hot{background:linear-gradient(270deg,rgba(47,107,255,.08),transparent)}
+.ol .nm{font-family:var(--head);font-weight:700;line-height:1.35;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.ol .cat{font-size:12px;color:var(--ink-3)}
+.ol .hotb{font-size:11px;background:var(--blue);color:#fff;border-radius:6px;padding:1px 8px;font-weight:600}
+.ol .ph{font-family:var(--font);direction:ltr;text-align:right;font-size:13.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .ol .stt{display:inline-block;font-size:12px;padding:2px 10px;border-radius:6px;font-weight:600;white-space:nowrap}
-.ol .fu{font-size:12px;color:var(--mute);margin-top:3px}.ol .fu.late{color:var(--late);font-weight:600}
-.ol .meet{font-size:12px;color:#6d3fb8;font-weight:600;margin-top:3px}
+.ol .fu{font-size:12px;color:var(--ink-3);margin-top:3px}.ol .fu.late{color:var(--red);font-weight:600}
+.ol .meet{font-size:12px;color:var(--s-meeting);font-weight:600;margin-top:3px}
 .ol .acts{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
-.ol .btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px}
-.ol .btn.wa{background:var(--wa);border-color:var(--wa);color:#fff}
-.ol .btn.call{background:var(--ink);border-color:var(--ink);color:#fff}
-.ol .btn.cal{background:#6d3fb8;border-color:#6d3fb8;color:#fff}
+.ol .btn{border:1px solid var(--line);background:var(--fill);border-radius:10px;padding:8px 13px;font-family:var(--head);font-size:13px;font-weight:700;cursor:pointer;color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;transition:border-color .15s,background .15s}
+.ol .btn:hover{border-color:var(--line-2)}
+.ol .btn.wa{background:#17a05d;border-color:#17a05d;color:#fff}
+.ol .btn.call{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.ol .btn.cal{background:var(--violet);border-color:var(--violet);color:#fff}
+.ol .btn.map{color:var(--link)}
 .ol .btn:disabled{opacity:.45;cursor:not-allowed}
 .ol .detail{grid-column:1/-1;display:flex;flex-direction:column;gap:10px;padding-top:10px;border-top:1px dashed var(--line)}
 .ol .detail .chips{align-items:center}
 .ol table{width:100%;border-collapse:collapse;font-size:13px}
-.ol th{font-weight:500;font-size:12px;color:var(--mute);text-align:right;padding:9px 14px;background:#f3f5f2;border-bottom:1px solid var(--line)}
-.ol td{padding:9px 14px;border-bottom:1px solid var(--line-2)}.ol td b{font-family:var(--mono);font-weight:500}
+.ol th{font-weight:600;font-size:12px;color:var(--ink-3);text-align:right;padding:9px 14px;background:var(--fill-2);border-bottom:1px solid var(--line)}
+.ol td{padding:9px 14px;border-bottom:1px solid var(--line)}.ol td b{font-weight:700}
 .ol .scroll{overflow-x:auto}
-.ol .modal-bg{position:fixed;inset:0;background:rgba(10,20,16,.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
-.ol .modal{background:var(--paper);border-radius:18px;padding:22px;width:420px;max-width:100%;display:flex;flex-direction:column;gap:14px}
-.ol .modal h3{font-family:var(--display);margin:0;font-size:19px}
+.ol .modal-bg{position:fixed;inset:0;background:rgba(2,5,14,.7);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
+.ol .modal{background:var(--pop);border:1px solid var(--line-2);border-radius:18px;padding:22px;width:420px;max-width:100%;display:flex;flex-direction:column;gap:14px}
+.ol .modal h3{font-family:var(--head);margin:0;font-size:19px;font-weight:800}
 .ol .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.ol :focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.ol :focus-visible{outline:2px solid var(--link);outline-offset:2px}
 .ol .mob-toggle{display:none}
 @media(max-width:900px){
-  .ol{padding:12px;border-radius:14px;margin:12px 10px 24px}
   .ol .row2{grid-template-columns:1fr}
   .ol .mob-toggle{display:block}
   .ol .slip.closed{display:none}
-  .ol .big{font-size:42px}
+  .ol .big{font-size:36px}
   .ol .lead{grid-template-columns:1fr 1fr}
   .ol .lead .c-name{grid-column:1/-1}
   .ol .lead .acts{grid-column:1/-1;justify-content:stretch}
@@ -552,7 +556,7 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
     return (
       <div key={l.id} className={`lead ${scored.hotIds.has(l.id) && l.status === 'new' ? 'hot' : ''}`}>
         <div className="c-name">
-          <div className="nm">{l.name}{scored.hotIds.has(l.id) && l.status === 'new' && <span className="hotb">أولوية عالية</span>}{!l.website && <span className="hotb" style={{ background: '#6d3fb8' }}>بدون موقع</span>}</div>
+          <div className="nm">{l.name}{scored.hotIds.has(l.id) && l.status === 'new' && <span className="hotb">أولوية عالية</span>}{!l.website && <span className="hotb" style={{ background: 'var(--violet)' }}>بدون موقع</span>}</div>
           <div className="cat">{l.category}{l.city ? ` · ${l.city}` : ''}{l.rating ? ` · ★ ${l.rating} (${l.reviews ?? 0})` : ''}</div>
         </div>
         <div>
@@ -569,10 +573,11 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
           {fu && !['won', 'lost', 'meeting'].includes(l.status) && <div className={`fu ${fu.late ? 'late' : ''}`}>{fu.text}</div>}
         </div>
         <div className="acts">
-          {isBlocked(l) ? <span className="stt" style={{ background: '#f8dedb', color: '#a33a2f' }}>ممنوع التواصل</span> : <>
+          {isBlocked(l) ? <span className="stt" style={{ background: 'color-mix(in srgb, var(--s-lost) 16%, transparent)', color: 'var(--s-lost)' }}>ممنوع التواصل</span> : <>
           <a className="btn call" href={`tel:+${l.phone}`} onClick={() => markContact(l, 'call')}>📞 اتصال</a>
           <button className="btn wa" disabled={!l.is_mobile} onClick={() => sendWhatsApp(l)}>واتساب</button></>}
           <button className="btn cal" onClick={() => setMeetingFor(l)}>🗓 اجتماع</button>
+          <a className="btn map" href={mapsUrl(l)} target="_blank" rel="noreferrer" title="موقعهم على خرائط قوقل">📍 الموقع</a>
           <button className="btn" aria-expanded={open} onClick={() => setOpenId(open ? null : l.id)}>{open ? '▴' : '⋯'}</button>
         </div>
         {open && (
@@ -795,7 +800,8 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
               <h3>{lead.name}</h3>
               <div className="cat">{lead.category}{lead.city ? ` · ${lead.city}` : ''}</div>
               <div className="ph" style={{ fontSize: 18 }}>+{lead.phone}</div>
-              <div className="note" style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 10, padding: 10 }}>{buildText(lead, key)}</div>
+              <a className="btn map" href={mapsUrl(lead)} target="_blank" rel="noreferrer">📍 موقعهم على خرائط قوقل</a>
+              <div className="note" style={{ background: 'var(--fill)', border: '1px solid var(--line)', borderRadius: 10, padding: 10 }}>{buildText(lead, key)}</div>
               <div className="acts" style={{ justifyContent: 'stretch' }}>
                 <a className="btn call" style={{ flex: 1 }} href={`tel:+${lead.phone}`} onClick={() => markContact(lead, 'call')}>📞 اتصال</a>
                 <button className="btn wa" style={{ flex: 1 }} disabled={!lead.is_mobile || isBlocked(lead)} onClick={() => { sendWhatsApp(lead); setQueue(q => (q && q.i + 1 < q.ids.length ? { ...q, i: q.i + 1 } : null)) }}>افتح واتساب وانتقل للتالي</button>
