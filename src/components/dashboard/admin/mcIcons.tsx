@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 export type McIconName =
   | 'grid' | 'chart' | 'mega' | 'users' | 'layers' | 'card' | 'gear' | 'wallet' | 'hand' | 'doc' | 'cal' | 'bank'
   | 'globe' | 'bot' | 'bell' | 'search' | 'arrow' | 'chev' | 'flag' | 'plus' | 'vid' | 'pin' | 'target' | 'news'
-  | 'check' | 'building' | 'more' | 'phone' | 'out' | 'menu' | 'close' | 'sun' | 'moon'
+  | 'check' | 'building' | 'more' | 'phone' | 'out' | 'menu' | 'close' | 'sun' | 'moon' | 'mic'
 
 const S = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.9, strokeLinecap: 'round', strokeLinejoin: 'round' } as const
 
@@ -24,6 +24,7 @@ const ICONS: Record<McIconName, ReactNode> = {
   bot: <path {...S} d="M7 8h10a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-6a3 3 0 0 1 3-3zM12 8V4M9 14h.01M15 14h.01" />,
   bell: <path {...S} d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0" />,
   search: <path {...S} strokeWidth={2} d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-3.5-3.5" />,
+  mic: <path {...S} d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zM6 11a6 6 0 0 0 12 0M12 17v4M9 21h6" />,
   arrow: <path {...S} strokeWidth={2.2} d="M19 12H5M11 6l-6 6 6 6" />,
   chev: <path {...S} strokeWidth={2} d="m15 6-6 6 6 6" />,
   flag: <path fill="currentColor" stroke="currentColor" strokeWidth={1.6} strokeLinejoin="round" d="M5 3v18M5 4h12l-2 4 2 4H5" />,

@@ -6,6 +6,7 @@ import { McIcon, type McIconName } from './mcIcons'
 import type { Deal } from '../../../lib/deals'
 import { STAGE_LABEL, isClosed, stageRank, type DealStage } from '../../../lib/dealStages'
 import { buildBrief } from '../../../lib/jarvis'
+import { JarvisChat } from './JarvisChat'
 import { bucketWindow, collectionSeries, dailyCollection, goalProgress, netCollection, pctChange, type PaymentRow, type Period, type RefundRow } from '../../../lib/collections'
 import { dateShort, monthKey, nf, riyadhDayStart, sar, timeShort } from '../../../lib/format'
 import { useRealtimeRefetch } from '../../../lib/realtime'
@@ -305,6 +306,7 @@ export const AdminCommandDeck = () => {
             <h2>جارفيس</h2><h4>أولوياتك اليوم</h4>
             <p>{brief.summary}</p>
             <button className="mc-go" onClick={() => navigate(brief.actions[0]?.to ?? '/admin/outreach')}><McIcon name="arrow" size={16} />أبدأ يومي</button>
+            <JarvisChat onChanged={() => load(true)} />
           </div>
           <div className="mc-orbwrap"><div className="mc-orb" aria-hidden="true"><span className="mc-r mc-r3" /><span className="mc-core" /><span className="mc-r mc-r1" /><span className="mc-r mc-r2" /></div></div>
         </article>
