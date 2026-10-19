@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { loadDoNotContact, writeAudit } from '../../../lib/deals'
 import { riyadhDayStart, dateShort, timeShort, nf } from '../../../lib/format'
+import { useRealtimeRefetch } from '../../../lib/realtime'
 
 interface Agent { id: string; name: string; role: 'seller' | 'supervisor'; status: 'draft' | 'active' | 'paused' | 'stopped'; daily_message_cap: number; min_price: number | null; max_discount_pct: number | null; spend_cap: number | null; can_promise_scope: boolean }
 interface Draft { id: string; agent_id: string; lead_id: string; body: string; status: string; is_trial: boolean; review_note: string; created_at: string; sent_at: string | null }
@@ -45,6 +46,7 @@ export const AdminAgentsControl = () => {
     setAssigned(new Set((as.data ?? []).map(x => x.lead_id as string)))
   }, [])
   useEffect(() => { load() }, [load])
+  useRealtimeRefetch('admin_agents', [{ table: 'sales_agents' }, { table: 'agent_assignments' }, { table: 'agent_drafts' }, { table: 'outreach_leads' }, { table: 'campaigns' }], load, true)
 
   const today = riyadhDayStart()
   const sentToday = (id: string) => drafts.filter(x => x.agent_id === id && x.status === 'sent' && x.sent_at && new Date(x.sent_at) >= today).length

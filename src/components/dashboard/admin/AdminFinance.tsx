@@ -6,6 +6,7 @@ import { bucketWindow, netCollection, splitVat, sumConfirmed, type PaymentRow, t
 import { commissionFor, type CommissionRule } from '../../../lib/commercial'
 import { dateShort, nf, riyadhDayStart, sar } from '../../../lib/format'
 import { McIcon } from './mcIcons'
+import { useRealtimeRefetch } from '../../../lib/realtime'
 
 interface Payment extends PaymentRow { vat_rate: number; rejected_reason: string; sourced_by: string; closed_by: string; note: string; invoice_id: string | null }
 interface Refund extends RefundRow { reason: string; reference: string; requested_at: string; invoice_id: string | null }
@@ -58,6 +59,7 @@ export const AdminFinance = () => {
     setLoading(false)
   }, [])
   useEffect(() => { load() }, [load])
+  useRealtimeRefetch('admin_finance', [{ table: 'payments' }, { table: 'refunds' }, { table: 'deals' }, { table: 'invoices' }, { table: 'commissions' }, { table: 'referrals' }, { table: 'marketers' }], load, true)
 
   // /admin/finance?invoice=<id> opens the payment form for that invoice (used by the invoices table)
   const wanted = params.get('invoice')

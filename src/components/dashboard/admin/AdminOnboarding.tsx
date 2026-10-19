@@ -3,6 +3,7 @@ import { supabase } from '../../../lib/supabase'
 import { writeAudit } from '../../../lib/deals'
 import { onboardingTemplate } from '../../../lib/commercial'
 import { dateShort } from '../../../lib/format'
+import { useRealtimeRefetch } from '../../../lib/realtime'
 
 interface Project { id: string; customer_name: string; deal_id: string | null; contract_id: string | null; status: string; clock_rule: string; clock_started_at: string | null; target_date: string | null; invite_status: string; note: string; created_at: string }
 interface Item { id: string; project_id: string; service_code: string; title: string; kind: 'step' | 'gate'; status: string; assignee: string; due_at: string | null; required_input: string; blocked_reason: string; last_error: string; retry_count: number }
@@ -34,6 +35,7 @@ export const AdminOnboarding = () => {
     setProjects((p.data ?? []) as Project[]); setItems((i.data ?? []) as Item[]); setContracts((c.data ?? []) as Contract[])
   }, [])
   useEffect(() => { load() }, [load])
+  useRealtimeRefetch('admin_onboarding', [{ table: 'onboarding_projects' }, { table: 'onboarding_items' }, { table: 'contracts' }], load, true)
 
   const available = contracts.filter(c => !projects.some(p => p.contract_id === c.id))
 

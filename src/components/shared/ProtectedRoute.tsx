@@ -13,38 +13,55 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
   const [isAuthed, setIsAuthed] = useState(false)
   const [userRole, setUserRole] = useState<string | null>(null)
   const mounted = useRef(true)
+  const retries = useRef(0)
 
   useEffect(() => {
     mounted.current = true
+    let retryTimer = 0
+
+    // The role is cached per user so a flaky connection can never downgrade or sign out a logged-in admin.
+    const roleKey = (id: string) => `madar_role_${id}`
+    const readRole = (id: string) => { try { return localStorage.getItem(roleKey(id)) } catch { return null } }
+    const writeRole = (id: string, role: string) => { try { localStorage.setItem(roleKey(id), role) } catch { /* private mode */ } }
 
     const checkAuth = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
+        // getSession reads the stored session and refreshes an expired token before answering;
+        // getUser asked the server with a possibly stale token and logged people out after the phone slept.
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
         if (!mounted.current) return
 
-        if (!user) {
+        if (!session) {
+          // a network error is not a sign-out: keep the screen and let the next event decide
+          if (sessionError) { setIsLoading(false); return }
           setIsAuthed(false)
           setIsLoading(false)
           return
         }
 
         setIsAuthed(true)
+        const user = session.user
 
         if (requiredRole) {
-          const { data } = await supabase
+          const cached = readRole(user.id)
+          if (cached) { setUserRole(cached); setIsLoading(false) }
+          const { data, error } = await supabase
             .from('users')
             .select('role')
             .eq('id', user.id)
             .maybeSingle()
           if (!mounted.current) return
-          setUserRole(data?.role || 'client')
+          if (!error && data?.role) { writeRole(user.id, data.role); setUserRole(data.role) }
+          else if (!cached) {
+            if (error) { if (retries.current++ < 6) retryTimer = window.setTimeout(checkAuth, 2500) }
+            else setUserRole('client')
+          }
         }
 
         setIsLoading(false)
       } catch {
         if (!mounted.current) return
-        setIsAuthed(false)
         setIsLoading(false)
       }
     }
@@ -64,6 +81,7 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
 
     return () => {
       mounted.current = false
+      window.clearTimeout(retryTimer)
       listener?.subscription.unsubscribe()
     }
   }, [requiredRole])
@@ -80,6 +98,8 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
     const portal = requiredRole ? `&portal=${requiredRole}` : ''
     return <Navigate to={`/admin/login?redirect=${redirect}${portal}`} replace />
   }
+
+  if (requiredRole && userRole === null) return null
 
   if (requiredRole && userRole !== requiredRole && userRole !== 'admin') {
     // Workspace users trying to access wrong portal → redirect to clinic dashboard

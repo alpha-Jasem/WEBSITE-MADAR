@@ -4,6 +4,7 @@ import { bucketWindow, type PaymentRow, type RefundRow } from '../../../lib/coll
 import { marginPct } from '../../../lib/commercial'
 import { dateShort, nf, sar } from '../../../lib/format'
 import type { Deal } from '../../../lib/deals'
+import { useRealtimeRefetch } from '../../../lib/realtime'
 
 interface Expense { id: string; category: string; description: string; vendor: string; amount_net: number; tax_amount: number; tax_recoverable: boolean; incurred_at: string; deal_id: string | null; reference: string }
 interface Pay extends PaymentRow { deal_id: string | null }
@@ -47,6 +48,7 @@ export const AdminExpenses = () => {
     if (s.data) setMinMargin(Number(s.data.min_margin_pct))
   }, [month])
   useEffect(() => { load() }, [load])
+  useRealtimeRefetch('admin_expenses', [{ table: 'expenses' }, { table: 'payments' }, { table: 'refunds' }, { table: 'commissions' }, { table: 'outreach_runs' }], load, true)
 
   const inMonth = (iso: string | null) => !!iso && new Date(iso) >= month.start && new Date(iso) < month.end
   const costOf = (x: Expense) => x.amount_net + (x.tax_recoverable ? 0 : x.tax_amount)

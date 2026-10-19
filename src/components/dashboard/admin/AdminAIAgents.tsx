@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
+import { useRealtimeRefetch } from '../../../lib/realtime'
 
 type AgentType = 'sales_website' | 'end_customer'
 
@@ -44,8 +45,8 @@ export const AdminAIAgents = () => {
   const [filter, setFilter] = useState<AgentType | 'all'>('all')
   const [loading, setLoading] = useState(true)
 
-  const load = async () => {
-    setLoading(true)
+  const load = async (silent = false) => {
+    if (!silent) setLoading(true)
     const [conversationsRes, ticketsRes, leadsRes] = await Promise.all([
       supabase.from('ai_agent_conversations').select('*, company:companies(name)').order('updated_at', { ascending: false }).limit(80),
       supabase.from('ai_agent_support_tickets').select('*, company:companies(name)').order('created_at', { ascending: false }).limit(40),
@@ -58,6 +59,8 @@ export const AdminAIAgents = () => {
   }
 
   useEffect(() => { load() }, [])
+
+  useRealtimeRefetch('admin_aiagents', [{ table: 'ai_agent_support_tickets' }], () => load(true), true)
 
   const filteredConversations = useMemo(() => {
     if (filter === 'all') return conversations

@@ -4,6 +4,7 @@ import { supabase } from '../../../lib/supabase'
 import { logDealEvent, writeAudit, type Deal } from '../../../lib/deals'
 import { computeQuote, quoteExceptions } from '../../../lib/commercial'
 import { dateShort, nf, sar } from '../../../lib/format'
+import { useRealtimeRefetch } from '../../../lib/realtime'
 
 interface Svc { id: string; code: string; name: string }
 interface Pkg { id: string; name: string; tier: number; status: string }
@@ -72,6 +73,7 @@ export const AdminQuotes = () => {
     if (st.data) setVat(Number(st.data.vat_rate))
   }, [])
   useEffect(() => { load() }, [load])
+  useRealtimeRefetch('admin_quotes', [{ table: 'quotes' }, { table: 'invoices' }, { table: 'contracts' }, { table: 'deals' }, { table: 'campaigns' }], load, true)
 
   const totals = useMemo(() => computeQuote({ setup_net: Number(form.setup_net) || 0, monthly_net: Number(form.monthly_net) || 0, discount_pct: Number(form.discount_pct) || 0, vat_rate: vat }), [form, vat])
   const dealOf = (id: string | null) => deals.find(d => d.id === id)

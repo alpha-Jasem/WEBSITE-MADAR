@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { dateShort } from '../../../lib/format'
+import { useRealtimeRefetch } from '../../../lib/realtime'
 
 interface Campaign { id: string; name: string; sector: string; city: string; source: string; service: string; offer: string; price_net: number | null; max_discount_pct: number | null; status: string; created_at: string }
 
@@ -25,6 +26,7 @@ export const AdminCampaigns = () => {
     setLoading(false)
   }, [])
   useEffect(() => { load() }, [load])
+  useRealtimeRefetch('admin_campaigns', [{ table: 'campaigns' }], load, true)
 
   const save = async () => {
     if (!form.name.trim()) return

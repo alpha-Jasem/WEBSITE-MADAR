@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { dateShort, timeShort } from '../../../lib/format'
+import { useRealtimeRefetch } from '../../../lib/realtime'
 
 interface Check { key: string; label: string; status: 'not_configured' | 'unchecked' | 'ok' | 'degraded' | 'failed'; detail: string; latency_ms: number | null; last_checked_at: string | null }
 
@@ -24,6 +25,7 @@ export function IntegrationHealthPanel() {
     setChecks((data ?? []) as Check[])
   }, [])
   useEffect(() => { read() }, [read])
+  useRealtimeRefetch('admin_health', [{ table: 'integration_checks' }], read, true)
 
   const run = async () => {
     setBusy(true)

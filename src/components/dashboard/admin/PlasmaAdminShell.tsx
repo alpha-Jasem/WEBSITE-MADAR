@@ -1,4 +1,5 @@
 ﻿import { useSystemChrome } from '../../../hooks/useSystemChrome'
+import { useRealtimeRefetch } from '../../../lib/realtime'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
@@ -108,6 +109,7 @@ function Shell({ children }: { children: ReactNode }) {
     return next
   })
 
+  const live = useRealtimeRefetch('admin_shell', [{ table: 'integration_checks' }], () => {}, true)
   const signOut = async () => { await supabase.auth.signOut(); navigate('/admin/login') }
 
   const notifs = useMemo(() => {
@@ -187,7 +189,7 @@ function Shell({ children }: { children: ReactNode }) {
             <button className="mc-search" onClick={() => setPalette(true)}><McIcon name="search" size={18} /><span>البحث في العملاء، الصفقات، الحملات …</span></button>
             <div className="mc-sp" />
             <div className="mc-date">
-              <span className="mc-chip" title="كل الأرقام تُقرأ من قاعدة البيانات الآن">● بيانات مباشرة</span>
+              <span className={`mc-chip ${live ? '' : 'mc-chip-off'}`} title={live ? 'متصل بالتحديث الفوري: أي تغيير يظهر مباشرة' : 'التحديث الفوري غير متصل الآن، تتجدد الأرقام كل دقيقة'}>{live ? '● مباشر' : '○ يتجدد كل دقيقة'}</span>
               <span className="mc-sepv" />
               <span className="mc-date-t">{dateLong(new Date())}</span><McIcon name="cal" size={18} />
             </div>

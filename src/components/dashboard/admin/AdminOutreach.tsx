@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
 import { addDoNotContact, loadDoNotContact, recordContact, syncDealForLead } from '../../../lib/deals'
+import { useRealtimeRefetch } from '../../../lib/realtime'
 
 type Status = 'new' | 'contacted' | 'replied' | 'meeting' | 'won' | 'lost' | 'no_answer'
 type TemplateKey = 'first' | 'reminder' | 'meeting' | 'offer' | 'confirm'
@@ -301,6 +302,8 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  useRealtimeRefetch('admin_outreach', [{ table: 'outreach_leads' }], load, true)
   useEffect(() => { loadDoNotContact().then(setBlocked).catch(() => undefined) }, [])
 
   // Register the push service worker (the install manifest is set by the admin shell).

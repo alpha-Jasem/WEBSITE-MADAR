@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { writeAudit } from '../../../lib/deals'
 import { dateShort, nf } from '../../../lib/format'
+import { useRealtimeRefetch } from '../../../lib/realtime'
 
 interface Marketer { id: string; auth_user_id: string | null; name: string; phone: string; email: string; status: string; referral_code: string | null; commission_rule: { type?: string; value?: number; hold_days?: number } }
 interface Referral { id: string; marketer_id: string; company_name: string; contact_phone: string; status: string; attribution_note: string; submitted_at: string }
@@ -44,6 +45,7 @@ export const AdminMarketers = () => {
     setSts(((s.data ?? []) as Statement[]).map(x => ({ ...x, total: Number(x.total) })))
   }, [])
   useEffect(() => { load() }, [load])
+  useRealtimeRefetch('admin_marketers', [{ table: 'marketers' }, { table: 'commissions' }, { table: 'referrals' }, { table: 'payout_statements' }], load, true)
 
   const mk = (id: string) => ms.find(m => m.id === id)?.name ?? '—'
 

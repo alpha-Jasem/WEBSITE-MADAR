@@ -3,6 +3,7 @@ import { fetchCompanies, supabase } from '../../../lib/supabase'
 import { AdminAddClientModal } from './AdminAddClientModal'
 import { AdminClientDrawer } from './AdminClientDrawer'
 import type { Company } from '../../../types'
+import { useRealtimeRefetch } from '../../../lib/realtime'
 
 const planColors: Record<string, string> = { starter: '#00BFFF', growth: '#3078FF', enterprise: '#F59E0B' }
 const planLabels: Record<string, string> = { starter: 'Starter', growth: 'Pro', enterprise: 'Premium' }
@@ -23,14 +24,16 @@ export const AdminCompanies = () => {
   const [loading, setLoading] = useState(true)
   const [busyCompanyId, setBusyCompanyId] = useState<string | null>(null)
 
-  const load = async () => {
-    setLoading(true)
+  const load = async (silent = false) => {
+    if (!silent) setLoading(true)
     const list = await fetchCompanies()
     setCompanies(list)
     setLoading(false)
   }
 
   useEffect(() => { load() }, [])
+
+  useRealtimeRefetch('admin_companies', [{ table: 'companies' }, { table: 'logs' }], () => load(true), true)
 
   const updateCompany = async (company: Company, patch: Partial<Company>, action: string) => {
     setBusyCompanyId(company.id)

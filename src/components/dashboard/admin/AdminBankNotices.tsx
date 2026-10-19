@@ -4,6 +4,7 @@ import { writeAudit } from '../../../lib/deals'
 import { parseBankNotice } from '../../../lib/commercial'
 import { splitVat } from '../../../lib/collections'
 import { dateShort, nf, timeShort } from '../../../lib/format'
+import { useRealtimeRefetch } from '../../../lib/realtime'
 
 interface Notice { id: string; received_at: string; sender: string; amount: number | null; reference: string; excerpt: string; status: string; matched_payment_id: string | null; note: string; source: string }
 const ST: Record<string, { label: string; cls: string }> = {
@@ -24,6 +25,7 @@ export const AdminBankNotices = () => {
     setRows(((data ?? []) as Notice[]).map(r => ({ ...r, amount: r.amount === null ? null : Number(r.amount) })))
   }, [])
   useEffect(() => { load() }, [load])
+  useRealtimeRefetch('admin_bank', [{ table: 'bank_notifications' }, { table: 'payments' }], load, true)
 
   const parse = () => { const p = parseBankNotice(text); setParsed({ amount: p.amount ? String(p.amount) : '', reference: p.reference }) }
 

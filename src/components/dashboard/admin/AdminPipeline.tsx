@@ -3,6 +3,7 @@ import { supabase } from '../../../lib/supabase'
 import { logDealEvent, type Deal } from '../../../lib/deals'
 import { DEAL_STAGES, STAGE_LABEL, isClosed, type DealStage } from '../../../lib/dealStages'
 import { dateShort, nf, sar, timeShort } from '../../../lib/format'
+import { useRealtimeRefetch } from '../../../lib/realtime'
 
 const LOST_REASONS = ['السعر', 'عندهم نظام حالياً', 'غير مهتم', 'قرار لاحقاً', 'طلب التوقف', 'أخرى']
 const BOARD_STAGES = DEAL_STAGES.filter(s => s !== 'lost') as DealStage[]
@@ -29,6 +30,8 @@ export const AdminPipeline = () => {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  useRealtimeRefetch('admin_pipeline', [{ table: 'deals' }, { table: 'agent_drafts' }, { table: 'deal_events' }], load, true)
 
   const byStage = useMemo(() => {
     const map = new Map<DealStage, Deal[]>()

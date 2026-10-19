@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import type { Log, LogLevel } from '../../../types'
+import { useRealtimeRefetch } from '../../../lib/realtime'
 
 const levelLabels: Record<LogLevel | 'all', string> = {
   all: 'الكل',
@@ -24,8 +25,8 @@ export const AdminLogs = () => {
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
 
-  const load = async () => {
-    setLoading(true)
+  const load = async (silent = false) => {
+    if (!silent) setLoading(true)
     const { data, error } = await supabase.from('logs').select('*').order('created_at', { ascending: false }).limit(120)
     setLoadError(error ? 'تعذّر تحميل السجلات: ' + error.message : null)
     setLogs(error ? [] : ((data ?? []) as Log[]))
@@ -33,6 +34,8 @@ export const AdminLogs = () => {
   }
 
   useEffect(() => { load() }, [])
+
+  useRealtimeRefetch('admin_logs', [{ table: 'logs' }], () => load(true), true)
 
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase()

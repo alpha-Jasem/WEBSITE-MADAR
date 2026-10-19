@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { logDealEvent, type Deal } from '../../../lib/deals'
 import { dateShort } from '../../../lib/format'
+import { useRealtimeRefetch } from '../../../lib/realtime'
 
 interface Lead { id: string; name: string; phone: string; category: string; city: string; notes: string; status: string; last_contacted_at: string | null; contact_name: string }
 interface Price { setup_net: number | null; monthly_net: number | null; packages: { name: string } | null }
@@ -40,6 +41,7 @@ export const AdminCallAssistant = () => {
     setLeads((l.data ?? []) as Lead[]); setDeals((d.data ?? []) as Deal[]); setPrices((p.data ?? []) as unknown as Price[])
   }, [])
   useEffect(() => { load() }, [load])
+  useRealtimeRefetch('admin_calls', [{ table: 'deals' }, { table: 'outreach_leads' }], load, true)
 
   const lead = leads.find(l => l.id === sel)
   const deal = useMemo(() => deals.find(d => d.lead_id === sel), [deals, sel])

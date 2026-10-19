@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { supabase } from '../../../lib/supabase'
+import { useRealtimeRefetch } from '../../../lib/realtime'
 
 export interface PulseLead {
   id: string
@@ -54,6 +55,8 @@ export function AdminPulseProvider({ children }: { children: ReactNode }) {
     const id = window.setInterval(reload, 60000)
     return () => window.clearInterval(id)
   }, [reload])
+
+  useRealtimeRefetch('admin_pulse', [{ table: 'outreach_leads' }], reload, true)
 
   const value = useMemo(() => ({ due, meetingsToday, newToday, waiting, reload }), [due, meetingsToday, newToday, waiting, reload])
   return <PulseContext.Provider value={value}>{children}</PulseContext.Provider>

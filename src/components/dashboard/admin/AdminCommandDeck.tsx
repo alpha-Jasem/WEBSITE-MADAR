@@ -8,6 +8,7 @@ import { STAGE_LABEL, isClosed, stageRank, type DealStage } from '../../../lib/d
 import { buildBrief } from '../../../lib/jarvis'
 import { bucketWindow, collectionSeries, dailyCollection, goalProgress, netCollection, pctChange, type PaymentRow, type Period, type RefundRow } from '../../../lib/collections'
 import { dateShort, monthKey, nf, riyadhDayStart, sar, timeShort } from '../../../lib/format'
+import { useRealtimeRefetch } from '../../../lib/realtime'
 
 interface Task { id: string; title: string; due_at: string | null; priority: 'high' | 'medium' | 'low'; done: boolean; done_at: string | null }
 interface Check { key: string; label: string; status: string }
@@ -59,8 +60,8 @@ export const AdminCommandDeck = () => {
   const [goalEdit, setGoalEdit] = useState(false)
   const [goalInput, setGoalInput] = useState('')
 
-  const load = useCallback(async () => {
-    setLoading(true)
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true)
     pulse.reload()
     const [p, d, t, g, c] = await Promise.all([
       supabase.from('payments').select('id, customer_name, status, total_amount, net_amount, tax_amount, confirmed_at, received_at, reference, method, deal_id').limit(3000),
@@ -106,6 +107,7 @@ export const AdminCommandDeck = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   useEffect(() => { load() }, [load])
+  useRealtimeRefetch('admin_cmd', [{ table: 'payments' }, { table: 'refunds' }, { table: 'deals' }, { table: 'admin_tasks' }, { table: 'agency_goals' }, { table: 'integration_checks' }, { table: 'bank_notifications' }, { table: 'contracts' }, { table: 'onboarding_items' }, { table: 'agent_drafts' }, { table: 'sales_agents' }, { table: 'news_items' }, { table: 'agency_settings' }], () => load(true), true)
 
   /* ---------- numbers ---------- */
   const now = new Date()
