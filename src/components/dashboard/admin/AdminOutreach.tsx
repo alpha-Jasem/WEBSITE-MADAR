@@ -289,14 +289,8 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
   useEffect(() => { load() }, [load])
   useEffect(() => { loadDoNotContact().then(setBlocked).catch(() => undefined) }, [])
 
-  // Make this page installable as its own phone app, and register the push service worker.
+  // Register the push service worker (the install manifest is set by the admin shell).
   useEffect(() => {
-    const prev = document.querySelector<HTMLLinkElement>('link[rel="manifest"]')
-    const prevHref = prev?.getAttribute('href') ?? null
-    const link = prev ?? Object.assign(document.createElement('link'), { rel: 'manifest' })
-    link.setAttribute('href', '/admin-manifest.json')
-    if (!prev) document.head.appendChild(link)
-
     if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
       setPush({ state: 'unsupported' })
     } else {
@@ -307,7 +301,6 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
       }).catch(() => setPush({ state: 'unsupported' }))
     }
     supabase.from('outreach_settings').select('*').eq('id', 1).maybeSingle().then(({ data }) => { if (data) setDaily({ ...DEFAULT_DAILY, ...data }) })
-    return () => { if (prevHref !== null) link.setAttribute('href', prevHref) }
   }, [])
 
   const saveDaily = async (patch: Partial<DailySettings>) => {

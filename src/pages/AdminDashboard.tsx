@@ -1,4 +1,5 @@
 ﻿import { Routes, Route, Navigate } from 'react-router-dom'
+import { useAppManifest } from '../hooks/useAppManifest'
 import { PlasmaAdminShell } from '../components/dashboard/admin/PlasmaAdminShell'
 import { AdminCommandDeck } from '../components/dashboard/admin/AdminCommandDeck'
 import { AdminCompanies } from '../components/dashboard/admin/AdminCompanies'
@@ -24,6 +25,7 @@ import { AdminAgentsControl } from '../components/dashboard/admin/AdminAgentsCon
 import { AdminCallAssistant } from '../components/dashboard/admin/AdminCallAssistant'
 
 export const AdminDashboard = () => {
+  useAppManifest('/admin-manifest.json')
   return (
     <PlasmaAdminShell>
       <Routes>

@@ -1,0 +1,16 @@
+{
+  "name": "مدار — لوحة العميل",
+  "short_name": "مدار",
+  "description": "لوحة تحكم عملاء مدار",
+  "start_url": "/dashboard",
+  "scope": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0D1B3E",
+  "theme_color": "#0D1B3E",
+  "lang": "ar-SA",
+  "dir": "rtl",
+  "icons": [
+    { "src": "/favicon-logo.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/logo-main.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
