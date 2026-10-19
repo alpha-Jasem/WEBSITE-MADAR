@@ -229,7 +229,6 @@ export const Privacy = () => {
             <p className="lp-p">لأي أسئلة حول سياسة الخصوصية أو كيفية تعاملنا مع معلوماتك:</p>
             <ul className="lp-ul">
               <li>البريد الإلكتروني: <strong style={{ color: C.accent2 }}>privacy@madar.software</strong></li>
-              <li>واتساب: <a href="https://wa.me/966546666005" style={{ color: C.accent2, textDecoration: 'none' }}>966546666005+</a></li>
               <li>العنوان: مدار OS، الرياض، المملكة العربية السعودية</li>
             </ul>
           </div>

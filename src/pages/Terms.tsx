@@ -247,7 +247,6 @@ export const Terms = () => {
             <p className="lt-p">هل لديك أسئلة حول شروط الاستخدام؟ يسعدنا المساعدة.</p>
             <ul className="lt-ul">
               <li>البريد الإلكتروني: <strong style={{ color: C.accent2 }}>legal@madar.software</strong></li>
-              <li>واتساب: <a href="https://wa.me/966546666005" style={{ color: C.accent2, textDecoration: 'none' }}>966546666005+</a></li>
               <li>العنوان: مدار OS، الرياض، المملكة العربية السعودية</li>
             </ul>
           </div>
