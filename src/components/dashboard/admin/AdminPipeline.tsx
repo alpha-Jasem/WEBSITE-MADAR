@@ -147,7 +147,7 @@ export const AdminPipeline = () => {
       {loading ? <div className="muted">جاري التحميل…</div> : deals.length === 0 ? (
         <div className="card card-pad">لا توجد صفقات بعد. تُنشأ تلقائيًا عند أول تواصل من Outreach، أو أضف صفقة يدويًا.</div>
       ) : (
-        <div style={{ display: 'grid', gridAutoFlow: 'column', gridAutoColumns: 'minmax(240px, 1fr)', gap: 12, overflowX: 'auto', paddingBottom: 8 }}>
+        <div className="mc-board" style={{ display: 'grid', gridAutoFlow: 'column', gridAutoColumns: 'minmax(240px, 1fr)', gap: 12, overflowX: 'auto', paddingBottom: 8 }}>
           {BOARD_STAGES.map(stage => (
             <div key={stage} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ fontWeight: 700, fontSize: 13, display: 'flex', justifyContent: 'space-between' }}>

@@ -63,6 +63,31 @@ function Shell({ children }: { children: ReactNode }) {
   useEffect(() => { setDrawer(false); setBell(false); setMenu(false) }, [location.pathname])
   useEffect(() => { document.querySelector('.mc-subtabs .mc-on')?.scrollIntoView({ inline: 'center', block: 'nearest' }) }, [location.pathname])
 
+  // On phones every data table is shown as a stack of cards: each cell carries its column name.
+  const contentRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const root = contentRef.current
+    if (!root) return
+    let raf = 0
+    const label = () => {
+      raf = 0
+      root.querySelectorAll('table').forEach(table => {
+        const heads = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent?.trim() ?? '')
+        if (heads.length < 3) return
+        if (!table.classList.contains('mc-cardtbl')) table.classList.add('mc-cardtbl')
+        table.querySelectorAll('tbody tr').forEach(tr => {
+          const cells = Array.from(tr.children) as HTMLTableCellElement[]
+          if (cells.length === 1 || cells.some(c => c.colSpan > 1)) { if (!tr.classList.contains('mc-fullrow')) tr.classList.add('mc-fullrow'); return }
+          cells.forEach((c, i) => { const h = heads[i] ?? ''; if (c.dataset.label !== h) c.dataset.label = h })
+        })
+      })
+    }
+    const obs = new MutationObserver(() => { if (!raf) raf = requestAnimationFrame(label) })
+    obs.observe(root, { childList: true, subtree: true })
+    label()
+    return () => { obs.disconnect(); if (raf) cancelAnimationFrame(raf) }
+  }, [])
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setPalette(p => !p) }
@@ -127,6 +152,7 @@ function Shell({ children }: { children: ReactNode }) {
         <main className="mc-main">
           <header className="mc-top">
             <button className="mc-menu" onClick={() => setDrawer(true)} aria-label="فتح القائمة"><McIcon name="menu" size={22} /></button>
+            <b className="mc-ptitle">{section.tabs?.find(t => t.to === location.pathname)?.label ?? section.label}</b>
             <div className="mc-who-wrap">
               <button className="mc-who" onClick={() => setMenu(m => !m)} aria-expanded={menu}>
                 <span className="mc-av">{initial}</span>أهلاً {name}
@@ -174,7 +200,7 @@ function Shell({ children }: { children: ReactNode }) {
             </div>
           )}
 
-          <div className="mc-content">{children}</div>
+          <div className="mc-content" ref={contentRef}>{children}</div>
         </main>
 
         <nav className="mc-mtab" aria-label="تنقل سريع">

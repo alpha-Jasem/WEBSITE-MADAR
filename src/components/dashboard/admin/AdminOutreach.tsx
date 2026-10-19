@@ -187,6 +187,7 @@ const CSS = `
 .ol .due .panel-h{color:var(--red);border-color:rgba(255,93,93,.25)}
 .ol .tools{display:flex;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap;align-items:center}
 .ol .tools input{flex:1 1 200px;width:auto}.ol .tools select{width:auto}
+.ol .tools-row{display:contents}
 .ol .lead{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.1fr) auto;gap:14px;align-items:center;padding:13px 16px;border-bottom:1px solid var(--line);transition:background .15s}
 .ol .lead:hover{background:rgba(80,120,255,.05)}
 .ol .lead:last-child{border:0}
@@ -202,7 +203,7 @@ const CSS = `
 .ol .btn{border:1px solid var(--line);background:var(--fill);border-radius:10px;padding:8px 13px;font-family:var(--head);font-size:13px;font-weight:700;cursor:pointer;color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;transition:border-color .15s,background .15s}
 .ol .btn:hover{border-color:var(--line-2)}
 .ol .btn.wa{background:#17a05d;border-color:#17a05d;color:#fff}
-.ol .btn.call{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.ol .btn.call{background:var(--blue);border-color:var(--blue);color:#fff}
 .ol .btn.cal{background:var(--violet);border-color:var(--violet);color:#fff}
 .ol .btn.map{color:var(--link)}
 .ol .btn:disabled{opacity:.45;cursor:not-allowed}
@@ -223,11 +224,24 @@ const CSS = `
   .ol .mob-toggle{display:block}
   .ol .slip.closed{display:none}
   .ol .big{font-size:36px}
-  .ol .lead{grid-template-columns:1fr 1fr}
+  .ol .lead{grid-template-columns:minmax(0,1fr) auto;gap:8px 10px;padding:14px}
   .ol .lead .c-name{grid-column:1/-1}
-  .ol .lead .acts{grid-column:1/-1;justify-content:stretch}
-  .ol .lead .acts .btn{flex:1}
+  .ol .lead .nm{font-size:15.5px}
+  .ol .lead .ph{font-size:15px}
+  .ol .lead .acts{grid-column:1/-1;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+  .ol .lead .acts>*{grid-column:span 2;min-height:46px;padding:8px 6px}
+  .ol .lead .acts>.call,.ol .lead .acts>.wa{grid-column:span 3;font-size:15px;min-height:50px}
+  .ol .lead .acts>.stt{grid-column:1/-1;text-align:center}
   .ol .btn{min-height:44px}
+  .ol .tools{flex-direction:column;align-items:stretch;padding:10px 12px}
+  .ol .tools input{flex:none;width:100%}
+  .ol .tools-row{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -12px;padding:0 12px 2px}
+  .ol .tools-row>*{flex:0 0 auto;white-space:nowrap}
+  .ol .tools-row select{min-height:40px}
+  .ol .head{gap:12px}
+  .ol .mini{gap:14px;width:100%;justify-content:space-between}
+  .ol .panel-h{padding:12px 14px}
+  .ol .panel-h .btn{width:100%}
 }
 @media(prefers-reduced-motion:reduce){.ol *{transition:none!important}}
 `
@@ -677,6 +691,7 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
           <section className="panel">
             <div className="tools">
               <input placeholder="بحث بالاسم أو الرقم أو المدينة" value={search} onChange={e => { setSearch(e.target.value); setLimit(PAGE_SIZE) }} />
+              <div className="tools-row">
               <select aria-label="تصفية الحالة" value={statusFilter} onChange={e => { setStatusFilter(e.target.value as 'all' | Status); setLimit(PAGE_SIZE) }}>
                 <option value="all">كل الحالات</option>
                 {Object.entries(STATUS_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
@@ -697,6 +712,7 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
               <button className="chip" aria-pressed={showStats} onClick={() => setShowStats(s => !s)}>📊 النتائج</button>
               <button className="chip" aria-pressed="false" onClick={() => exportCsv(filtered)}>⬇ تصدير Excel</button>
               <button className="chip" aria-pressed={showSettings} onClick={() => setShowSettings(s => !s)}>⚙ الرسائل والروابط</button>
+              </div>
             </div>
 
             {showSettings && (
