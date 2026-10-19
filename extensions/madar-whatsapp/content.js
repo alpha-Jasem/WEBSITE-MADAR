@@ -105,16 +105,30 @@
     return el ? (el.getAttribute('title') || '').trim() : ''
   }
 
+  // numbers of the conversations the agent started (refreshed from the bridge at most once a minute)
+  let known = { at: 0, last9: new Set() }
+  async function knownChats() {
+    if (Date.now() - known.at < 60000) return known.last9
+    const r = await bridge({ action: 'hello', status: 'chats' })
+    if (Array.isArray(r.phones)) known = { at: Date.now(), last9: new Set(r.phones.map(p => digits(p).slice(-9))) }
+    return known.last9
+  }
+
   async function handleInbound() {
     const rows = unreadRows()
     if (!rows.length) return false
-    const row = rows[0]
-    const title = rowTitle(row)
+    const mine = await knownChats()
     const { chatMap = {} } = await store.get('chatMap')
-    const phone = digits(title).length >= 9 ? digits(title) : chatMap[title]
+    // only chats that belong to the agent are opened; every other chat is left unread and untouched
+    let row = null, phone = null
+    for (const r of rows) {
+      const title = rowTitle(r)
+      const p = digits(title).length >= 9 ? digits(title) : chatMap[title]
+      if (p && mine.has(digits(p).slice(-9))) { row = r; phone = p; break }
+    }
+    if (!row) return false
     row.click()
     await sleep(rand(1500, 3000))
-    if (!phone) return true // not a chat we started (saved contact we never messaged): just leave it
     const msgs = lastMessages()
     const tail = []
     for (let i = msgs.length - 1; i >= 0; i--) {

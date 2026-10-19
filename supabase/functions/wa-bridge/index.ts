@@ -85,7 +85,8 @@ Deno.serve(async req => {
 
   try {
     if (action === 'hello') {
-      return json({ ok: true, enabled: settings.enabled, in_hours: inHours, cap_today: capToday(), sent_today: await sentToday('first'), pause_reason: settings.pause_reason })
+      const { data: convs } = await service.from('wa_conversations').select('phone').in('state', ['active', 'escalated', 'paused']).limit(500)
+      return json({ ok: true, enabled: settings.enabled, in_hours: inHours, cap_today: capToday(), sent_today: await sentToday('first'), pause_reason: settings.pause_reason, phones: (convs ?? []).map(c => c.phone) })
     }
 
     if (action === 'next_job') {
