@@ -25,6 +25,8 @@ import { AdminAgentsControl } from '../components/dashboard/admin/AdminAgentsCon
 import { AdminCallAssistant } from '../components/dashboard/admin/AdminCallAssistant'
 import { AdminAI } from '../components/dashboard/admin/AdminAI'
 import { AdminAISettings } from '../components/dashboard/admin/AdminAISettings'
+import { AdminAgentKnowledge } from '../components/dashboard/admin/AdminAgentKnowledge'
+import { AdminAgentTest } from '../components/dashboard/admin/AdminAgentTest'
 
 export const AdminDashboard = () => {
   useAppManifest('/admin-manifest.json')
@@ -57,6 +59,8 @@ export const AdminDashboard = () => {
         <Route path="call-assistant" element={<AdminCallAssistant />} />
         <Route path="ai" element={<AdminAI />} />
         <Route path="ai-settings" element={<AdminAISettings />} />
+        <Route path="ai-knowledge" element={<AdminAgentKnowledge />} />
+        <Route path="ai-test" element={<AdminAgentTest />} />
         <Route path="*" element={<AdminCommandDeck />} />
       </Routes>
     </PlasmaAdminShell>

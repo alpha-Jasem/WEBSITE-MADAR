@@ -31,6 +31,7 @@ export const AdminAgentsControl = () => {
   const [form, setForm] = useState(EMPTY)
   const [trialAgent, setTrialAgent] = useState('')
   const [trialCampaign, setTrialCampaign] = useState('')
+  const [target, setTarget] = useState<'outreach' | 'no_website'>('outreach')
   const [info, setInfo] = useState<string | null>(null)
 
   const load = useCallback(async () => {
@@ -83,14 +84,14 @@ export const AdminAgentsControl = () => {
     if (!agent) return
     const blocked = await loadDoNotContact()
     const c = campaigns.find(x => x.id === trialCampaign)
-    const pool = leads.filter(l => !assigned.has(l.id) && !blocked.has(l.phone))
+    const pool = leads.filter(l => !assigned.has(l.id) && !blocked.has(l.phone) && (target === 'no_website' ? !l.website : !!l.website))
       .sort((a, b) => ((b.rating ?? 0) * Math.log10((b.reviews ?? 0) + 10)) - ((a.rating ?? 0) * Math.log10((a.reviews ?? 0) + 10)))
     const chosen = pool.slice(0, 5)
     if (chosen.length === 0) { setInfo('لا يوجد عملاء مؤهلون متاحون للتجربة.'); return }
     const { error: e1 } = await supabase.from('agent_assignments').insert(chosen.map(l => ({ agent_id: agent.id, lead_id: l.id })))
     if (e1) { setError('تعذّر إسناد العملاء (ربما أُسندوا لإيجنت آخر).'); return }
     setInfo('الإيجنت يكتب المسودات…')
-    const made = await supabase.functions.invoke('agent-draft', { body: { action: 'draft', agent_id: agent.id, lead_ids: chosen.map(l => l.id), campaign_id: trialCampaign || undefined, trial: true } })
+    const made = await supabase.functions.invoke('agent-draft', { body: { action: 'draft', target, agent_id: agent.id, lead_ids: chosen.map(l => l.id), campaign_id: trialCampaign || undefined, trial: true } })
     const done = new Set(((made.data?.drafts ?? []) as { lead_id: string }[]).map(d => d.lead_id))
     const missing = chosen.filter(l => !done.has(l.id))
     if (missing.length > 0) {
@@ -139,7 +140,7 @@ export const AdminAgentsControl = () => {
   const runSim = async () => {
     if (!simLead) return
     setSimBusy(true); setSim(null)
-    const { data, error: e } = await supabase.functions.invoke('agent-draft', { body: { action: 'simulate', lead_id: simLead, agent_id: trialAgent || agents[0]?.id, campaign_id: trialCampaign || undefined, turns: 4 } })
+    const { data, error: e } = await supabase.functions.invoke('agent-draft', { body: { action: 'simulate', target, lead_id: simLead, agent_id: trialAgent || agents[0]?.id, campaign_id: trialCampaign || undefined, turns: 4 } })
     setSimBusy(false)
     if (e || !data?.transcript) { setError('تعذّرت المحاكاة. تأكد من رصيد OpenAI وأعد المحاولة.'); return }
     setSim(data.transcript)
@@ -155,9 +156,13 @@ export const AdminAgentsControl = () => {
         <div className="mc-delta" style={{ padding: '0 20px 10px', lineHeight: 1.8 }}>اختر عميلًا وشاهد محادثة تجريبية: الإيجنت يكتب، والعميل شخصية يلعبها الذكاء الاصطناعي. لا يُرسل أي رسالة ولا يُحفظ شيء. الإيجنت يتكلم باسمه، ولا يذكر سعرًا إلا من الأسعار المعتمدة، ولا يدّعي أنه إنسان إذا سُئل، ويتوقف إذا رفض العميل.</div>
         <div style={{ padding: '0 20px 18px', display: 'grid', gap: 12 }}>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <select value={target} onChange={e => { setTarget(e.target.value as 'outreach' | 'no_website'); setSimLead(''); setSim(null) }} aria-label="قائمة الاستهداف" style={{ flex: '1 1 180px', minHeight: 42 }}>
+              <option value="outreach">قائمة Outreach</option>
+              <option value="no_website">قائمة بدون موقع</option>
+            </select>
             <select value={simLead} onChange={e => setSimLead(e.target.value)} aria-label="العميل" style={{ flex: '1 1 220px', minHeight: 42 }}>
               <option value="">اختر عميلًا</option>
-              {leads.slice(0, 200).map(l => <option key={l.id} value={l.id}>{l.name}{l.category ? ` · ${l.category}` : ''}</option>)}
+              {leads.filter(l => (target === 'no_website' ? !l.website : !!l.website)).slice(0, 200).map(l => <option key={l.id} value={l.id}>{l.name}{l.category ? ` · ${l.category}` : ''}</option>)}
             </select>
             <button className="mc-btn2 p" onClick={runSim} disabled={!simLead || simBusy}>{simBusy ? 'جاري المحادثة…' : 'ابدأ المحاكاة'}</button>
           </div>
@@ -209,6 +214,7 @@ export const AdminAgentsControl = () => {
         <div style={{ padding: '0 20px 18px', display: 'grid', gap: 10 }}>
           <div className="mc-grid2">
             <label className="mc-field">الإيجنت<select value={trialAgent} onChange={e => setTrialAgent(e.target.value)}><option value="">اختر</option>{agents.filter(a => a.status !== 'stopped').map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></label>
+            <label className="mc-field">قائمة الاستهداف<select value={target} onChange={e => { setTarget(e.target.value as 'outreach' | 'no_website'); setSimLead(''); setSim(null) }}><option value="outreach">Outreach (وكيل ذكاء اصطناعي)</option><option value="no_website">بدون موقع (موقع إلكتروني)</option></select></label>
             <label className="mc-field">الحملة (للعرض في الرسالة)<select value={trialCampaign} onChange={e => setTrialCampaign(e.target.value)}><option value="">بدون حملة</option>{campaigns.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
           </div>
           <div><button className="mc-btn2 p" disabled={!trialAgent} onClick={runTrial}>جهّز مسودات 5 شركات</button></div>

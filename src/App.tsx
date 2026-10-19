@@ -6,6 +6,7 @@ import { ProtectedRoute } from './components/shared/ProtectedRoute'
 import { ModuleRoute, PermissionRoute } from './dashboard/components/ModuleRoute'
 import { ErrorBoundary, reloadForFreshAssets } from './components/shared/ErrorBoundary'
 import { Login } from './pages/Login'
+import { SitePreview } from './pages/SitePreview'
 import { ForgotPassword } from './pages/ForgotPassword'
 import { ResetPassword } from './pages/ResetPassword'
 import { AuthCallback } from './pages/AuthCallback'
@@ -149,6 +150,7 @@ function App() {
             <Route path="/clinic-os/mfa-challenge" element={<Navigate to="/mfa-challenge" replace />} />
             <Route path="/signup" element={<ClinicOSSignupPage />} />
             <Route path="/trial" element={<Navigate to="/signup" replace />} />
+            <Route path="/preview/:token" element={<SitePreview />} />
             <Route path="/clinic-os/signup" element={<Navigate to="/signup" replace />} />
             <Route path="/clinic-os/demo"     element={<DemoSignupPage />} />
             <Route path="/clinic-os/demo/confirm" element={<DemoConfirmPage />} />
