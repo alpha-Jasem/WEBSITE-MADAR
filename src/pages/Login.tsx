@@ -7,8 +7,10 @@ import { signInWithPassword, getCurrentUser, signOut } from '../lib/supabase'
 
 const css = `
 .al,.al *{box-sizing:border-box;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif}
-.al{min-height:100vh;min-height:100dvh;display:grid;grid-template-columns:minmax(0,1fr);place-items:center;padding:24px;position:relative;overflow:hidden;color:#e8eefc;
+html:has(.al),html:has(.al) body{height:100%;min-height:0;overflow:hidden}
+.al{height:100vh;height:100dvh;overflow:clip;display:grid;grid-template-columns:minmax(0,1fr);place-items:center;padding:24px;position:relative;color:#e8eefc;
   background:radial-gradient(ellipse 80% 60% at 92% -10%,oklch(.40 .28 252) 0%,transparent 55%),radial-gradient(ellipse 55% 55% at -8% 98%,oklch(.36 .26 265) 0%,transparent 55%),#050a18}
+@media(max-height:640px){html:has(.al),html:has(.al) body{height:auto;overflow:auto}.al{height:auto;min-height:100dvh}}
 .al-orb{position:absolute;border-radius:50%;filter:blur(70px);pointer-events:none;opacity:.55}
 .al-orb.a{width:380px;height:380px;background:rgba(48,120,255,.35);top:-120px;right:-80px}
 .al-orb.b{width:320px;height:320px;background:rgba(110,80,255,.30);bottom:-110px;left:-60px}
