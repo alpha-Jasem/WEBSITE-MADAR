@@ -1130,9 +1130,13 @@
   var canvas = document.getElementById('film');
   var ctx = canvas.getContext('2d');
   var DPR = Math.min(devicePixelRatio || 1, 1.25);
+  // The frames are 1280px wide, so a backing store wider than that only costs GPU memory.
+  var MAX_BACK_W = 1280;
+  function backScale(){ return Math.min(DPR, MAX_BACK_W / Math.max(1, innerWidth)); }
   function sizeCanvas(){
-    canvas.width = Math.round(innerWidth * DPR);
-    canvas.height = Math.round(innerHeight * DPR);
+    var k = backScale();
+    canvas.width = Math.round(innerWidth * k);
+    canvas.height = Math.round(innerHeight * k);
   }
   sizeCanvas();
 
@@ -1253,7 +1257,7 @@
   var actx = amb.getContext('2d');
   var motes = [], sprite = null;
   function initAmbient(){
-    amb.width = Math.round(innerWidth * DPR); amb.height = Math.round(innerHeight * DPR);
+    amb.width = Math.round(innerWidth * backScale()); amb.height = Math.round(innerHeight * backScale());
     sprite = document.createElement('canvas'); sprite.width = sprite.height = 32;
     var sc = sprite.getContext('2d');
     var g = sc.createRadialGradient(16,16,0,16,16,16);
@@ -1277,7 +1281,7 @@
       if (m.x < -0.05) m.x = 1.05; if (m.x > 1.05) m.x = -0.05;
       if (m.y < -0.05) m.y = 1.05; if (m.y > 1.05) m.y = -0.05;
       var twinkle = 0.55 + 0.45 * Math.sin(t * 0.0011 + m.tw);
-      var s = (3 + m.z * 8) * DPR;
+      var s = (3 + m.z * 8) * backScale();
       actx.globalAlpha = alpha * twinkle * m.z * 0.6;
       actx.drawImage(sprite, m.x * amb.width - s/2, m.y * amb.height - s/2, s, s);
     }
@@ -1294,7 +1298,8 @@
     if (now - lastLuma < 180 || displayed < 0) return;
     lastLuma = now;
     try {
-      lumaCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height * 0.14, 0, 0, 16, 4);
+      var src = images[displayed]; if (!src || !src.naturalWidth) return;
+      lumaCtx.drawImage(src, 0, 0, src.naturalWidth, src.naturalHeight * 0.14, 0, 0, 16, 4);
       var d = lumaCtx.getImageData(0, 0, 16, 4).data, sum = 0;
       for (var i = 0; i < d.length; i += 4) sum += 0.2126*d[i] + 0.7152*d[i+1] + 0.0722*d[i+2];
       hdr.classList.toggle('on-light', (sum / (d.length / 4)) > 138);
