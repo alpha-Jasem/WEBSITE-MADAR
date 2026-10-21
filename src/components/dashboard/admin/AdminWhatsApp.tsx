@@ -20,7 +20,7 @@ const STATE_LABEL: Record<Conv['state'], { label: string; cls: string }> = {
 }
 const DAY = 86400000
 
-// Control room for the WhatsApp Web bridge: master switch, pacing, the Chrome extension token, and the conversations the agent is handling.
+// Control room for WhatsApp on Kapso: connection status, master switch, pacing, and the conversations the agent is handling.
 export const AdminWhatsApp = () => {
   const [s, setS] = useState<Settings | null>(null)
   const [kapso, setKapso] = useState<KapsoStatus | null>(null)
@@ -148,7 +148,7 @@ export const AdminWhatsApp = () => {
 
       <article className="mc-card" style={{ marginBottom: 14 }}>
         <div className="mc-ph">
-          <h3>واتساب عبر Chrome</h3>
+          <h3>واتساب الرسمي (Kapso)</h3>
           <span className={`mc-st ${s.enabled ? 'mc-g' : 'mc-n2'}`}>{s.enabled ? 'الإرسال يعمل' : 'الإرسال متوقف'}</span>
         </div>
         <div style={{ padding: '0 20px 18px', display: 'grid', gap: 12 }}>
