@@ -187,7 +187,7 @@ export async function sendNextFirst(service: SupabaseClient, s: WaSettings) {
   const stop = new Set((blocked ?? []).map(b => b.phone))
   const { data: known } = await service.from('wa_conversations').select('phone')
   const seen = new Set((known ?? []).map(k => k.phone))
-  let q = service.from('outreach_leads').select('id, name, phone, website').eq('status', 'new').eq('is_mobile', true).order('rating', { ascending: false, nullsFirst: false }).limit(60)
+  let q = service.from('outreach_leads').select('id, name, phone, website').eq('status', 'new').eq('is_mobile', true).eq('in_focus', true).order('rating', { ascending: false, nullsFirst: false }).limit(60)
   q = s.target === 'no_website' ? q.eq('website', '') : q.neq('website', '')
   const { data: pool } = await q
   for (const lead of pool ?? []) {

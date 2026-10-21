@@ -38,7 +38,7 @@ export const AdminAgentsControl = () => {
     const [a, d, l, c, as] = await Promise.all([
       supabase.from('sales_agents').select('*').order('created_at'),
       supabase.from('agent_drafts').select('*').order('created_at', { ascending: false }).limit(300),
-      supabase.from('outreach_leads').select('id, name, phone, is_mobile, rating, reviews, category, website, status').eq('status', 'new').eq('is_mobile', true).limit(2000),
+      supabase.from('outreach_leads').select('id, name, phone, is_mobile, rating, reviews, category, website, status').eq('status', 'new').eq('is_mobile', true).eq('in_focus', true).limit(2000),
       supabase.from('campaigns').select('id, name, service, offer'),
       supabase.from('agent_assignments').select('lead_id').is('released_at', null),
     ])

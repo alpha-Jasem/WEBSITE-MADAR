@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
 import { addDoNotContact, loadDoNotContact, recordContact, syncDealForLead } from '../../../lib/deals'
 import { useRealtimeRefetch } from '../../../lib/realtime'
+import { LeadFocusPanel } from './LeadFocusPanel'
 
 type Status = 'new' | 'contacted' | 'replied' | 'meeting' | 'won' | 'lost' | 'no_answer'
 type TemplateKey = 'first' | 'reminder' | 'meeting' | 'offer' | 'confirm'
@@ -50,6 +51,8 @@ const QUICK_QUERIES = [
   { ar: 'مراكز تجميل', en: 'beauty clinic' },
   { ar: 'مراكز طبية', en: 'medical center' },
   { ar: 'مطاعم', en: 'restaurant' },
+  { ar: 'مطورون عقاريون', en: 'real estate developer' },
+  { ar: 'شركات تطوير عقاري', en: 'property development company' },
   { ar: 'مكاتب عقارية', en: 'real estate office' },
   { ar: 'صالونات', en: 'salon' },
   { ar: 'مقاولات', en: 'contracting company' },
@@ -94,7 +97,7 @@ interface DailySettings {
   digest_enabled: boolean
 }
 const DEFAULT_DAILY: DailySettings = {
-  daily_enabled: false, daily_source: 'google_maps', daily_query: 'dental clinic', daily_city: 'Jeddah', daily_count: 200, digest_enabled: true,
+  daily_enabled: false, daily_source: 'google_maps', daily_query: 'real estate developer', daily_city: 'Jeddah', daily_count: 200, digest_enabled: true,
 }
 
 function urlBase64ToUint8Array(base64: string) {
@@ -279,6 +282,7 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
   const [templates, setTemplates] = useState<Record<TemplateKey, string>>(() => loadJson(storeKey, siteMode ? SITE_TEMPLATES : DEFAULT_TEMPLATES))
   const [settings, setSettings] = useState<Settings>(() => loadJson(STORE.settings, { meetLink: '', offerLink: '' }))
   const [showSettings, setShowSettings] = useState(false)
+  const [showFocus, setShowFocus] = useState(false)
   const [showStats, setShowStats] = useState(false)
 
   // modals
@@ -293,7 +297,7 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
 
   const load = useCallback(async () => {
     const [list, today] = await Promise.all([
-      supabase.from('outreach_leads').select('*').order('created_at', { ascending: false }).limit(5000),
+      supabase.from('outreach_leads').select('*').eq('in_focus', true).order('created_at', { ascending: false }).limit(5000),
       supabase.from('outreach_leads').select('id', { count: 'exact', head: true }).gte('created_at', startOfToday().toISOString()),
     ])
     setLeads((list.data ?? []) as OutreachLead[])
@@ -708,6 +712,8 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
             </section>
           )}
 
+          {showFocus && <LeadFocusPanel onChanged={load} />}
+
           <section className="panel">
             <div className="tools">
               <input placeholder="بحث بالاسم أو الرقم أو المدينة" value={search} onChange={e => { setSearch(e.target.value); setLimit(PAGE_SIZE) }} />
@@ -731,6 +737,7 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
                 onClick={() => setQueue({ ids: filtered.filter(l => l.is_mobile && !isBlocked(l)).slice(0, 30).map(l => l.id), i: 0 })}>▶ تواصل سريع ({Math.min(30, filtered.filter(l => l.is_mobile && !isBlocked(l)).length)})</button>
               <button className="chip" aria-pressed={showStats} onClick={() => setShowStats(s => !s)}>📊 النتائج</button>
               <button className="chip" aria-pressed="false" onClick={() => exportCsv(filtered)}>⬇ تصدير Excel</button>
+              <button className="chip" aria-pressed={showFocus} onClick={() => setShowFocus(s => !s)}>🎯 التركيز</button>
               <button className="chip" aria-pressed={showSettings} onClick={() => setShowSettings(s => !s)}>⚙ الرسائل والروابط</button>
               </div>
             </div>

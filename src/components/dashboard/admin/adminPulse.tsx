@@ -42,7 +42,7 @@ export function AdminPulseProvider({ children }: { children: ReactNode }) {
       supabase.from('outreach_leads').select(COLS).eq('status', 'meeting')
         .gte('meeting_at', start.toISOString()).lt('meeting_at', end.toISOString()).order('meeting_at'),
       supabase.from('outreach_leads').select('id', { count: 'exact', head: true }).gte('created_at', start.toISOString()),
-      supabase.from('outreach_leads').select('id', { count: 'exact', head: true }).eq('status', 'new').eq('is_mobile', true),
+      supabase.from('outreach_leads').select('id', { count: 'exact', head: true }).eq('status', 'new').eq('is_mobile', true).eq('in_focus', true),
     ])
     setDue((d.data ?? []) as PulseLead[])
     setMeetingsToday((m.data ?? []) as PulseLead[])

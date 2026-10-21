@@ -92,7 +92,19 @@ async function datasetItems(datasetId: string, token: string) {
   return Array.isArray(items) ? items : []
 }
 
-async function insertLeads(service: SupabaseClient, rows: Record<string, unknown>[]) {
+interface Focus { preset: string; include_words: string[]; exclude_words: string[] }
+// same rule as the database function lead_in_focus: excluded words win, then at least one included word must match
+export function inFocus(category: unknown, f: Focus | null) {
+  if (!f || f.preset === 'all') return true
+  const c = String(category ?? '').toLowerCase()
+  if ((f.exclude_words ?? []).some(w => w && c.includes(w.toLowerCase()))) return false
+  if (!(f.include_words ?? []).length) return true
+  return f.include_words.some(w => w && c.includes(w.toLowerCase()))
+}
+
+async function insertLeads(service: SupabaseClient, allRows: Record<string, unknown>[]) {
+  const { data: focus } = await service.from('lead_focus').select('preset, include_words, exclude_words').eq('id', 1).maybeSingle()
+  const rows = allRows.filter(r => inFocus(r.category, focus as Focus | null))
   let added = 0
   for (let i = 0; i < rows.length; i += 200) {
     const { data } = await service.from('outreach_leads')

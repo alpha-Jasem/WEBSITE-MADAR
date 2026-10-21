@@ -19,7 +19,7 @@ export const AdminAgentTest = () => {
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    let q = supabase.from('outreach_leads').select('id, name, category, website').eq('is_mobile', true).order('rating', { ascending: false, nullsFirst: false }).limit(150)
+    let q = supabase.from('outreach_leads').select('id, name, category, website').eq('is_mobile', true).eq('in_focus', true).order('rating', { ascending: false, nullsFirst: false }).limit(150)
     q = target === 'no_website' ? q.eq('website', '') : q.neq('website', '')
     q.then(({ data }) => { setLeads((data ?? []) as Lead[]); setLeadId('') })
   }, [target])
