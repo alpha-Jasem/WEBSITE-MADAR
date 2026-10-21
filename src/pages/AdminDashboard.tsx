@@ -28,6 +28,7 @@ import { AdminAISettings } from '../components/dashboard/admin/AdminAISettings'
 import { AdminAgentKnowledge } from '../components/dashboard/admin/AdminAgentKnowledge'
 import { AdminAgentTest } from '../components/dashboard/admin/AdminAgentTest'
 import { AdminWhatsApp } from '../components/dashboard/admin/AdminWhatsApp'
+import { AdminContacted } from '../components/dashboard/admin/AdminContacted'
 
 export const AdminDashboard = () => {
   useAppManifest('/admin-manifest.json')
@@ -63,6 +64,7 @@ export const AdminDashboard = () => {
         <Route path="ai-knowledge" element={<AdminAgentKnowledge />} />
         <Route path="ai-test" element={<AdminAgentTest />} />
         <Route path="whatsapp" element={<AdminWhatsApp />} />
+        <Route path="contacted" element={<AdminContacted />} />
         <Route path="*" element={<AdminCommandDeck />} />
       </Routes>
     </PlasmaAdminShell>

@@ -17,8 +17,8 @@ interface Section { id: string; label: string; icon: McIconName; to: string; mat
 // The sidebar has the eight sections of the reference design. Pages that already exist live as tabs under them.
 const SECTIONS: Section[] = [
   { id: 'command', label: 'مركز القيادة', icon: 'grid', to: '/admin', match: ['/admin'], exact: true },
-  { id: 'sales', label: 'المبيعات', icon: 'chart', to: '/admin/outreach', match: ['/admin/outreach', '/admin/no-website', '/admin/pipeline', '/admin/sales-blitz'],
-    tabs: [{ label: 'Outreach', to: '/admin/outreach' }, { label: 'بدون موقع', to: '/admin/no-website' }, { label: 'الصفقات', to: '/admin/pipeline' }] },
+  { id: 'sales', label: 'المبيعات', icon: 'chart', to: '/admin/outreach', match: ['/admin/outreach', '/admin/no-website', '/admin/contacted', '/admin/pipeline', '/admin/sales-blitz'],
+    tabs: [{ label: 'Outreach', to: '/admin/outreach' }, { label: 'بدون موقع', to: '/admin/no-website' }, { label: 'تم التواصل', to: '/admin/contacted' }, { label: 'الصفقات', to: '/admin/pipeline' }] },
   { id: 'ai', label: 'الإيجنت AI', icon: 'bot', to: '/admin/ai', match: ['/admin/ai', '/admin/ai-settings', '/admin/ai-knowledge', '/admin/ai-test', '/admin/whatsapp', '/admin/agents-control', '/admin/call-assistant'],
     tabs: [{ label: 'جارفيس', to: '/admin/ai' }, { label: 'الإيجنت البائع', to: '/admin/agents-control' }, { label: 'معرفة الإيجنت', to: '/admin/ai-knowledge' }, { label: 'تجربة الإيجنت', to: '/admin/ai-test' }, { label: 'واتساب', to: '/admin/whatsapp' }, { label: 'مساعد المكالمات', to: '/admin/call-assistant' }, { label: 'الإعدادات', to: '/admin/ai-settings' }] },
   { id: 'campaigns', label: 'الحملات', icon: 'mega', to: '/admin/campaigns', match: ['/admin/campaigns'] },
