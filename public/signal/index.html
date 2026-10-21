@@ -228,6 +228,11 @@
     letter-spacing:.008em;
     animation:heroShimmer 7s linear infinite;
   }
+  .beat.hero-beat h1{max-width:min(1180px,94vw);font-size:clamp(38px,min(6.4vw,9vh),84px)}
+  @media(max-height:820px){.hero-badge{margin-bottom:16px}.hero-cta-row{margin-top:24px}.hero-stats-row{margin-top:26px}}
+  @media(max-width:1500px){.nav-links{gap:10px}.nav-links a{padding:8px 11px}}
+  @media(max-width:1199px){.nav-links a[href="#listen"]{display:none}.nav-links{gap:4px}}
+  @media(max-width:1000px){.nav-links a[href="#faq"],.nav-links a[href="/about/"]{display:none}}
   .beat.hero-beat p{color:rgba(234,241,251,.92);letter-spacing:.01em;font-weight:300}
   @keyframes heroShimmer{0%{background-position:0% center}100%{background-position:-220% center}}
   .hero-badge{pointer-events:auto;display:inline-flex;align-items:center;gap:10px;margin-bottom:26px;
@@ -447,7 +452,7 @@
   .lgrid{display:none}
 
   /* ── Nav bar (content mode) ── */
-  .nav-links{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  .nav-links{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:max-content;max-width:calc(100vw - 460px);white-space:nowrap;
     display:flex;align-items:center;gap:28px;opacity:0;visibility:hidden;transition:opacity .45s ease}
   .nav-links a{font-family:var(--body);font-size:14px;font-weight:500;color:currentColor;text-decoration:none;
     opacity:.78;transition:opacity .25s ease}
