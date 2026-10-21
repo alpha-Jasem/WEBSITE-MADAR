@@ -7,9 +7,9 @@ interface Settings {
   enabled: boolean; send_outbound: boolean; auto_reply: boolean; start_hour: number; end_hour: number
   ramp_start: number; ramp_step: number; ramp_every_days: number; max_cap: number; min_delay_s: number; max_delay_s: number
   reply_cap: number; agent_id: string | null; target: 'outreach' | 'no_website'; campaign_id: string | null
-  started_on: string | null; pause_reason: string | null
+  started_on: string | null; pause_reason: string | null; reply_to_new_inbound: boolean
 }
-interface Device { id: string; name: string; last_seen_at: string | null; last_status: string | null; revoked: boolean }
+interface KapsoStatus { ok?: boolean; error?: string; number?: { name: string; status: string; quality: string | null; display: string | null }; webhook?: { registered: boolean; active: boolean }; template?: { name: string; status: string; category: string; reason?: string } | null; template_name?: string }
 interface Conv { id: string; lead_id: string | null; phone: string; state: 'active' | 'paused' | 'stopped' | 'escalated' | 'done'; last_in_at: string | null; last_out_at: string | null; auto_replies: number }
 interface Msg { id: string; direction: 'in' | 'out'; body: string; status: string; kind: string; created_at: string }
 interface Agent { id: string; name: string; status: string }
@@ -23,7 +23,7 @@ const DAY = 86400000
 // Control room for the WhatsApp Web bridge: master switch, pacing, the Chrome extension token, and the conversations the agent is handling.
 export const AdminWhatsApp = () => {
   const [s, setS] = useState<Settings | null>(null)
-  const [devices, setDevices] = useState<Device[]>([])
+  const [kapso, setKapso] = useState<KapsoStatus | null>(null)
   const [convs, setConvs] = useState<Conv[]>([])
   const [names, setNames] = useState<Record<string, string>>({})
   const [agents, setAgents] = useState<Agent[]>([])
@@ -31,16 +31,14 @@ export const AdminWhatsApp = () => {
   const [sentToday, setSentToday] = useState({ first: 0, reply: 0 })
   const [open, setOpen] = useState<string | null>(null)
   const [msgs, setMsgs] = useState<Msg[]>([])
-  const [token, setToken] = useState<string | null>(null)
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null)
   const [busy, setBusy] = useState(false)
 
   const load = useCallback(async () => {
     const start = new Date(Date.now() + 3 * 3600000); start.setUTCHours(0, 0, 0, 0)
     const dayStart = new Date(start.getTime() - 3 * 3600000).toISOString()
-    const [st, dv, cv, ag, cp, first, reply] = await Promise.all([
+    const [st, cv, ag, cp, first, reply] = await Promise.all([
       supabase.from('wa_settings').select('*').eq('id', 1).maybeSingle(),
-      supabase.from('wa_devices').select('id, name, last_seen_at, last_status, revoked').eq('revoked', false).order('created_at', { ascending: false }),
       supabase.from('wa_conversations').select('*').order('last_in_at', { ascending: false, nullsFirst: false }).limit(60),
       supabase.from('sales_agents').select('id, name, status'),
       supabase.from('campaigns').select('id, name'),
@@ -48,7 +46,7 @@ export const AdminWhatsApp = () => {
       supabase.from('wa_messages').select('id', { count: 'exact', head: true }).eq('direction', 'out').eq('status', 'sent').eq('kind', 'reply').gte('sent_at', dayStart),
     ])
     if (st.data) setS(st.data as Settings)
-    setDevices((dv.data ?? []) as Device[]); setConvs((cv.data ?? []) as Conv[]); setAgents((ag.data ?? []) as Agent[]); setCampaigns((cp.data ?? []) as { id: string; name: string }[])
+    setConvs((cv.data ?? []) as Conv[]); setAgents((ag.data ?? []) as Agent[]); setCampaigns((cp.data ?? []) as { id: string; name: string }[])
     setSentToday({ first: first.count ?? 0, reply: reply.count ?? 0 })
     const ids = ((cv.data ?? []) as Conv[]).map(c => c.lead_id).filter(Boolean) as string[]
     if (ids.length) {
@@ -57,7 +55,28 @@ export const AdminWhatsApp = () => {
     }
   }, [])
   useEffect(() => { load() }, [load])
-  useRealtimeRefetch('admin_whatsapp', [{ table: 'wa_settings' }, { table: 'wa_conversations' }, { table: 'wa_messages' }, { table: 'wa_devices' }], load, true)
+  useRealtimeRefetch('admin_whatsapp', [{ table: 'wa_settings' }, { table: 'wa_conversations' }, { table: 'wa_messages' }], load, true)
+
+  const kapsoCall = useCallback(async (action: string) => {
+    const { data, error } = await supabase.functions.invoke('kapso-admin', { body: { action } })
+    return (error ? { error: error.message } : data) as KapsoStatus & { status?: number }
+  }, [])
+  const refreshKapso = useCallback(async () => setKapso(await kapsoCall('status')), [kapsoCall])
+  useEffect(() => { refreshKapso() }, [refreshKapso])
+  const connectWebhook = async () => {
+    setBusy(true); setNote(null)
+    const r = await kapsoCall('register_webhook')
+    setBusy(false)
+    setNote(r.ok ? { ok: true, text: 'رُبط الـ webhook. رسائل العملاء تصل الآن للإيجنت.' } : { ok: false, text: 'تعذّر ربط الـ webhook.' })
+    refreshKapso()
+  }
+  const submitTemplate = async () => {
+    setBusy(true); setNote(null)
+    const r = await kapsoCall('create_template')
+    setBusy(false)
+    setNote(r.ok ? { ok: true, text: 'أُرسل القالب لـ Meta للاعتماد. عادةً من دقائق إلى يوم.' } : { ok: false, text: 'تعذّر إرسال القالب.' })
+    refreshKapso()
+  }
 
   const cap = useMemo(() => {
     if (!s) return 0
@@ -81,20 +100,13 @@ export const AdminWhatsApp = () => {
   const toggle = async () => {
     if (!s) return
     if (!s.enabled) {
-      if (devices.length === 0) { setNote({ ok: false, text: 'أنشئ رمز جهاز وثبّت الإضافة أولًا.' }); return }
+      if (!kapso?.number || kapso.number.status !== 'CONNECTED') { setNote({ ok: false, text: 'رقم واتساب غير متصل بـ Kapso.' }); return }
+      if (!kapso.webhook?.active) { setNote({ ok: false, text: 'اربط الـ webhook أولًا حتى تصل رسائل العملاء.' }); return }
       if (s.send_outbound && !s.agent_id) { setNote({ ok: false, text: 'اختر الإيجنت الذي يرسل (يجب أن يكون «يعمل») أو أوقف الإرسال الجديد وابقِ الردود فقط.' }); return }
     }
     await save({ enabled: !s.enabled })
   }
 
-  const newDevice = async () => {
-    setBusy(true); setNote(null)
-    const { data, error } = await supabase.functions.invoke('wa-bridge', { body: { action: 'create_device', name: 'Chrome' } })
-    setBusy(false)
-    if (error || !data?.token) { setNote({ ok: false, text: 'تعذّر إنشاء الرمز.' }); return }
-    setToken(data.token as string); load()
-  }
-  const revoke = async (id: string) => { await supabase.functions.invoke('wa-bridge', { body: { action: 'revoke_device', id } }); load() }
 
   const setState = async (c: Conv, state: Conv['state']) => { await supabase.from('wa_conversations').update({ state }).eq('id', c.id); load() }
   const openConv = async (c: Conv) => {
@@ -106,8 +118,7 @@ export const AdminWhatsApp = () => {
 
   if (!s) return <div className="mc-flat">جاري التحميل…</div>
   const agent = agents.find(a => a.id === s.agent_id)
-  const lastSeen = devices.map(d => d.last_seen_at).filter(Boolean).sort().pop()
-  const online = lastSeen ? Date.now() - new Date(lastSeen).getTime() < 3 * 60000 : false
+  const tplOk = kapso?.template?.status === 'APPROVED'
   const num = (k: keyof Settings, min?: number, max?: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = Number(e.target.value)
     patch({ [k]: Number.isFinite(v) ? Math.min(max ?? 1e6, Math.max(min ?? 0, v)) : 0 } as Partial<Settings>)
@@ -125,13 +136,12 @@ export const AdminWhatsApp = () => {
         </div>
         <div style={{ padding: '0 20px 18px', display: 'grid', gap: 12 }}>
           <div className="mc-delta" style={{ lineHeight: 1.8 }}>
-            الإيجنت يرسل ويرد من واتساب ويب في متصفحك عبر إضافة مدار، حتى وأنت نايم، بشرط أن يبقى الكمبيوتر شغالًا وChrome مفتوحًا على واتساب ويب.
-            <b> تنبيه:</b> هذا ليس القناة الرسمية. واتساب قد يقيّد أو يحظر الرقم مع الرسائل الجماعية لأرقام لم تتواصل معك. خففنا الخطر بحد يومي يرتفع تدريجيًا وفواصل عشوائية وساعات عمل وإيقاف تلقائي، لكنه لا يُلغى. الأفضل رقم ثانوي.
+            الإيجنت يرد ويرسل عبر <b>واتساب الرسمي (Kapso)</b> على الخادم، 24 ساعة، حتى لو الكمبيوتر مطفأ. العميل الذي يراسلك يردّ عليه الإيجنت فورًا. أما أول رسالة لعميل لم يراسلك فتخرج بقالب معتمد من Meta، وتوقف الإرسال إذا رفض العميل أو طلب موظفًا، وكل شيء يخضع للحد اليومي وساعات العمل.
           </div>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
             <button className={`mc-btn2 ${s.enabled ? '' : 'p'}`} onClick={toggle} disabled={busy}>{s.enabled ? 'إيقاف الإرسال الآن' : 'تشغيل الإرسال'}</button>
             <span className="mc-st mc-n2">اليوم: {sentToday.first} من {cap} رسالة جديدة · {sentToday.reply} رد</span>
-            <span className={`mc-st ${online ? 'mc-g' : 'mc-a'}`}>{online ? 'الإضافة متصلة' : devices.length ? 'الإضافة غير متصلة' : 'لا يوجد جهاز'}</span>
+            <span className={`mc-st ${kapso?.number?.status === 'CONNECTED' ? 'mc-g' : 'mc-a'}`}>{kapso?.number ? (kapso.number.status === 'CONNECTED' ? 'الرقم متصل' : 'الرقم: ' + kapso.number.status) : kapso?.error ? 'تعذّر الاتصال بـ Kapso' : 'جاري الفحص…'}</span>
             {s.enabled && agent && agent.status !== 'active' && <span className="mc-st mc-a">الإيجنت «{agent.name}» غير مفعّل</span>}
           </div>
         </div>
@@ -180,31 +190,35 @@ export const AdminWhatsApp = () => {
             <input type="checkbox" style={{ width: 'auto' }} checked={s.auto_reply} onChange={e => patch({ auto_reply: e.target.checked })} />
             <span><b>الرد التلقائي</b><span className="mc-delta"> · يرد فقط في المحادثات التي بدأها هو، وبعد 12 ردًّا أو عند طلب موظف يتوقف وينبهك</span></span>
           </label>
+          <label style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <input type="checkbox" style={{ width: 'auto' }} checked={s.reply_to_new_inbound} onChange={e => patch({ reply_to_new_inbound: e.target.checked })} />
+            <span><b>الرد على من يراسل الرقم أول مرة</b><span className="mc-delta"> · عملاء كتبوا لك من إعلان أو موقع أو بحث، ويُسجَّلون كعملاء جدد</span></span>
+          </label>
           <div><button className="mc-btn2 p" onClick={() => save()} disabled={busy}>حفظ الإعدادات</button></div>
         </div>
       </article>
 
       <article className="mc-card" style={{ marginBottom: 14 }}>
-        <div className="mc-ph"><h3>ربط Chrome</h3><button className="mc-btn2" onClick={newDevice} disabled={busy}>إنشاء رمز جهاز</button></div>
-        <div style={{ padding: '0 20px 18px', display: 'grid', gap: 10 }}>
-          <ol className="mc-delta" style={{ lineHeight: 2, margin: 0, paddingInlineStart: 20 }}>
-            <li>في Chrome افتح <b>chrome://extensions</b> وفعّل «وضع المطوّر».</li>
-            <li>اضغط «تحميل إضافة غير مضغوطة» واختر مجلد <b>extensions/madar-whatsapp</b> من مشروع مدار.</li>
-            <li>اضغط «إنشاء رمز جهاز» هنا، وألصق الرمز في نافذة الإضافة واحفظ.</li>
-            <li>افتح <b>web.whatsapp.com</b> وسجّل الدخول، واترك التبويب مفتوحًا. تظهر شارة «مدار» أسفل الصفحة تبين ما يفعله.</li>
-          </ol>
-          {token && (
-            <div style={{ padding: 12, borderRadius: 12, background: 'var(--fill)', border: '1px solid var(--line-2)', direction: 'ltr', wordBreak: 'break-all', fontFamily: 'monospace', fontSize: 12.5 }}>
-              {token}
-              <div className="mc-delta" style={{ direction: 'rtl', marginTop: 6 }}>انسخه الآن. لن يظهر مرة ثانية.</div>
+        <div className="mc-ph"><h3>الربط مع Kapso</h3><button className="mc-btn2" onClick={refreshKapso}>تحديث الحالة</button></div>
+        <div style={{ padding: '0 20px 18px', display: 'grid', gap: 12 }}>
+          {kapso?.error && <div className="mc-delta">تعذّر الاتصال: {kapso.error === 'kapso_not_configured' ? 'مفتاح Kapso غير مضبوط على الخادم.' : kapso.error}</div>}
+          {kapso?.number && (
+            <div className="mc-act" style={{ cursor: 'default' }}>
+              <div className="mc-m"><b>{kapso.number.name?.trim() || 'رقم واتساب'}</b><small dir="ltr" style={{ textAlign: 'right' }}>{kapso.number.display ?? ''} · جودة الرقم: {kapso.number.quality ?? 'غير معروفة'}</small></div>
+              <span className={`mc-st ${kapso.number.status === 'CONNECTED' ? 'mc-g' : 'mc-a'}`}>{kapso.number.status === 'CONNECTED' ? 'متصل' : kapso.number.status}</span>
             </div>
           )}
-          {devices.map(d => (
-            <div key={d.id} className="mc-act" style={{ cursor: 'default' }}>
-              <div className="mc-m"><b>{d.name}</b><small>آخر اتصال: {d.last_seen_at ? `${dateShort(d.last_seen_at)} ${timeShort(d.last_seen_at)}` : 'لم يتصل بعد'}{d.last_status ? ` · ${d.last_status}` : ''}</small></div>
-              <button className="mc-btn2" onClick={() => revoke(d.id)}>إلغاء الجهاز</button>
-            </div>
-          ))}
+          <div className="mc-act" style={{ cursor: 'default' }}>
+            <div className="mc-m"><b>استقبال الرسائل (webhook)</b><small>يوصّل ردود العملاء للإيجنت لحظيًا</small></div>
+            {kapso?.webhook?.active ? <span className="mc-st mc-g">مربوط</span> : <button className="mc-btn2 p" onClick={connectWebhook} disabled={busy}>اربط الآن</button>}
+          </div>
+          <div className="mc-act" style={{ cursor: 'default' }}>
+            <div className="mc-m"><b>قالب الرسالة الأولى</b><small>{kapso?.template ? `${kapso.template.name} · ${kapso.template.category}${kapso.template.reason && kapso.template.reason !== 'NONE' ? ' · ' + kapso.template.reason : ''}` : 'لم يُرسل للاعتماد بعد'}</small></div>
+            {kapso?.template ? <span className={`mc-st ${tplOk ? 'mc-g' : kapso.template.status === 'REJECTED' ? 'mc-n2' : 'mc-a'}`}>{tplOk ? 'معتمد' : kapso.template.status === 'PENDING' ? 'بانتظار Meta' : kapso.template.status}</span> : <button className="mc-btn2 p" onClick={submitTemplate} disabled={busy}>أرسله للاعتماد</button>}
+          </div>
+          <div className="mc-delta" style={{ lineHeight: 1.9 }}>
+            الرسالة الأولى لعميل لم يراسلك لا تخرج إلا بعد اعتماد القالب. <b>للتجربة بدون عملاء:</b> فعّل «تشغيل الإرسال» مع إلغاء «إرسال رسائل جديدة»، ثم أرسل من جوالك الشخصي رسالة إلى رقم النشاط{kapso?.number?.display ? ` (${kapso.number.display})` : ''} واكتب سؤال عميل. يرد الإيجنت خلال ثوانٍ، وتظهر المحادثة في الأسفل.
+          </div>
         </div>
       </article>
 
