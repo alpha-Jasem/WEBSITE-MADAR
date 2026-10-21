@@ -1,6 +1,6 @@
 // Dashboard helper for the Kapso connection: status, webhook registration and the first-message template. Admin only.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
-import { KAPSO_PLATFORM, kapsoKey, loadSettings } from '../_shared/wa.ts'
+import { KAPSO_PLATFORM, kapsoKey, loadSettings, sendText } from '../_shared/wa.ts'
 
 const META = 'https://api.kapso.ai/meta/whatsapp/v24.0'
 const corsHeaders = {
@@ -45,6 +45,22 @@ Deno.serve(async req => {
     const r = await kapso(`${META}/${waba}/message_templates?name=${encodeURIComponent(s.template_name)}`)
     const t = (r.data?.data ?? []).find((x: any) => x.name === s.template_name && x.language === s.template_lang) ?? (r.data?.data ?? [])[0]
     return t ? { name: t.name, status: t.status, category: t.category, language: t.language, reason: t.rejected_reason } : null
+  }
+
+  if (body.action === 'send') {
+    const text = String(body.text || '').trim().slice(0, 1500)
+    if (!text) return json({ error: 'empty' }, 200)
+    const { data: conv } = await service.from('wa_conversations').select('id, phone, state, last_in_at').eq('id', String(body.conversation_id || '')).maybeSingle()
+    if (!conv) return json({ error: 'conversation_not_found' }, 200)
+    if (!conv.last_in_at || Date.now() - new Date(conv.last_in_at).getTime() > 23 * 3600000) return json({ error: 'window_closed' }, 200)
+    const { data: row } = await service.from('wa_messages').insert({ conversation_id: conv.id, direction: 'out', body: text, kind: 'reply', status: 'queued' }).select('id').single()
+    const r = await sendText(pnid, conv.phone, text)
+    const now = new Date().toISOString()
+    if (!r.ok) { await service.from('wa_messages').update({ status: 'failed', error: r.error }).eq('id', row!.id); return json({ error: 'send_failed', detail: r.error }, 200) }
+    await service.from('wa_messages').update({ status: 'sent', sent_at: now, wa_message_id: r.id ?? null }).eq('id', row!.id)
+    // once a person answers, the agent stays out of it until the owner hands the chat back
+    await service.from('wa_conversations').update({ last_out_at: now, state: conv.state === 'stopped' || conv.state === 'done' ? conv.state : 'paused' }).eq('id', conv.id)
+    return json({ ok: true })
   }
 
   if (body.action === 'register_webhook') {

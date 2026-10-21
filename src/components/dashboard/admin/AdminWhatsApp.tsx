@@ -33,6 +33,8 @@ export const AdminWhatsApp = () => {
   const [msgs, setMsgs] = useState<Msg[]>([])
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null)
   const [busy, setBusy] = useState(false)
+  const [draft, setDraft] = useState('')
+  const [sending, setSending] = useState(false)
 
   const load = useCallback(async () => {
     const start = new Date(Date.now() + 3 * 3600000); start.setUTCHours(0, 0, 0, 0)
@@ -109,11 +111,26 @@ export const AdminWhatsApp = () => {
 
 
   const setState = async (c: Conv, state: Conv['state']) => { await supabase.from('wa_conversations').update({ state }).eq('id', c.id); load() }
+  const loadMsgs = async (id: string) => {
+    const { data } = await supabase.from('wa_messages').select('id, direction, body, status, kind, created_at').eq('conversation_id', id).order('created_at').limit(60)
+    setMsgs((data ?? []) as Msg[])
+  }
+  const sendHuman = async (c: Conv) => {
+    const text = draft.trim()
+    if (!text || sending) return
+    setSending(true); setNote(null)
+    const { data, error } = await supabase.functions.invoke('kapso-admin', { body: { action: 'send', conversation_id: c.id, text } })
+    setSending(false)
+    if (error || !data?.ok) {
+      setNote({ ok: false, text: data?.error === 'window_closed' ? 'انتهت نافذة 24 ساعة منذ آخر رسالة من العميل، فلا يمكن الرد إلا بقالب معتمد.' : 'تعذّر إرسال الرد. حاول مرة ثانية.' })
+      return
+    }
+    setDraft(''); await loadMsgs(c.id); load()
+  }
   const openConv = async (c: Conv) => {
     if (open === c.id) { setOpen(null); return }
-    setOpen(c.id)
-    const { data } = await supabase.from('wa_messages').select('id, direction, body, status, kind, created_at').eq('conversation_id', c.id).order('created_at').limit(40)
-    setMsgs((data ?? []) as Msg[])
+    setOpen(c.id); setDraft('')
+    await loadMsgs(c.id)
   }
 
   if (!s) return <div className="mc-flat">جاري التحميل…</div>
@@ -244,11 +261,16 @@ export const AdminWhatsApp = () => {
                     </div>
                   ))}
                 </div>
+                {c.state !== 'stopped' && c.state !== 'done' && (
+                  <form className="mc-jc-in" onSubmit={e => { e.preventDefault(); void sendHuman(c) }}>
+                    <input value={draft} onChange={e => setDraft(e.target.value)} placeholder="اكتب ردك للعميل (يتولى المحادثة وقف الإيجنت)" aria-label="رد للعميل" maxLength={1500} disabled={sending} />
+                    <button type="submit" className="mc-jc-send" disabled={sending || !draft.trim()} aria-label="إرسال">←</button>
+                  </form>
+                )}
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {c.state !== 'paused' && <button className="mc-btn2" onClick={() => setState(c, 'paused')}>أتولى المحادثة (يتوقف الإيجنت)</button>}
                   {(c.state === 'paused' || c.state === 'escalated') && <button className="mc-btn2 p" onClick={() => setState(c, 'active')}>أعد الإيجنت للمحادثة</button>}
                   {c.state !== 'done' && <button className="mc-btn2" onClick={() => setState(c, 'done')}>أنهِ المحادثة</button>}
-                  <a className="mc-btn2" href={`https://wa.me/${c.phone}`} target="_blank" rel="noreferrer">افتح في واتساب</a>
                 </div>
               </div>
             )}
