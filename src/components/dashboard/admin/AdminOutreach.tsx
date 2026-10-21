@@ -4,6 +4,7 @@ import { supabase } from '../../../lib/supabase'
 import { addDoNotContact, loadDoNotContact, recordContact, syncDealForLead } from '../../../lib/deals'
 import { useRealtimeRefetch } from '../../../lib/realtime'
 import { LeadFocusPanel } from './LeadFocusPanel'
+import { deleteLeads } from '../../../lib/deals'
 
 type Status = 'new' | 'contacted' | 'replied' | 'meeting' | 'won' | 'lost' | 'no_answer'
 type TemplateKey = 'first' | 'reminder' | 'meeting' | 'offer' | 'confirm'
@@ -462,6 +463,14 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
     })
   }
 
+  const removeLead = async (l: OutreachLead) => {
+    if (!window.confirm(`حذف «${l.name}» نهائيًا؟ لن يرجع مع الجلب القادم.`)) return
+    const r = await deleteLeads([{ id: l.id, phone: l.phone }])
+    if (!r.ok) { setToast({ ok: false, text: 'تعذّر الحذف.' }); return }
+    setLeads(ls => ls.filter(x => x.id !== l.id)); setOpenId(null)
+    setToast({ ok: true, text: `حُذف «${l.name}».` })
+  }
+
   // the owner's quick verdict right after a call (always applied to the latest copy of the lead)
   const outcome = (kind: 'no_answer' | 'replied' | 'meeting' | 'lost' | 'undo') => {
     const base = toast?.lead
@@ -634,6 +643,10 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
                   <button key={k} className="chip" disabled={!l.is_mobile} aria-pressed="false" onClick={() => sendWhatsApp(l, k)}>{TEMPLATE_LABELS[k]}</button>
                 ))}
               </div>
+            </div>
+            <div>
+              <div className="lbl">إدارة العميل</div>
+              <div className="chips"><button className="chip" aria-pressed="false" onClick={() => removeLead(l)}>🗑 حذف هذا العميل</button></div>
             </div>
             <div>
               <div className="lbl">اقترح موعدًا</div>

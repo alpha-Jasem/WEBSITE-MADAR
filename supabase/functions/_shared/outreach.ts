@@ -104,7 +104,9 @@ export function inFocus(category: unknown, f: Focus | null) {
 
 async function insertLeads(service: SupabaseClient, allRows: Record<string, unknown>[]) {
   const { data: focus } = await service.from('lead_focus').select('preset, include_words, exclude_words').eq('id', 1).maybeSingle()
-  const rows = allRows.filter(r => inFocus(r.category, focus as Focus | null))
+  const { data: gone } = await service.from('deleted_leads').select('phone')
+  const deleted = new Set((gone ?? []).map(g => g.phone as string))
+  const rows = allRows.filter(r => inFocus(r.category, focus as Focus | null) && !deleted.has(String(r.phone)))
   let added = 0
   for (let i = 0; i < rows.length; i += 200) {
     const { data } = await service.from('outreach_leads')

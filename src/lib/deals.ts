@@ -102,3 +102,16 @@ export async function writeAudit(action: string, entityType: string, entityId: s
   if (!actor) return
   await supabase.from('audit_events').insert({ actor_id: actor, action, entity_type: entityType, entity_id: entityId, before, after })
 }
+
+
+/** Deletes leads for good. Their phones are remembered so a later fetch does not bring them back. */
+export async function deleteLeads(leads: { id: string; phone: string }[]) {
+  if (leads.length === 0) return { ok: true as const }
+  for (let i = 0; i < leads.length; i += 100) {
+    const chunk = leads.slice(i, i + 100)
+    await supabase.from('deleted_leads').upsert(chunk.map(l => ({ phone: l.phone })), { onConflict: 'phone', ignoreDuplicates: true })
+    const { error } = await supabase.from('outreach_leads').delete().in('id', chunk.map(l => l.id))
+    if (error) return { ok: false as const, error: error.message }
+  }
+  return { ok: true as const }
+}

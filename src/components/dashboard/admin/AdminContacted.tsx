@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
-import { syncDealForLead, recordContact, loadDoNotContact } from '../../../lib/deals'
+import { syncDealForLead, recordContact, loadDoNotContact, deleteLeads } from '../../../lib/deals'
 import { dateShort, timeShort } from '../../../lib/format'
 import { useRealtimeRefetch } from '../../../lib/realtime'
 
@@ -34,6 +34,7 @@ export const AdminContacted = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [limit, setLimit] = useState(60)
+  const [picked, setPicked] = useState<Set<string>>(new Set())
 
   const load = useCallback(async () => {
     const { data, error: e } = await supabase.from('outreach_leads')
@@ -93,6 +94,15 @@ export const AdminContacted = () => {
     contacted(l, 'whatsapp')
   }
   const saveNote = (l: Lead, text: string) => { if (text !== l.notes) patch(l, { notes: text }) }
+  const togglePick = (id: string) => setPicked(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n })
+  const remove = async (list: Lead[]) => {
+    if (list.length === 0) return
+    if (!window.confirm(list.length === 1 ? `حذف «${list[0].name}» نهائيًا؟ لن يرجع مع الجلب القادم.` : `حذف ${list.length} عميل نهائيًا؟ لن يرجعوا مع الجلب القادم.`)) return
+    const r = await deleteLeads(list.map(l => ({ id: l.id, phone: l.phone })))
+    if (!r.ok) { setError('تعذّر الحذف: ' + r.error); return }
+    setRows(rs => rs.filter(x => !list.some(l => l.id === x.id)))
+    setPicked(p => { const n = new Set(p); list.forEach(l => n.delete(l.id)); return n })
+  }
 
   return (
     <div>
@@ -105,11 +115,18 @@ export const AdminContacted = () => {
               <button key={k} className={`mc-chipbtn ${filter === k ? 'mc-on' : ''}`} onClick={() => { setFilter(k); setLimit(60) }}>{label} {n}</button>
             ))}
           </div>
+          {picked.size > 0 && (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <span className="mc-st mc-b">محدد {picked.size}</span>
+              <button className="mc-btn2" onClick={() => remove(rows.filter(r => picked.has(r.id)))}>🗑 حذف المحدد</button>
+              <button className="mc-btn2" onClick={() => setPicked(new Set())}>إلغاء التحديد</button>
+            </div>
+          )}
           <div className="mc-field"><input value={search} onChange={e => setSearch(e.target.value)} placeholder="ابحث بالاسم أو الرقم أو النشاط" aria-label="بحث" /></div>
         </div>
         <div style={{ overflowX: 'auto' }}>
           <table className="mc-tbl">
-            <thead><tr><th>العميل</th><th>إجراءات</th><th>الحالة</th><th>آخر تواصل</th><th>مرات</th><th>المتابعة القادمة</th><th>ملاحظة</th></tr></thead>
+            <thead><tr><th><input type="checkbox" aria-label="تحديد كل الظاهر" checked={shown.length > 0 && shown.slice(0, limit).every(l => picked.has(l.id))} onChange={e => setPicked(e.target.checked ? new Set(shown.slice(0, limit).map(l => l.id)) : new Set())} style={{ width: 'auto' }} /> العميل</th><th>إجراءات</th><th>الحالة</th><th>آخر تواصل</th><th>مرات</th><th>المتابعة القادمة</th><th>ملاحظة</th></tr></thead>
             <tbody>
               {loading && <tr><td colSpan={7} className="mc-flat">جاري التحميل…</td></tr>}
               {!loading && shown.length === 0 && <tr><td colSpan={7} className="mc-flat">لا يوجد عملاء في هذا التصنيف.</td></tr>}
@@ -118,7 +135,7 @@ export const AdminContacted = () => {
                 const block = blocked.has(l.phone)
                 return (
                   <tr key={l.id}>
-                    <td><b>{l.name}</b><div style={{ color: 'var(--ink-3)', fontSize: 12 }}>{l.category}{l.city ? ` · ${l.city}` : ''}</div><div dir="ltr" style={{ textAlign: 'right', fontSize: 12.5 }}>+{l.phone}</div></td>
+                    <td><label style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}><input type="checkbox" aria-label="تحديد" checked={picked.has(l.id)} onChange={() => togglePick(l.id)} style={{ width: 'auto', marginTop: 4 }} /><span><b>{l.name}</b><div style={{ color: 'var(--ink-3)', fontSize: 12 }}>{l.category}{l.city ? ` · ${l.city}` : ''}</div><div dir="ltr" style={{ textAlign: 'right', fontSize: 12.5 }}>+{l.phone}</div></span></label></td>
                     <td>
                       <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap', minWidth: 112 }}>
                         {block ? <span className="mc-st mc-n2">ممنوع التواصل</span> : <>
@@ -127,6 +144,7 @@ export const AdminContacted = () => {
                         </>}
                         <a className="mc-btn2" href={mapsUrl(l)} target="_blank" rel="noreferrer">📍</a>
                         <button className="mc-btn2" onClick={() => navigate(`/admin/outreach?q=${encodeURIComponent(l.name)}`)}>اجتماع / تفاصيل</button>
+                        <button className="mc-btn2" onClick={() => remove([l])} aria-label="حذف العميل">🗑 حذف</button>
                       </span>
                     </td>
                     <td>
