@@ -192,6 +192,7 @@ const CSS = `
 .ol .tools{display:flex;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap;align-items:center}
 .ol .tools input{flex:1 1 200px;width:auto}.ol .tools select{width:auto}
 .ol .tools-row{display:contents}
+.ol .statusbar{display:flex;gap:6px;padding:10px 14px;overflow-x:auto;border-bottom:1px solid var(--line);scrollbar-width:none}.ol .statusbar .chip{flex:0 0 auto;white-space:nowrap}
 .ol .lead{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.1fr) auto;gap:14px;align-items:center;padding:13px 16px;border-bottom:1px solid var(--line);transition:background .15s}
 .ol .lead:hover{background:rgba(80,120,255,.05)}
 .ol .lead:last-child{border:0}
@@ -288,7 +289,7 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
   // modals
   const [meetingFor, setMeetingFor] = useState<OutreachLead | null>(null)
   const [lostFor, setLostFor] = useState<OutreachLead | null>(null)
-  const [toast, setToast] = useState<{ ok: boolean; text: string; link?: string; lead?: OutreachLead } | null>(null)
+  const [toast, setToast] = useState<{ ok: boolean; text: string; link?: string; lead?: OutreachLead; call?: boolean; prev?: Partial<OutreachLead> } | null>(null)
   const [source, setSource] = useState<'google_maps' | 'linkedin'>('google_maps')
   const [daily, setDaily] = useState<DailySettings>(DEFAULT_DAILY)
   const [push, setPush] = useState<{ state: 'unsupported' | 'off' | 'on' | 'denied' | 'busy'; note?: string }>({ state: 'off' })
@@ -453,6 +454,23 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
     const hasFuture = lead.next_follow_up && new Date(lead.next_follow_up) > new Date()
     if (open && !hasFuture) { const d = new Date(); d.setHours(10, 0, 0, 0); patch.next_follow_up = new Date(d.getTime() + 2 * DAY).toISOString() }
     updateLead(lead.id, patch)
+    const moved = patch.status && patch.status !== lead.status
+    setToast({
+      ok: true, call: channel === 'call', lead,
+      prev: { status: lead.status, next_follow_up: lead.next_follow_up, last_contacted_at: lead.last_contacted_at, contact_count: lead.contact_count },
+      text: `${channel === 'call' ? 'سُجّل اتصالك' : 'سُجّلت رسالتك'} بـ«${lead.name}».${moved ? ' انتقل من «جديد» إلى «تم التواصل»' : ''}${patch.next_follow_up ? `، وذكّرتك بالمتابعة ${fmtFollow(patch.next_follow_up).text}` : ''}.${channel === 'call' ? ' كيف كانت المكالمة؟' : ''}`,
+    })
+  }
+
+  // the owner's quick verdict right after a call (always applied to the latest copy of the lead)
+  const outcome = (kind: 'no_answer' | 'replied' | 'meeting' | 'lost' | 'undo') => {
+    const base = toast?.lead
+    if (!base) return
+    const lead = leads.find(x => x.id === base.id) ?? base
+    if (kind === 'undo') { updateLead(lead.id, { ...(toast?.prev ?? {}) }); setToast({ ok: true, text: 'أُلغي تسجيل الاتصال، ورجع العميل كما كان.' }); return }
+    setToast(null)
+    if (kind === 'meeting') { setMeetingFor(lead); return }
+    setStatus(lead, kind)
   }
 
   /* ---------- messages ---------- */
@@ -688,8 +706,15 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
           {toast && (
             <div className="panel" style={{ padding: '10px 16px', display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
               <span className={toast.ok ? 'msg-ok' : 'msg-bad'}>{toast.text}</span>
-              <span style={{ display: 'flex', gap: 8 }}>
-                {toast.lead && toast.lead.is_mobile && <button className="btn wa" onClick={() => sendWhatsApp(toast.lead!, 'confirm')}>أرسل التأكيد للعميل</button>}
+              <span style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {toast.call && (<>
+                  <button className="btn" onClick={() => outcome('no_answer')}>لم يرد</button>
+                  <button className="btn call" onClick={() => outcome('replied')}>رد ومهتم</button>
+                  <button className="btn cal" onClick={() => outcome('meeting')}>اجتماع</button>
+                  <button className="btn" onClick={() => outcome('lost')}>غير مهتم</button>
+                  <button className="btn" onClick={() => outcome('undo')}>تراجع</button>
+                </>)}
+                {!toast.call && toast.lead && toast.lead.is_mobile && toast.link && <button className="btn wa" onClick={() => sendWhatsApp(toast.lead!, 'confirm')}>أرسل التأكيد للعميل</button>}
                 {toast.link && <a className="btn" href={toast.link} target="_blank" rel="noreferrer">افتح الحدث</a>}
                 <button className="btn" onClick={() => setToast(null)}>إغلاق</button>
               </span>
@@ -715,6 +740,12 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
           {showFocus && <LeadFocusPanel onChanged={load} />}
 
           <section className="panel">
+            <div className="statusbar" role="tablist" aria-label="حالة العميل">
+              <button className="chip" aria-pressed={statusFilter === 'all'} onClick={() => { setStatusFilter('all'); setLimit(PAGE_SIZE) }}>الكل {leads.length}</button>
+              {(Object.keys(STATUS_META) as Status[]).map(k => (
+                <button key={k} className="chip" aria-pressed={statusFilter === k} onClick={() => { setStatusFilter(k); setLimit(PAGE_SIZE) }}>{STATUS_META[k].label} {leads.filter(l => l.status === k).length}</button>
+              ))}
+            </div>
             <div className="tools">
               <input placeholder="بحث بالاسم أو الرقم أو المدينة" value={search} onChange={e => { setSearch(e.target.value); setLimit(PAGE_SIZE) }} />
               <div className="tools-row">
