@@ -7,6 +7,7 @@ import type { Deal } from '../../../lib/deals'
 import { STAGE_LABEL, isClosed, stageRank, type DealStage } from '../../../lib/dealStages'
 import { buildBrief } from '../../../lib/jarvis'
 import { JarvisChat } from './JarvisChat'
+import { CountUp, JarvisHero } from './JarvisHero'
 import { bucketWindow, collectionSeries, dailyCollection, goalProgress, netCollection, pctChange, type PaymentRow, type Period, type RefundRow } from '../../../lib/collections'
 import { dateShort, monthKey, nf, riyadhDayStart, sar, timeShort } from '../../../lib/format'
 import { useRealtimeRefetch } from '../../../lib/realtime'
@@ -60,6 +61,7 @@ export const AdminCommandDeck = () => {
   const [taskTitle, setTaskTitle] = useState('')
   const [goalEdit, setGoalEdit] = useState(false)
   const [goalInput, setGoalInput] = useState('')
+  const [thinking, setThinking] = useState(false)
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true)
@@ -169,6 +171,16 @@ export const AdminCommandDeck = () => {
   if (failing.length > 0) actions.push({ id: 'ig', icon: 'gear', title: 'تكاملات تحتاج مراجعة', sub: failing.slice(0, 2).join('، '), chip: 'يحتاج مراجعة', tone: 'a', to: '/admin/settings' })
   const shownActions = actions.slice(0, 5)
 
+  // what Jarvis watches, as moons around him; any change in the underlying rows makes the core flare
+  const agentSent = Object.values(x.sentToday).reduce((a, b) => a + b, 0)
+  const moons = [
+    { key: 'follow', label: 'متابعات اليوم', count: pulse.due.length + pulse.meetingsToday.length, color: '#5F7DFF' },
+    { key: 'deals', label: 'صفقات مفتوحة', count: open.length, color: '#E9EAF0' },
+    { key: 'money', label: 'دفعات للتحقق', count: pending.length + x.bankNotices, color: '#F0A843' },
+    { key: 'agents', label: 'رسائل الإيجنت اليوم', count: agentSent, color: '#A99BFF' },
+  ]
+  const activity = payments.length + deals.length + tasks.length + agentSent + pulse.due.length
+
   const visibleTasks = tasks.filter(t => !t.done || (t.done_at && new Date(t.done_at) >= today)).slice(0, 5)
 
   /* ---------- writes ---------- */
@@ -213,11 +225,29 @@ export const AdminCommandDeck = () => {
     <div className="mc-deck">
       {error && <div className="mc-banner">{error}</div>}
 
+      <JarvisHero
+        status={loading ? 'يقرأ بياناتك…' : brief.tone === 'calm' ? 'كل شيء تحت السيطرة' : brief.tone === 'alert' ? 'فيه شي يحتاجك الآن' : 'يتابع معك'}
+        tone={brief.tone}
+        summary={brief.summary}
+        moons={moons}
+        pulse={activity}
+        thinking={thinking}
+        stats={[
+          { value: pulse.due.length, label: 'متابعات اليوم' },
+          { value: pulse.meetingsToday.length, label: 'اجتماعات اليوم' },
+          { value: actions.length, label: 'إجراءات تحتاجك' },
+        ]}
+        actions={brief.actions.map(a => ({ ...a, icon: TILE_ICON[a.id] ?? 'doc' }))}
+        onAction={navigate}
+        onStart={() => navigate(brief.actions[0]?.to ?? '/admin/outreach')}
+        chat={<JarvisChat onChanged={() => load(true)} onBusy={setThinking} />}
+      />
+
       {/* KPIs */}
       <section className="mc-kpis">
         <article className="mc-card mc-kpi">
           <div className="mc-h"><div className="mc-ico"><McIcon name="wallet" /></div><span>المحصل اليوم</span></div>
-          <div className="mc-big">{nf(collectedToday)} <small>ر.س</small></div>
+          <div className="mc-big"><CountUp value={collectedToday} /> <small>ر.س</small></div>
           <Delta pct={pctChange(collectedToday, collectedYesterday)} label="مقارنة بالأمس" />
           <svg className="mc-spark" viewBox="0 0 140 60" preserveAspectRatio="none" aria-hidden="true">
             <defs><linearGradient id="mcSg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#4f8dff" stopOpacity=".45" /><stop offset="1" stopColor="#4f8dff" stopOpacity="0" /></linearGradient></defs>
@@ -237,7 +267,7 @@ export const AdminCommandDeck = () => {
               <b>{progress === null ? '—' : `${progress}%`}</b>
             </div>
             <div>
-              <div className="mc-big" style={{ margin: 0, fontSize: 28 }}>{nf(collectedMonth)} <small>ر.س</small></div>
+              <div className="mc-big" style={{ margin: 0, fontSize: 28 }}><CountUp value={collectedMonth} /> <small>ر.س</small></div>
               {goalEdit ? (
                 <div className="mc-addrow" style={{ margin: '6px 0 0' }}>
                   <input type="number" min={1} value={goalInput} onChange={e => setGoalInput(e.target.value)} aria-label="الهدف الشهري بالريال" autoFocus />
@@ -255,7 +285,7 @@ export const AdminCommandDeck = () => {
 
         <article className="mc-card mc-kpi mc-hot">
           <div className="mc-h"><div className="mc-ico"><McIcon name="hand" /></div><span>الصفقات المغلقة</span></div>
-          <div className="mc-big">{nf(wonMonth)}</div>
+          <div className="mc-big"><CountUp value={wonMonth} /></div>
           <button className="mc-pillbtn" onClick={() => navigate('/admin/pipeline')}>عرض التفاصيل <McIcon name="arrow" size={14} /></button>
           <Delta pct={pctChange(won7, wonPrev7)} label="مقارنة بالأسبوع الماضي" />
           <Bars values={wonDays} />
@@ -263,14 +293,14 @@ export const AdminCommandDeck = () => {
 
         <article className="mc-card mc-kpi">
           <div className="mc-h"><div className="mc-ico"><McIcon name="users" /></div><span>العملاء المهتمون</span></div>
-          <div className="mc-big">{nf(interested.length)}</div>
+          <div className="mc-big"><CountUp value={interested.length} /></div>
           <Delta pct={pctChange(int7, intPrev7)} label="مقارنة بالأسبوع الماضي" />
           <Bars values={interestedDays} violet />
         </article>
       </section>
 
-      {/* tasks + Jarvis */}
-      <section className="mc-g2">
+      {/* tasks + actions */}
+      <section className="mc-g2 jv-even">
         <article className="mc-card">
           <div className="mc-ph"><h3>مهام اليوم</h3><div className="mc-sub"><span className={`mc-live ${tdState.ids.length > 0 && !tdState.err && tdState.ok ? '' : 'mc-off'}`} />{tdState.ids.length === 0 ? <button className="mc-linkbtn" onClick={() => navigate('/admin/settings')}>Todoist: اختر مشروعًا</button> : tdState.err ? `Todoist: خطأ في المزامنة` : tdState.ok ? `Todoist متزامن · ${timeShort(tdState.ok)}` : 'Todoist: لم يُزامَن بعد'}</div></div>
           {visibleTasks.length === 0 && <div className="mc-flat">لا توجد مهام لليوم.</div>}
@@ -292,28 +322,6 @@ export const AdminCommandDeck = () => {
           )}
         </article>
 
-        <article className="mc-card mc-jarvis">
-          <div className="mc-tiles">
-            {brief.actions.length === 0 && <div className="mc-tile"><div className="mc-ico"><McIcon name="check" /></div><div><b>لا إجراءات مقترحة</b><small>{loading ? 'جاري التحميل…' : 'كل شيء تحت السيطرة الآن'}</small></div></div>}
-            {brief.actions.map(a => (
-              <button key={a.id} className="mc-tile" onClick={() => navigate(a.to)}>
-                <div className="mc-ico"><McIcon name={TILE_ICON[a.id] ?? 'doc'} /></div>
-                <div><b>{a.title}</b><small>{a.reason}</small></div>
-              </button>
-            ))}
-          </div>
-          <div className="mc-jt">
-            <h2>جارفيس</h2><h4>أولوياتك اليوم</h4>
-            <p>{brief.summary}</p>
-            <button className="mc-go" onClick={() => navigate(brief.actions[0]?.to ?? '/admin/outreach')}><McIcon name="arrow" size={16} />أبدأ يومي</button>
-            <JarvisChat onChanged={() => load(true)} />
-          </div>
-          <div className="mc-orbwrap"><div className="mc-orb" aria-hidden="true"><span className="mc-r mc-r3" /><span className="mc-core" /><span className="mc-r mc-r1" /><span className="mc-r mc-r2" /></div></div>
-        </article>
-      </section>
-
-      {/* actions + chart */}
-      <section className="mc-g2">
         <article className="mc-card">
           <div className="mc-ph"><h3>إجراءات تحتاجك</h3>{shownActions.length > 0 && <span className="mc-badge3">{nf(actions.length)}</span>}</div>
           {shownActions.length === 0 && <div className="mc-flat">لا توجد إجراءات معلّقة.</div>}
@@ -326,7 +334,9 @@ export const AdminCommandDeck = () => {
             </button>
           ))}
         </article>
+      </section>
 
+      <section className="jv-chartrow">
         <article className="mc-card">
           <div className="mc-ph">
             <h3>المبيعات والتحصيل</h3>

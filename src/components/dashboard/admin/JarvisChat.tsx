@@ -12,10 +12,11 @@ const speechCtor = (): (new () => SpeechRec) | null => {
 }
 
 // Jarvis follows what the owner says and edits the dashboard accordingly (tasks, goal, deals, follow-ups, notes).
-export function JarvisChat({ onChanged, context, compact, suggestions }: { onChanged: () => void; context?: { lead_name: string; lead_phone?: string; on_call?: boolean }; compact?: boolean; suggestions?: string[] }) {
+export function JarvisChat({ onChanged, context, compact, suggestions, onBusy }: { onChanged: () => void; context?: { lead_name: string; lead_phone?: string; on_call?: boolean }; compact?: boolean; suggestions?: string[]; onBusy?: (busy: boolean) => void }) {
   const [msgs, setMsgs] = useState<Msg[]>([])
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
+  useEffect(() => { onBusy?.(busy) }, [busy]) // eslint-disable-line react-hooks/exhaustive-deps
   const [listening, setListening] = useState(false)
   const recRef = useRef<SpeechRec | null>(null)
   const endRef = useRef<HTMLDivElement>(null)

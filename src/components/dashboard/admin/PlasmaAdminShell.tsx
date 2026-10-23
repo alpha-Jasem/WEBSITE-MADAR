@@ -10,6 +10,7 @@ import { dateLong, nf, timeShort } from '../../../lib/format'
 import '../../../styles/admin-plasma.css'
 import '../../../styles/admin-shell.css'
 import '../../../styles/admin-mc.css'
+import '../../../styles/admin-orbit.css'
 
 interface Tab { label: string; to: string }
 interface Section { id: string; label: string; icon: McIconName; to: string; match: string[]; exact?: boolean; tabs?: Tab[] }
@@ -101,7 +102,7 @@ function Shell({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  useSystemChrome(theme === 'dark' ? '#040815' : '#eef2fb')
+  useSystemChrome(theme === 'dark' ? '#07080B' : '#F5F6F8')
   useEffect(() => {
     document.body.setAttribute('data-mc-theme', theme)
     return () => document.body.removeAttribute('data-mc-theme')
