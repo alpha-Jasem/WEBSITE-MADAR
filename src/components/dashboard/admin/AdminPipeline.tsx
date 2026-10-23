@@ -7,7 +7,16 @@ import { useRealtimeRefetch } from '../../../lib/realtime'
 import { McIcon } from './mcIcons'
 
 const LOST_REASONS = ['السعر', 'عندهم نظام حالياً', 'غير مهتم', 'قرار لاحقاً', 'طلب التوقف', 'أخرى']
-const BOARD_STAGES = DEAL_STAGES.filter(s => s !== 'lost') as DealStage[]
+// The board shows four working columns plus "won"; the nine stored stages are unchanged underneath, so Outreach sync, Jarvis and reports keep working.
+const LANES: { key: string; label: string; stages: DealStage[] }[] = [
+  { key: 'new', label: 'جديد', stages: ['new'] },
+  { key: 'contact', label: 'تواصل', stages: ['contacted', 'interested'] },
+  { key: 'meeting', label: 'اجتماع', stages: ['qualified'] },
+  { key: 'offer', label: 'عرض ودفع', stages: ['offer_sent', 'negotiation', 'awaiting_payment'] },
+  { key: 'won', label: 'مغلق بنجاح', stages: ['won'] },
+]
+const FLOW: DealStage[] = ['new', 'contacted', 'interested', 'qualified', 'offer_sent', 'negotiation', 'awaiting_payment', 'won']
+const nextOf = (s: DealStage): DealStage | null => { const i = FLOW.indexOf(s); return i >= 0 && i < FLOW.length - 1 ? FLOW[i + 1] : null }
 const VIEW_KEY = 'madar_deals_view'
 type View = 'board' | 'list'
 type Sort = 'stage' | 'next' | 'updated'
@@ -35,7 +44,7 @@ export const AdminPipeline = () => {
   const [view, setView] = useState<View>(readView)
   const [sort, setSort] = useState<Sort>('stage')
   const [dragId, setDragId] = useState<string | null>(null)
-  const [over, setOver] = useState<DealStage | null>(null)
+  const [over, setOver] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     const { data, error: e } = await supabase.from('deals').select('*').order('updated_at', { ascending: false }).limit(500)
@@ -104,16 +113,16 @@ export const AdminPipeline = () => {
   }
 
   /* ---------- drag and drop between stages ---------- */
-  const drop = (stage: DealStage) => {
+  const drop = (lane: (typeof LANES)[number]) => {
     const d = deals.find(x => x.id === dragId)
-    if (d && d.stage !== stage) moveStage(d, stage)
+    if (d && !lane.stages.includes(d.stage)) moveStage(d, lane.stages[0])
     setDragId(null)
     setOver(null)
   }
-  const laneDnD = (stage: DealStage) => ({
-    onDragOver: (e: DragEvent) => { if (!dragId) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (over !== stage) setOver(stage) },
-    onDragLeave: (e: DragEvent) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setOver(o => (o === stage ? null : o)) },
-    onDrop: (e: DragEvent) => { e.preventDefault(); drop(stage) },
+  const laneDnD = (lane: (typeof LANES)[number]) => ({
+    onDragOver: (e: DragEvent) => { if (!dragId) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (over !== lane.key) setOver(lane.key) },
+    onDragLeave: (e: DragEvent) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setOver(o => (o === lane.key ? null : o)) },
+    onDrop: (e: DragEvent) => { e.preventDefault(); drop(lane) },
   })
 
   const open = deals.filter(d => !isClosed(d.stage))
@@ -124,29 +133,41 @@ export const AdminPipeline = () => {
   const late = (d: Deal) => !!d.next_step_at && new Date(d.next_step_at) < today && !isClosed(d.stage)
   const current = deals.find(d => d.id === openId) ?? null
 
-  const card = (d: Deal) => (
-    <button
-      key={d.id}
-      type="button"
-      className={`jv-deal ${dragId === d.id ? 'is-drag' : ''} ${openId === d.id ? 'is-open' : ''}`}
-      draggable
-      onDragStart={e => { e.dataTransfer.setData('text/plain', d.id); e.dataTransfer.effectAllowed = 'move'; setDragId(d.id) }}
-      onDragEnd={() => { setDragId(null); setOver(null) }}
-      onClick={() => openDeal(d)}
-    >
-      <b>{d.company_name}</b>
-      <small>{d.contact_name || '—'}{d.contact_phone && <> · <span className="jv-ltr">+{d.contact_phone}</span></>}</small>
-      {d.next_step || d.next_step_at
-        ? <span className={`jv-next ${late(d) ? 'late' : ''}`}>{d.next_step || 'خطوة قادمة'}{d.next_step_at && ` · ${dateShort(d.next_step_at)}`}</span>
-        : <span className="jv-next none">بلا خطوة قادمة</span>}
-      {(isOwner(d) || d.lost_reason) && (
-        <span className="jv-tags">
-          {isOwner(d) && <i>بيدك</i>}
-          {d.lost_reason && <i>السبب: {d.lost_reason}</i>}
-        </span>
-      )}
-    </button>
-  )
+  const card = (d: Deal, showStage = false) => {
+    const next = nextOf(d.stage)
+    return (
+      <div
+        key={d.id}
+        role="button"
+        tabIndex={0}
+        className={`jv-deal ${dragId === d.id ? 'is-drag' : ''} ${openId === d.id ? 'is-open' : ''}`}
+        draggable
+        onDragStart={e => { e.dataTransfer.setData('text/plain', d.id); e.dataTransfer.effectAllowed = 'move'; setDragId(d.id) }}
+        onDragEnd={() => { setDragId(null); setOver(null) }}
+        onClick={() => openDeal(d)}
+        onKeyDown={e => { if (e.key === 'Enter') openDeal(d) }}
+      >
+        <b>{d.company_name}</b>
+        <small>{d.contact_name || '—'}{d.contact_phone && <> · <span className="jv-ltr">+{d.contact_phone}</span></>}</small>
+        {d.next_step || d.next_step_at
+          ? <span className={`jv-next ${late(d) ? 'late' : ''}`}>{d.next_step || 'خطوة قادمة'}{d.next_step_at && ` · ${dateShort(d.next_step_at)}`}</span>
+          : <span className="jv-next none">بلا خطوة قادمة</span>}
+        {(showStage || isOwner(d) || d.lost_reason) && (
+          <span className="jv-tags">
+            {showStage && <i className="stage">{STAGE_LABEL[d.stage]}</i>}
+            {isOwner(d) && <i>بيدك</i>}
+            {d.lost_reason && <i>السبب: {d.lost_reason}</i>}
+          </span>
+        )}
+        {!isClosed(d.stage) && (
+          <span className="jv-quick" onClick={e => e.stopPropagation()}>
+            {next && <button type="button" onClick={() => moveStage(d, next)}>{STAGE_LABEL[next]} ←</button>}
+            <button type="button" className="lose" onClick={() => setLostFor(d)}>خسارة</button>
+          </span>
+        )}
+      </div>
+    )
+  }
 
   const sorted = useMemo(() => {
     const list = deals.filter(d => showLost || d.stage !== 'lost')
@@ -191,12 +212,15 @@ export const AdminPipeline = () => {
       ) : view === 'board' ? (
         <>
           <div className="mc-board jv-board">
-            {BOARD_STAGES.map(stage => {
-              const list = byStage.get(stage)!
+            {LANES.map(lane => {
+              const list = lane.stages.flatMap(st => byStage.get(st)!)
               return (
-                <section key={stage} className={`jv-lane ${list.length === 0 ? 'is-empty' : ''} ${over === stage ? 'is-over' : ''}`} aria-label={STAGE_LABEL[stage]} {...laneDnD(stage)}>
-                  <div className="jv-lane-h"><span>{STAGE_LABEL[stage]}</span><span className="num">{nf(list.length)}</span></div>
-                  <div className="jv-lane-b">{list.map(card)}</div>
+                <section key={lane.key} className={`jv-lane ${over === lane.key ? 'is-over' : ''}`} aria-label={lane.label} {...laneDnD(lane)}>
+                  <div className="jv-lane-h"><span>{lane.label}</span><span className="num">{nf(list.length)}</span></div>
+                  <div className="jv-lane-b">
+                    {list.map(d => card(d, lane.stages.length > 1))}
+                    {list.length === 0 && <div className="jv-lane-empty">{dragId ? 'أفلتها هنا' : 'لا شيء هنا'}</div>}
+                  </div>
                 </section>
               )
             })}
@@ -204,12 +228,7 @@ export const AdminPipeline = () => {
           {showLost && (
             <div style={{ marginTop: 22 }}>
               <div style={{ fontWeight: 700, marginBottom: 10 }}>الخسائر</div>
-              <div className="jv-lostgrid">{byStage.get('lost')!.map(card)}</div>
-            </div>
-          )}
-          {dragId && (
-            <div className={`jv-lostdrop ${over === 'lost' ? 'is-over' : ''}`} {...laneDnD('lost')}>
-              <McIcon name="close" size={16} />اسحبها هنا لتسجيلها خسارة
+              <div className="jv-lostgrid">{byStage.get('lost')!.map(d => card(d))}</div>
             </div>
           )}
         </>
