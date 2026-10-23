@@ -38,6 +38,7 @@ export const AdminPipeline = () => {
   const [showLost, setShowLost] = useState(false)
   const [adding, setAdding] = useState(false)
   const [lostFor, setLostFor] = useState<Deal | null>(null)
+  const [wonFor, setWonFor] = useState<Deal | null>(null)
   const [openId, setOpenId] = useState<string | null>(null)
   const [events, setEvents] = useState<DealEvent[]>([])
   const [form, setForm] = useState({ company_name: '', contact_name: '', contact_phone: '', service: '' })
@@ -79,6 +80,7 @@ export const AdminPipeline = () => {
 
   const moveStage = (deal: Deal, stage: DealStage) => {
     if (stage === 'lost') { setLostFor(deal); return }
+    if (stage === 'won') { setWonFor(deal); return }
     patchDeal(deal, { stage, closed_at: isClosed(stage) ? new Date().toISOString() : null, lost_reason: '' },
       { type: 'stage_change', data: { from: deal.stage, to: stage } })
   }
@@ -322,6 +324,22 @@ export const AdminPipeline = () => {
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button className="btn btn-ghost" onClick={() => setAdding(false)}>إلغاء</button>
               <button className="btn btn-primary" onClick={addDeal} disabled={!form.company_name.trim()}>إضافة</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {wonFor && (
+        <div className="pal-bg" onClick={() => setWonFor(null)}>
+          <div className="pal" style={{ padding: 20, display: 'grid', gap: 12 }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontWeight: 700 }}>إغلاق الصفقة بنجاح: {wonFor.company_name}</div>
+            <div className="muted" style={{ fontSize: 13 }}>تُسجَّل الصفقة كعميل مغلق بنجاح. تقدر تعيد فتحها من اللوحة الجانبية.</div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button className="btn btn-ghost" onClick={() => setWonFor(null)}>إلغاء</button>
+              <button className="btn btn-primary" onClick={() => {
+                patchDeal(wonFor, { stage: 'won', closed_at: new Date().toISOString(), lost_reason: '' }, { type: 'stage_change', data: { from: wonFor.stage, to: 'won' } })
+                setWonFor(null)
+              }}>تأكيد الإغلاق</button>
             </div>
           </div>
         </div>
