@@ -83,7 +83,7 @@ export const AdminPipeline = () => {
   const pipelineValue = priced.reduce((sum, d) => sum + (d.value_net ?? 0), 0)
 
   const card = (d: Deal) => (
-    <div key={d.id} className="card" style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div key={d.id} className="card jv-deal" style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
       <button onClick={() => openDeal(d)} style={{ textAlign: 'start', fontWeight: 600, fontSize: 13.5 }}>{d.company_name}</button>
       <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>
         {d.contact_name || '—'}
@@ -152,8 +152,8 @@ export const AdminPipeline = () => {
       ) : (
         <div className="mc-board" style={{ display: 'grid', gridAutoFlow: 'column', gridAutoColumns: 'minmax(240px, 1fr)', gap: 12, overflowX: 'auto', paddingBottom: 8 }}>
           {BOARD_STAGES.map(stage => (
-            <div key={stage} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ fontWeight: 700, fontSize: 13, display: 'flex', justifyContent: 'space-between' }}>
+            <div key={stage} className="jv-lane" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div className="jv-lane-h" style={{ fontWeight: 700, fontSize: 13, display: 'flex', justifyContent: 'space-between' }}>
                 {STAGE_LABEL[stage]}<span className="muted num">{nf(byStage.get(stage)!.length)}</span>
               </div>
               {byStage.get(stage)!.map(card)}

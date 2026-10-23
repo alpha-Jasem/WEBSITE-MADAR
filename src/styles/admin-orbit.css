@@ -66,8 +66,54 @@ body.plasma-admin[data-mc-theme="light"]{background:#F5F6F8 !important}
 
 /* older Plasma pages inside the shell */
 .mc-root .card,.mc-root .stat{background:var(--card) !important;border:1px solid var(--line) !important;box-shadow:var(--shadow-sm) !important;backdrop-filter:none !important}
-.mc-root .stat-value{font-family:var(--num)}
+.mc-root .stat{border-radius:18px}
+.mc-root .stat::after{display:none}
+.mc-root .stat:hover{border-color:var(--line-2) !important;box-shadow:var(--shadow-sm) !important}
+.mc-root .stat:first-child .stat-value{text-shadow:none;animation:none}
+.mc-root .stat-value{font-family:var(--num);font-weight:600}
+.mc-root .btn{border-radius:999px}
 .mc-root .btn-primary,.mc-root .btn.primary{background:var(--blue) !important;box-shadow:none !important}
+.mc-root .btn-primary:hover{background:#2B43E0 !important}
+.mc-root .btn-ghost{background:var(--fill) !important;border:1px solid var(--line) !important;color:var(--ink-2) !important}
+.mc-root .btn-ghost:hover{background:var(--fill-hover) !important;color:var(--ink) !important}
+.mc-root .pill{background:var(--fill) !important;border:1px solid var(--line) !important}
+.mc-root .tbl th{background:var(--fill-2) !important;border-bottom:1px solid var(--line) !important}
+.mc-root .tbl td{border-color:var(--line) !important}
+.mc-root .sec-title{font-size:20px}
+
+/* ---- Sales: Outreach (its own inline styles, so these need the extra .mc-root) ---- */
+.mc-root .ol .slip,.mc-root .ol .panel{border-radius:18px;box-shadow:var(--shadow-sm)}
+.mc-root .ol .slip h2,.mc-root .ol .modal h3{font-weight:700}
+.mc-root .ol .big{font-family:var(--num);font-weight:600;letter-spacing:-.03em}
+.mc-root .ol .big small{font-family:var(--font)}
+.mc-root .ol .mini b{font-family:var(--num);font-weight:600}
+.mc-root .ol .seg{border-radius:999px;padding:3px;gap:2px;background:var(--fill-2)}
+.mc-root .ol .seg button{border:0;border-radius:999px;font-family:var(--num);font-weight:600}
+.mc-root .ol .chip{font-weight:500}
+.mc-root .ol .chip[aria-pressed=true]{background:rgba(59,91,250,.14);border-color:var(--blue);color:var(--ink)}
+.mc-root .ol .go{background:var(--blue);border-radius:999px;box-shadow:none;font-weight:600}
+.mc-root .ol .go:hover{background:#2B43E0}
+.mc-root .ol .btn{border-radius:999px;font-weight:600}
+.mc-root .ol .btn.wa{background:#1FA463;border-color:#1FA463}
+.mc-root .ol .btn.cal{background:#7C6CF0;border-color:#7C6CF0}
+.mc-root .ol select,.mc-root .ol input,.mc-root .ol textarea{border-radius:12px}
+.mc-root .ol .lead:hover{background:var(--fill-hover)}
+.mc-root .ol .lead.hot{background:linear-gradient(270deg,rgba(59,91,250,.09),transparent 70%)}
+.mc-root .ol .lead.hot .nm::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--blue-2);box-shadow:0 0 0 4px rgba(95,125,255,.18)}
+.mc-root .ol .hotb{background:var(--blue);border-radius:999px}
+.mc-root .ol .ph{font-family:var(--num)}
+.mc-root .ol .due{border-color:rgba(255,138,115,.35);background:rgba(255,138,115,.05)}
+.mc-root .ol .due .panel-h{color:var(--red)}
+.mc-root .ol th{background:var(--fill-2)}
+.mc-root .ol .modal{border-radius:20px}
+
+/* ---- Sales: deals board ---- */
+.mc-root .jv-lane{background:var(--fill-2);border:1px solid var(--line);border-radius:18px;padding:10px;min-height:120px}
+.mc-root .jv-lane-h{padding:4px 6px 2px;align-items:center}
+.mc-root .jv-lane-h .num{font-family:var(--num);font-size:12px;min-width:24px;height:22px;padding:0 8px;border-radius:999px;background:var(--card);border:1px solid var(--line);display:grid;place-items:center}
+.mc-root .jv-deal{border-radius:14px !important;transition:border-color .15s}
+.mc-root .jv-deal:hover{border-color:var(--line-2) !important}
+.mc-root .jv-deal input,.mc-root .jv-deal select{border-radius:10px !important}
 .mc-root .pill.active{background:var(--blue) !important;border-color:var(--blue) !important;color:#fff !important}
 
 /* ---- Jarvis hero ---- */
