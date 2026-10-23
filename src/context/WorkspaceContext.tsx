@@ -98,7 +98,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
       setAccountLoading(true)
       setAccountError(null)
       try {
-        const demoRoute = location.pathname.includes('/demo-review') || location.pathname.includes('/clinic-os/demo')
+        const demoRoute = location.pathname.includes('/demo-review') || location.pathname.includes('/clinic-os/demo') || location.pathname.startsWith('/try')
         setIsDemo(demoRoute)
 
         if (demoRoute) {

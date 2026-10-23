@@ -152,8 +152,10 @@ function App() {
             <Route path="/trial" element={<Navigate to="/signup" replace />} />
             <Route path="/preview/:token" element={<SitePreview />} />
             <Route path="/clinic-os/signup" element={<Navigate to="/signup" replace />} />
-            <Route path="/clinic-os/demo"     element={<DemoSignupPage />} />
-            <Route path="/clinic-os/demo/confirm" element={<DemoConfirmPage />} />
+            <Route path="/try" element={<DemoSignupPage />} />
+            <Route path="/try/confirm" element={<DemoConfirmPage />} />
+            <Route path="/clinic-os/demo" element={<Navigate to="/try" replace />} />
+            <Route path="/clinic-os/demo/confirm" element={<Navigate to="/try/confirm" replace />} />
             <Route path="/clinic-os/admin" element={<Navigate to="/admin" replace />} />
             <Route path="/select"   element={
               <WorkspaceProvider><PackageSelectorPage /></WorkspaceProvider>

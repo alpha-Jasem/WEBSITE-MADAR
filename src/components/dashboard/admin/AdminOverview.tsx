@@ -198,7 +198,7 @@ export const AdminOverview = () => {
             {[
               { label: 'شركات نشطة', value: activeCompanies, color: 'var(--green)', pct: Math.round((activeCompanies / Math.max(realCompanies.length, 1)) * 100) },
               { label: 'تجربة أو موقوفة', value: realCompanies.length - activeCompanies, color: 'var(--amber)', pct: Math.round(((realCompanies.length - activeCompanies) / Math.max(realCompanies.length, 1)) * 100) },
-              { label: 'عملاء Workspace OS', value: clinicOSCount, color: 'var(--primary)', pct: 100 },
+              { label: 'عملاء مدار', value: clinicOSCount, color: 'var(--primary)', pct: 100 },
             ].map(row => (
               <div key={row.label}>
                 <div className="row gap-2" style={{ marginBottom: 6 }}>

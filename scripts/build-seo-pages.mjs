@@ -247,7 +247,7 @@ function render(p) {
   const ld = {
     '@context': 'https://schema.org',
     '@graph': [
-      { '@type': 'Organization', '@id': `${ORIGIN}/#organization`, name: 'مدار', alternateName: ['MADAR', 'Madar Software'], url: `${ORIGIN}/`, logo: `${ORIGIN}/signal/logo-main.png`, email: MAIL, address: { '@type': 'PostalAddress', addressLocality: 'جدة', addressCountry: 'SA' } },
+      { '@type': 'Organization', '@id': `${ORIGIN}/#organization`, name: 'مدار', alternateName: ['MADAR', 'Madar Software'], url: `${ORIGIN}/`, logo: `${ORIGIN}/favicon-logo.png`, email: MAIL, address: { '@type': 'PostalAddress', addressLocality: 'جدة', addressCountry: 'SA' } },
       { '@type': p.kind === 'article' ? 'Article' : p.kind === 'faq' ? 'FAQPage' : 'Service', '@id': `${url}#main`, name: p.h1, headline: p.h1, description: p.description, url, inLanguage: 'ar-SA',
         ...(p.kind === 'article' ? { author: { '@id': `${ORIGIN}/#organization` }, publisher: { '@id': `${ORIGIN}/#organization` }, datePublished: TODAY, dateModified: TODAY, mainEntityOfPage: url }
           : p.kind === 'service' ? { provider: { '@id': `${ORIGIN}/#organization` }, areaServed: { '@type': 'Country', name: 'Saudi Arabia' }, serviceType: p.h1 } : {}) },

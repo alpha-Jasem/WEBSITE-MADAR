@@ -7,7 +7,7 @@ export const DemoSignup = () => {
   useDocumentHead({
     title: 'جرّب وكيل الاستقبال الذكي — مدار',
     description: 'اطلب تجربة مجانية لوكيل الاستقبال الذكي من مدار: يرد على المكالمات والواتساب ويحجز المواعيد تلقائياً على مدار الساعة.',
-    canonical: 'https://madar.software/clinic-os/demo',
+    canonical: 'https://madar.software/try',
   })
 
   const navigate = useNavigate()
@@ -33,7 +33,7 @@ export const DemoSignup = () => {
     if (Object.keys(errs).length) { setErrors(errs); return }
     setLoading(true)
     await new Promise(r => setTimeout(r, 800))
-    navigate('/clinic-os/demo/confirm')
+    navigate('/try/confirm')
   }
 
   const Field = ({ name, label, type = 'text', placeholder, maxLength }: { name: keyof typeof form, label: string, type?: string, placeholder?: string, maxLength?: number }) => (
