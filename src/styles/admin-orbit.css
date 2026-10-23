@@ -108,11 +108,15 @@ body.plasma-admin[data-mc-theme="light"]{background:#F5F6F8 !important}
 .jv-copy .mc-jc{margin-top:2px;max-width:none}
 .jv-num{font-family:var(--num)}
 
-.mc-g2.jv-even{grid-template-columns:repeat(2,minmax(0,1fr))}
-.jv-chartrow{margin-bottom:14px}
+.jv-stack{display:grid;gap:14px;align-content:start;min-width:0}
+/* the 3D scene glows additively, which washes out on white: in day mode it sits in a dark window */
+.mc-root[data-mc-theme="light"] .jv-stage{margin:14px;border-radius:20px;background:radial-gradient(70% 70% at 50% 50%,#141833 0%,#07080B 75%)}
+.mc-root[data-mc-theme="light"] .jv-moon-label{color:#F4F4F6}
+.mc-root[data-mc-theme="light"] .jv-moon-label b{color:#9A9FB2}
+.mc-root[data-mc-theme="light"] .jv-think{color:#93A9FF}
 .mc-deck>section{animation:jv-rise .7s cubic-bezier(.2,.8,.2,1) backwards}
 .mc-deck>section:nth-of-type(2){animation-delay:.08s}.mc-deck>section:nth-of-type(3){animation-delay:.16s}.mc-deck>section:nth-of-type(4){animation-delay:.24s}.mc-deck>section:nth-of-type(5){animation-delay:.32s}
 
-@media(max-width:1180px){.jv-hero{grid-template-columns:minmax(0,1fr)}.jv-stage{order:1;min-height:320px}.jv-copy{order:2;padding-top:6px}.mc-g2.jv-even{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:1180px){.jv-hero{grid-template-columns:minmax(0,1fr)}.jv-stage{order:1;min-height:320px}.jv-copy{order:2;padding-top:6px}}
 @media(max-width:860px){.jv-stage{min-height:260px}.jv-stats{gap:6px}.jv-stat b{font-size:18px}.jv-hero{border-radius:20px}.jv-copy{padding:6px 16px 18px}}
 @media(prefers-reduced-motion:reduce){.jv-hero,.mc-deck>section{animation:none}.jv-dot,.jv-caret.blink,.jv-think{animation:none}}

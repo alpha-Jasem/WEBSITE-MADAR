@@ -299,8 +299,9 @@ export const AdminCommandDeck = () => {
         </article>
       </section>
 
-      {/* tasks + actions */}
-      <section className="mc-g2 jv-even">
+      {/* tasks + actions beside the collections chart */}
+      <section className="mc-g2">
+        <div className="jv-stack">
         <article className="mc-card">
           <div className="mc-ph"><h3>مهام اليوم</h3><div className="mc-sub"><span className={`mc-live ${tdState.ids.length > 0 && !tdState.err && tdState.ok ? '' : 'mc-off'}`} />{tdState.ids.length === 0 ? <button className="mc-linkbtn" onClick={() => navigate('/admin/settings')}>Todoist: اختر مشروعًا</button> : tdState.err ? `Todoist: خطأ في المزامنة` : tdState.ok ? `Todoist متزامن · ${timeShort(tdState.ok)}` : 'Todoist: لم يُزامَن بعد'}</div></div>
           {visibleTasks.length === 0 && <div className="mc-flat">لا توجد مهام لليوم.</div>}
@@ -334,9 +335,8 @@ export const AdminCommandDeck = () => {
             </button>
           ))}
         </article>
-      </section>
+        </div>
 
-      <section className="jv-chartrow">
         <article className="mc-card">
           <div className="mc-ph">
             <h3>المبيعات والتحصيل</h3>
