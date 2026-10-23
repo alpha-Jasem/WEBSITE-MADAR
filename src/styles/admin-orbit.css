@@ -226,3 +226,9 @@ body.plasma-admin[data-mc-theme="light"]{background:#F5F6F8 !important}
 @media(max-width:1180px){.jv-hero{grid-template-columns:minmax(0,1fr)}.jv-stage{order:1;min-height:320px}.jv-copy{order:2;padding-top:6px}}
 @media(max-width:860px){.jv-stage{min-height:260px}.jv-stats{gap:6px}.jv-stat b{font-size:18px}.jv-hero{border-radius:20px}.jv-copy{padding:6px 16px 18px}}
 @media(prefers-reduced-motion:reduce){.jv-hero,.mc-deck>section{animation:none}.jv-dot,.jv-caret.blink,.jv-think{animation:none}}
+
+/* the installed app draws under the iPhone status bar: keep the drawers and the deal panel clear of it */
+@media(max-width:860px){
+  .mc-sb{padding-top:calc(18px + env(safe-area-inset-top,0px))}
+  .jv-drawer{padding-top:calc(20px + env(safe-area-inset-top,0px))}
+}
