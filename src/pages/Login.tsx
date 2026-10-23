@@ -29,7 +29,7 @@ html:has(.al),html:has(.al) body{height:100%;min-height:0;overflow:hidden}
   background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.10);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
   box-shadow:0 24px 64px rgba(0,0,0,.6),0 0 80px rgba(40,100,255,.12)}
 .al-brand{display:flex;align-items:center;gap:10px;margin-bottom:26px;direction:ltr;width:max-content}
-.al-brand img{width:36px;height:36px;object-fit:contain}
+.al-brand img{width:38px;height:38px;object-fit:contain}
 .al-brand b{font-size:16px;font-weight:700;letter-spacing:.01em}
 .al-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font-size:11px;font-weight:600;color:#9bbcff;background:rgba(48,120,255,.16);border:1px solid rgba(48,120,255,.32)}
 .al-card h1{margin:14px 0 6px;font-size:27px;font-weight:700;line-height:1.35}
@@ -112,7 +112,7 @@ export const Login = () => {
         initial={reduce ? false : { opacity: 0, y: 22, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
         <motion.div className="al-brand" {...item(0)}>
-          <img src="/logo-main.png" alt="" />
+          <img src="/admin-logo-mark.png" alt="" />
           <b>Madar.software</b>
         </motion.div>
 
