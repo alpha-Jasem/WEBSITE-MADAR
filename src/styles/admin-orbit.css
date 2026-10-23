@@ -109,7 +109,7 @@ body.plasma-admin[data-mc-theme="light"]{background:#F5F6F8 !important}
 
 /* ---- Sales: deals board ---- */
 .jv-board{display:flex;gap:10px;align-items:stretch;overflow-x:auto;padding-bottom:8px;scrollbar-width:thin}
-.jv-lane{flex:1 1 230px;min-width:220px;max-width:340px;display:flex;flex-direction:column;background:var(--fill-2);border:1px solid var(--line);border-radius:18px;transition:border-color .15s,background .15s,flex-basis .2s}
+.jv-lane{flex:1 1 230px;min-width:220px;display:flex;flex-direction:column;background:var(--fill-2);border:1px solid var(--line);border-radius:18px;transition:border-color .15s,background .15s,flex-basis .2s}
 .jv-lane-h{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 12px 8px;font-weight:600;font-size:13.5px;color:var(--ink)}
 .jv-lane-h .num{font-family:var(--num);font-size:12px;min-width:24px;height:22px;padding:0 8px;border-radius:999px;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;color:var(--ink-2)}
 .jv-lane-b{display:flex;flex-direction:column;gap:8px;padding:0 8px 10px;max-height:calc(100dvh - 330px);min-height:60px;overflow-y:auto;scrollbar-width:thin}

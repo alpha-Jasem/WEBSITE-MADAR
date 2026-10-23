@@ -14,7 +14,11 @@ type Sort = 'stage' | 'next' | 'updated'
 
 interface DealEvent { id: string; type: string; data: Record<string, unknown>; created_at: string }
 
-const readView = (): View => { try { return localStorage.getItem(VIEW_KEY) === 'list' ? 'list' : 'board' } catch { return 'board' } }
+const EVENT_LABEL: Record<string, string> = {
+  created: 'أُنشئت الصفقة', handover_to_owner: 'توليتها أنت', handover_to_agent: 'أُعيدت للإيجنت', next_step: 'تحديث الخطوة القادمة',
+}
+
+const readView =(): View => { try { return localStorage.getItem(VIEW_KEY) === 'list' ? 'list' : 'board' } catch { return 'board' } }
 const isOwner = (d: Deal) => !!d.agent_paused || d.owner_type === 'owner'
 
 // Deals of the agency's own sales (not the customers' data). Source: public.deals.
@@ -281,7 +285,7 @@ export const AdminPipeline = () => {
               <b>السجل</b>
               {current.last_contact_at && <div>آخر تواصل: {dateShort(current.last_contact_at)} {timeShort(current.last_contact_at)}</div>}
               {events.length === 0 ? <div>لا توجد أحداث مسجلة.</div> : events.map(ev => (
-                <div key={ev.id}>{dateShort(ev.created_at)} · {ev.type === 'stage_change' ? `${STAGE_LABEL[ev.data.from as DealStage] ?? ''} ← ${STAGE_LABEL[ev.data.to as DealStage] ?? ''}` : ev.type}</div>
+                <div key={ev.id}>{dateShort(ev.created_at)} · {ev.type === 'stage_change' ? `${STAGE_LABEL[ev.data.from as DealStage] ?? ''} ← ${STAGE_LABEL[ev.data.to as DealStage] ?? ''}` : EVENT_LABEL[ev.type] ?? ev.type}</div>
               ))}
             </div>
           </aside>
