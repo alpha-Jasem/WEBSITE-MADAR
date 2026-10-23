@@ -1,14 +1,21 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type DragEvent } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { logDealEvent, type Deal } from '../../../lib/deals'
-import { DEAL_STAGES, STAGE_LABEL, isClosed, type DealStage } from '../../../lib/dealStages'
-import { dateShort, nf, sar, timeShort } from '../../../lib/format'
+import { DEAL_STAGES, STAGE_LABEL, isClosed, stageRank, type DealStage } from '../../../lib/dealStages'
+import { dateShort, nf, riyadhDayStart, sar, timeShort } from '../../../lib/format'
 import { useRealtimeRefetch } from '../../../lib/realtime'
+import { McIcon } from './mcIcons'
 
 const LOST_REASONS = ['السعر', 'عندهم نظام حالياً', 'غير مهتم', 'قرار لاحقاً', 'طلب التوقف', 'أخرى']
 const BOARD_STAGES = DEAL_STAGES.filter(s => s !== 'lost') as DealStage[]
+const VIEW_KEY = 'madar_deals_view'
+type View = 'board' | 'list'
+type Sort = 'stage' | 'next' | 'updated'
 
 interface DealEvent { id: string; type: string; data: Record<string, unknown>; created_at: string }
+
+const readView = (): View => { try { return localStorage.getItem(VIEW_KEY) === 'list' ? 'list' : 'board' } catch { return 'board' } }
+const isOwner = (d: Deal) => !!d.agent_paused || d.owner_type === 'owner'
 
 // Deals of the agency's own sales (not the customers' data). Source: public.deals.
 export const AdminPipeline = () => {
@@ -21,6 +28,10 @@ export const AdminPipeline = () => {
   const [openId, setOpenId] = useState<string | null>(null)
   const [events, setEvents] = useState<DealEvent[]>([])
   const [form, setForm] = useState({ company_name: '', contact_name: '', contact_phone: '', service: '' })
+  const [view, setView] = useState<View>(readView)
+  const [sort, setSort] = useState<Sort>('stage')
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [over, setOver] = useState<DealStage | null>(null)
 
   const load = useCallback(async () => {
     const { data, error: e } = await supabase.from('deals').select('*').order('updated_at', { ascending: false }).limit(500)
@@ -32,6 +43,12 @@ export const AdminPipeline = () => {
   useEffect(() => { load() }, [load])
 
   useRealtimeRefetch('admin_pipeline', [{ table: 'deals' }, { table: 'agent_drafts' }, { table: 'deal_events' }], load, true)
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpenId(null) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   const byStage = useMemo(() => {
     const map = new Map<DealStage, Deal[]>()
@@ -61,8 +78,8 @@ export const AdminPipeline = () => {
   const giveBack = (deal: Deal) => patchDeal(deal, { owner_type: 'agent', agent_paused: false } as Partial<Deal>, { type: 'handover_to_agent', data: {} })
 
   const openDeal = async (deal: Deal) => {
-    if (openId === deal.id) { setOpenId(null); return }
     setOpenId(deal.id)
+    setEvents([])
     const { data } = await supabase.from('deal_events').select('id, type, data, created_at').eq('deal_id', deal.id).order('created_at', { ascending: false }).limit(15)
     setEvents((data ?? []) as DealEvent[])
   }
@@ -77,50 +94,64 @@ export const AdminPipeline = () => {
     load()
   }
 
+  const changeView = (v: View) => {
+    setView(v)
+    try { localStorage.setItem(VIEW_KEY, v) } catch { /* storage unavailable */ }
+  }
+
+  /* ---------- drag and drop between stages ---------- */
+  const drop = (stage: DealStage) => {
+    const d = deals.find(x => x.id === dragId)
+    if (d && d.stage !== stage) moveStage(d, stage)
+    setDragId(null)
+    setOver(null)
+  }
+  const laneDnD = (stage: DealStage) => ({
+    onDragOver: (e: DragEvent) => { if (!dragId) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (over !== stage) setOver(stage) },
+    onDragLeave: (e: DragEvent) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setOver(o => (o === stage ? null : o)) },
+    onDrop: (e: DragEvent) => { e.preventDefault(); drop(stage) },
+  })
+
   const open = deals.filter(d => !isClosed(d.stage))
   const stale = open.filter(d => !d.next_step && !d.next_step_at).length
   const priced = open.filter(d => d.value_net != null)
   const pipelineValue = priced.reduce((sum, d) => sum + (d.value_net ?? 0), 0)
+  const today = riyadhDayStart()
+  const late = (d: Deal) => !!d.next_step_at && new Date(d.next_step_at) < today && !isClosed(d.stage)
+  const current = deals.find(d => d.id === openId) ?? null
 
   const card = (d: Deal) => (
-    <div key={d.id} className="card jv-deal" style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <button onClick={() => openDeal(d)} style={{ textAlign: 'start', fontWeight: 600, fontSize: 13.5 }}>{d.company_name}</button>
-      <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>
-        {d.contact_name || '—'}
-        {d.contact_phone && <> · <a href={`tel:+${d.contact_phone}`} style={{ color: 'var(--primary-ink)' }} className="mono">+{d.contact_phone}</a></>}
-      </div>
-      <input
-        defaultValue={d.next_step}
-        placeholder="الخطوة القادمة…"
-        aria-label="الخطوة القادمة"
-        onBlur={e => { if (e.target.value !== d.next_step) patchDeal(d, { next_step: e.target.value }, { type: 'next_step', data: { text: e.target.value } }) }}
-        style={{ background: 'var(--fill)', border: '1px solid var(--line)', borderRadius: 8, padding: '6px 9px', color: 'var(--ink)', fontSize: 12.5 }}
-      />
-      <input
-        type="date"
-        aria-label="موعد الخطوة"
-        defaultValue={d.next_step_at ? d.next_step_at.slice(0, 10) : ''}
-        onBlur={e => patchDeal(d, { next_step_at: e.target.value ? new Date(`${e.target.value}T10:00:00+03:00`).toISOString() : null })}
-        style={{ background: 'var(--fill)', border: '1px solid var(--line)', borderRadius: 8, padding: '5px 9px', color: 'var(--ink)', fontSize: 12.5 }}
-      />
-      <select value={d.stage} onChange={e => moveStage(d, e.target.value as DealStage)} aria-label="المرحلة"
-        style={{ background: 'var(--fill)', border: '1px solid var(--line)', borderRadius: 8, padding: '6px 8px', color: 'var(--ink)', fontSize: 12.5 }}>
-        {DEAL_STAGES.map(s => <option key={s} value={s}>{STAGE_LABEL[s]}</option>)}
-      </select>
-      {d.lost_reason && <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>السبب: {d.lost_reason}</div>}
-      {d.agent_paused || d.owner_type === 'owner'
-        ? <button className="btn btn-ghost" onClick={() => giveBack(d)} style={{ fontSize: 12 }}>بيدك الآن · أعدها للإيجنت</button>
-        : <button className="btn btn-ghost" onClick={() => takeDeal(d)} style={{ fontSize: 12 }}>أتولى الصفقة</button>}
-      {openId === d.id && (
-        <div style={{ borderTop: '1px solid var(--line)', paddingTop: 8, display: 'grid', gap: 4, fontSize: 12, color: 'var(--ink-3)' }}>
-          {d.last_contact_at && <div>آخر تواصل: {dateShort(d.last_contact_at)} {timeShort(d.last_contact_at)}</div>}
-          {events.length === 0 ? <div>لا توجد أحداث مسجلة.</div> : events.map(ev => (
-            <div key={ev.id}>{dateShort(ev.created_at)} · {ev.type === 'stage_change' ? `${STAGE_LABEL[ev.data.from as DealStage] ?? ''} ← ${STAGE_LABEL[ev.data.to as DealStage] ?? ''}` : ev.type}</div>
-          ))}
-        </div>
+    <button
+      key={d.id}
+      type="button"
+      className={`jv-deal ${dragId === d.id ? 'is-drag' : ''} ${openId === d.id ? 'is-open' : ''}`}
+      draggable
+      onDragStart={e => { e.dataTransfer.setData('text/plain', d.id); e.dataTransfer.effectAllowed = 'move'; setDragId(d.id) }}
+      onDragEnd={() => { setDragId(null); setOver(null) }}
+      onClick={() => openDeal(d)}
+    >
+      <b>{d.company_name}</b>
+      <small>{d.contact_name || '—'}{d.contact_phone && <> · <span className="jv-ltr">+{d.contact_phone}</span></>}</small>
+      {d.next_step || d.next_step_at
+        ? <span className={`jv-next ${late(d) ? 'late' : ''}`}>{d.next_step || 'خطوة قادمة'}{d.next_step_at && ` · ${dateShort(d.next_step_at)}`}</span>
+        : <span className="jv-next none">بلا خطوة قادمة</span>}
+      {(isOwner(d) || d.lost_reason) && (
+        <span className="jv-tags">
+          {isOwner(d) && <i>بيدك</i>}
+          {d.lost_reason && <i>السبب: {d.lost_reason}</i>}
+        </span>
       )}
-    </div>
+    </button>
   )
+
+  const sorted = useMemo(() => {
+    const list = deals.filter(d => showLost || d.stage !== 'lost')
+    const t = (s: string | null) => (s ? new Date(s).getTime() : Infinity)
+    return [...list].sort((a, b) =>
+      sort === 'stage' ? stageRank(b.stage) - stageRank(a.stage)
+        : sort === 'next' ? t(a.next_step_at) - t(b.next_step_at)
+          : new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+  }, [deals, sort, showLost])
 
   return (
     <div className="page fade-in">
@@ -129,7 +160,11 @@ export const AdminPipeline = () => {
           <div className="sec-title">الصفقات</div>
           <div className="sec-sub">مبيعات وكالة مدار فقط. المصدر: جدول deals</div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div className="jv-seg" role="tablist" aria-label="طريقة العرض">
+            <button role="tab" aria-selected={view === 'board'} className={view === 'board' ? 'on' : ''} onClick={() => changeView('board')}>لوحة</button>
+            <button role="tab" aria-selected={view === 'list'} className={view === 'list' ? 'on' : ''} onClick={() => changeView('list')}>قائمة</button>
+          </div>
           <button className="btn btn-ghost" onClick={() => setShowLost(s => !s)}>{showLost ? 'إخفاء الخسائر' : `الخسائر (${nf(byStage.get('lost')!.length)})`}</button>
           <button className="btn btn-primary" onClick={() => setAdding(true)}>إضافة صفقة</button>
         </div>
@@ -149,25 +184,108 @@ export const AdminPipeline = () => {
 
       {loading ? <div className="muted">جاري التحميل…</div> : deals.length === 0 ? (
         <div className="card card-pad">لا توجد صفقات بعد. تُنشأ تلقائيًا عند أول تواصل من Outreach، أو أضف صفقة يدويًا.</div>
-      ) : (
-        <div className="mc-board" style={{ display: 'grid', gridAutoFlow: 'column', gridAutoColumns: 'minmax(240px, 1fr)', gap: 12, overflowX: 'auto', paddingBottom: 8 }}>
-          {BOARD_STAGES.map(stage => (
-            <div key={stage} className="jv-lane" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div className="jv-lane-h" style={{ fontWeight: 700, fontSize: 13, display: 'flex', justifyContent: 'space-between' }}>
-                {STAGE_LABEL[stage]}<span className="muted num">{nf(byStage.get(stage)!.length)}</span>
-              </div>
-              {byStage.get(stage)!.map(card)}
-              {byStage.get(stage)!.length === 0 && <div className="muted" style={{ fontSize: 12 }}>لا شيء هنا</div>}
+      ) : view === 'board' ? (
+        <>
+          <div className="mc-board jv-board">
+            {BOARD_STAGES.map(stage => {
+              const list = byStage.get(stage)!
+              return (
+                <section key={stage} className={`jv-lane ${list.length === 0 ? 'is-empty' : ''} ${over === stage ? 'is-over' : ''}`} aria-label={STAGE_LABEL[stage]} {...laneDnD(stage)}>
+                  <div className="jv-lane-h"><span>{STAGE_LABEL[stage]}</span><span className="num">{nf(list.length)}</span></div>
+                  <div className="jv-lane-b">{list.map(card)}</div>
+                </section>
+              )
+            })}
+          </div>
+          {showLost && (
+            <div style={{ marginTop: 22 }}>
+              <div style={{ fontWeight: 700, marginBottom: 10 }}>الخسائر</div>
+              <div className="jv-lostgrid">{byStage.get('lost')!.map(card)}</div>
             </div>
-          ))}
+          )}
+          {dragId && (
+            <div className={`jv-lostdrop ${over === 'lost' ? 'is-over' : ''}`} {...laneDnD('lost')}>
+              <McIcon name="close" size={16} />اسحبها هنا لتسجيلها خسارة
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="card" style={{ overflow: 'hidden' }}>
+          <div className="jv-listbar">
+            <span className="muted">{nf(sorted.length)} صفقة</span>
+            <label className="muted">ترتيب حسب{' '}
+              <select value={sort} onChange={e => setSort(e.target.value as Sort)} aria-label="ترتيب الصفقات">
+                <option value="stage">المرحلة</option>
+                <option value="next">الخطوة القادمة</option>
+                <option value="updated">آخر تحديث</option>
+              </select>
+            </label>
+          </div>
+          <div className="scroll">
+            <table className="tbl jv-list">
+              <thead><tr><th>الشركة</th><th>المرحلة</th><th>الخطوة القادمة</th><th>الموعد</th><th>آخر تواصل</th><th>القيمة</th></tr></thead>
+              <tbody>
+                {sorted.map(d => (
+                  <tr key={d.id} onClick={() => openDeal(d)} className={openId === d.id ? 'is-open' : ''}>
+                    <td><b>{d.company_name}</b>{isOwner(d) && <span className="jv-tags"><i>بيدك</i></span>}<div className="muted" style={{ fontSize: 12 }}>{d.contact_name || '—'}</div></td>
+                    <td><span className="jv-stage">{STAGE_LABEL[d.stage]}</span></td>
+                    <td>{d.next_step || <span style={{ color: 'var(--red)' }}>بلا خطوة قادمة</span>}</td>
+                    <td className={late(d) ? 'jv-late' : ''}>{d.next_step_at ? dateShort(d.next_step_at) : '—'}</td>
+                    <td>{d.last_contact_at ? dateShort(d.last_contact_at) : '—'}</td>
+                    <td className="num">{d.value_net != null ? sar(d.value_net) : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
-      {showLost && (
-        <div style={{ marginTop: 22 }}>
-          <div style={{ fontWeight: 700, marginBottom: 10 }}>الخسائر</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>{byStage.get('lost')!.map(card)}</div>
-        </div>
+      {current && (
+        <>
+          <div className="jv-drawer-bg" onClick={() => setOpenId(null)} />
+          <aside className="jv-drawer" role="dialog" aria-label={current.company_name} key={current.id}>
+            <div className="jv-drawer-h">
+              <div>
+                <b>{current.company_name}</b>
+                <small>{current.contact_name || '—'}{current.service && ` · ${current.service}`}</small>
+              </div>
+              <button className="jv-x" onClick={() => setOpenId(null)} aria-label="إغلاق"><McIcon name="close" size={18} /></button>
+            </div>
+            {current.contact_phone && <a className="btn btn-ghost" href={`tel:+${current.contact_phone}`}><McIcon name="phone" size={16} /><span className="jv-ltr">+{current.contact_phone}</span></a>}
+            <label className="jv-f">المرحلة
+              <select value={current.stage} onChange={e => moveStage(current, e.target.value as DealStage)}>
+                {DEAL_STAGES.map(s => <option key={s} value={s}>{STAGE_LABEL[s]}</option>)}
+              </select>
+            </label>
+            <label className="jv-f">الخطوة القادمة
+              <input
+                defaultValue={current.next_step}
+                placeholder="الخطوة القادمة…"
+                onBlur={e => { if (e.target.value !== current.next_step) patchDeal(current, { next_step: e.target.value }, { type: 'next_step', data: { text: e.target.value } }) }}
+              />
+            </label>
+            <label className="jv-f">موعد الخطوة
+              <input
+                type="date"
+                defaultValue={current.next_step_at ? current.next_step_at.slice(0, 10) : ''}
+                onBlur={e => patchDeal(current, { next_step_at: e.target.value ? new Date(`${e.target.value}T10:00:00+03:00`).toISOString() : null })}
+              />
+            </label>
+            {current.value_net != null && <div className="jv-kv"><span>القيمة (صافي)</span><b>{sar(current.value_net)}</b></div>}
+            {current.lost_reason && <div className="jv-kv"><span>سبب الخسارة</span><b>{current.lost_reason}</b></div>}
+            {isOwner(current)
+              ? <button className="btn btn-ghost" onClick={() => giveBack(current)}>بيدك الآن · أعدها للإيجنت</button>
+              : <button className="btn btn-primary" onClick={() => takeDeal(current)}>أتولى الصفقة</button>}
+            <div className="jv-hist">
+              <b>السجل</b>
+              {current.last_contact_at && <div>آخر تواصل: {dateShort(current.last_contact_at)} {timeShort(current.last_contact_at)}</div>}
+              {events.length === 0 ? <div>لا توجد أحداث مسجلة.</div> : events.map(ev => (
+                <div key={ev.id}>{dateShort(ev.created_at)} · {ev.type === 'stage_change' ? `${STAGE_LABEL[ev.data.from as DealStage] ?? ''} ← ${STAGE_LABEL[ev.data.to as DealStage] ?? ''}` : ev.type}</div>
+              ))}
+            </div>
+          </aside>
+        </>
       )}
 
       {adding && (
