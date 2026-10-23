@@ -1,4 +1,4 @@
-﻿import { useSystemChrome } from '../../../hooks/useSystemChrome'
+import { useSystemChrome } from '../../../hooks/useSystemChrome'
 import { useRealtimeRefetch } from '../../../lib/realtime'
 import { usePush } from '../../../lib/push'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
@@ -62,6 +62,14 @@ function Shell({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.body.classList.add('plasma-admin')
     return () => document.body.classList.remove('plasma-admin')
+  }, [])
+
+  // the admin installs as its own app with the new mark; the public site keeps its icon
+  useEffect(() => {
+    const link = document.querySelector<HTMLLinkElement>('link[rel="apple-touch-icon"]')
+    const prev = link?.href
+    if (link) link.href = '/admin-icon-180.png'
+    return () => { if (link && prev) link.href = prev }
   }, [])
 
   useEffect(() => { supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? '')) }, [])
@@ -141,7 +149,7 @@ function Shell({ children }: { children: ReactNode }) {
       <div className={`mc-app ${drawer ? 'mc-drawer-open' : ''}`}>
         <aside className="mc-sb" aria-label="القائمة الرئيسية">
           <div className="mc-logo">
-            <img className="mc-logoimg" src="/logo-main.png" alt="مدار" width="48" height="36" />
+            <img className="mc-logoimg" src="/admin-logo-mark.png" alt="مدار" width="40" height="39" />
             <div className="mc-t"><b>مدار</b><small>MADAR</small></div>
             <button className="mc-close" onClick={() => setDrawer(false)} aria-label="إغلاق"><McIcon name="close" size={18} /></button>
           </div>
@@ -160,7 +168,7 @@ function Shell({ children }: { children: ReactNode }) {
         <main className="mc-main">
           <header className="mc-top">
             <button className="mc-menu" onClick={() => setDrawer(true)} aria-label="فتح القائمة"><McIcon name="menu" size={22} /></button>
-            <img className="mc-barlogo" src="/logo-main.png" alt="" width="30" height="22" />
+            <img className="mc-barlogo" src="/admin-logo-mark.png" alt="" width="28" height="27" />
             <b className="mc-ptitle">{section.tabs?.find(t => t.to === location.pathname)?.label ?? section.label}</b>
             <div className="mc-who-wrap">
               <button className="mc-who" onClick={() => setMenu(m => !m)} aria-expanded={menu}>

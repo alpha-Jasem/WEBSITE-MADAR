@@ -7,8 +7,8 @@ self.addEventListener('push', event => {
   try { data = event.data ? event.data.json() : {} } catch (e) { data = { body: event.data ? event.data.text() : '' } }
   event.waitUntil(self.registration.showNotification(data.title || 'مدار', {
     body: data.body || '',
-    icon: '/outreach-icon-192.png',
-    badge: '/outreach-icon-192.png',
+    icon: '/admin-icon-192.png',
+    badge: '/admin-badge-96.png',
     tag: data.tag || 'outreach',
     dir: 'rtl',
     lang: 'ar',
