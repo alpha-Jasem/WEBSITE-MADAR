@@ -442,7 +442,8 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
     updateLead(lead.id, { next_follow_up: d.toISOString() })
   }
 
-  // Any contact attempt is logged, and a follow-up is scheduled for 2 days later unless one is already set.
+  // Any contact attempt is logged and a follow-up is scheduled for 2 days later unless one is already set.
+  // The status never changes by itself: the lead stays where it is until the owner picks a new status.
   const markContact = (lead: OutreachLead, channel: 'whatsapp' | 'call' = 'whatsapp') => {
     if (isBlocked(lead)) return
     recordContact({ id: lead.id, name: lead.name, phone: lead.phone }, channel)
@@ -450,16 +451,14 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
       last_contacted_at: new Date().toISOString(),
       contact_count: (lead.contact_count || 0) + 1,
     }
-    if (lead.status === 'new') patch.status = 'contacted'
     const open = ['new', 'contacted', 'no_answer'].includes(lead.status)
     const hasFuture = lead.next_follow_up && new Date(lead.next_follow_up) > new Date()
     if (open && !hasFuture) { const d = new Date(); d.setHours(10, 0, 0, 0); patch.next_follow_up = new Date(d.getTime() + 2 * DAY).toISOString() }
     updateLead(lead.id, patch)
-    const moved = patch.status && patch.status !== lead.status
     setToast({
       ok: true, call: channel === 'call', lead,
       prev: { status: lead.status, next_follow_up: lead.next_follow_up, last_contacted_at: lead.last_contacted_at, contact_count: lead.contact_count },
-      text: `${channel === 'call' ? 'سُجّل اتصالك' : 'سُجّلت رسالتك'} بـ«${lead.name}».${moved ? ' انتقل من «جديد» إلى «تم التواصل»' : ''}${patch.next_follow_up ? `، وذكّرتك بالمتابعة ${fmtFollow(patch.next_follow_up).text}` : ''}.${channel === 'call' ? ' كيف كانت المكالمة؟' : ''}`,
+      text: `${channel === 'call' ? 'سُجّل اتصالك' : 'سُجّلت رسالتك'} بـ«${lead.name}»${patch.next_follow_up ? `، وذكّرتك بالمتابعة ${fmtFollow(patch.next_follow_up).text}` : ''}. يبقى في مكانه حتى تغيّر حالته.${channel === 'call' ? ' كيف كانت المكالمة؟' : ''}`,
     })
   }
 
@@ -472,7 +471,7 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
   }
 
   // the owner's quick verdict right after a call (always applied to the latest copy of the lead)
-  const outcome = (kind: 'no_answer' | 'replied' | 'meeting' | 'lost' | 'undo') => {
+  const outcome = (kind: 'contacted' | 'no_answer' | 'replied' | 'meeting' | 'lost' | 'undo') => {
     const base = toast?.lead
     if (!base) return
     const lead = leads.find(x => x.id === base.id) ?? base
@@ -721,6 +720,7 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
               <span className={toast.ok ? 'msg-ok' : 'msg-bad'}>{toast.text}</span>
               <span style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {toast.call && (<>
+                  <button className="btn" onClick={() => outcome('contacted')}>تم التواصل</button>
                   <button className="btn" onClick={() => outcome('no_answer')}>لم يرد</button>
                   <button className="btn call" onClick={() => outcome('replied')}>رد ومهتم</button>
                   <button className="btn cal" onClick={() => outcome('meeting')}>اجتماع</button>
