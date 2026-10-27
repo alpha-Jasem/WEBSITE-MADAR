@@ -5,6 +5,7 @@ import { addDoNotContact, loadDoNotContact, recordContact, syncDealForLead } fro
 import { useRealtimeRefetch } from '../../../lib/realtime'
 import { LeadFocusPanel } from './LeadFocusPanel'
 import { deleteLeads } from '../../../lib/deals'
+import { AR_GREG, monthKey, nf } from '../../../lib/format'
 
 type Status = 'new' | 'contacted' | 'replied' | 'meeting' | 'won' | 'lost' | 'no_answer'
 type TemplateKey = 'first' | 'reminder' | 'meeting' | 'offer' | 'confirm'
@@ -159,95 +160,107 @@ function score(l: OutreachLead) {
 }
 
 const CSS = `
-.ol{color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.6;display:flex;flex-direction:column;gap:14px;margin:8px 0 40px}
+.ol{--paper:#1a150f;--card:#221b13;--card-2:#2a2218;--line:#3b3125;--line-2:#5a4a36;--ink:#f3ebdf;--ink-2:#d6c8b2;--ink-3:#a8977d;
+  --fill:#2a2218;--fill-2:#30271c;--pop:#241d15;--cta:#f3ebdf;--cta-ink:#1a150f;--good:#5cc39a;--good-bg:rgba(92,195,154,.14);--gold:#e0a63a;--bad:#ff8a7a;
+  --font:'Tajawal',system-ui,sans-serif;--head:'Tajawal',system-ui,sans-serif;
+  background:var(--paper);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.6;display:flex;flex-direction:column;gap:18px;
+  margin:8px 0 40px;padding:24px;border-radius:22px;border:1px solid var(--line)}
+[data-mc-theme="light"] .ol{--paper:#f7f3ec;--card:#fffdf9;--card-2:#fffaf2;--line:#e6dac6;--line-2:#cdbb9e;--ink:#231d15;--ink-2:#4d4131;--ink-3:#7a6b55;
+  --fill:#fffaf2;--fill-2:#f1e8da;--pop:#fffdf9;--cta:#231d15;--cta-ink:#fffaf2;--good:#1f6f54;--good-bg:#e1efe8;--gold:#b97a12;--bad:#c0392b}
 .ol *{box-sizing:border-box}
 .ol button{font-family:inherit}
-.ol .row2{display:grid;grid-template-columns:340px minmax(0,1fr);gap:14px;align-items:start}
-.ol .slip{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:16px}
-.ol .slip h2{font-family:var(--head);font-weight:800;font-size:21px;margin:0;line-height:1.3}
-.ol .eb{font-family:var(--font);font-size:11px;letter-spacing:1px;color:var(--link);font-weight:600}
-.ol .perf{border-top:1px dashed var(--line)}
-.ol .lbl{font-size:12px;color:var(--ink-3);margin-bottom:6px}
+.ol a{color:inherit}
+.ol .hd{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;flex-wrap:wrap}
+.ol .hd h1{margin:0;font-size:32px;font-weight:700;line-height:1.2}
+.ol .hd .sub{font-size:16px;color:var(--ink-3);margin-top:4px}
+.ol .goal{flex:1;min-width:240px;max-width:440px}
+.ol .goal .t{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:16px;font-weight:500}
+.ol .goal .bar{height:10px;background:var(--fill-2);border-radius:99px;overflow:hidden;margin-top:8px}
+.ol .goal .bar i{display:block;height:100%;background:var(--good);border-radius:99px;transition:width .4s}
+.ol .goal .edit{display:flex;gap:8px;margin-top:8px}.ol .goal .edit input{width:110px}
+.ol .linkbtn{border:0;background:none;padding:0;color:var(--ink-3);font-size:15px;text-decoration:underline;cursor:pointer}
+.ol .flow{display:flex;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card-2);overflow-x:auto;scrollbar-width:none}
+.ol .flow button{flex:1 0 auto;min-width:104px;border:0;border-inline-start:1px solid var(--line);background:transparent;color:var(--ink);padding:12px 16px;text-align:start;cursor:pointer}
+.ol .flow button:first-child{border-inline-start:0}
+.ol .flow b{display:block;font-size:28px;font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums}
+.ol .flow span{font-size:15px;color:var(--ink-3)}
+.ol .flow button[aria-pressed=true]{background:var(--cta);color:var(--cta-ink)}.ol .flow button[aria-pressed=true] span{color:inherit;opacity:.75}
+.ol .slip{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;align-items:start}
+.ol .slip h2{font-weight:700;font-size:22px;margin:0;line-height:1.3}
+.ol .slip .full{grid-column:1/-1}
+.ol .lbl{font-size:15px;color:var(--ink-3);margin-bottom:6px}
 .ol .seg{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.ol .seg button{border:0;background:transparent;font-family:var(--head);font-weight:700;font-size:18px;padding:10px 0;cursor:pointer;color:var(--ink-3);border-inline-start:1px solid var(--line)}
+.ol .seg button{border:0;background:transparent;font-weight:700;font-size:18px;padding:10px 0;cursor:pointer;color:var(--ink-3);border-inline-start:1px solid var(--line)}
 .ol .seg button:first-child{border:0}
-.ol .seg button[aria-pressed=true]{background:var(--blue);color:#fff}
-.ol select,.ol input,.ol textarea{width:100%;border:1px solid var(--line);background:var(--fill);border-radius:11px;padding:10px 12px;font:inherit;color:var(--ink)}
+.ol .seg button[aria-pressed=true]{background:var(--cta);color:var(--cta-ink)}
+.ol select,.ol input,.ol textarea{width:100%;border:1px solid var(--line);background:var(--fill);border-radius:12px;padding:10px 12px;font:inherit;font-size:15px;color:var(--ink)}
 .ol textarea{resize:vertical}
-.ol .chips{display:flex;flex-wrap:wrap;gap:6px}
-.ol .chip{border:1px solid var(--line);background:var(--fill);border-radius:99px;padding:6px 14px;font-size:13px;cursor:pointer;color:var(--ink-2);font-family:var(--head);font-weight:600}
-.ol .chip[aria-pressed=true]{background:rgba(47,107,255,.2);border-color:var(--blue);color:var(--ink)}
-.ol .go{border:0;background:linear-gradient(90deg,#2f6bff,#4f9bff);color:#fff;border-radius:14px;padding:14px;font-family:var(--head);font-weight:800;font-size:16px;cursor:pointer;box-shadow:0 8px 24px rgba(47,107,255,.35)}
+.ol .chips{display:flex;flex-wrap:wrap;gap:8px}
+.ol .chip{border:1px solid var(--line);background:var(--fill);border-radius:99px;padding:7px 15px;font-size:15px;cursor:pointer;color:var(--ink-2);font-weight:500}
+.ol .chip[aria-pressed=true]{background:var(--cta);border-color:var(--cta);color:var(--cta-ink)}
+.ol .chip:disabled{opacity:.5;cursor:not-allowed}
+.ol .go{border:0;background:var(--cta);color:var(--cta-ink);border-radius:14px;padding:14px;font-weight:700;font-size:17px;cursor:pointer;width:100%}
 .ol .go:disabled{opacity:.6;cursor:wait}
-.ol .note{font-size:12px;color:var(--ink-3)}
-.ol .msg-ok{color:var(--green);font-size:13px}.ol .msg-bad{color:var(--red);font-size:13px}
-.ol .main{display:flex;flex-direction:column;gap:14px;min-width:0}
-.ol .head{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end;justify-content:space-between}
-.ol .big{font-family:var(--head);font-weight:800;font-size:44px;line-height:1;letter-spacing:-1px}
-.ol .big small{font-size:14px;letter-spacing:0;color:var(--ink-3);font-weight:500;margin-inline-start:8px}
-.ol .mini{display:flex;gap:20px;flex-wrap:wrap}.ol .mini b{display:block;font-family:var(--head);font-size:20px;font-weight:700}.ol .mini span{font-size:12px;color:var(--ink-3)}
-.ol .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
-.ol .panel-h{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);font-family:var(--head);font-weight:700;flex-wrap:wrap}
-.ol .due{border-color:rgba(255,93,93,.4);background:rgba(255,93,93,.06)}
-.ol .due .panel-h{color:var(--red);border-color:rgba(255,93,93,.25)}
-.ol .tools{display:flex;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap;align-items:center}
-.ol .tools input{flex:1 1 200px;width:auto}.ol .tools select{width:auto}
+.ol .note{font-size:15px;color:var(--ink-3)}
+.ol .msg-ok{color:var(--good);font-size:15px;font-weight:500}.ol .msg-bad{color:var(--bad);font-size:15px;font-weight:500}
+.ol .panel{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.ol .sec-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.ol .sec-h h3{margin:0;font-size:20px;font-weight:700}
+.ol .sec-h.due h3{color:var(--bad)}
+.ol .tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ol .tools input{flex:1 1 240px;width:auto}.ol .tools select{width:auto}
 .ol .tools-row{display:contents}
-.ol .statusbar{display:flex;gap:6px;padding:10px 14px;overflow-x:auto;border-bottom:1px solid var(--line);scrollbar-width:none}.ol .statusbar .chip{flex:0 0 auto;white-space:nowrap}
-.ol .lead{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.1fr) auto;gap:14px;align-items:center;padding:13px 16px;border-bottom:1px solid var(--line);transition:background .15s}
-.ol .lead:hover{background:rgba(80,120,255,.05)}
-.ol .lead:last-child{border:0}
-.ol .lead.hot{background:linear-gradient(270deg,rgba(47,107,255,.08),transparent)}
-.ol .nm{font-family:var(--head);font-weight:700;line-height:1.35;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.ol .cat{font-size:12px;color:var(--ink-3)}
-.ol .hotb{font-size:11px;background:var(--blue);color:#fff;border-radius:6px;padding:1px 8px;font-weight:600}
-.ol .ph{font-family:var(--font);direction:ltr;text-align:right;font-size:13.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
-.ol .stt{display:inline-block;font-size:12px;padding:2px 10px;border-radius:6px;font-weight:600;white-space:nowrap}
-.ol .fu{font-size:12px;color:var(--ink-3);margin-top:3px}.ol .fu.late{color:var(--red);font-weight:600}
-.ol .meet{font-size:12px;color:var(--s-meeting);font-weight:600;margin-top:3px}
-.ol .acts{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
-.ol .btn{border:1px solid var(--line);background:var(--fill);border-radius:10px;padding:8px 13px;font-family:var(--head);font-size:13px;font-weight:700;cursor:pointer;color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;transition:border-color .15s,background .15s}
+.ol .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.ol .cd{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.ol .cd.open{grid-column:1/-1}
+.ol .cd.late{border-color:color-mix(in srgb,var(--bad) 45%,var(--line))}
+.ol .cd-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.ol .nm{font-size:19px;font-weight:700;line-height:1.35;min-width:0;overflow-wrap:anywhere}
+.ol .stars{color:var(--gold);font-size:15px;font-weight:700;white-space:nowrap}.ol .stars small{color:var(--ink-3);font-weight:400;margin-inline-start:3px}
+.ol .cat{font-size:15px;color:var(--ink-3)}
+.ol .tags{display:flex;gap:6px;flex-wrap:wrap}
+.ol .tag{font-size:14px;font-weight:700;border-radius:8px;padding:2px 10px;background:var(--fill-2);color:var(--ink-2)}
+.ol .tag.nosite{background:var(--good-bg);color:var(--good)}
+.ol .tag.hot{background:var(--cta);color:var(--cta-ink)}
+.ol .ph{direction:ltr;text-align:right;font-size:17px;font-weight:500;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ol .strow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.ol .strow select{width:auto;padding:5px 10px;font-size:15px;font-weight:700;border:none}
+.ol .fu{font-size:15px;color:var(--ink-3)}.ol .fu.late{color:var(--bad);font-weight:700}
+.ol .meet{font-size:15px;color:var(--good);font-weight:700}
+.ol .big2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ol .btn{border:1px solid var(--line);background:var(--fill);border-radius:12px;padding:9px 14px;font-size:15px;font-weight:700;cursor:pointer;color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:42px;transition:border-color .15s,background .15s}
 .ol .btn:hover{border-color:var(--line-2)}
-.ol .btn.wa{background:#17a05d;border-color:#17a05d;color:#fff}
-.ol .btn.call{background:var(--blue);border-color:var(--blue);color:#fff}
-.ol .btn.cal{background:var(--violet);border-color:var(--violet);color:#fff}
-.ol .btn.map{color:var(--link)}
+.ol .btn.call{background:var(--cta);border-color:var(--cta);color:var(--cta-ink)}
+.ol .btn.wa{background:transparent;border:1.5px solid var(--ink);color:var(--ink)}
+.ol .big2 .btn{min-height:50px;font-size:17px}
+.ol .btn.cal{background:var(--good);border-color:var(--good);color:#fff}
 .ol .btn:disabled{opacity:.45;cursor:not-allowed}
-.ol .detail{grid-column:1/-1;display:flex;flex-direction:column;gap:10px;padding-top:10px;border-top:1px dashed var(--line)}
-.ol .detail .chips{align-items:center}
-.ol table{width:100%;border-collapse:collapse;font-size:13px}
-.ol th{font-weight:600;font-size:12px;color:var(--ink-3);text-align:right;padding:9px 14px;background:var(--fill-2);border-bottom:1px solid var(--line)}
+.ol .small{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.ol .small .btn{min-height:40px;font-weight:500;padding:8px 6px;white-space:nowrap}
+.ol .after{font-size:15px;color:var(--ink-3);border-top:1px dashed var(--line);padding-top:8px}
+.ol .blocked{grid-column:1/-1;text-align:center;font-size:15px;font-weight:700;color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,transparent);border-radius:12px;padding:12px}
+.ol .detail{display:flex;flex-direction:column;gap:14px;padding-top:12px;border-top:1px dashed var(--line)}
+.ol table{width:100%;border-collapse:collapse;font-size:15px}
+.ol th{font-weight:700;font-size:14px;color:var(--ink-3);text-align:right;padding:9px 14px;background:var(--fill-2);border-bottom:1px solid var(--line)}
 .ol td{padding:9px 14px;border-bottom:1px solid var(--line)}.ol td b{font-weight:700}
 .ol .scroll{overflow-x:auto}
-.ol .modal-bg{position:fixed;inset:0;background:rgba(2,5,14,.7);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
-.ol .modal{background:var(--pop);border:1px solid var(--line-2);border-radius:18px;padding:22px;width:420px;max-width:100%;display:flex;flex-direction:column;gap:14px}
-.ol .modal h3{font-family:var(--head);margin:0;font-size:19px;font-weight:800}
+.ol .more{width:100%;border:1px dashed var(--line-2);background:transparent;color:var(--ink);border-radius:14px;padding:12px;font-size:16px;font-weight:700;cursor:pointer}
+.ol .modal-bg{position:fixed;inset:0;background:rgba(10,8,5,.7);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
+.ol .modal{background:var(--pop);border:1px solid var(--line-2);border-radius:20px;padding:22px;width:440px;max-width:100%;display:flex;flex-direction:column;gap:14px;color:var(--ink)}
+.ol .modal h3{margin:0;font-size:22px;font-weight:700}
 .ol .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.ol :focus-visible{outline:2px solid var(--link);outline-offset:2px}
-.ol .mob-toggle{display:none}
+.ol :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 @media(max-width:900px){
-  .ol .row2{grid-template-columns:1fr}
-  .ol .mob-toggle{display:block}
-  .ol .slip.closed{display:none}
-  .ol .big{font-size:36px}
-  .ol .lead{grid-template-columns:minmax(0,1fr) auto;gap:8px 10px;padding:14px}
-  .ol .lead .c-name{grid-column:1/-1}
-  .ol .lead .nm{font-size:15.5px}
-  .ol .lead .ph{font-size:15px}
-  .ol .lead .acts{grid-column:1/-1;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
-  .ol .lead .acts>*{grid-column:span 2;min-height:46px;padding:8px 6px}
-  .ol .lead .acts>.call,.ol .lead .acts>.wa{grid-column:span 3;font-size:15px;min-height:50px}
-  .ol .lead .acts>.stt{grid-column:1/-1;text-align:center}
-  .ol .btn{min-height:44px}
-  .ol .tools{flex-direction:column;align-items:stretch;padding:10px 12px}
+  .ol{padding:16px;border-radius:18px;margin:4px 0 32px}
+  .ol .hd h1{font-size:27px}
+  .ol .goal{max-width:none}
+  .ol .flow b{font-size:24px}
+  .ol .flow button{min-width:92px;padding:10px 12px}
+  .ol .tools{flex-direction:column;align-items:stretch}
   .ol .tools input{flex:none;width:100%}
-  .ol .tools-row{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -12px;padding:0 12px 2px}
+  .ol .tools-row{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;width:100%;max-width:100%;min-width:0}
   .ol .tools-row>*{flex:0 0 auto;white-space:nowrap}
-  .ol .tools-row select{min-height:40px}
-  .ol .head{gap:12px}
-  .ol .mini{gap:14px;width:100%;justify-content:space-between}
-  .ol .panel-h{padding:12px 14px}
-  .ol .panel-h .btn{width:100%}
+  .ol .cards{grid-template-columns:1fr}
+  .ol .two{grid-template-columns:1fr}
 }
 @media(prefers-reduced-motion:reduce){.ol *{transition:none!important}}
 `
@@ -266,7 +279,7 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
   const [fetching, setFetching] = useState(false)
   const [progress, setProgress] = useState(0)
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
-  const [panelOpen, setPanelOpen] = useState(() => typeof window === 'undefined' || window.innerWidth > 900)
+  const [panelOpen, setPanelOpen] = useState(false)
   const timer = useRef<number | null>(null)
 
   // list
@@ -296,20 +309,26 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
   const [push, setPush] = useState<{ state: 'unsupported' | 'off' | 'on' | 'denied' | 'busy'; note?: string }>({ state: 'off' })
   const [queue, setQueue] = useState<{ ids: string[]; i: number } | null>(null)
   const [blocked, setBlocked] = useState<Set<string>>(new Set())
+  const [goal, setGoal] = useState<{ target: number | null; won: number }>({ target: null, won: 0 })
+  const [goalDraft, setGoalDraft] = useState<string | null>(null)
 
   const load = useCallback(async () => {
-    const [list, today] = await Promise.all([
+    const monthStart = new Date(`${monthKey()}-01T00:00:00+03:00`).toISOString()
+    const [list, today, target, won] = await Promise.all([
       supabase.from('outreach_leads').select('*').eq('in_focus', true).order('created_at', { ascending: false }).limit(5000),
       supabase.from('outreach_leads').select('id', { count: 'exact', head: true }).gte('created_at', startOfToday().toISOString()),
+      supabase.from('agency_goals').select('target').eq('period', monthKey()).eq('kind', 'closed_deals').maybeSingle(),
+      supabase.from('deals').select('id', { count: 'exact', head: true }).eq('stage', 'won').gte('closed_at', monthStart),
     ])
     setLeads((list.data ?? []) as OutreachLead[])
     setTodayCount(today.count ?? 0)
+    setGoal({ target: target.data ? Number(target.data.target) : null, won: won.count ?? 0 })
     setLoading(false)
   }, [])
 
   useEffect(() => { load() }, [load])
 
-  useRealtimeRefetch('admin_outreach', [{ table: 'outreach_leads' }], load, true)
+  useRealtimeRefetch('admin_outreach', [{ table: 'outreach_leads' }, { table: 'deals' }, { table: 'agency_goals' }], load, true)
   useEffect(() => { loadDoNotContact().then(setBlocked).catch(() => undefined) }, [])
 
   // Register the push service worker (the install manifest is set by the admin shell).
@@ -430,6 +449,14 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
   }
 
   const isBlocked = (l: OutreachLead) => blocked.has(l.phone)
+
+  const saveGoal = async () => {
+    const target = Number(goalDraft)
+    if (!Number.isFinite(target) || target < 0) return
+    const { error } = await supabase.from('agency_goals').upsert({ period: monthKey(), kind: 'closed_deals', target, updated_at: new Date().toISOString() }, { onConflict: 'period,kind' })
+    if (error) { setToast({ ok: false, text: 'تعذّر حفظ الهدف.' }); return }
+    setGoal(g => ({ ...g, target })); setGoalDraft(null)
+  }
 
   const setStatus = (lead: OutreachLead, status: Status) => {
     if (status === 'lost') { setLostFor(lead); return }
@@ -601,51 +628,62 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
   const pct = (a: number, b: number) => (b ? `${Math.round((a / b) * 100)}%` : '—')
   const shown = filtered.slice(0, limit)
 
-  /* ---------- lead row ---------- */
+  /* ---------- lead card ---------- */
+  const FLOW: Status[] = ['new', 'contacted', 'no_answer', 'replied', 'meeting', 'won', 'lost']
   const renderLead = (l: OutreachLead) => {
     const fu = l.next_follow_up ? fmtFollow(l.next_follow_up) : null
     const st = STATUS_META[l.status]
     const open = openId === l.id
+    const hot = scored.hotIds.has(l.id) && l.status === 'new'
+    const late = !!fu?.late && !['won', 'lost', 'meeting'].includes(l.status)
     return (
-      <div key={l.id} className={`lead ${scored.hotIds.has(l.id) && l.status === 'new' ? 'hot' : ''}`}>
-        <div className="c-name">
-          <div className="nm">{l.name}{scored.hotIds.has(l.id) && l.status === 'new' && <span className="hotb">أولوية عالية</span>}{!l.website && <span className="hotb" style={{ background: 'var(--violet)' }}>بدون موقع</span>}</div>
-          <div className="cat">{l.category}{l.city ? ` · ${l.city}` : ''}{l.rating ? ` · ★ ${l.rating} (${l.reviews ?? 0})` : ''}</div>
+      <article key={l.id} className={`cd ${open ? 'open' : ''} ${late ? 'late' : ''}`}>
+        <div className="cd-top">
+          <div className="nm">{l.name}</div>
+          {l.rating ? <span className="stars">★ {l.rating}<small>({l.reviews ?? 0})</small></span> : null}
         </div>
-        <div>
-          <div className="ph">+{l.phone}</div>
-          {!l.is_mobile && <div className="cat">رقم ثابت — اتصال فقط</div>}
-        </div>
-        <div>
-          <select aria-label="الحالة" value={l.status} onChange={e => setStatus(l, e.target.value as Status)}
-            style={{ width: 'auto', padding: '4px 8px', fontSize: 12, fontWeight: 600, color: st.color, background: st.bg, border: 'none' }}>
+        <div className="cat">{[l.category, l.city].filter(Boolean).join(' · ')}</div>
+        {(hot || !l.website || !l.is_mobile) && (
+          <div className="tags">
+            {hot && <span className="tag hot">أولوية عالية</span>}
+            {!l.website && <span className="tag nosite">بدون موقع</span>}
+            {!l.is_mobile && <span className="tag">رقم ثابت، اتصال فقط</span>}
+          </div>
+        )}
+        <div className="ph">+{l.phone}</div>
+        <div className="strow">
+          <select aria-label="الحالة" value={l.status} onChange={e => setStatus(l, e.target.value as Status)} style={{ color: st.color, background: st.bg }}>
             {Object.entries(STATUS_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
           </select>
-          {l.status === 'meeting' && l.meeting_at && <div className="meet">🗓 {fmtWhen(l.meeting_at)}</div>}
-          {l.status === 'lost' && l.lost_reason && <div className="fu">السبب: {l.lost_reason}</div>}
-          {fu && !['won', 'lost', 'meeting'].includes(l.status) && <div className={`fu ${fu.late ? 'late' : ''}`}>{fu.text}</div>}
+          {l.status === 'meeting' && l.meeting_at && <span className="meet">🗓 {fmtWhen(l.meeting_at)}</span>}
+          {l.status === 'lost' && l.lost_reason && <span className="fu">السبب: {l.lost_reason}</span>}
+          {fu && !['won', 'lost', 'meeting'].includes(l.status) && <span className={`fu ${fu.late ? 'late' : ''}`}>{fu.text}</span>}
         </div>
-        <div className="acts">
-          {isBlocked(l) ? <span className="stt" style={{ background: 'color-mix(in srgb, var(--s-lost) 16%, transparent)', color: 'var(--s-lost)' }}>ممنوع التواصل</span> : <>
-          <a className="btn call" href={`tel:+${l.phone}`} onClick={() => markContact(l, 'call')}>📞 اتصال</a>
-          <button className="btn wa" disabled={!l.is_mobile} onClick={() => sendWhatsApp(l)}>واتساب</button></>}
-          <button className="btn cal" onClick={() => setMeetingFor(l)}>🗓 اجتماع</button>
-          <a className="btn map" href={mapsUrl(l)} target="_blank" rel="noreferrer" title="موقعهم على خرائط قوقل">📍 الموقع</a>
-          <button className="btn" aria-expanded={open} onClick={() => setOpenId(open ? null : l.id)}>{open ? '▴' : '⋯'}</button>
+        <div className="big2">
+          {isBlocked(l) ? <div className="blocked">ممنوع التواصل</div> : <>
+            <a className="btn call" href={`tel:+${l.phone}`} onClick={() => markContact(l, 'call')}>📞 اتصال</a>
+            <button className="btn wa" disabled={!l.is_mobile} onClick={() => sendWhatsApp(l)}>💬 واتساب</button>
+          </>}
+        </div>
+        <div className="small">
+          <button className="btn" onClick={() => setMeetingFor(l)}>🗓 اجتماع</button>
+          <a className="btn" href={mapsUrl(l)} target="_blank" rel="noreferrer" title="موقعهم على خرائط قوقل">📍 الخريطة</a>
+          <button className="btn" aria-expanded={open} onClick={() => setOpenId(open ? null : l.id)}>{open ? 'إخفاء' : 'المزيد'}</button>
+        </div>
+        <div className="after">
+          {l.contact_count > 0
+            ? `تواصلت ${l.contact_count} مرة${l.last_contacted_at ? `، آخرها ${new Date(l.last_contacted_at).toLocaleDateString(AR_GREG, { day: 'numeric', month: 'short' })}` : ''}`
+            : 'لم يُتصل بعد'}
         </div>
         {open && (
           <div className="detail">
             <div>
-              <div className="lbl">أرسل قالباً محدداً</div>
+              <div className="lbl">أرسل قالبًا محددًا</div>
               <div className="chips">
                 {(Object.keys(TEMPLATE_LABELS) as TemplateKey[]).map(k => (
                   <button key={k} className="chip" disabled={!l.is_mobile} aria-pressed="false" onClick={() => sendWhatsApp(l, k)}>{TEMPLATE_LABELS[k]}</button>
                 ))}
               </div>
-            </div>
-            <div>
-              <div className="lbl">إدارة العميل</div>
-              <div className="chips"><button className="chip" aria-pressed="false" onClick={() => removeLead(l)}>🗑 حذف هذا العميل</button></div>
             </div>
             <div>
               <div className="lbl">اقترح موعدًا</div>
@@ -666,28 +704,74 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
                 onBlur={e => { if (e.target.value !== l.notes) updateLead(l.id, { notes: e.target.value }) }} />
             </div>
             <div className="note">
-              {l.contact_count > 0 ? `تم التواصل ${l.contact_count} مرة` : 'ما تم التواصل بعد'}
-              {l.website && <> · <a href={l.website} target="_blank" rel="noreferrer">الموقع</a></>}
-              {l.source_url && <> · <a href={l.source_url} target="_blank" rel="noreferrer">خرائط قوقل</a></>}
+              {l.website && <><a href={l.website} target="_blank" rel="noreferrer">موقعهم</a> · </>}
+              {l.source_url && <><a href={l.source_url} target="_blank" rel="noreferrer">صفحتهم في خرائط قوقل</a> · </>}
+              <button className="linkbtn" onClick={() => removeLead(l)}>🗑 حذف هذا العميل</button>
             </div>
           </div>
         )}
-      </div>
+      </article>
     )
   }
+
+  const monthName = new Date().toLocaleDateString(AR_GREG, { month: 'long', timeZone: 'Asia/Riyadh' })
+  const quickIds = filtered.filter(l => l.is_mobile && !isBlocked(l)).slice(0, 30).map(l => l.id)
 
   return (
     <div className="ol" dir="rtl">
       <style>{CSS}</style>
 
-      <button className="btn mob-toggle" onClick={() => setPanelOpen(o => !o)}>
-        {panelOpen ? 'إخفاء جلب العملاء' : '＋ جلب عملاء جدد'}
-      </button>
+      {/* ---- header: title + monthly goal ---- */}
+      <header className="hd">
+        <div>
+          <h1>{siteMode ? 'عملاء بدون موقع' : `مبيعات ${monthName}`}</h1>
+          <div className="sub">{nf(todayCount)} عميل أُضيف اليوم · {nf(dueList.length)} متابعة الآن</div>
+        </div>
+        <div className="goal">
+          {goalDraft !== null ? (
+            <div>
+              <div className="lbl">كم صفقة تبغى تقفل هذا الشهر؟</div>
+              <div className="edit">
+                <input type="number" min={0} inputMode="numeric" value={goalDraft} onChange={e => setGoalDraft(e.target.value)} aria-label="هدف الشهر" />
+                <button className="btn call" onClick={saveGoal}>حفظ</button>
+                <button className="btn" onClick={() => setGoalDraft(null)}>إلغاء</button>
+              </div>
+            </div>
+          ) : goal.target ? (<>
+            <div className="t"><span>هدف الشهر: {nf(goal.target)} صفقات</span><span className="num">{nf(goal.won)} / {nf(goal.target)}</span></div>
+            <div className="bar"><i style={{ width: `${Math.min(100, (goal.won / goal.target) * 100)}%` }} /></div>
+            <button className="linkbtn" style={{ marginTop: 6 }} onClick={() => setGoalDraft(String(goal.target))}>تعديل الهدف</button>
+          </>) : (<>
+            <div className="t"><span>أُغلق هذا الشهر: {nf(goal.won)}</span></div>
+            <button className="linkbtn" style={{ marginTop: 6 }} onClick={() => setGoalDraft('')}>حدد هدف الشهر</button>
+          </>)}
+        </div>
+        <button className="btn call" onClick={() => setPanelOpen(o => !o)}>{panelOpen ? 'إخفاء الجلب' : '＋ جلب عملاء جدد'}</button>
+      </header>
 
-      <div className="row2">
-        {/* ---- order slip ---- */}
-        <aside className={`slip ${panelOpen ? '' : 'closed'}`}>
-          <div><div className="eb">{siteMode ? 'WEBSITES · عملاء بدون موقع' : 'OUTREACH · طلب جلب'}</div><h2>{siteMode ? 'جيب أنشطة ما عندها موقع' : 'كم عميل تبغى اليوم؟'}</h2>{siteMode && <div className="note" style={{ marginTop: 6 }}>اختر القطاع والمدينة. الجلب يستورد كل الأنشطة، وهذه الصفحة تعرض منها اللي ما فيها موقع فقط.</div>}</div>
+      {toast && (
+        <div className="panel" style={{ padding: '12px 16px', display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+          <span className={toast.ok ? 'msg-ok' : 'msg-bad'}>{toast.text}</span>
+          <span style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {toast.call && (<>
+              <button className="btn" onClick={() => outcome('contacted')}>تم التواصل</button>
+              <button className="btn" onClick={() => outcome('no_answer')}>لم يرد</button>
+              <button className="btn call" onClick={() => outcome('replied')}>رد ومهتم</button>
+              <button className="btn cal" onClick={() => outcome('meeting')}>اجتماع</button>
+              <button className="btn" onClick={() => outcome('lost')}>غير مهتم</button>
+              <button className="btn" onClick={() => outcome('undo')}>تراجع</button>
+            </>)}
+            {!toast.call && toast.lead && toast.lead.is_mobile && toast.link && <button className="btn wa" onClick={() => sendWhatsApp(toast.lead!, 'confirm')}>أرسل التأكيد للعميل</button>}
+            {toast.link && <a className="btn" href={toast.link} target="_blank" rel="noreferrer">افتح الحدث</a>}
+            <button className="btn" onClick={() => setToast(null)}>إغلاق</button>
+          </span>
+        </div>
+      )}
+
+      {/* ---- fetch new leads ---- */}
+      {panelOpen && (
+        <section className="slip">
+          <div className="full"><h2>{siteMode ? 'جيب أنشطة ما عندها موقع' : 'كم عميل تبغى اليوم؟'}</h2>{siteMode && <div className="note" style={{ marginTop: 6 }}>الجلب يستورد كل الأنشطة، وهذه الصفحة تعرض منها اللي ما فيها موقع فقط.</div>}</div>
           <div><div className="lbl">المصدر</div>
             <div className="chips">
               <button className="chip" aria-pressed={source === 'google_maps'} disabled={fetching} onClick={() => setSource('google_maps')}>خرائط قوقل</button>
@@ -697,97 +781,67 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
           </div>
           <div><div className="lbl">العدد</div>
             <div className="seg">{COUNTS.map(c => <button key={c} aria-pressed={count === c} onClick={() => setCount(c)} disabled={fetching}>{c}</button>)}</div></div>
-          <div><div className="lbl">النشاط</div>
+          <div><div className="lbl">المدينة</div>
+            <select value={city} onChange={e => setCity(e.target.value)} disabled={fetching}>{CITIES.map(c => <option key={c.en} value={c.en}>{c.ar}</option>)}</select></div>
+          <div className="full"><div className="lbl">النشاط</div>
             <div className="chips">{QUICK_QUERIES.map(q => (
               <button key={q.en} className="chip" aria-pressed={query === q.en} disabled={fetching} onClick={() => setQuery(q.en)}>{q.ar}</button>
             ))}</div>
-            <input style={{ marginTop: 8 }} dir="ltr" value={query} onChange={e => setQuery(e.target.value)} disabled={fetching} placeholder="أو اكتب بالإنجليزي: dental clinic" />
+            <input style={{ marginTop: 10 }} dir="ltr" value={query} onChange={e => setQuery(e.target.value)} disabled={fetching} placeholder="أو اكتب بالإنجليزي: real estate developer" />
           </div>
-          <div><div className="lbl">المدينة</div>
-            <select value={city} onChange={e => setCity(e.target.value)} disabled={fetching}>{CITIES.map(c => <option key={c.en} value={c.en}>{c.ar}</option>)}</select></div>
-          <div className="perf" />
-          <button className="go" onClick={fetchLeads} disabled={fetching || !query.trim()}>
-            {fetching ? `جارٍ الجلب… ${progress ? `(${progress})` : ''}` : `جيب ${count} عميل`}
+          <div className="full" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <button className="go" onClick={fetchLeads} disabled={fetching || !query.trim()}>
+              {fetching ? `جارٍ الجلب… ${progress ? `(${progress})` : ''}` : `جيب ${count} عميل`}
+            </button>
+            {fetching && <div className="note">الجلب يأخذ من دقيقة إلى ٥ دقائق. تقدر تتصفح القائمة وهو يشتغل.</div>}
+            {message && <div className={message.ok ? 'msg-ok' : 'msg-bad'}>{message.text}</div>}
+          </div>
+        </section>
+      )}
+
+      {/* ---- stage strip doubles as the status filter ---- */}
+      <nav className="flow" aria-label="مراحل البيع">
+        <button aria-pressed={statusFilter === 'all'} onClick={() => { setStatusFilter('all'); setLimit(PAGE_SIZE) }}><b>{nf(leads.length)}</b><span>الكل</span></button>
+        {FLOW.map(k => (
+          <button key={k} aria-pressed={statusFilter === k} onClick={() => { setStatusFilter(k); setLimit(PAGE_SIZE) }}>
+            <b>{nf(leads.filter(l => l.status === k).length)}</b><span>{STATUS_META[k].label}</span>
           </button>
-          {fetching && <div className="note">الجلب يأخذ من دقيقة إلى ٥ دقائق. تقدر تتصفح القائمة وهو يشتغل.</div>}
-          {message && <div className={message.ok ? 'msg-ok' : 'msg-bad'}>{message.text}</div>}
-        </aside>
+        ))}
+      </nav>
 
-        {/* ---- main ---- */}
-        <main className="main">
-          {toast && (
-            <div className="panel" style={{ padding: '10px 16px', display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-              <span className={toast.ok ? 'msg-ok' : 'msg-bad'}>{toast.text}</span>
-              <span style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {toast.call && (<>
-                  <button className="btn" onClick={() => outcome('contacted')}>تم التواصل</button>
-                  <button className="btn" onClick={() => outcome('no_answer')}>لم يرد</button>
-                  <button className="btn call" onClick={() => outcome('replied')}>رد ومهتم</button>
-                  <button className="btn cal" onClick={() => outcome('meeting')}>اجتماع</button>
-                  <button className="btn" onClick={() => outcome('lost')}>غير مهتم</button>
-                  <button className="btn" onClick={() => outcome('undo')}>تراجع</button>
-                </>)}
-                {!toast.call && toast.lead && toast.lead.is_mobile && toast.link && <button className="btn wa" onClick={() => sendWhatsApp(toast.lead!, 'confirm')}>أرسل التأكيد للعميل</button>}
-                {toast.link && <a className="btn" href={toast.link} target="_blank" rel="noreferrer">افتح الحدث</a>}
-                <button className="btn" onClick={() => setToast(null)}>إغلاق</button>
-              </span>
-            </div>
-          )}
-          <div className="head">
-            <div className="big">{todayCount}<small>عميل أُضيف اليوم</small></div>
-            <div className="mini">
-              <div><b>{totals.fresh}</b><span>بانتظار التواصل</span></div>
-              <div><b>{totals.contacted}</b><span>تم التواصل</span></div>
-              <div><b>{totals.meetings}</b><span>اجتماعات</span></div>
-              <div><b>{totals.won}</b><span>أُغلقت</span></div>
-            </div>
+      {dueList.length > 0 && (
+        <section>
+          <div className="sec-h due"><h3>🔔 متابعات الآن ({nf(dueList.length)})</h3><button className="btn call" onClick={() => setQueue({ ids: dueList.map(l => l.id), i: 0 })}>▶ ابدأ المتابعة السريعة</button></div>
+          <div className="cards">{dueList.slice(0, 12).map(l => renderLead(l))}</div>
+        </section>
+      )}
+
+      {showFocus && <LeadFocusPanel onChanged={load} />}
+
+      <section style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div className="tools">
+          <input placeholder="بحث بالاسم أو الرقم أو المدينة" value={search} onChange={e => { setSearch(e.target.value); setLimit(PAGE_SIZE) }} />
+          <div className="tools-row">
+            <select aria-label="الترتيب" value={sort} onChange={e => setSort(e.target.value as 'priority' | 'newest')}>
+              <option value="priority">الأولوية أولاً</option>
+              <option value="newest">الأحدث</option>
+            </select>
+            {categories.length > 1 && (
+              <select aria-label="القطاع" value={catFilter} onChange={e => { setCatFilter(e.target.value); setLimit(PAGE_SIZE) }}>
+                <option value="all">كل القطاعات</option>
+                {categories.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            )}
+            <button className="chip" aria-pressed={mobileOnly} onClick={() => setMobileOnly(m => !m)}>جوالات فقط</button>
+            <button className="chip" aria-pressed="false" disabled={quickIds.length === 0} onClick={() => setQueue({ ids: quickIds, i: 0 })}>▶ تواصل سريع ({quickIds.length})</button>
+            <button className="chip" aria-pressed={showStats} onClick={() => setShowStats(v => !v)}>📊 النتائج</button>
+            <button className="chip" aria-pressed="false" onClick={() => exportCsv(filtered)}>⬇ تصدير Excel</button>
+            <button className="chip" aria-pressed={showFocus} onClick={() => setShowFocus(v => !v)}>🎯 التركيز</button>
+            <button className="chip" aria-pressed={showSettings} onClick={() => setShowSettings(v => !v)}>⚙ الرسائل والروابط</button>
           </div>
-
-          {dueList.length > 0 && (
-            <section className="panel due">
-              <div className="panel-h"><span>🔔 متابعات اليوم ({dueList.length})</span><button className="btn call" onClick={() => setQueue({ ids: dueList.map(l => l.id), i: 0 })}>▶ ابدأ المتابعة السريعة</button></div>
-              {dueList.slice(0, 12).map(l => renderLead(l))}
-            </section>
-          )}
-
-          {showFocus && <LeadFocusPanel onChanged={load} />}
-
-          <section className="panel">
-            <div className="statusbar" role="tablist" aria-label="حالة العميل">
-              <button className="chip" aria-pressed={statusFilter === 'all'} onClick={() => { setStatusFilter('all'); setLimit(PAGE_SIZE) }}>الكل {leads.length}</button>
-              {(Object.keys(STATUS_META) as Status[]).map(k => (
-                <button key={k} className="chip" aria-pressed={statusFilter === k} onClick={() => { setStatusFilter(k); setLimit(PAGE_SIZE) }}>{STATUS_META[k].label} {leads.filter(l => l.status === k).length}</button>
-              ))}
-            </div>
-            <div className="tools">
-              <input placeholder="بحث بالاسم أو الرقم أو المدينة" value={search} onChange={e => { setSearch(e.target.value); setLimit(PAGE_SIZE) }} />
-              <div className="tools-row">
-              <select aria-label="تصفية الحالة" value={statusFilter} onChange={e => { setStatusFilter(e.target.value as 'all' | Status); setLimit(PAGE_SIZE) }}>
-                <option value="all">كل الحالات</option>
-                {Object.entries(STATUS_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-              </select>
-              <select aria-label="الترتيب" value={sort} onChange={e => setSort(e.target.value as 'priority' | 'newest')}>
-                <option value="priority">الأولوية أولاً</option>
-                <option value="newest">الأحدث</option>
-              </select>
-              {categories.length > 1 && (
-                <select aria-label="القطاع" value={catFilter} onChange={e => { setCatFilter(e.target.value); setLimit(PAGE_SIZE) }}>
-                  <option value="all">كل القطاعات</option>
-                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              )}
-              <button className="chip" aria-pressed={mobileOnly} onClick={() => setMobileOnly(m => !m)}>جوالات فقط</button>
-              <button className="chip" aria-pressed="false" disabled={filtered.filter(l => l.is_mobile && !isBlocked(l)).length === 0}
-                onClick={() => setQueue({ ids: filtered.filter(l => l.is_mobile && !isBlocked(l)).slice(0, 30).map(l => l.id), i: 0 })}>▶ تواصل سريع ({Math.min(30, filtered.filter(l => l.is_mobile && !isBlocked(l)).length)})</button>
-              <button className="chip" aria-pressed={showStats} onClick={() => setShowStats(s => !s)}>📊 النتائج</button>
-              <button className="chip" aria-pressed="false" onClick={() => exportCsv(filtered)}>⬇ تصدير Excel</button>
-              <button className="chip" aria-pressed={showFocus} onClick={() => setShowFocus(s => !s)}>🎯 التركيز</button>
-              <button className="chip" aria-pressed={showSettings} onClick={() => setShowSettings(s => !s)}>⚙ الرسائل والروابط</button>
-              </div>
-            </div>
-
+        </div>
             {showSettings && (
-              <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, borderBottom: '1px solid var(--line)' }}>
+              <div className="panel" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div className="two">
                   <div><div className="lbl">رابط Google Meet الخاص بك</div>
                     <input dir="ltr" value={settings.meetLink} onChange={e => updateSettings({ meetLink: e.target.value })} placeholder="https://meet.google.com/xxx-xxxx-xxx" /></div>
@@ -834,7 +888,7 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
             )}
 
             {showStats && (
-              <div style={{ padding: 16, borderBottom: '1px solid var(--line)', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div className="panel" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div className="note">
                   من {totals.all} عميل: تواصلت مع {pct(totals.contacted, totals.all)} · ردّ {pct(totals.replied, totals.contacted)} من اللي تواصلت معهم · اجتماع {pct(totals.meetings, totals.contacted)} · إغلاق {pct(totals.won, totals.meetings)} من الاجتماعات
                 </div>
@@ -851,23 +905,20 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
               </div>
             )}
 
-            {loading ? (
-              <div style={{ padding: 40, textAlign: 'center' }} className="note">جارٍ التحميل…</div>
-            ) : shown.length === 0 ? (
-              <div style={{ padding: 40, textAlign: 'center' }} className="note">
-                {leads.length === 0 ? 'ما فيه عملاء بعد. اضغط «جيب عميل».' : 'ما فيه نتائج بهذا الفلتر.'}
-              </div>
-            ) : shown.map(renderLead)}
 
-            {filtered.length > limit && (
-              <button className="btn" style={{ width: '100%', borderRadius: 0, border: 0, borderTop: '1px solid var(--line)' }} onClick={() => setLimit(n => n + PAGE_SIZE)}>
-                عرض المزيد ({filtered.length - limit})
-              </button>
-            )}
-          </section>
-          <div className="note" style={{ textAlign: 'center' }}>{filtered.length} نتيجة</div>
-        </main>
-      </div>
+        {loading ? (
+          <div style={{ padding: 40, textAlign: 'center' }} className="note">جارٍ التحميل…</div>
+        ) : shown.length === 0 ? (
+          <div style={{ padding: 40, textAlign: 'center' }} className="note">
+            {leads.length === 0 ? 'ما فيه عملاء بعد. اضغط «جلب عملاء جدد».' : 'ما فيه نتائج بهذا الفلتر.'}
+          </div>
+        ) : <div className="cards">{shown.map(renderLead)}</div>}
+
+        {filtered.length > limit && (
+          <button className="more" onClick={() => setLimit(n => n + PAGE_SIZE)}>عرض المزيد ({nf(filtered.length - limit)})</button>
+        )}
+        <div className="note" style={{ textAlign: 'center' }}>{nf(filtered.length)} نتيجة</div>
+      </section>
 
       {queue && (() => {
         const lead = leads.find(l => l.id === queue.ids[queue.i])
