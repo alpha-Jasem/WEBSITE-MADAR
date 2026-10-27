@@ -33,6 +33,7 @@ interface OutreachLead {
   lost_reason: string
   last_contacted_at: string | null
   contact_count: number
+  outreach_runs?: { query: string } | null
 }
 
 const STATUS_META: Record<Status, { label: string; color: string; bg: string }> = {
@@ -61,6 +62,21 @@ const QUICK_QUERIES = [
   { ar: 'متاجر', en: 'store' },
   { ar: 'مغاسل سيارات', en: 'car wash' },
 ]
+// Each fetch lands in the sector of its search. Order matters: 'beauty clinic' is beauty, not clinics.
+const SECTORS = [
+  { key: 'real_estate', ar: 'عقار', match: /(real estate|property|developer|development|realty|apartment|housing|عقار|تطوير)/i },
+  { key: 'restaurants', ar: 'مطاعم وكافيهات', match: /(restaurant|cafe|coffee|food|مطعم|مطاعم|كافي)/i },
+  { key: 'beauty', ar: 'تجميل وصالونات', match: /(beauty|salon|spa|barber|تجميل|صالون)/i },
+  { key: 'clinics', ar: 'عيادات ومراكز طبية', match: /(dental|dentist|clinic|medical|hospital|عياد|طبي|أسنان)/i },
+  { key: 'contracting', ar: 'مقاولات', match: /(contract|construction|مقاول)/i },
+  { key: 'stores', ar: 'متاجر', match: /(store|shop|متجر|متاجر)/i },
+  { key: 'car_wash', ar: 'مغاسل سيارات', match: /(car wash|مغسل)/i },
+]
+const sectorKey = (text: string) => SECTORS.find(x => x.match.test(text))?.key ?? 'other'
+const sectorOf = (l: OutreachLead) => sectorKey(l.outreach_runs?.query || l.category)
+const sectorLabel = (key: string) => SECTORS.find(x => x.key === key)?.ar ?? 'أخرى'
+const SECTOR_STORE = 'madar_outreach_sector'
+
 const CITIES = [
   { ar: 'جدة', en: 'Jeddah' }, { ar: 'الرياض', en: 'Riyadh' }, { ar: 'مكة المكرمة', en: 'Makkah' },
   { ar: 'المدينة المنورة', en: 'Madinah' }, { ar: 'الدمام', en: 'Dammam' }, { ar: 'الخبر', en: 'Khobar' },
@@ -179,6 +195,10 @@ const CSS = `
 .ol .goal .bar i{display:block;height:100%;background:var(--good);border-radius:99px;transition:width .4s}
 .ol .goal .edit{display:flex;gap:8px;margin-top:8px}.ol .goal .edit input{width:110px}
 .ol .linkbtn{border:0;background:none;padding:0;color:var(--ink-3);font-size:15px;text-decoration:underline;cursor:pointer}
+.ol .sectors{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.ol .sectors button{flex:0 0 auto;border:0;background:none;color:var(--ink-3);font-size:17px;font-weight:500;padding:10px 14px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+.ol .sectors button i{font-style:normal;font-size:14px;background:var(--fill-2);border-radius:99px;padding:1px 8px;margin-inline-start:4px}
+.ol .sectors button[aria-selected=true]{color:var(--ink);font-weight:700;border-color:var(--ink)}
 .ol .flow{display:flex;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card-2);overflow-x:auto;scrollbar-width:none}
 .ol .flow button{flex:1 0 auto;min-width:104px;border:0;border-inline-start:1px solid var(--line);background:transparent;color:var(--ink);padding:12px 16px;text-align:start;cursor:pointer}
 .ol .flow button:first-child{border-inline-start:0}
@@ -289,6 +309,8 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
   const [statusFilter, setStatusFilter] = useState<'all' | Status>(initialQ ? 'all' : 'new')
   const [mobileOnly, setMobileOnly] = useState(!initialQ)
   const [catFilter, setCatFilter] = useState('all')
+  const [sector, setSectorState] = useState<string>(() => { try { return localStorage.getItem(SECTOR_STORE) || 'all' } catch { return 'all' } })
+  const setSector = (k: string) => { setSectorState(k); setCatFilter('all'); setLimit(PAGE_SIZE); try { localStorage.setItem(SECTOR_STORE, k) } catch { /* storage unavailable */ } }
   const [sort, setSort] = useState<'priority' | 'newest'>('priority')
   const [limit, setLimit] = useState(PAGE_SIZE)
   const [openId, setOpenId] = useState<string | null>(null)
@@ -315,7 +337,7 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
   const load = useCallback(async () => {
     const monthStart = new Date(`${monthKey()}-01T00:00:00+03:00`).toISOString()
     const [list, today, target, won] = await Promise.all([
-      supabase.from('outreach_leads').select('*').eq('in_focus', true).order('created_at', { ascending: false }).limit(5000),
+      supabase.from('outreach_leads').select('*, outreach_runs(query)').eq('in_focus', true).order('created_at', { ascending: false }).limit(5000),
       supabase.from('outreach_leads').select('id', { count: 'exact', head: true }).gte('created_at', startOfToday().toISOString()),
       supabase.from('agency_goals').select('target').eq('period', monthKey()).eq('kind', 'closed_deals').maybeSingle(),
       supabase.from('deals').select('id', { count: 'exact', head: true }).eq('stage', 'won').gte('closed_at', monthStart),
@@ -407,6 +429,7 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
           setFetching(false)
           setMessage({ ok: true, text: `تمت إضافة ${r.added} عميل جديد${r.found > r.added ? ` (${r.found - r.added} كانوا موجودين مسبقاً)` : ''}` })
           setStatusFilter('new')
+          setSector(sectorKey(query))
           load()
         } else {
           setFetching(false)
@@ -572,28 +595,36 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
     return { sorted, hotIds }
   }, [leads])
 
+  const sectors = useMemo(() => {
+    const m = new Map<string, number>()
+    leads.forEach(l => { const k = sectorOf(l); m.set(k, (m.get(k) ?? 0) + 1) })
+    return [...m.entries()].sort((a, b) => b[1] - a[1])
+  }, [leads])
+  const pool = useMemo(() => (sector === 'all' ? leads : leads.filter(l => sectorOf(l) === sector)), [leads, sector])
+
   const dueList = useMemo(
-    () => leads
+    () => pool
       .filter(l => l.next_follow_up && new Date(l.next_follow_up).getTime() <= Date.now() + 6 * 3600000 && ['contacted', 'no_answer', 'replied', 'new'].includes(l.status))
       .sort((a, b) => new Date(a.next_follow_up!).getTime() - new Date(b.next_follow_up!).getTime()),
-    [leads],
+    [pool],
   )
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     const base = sort === 'priority' ? scored.sorted : leads
     return base.filter(l =>
+      (sector === 'all' || sectorOf(l) === sector) &&
       (statusFilter === 'all' || l.status === statusFilter) &&
       (!siteMode || !l.website) &&
       (catFilter === 'all' || l.category === catFilter) &&
       (!mobileOnly || l.is_mobile) &&
       (!q || l.name.toLowerCase().includes(q) || l.phone.includes(q) || l.category.toLowerCase().includes(q) || l.city.toLowerCase().includes(q)))
-  }, [leads, scored, search, statusFilter, mobileOnly, sort, siteMode, catFilter])
+  }, [leads, scored, search, statusFilter, mobileOnly, sort, siteMode, catFilter, sector])
 
   const categories = useMemo(() => {
-    const pool = siteMode ? leads.filter(l => !l.website) : leads
-    return [...new Set(pool.map(l => l.category).filter(Boolean))].sort()
-  }, [leads, siteMode])
+    const base = siteMode ? pool.filter(l => !l.website) : pool
+    return [...new Set(base.map(l => l.category).filter(Boolean))].sort()
+  }, [pool, siteMode])
 
   const totals = useMemo(() => {
     const c = (f: (l: OutreachLead) => boolean) => leads.filter(f).length
@@ -724,7 +755,7 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
       {/* ---- header: title + monthly goal ---- */}
       <header className="hd">
         <div>
-          <h1>{siteMode ? 'عملاء بدون موقع' : `مبيعات ${monthName}`}</h1>
+          <h1>{siteMode ? 'عملاء بدون موقع' : `مبيعات ${monthName}`}{sector !== 'all' && <span style={{ color: 'var(--ink-3)', fontWeight: 500 }}> · {sectorLabel(sector)}</span>}</h1>
           <div className="sub">{nf(todayCount)} عميل أُضيف اليوم · {nf(dueList.length)} متابعة الآن</div>
         </div>
         <div className="goal">
@@ -799,12 +830,22 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
         </section>
       )}
 
+      {/* ---- sectors: every fetch keeps its own section ---- */}
+      {sectors.length > 0 && (
+        <div className="sectors" role="tablist" aria-label="الأقسام">
+          <button role="tab" aria-selected={sector === 'all'} onClick={() => setSector('all')}>كل الأقسام <i>{nf(leads.length)}</i></button>
+          {sectors.map(([k, n]) => (
+            <button key={k} role="tab" aria-selected={sector === k} onClick={() => setSector(k)}>{sectorLabel(k)} <i>{nf(n)}</i></button>
+          ))}
+        </div>
+      )}
+
       {/* ---- stage strip doubles as the status filter ---- */}
       <nav className="flow" aria-label="مراحل البيع">
-        <button aria-pressed={statusFilter === 'all'} onClick={() => { setStatusFilter('all'); setLimit(PAGE_SIZE) }}><b>{nf(leads.length)}</b><span>الكل</span></button>
+        <button aria-pressed={statusFilter === 'all'} onClick={() => { setStatusFilter('all'); setLimit(PAGE_SIZE) }}><b>{nf(pool.length)}</b><span>الكل</span></button>
         {FLOW.map(k => (
           <button key={k} aria-pressed={statusFilter === k} onClick={() => { setStatusFilter(k); setLimit(PAGE_SIZE) }}>
-            <b>{nf(leads.filter(l => l.status === k).length)}</b><span>{STATUS_META[k].label}</span>
+            <b>{nf(pool.filter(l => l.status === k).length)}</b><span>{STATUS_META[k].label}</span>
           </button>
         ))}
       </nav>

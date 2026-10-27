@@ -102,11 +102,15 @@ export function inFocus(category: unknown, f: Focus | null) {
   return f.include_words.some(w => w && c.includes(w.toLowerCase()))
 }
 
-async function insertLeads(service: SupabaseClient, allRows: Record<string, unknown>[]) {
+// same rule as the database function query_is_real_estate: the focus words only apply to real estate searches
+export const isRealEstateQuery = (q: unknown) => /(real estate|property|developer|development|realty|apartment|housing|عقار|تطوير)/i.test(String(q ?? ''))
+
+async function insertLeads(service: SupabaseClient, allRows: Record<string, unknown>[], query: string) {
   const { data: focus } = await service.from('lead_focus').select('preset, include_words, exclude_words').eq('id', 1).maybeSingle()
   const { data: gone } = await service.from('deleted_leads').select('phone')
   const deleted = new Set((gone ?? []).map(g => g.phone as string))
-  const rows = allRows.filter(r => inFocus(r.category, focus as Focus | null) && !deleted.has(String(r.phone)))
+  const checkFocus = isRealEstateQuery(query)
+  const rows = allRows.filter(r => (!checkFocus || inFocus(r.category, focus as Focus | null)) && !deleted.has(String(r.phone)))
   let added = 0
   for (let i = 0; i < rows.length; i += 200) {
     const { data } = await service.from('outreach_leads')
@@ -164,7 +168,7 @@ export async function advanceRun(service: SupabaseClient, token: string, run: an
         lookup.push({ key: `${name} ${run.city}`, name, website: it.website || '', url: it.linkedinUrl || '', city, category })
       }
     }
-    const added = await insertLeads(service, rows.slice(0, run.requested))
+    const added = await insertLeads(service, rows.slice(0, run.requested), run.query)
     const todo = lookup.slice(0, 300)
     if (todo.length === 0) {
       await service.from('outreach_runs').update({ status: 'done', imported: true, cost_usd: cost, found: rows.length, added }).eq('id', run.id)
@@ -205,7 +209,7 @@ export async function advanceRun(service: SupabaseClient, token: string, run: an
     }
     rows.sort((a, b) => Number(b.is_mobile) - Number(a.is_mobile))
     const remaining = Math.max(0, run.requested - (run.added || 0))
-    const added2 = await insertLeads(service, rows.slice(0, remaining))
+    const added2 = await insertLeads(service, rows.slice(0, remaining), run.query)
     const total = (run.added || 0) + added2
     await service.from('outreach_runs').update({ status: 'done', imported: true, cost_usd: cost, found: (run.found || 0) + rows.length, added: total }).eq('id', run.id)
     return { status: 'done' as const, added: total, found: (run.found || 0) + rows.length }
@@ -229,7 +233,7 @@ export async function advanceRun(service: SupabaseClient, token: string, run: an
   // Mobiles first (WhatsApp works on them), then trim to what was asked for.
   rows.sort((a, b) => Number(b.is_mobile) - Number(a.is_mobile))
   const wanted = rows.slice(0, run.requested)
-  const added = await insertLeads(service, wanted)
+  const added = await insertLeads(service, wanted, run.query)
   await service.from('outreach_runs').update({ status: 'done', imported: true, cost_usd: cost, found: wanted.length, added }).eq('id', run.id)
   return { status: 'done' as const, added, found: wanted.length }
 }
