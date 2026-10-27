@@ -31,7 +31,7 @@ Deno.serve(async req => {
   if (userError || !userData.user) return json({ error: 'invalid_auth' }, 401)
   const { data: profile } = await service.from('users').select('role').eq('id', userData.user.id).maybeSingle()
   if (profile?.role !== 'admin') return json({ error: 'forbidden' }, 403)
-  if (!apifyToken) return json({ error: 'missing_apify_token' }, 500)
+  if (!apifyToken && !Deno.env.get('GOOGLE_PLACES_KEY')) return json({ error: 'missing_apify_token' }, 500)
 
   const payload = await req.json().catch(() => ({}))
 
@@ -41,7 +41,7 @@ Deno.serve(async req => {
       const city = String(payload.city_en || payload.city || '').trim()
       if (!query) return json({ error: 'query_required' }, 400)
       const source = payload.source === 'linkedin' ? 'linkedin' : 'google_maps'
-      const runId = await startRun(service, apifyToken, {
+      const runId = await startRun(service, apifyToken ?? '', {
         source, query, city, count: Number(payload.count), trigger: 'manual', userId: userData.user.id,
       })
       return json({ ok: true, run_id: runId })
@@ -50,7 +50,7 @@ Deno.serve(async req => {
     if (payload.action === 'poll') {
       const { data: run } = await service.from('outreach_runs').select('*').eq('id', payload.run_id).maybeSingle()
       if (!run) return json({ error: 'run_not_found' }, 404)
-      return json({ ok: true, ...(await advanceRun(service, apifyToken, run)) })
+      return json({ ok: true, ...(await advanceRun(service, apifyToken ?? '', run)) })
     }
 
     return json({ error: 'unknown_action' }, 400)

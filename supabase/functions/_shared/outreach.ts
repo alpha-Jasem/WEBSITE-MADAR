@@ -50,10 +50,83 @@ export interface StartOpts {
   userId?: string | null
 }
 
+// Google Maps returns ~120 places per search at most, so big requests are split by district.
+// Search terms and city must be English: Arabic terms return nothing from the scraper.
+function mapsInput(o: StartOpts, requested: number) {
+  const districts = DISTRICTS[o.city] ?? []
+  const searches = Math.max(1, Math.min(Math.ceil(requested / 40), districts.length || 1))
+  const searchStrings = districts.length > 1 ? districts.slice(0, searches).map(d => `${o.query} ${d}`) : [o.query]
+  return {
+    searchStringsArray: searchStrings,
+    locationQuery: `${o.city}, Saudi Arabia`,
+    maxCrawledPlacesPerSearch: districts.length > 1 ? 60 : Math.min(requested, 120),
+    language: 'en',
+    skipClosedPlaces: true,
+  }
+}
+
+// Google Places API (New) text search, used when Apify is out of credit. Synchronous: the leads are imported straight away.
+// Phone numbers sit in the Enterprise field tier, which has a monthly free allowance, so each run is capped at 25 requests.
+const PLACES_MAX_REQUESTS = 25
+async function placesRun(service: SupabaseClient, o: StartOpts, count: number, requested: number) {
+  const key = Deno.env.get('GOOGLE_PLACES_KEY')
+  if (!key) throw new Error('missing_google_places_key')
+  const districts = DISTRICTS[o.city] ?? []
+  const searches = Math.max(1, Math.min(Math.ceil(requested / 40), districts.length || 1))
+  const queries = districts.length > 1 ? districts.slice(0, searches).map(d => `${o.query} ${d} ${o.city}`) : [`${o.query} ${o.city}`]
+  const seen = new Set<string>()
+  const rows: Record<string, unknown>[] = []
+  let requests = 0
+  for (const textQuery of queries) {
+    let pageToken: string | undefined
+    for (let page = 0; page < 3 && requests < PLACES_MAX_REQUESTS && rows.length < requested; page++) {
+      requests++
+      const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json', 'X-Goog-Api-Key': key,
+          'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.googleMapsUri,places.primaryTypeDisplayName,places.businessStatus,nextPageToken',
+        },
+        body: JSON.stringify({ textQuery, languageCode: 'en', regionCode: 'SA', pageSize: 20, ...(pageToken ? { pageToken } : {}) }),
+      })
+      const body = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(body?.error?.message || `places_${res.status}`)
+      for (const it of body.places ?? []) {
+        if (it.businessStatus && it.businessStatus !== 'OPERATIONAL') continue
+        const p = normalizeSaudiPhone(it.internationalPhoneNumber || it.nationalPhoneNumber)
+        if (!p || seen.has(p.phone)) continue
+        seen.add(p.phone)
+        rows.push({
+          name: it.displayName?.text || '—', phone: p.phone, is_mobile: p.isMobile, website: it.websiteUri || '',
+          address: it.formattedAddress || '', city: o.city, category: it.primaryTypeDisplayName?.text || '',
+          rating: it.rating ?? null, reviews: it.userRatingCount ?? null, source: 'google_maps', source_url: it.googleMapsUri || '',
+        })
+      }
+      pageToken = body.nextPageToken
+      if (!pageToken) break
+    }
+  }
+  rows.sort((a, b) => Number(b.is_mobile) - Number(a.is_mobile))
+  const wanted = rows.slice(0, requested)
+  const { data: row, error } = await service.from('outreach_runs').insert({
+    source: 'google_maps', query: o.query, city: o.city, requested: count, stage: 'main', trigger: o.trigger,
+    created_by: o.userId ?? null, status: 'done', imported: true, found: wanted.length, meta: { via: 'google_places', requests },
+  }).select('id').single()
+  if (error) throw new Error(error.message)
+  const added = await insertLeads(service, wanted.map(r => ({ ...r, run_id: row.id })), o.query)
+  await service.from('outreach_runs').update({ added }).eq('id', row.id)
+  return row.id as string
+}
+
 export async function startRun(service: SupabaseClient, token: string, o: StartOpts) {
   const count = Math.min(Math.max(Number(o.count) || 200, 10), MAX_COUNT)
   const requested = Math.min(Math.ceil(count * 1.5), 750)
   let run
+
+  if (o.source === 'google_maps' && Deno.env.get('GOOGLE_PLACES_KEY')) {
+    try { run = await apify(`/acts/${MAPS_ACTOR}/runs`, token, post(mapsInput(o, requested))) }
+    catch { return placesRun(service, o, count, requested) }
+  }
 
   if (o.source === 'linkedin') {
     run = await apify(`/acts/${LINKEDIN_ACTOR}/runs`, token, post({
@@ -62,19 +135,8 @@ export async function startRun(service: SupabaseClient, token: string, o: StartO
       maxItems: Math.min(count * 2, 1000),
       takePages: Math.min(20, Math.ceil((count * 2) / 50)),
     }))
-  } else {
-    // Google Maps returns ~120 places per search at most, so big requests are split by district.
-    // Search terms and city must be English: Arabic terms return nothing from the scraper.
-    const districts = DISTRICTS[o.city] ?? []
-    const searches = Math.max(1, Math.min(Math.ceil(requested / 40), districts.length || 1))
-    const searchStrings = districts.length > 1 ? districts.slice(0, searches).map(d => `${o.query} ${d}`) : [o.query]
-    run = await apify(`/acts/${MAPS_ACTOR}/runs`, token, post({
-      searchStringsArray: searchStrings,
-      locationQuery: `${o.city}, Saudi Arabia`,
-      maxCrawledPlacesPerSearch: districts.length > 1 ? 60 : Math.min(requested, 120),
-      language: 'en',
-      skipClosedPlaces: true,
-    }))
+  } else if (!run) {
+    run = await apify(`/acts/${MAPS_ACTOR}/runs`, token, post(mapsInput(o, requested)))
   }
 
   const { data: row, error } = await service.from('outreach_runs').insert({
