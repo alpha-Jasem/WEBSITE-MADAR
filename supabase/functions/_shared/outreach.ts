@@ -68,9 +68,40 @@ function mapsInput(o: StartOpts, requested: number) {
 // Google Places API (New) text search, used when Apify is out of credit. Synchronous: the leads are imported straight away.
 // Phone numbers sit in the Enterprise field tier, which has a monthly free allowance, so each run is capped at 25 requests.
 const PLACES_MAX_REQUESTS = 25
-async function placesRun(service: SupabaseClient, o: StartOpts, count: number, requested: number) {
+const b64url = (v: string | ArrayBuffer) => {
+  const bytes = typeof v === 'string' ? new TextEncoder().encode(v) : new Uint8Array(v)
+  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+// Auth for Places: an API key if set, otherwise the existing Google service account (cloud-platform scope).
+export async function placesAuth(): Promise<Record<string, string> | null> {
   const key = Deno.env.get('GOOGLE_PLACES_KEY')
-  if (!key) throw new Error('missing_google_places_key')
+  if (key) return { 'X-Goog-Api-Key': key }
+  const raw = Deno.env.get('GOOGLE_SA_JSON')
+  if (!raw) return null
+  const sa = JSON.parse(raw)
+  const now = Math.floor(Date.now() / 1000)
+  const header = b64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }))
+  const claims = b64url(JSON.stringify({
+    iss: sa.client_email, scope: 'https://www.googleapis.com/auth/cloud-platform',
+    aud: 'https://oauth2.googleapis.com/token', iat: now, exp: now + 3600,
+  }))
+  const pem = String(sa.private_key).replace(/-----[^-]+-----/g, '').replace(/\s+/g, '')
+  const der = Uint8Array.from(atob(pem), c => c.charCodeAt(0))
+  const k = await crypto.subtle.importKey('pkcs8', der, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign'])
+  const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', k, new TextEncoder().encode(`${header}.${claims}`))
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion: `${header}.${claims}.${b64url(sig)}` }),
+  })
+  const tok = await res.json().catch(() => ({}))
+  if (!tok.access_token) throw new Error(tok.error_description || 'google_token_failed')
+  return { Authorization: `Bearer ${tok.access_token}`, 'X-Goog-User-Project': String(sa.project_id) }
+}
+
+async function placesRun(service: SupabaseClient, o: StartOpts, count: number, requested: number) {
+  const auth = await placesAuth()
+  if (!auth) throw new Error('missing_google_places_key')
   const districts = DISTRICTS[o.city] ?? []
   const searches = Math.max(1, Math.min(Math.ceil(requested / 40), districts.length || 1))
   const queries = districts.length > 1 ? districts.slice(0, searches).map(d => `${o.query} ${d} ${o.city}`) : [`${o.query} ${o.city}`]
@@ -84,7 +115,7 @@ async function placesRun(service: SupabaseClient, o: StartOpts, count: number, r
       const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json', 'X-Goog-Api-Key': key,
+          'Content-Type': 'application/json', ...auth,
           'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.googleMapsUri,places.primaryTypeDisplayName,places.businessStatus,nextPageToken',
         },
         body: JSON.stringify({ textQuery, languageCode: 'en', regionCode: 'SA', pageSize: 20, ...(pageToken ? { pageToken } : {}) }),
@@ -123,7 +154,7 @@ export async function startRun(service: SupabaseClient, token: string, o: StartO
   const requested = Math.min(Math.ceil(count * 1.5), 750)
   let run
 
-  if (o.source === 'google_maps' && Deno.env.get('GOOGLE_PLACES_KEY')) {
+  if (o.source === 'google_maps' && (Deno.env.get('GOOGLE_PLACES_KEY') || Deno.env.get('GOOGLE_SA_JSON'))) {
     try { run = await apify(`/acts/${MAPS_ACTOR}/runs`, token, post(mapsInput(o, requested))) }
     catch { return placesRun(service, o, count, requested) }
   }

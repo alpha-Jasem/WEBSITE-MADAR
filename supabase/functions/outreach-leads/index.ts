@@ -31,7 +31,7 @@ Deno.serve(async req => {
   if (userError || !userData.user) return json({ error: 'invalid_auth' }, 401)
   const { data: profile } = await service.from('users').select('role').eq('id', userData.user.id).maybeSingle()
   if (profile?.role !== 'admin') return json({ error: 'forbidden' }, 403)
-  if (!apifyToken && !Deno.env.get('GOOGLE_PLACES_KEY')) return json({ error: 'missing_apify_token' }, 500)
+  if (!apifyToken && !Deno.env.get('GOOGLE_PLACES_KEY') && !Deno.env.get('GOOGLE_SA_JSON')) return json({ error: 'missing_apify_token' }, 500)
 
   const payload = await req.json().catch(() => ({}))
 
