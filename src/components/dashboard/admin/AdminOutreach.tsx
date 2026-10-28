@@ -34,6 +34,12 @@ interface OutreachLead {
   last_contacted_at: string | null
   contact_count: number
   outreach_runs?: { query: string } | null
+  sector?: string | null
+  lead_score?: number | null
+  priority_rank?: number | null
+  site_status?: 'unchecked' | 'needs_verification' | 'verified_none' | 'has_site'
+  package?: string | null
+  price?: number | null
 }
 
 const STATUS_META: Record<Status, { label: string; color: string; bg: string }> = {
@@ -53,28 +59,71 @@ const QUICK_QUERIES = [
   { ar: 'عيادات أسنان', en: 'dental clinic' },
   { ar: 'مراكز تجميل', en: 'beauty clinic' },
   { ar: 'مراكز طبية', en: 'medical center' },
-  { ar: 'مطاعم', en: 'restaurant' },
   { ar: 'مطورون عقاريون', en: 'real estate developer' },
   { ar: 'شركات تطوير عقاري', en: 'property development company' },
   { ar: 'مكاتب عقارية', en: 'real estate office' },
-  { ar: 'صالونات', en: 'salon' },
   { ar: 'مقاولات', en: 'contracting company' },
-  { ar: 'متاجر', en: 'store' },
   { ar: 'مغاسل سيارات', en: 'car wash' },
 ]
 // Each fetch lands in the sector of its search. Order matters: 'beauty clinic' is beauty, not clinics.
-const SECTORS = [
-  { key: 'real_estate', ar: 'عقار', match: /(real estate|property|developer|development|realty|apartment|housing|عقار|تطوير)/i },
+const SECTORS: { key: string; ar: string; rank?: number; match: RegExp; why?: string; features?: string; pitch?: string }[] = [
+  { key: 'contracting', ar: 'مقاولات وتشطيبات', rank: 1, match: /(contract|construction|fit out|مقاول)/i,
+    why: 'العميل يقارن بين المقاولين قبل ما يتصل، وبدون معرض أعمال ما يثق فيهم قبل المكالمة.',
+    features: 'معرض مشاريع قبل وبعد، التراخيص والشهادات، نموذج طلب عرض سعر، زر واتساب',
+    pitch: 'قبل ما يتصل العميل يبحث ويقارن. موقع بمعرض مشاريعكم وطلب عرض سعر يخلي شغلكم يوصل له أول.' },
+  { key: 'equipment', ar: 'تأجير معدات ثقيلة', rank: 2, match: /(equipment|crane|forklift|معدات|رافعة)/i,
+    why: 'من يحتاج معدات يبحث عن المتوفر والمواصفات بسرعة، ومن عنده كتالوج واضح يأخذ الطلب.',
+    features: 'كتالوج معدات بالمواصفات، نموذج طلب إيجار، مناطق الخدمة',
+    pitch: 'موقع بكتالوج معداتكم ونموذج طلب إيجار يخليهم يرسلون الطلب لكم وقت ما يبحثون.' },
+  { key: 'logistics', ar: 'لوجستيات وشحن', rank: 3, match: /(logistic|freight|warehouse|shipping|transport|شحن|لوجست)/i,
+    why: 'عملاء الشركات يتأكدون من جدية الشركة وخدماتها قبل ما يتعاملون معها.',
+    features: 'صفحات الخدمات، طلب تسعير شحنة، التغطية والمستودعات',
+    pitch: 'الشركات اللي تبحث عن ناقل تدور على موقع يوضح الخدمات ويستقبل طلب التسعير.' },
+  { key: 'fabrication', ar: 'ألمنيوم وزجاج ومطابخ', rank: 4, match: /(aluminum|aluminium|glass|kitchen|workshop|ألمنيوم|زجاج|مطابخ)/i,
+    why: 'شغلهم بصري، والعميل يبغى يشوف أعمال سابقة قبل ما يطلب قياس أو عرض.',
+    features: 'معرض أعمال، أنواع المنتجات، طلب قياس وعرض سعر',
+    pitch: 'معرض صور لأعمالكم وطلب عرض سعر من الموقع يعرض شغلكم لأي أحد يبحث عن ورشة.' },
+  { key: 'hvac', ar: 'تكييف وصيانة', rank: 5, match: /(hvac|air condition|maintenance|facility|تكييف|صيانة)/i,
+    why: 'طلبات الصيانة غالبًا تجي من البحث السريع، وعقود الشركات تحتاج حضور موثوق.',
+    features: 'طلب صيانة وحجز زيارة، عقود الصيانة السنوية، مناطق الخدمة',
+    pitch: 'العميل يبحث وقت ما يتعطل مكيفه. موقع فيه طلب زيارة مباشر يوصلكم الطلب أول.' },
+  { key: 'clinics', ar: 'عيادات ومراكز طبية', rank: 6, match: /(dental|dentist|clinic|medical|hospital|عياد|طبي|أسنان)/i,
+    why: 'المريض يقارن العيادات ويبحث عن الأطباء والخدمات قبل الحجز.',
+    features: 'حجز موعد، صفحات الأطباء والخدمات، الموقع وساعات العمل',
+    pitch: 'موقع يعرض أطباءكم وخدماتكم ويستقبل الحجز يوفر عليكم مكالمات كثيرة.' },
+  { key: 'recruitment', ar: 'استقدام', rank: 7, match: /(recruit|manpower|domestic workers|استقدام)/i,
+    why: 'العميل يقارن مكاتب الاستقدام ويحتاج يفهم الإجراءات والمدد قبل ما يتواصل.',
+    features: 'نموذج طلب استقدام، الجنسيات والمدد، أسئلة شائعة، زر واتساب',
+    pitch: 'صفحة توضح الإجراءات والمدد مع نموذج الطلب تقلل الأسئلة المتكررة وتجيب طلبات جاهزة.' },
+  { key: 'cleaning', ar: 'نظافة ومكافحة حشرات', rank: 8, match: /(cleaning|pest|نظافة|حشرات)/i,
+    why: 'يبحث العميل عن خدمة سريعة موثوقة، والشركات تحتاج عقود وتعريف بالخدمة.',
+    features: 'طلب خدمة وحجز، باقات الخدمات، مناطق الخدمة، عقود الشركات',
+    pitch: 'موقع بالباقات وطلب الحجز المباشر يوصلكم الطلب قبل منافسيكم.' },
+  { key: 'real_estate', ar: 'عقار', rank: 9, match: /(real estate|property|developer|development|realty|apartment|housing|عقار|تطوير)/i,
+    why: 'العميل يبحث عن عقار وعن المكتب الموثوق، والموقع يعرض عقاراتكم ويجمع الطلبات.',
+    features: 'عرض العقارات بفلاتر، نموذج طلب عقار، الخريطة، واتساب لكل عقار',
+    pitch: 'موقع يعرض عقاراتكم ويستقبل طلبات المشترين خارج ساعات الدوام.' },
+  { key: 'events', ar: 'معارض وفعاليات', rank: 10, match: /(exhibition|event|معرض|فعالي)/i,
+    why: 'المنظم يختار بناءً على أعماله السابقة، والموقع هو معرض فعالياته.',
+    features: 'معرض فعاليات سابقة، باقات الخدمات، نموذج طلب عرض سعر',
+    pitch: 'موقع بفعالياتكم السابقة وطلب عرض سعر يوريهم مستواكم قبل ما يتواصلون.' },
   { key: 'restaurants', ar: 'مطاعم وكافيهات', match: /(restaurant|cafe|coffee|food|مطعم|مطاعم|كافي)/i },
   { key: 'beauty', ar: 'تجميل وصالونات', match: /(beauty|salon|spa|barber|تجميل|صالون)/i },
   { key: 'clinics', ar: 'عيادات ومراكز طبية', match: /(dental|dentist|clinic|medical|hospital|عياد|طبي|أسنان)/i },
-  { key: 'contracting', ar: 'مقاولات', match: /(contract|construction|مقاول)/i },
   { key: 'stores', ar: 'متاجر', match: /(store|shop|متجر|متاجر)/i },
   { key: 'car_wash', ar: 'مغاسل سيارات', match: /(car wash|مغسل)/i },
 ]
 const sectorKey = (text: string) => SECTORS.find(x => x.match.test(text))?.key ?? 'other'
-const sectorOf = (l: OutreachLead) => sectorKey(l.outreach_runs?.query || l.category)
+const sectorOf = (l: OutreachLead) => l.sector || sectorKey(l.outreach_runs?.query || l.category)
 const sectorLabel = (key: string) => SECTORS.find(x => x.key === key)?.ar ?? 'أخرى'
+const sectorRank = (key: string) => SECTORS.find(x => x.key === key)?.rank ?? 99
+
+// Website packages (approved by the owner). The price on each lead can still be edited.
+const PACKAGES = [
+  { key: 'starter', label: 'Starter', price: 1500 },
+  { key: 'pro', label: 'Pro', price: 2500 },
+  { key: 'elite', label: 'Elite', price: 5000 },
+]
 const SECTOR_STORE = 'madar_outreach_sector'
 
 const CITIES = [
@@ -87,27 +136,21 @@ const COUNTS = [200, 300, 500]
 const TEMPLATE_LABELS: Record<TemplateKey, string> = {
   first: 'أول تواصل', reminder: 'تذكير', meeting: 'عرض اجتماع', offer: 'إرسال العرض', confirm: 'تأكيد الاجتماع',
 }
-const DEFAULT_TEMPLATES: Record<TemplateKey, string> = {
-  first: 'مرحباً، أنا جاسم من مادار. نساعد {name} على الرد على العملاء وحجز المواعيد تلقائياً على واتساب. هل يناسبك دقيقتان أوضح لك كيف؟',
-  reminder: 'مرحباً مرة ثانية 👋 أتابع معك بخصوص {name}. ودي أعرض عليك كيف نخلي واتساب يرد ويحجز عنك تلقائياً. متى يناسبك؟',
-  meeting: 'يسعدني نجلس 15 دقيقة نوريك النظام على {name}. وش الوقت المناسب لك هالأسبوع؟',
-  offer: 'هذا عرضنا لـ {name}: {offer_link}\nأي سؤال أنا حاضر.',
-  confirm: 'تم تأكيد اجتماعنا {time} 🗓\nرابط الاجتماع: {meet_link}\nنتشرف بك.',
-}
 const SITE_TEMPLATES: Record<TemplateKey, string> = {
-  first: 'مرحباً، أنا جاسم من مادار. لاحظت أن {name} ما عنده موقع إلكتروني، ونبني مواقع جاهزة للمطاعم والعقارات والمتاجر تستقبل الطلبات والحجوزات. تحب أرسل لك نموذجاً تجريبياً لنشاطك؟',
+  first: 'مرحباً، أنا جاسم من مادار. لاحظت أن {name} ما عنده موقع إلكتروني مستقل، ونبني مواقع احترافية للشركات تعرض أعمالها وتستقبل طلبات عروض الأسعار. تحب أرسل لك نموذجاً تجريبياً لنشاطك؟',
   reminder: 'مرحباً مرة ثانية 👋 بخصوص موقع {name}. جهزنا لك فكرة سريعة وأقدر أوريك نموذجها. متى يناسبك؟',
   meeting: 'يسعدني أعرض عليك نموذج موقع {name} في 10 دقائق. وش الوقت المناسب لك هالأسبوع؟',
   offer: 'هذا عرض موقع {name}: {offer_link}\nأي سؤال أنا حاضر.',
   confirm: 'تم تأكيد اجتماعنا {time} 🗓\nرابط الاجتماع: {meet_link}\nنتشرف بك.',
 }
+const DEFAULT_TEMPLATES = SITE_TEMPLATES
 // Ready replies to the objections heard most often; the owner sends one when the customer pushes back.
 const OBJECTIONS: { label: string; text: string }[] = [
-  { label: 'وش أستفيد؟', text: 'سؤال في محله. لما أحد يبحث عن مطعم قريب منه في قوقل، الموقع يخلي {name} يطلع بالمنيو وزر الطلب، مو بس رقم وموقع. وكم تدفع عمولة على الطلب من التطبيقات؟ الطلب من موقعك ما فيه عمولة.' },
-  { label: 'ما أبغى', text: 'أفهمك تمامًا، ما أبغى أضغط عليك. بس أسألك سؤال واحد: كيف يوصلك الزبون الجديد الحين؟ إذا حسيت إن في فرصة، أجهز لك تصميمًا تشوفه من غير أي التزام.' },
+  { label: 'وش أستفيد؟', text: 'سؤال في محله. لما أحد يبحث في قوقل عن خدمتكم، الموقع يخلي {name} يظهر بأعماله وطريقة الطلب، مو بس رقم وموقع على الخريطة. وكثير من العملاء يقارنون قبل ما يتصلون.' },
+  { label: 'ما أبغى', text: 'أفهمك تمامًا، ما أبغى أضغط عليك. بس أسألك: كيف يوصلك العميل الجديد الحين؟ إذا حسيت إن في فرصة، أجهز لك تصميمًا تشوفه من غير أي التزام.' },
   { label: 'غالي', text: 'أقدّر صراحتك. خلني أجهز لك تصميمًا لـ {name} تشوفه أول، وبعدها تقرر إذا يستاهل. ولو السعر هو المشكلة، قلي وش الميزانية اللي تناسبك وأشوف أي باقة تنفع.' },
   { label: 'ما عندي وقت', text: 'ولا يهمك، أنت ما تحتاج وقت. أنا أجهز كل شي وأسألك أسئلة بسيطة بس. متى يناسبك أتصل 5 دقائق؟' },
-  { label: 'عندي انستقرام', text: 'حلو إن عندك حضور. الموقع ما يلغي الانستقرام، يكمله: المنيو والطلب والموقع في مكان واحد يظهر في قوقل، والانستقرام ما يظهر فيه بنفس الطريقة.' },
+  { label: 'عندي انستقرام', text: 'حلو إن عندك حضور. الموقع ما يلغي الانستقرام، يكمله: أعمالك وطريقة الطلب في مكان واحد يظهر في قوقل، والانستقرام ما يظهر فيه بنفس الطريقة.' },
   { label: 'أفكر فيها', text: 'تمام، خذ راحتك. أرسل لك نموذجًا لـ {name} تشوفه وقت ما تبغى، وأرجع لك بعد كم يوم؟' },
 ]
 const STORE = { templates: 'madar_outreach_templates', settings: 'madar_outreach_settings' }
@@ -181,6 +224,7 @@ function calStamp(d: Date) {
 }
 
 function score(l: OutreachLead) {
+  if (l.lead_score != null) return 1000 + l.lead_score
   return (l.rating ?? 0) * Math.log10((l.reviews ?? 0) + 10) + (l.website ? 1 : 0) + (l.is_mobile ? 3 : 0)
 }
 
@@ -351,7 +395,7 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
       supabase.from('agency_goals').select('target').eq('period', monthKey()).eq('kind', 'closed_deals').maybeSingle(),
       supabase.from('deals').select('id', { count: 'exact', head: true }).eq('stage', 'won').gte('closed_at', monthStart),
     ])
-    setLeads((list.data ?? []) as OutreachLead[])
+    setLeads(((list.data ?? []) as OutreachLead[]).filter(l => l.site_status !== 'has_site'))
     setTodayCount(today.count ?? 0)
     setGoal({ target: target.data ? Number(target.data.target) : null, won: won.count ?? 0 })
     setLoading(false)
@@ -427,18 +471,18 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
     return data as Record<string, any>
   }
 
-  const poll = (runId: string) => {
+  const poll = (runId: string, landOn?: string) => {
     timer.current = window.setTimeout(async () => {
       try {
         const r = await invoke({ action: 'poll', run_id: runId })
         if (r.status === 'running') {
           setProgress(r.progress ?? 0)
-          poll(runId)
+          poll(runId, landOn)
         } else if (r.status === 'done') {
           setFetching(false)
           setMessage({ ok: true, text: `تمت إضافة ${r.added} عميل جديد${r.found > r.added ? ` (${r.found - r.added} كانوا موجودين مسبقاً)` : ''}` })
           setStatusFilter('new')
-          setSector(sectorKey(query))
+          setSector(landOn ?? sectorKey(query))
           load()
         } else {
           setFetching(false)
@@ -463,6 +507,38 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
       setFetching(false)
       setMessage({ ok: false, text: (e as Error).message })
     }
+  }
+
+  // Jeddah website campaign: the server searches the priority sectors, drops anyone with a real website and scores the rest.
+  const fetchCampaign = async () => {
+    if (fetching) return
+    setFetching(true)
+    setProgress(0)
+    setMessage(null)
+    try {
+      const r = await invoke({ action: 'start', source: 'google_maps', query: 'website prospects', query_en: 'website prospects', city: 'Jeddah', city_en: 'Jeddah', count })
+      poll(r.run_id, 'all')
+    } catch (e) {
+      setFetching(false)
+      setMessage({ ok: false, text: (e as Error).message })
+    }
+  }
+
+  const exportCsv = () => {
+    const q = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`
+    const head = ['Company Name', 'Business Category', 'Priority Rank', 'Lead Score /100', 'Phone Number', 'WhatsApp Link (mobile, availability not verified)', 'Google Maps Link', 'District / Neighborhood',
+      'Website Status', 'Number of Reviews', 'Google Rating', 'Why This Business Needs a Website', 'Suggested Website Features', 'Recommended Sales Pitch', 'Package', 'Price (SAR)']
+    const rows = filtered.map(l => {
+      const sec = SECTORS.find(x => x.key === sectorOf(l))
+      return [l.name, sec?.ar ?? l.category, l.priority_rank ?? '', l.lead_score ?? '', `+${l.phone}`, l.is_mobile ? `https://wa.me/${l.phone}` : '', l.source_url, l.address,
+        l.site_status === 'verified_none' ? 'Verified No Website' : 'Needs Verification', l.reviews ?? '', l.rating ?? '', sec?.why ?? '', sec?.features ?? '', sec?.pitch ?? '', l.package ?? '', l.price ?? '']
+    })
+    const csv = '\ufeff' + [head, ...rows].map(r => r.map(q).join(',')).join('\r\n')
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+    a.download = `madar-leads-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(a.href)
   }
 
   /* ---------- lead updates ---------- */
@@ -613,9 +689,14 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
   const sectors = useMemo(() => {
     const m = new Map<string, number>()
     leads.forEach(l => { const k = sectorOf(l); m.set(k, (m.get(k) ?? 0) + 1) })
-    return [...m.entries()].sort((a, b) => b[1] - a[1])
+    return [...m.entries()].sort((a, b) => sectorRank(a[0]) - sectorRank(b[0]) || b[1] - a[1])
   }, [leads])
   const pool = useMemo(() => (sector === 'all' ? leads : leads.filter(l => sectorOf(l) === sector)), [leads, sector])
+
+  const money = useMemo(() => {
+    const sum = (f: (l: OutreachLead) => boolean) => pool.filter(f).reduce((t, l) => t + Number(l.price ?? 0), 0)
+    return { expected: sum(l => l.status === 'replied' || l.status === 'meeting'), closed: sum(l => l.status === 'won') }
+  }, [pool])
 
   const dueList = useMemo(
     () => pool
@@ -689,10 +770,14 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
           {l.rating ? <span className="stars">★ {l.rating}<small>({l.reviews ?? 0})</small></span> : null}
         </div>
         <div className="cat">{[l.category, l.city].filter(Boolean).join(' · ')}</div>
-        {(hot || !l.website || !l.is_mobile) && (
+        {(hot || !l.website || !l.is_mobile || l.lead_score != null) && (
           <div className="tags">
             {hot && <span className="tag hot">أولوية عالية</span>}
-            {!l.website && <span className="tag nosite">بدون موقع</span>}
+            {l.lead_score != null && <span className="tag">{l.lead_score}/100</span>}
+            {l.site_status === 'verified_none' ? <span className="tag nosite">تأكدت: بلا موقع</span>
+              : l.site_status === 'needs_verification' ? <span className="tag">يحتاج تحقق من الموقع</span>
+              : !l.website && <span className="tag nosite">بدون موقع</span>}
+            {l.package && <span className="tag">{l.package}{l.price ? ` · ${nf(Number(l.price))} ريال` : ''}</span>}
             {!l.is_mobile && <span className="tag">رقم ثابت، اتصال فقط</span>}
           </div>
         )}
@@ -729,6 +814,35 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
                 {(Object.keys(TEMPLATE_LABELS) as TemplateKey[]).map(k => (
                   <button key={k} className="chip" disabled={!l.is_mobile} aria-pressed="false" onClick={() => sendWhatsApp(l, k)}>{TEMPLATE_LABELS[k]}</button>
                 ))}
+              </div>
+            </div>
+            {(() => {
+              const sec = SECTORS.find(x => x.key === sectorOf(l))
+              return sec?.why ? (
+                <div>
+                  <div className="lbl">ليش يحتاج موقع</div>
+                  <div className="note">{sec.why}</div>
+                  <div className="note" style={{ marginTop: 4 }}>اقترح له: {sec.features}</div>
+                </div>
+              ) : null
+            })()}
+            <div>
+              <div className="lbl">الباقة والسعر</div>
+              <div className="chips">
+                {PACKAGES.map(pk => (
+                  <button key={pk.key} className="chip" aria-pressed={l.package === pk.label} onClick={() => updateLead(l.id, { package: pk.label, price: pk.price })}>{pk.label} · {nf(pk.price)}</button>
+                ))}
+                <input type="number" min={0} inputMode="numeric" dir="ltr" style={{ width: 120 }} aria-label="السعر بالريال" placeholder="السعر"
+                  defaultValue={l.price ?? ''} key={`${l.id}-${l.price ?? ''}`}
+                  onBlur={e => { const v = e.target.value === '' ? null : Number(e.target.value); if (v !== (l.price ?? null)) updateLead(l.id, { price: v }) }} />
+              </div>
+            </div>
+            <div>
+              <div className="lbl">هل عنده موقع فعلًا؟</div>
+              <div className="chips">
+                <a className="chip" href={`https://www.google.com/search?q=${encodeURIComponent(`${l.name} ${l.city}`)}`} target="_blank" rel="noreferrer">ابحث عنه في قوقل</a>
+                <button className="chip" aria-pressed={l.site_status === 'verified_none'} onClick={() => updateLead(l.id, { site_status: 'verified_none' })}>تأكدت: بلا موقع</button>
+                <button className="chip" aria-pressed="false" onClick={() => { updateLead(l.id, { site_status: 'has_site' }); setLeads(ls => ls.filter(x => x.id !== l.id)) }}>عنده موقع، أخفه</button>
               </div>
             </div>
             <div>
@@ -779,7 +893,7 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
       <header className="hd">
         <div>
           <h1>{siteMode ? 'عملاء بدون موقع' : `مبيعات ${monthName}`}{sector !== 'all' && <span style={{ color: 'var(--ink-3)', fontWeight: 500 }}> · {sectorLabel(sector)}</span>}</h1>
-          <div className="sub">{nf(todayCount)} عميل أُضيف اليوم · {nf(dueList.length)} متابعة الآن</div>
+          <div className="sub">{nf(todayCount)} عميل أُضيف اليوم · {nf(dueList.length)} متابعة الآن{(money.expected > 0 || money.closed > 0) && ` · المتوقع ${nf(money.expected)} ريال · المغلق ${nf(money.closed)} ريال`}</div>
         </div>
         <div className="goal">
           {goalDraft !== null ? (
@@ -844,6 +958,10 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
             <input style={{ marginTop: 10 }} dir="ltr" value={query} onChange={e => setQuery(e.target.value)} disabled={fetching} placeholder="أو اكتب بالإنجليزي: real estate developer" />
           </div>
           <div className="full" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <button className="go" onClick={fetchCampaign} disabled={fetching}>
+              {fetching ? `جارٍ الجلب… ${progress ? `(${progress})` : ''}` : `حملة جدة: ${count} عميل يحتاج موقع`}
+            </button>
+            <div className="note">يبحث في 10 قطاعات بالترتيب (المقاولات أولًا)، يستبعد المطاعم والكافيهات والبقالات وكل من عنده موقع مستقل، ويقيّم كل عميل من 100. بدون موقع الموثق = «يحتاج تحقق» حتى تتأكد أنت.</div>
             <button className="go" onClick={fetchLeads} disabled={fetching || !query.trim()}>
               {fetching ? `جارٍ الجلب… ${progress ? `(${progress})` : ''}` : `جيب ${count} عميل`}
             </button>
@@ -897,6 +1015,7 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
               </select>
             )}
             <button className="chip" aria-pressed={mobileOnly} onClick={() => setMobileOnly(m => !m)}>جوالات فقط</button>
+            <button className="chip" aria-pressed="false" disabled={filtered.length === 0} onClick={exportCsv}>⬇ تصدير CSV ({filtered.length})</button>
             <button className="chip" aria-pressed="false" disabled={quickIds.length === 0} onClick={() => setQueue({ ids: quickIds, i: 0 })}>▶ تواصل سريع ({quickIds.length})</button>
             <button className="chip" aria-pressed={showStats} onClick={() => setShowStats(v => !v)}>📊 النتائج</button>
             <button className="chip" aria-pressed="false" onClick={() => exportCsv(filtered)}>⬇ تصدير Excel</button>

@@ -50,6 +50,35 @@ export interface StartOpts {
   userId?: string | null
 }
 
+// Website campaign: high-intent B2B sectors in Jeddah, in priority order. need/importance/ability are the
+// owner-approved judgment weights for the 100-point lead score, not measured data.
+export const CAMPAIGN_QUERY = 'website prospects'
+const PROSPECT_SECTORS = [
+  { key: 'contracting', rank: 1, terms: ['general contractor', 'interior fit out company'], need: 30, importance: 25, ability: 14 },
+  { key: 'equipment', rank: 2, terms: ['heavy equipment rental', 'crane and forklift rental'], need: 28, importance: 22, ability: 14 },
+  { key: 'logistics', rank: 3, terms: ['logistics company', 'freight forwarding company'], need: 26, importance: 22, ability: 13 },
+  { key: 'fabrication', rank: 4, terms: ['aluminum and glass fabrication', 'kitchen manufacturer workshop'], need: 26, importance: 22, ability: 11 },
+  { key: 'hvac', rank: 5, terms: ['air conditioning maintenance company', 'facility maintenance company'], need: 24, importance: 22, ability: 10 },
+  { key: 'clinics', rank: 6, terms: ['medical clinic', 'cosmetic clinic'], need: 24, importance: 20, ability: 11 },
+  { key: 'recruitment', rank: 7, terms: ['domestic workers recruitment office', 'manpower recruitment agency'], need: 22, importance: 20, ability: 10 },
+  { key: 'cleaning', rank: 8, terms: ['cleaning company', 'pest control company'], need: 22, importance: 20, ability: 8 },
+  { key: 'real_estate', rank: 9, terms: ['real estate office', 'property management company'], need: 20, importance: 22, ability: 9 },
+  { key: 'events', rank: 10, terms: ['exhibition organizer', 'event management company'], need: 22, importance: 18, ability: 9 },
+]
+// Never targeted by the campaign, even when they have no website.
+const BANNED = /(restaurant|cafe|café|coffee|grocery|supermarket|mini ?market|barber|fast food|food truck|bakery|sweets|juice|مطعم|مقهى|كافيه|بقال|سوبرماركت|حلاق)/i
+// These are not an independent website of the business.
+const NOT_A_SITE = /(instagram|facebook|fb\.com|twitter|x\.com|tiktok|snapchat|linktr\.ee|linktree|wa\.me|whatsapp|t\.me|youtube|google\.|goo\.gl|maps\.app|business\.site)/i
+
+function prospectScore(sec: typeof PROSPECT_SECTORS[number], it: any, isMobile: boolean) {
+  const rating = Number(it.totalScore || 0)
+  const reviews = Number(it.reviewsCount || 0)
+  const lr = Math.log10(reviews + 1)
+  const ability = Math.min(20, sec.ability + Math.min(6, Math.floor(lr * 3)))
+  const quality = Math.min(15, (rating >= 4.5 ? 8 : rating >= 4 ? 6 : rating >= 3.5 ? 3 : 0) + Math.min(7, Math.floor(lr * 3.5)))
+  return Math.min(100, sec.need + sec.importance + ability + quality + (isMobile ? 10 : 4))
+}
+
 // Google Maps returns ~120 places per search at most, so big requests are split by district.
 // Search terms and city must be English: Arabic terms return nothing from the scraper.
 function mapsInput(o: StartOpts, requested: number) {
@@ -154,7 +183,16 @@ export async function startRun(service: SupabaseClient, token: string, o: StartO
   const requested = Math.min(Math.ceil(count * 1.5), 750)
   let run
 
-  if (o.source === 'google_maps' && (Deno.env.get('GOOGLE_PLACES_KEY') || Deno.env.get('GOOGLE_SA_JSON'))) {
+  const campaign = o.source === 'google_maps' && o.query === CAMPAIGN_QUERY
+  if (campaign) {
+    run = await apify(`/acts/${MAPS_ACTOR}/runs`, token, post({
+      searchStringsArray: PROSPECT_SECTORS.flatMap(x => x.terms),
+      locationQuery: `${o.city}, Saudi Arabia`,
+      maxCrawledPlacesPerSearch: 25,
+      language: 'en',
+      skipClosedPlaces: true,
+    }))
+  } else if (o.source === 'google_maps' && (Deno.env.get('GOOGLE_PLACES_KEY') || Deno.env.get('GOOGLE_SA_JSON'))) {
     try { run = await apify(`/acts/${MAPS_ACTOR}/runs`, token, post(mapsInput(o, requested))) }
     catch { return placesRun(service, o, count, requested) }
   }
@@ -174,6 +212,7 @@ export async function startRun(service: SupabaseClient, token: string, o: StartO
     source: o.source, query: o.query, city: o.city, requested: count,
     apify_run_id: run.data.id, dataset_id: run.data.defaultDatasetId,
     stage: o.source === 'linkedin' ? 'linkedin' : 'main', trigger: o.trigger, created_by: o.userId ?? null,
+    meta: campaign ? { campaign: true } : {},
   }).select('id').single()
   if (error) throw new Error(error.message)
   return row.id as string
@@ -306,6 +345,45 @@ export async function advanceRun(service: SupabaseClient, token: string, run: an
     const total = (run.added || 0) + added2
     await service.from('outreach_runs').update({ status: 'done', imported: true, cost_usd: cost, found: (run.found || 0) + rows.length, added: total }).eq('id', run.id)
     return { status: 'done' as const, added: total, found: (run.found || 0) + rows.length }
+  }
+
+  /* ---- Website campaign: only businesses without an independent website, scored and balanced across sectors ---- */
+  if (run.meta?.campaign) {
+    const bySearch = new Map(PROSPECT_SECTORS.flatMap(x => x.terms.map(t => [t, x] as const)))
+    const seen = new Set<string>()
+    const rows: Record<string, unknown>[] = []
+    for (const it of items) {
+      const sec = bySearch.get(String(it.searchString ?? '').trim())
+      const p = normalizeSaudiPhone(it.phoneUnformatted || it.phone)
+      if (!sec || !p || seen.has(p.phone)) continue
+      const category = String(it.categoryName || (it.categories?.[0] ?? ''))
+      if (BANNED.test(category) || BANNED.test(String(it.title ?? ''))) continue
+      if (it.permanentlyClosed) continue
+      const site = String(it.website || '').trim()
+      if (site && !NOT_A_SITE.test(site)) continue
+      seen.add(p.phone)
+      rows.push({
+        run_id: run.id, name: it.title || it.name || '—', phone: p.phone, is_mobile: p.isMobile,
+        website: site, address: it.address || '', city: it.city || run.city, category,
+        rating: it.totalScore ?? null, reviews: it.reviewsCount ?? null, source: 'google_maps', source_url: it.url || '',
+        sector: sec.key, priority_rank: sec.rank, lead_score: prospectScore(sec, it, p.isMobile), site_status: 'needs_verification',
+      })
+    }
+    const byScore = (a: any, b: any) => a.priority_rank - b.priority_rank || b.lead_score - a.lead_score
+    rows.sort(byScore)
+    // first the best 10 of every sector, then fill up to the requested count in priority order
+    const perSector = new Map<string, number>()
+    const picked: Record<string, unknown>[] = []
+    const rest: Record<string, unknown>[] = []
+    for (const r of rows) {
+      const n = perSector.get(r.sector as string) ?? 0
+      if (n < 10 && picked.length < run.requested) { perSector.set(r.sector as string, n + 1); picked.push(r) } else rest.push(r)
+    }
+    for (const r of rest) { if (picked.length >= run.requested) break; picked.push(r) }
+    picked.sort(byScore)
+    const added = await insertLeads(service, picked, run.query)
+    await service.from('outreach_runs').update({ status: 'done', imported: true, cost_usd: cost, found: picked.length, added }).eq('id', run.id)
+    return { status: 'done' as const, added, found: picked.length }
   }
 
   /* ---- Google Maps ---- */
