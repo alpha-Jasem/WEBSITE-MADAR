@@ -101,6 +101,15 @@ const SITE_TEMPLATES: Record<TemplateKey, string> = {
   offer: 'هذا عرض موقع {name}: {offer_link}\nأي سؤال أنا حاضر.',
   confirm: 'تم تأكيد اجتماعنا {time} 🗓\nرابط الاجتماع: {meet_link}\nنتشرف بك.',
 }
+// Ready replies to the objections heard most often; the owner sends one when the customer pushes back.
+const OBJECTIONS: { label: string; text: string }[] = [
+  { label: 'وش أستفيد؟', text: 'سؤال في محله. لما أحد يبحث عن مطعم قريب منه في قوقل، الموقع يخلي {name} يطلع بالمنيو وزر الطلب، مو بس رقم وموقع. وكم تدفع عمولة على الطلب من التطبيقات؟ الطلب من موقعك ما فيه عمولة.' },
+  { label: 'ما أبغى', text: 'أفهمك تمامًا، ما أبغى أضغط عليك. بس أسألك سؤال واحد: كيف يوصلك الزبون الجديد الحين؟ إذا حسيت إن في فرصة، أجهز لك تصميمًا تشوفه من غير أي التزام.' },
+  { label: 'غالي', text: 'أقدّر صراحتك. خلني أجهز لك تصميمًا لـ {name} تشوفه أول، وبعدها تقرر إذا يستاهل. ولو السعر هو المشكلة، قلي وش الميزانية اللي تناسبك وأشوف أي باقة تنفع.' },
+  { label: 'ما عندي وقت', text: 'ولا يهمك، أنت ما تحتاج وقت. أنا أجهز كل شي وأسألك أسئلة بسيطة بس. متى يناسبك أتصل 5 دقائق؟' },
+  { label: 'عندي انستقرام', text: 'حلو إن عندك حضور. الموقع ما يلغي الانستقرام، يكمله: المنيو والطلب والموقع في مكان واحد يظهر في قوقل، والانستقرام ما يظهر فيه بنفس الطريقة.' },
+  { label: 'أفكر فيها', text: 'تمام، خذ راحتك. أرسل لك نموذجًا لـ {name} تشوفه وقت ما تبغى، وأرجع لك بعد كم يوم؟' },
+]
 const STORE = { templates: 'madar_outreach_templates', settings: 'madar_outreach_settings' }
 const PAGE_SIZE = 40
 const DAY = 86400000
@@ -552,6 +561,12 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
     markContact(l)
   }
 
+  const sendObjection = (l: OutreachLead, text: string) => {
+    if (isBlocked(l)) { setToast({ ok: false, text: 'هذا الرقم في قائمة ممنوع التواصل.' }); return }
+    window.open(`https://wa.me/${l.phone}?text=${encodeURIComponent(text.split('{name}').join(l.name))}`, '_blank', 'noopener')
+    markContact(l)
+  }
+
   // Proposes two real free times from the owner's calendar and opens WhatsApp with the question.
   const proposeSlots = async (l: OutreachLead) => {
     if (isBlocked(l)) { setToast({ ok: false, text: 'هذا الرقم في قائمة ممنوع التواصل.' }); return }
@@ -713,6 +728,14 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
               <div className="chips">
                 {(Object.keys(TEMPLATE_LABELS) as TemplateKey[]).map(k => (
                   <button key={k} className="chip" disabled={!l.is_mobile} aria-pressed="false" onClick={() => sendWhatsApp(l, k)}>{TEMPLATE_LABELS[k]}</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="lbl">رد على اعتراض</div>
+              <div className="chips">
+                {OBJECTIONS.map(o => (
+                  <button key={o.label} className="chip" disabled={!l.is_mobile} aria-pressed="false" onClick={() => sendObjection(l, o.text)}>{o.label}</button>
                 ))}
               </div>
             </div>
