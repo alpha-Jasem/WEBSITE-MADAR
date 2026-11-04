@@ -387,6 +387,19 @@
   .miss span.lost{background:linear-gradient(90deg,rgba(232,145,127,.55),rgba(232,145,127,.15))}
 
   /* ── Section 3 — نظام مدار (bento) ── */
+  #products{background:#060d18}
+  .prod-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+  .prod{position:relative;border-radius:18px;border:1px solid rgba(255,255,255,.08);padding:26px 26px 24px;
+    background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01));overflow:hidden}
+  .prod::before{content:"";position:absolute;inset-inline:0;top:0;height:3px;background:var(--pc)}
+  .prod-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}
+  .prod-name{font-weight:700;font-size:15px;color:var(--pc)}
+  .prod-tag{font-size:11.5px;color:var(--ink2);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:3px 10px}
+  .prod h4{font-size:19px;font-weight:700;color:var(--ink);line-height:1.6;margin-bottom:14px}
+  .prod ul{list-style:none;display:grid;gap:8px}
+  .prod li{font-size:14px;font-weight:300;color:var(--ink2);line-height:1.8;padding-inline-start:18px;position:relative}
+  .prod li::before{content:"";position:absolute;inset-inline-start:0;top:.75em;width:7px;height:7px;border-radius:50%;background:var(--pc)}
+  @media (max-width:760px){.prod-grid{grid-template-columns:1fr}.prod{padding:22px 20px}}
   #system{background:linear-gradient(180deg,#081120,#060d18)}
   .sys-head{margin-bottom:56px}
   .bento{display:grid;grid-template-columns:repeat(6,1fr);grid-auto-rows:180px;gap:16px}
@@ -682,6 +695,7 @@
     <span class="wordmark" dir="ltr">madar<b>.software</b></span>
   </a>
   <nav class="nav-links">
+    <a href="#products">المنتجات</a>
     <a href="#listen">اسمع مدار Voice Agent</a>
     <a href="#system">النظام</a>
     <a href="#connect">التكامل</a>
@@ -704,6 +718,7 @@
 
 <div class="mobile-nav-scrim" id="mobile-nav-scrim"></div>
 <div class="mobile-nav" id="mobile-nav">
+  <a href="#products">المنتجات</a>
   <a href="#listen">اسمع مدار Voice Agent</a>
   <a href="#system">النظام</a>
   <a href="#connect">التكامل</a>
@@ -835,6 +850,55 @@
           <div class="foot">صحيت الصبح، تقويمك ممتلئ.</div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section id="products">
+    <div class="wrap">
+      <div class="sys-head">
+        <div class="eyebrow">منتجات مدار</div>
+        <h3>منتجان تشغّلهما شهريًا، ومشروعان نبنيهما لك.</h3>
+        <p class="lede">اشترك في Voice AI أو Quotation أو الاثنين بنفس الحساب، وتنتقل بينهم من لوحة واحدة.</p>
+      </div>
+      <div class="prod-grid">
+        <article class="prod reveal" style="--pc:#4FA3FF">
+          <div class="prod-top"><span class="prod-tag">اشتراك شهري</span><span class="prod-name" dir="ltr">مدار Voice AI</span></div>
+          <h4>وكيل واحد يرد على عملائك في الهاتف وواتساب وشات موقعك.</h4>
+          <ul>
+            <li>يرد خلال ثوانٍ بلهجة سعودية طبيعية، ليلًا ونهارًا.</li>
+            <li>يحجز المواعيد ويذكّر العميل ويتابعه بعد الموعد.</li>
+            <li>يحوّل المحادثة لموظفك عند الحاجة.</li>
+            <li>المكالمات والمحادثات والمواعيد في لوحة واحدة.</li>
+          </ul>
+        </article>
+        <article class="prod reveal" style="--pc:#A78BFA">
+          <div class="prod-top"><span class="prod-tag">اشتراك شهري</span><span class="prod-name" dir="ltr">مدار Quotation</span></div>
+          <h4>من طلب المشتري إلى عرض سعر جاهز للإرسال.</h4>
+          <ul>
+            <li>يفهم الطلب كتابةً أو من ملف Excel، ويسأل عن الناقص فقط.</li>
+            <li>يطابق البنود مع كتالوجك وأسعارك المعتمدة، بدون تخمين.</li>
+            <li>يصدر العرض ضمن قواعدك، ويرفع الخصم أو الهامش المنخفض للمدير.</li>
+            <li>رابط آمن للعميل يقبل منه العرض أو يطلب تعديلًا.</li>
+          </ul>
+        </article>
+        <article class="prod reveal" style="--pc:#34D399">
+          <div class="prod-top"><span class="prod-tag">مشروع</span><span class="prod-name">موقع إلكتروني</span></div>
+          <h4>موقع سريع بهوية شركتك، يحوّل الزائر إلى عميل.</h4>
+          <ul>
+            <li>تصميم عربي يناسب الجوال، ومهيأ لمحركات البحث.</li>
+            <li>يرتبط بوكيل مدار ليرد على الزوار مباشرة.</li>
+          </ul>
+        </article>
+        <article class="prod reveal" style="--pc:#FB923C">
+          <div class="prod-top"><span class="prod-tag">مشروع</span><span class="prod-name" dir="ltr">Web 3D Experience</span></div>
+          <h4>تجربة ويب تفاعلية ثلاثية الأبعاد لمنتجك أو مشروعك.</h4>
+          <ul>
+            <li>يتحرك العميل داخل المنتج أو المكان من المتصفح.</li>
+            <li>مناسبة للإطلاقات والمعارض والمشاريع العقارية.</li>
+          </ul>
+        </article>
+      </div>
+      <div style="text-align:center;margin-top:40px"><a class="cta-primary" href="#contact">احجز جلسة تعريفية ↓</a></div>
     </div>
   </section>
 

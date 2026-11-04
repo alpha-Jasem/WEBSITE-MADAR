@@ -60,7 +60,7 @@ function useViewportFitCover() {
   }, [])
 }
 
-const SHELL_CSS = `
+export const SHELL_CSS = `
   .dv2-app { display: flex; height: 100vh; height: 100dvh; overflow: hidden; background: var(--surface-canvas);
     padding-inline: env(safe-area-inset-right, 0px) env(safe-area-inset-left, 0px); }
 

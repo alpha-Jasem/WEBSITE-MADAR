@@ -114,6 +114,30 @@ const dashboardChildRoutes = (
   </>
 )
 
+// Madar Quotation: its own dashboard, same accounts and company as Voice AI.
+const QuotationLayout = lazy(() => import('./quotation/ui/QuotationLayout').then(m => ({ default: m.QuotationLayout })))
+const QtHome          = lazy(() => import('./quotation/ui/pages/Home').then(m => ({ default: m.QtHome })))
+const QtQuotes        = lazy(() => import('./quotation/ui/pages/Quotes').then(m => ({ default: m.QtQuotes })))
+const QtQuoteDetail   = lazy(() => import('./quotation/ui/pages/QuoteDetail').then(m => ({ default: m.QtQuoteDetail })))
+const QtCustomers     = lazy(() => import('./quotation/ui/pages/Customers').then(m => ({ default: m.QtCustomers })))
+const QtProducts      = lazy(() => import('./quotation/ui/pages/Products').then(m => ({ default: m.QtProducts })))
+const QtAnalytics     = lazy(() => import('./quotation/ui/pages/Analytics').then(m => ({ default: m.QtAnalytics })))
+const QtSettingsPage  = lazy(() => import('./quotation/ui/pages/Settings').then(m => ({ default: m.QtSettingsPage })))
+const QtBuyerView     = lazy(() => import('./quotation/ui/pages/BuyerView').then(m => ({ default: m.BuyerView })))
+
+const quotationChildRoutes = (
+  <>
+    <Route index element={<QtHome />} />
+    <Route path="quotes" element={<QtQuotes />} />
+    <Route path="q/:id" element={<QtQuoteDetail />} />
+    <Route path="customers" element={<QtCustomers />} />
+    <Route path="products" element={<QtProducts />} />
+    <Route path="analytics" element={<QtAnalytics />} />
+    <Route path="settings" element={<QtSettingsPage />} />
+    <Route path="*" element={<Navigate to="." replace />} />
+  </>
+)
+
 // Old links (emails, saved notifications, bookmarks) used /clinic-os/dashboard/...; keep them working.
 function LegacyDashboardRedirect() {
   const loc = useLocation()
@@ -179,6 +203,12 @@ function App() {
             }>
               {dashboardChildRoutes}
             </Route>
+
+            {/* ── Madar Quotation ── */}
+            <Route path="/quotation/*" element={<WorkspaceProvider><QuotationLayout /></WorkspaceProvider>}>{quotationChildRoutes}</Route>
+            <Route path="/quotation-demo/view/:token" element={<QtBuyerView demo />} />
+            <Route path="/quotation-demo/*" element={<WorkspaceProvider><QuotationLayout /></WorkspaceProvider>}>{quotationChildRoutes}</Route>
+            <Route path="/q/:token" element={<QtBuyerView />} />
 
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
