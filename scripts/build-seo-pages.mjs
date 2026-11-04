@@ -278,11 +278,11 @@ function render(p) {
 <meta property="og:url" content="${url}">
 <meta property="og:title" content="${esc(p.title)}">
 <meta property="og:description" content="${esc(p.description)}">
-<meta property="og:image" content="${ORIGIN}/og-image.jpg">
+<meta property="og:image" content="${ORIGIN}/og-image-v2.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${esc(p.title)}">
 <meta name="twitter:description" content="${esc(p.description)}">
-<meta name="twitter:image" content="${ORIGIN}/og-image.jpg">
+<meta name="twitter:image" content="${ORIGIN}/og-image-v2.jpg">
 <meta name="theme-color" content="#070b14">
 <link rel="icon" type="image/png" href="/favicon-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
