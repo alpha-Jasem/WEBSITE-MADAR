@@ -14,6 +14,7 @@ import {
 } from '@/lib/queries/inbox'
 import { collectedData, contactKey, normalizePhone, sentimentKind, SENTIMENT_LABEL, sentimentTone, formatValue } from '@/lib/callAnalysis'
 import { sendWhatsAppMessage } from '@/lib/whatsapp'
+import { sendWhatsAppReply, WaReplyError } from '@/lib/queries/outreach'
 import { useToast } from '@/dashboard/components/uiExtras'
 import type { SupportTicket } from '@/types/dashboard'
 import { arReason, buildConversations, callLengthLabel, msgClock, msgInstant, CHANNEL_LABEL, copyText, fmtDay, fmtFull, fmtWhen, itemChip, type ConvItem } from './model'
@@ -423,6 +424,7 @@ function Composer({ item, authorName }: { item: ConvItem; authorName: string }) 
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
   const canReply = !!item.phone
+  const isWa = item.channel === 'whatsapp'
   const effectiveMode = mode === 'reply' && !canReply ? 'note' : mode
 
   // "/" opens the quick replies; typing after it filters them.
@@ -435,14 +437,21 @@ function Composer({ item, authorName }: { item: ConvItem; authorName: string }) 
     setBusy(true)
     try {
       if (effectiveMode === 'reply') {
-        sendWhatsAppMessage(item.phone, body)
+        // WhatsApp chats get the reply from the business number itself; elsewhere (or until
+        // the company's Meta token is set) it opens WhatsApp on this device.
+        let direct = false
+        if (item.channel === 'whatsapp' && !isDemo) {
+          try { await sendWhatsAppReply(item.phone, body); direct = true }
+          catch (e) { if (!(e instanceof WaReplyError && e.code === 'not_configured')) throw e }
+        }
+        if (!direct && !(isDemo && item.channel === 'whatsapp')) sendWhatsAppMessage(item.phone, body)
         await addConversationEvent(companyId, isDemo, { key: item.key, kind: 'reply', body, authorName })
       } else {
         await addConversationEvent(companyId, isDemo, { key: item.key, kind: 'note', body, authorName })
       }
       setText('')
     } catch (e) {
-      pushToast({ kind: 'danger', title: 'ما انحفظت', description: e instanceof Error ? e.message : undefined })
+      pushToast({ kind: 'danger', title: e instanceof WaReplyError ? 'ما انرسلت' : 'ما انحفظت', description: e instanceof Error ? e.message : undefined })
     } finally { setBusy(false) }
   }
 
@@ -469,7 +478,7 @@ function Composer({ item, authorName }: { item: ConvItem; authorName: string }) 
       )}
       <div className="ib-modes" role="tablist" aria-label="نوع الرسالة">
         <button type="button" role="tab" aria-selected={effectiveMode === 'reply'} disabled={!canReply} onClick={() => setMode('reply')} title={canReply ? '' : 'ما فيه رقم لهذا العميل'}>
-          <Send size={13} /> واتساب من جوالك
+          <Send size={13} /> {isWa ? 'رد واتساب' : 'واتساب من جوالك'}
         </button>
         <button type="button" role="tab" aria-selected={effectiveMode === 'note'} onClick={() => setMode('note')}><StickyNote size={13} /> ملاحظة داخلية</button>
       </div>
@@ -480,11 +489,13 @@ function Composer({ item, authorName }: { item: ConvItem; authorName: string }) 
         onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void send() } }}
       />
       <div className="ib-composer-foot">
-        <span>{effectiveMode === 'reply' ? 'الوكيل يرد تلقائيًا من رقم الأعمال. هذا يفتح واتساب على جوالك لو تبغى تتواصل بنفسك، ويتسجل هنا.' : 'الملاحظة داخلية ولا تُرسل للعميل.'}</span>
+        <span>{effectiveMode !== 'reply' ? 'الملاحظة داخلية ولا تُرسل للعميل.'
+          : isWa ? 'يوصل للعميل من رقم الأعمال ويتسجل هنا. الوكيل يظل يرد إذا كتب العميل بعدك.'
+          : 'الوكيل يرد تلقائيًا من رقم الأعمال. هذا يفتح واتساب على جوالك لو تبغى تتواصل بنفسك، ويتسجل هنا.'}</span>
         <div>
           <button type="button" className="nx-btn sm" onClick={saveAsReply} title="احفظ النص كرد جاهز"><Plus size={13} /> رد جاهز</button>
           <button type="button" className="nx-btn pri" disabled={busy || !text.trim() || text.startsWith('/')} onClick={send}>
-            {effectiveMode === 'reply' ? <><Send /> فتح واتساب</> : <><StickyNote /> حفظ الملاحظة</>}
+            {effectiveMode === 'reply' ? <><Send /> {isWa ? 'إرسال' : 'فتح واتساب'}</> : <><StickyNote /> حفظ الملاحظة</>}
           </button>
         </div>
       </div>

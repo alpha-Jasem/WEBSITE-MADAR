@@ -138,3 +138,28 @@ export async function sendOutreach(
   if (!opts.dryRun) notify()
   return { results: out.results || [], from: out.from }
 }
+
+/** Why a direct reply failed: not_configured falls back to the phone, window_closed needs a template. */
+export class WaReplyError extends Error {
+  constructor(message: string, public code?: string) { super(message) }
+}
+
+/** A free-text reply from the business number (whatsapp-reply edge function). */
+export async function sendWhatsAppReply(phone: string, text: string) {
+  const { data: sessionData } = await supabase.auth.getSession()
+  const token = sessionData.session?.access_token
+  if (!token) throw new WaReplyError('سجّل دخولك من جديد')
+  const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/whatsapp-reply`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, apikey: import.meta.env.VITE_SUPABASE_ANON_KEY ?? '', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone, text }),
+  })
+  if (res.ok) return
+  const out = await res.json().catch(() => ({}))
+  const reason: Record<string, string> = {
+    not_configured: 'الرد من رقم الأعمال غير مفعّل لحسابك.',
+    window_closed: 'مرّ أكثر من 24 ساعة على آخر رسالة من العميل. ميتا تسمح هنا بقالب معتمد فقط (من الرسائل الصادرة).',
+    token: 'انتهت صلاحية ربط حساب ميتا. تواصل مع فريق مدار.',
+  }
+  throw new WaReplyError(reason[out.code] || out.error || 'تعذّر الإرسال', out.code)
+}
