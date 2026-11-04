@@ -437,14 +437,9 @@ function Composer({ item, authorName }: { item: ConvItem; authorName: string }) 
     setBusy(true)
     try {
       if (effectiveMode === 'reply') {
-        // WhatsApp chats get the reply from the business number itself; elsewhere (or until
-        // the company's Meta token is set) it opens WhatsApp on this device.
-        let direct = false
-        if (item.channel === 'whatsapp' && !isDemo) {
-          try { await sendWhatsAppReply(item.phone, body); direct = true }
-          catch (e) { if (!(e instanceof WaReplyError && e.code === 'not_configured')) throw e }
-        }
-        if (!direct && !(isDemo && item.channel === 'whatsapp')) sendWhatsAppMessage(item.phone, body)
+        // WhatsApp chats get the reply from the business number itself; other channels open WhatsApp on this device.
+        if (item.channel === 'whatsapp') { if (!isDemo) await sendWhatsAppReply(item.phone, body) }
+        else sendWhatsAppMessage(item.phone, body)
         await addConversationEvent(companyId, isDemo, { key: item.key, kind: 'reply', body, authorName })
       } else {
         await addConversationEvent(companyId, isDemo, { key: item.key, kind: 'note', body, authorName })

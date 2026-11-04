@@ -139,7 +139,7 @@ export async function sendOutreach(
   return { results: out.results || [], from: out.from }
 }
 
-/** Why a direct reply failed: not_configured falls back to the phone, window_closed needs a template. */
+/** Why a direct reply failed: not_configured means no Meta token yet, window_closed needs a template. */
 export class WaReplyError extends Error {
   constructor(message: string, public code?: string) { super(message) }
 }
@@ -157,7 +157,7 @@ export async function sendWhatsAppReply(phone: string, text: string) {
   if (res.ok) return
   const out = await res.json().catch(() => ({}))
   const reason: Record<string, string> = {
-    not_configured: 'الرد من رقم الأعمال غير مفعّل لحسابك.',
+    not_configured: 'الإرسال من اللوحة يحتاج ربط حساب ميتا لرقمك. تواصل مع فريق مدار لتفعيله.',
     window_closed: 'مرّ أكثر من 24 ساعة على آخر رسالة من العميل. ميتا تسمح هنا بقالب معتمد فقط (من الرسائل الصادرة).',
     token: 'انتهت صلاحية ربط حساب ميتا. تواصل مع فريق مدار.',
   }
