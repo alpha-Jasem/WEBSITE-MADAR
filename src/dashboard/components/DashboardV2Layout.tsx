@@ -171,7 +171,7 @@ const EXTRA_TITLES: Record<string, string> = {
 
 export function DashboardV2Layout() {
   useAppManifest('/dashboard-manifest.json')
-  useSystemChrome('#0F0F0F')
+  useSystemChrome('#0A0B0E')
   const navigate = useNavigate()
   const location = useLocation()
   const { companyId, isDemo, accountError, refreshAccount, businessType, hasModule, canOpen, can, packageType, usageMetrics, companyName, companyLogoUrl } = useWorkspace()
@@ -337,13 +337,13 @@ export function DashboardV2Layout() {
 
   return (
     // ToastProvider sits inside the scope so its toast stack inherits the tokens.
-    <div className="dv2-scope dv2-app" dir="rtl" data-theme={theme} style={{ ['--side-w' as string]: collapsed ? '64px' : '252px' }}>
+    <div className="dv2-scope dv2-app vx" dir="rtl" data-theme={theme} style={{ ['--side-w' as string]: collapsed ? '64px' : '252px' }}>
     <ToastProvider>
       <style>{SHELL_CSS + TOPBAR_CSS}</style>
 
       <aside className={`dv2-side${collapsed ? ' is-collapsed' : ''}`} aria-label="القائمة الرئيسية">
         <div className="dv2-logo">
-          <img src="/logo-main.png" alt="" />
+          <img src="/logo-orbit.png" alt="" />
           {!collapsed && 'مدار'}
         </div>
         <button type="button" className="dv2-side-search" onClick={() => requestOpenSearch()} aria-label="ابحث أو أنشئ">

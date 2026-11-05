@@ -93,8 +93,38 @@
 .nx-bar span { width: 100%; border-radius: 3px 3px 1px 1px; background: color-mix(in srgb, var(--sky) 45%, transparent); }
 .nx-bar span.zero { background: var(--line-2); }
 .nx-bar.peak span { background: var(--sky); }
+.nx-bar.off span:not(.zero) { background: var(--night-grad); }
 .nx-bar small { font-size: 10.5px; color: var(--dim); white-space: nowrap; }
 .nx-bar b { font-size: 11px; font-variant-numeric: tabular-nums; }
+.nx-legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: var(--muted); }
+.nx-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.nx-legend i { width: 10px; height: 10px; border-radius: 3px; background: color-mix(in srgb, var(--sky) 45%, transparent); }
+.nx-legend i.off { background: var(--night-grad); }
+
+/* header: eyebrow line, agent status pill */
+.nx-eyebrow { margin: 0 0 4px; color: var(--dim); font-size: 12.5px; }
+.nx-head-acts { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.nx-live { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 500; color: var(--ok);
+  background: var(--ok-bg); border: 1px solid color-mix(in srgb, var(--ok) 28%, transparent); border-radius: 9px; padding: 5px 12px; }
+.nx-live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 20%, transparent); }
+.nx-live.dim { color: var(--muted); background: var(--hover-bg); border-color: var(--line); }
+
+/* latest calls, shown big */
+.nx-spot-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.nx-spot { border-radius: 16px; padding: 18px 20px; background: var(--spot-bg); border: 1px solid var(--line-2); display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.nx-spot-top { display: flex; align-items: center; gap: 12px; }
+.nx-spot-av { width: 40px; height: 40px; border-radius: 12px; background: var(--nav-active-bg); color: var(--ink); display: grid; place-items: center; font-size: 15px; flex: none; }
+.nx-spot-name { display: block; font-size: 14.5px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nx-spot-top small { color: var(--dim); font-size: 12px; }
+.nx-spot-dur { font-size: 22px; font-weight: 500; }
+.nx-wave { display: flex; align-items: center; gap: 3px; height: 38px; }
+.nx-wave i { flex: 1; border-radius: 2px; background: var(--night-grad); min-height: 3px; }
+.nx-spot-foot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.nx-spot-sum { flex: 1 1 140px; min-width: 0; color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* the narrow column next to recent conversations: actions drop under the text */
+.nx-side-col .nx-item { flex-wrap: wrap; }
+.nx-side-col .nx-item .nx-acts { width: 100%; max-width: none; justify-content: flex-start; padding-inline-start: 44px; }
 
 /* conversation rows */
 .nx-list { display: flex; flex-direction: column; }
@@ -164,13 +194,15 @@
   .nx-kpis.wide { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 900px) {
-  .nx-grid-2, .nx-grid-3, .nx-detail, .nx-onboard { grid-template-columns: minmax(0, 1fr); }
+  .nx-grid-2, .nx-grid-3, .nx-detail, .nx-onboard, .nx-spot-grid { grid-template-columns: minmax(0, 1fr); }
   .nx-span-2, .nx-grid-3 .nx-span-2 { grid-column: auto; }
   .nx-search { max-width: none; }
 }
 @media (max-width: 520px) {
   .nx-stat b { font-size: 21px; }
   .nx-h1 { font-size: 20px; }
+  .nx-bars { gap: 2px; }
+  .nx-bar b { display: none; }
   .nx-item { flex-wrap: wrap; }
   .nx-item .nx-acts { width: 100%; max-width: none; justify-content: flex-start; padding-inline-start: 48px; }
   .nx-msg { max-width: 92%; }
