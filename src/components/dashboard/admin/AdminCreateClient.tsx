@@ -1,0 +1,127 @@
+import { useState } from 'react'
+import { supabase } from '../../../lib/supabase'
+
+type Product = 'voice_ai' | 'quotation'
+interface Made { company: string; product: Product; email: string; password: string; url: string }
+
+const PRODUCTS: { id: Product; label: string; hint: string }[] = [
+  { id: 'voice_ai', label: 'مدار Voice AI', hint: 'وكيل يرد على الواتساب والمكالمات، مع لوحته' },
+  { id: 'quotation', label: 'مدار Quotation', hint: 'لوحة عروض الأسعار، مفصولة بالكامل عن لوحة الوكيل' },
+]
+const TYPES = [['clinic', 'عيادة'], ['real_estate', 'عقار'], ['ecommerce', 'تجارة إلكترونية'], ['other', 'أخرى']] as const
+const PLANS = [['starter', 'ابتدائي'], ['growth', 'نمو'], ['enterprise', 'مؤسسي']] as const
+const EMPTY = { company_name: '', owner_name: '', email: '', phone: '' }
+
+// No look-alike characters (0/O, 1/l/I), so a password read aloud or typed from a message is not mistyped.
+const makePassword = () => {
+  const chars = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  const bytes = crypto.getRandomValues(new Uint8Array(12))
+  return Array.from(bytes, b => chars[b % chars.length]).join('')
+}
+
+/** Creates a client's login and its company in one step, for the product picked. Shows the credentials to hand over. */
+export const AdminCreateClient = () => {
+  const [product, setProduct] = useState<Product>('voice_ai')
+  const [type, setType] = useState('other')
+  const [plan, setPlan] = useState('starter')
+  const [form, setForm] = useState(EMPTY)
+  const [password, setPassword] = useState(makePassword)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [made, setMade] = useState<Made | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  const valid = form.company_name.trim() && form.owner_name.trim() && form.email.includes('@')
+
+  const create = async () => {
+    setBusy(true); setError(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-create-client`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify({
+          email: form.email.trim().toLowerCase(), password, company_name: form.company_name.trim(), owner_name: form.owner_name.trim(),
+          owner_phone: form.phone.trim(), business_type: product === 'quotation' ? 'other' : type, plan: product === 'quotation' ? 'starter' : plan,
+          // Voice AI is the column default, so only Quotation sends it (and needs the products column).
+          ...(product === 'quotation' ? { products: ['quotation'] } : {}),
+        }),
+      })
+      const out = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setError(/products/i.test(out.error ?? '') ? 'منتج Quotation يحتاج تحديث قاعدة البيانات أولًا.' : out.error || 'تعذّر إنشاء الحساب.')
+        return
+      }
+      setMade({ company: form.company_name.trim(), product, email: form.email.trim().toLowerCase(), password, url: `${window.location.origin}/login` })
+      setForm(EMPTY); setPassword(makePassword()); setCopied(false)
+    } catch { setError('خطأ في الاتصال بالخادم.') } finally { setBusy(false) }
+  }
+
+  const message = made && [
+    `حسابك في ${PRODUCTS.find(p => p.id === made.product)!.label} جاهز.`,
+    `الرابط: ${made.url}`,
+    `البريد: ${made.email}`,
+    `كلمة المرور: ${made.password}`,
+    'غيّر كلمة المرور بعد أول دخول.',
+  ].join('\n')
+
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(message ?? ''); setCopied(true) } catch { setError('تعذّر النسخ. انسخ البيانات يدويًا.') }
+  }
+
+  return (
+    <div>
+      {error && <div className="mc-banner">{error}</div>}
+
+      {made && (
+        <article className="mc-card" style={{ marginBottom: 16 }}>
+          <div className="mc-ph"><h3>جاهز: {made.company}</h3><div className="mc-phr"><button className="mc-btn2 p" onClick={copy}>{copied ? 'تم النسخ' : 'نسخ بيانات الدخول'}</button></div></div>
+          <div style={{ padding: '0 20px 16px', lineHeight: 2 }}>
+            <div>الرابط: <b dir="ltr">{made.url}</b></div>
+            <div>البريد: <b dir="ltr">{made.email}</b></div>
+            <div>كلمة المرور: <b dir="ltr">{made.password}</b></div>
+            <div className="mc-delta">كلمة المرور تظهر هنا مرة واحدة فقط. انسخها وأرسلها للعميل قبل ما تغادر الصفحة.</div>
+          </div>
+        </article>
+      )}
+
+      <article className="mc-card">
+        <div className="mc-ph"><h3>إنشاء عميل</h3></div>
+        <div style={{ padding: '0 20px 20px', display: 'grid', gap: 14 }}>
+          <div className="mc-grid2">
+            {PRODUCTS.map(p => (
+              <button key={p.id} type="button" className={`mc-btn2 ${product === p.id ? 'p' : ''}`} style={{ textAlign: 'right', padding: 14, height: 'auto', display: 'block' }} onClick={() => setProduct(p.id)}>
+                <b>{p.label}</b><div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>{p.hint}</div>
+              </button>
+            ))}
+          </div>
+
+          <label className="mc-field">اسم الشركة<input value={form.company_name} onChange={e => setForm({ ...form, company_name: e.target.value })} /></label>
+          <div className="mc-grid2">
+            <label className="mc-field">اسم المالك<input value={form.owner_name} onChange={e => setForm({ ...form, owner_name: e.target.value })} /></label>
+            <label className="mc-field">الجوال<input dir="ltr" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></label>
+          </div>
+          <label className="mc-field">البريد (هو اسم الدخول)<input dir="ltr" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></label>
+
+          {product === 'voice_ai' && (
+            <div className="mc-grid2">
+              <label className="mc-field">نوع النشاط<select value={type} onChange={e => setType(e.target.value)}>{TYPES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
+              <label className="mc-field">الباقة<select value={plan} onChange={e => setPlan(e.target.value)}>{PLANS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
+            </div>
+          )}
+
+          <label className="mc-field">كلمة المرور (تنولّد تلقائيًا)
+            <span style={{ display: 'flex', gap: 8 }}>
+              <input dir="ltr" value={password} onChange={e => setPassword(e.target.value)} style={{ flex: 1 }} />
+              <button type="button" className="mc-btn2" onClick={() => setPassword(makePassword())}>توليد جديدة</button>
+            </span>
+          </label>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button className="mc-btn2 p" disabled={!valid || password.length < 8 || busy} onClick={create}>{busy ? 'جاري الإنشاء…' : 'إنشاء العميل'}</button>
+          </div>
+        </div>
+      </article>
+    </div>
+  )
+}
