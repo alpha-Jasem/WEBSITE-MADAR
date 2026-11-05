@@ -11,6 +11,11 @@ export function QtSettingsPage() {
   const { isDemo, can } = useWorkspace()
   const settings = useQt((s) => s.settings)
   const canApprove = useQt((s) => s.canApprove)
+  const companyId = useQt((s) => s.companyId)
+  const [copied, setCopied] = useState('')
+  const rfqUrl = `${window.location.origin}${isDemo ? '/quotation-demo/rfq' : `/rfq/${companyId}`}`
+  const embed = `<iframe src="${rfqUrl}" style="width:100%;min-height:760px;border:0" title="طلب عرض سعر"></iframe>`
+  const copy = (what: string, text: string) => { void navigator.clipboard.writeText(text); setCopied(what); setTimeout(() => setCopied(''), 2000) }
   const [form, setForm] = useState<QtSettings>(settings)
   const [saved, setSaved] = useState(false)
   useEffect(() => setForm(settings), [settings])
@@ -43,6 +48,18 @@ export function QtSettingsPage() {
             <button type="button" className="qt-btn pri" onClick={async () => { await saveSettings(form); setSaved(true); setTimeout(() => setSaved(false), 2000) }}>حفظ القواعد</button>
           </div>
         ) : <p style={{ fontSize: 12.5, color: 'var(--muted)', margin: '12px 0 0' }}>تعديل القواعد للمالك والمدير فقط.</p>}
+      </div>
+      <div className="qt-card">
+        <CardTitle>صفحة طلب عرض السعر</CardTitle>
+        <p style={{ margin: '-6px 0 14px', fontSize: 13, color: 'var(--muted)', lineHeight: 1.8 }}>
+          شارك الرابط مع عملائك أو ضعه في موقعك. العميل يكتب طلبه أو يرفع ملفه، والوكيل يقرأه ويطابقه مع الكتالوج ويجهّز العرض هنا.
+        </p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <input className="qt-input qt-num" readOnly value={rfqUrl} style={{ flex: '1 1 260px' }} aria-label="رابط الصفحة" onFocus={(e) => e.target.select()} />
+          <button type="button" className="qt-btn pri" onClick={() => copy('link', rfqUrl)}>{copied === 'link' ? 'تم النسخ' : 'نسخ الرابط'}</button>
+          <button type="button" className="qt-btn" onClick={() => copy('embed', embed)}>{copied === 'embed' ? 'تم النسخ' : 'نسخ كود الموقع'}</button>
+          <a className="qt-btn ghost" href={rfqUrl} target="_blank" rel="noreferrer">فتح الصفحة</a>
+        </div>
       </div>
       <div className="qt-card">
         <CardTitle>الفريق والصلاحيات</CardTitle>

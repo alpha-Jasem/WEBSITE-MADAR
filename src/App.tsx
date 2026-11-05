@@ -124,6 +124,7 @@ const QtProducts      = lazy(() => import('./quotation/ui/pages/Products').then(
 const QtAnalytics     = lazy(() => import('./quotation/ui/pages/Analytics').then(m => ({ default: m.QtAnalytics })))
 const QtSettingsPage  = lazy(() => import('./quotation/ui/pages/Settings').then(m => ({ default: m.QtSettingsPage })))
 const QtBuyerView     = lazy(() => import('./quotation/ui/pages/BuyerView').then(m => ({ default: m.BuyerView })))
+const QtRequestPage   = lazy(() => import('./quotation/ui/pages/RequestPage').then(m => ({ default: m.RequestPage })))
 
 const quotationChildRoutes = (
   <>
@@ -208,7 +209,9 @@ function App() {
             <Route path="/quotation/*" element={<WorkspaceProvider><QuotationLayout /></WorkspaceProvider>}>{quotationChildRoutes}</Route>
             <Route path="/quotation-demo/view/:token" element={<QtBuyerView demo />} />
             <Route path="/quotation-demo/*" element={<WorkspaceProvider><QuotationLayout /></WorkspaceProvider>}>{quotationChildRoutes}</Route>
+            <Route path="/quotation-demo/rfq" element={<QtRequestPage demo />} />
             <Route path="/q/:token" element={<QtBuyerView />} />
+            <Route path="/rfq/:companyId" element={<QtRequestPage />} />
 
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />

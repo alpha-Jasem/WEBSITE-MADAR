@@ -7,6 +7,18 @@ import { DEMO_SETTINGS } from './demoData'
 
 type Row = Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
 
+export type AgentFile = { name: string; base64: string }
+
+/** A PDF for the agent, as base64 without the data-URL prefix. */
+export function fileToAgent(f: File): Promise<AgentFile> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader()
+    r.onload = () => resolve({ name: f.name, base64: String(r.result).replace(/^data:[^,]*,/, '') })
+    r.onerror = () => reject(r.error)
+    r.readAsDataURL(f)
+  })
+}
+
 function check<T>(res: { data: T; error: { message: string } | null }): T {
   if (res.error) throw new Error(res.error.message)
   return res.data
@@ -128,6 +140,24 @@ export const live = {
       max_discount_pct: s.maxDiscountPct, min_margin_pct: s.minMarginPct, price_max_age_days: s.priceMaxAgeDays,
       payment_terms: s.paymentTerms, delivery_terms: s.deliveryTerms, quote_prefix: s.quotePrefix, updated_at: new Date().toISOString(),
     }))
+  },
+
+  /** The agent reads a request (text or PDF) and matches it to the catalog; prices are applied later from the catalog. */
+  async understand(text: string, file: AgentFile | null): Promise<{ items: { text: string; qty: number | null; productId?: string | null; sourceRef?: string }[]; error: string | null }> {
+    const { data, error } = await supabase.functions.invoke('qt-agent', { body: { action: 'understand', text, file } })
+    if (error || !data?.ok) return { items: [], error: data?.error ?? 'failed' }
+    return { items: data.items ?? [], error: null }
+  },
+
+  async rfqCompany(companyId: string): Promise<{ name: string; logo_url: string | null } | null> {
+    const { data, error } = await supabase.functions.invoke('qt-agent', { body: { action: 'company', company_id: companyId } })
+    return error || !data?.ok ? null : data
+  },
+
+  async intake(body: { company_id: string; key: string; name: string; phone: string; org: string; email: string; text: string; file: AgentFile | null; items: { text: string; qty: number | null; sourceRef: string }[] }) {
+    const { data, error } = await supabase.functions.invoke('qt-agent', { body: { action: 'intake', ...body } })
+    if (error && !data) return { ok: false, message: 'تعذر إرسال الطلب، حاول مرة ثانية.' }
+    return data as { ok: boolean; number?: string; message?: string }
   },
 
   async publicQuote(token: string) {

@@ -4,6 +4,7 @@ import { Bot, FileSpreadsheet, X, Check, HelpCircle } from 'lucide-react'
 import { useQt, createQuoteFromRequest, upsertCustomer } from '../store'
 import { matchItem, parseRequest, type RequestItem } from '../matching'
 import { readSheet, requestItemsFromRows } from '../importer'
+import { live, fileToAgent, type AgentFile } from '../liveApi'
 import { Field } from './common'
 
 /**
@@ -14,12 +15,16 @@ export function NewQuoteDialog({ open, onClose, base }: { open: boolean; onClose
   const navigate = useNavigate()
   const customers = useQt((s) => s.customers)
   const products = useQt((s) => s.products)
+  const mode = useQt((s) => s.mode)
   const [customerId, setCustomerId] = useState('')
   const [newCustomer, setNewCustomer] = useState('')
   const [text, setText] = useState('')
   const [fileItems, setFileItems] = useState<RequestItem[]>([])
   const [fileName, setFileName] = useState('')
   const [fileError, setFileError] = useState('')
+  const [pdf, setPdf] = useState<AgentFile | null>(null)
+  const [reading, setReading] = useState(false)
+  const [note, setNote] = useState('')
   const [step, setStep] = useState<'request' | 'review'>('request')
   const [items, setItems] = useState<(RequestItem & { pick?: string })[]>([])
   const [busy, setBusy] = useState(false)
@@ -35,27 +40,42 @@ export function NewQuoteDialog({ open, onClose, base }: { open: boolean; onClose
   if (!open) return null
 
   const reset = () => {
-    setCustomerId(''); setNewCustomer(''); setText(''); setFileItems([]); setFileName(''); setFileError(''); setStep('request'); setItems([]); keyRef.current = crypto.randomUUID()
+    setCustomerId(''); setNewCustomer(''); setText(''); setFileItems([]); setFileName(''); setFileError(''); setPdf(null); setNote(''); setStep('request'); setItems([]); keyRef.current = crypto.randomUUID()
   }
   const close = () => { reset(); onClose() }
 
   async function onFile(f: File | undefined) {
     setFileError('')
     if (!f) return
-    if (/\.pdf$/i.test(f.name)) { setFileError('قراءة ملفات PDF غير متاحة بعد. ارفع Excel أو CSV، أو الصق البنود كنص.'); return }
+    if (/\.pdf$/i.test(f.name)) {
+      if (mode !== 'live') { setFileError('قراءة ملفات PDF تعمل في الحساب الفعلي. في التجربة ارفع Excel أو الصق البنود كنص.'); return }
+      if (f.size > 5 * 1024 * 1024) { setFileError('الملف أكبر من 5 ميجا.'); return }
+      setPdf(await fileToAgent(f)); setFileItems([]); setFileName(f.name)
+      return
+    }
     try {
       const rows = await readSheet(f)
       const its = requestItemsFromRows(rows, f.name)
       if (its.length === 0) { setFileError('ما لقيت بنودًا في الملف. تأكد أن فيه عمود «البند» أو «الاسم».'); return }
-      setFileItems(its); setFileName(f.name)
+      setFileItems(its); setFileName(f.name); setPdf(null)
     } catch {
       setFileError('تعذر قراءة الملف.')
     }
   }
 
-  function toReview() {
-    const all = [...parseRequest(text), ...fileItems]
-    setItems(all)
+  /** Live: the agent reads the message or PDF and picks catalog products; otherwise (or if it fails) line-by-line reading. */
+  async function toReview() {
+    setNote('')
+    let read: (RequestItem & { pick?: string })[] | null = null
+    if (mode === 'live' && (text.trim() || pdf)) {
+      setReading(true)
+      const r = await live.understand(text, pdf)
+      setReading(false)
+      if (!r.error) read = r.items.map((i) => ({ text: i.text, qty: i.qty, sourceRef: i.sourceRef ?? 'نص الطلب', pick: i.productId ?? undefined }))
+      else if (pdf) { setFileError('ما قدر الوكيل يقرأ الملف. الصق البنود كنص أو ارفع Excel.'); return }
+      else setNote('الوكيل ما رد هالمرة، فقرأت الطلب سطرًا بسطر. راجع البنود.')
+    }
+    setItems([...(read ?? parseRequest(text)), ...fileItems])
     setStep('review')
   }
 
@@ -104,17 +124,18 @@ export function NewQuoteDialog({ open, onClose, base }: { open: boolean; onClose
             </Field>
             <div>
               <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.pdf" hidden onChange={(e) => onFile(e.target.files?.[0])} />
-              <button type="button" className="qt-btn" onClick={() => fileRef.current?.click()}><FileSpreadsheet size={15} /> إرفاق قائمة Excel أو CSV</button>
-              {fileName && <span style={{ marginInlineStart: 10, fontSize: 12.5, color: 'var(--muted)' }}>{fileName}: {fileItems.length} بند</span>}
+              <button type="button" className="qt-btn" onClick={() => fileRef.current?.click()}><FileSpreadsheet size={15} /> إرفاق ملف (Excel أو PDF)</button>
+              {fileName && <span style={{ marginInlineStart: 10, fontSize: 12.5, color: 'var(--muted)' }}>{fileName}{pdf ? ': يقرأه الوكيل' : `: ${fileItems.length} بند`}</span>}
               {fileError && <p style={{ color: 'var(--warn)', fontSize: 12.5, margin: '8px 0 0' }}>{fileError}</p>}
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
               <button type="button" className="qt-btn ghost" onClick={close}>إلغاء</button>
-              <button type="button" className="qt-btn pri" disabled={!text.trim() && fileItems.length === 0} onClick={toReview}>فهم الطلب</button>
+              <button type="button" className="qt-btn pri" disabled={reading || (!text.trim() && fileItems.length === 0 && !pdf)} onClick={toReview}>{reading ? 'الوكيل يقرأ الطلب…' : 'فهم الطلب'}</button>
             </div>
           </div>
         ) : (
           <div>
+            {note && <p className="qt-issue blocking" style={{ margin: '0 0 10px' }}>{note}</p>}
             <p style={{ margin: '0 0 10px', color: 'var(--muted)', fontSize: 13 }}>هذا اللي فهمه الوكيل. {unresolved.length ? `فيه ${unresolved.length} بند يحتاج توضيح، والباقي جاهز.` : 'كل البنود واضحة.'}</p>
             <div>
               {reviewed.map((r, i) => (

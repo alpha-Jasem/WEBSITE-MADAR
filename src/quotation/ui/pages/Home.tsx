@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bot, Search, Clock, Upload, Download } from 'lucide-react'
+import { Bot, Search, Clock, Upload, Download, MessageCircle, Copy } from 'lucide-react'
 import { NightPage, Kpi, CardTitle, Seg, EmptyLine } from '@/dashboard/pages/shared/night'
 import { useWorkspace } from '@/context/WorkspaceContext'
-import { useQt, verdictFor, decideApproval } from '../../store'
+import { useQt, verdictFor, decideApproval, dueFollowUps, logFollowUp, FOLLOW_UP_DAYS } from '../../store'
 import type { DocStatus } from '../../types'
 import { NewQuoteDialog } from '../NewQuoteDialog'
 import { QuoteStatus, fmtAgo, fmtDuration, fmtMoney, prepSeconds } from '../common'
@@ -45,6 +45,13 @@ export function QtHome() {
   const preps = inPeriod.map(prepSeconds).filter((x): x is number => x != null)
   const avgPrep = preps.length ? preps.reduce((a, b) => a + b, 0) / preps.length : null
   const custName = (id: string) => customers.find((c) => c.id === id)?.name ?? '—'
+  const followUps = useMemo(() => dueFollowUps({ quotes, events }), [quotes, events])
+  const [copiedId, setCopiedId] = useState('')
+  const followText = (q: (typeof quotes)[number]) => {
+    const c = customers.find((x) => x.id === q.customerId)
+    const link = `${window.location.origin}${isDemo ? '/quotation-demo/view/' : '/q/'}${q.publicToken}`
+    return `السلام عليكم ${c?.contactName || c?.name || ''}، أرسلنا لكم عرض السعر رقم ${q.number}. هل عندكم أي استفسار أو تعديل عليه؟ رابط العرض: ${link}`
+  }
 
   const stages = STAGES.map((st) => {
     const list = inPeriod.filter((q) => st.match.includes(q.docStatus))
@@ -155,6 +162,28 @@ export function QtHome() {
             ))}
           </section>
 
+          {followUps.length > 0 && (
+            <section className="qt-card">
+              <CardTitle aside={`${followUps.length}`}>متابعات مستحقة</CardTitle>
+              <p className="qh-note">عروض أُرسلت من {FOLLOW_UP_DAYS} أيام أو أكثر وما رد العميل.</p>
+              {followUps.map((q) => {
+                const phone = customers.find((c) => c.id === q.customerId)?.phone?.replace(/\D/g, '').replace(/^0(5\d{8})$/, '966$1')
+                return (
+                  <div key={q.id} className="np-row">
+                    <div className="np-row-main">
+                      <b><span className="qt-num">{q.number}</span> · {custName(q.customerId)}</b>
+                      <small>أُرسل {fmtAgo(q.updatedAt)} · <span className="qt-num">{fmtMoney(total(q))}</span> ر.س</small>
+                    </div>
+                    <span style={{ display: 'flex', gap: 6 }}>
+                      {phone && <a className="qt-btn sm pri" href={`https://wa.me/${phone}?text=${encodeURIComponent(followText(q))}`} target="_blank" rel="noreferrer" onClick={() => logFollowUp(q.id, 'على واتساب')}><MessageCircle size={14} /> واتساب</a>}
+                      <button type="button" className="qt-btn sm" onClick={() => { void navigator.clipboard.writeText(followText(q)); logFollowUp(q.id, 'بنسخ الرسالة'); setCopiedId(q.id) }}><Copy size={14} /> {copiedId === q.id ? 'تم النسخ' : 'نسخ الرسالة'}</button>
+                    </span>
+                  </div>
+                )
+              })}
+            </section>
+          )}
+
           <section className="qt-card qh-customers">
             <CardTitle aside={`${customers.length} عميل`}>العملاء</CardTitle>
             <p>استورد قائمتك من Excel مرة وحدة، والوكيل يتعرّف على العميل لما يطلب عرض.</p>
@@ -214,6 +243,7 @@ const HOME_CSS = `
 .qh-row-main b { font-weight: 500; font-size: 14px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .qh-row-main small { font-size: 12px; color: var(--dim); }
 .qh-row-v { font-size: 14px; color: var(--ink); }
+.qh-note { margin: -4px 0 8px; font-size: 12.5px; color: var(--muted); }
 .qh-customers p { margin: 0 0 12px; font-size: 13px; color: var(--muted); line-height: 1.7; }
 .qr:not([data-theme="light"]) .qh-customers { background: linear-gradient(150deg, rgba(21,80,255,.22), rgba(123,43,255,.16)); border-color: rgba(160,176,255,.28); }
 @media (max-width: 1000px) { .qh-grid { grid-template-columns: minmax(0, 1fr); } }

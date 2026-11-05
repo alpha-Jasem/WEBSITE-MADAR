@@ -116,7 +116,7 @@ export interface QtApproval {
 export interface QtEvent {
   id: string
   quoteId: string
-  kind: 'created' | 'agent' | 'edit' | 'issued' | 'sent' | 'approval' | 'accepted' | 'rejected' | 'change_request' | 'expired'
+  kind: 'created' | 'agent' | 'edit' | 'issued' | 'sent' | 'approval' | 'accepted' | 'rejected' | 'change_request' | 'expired' | 'followup'
   body: string
   actor: string
   at: string

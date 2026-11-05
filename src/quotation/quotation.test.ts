@@ -3,7 +3,8 @@ import { computeTotals, evaluate } from './pricing'
 import { buildLines, matchItem, normalize, parseRequest } from './matching'
 import { DEMO_PRODUCTS, DEMO_SETTINGS } from './demoData'
 import { runAgentCommand } from './agent'
-import type { QtLine } from './types'
+import { dueFollowUps } from './store'
+import type { QtEvent, QtLine, QtQuote } from './types'
 
 const line = (p: Partial<QtLine>): QtLine => ({
   id: 'x', requested: 'x', productId: 'p', description: 'بند', unit: 'حبة', qty: 1, unitPrice: 100, unitCost: 60, discountPct: 0,
@@ -111,5 +112,19 @@ describe('request parsing and matching', () => {
     const lines = buildLines(parseRequest('3 طابعة ليزر\nسبورة ذكية'), DEMO_PRODUCTS)
     expect(lines[0]).toMatchObject({ productId: 'p6', qty: 3, requested: 'طابعة ليزر', unitPrice: 1350 })
     expect(lines[1]).toMatchObject({ productId: null, qty: 0 })
+  })
+})
+
+describe('dueFollowUps', () => {
+  const day = 86400000
+  const now = Date.parse('2026-11-10T12:00:00Z')
+  const iso = (daysAgo: number) => new Date(now - daysAgo * day).toISOString()
+  const quote = (id: string, docStatus: QtQuote['docStatus'], updatedAt: string) => ({ id, docStatus, updatedAt }) as QtQuote
+  const ev = (quoteId: string, kind: QtEvent['kind'], at: string) => ({ id: `${quoteId}${kind}`, quoteId, kind, body: '', actor: '', at })
+
+  it('lists sent quotes with no answer for the follow-up period, counting from the last follow-up', () => {
+    const quotes = [quote('a', 'sent', iso(4)), quote('b', 'sent', iso(1)), quote('c', 'accepted', iso(9)), quote('d', 'sent', iso(8))]
+    const events = [ev('d', 'followup', iso(1))]
+    expect(dueFollowUps({ quotes, events }, now).map((q) => q.id)).toEqual(['a'])
   })
 })

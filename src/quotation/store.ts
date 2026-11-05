@@ -87,6 +87,7 @@ export async function initQuotation(opts: { demo: boolean; companyId: string | n
     if (!data) { set({ status: 'not_enabled' }); return }
     set({ ...data, status: 'ready', keys: {} })
     expireDue()
+    await settleIncoming()
   } catch (e) {
     set({ status: 'error', error: e instanceof Error ? e.message : 'تعذر تحميل بيانات عروض الأسعار' })
   }
@@ -207,6 +208,34 @@ export async function createQuoteFromRequest(r: NewRequest): Promise<QtQuote> {
   if (q.docStatus === 'ready') addEvent(q.id, 'issued', 'أصدر الوكيل العرض تلقائيًا ضمن القواعد المعتمدة', 'الوكيل')
   ensureApprovalRequest(q)
   return q
+}
+
+/** Requests from the public request page arrive as 'preparing'; the rules run here, like for a quote made in the dashboard. */
+async function settleIncoming() {
+  for (const q of state.quotes.filter((x) => x.workState === 'preparing')) {
+    const next = settle(q, { auto: true })
+    await saveQuote(next)
+    addVersion(next, 'جهّزها الوكيل من طلب العميل على صفحة الطلبات', 'الوكيل')
+    if (next.workState === 'needs_info') addEvent(q.id, 'agent', 'بانتظار معلومة: ' + verdictFor(next).issues.filter((i) => i.level === 'blocking').map((i) => i.message).join('، '), 'الوكيل')
+    if (next.docStatus === 'ready') addEvent(q.id, 'issued', 'أصدر الوكيل العرض تلقائيًا ضمن القواعد المعتمدة', 'الوكيل')
+    ensureApprovalRequest(next)
+  }
+}
+
+/** Days after sending with no answer before a quote shows up for follow-up. */
+export const FOLLOW_UP_DAYS = 3
+
+/** Sent quotes the buyer hasn't answered, counting from the later of sending and the last follow-up. */
+export function dueFollowUps(s: Pick<QtState, 'quotes' | 'events'> = state, at = Date.now()) {
+  return s.quotes.filter((q) => {
+    if (q.docStatus !== 'sent') return false
+    const last = s.events.filter((e) => e.quoteId === q.id && (e.kind === 'sent' || e.kind === 'followup')).reduce((m, e) => Math.max(m, new Date(e.at).getTime()), new Date(q.updatedAt).getTime())
+    return at - last >= FOLLOW_UP_DAYS * 86400000
+  })
+}
+
+export function logFollowUp(id: string, how: string) {
+  addEvent(id, 'followup', `متابعة مع العميل ${how}`)
 }
 
 function addVersion(q: QtQuote, note: string, by = state.actor) {
