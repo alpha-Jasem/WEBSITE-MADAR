@@ -59,8 +59,8 @@ export const QT_CSS = `
 .qt-input:focus-visible, .qt-select:focus-visible, .qt-textarea:focus-visible { outline: 2px solid var(--line-2); outline-offset: 1px; border-color: var(--muted); }
 .qt-label { display: block; font-size: 12.5px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
 .qt-field { display: block; min-width: 0; }
-.qt-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; min-width: 0; }
-.qt-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 34px; padding: 0 14px; border-radius: 8px;
+.qt-card { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 18px 20px; min-width: 0; }
+.qt-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 36px; padding: 0 16px; border-radius: 999px;
   font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; border: 1px solid var(--line-2);
   background: var(--panel-2); color: var(--text-primary); text-decoration: none; }
 .qt-btn:hover { background: var(--raise); }
@@ -78,6 +78,14 @@ export const QT_CSS = `
 .qt-issue.approval { background: var(--ai-bg); color: var(--ai); }
 .qt-accent { --qt: var(--violet); }
 .qt-num { font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; }
+.qt-note { padding: 12px 16px; border-radius: 12px; font-size: 13.5px; background: var(--bad-bg); color: var(--bad); }
+.qt-note[data-ok="true"] { background: var(--ok-bg); color: var(--ok); }
+.qt-drop { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 28px 16px; border: 1px dashed var(--line-2);
+  border-radius: 14px; background: var(--panel-2); color: var(--text-primary); font: inherit; cursor: pointer; text-align: center; }
+.qt-drop svg { color: var(--sky); }
+.qt-drop b { font-weight: 500; font-size: 14.5px; }
+.qt-drop small { color: var(--muted); font-size: 12.5px; max-width: 460px; line-height: 1.7; }
+.qt-drop:hover { border-color: var(--sky); }
 @media (max-width: 900px) { .qt-btn { min-height: 40px; } .qt-input, .qt-select { height: 42px; } }
 `
 

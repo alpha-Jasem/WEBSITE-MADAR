@@ -52,6 +52,11 @@ export function useQt<T>(select: (s: QtState) => T): T {
 }
 export const getQt = () => state
 
+/** A request that never answers would leave the page loading forever; turn it into a retryable error. */
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([p, new Promise<T>((_, reject) => setTimeout(() => reject(new Error('الاتصال بطيء، ما وصلت البيانات')), ms))])
+}
+
 const now = () => new Date().toISOString()
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -68,11 +73,18 @@ export async function initQuotation(opts: { demo: boolean; companyId: string | n
     return
   }
   if (!opts.companyId) return
+  // The workspace reloads the account on every page change; the company's data is already here, so keep it.
+  if (state.mode === 'live' && state.companyId === opts.companyId && (state.status === 'ready' || state.status === 'loading')) {
+    if (state.companyName !== opts.companyName || state.actor !== opts.actor) set({ companyName: opts.companyName, actor: opts.actor })
+    return
+  }
   set({ mode: 'live', status: 'loading', error: null, companyId: opts.companyId, companyName: opts.companyName, actor: opts.actor, canSeeCosts, canApprove: canSeeCosts })
   try {
-    const enabled = await live.isEnabled(opts.companyId)
-    if (!enabled) { set({ status: 'not_enabled' }); return }
-    const data = await live.loadAll(opts.companyId, canSeeCosts)
+    const data = await withTimeout((async () => {
+      const enabled = await live.isEnabled(opts.companyId!)
+      return enabled ? live.loadAll(opts.companyId!, canSeeCosts) : null
+    })(), 20000)
+    if (!data) { set({ status: 'not_enabled' }); return }
     set({ ...data, status: 'ready', keys: {} })
     expireDue()
   } catch (e) {
@@ -148,6 +160,19 @@ export async function upsertCustomer(c: Omit<QtCustomer, 'id' | 'createdAt'> & {
   set({ customers: existing ? state.customers.map((x) => (x.id === row.id ? row : x)) : [row, ...state.customers] })
   if (state.mode === 'live') await live.saveCustomer(state.companyId!, row)
   return row
+}
+
+/** Bulk add from a file: a row whose name already exists updates that customer instead of duplicating it. */
+export async function importCustomers(rows: Omit<QtCustomer, 'id' | 'createdAt'>[]): Promise<number> {
+  const byName = new Map(state.customers.map((c) => [c.name.trim(), c]))
+  const saved: QtCustomer[] = rows.map((r) => {
+    const prev = byName.get(r.name.trim())
+    return { ...(prev ?? { id: uid(), createdAt: now() }), ...r, name: r.name.trim() } as QtCustomer
+  })
+  if (state.mode === 'live') await live.saveCustomers(state.companyId!, saved)
+  const ids = new Set(saved.map((c) => c.id))
+  set({ customers: [...saved.filter((c) => !state.customers.some((x) => x.id === c.id)), ...state.customers.map((x) => (ids.has(x.id) ? saved.find((c) => c.id === x.id)! : x))] })
+  return saved.length
 }
 
 /* ── the agent journey: request -> quote ─────────────────────────────── */

@@ -3,7 +3,6 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, FileText, Users, Package, BarChart3, Settings, Sun, Moon, LogOut, ArrowLeftRight, AlertTriangle, RefreshCw } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { SHELL_CSS } from '@/dashboard/components/DashboardV2Layout'
-import { TOPBAR_CSS } from '@/dashboard/components/TopBar'
 import '@/styles/dashboardV2Tokens.css'
 import { initQuotation, useQt } from '../store'
 import { QtStyles } from './common'
@@ -43,7 +42,7 @@ export function QuotationLayout() {
 
   useEffect(() => {
     const prev = [document.documentElement.style.background, document.body.style.background]
-    const c = theme === 'dark' ? '#0F0F0F' : '#FFFFFF'
+    const c = theme === 'dark' ? '#070B24' : '#F3F5FA'
     document.documentElement.style.background = c; document.body.style.background = c
     return () => { document.documentElement.style.background = prev[0]; document.body.style.background = prev[1] }
   }, [theme])
@@ -57,11 +56,16 @@ export function QuotationLayout() {
     { label: 'الإعدادات والفريق', short: 'الإعدادات', path: `${base}/settings`, icon: <Settings size={16} /> },
   ]
   const isActive = (p: string) => (p === base ? location.pathname === base || location.pathname === `${base}/` : location.pathname.startsWith(p))
-  const title = items.find((i) => isActive(i.path))?.label ?? (location.pathname.includes('/q/') ? 'عرض سعر' : 'الرئيسية')
   const toggleTheme = () => setTheme((t) => { const n = t === 'dark' ? 'light' : 'dark'; try { localStorage.setItem(THEME_KEY, n) } catch { /* private mode */ } return n })
 
+  // Once the company's data is in, page changes (which reload the workspace account) never blank the page again.
   let body: ReactNode = <Outlet />
-  if (ws.accountLoading || status === 'loading' || status === 'idle') body = <div className="np-empty" style={{ padding: 60 }}>جارٍ التحميل…</div>
+  if (status === 'loading' || (status === 'idle' && (ws.accountLoading || ws.companyId))) body = <Loading />
+  else if (status === 'idle') body = (
+    <div className="qt-card" style={{ maxWidth: 560, margin: '40px auto', textAlign: 'center' }}>
+      <p style={{ color: 'var(--muted)', margin: 0, lineHeight: 1.8 }}>{ws.accountError || 'ما لقينا شركة مربوطة بهذا الحساب. تواصل مع فريق مدار.'}</p>
+    </div>
+  )
   else if (status === 'not_enabled') body = (
     <div className="qt-card" style={{ maxWidth: 560, margin: '40px auto', textAlign: 'center' }}>
       <h2 style={{ margin: '0 0 8px', fontSize: 18 }}>مدار Quotation غير مفعّل لشركتك</h2>
@@ -76,38 +80,32 @@ export function QuotationLayout() {
   )
 
   return (
-    <div className="dv2-scope dv2-app qt-accent" dir="rtl" data-theme={theme}>
-      <style>{SHELL_CSS + TOPBAR_CSS + QT_SHELL_CSS}</style>
+    <div className="dv2-scope dv2-app qt-accent qr" dir="rtl" data-theme={theme}>
+      <style>{SHELL_CSS + QR_CSS}</style>
       <QtStyles />
-      <aside className="dv2-side" aria-label="قائمة مدار Quotation">
-        <div className="dv2-logo"><img src="/logo-main.png" alt="" />مدار <span className="qt-product">Quotation</span></div>
-        <div className="dv2-ctx">
-          <div className="dv2-ctx-txt">
-            <b>{ws.isDemo ? 'شركة الأثاث المكتبي' : ws.companyName || 'شركتك'}</b>
-            <small><i className="dv2-dot" />{ws.isDemo ? 'نسخة تجريبية' : 'عروض الأسعار'}</small>
-          </div>
+      <header className="qr-top">
+        <div className="qr-brand">
+          <img src="/logo-orbit.png" alt="" width={36} height={36} />
+          <b>مدار</b>
+          <span className="qr-product">Quotation</span>
         </div>
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 8 }}>
+        <nav className="qr-nav" aria-label="قائمة مدار Quotation">
           {items.map((it) => (
-            <button key={it.path} type="button" className={`dv2-nav${isActive(it.path) ? ' is-active' : ''}`} aria-current={isActive(it.path) ? 'page' : undefined} onClick={() => navigate(it.path)}>
-              {it.icon}<span style={{ flex: 1 }}>{it.label}</span>{it.badge != null && <i className="dv2-badge">{it.badge}</i>}
+            <button key={it.path} type="button" className={isActive(it.path) ? 'is-active' : undefined} aria-current={isActive(it.path) ? 'page' : undefined} onClick={() => navigate(it.path)}>
+              {it.short || it.label}{it.badge != null && <i className="dv2-badge">{it.badge}</i>}
             </button>
           ))}
         </nav>
-        {hasVoice && (
-          <button type="button" className="dv2-nav qt-switch" onClick={() => navigate(ws.isDemo ? '/demo-review' : '/dashboard')}>
-            <ArrowLeftRight size={16} /><span style={{ flex: 1 }}>الانتقال إلى مدار Voice AI</span>
-          </button>
-        )}
-      </aside>
+        <div className="qr-end">
+          {hasVoice && (
+            <button type="button" className="qt-btn ghost qr-wide" onClick={() => navigate(ws.isDemo ? '/demo-review' : '/dashboard')}><ArrowLeftRight size={15} /> Voice AI</button>
+          )}
+          <span className="qr-company qr-wide">{ws.isDemo ? 'شركة الأثاث المكتبي' : ws.companyName || 'شركتك'}</span>
+          <button type="button" className="qt-btn ghost" onClick={toggleTheme} aria-label={theme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن'}>{theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}</button>
+          {!ws.isDemo && <button type="button" className="qt-btn ghost" onClick={() => ws.logout()} aria-label="تسجيل الخروج"><LogOut size={16} /></button>}
+        </div>
+      </header>
       <div className="dv2-col">
-        <header className="dv2-top">
-          <div className="dv2-top-start"><div className="dv2-title"><span>{title}</span></div></div>
-          <div className="dv2-top-actions">
-            <button type="button" className="qt-btn ghost" onClick={toggleTheme} aria-label={theme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن'}>{theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}</button>
-            {!ws.isDemo && <button type="button" className="qt-btn ghost" onClick={() => ws.logout()} aria-label="تسجيل الخروج"><LogOut size={16} /></button>}
-          </div>
-        </header>
         <main className="dv2-content dv2-main">{body}</main>
       </div>
       <nav className="dv2-tabbar" aria-label="التنقل">
@@ -121,13 +119,75 @@ export function QuotationLayout() {
   )
 }
 
-const QT_SHELL_CSS = `
-  .qt-product { font-size: 11px; font-weight: 600; color: var(--violet); border: 1px solid color-mix(in srgb, var(--violet) 40%, transparent); border-radius: 999px; padding: 1px 7px; }
-  .qt-switch { margin-top: auto; border: 1px dashed var(--line-2); }
-  @media (max-width: 900px) { .dv2-tabbar { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+/** Skeleton in the page's own shape, so a slow load reads as "coming" rather than "stuck". */
+function Loading() {
+  return (
+    <div className="qr-skel" aria-busy="true" aria-label="جارٍ التحميل">
+      <i style={{ height: 120 }} />
+      <div><i /><i /><i /><i /></div>
+      <i style={{ height: 260 }} />
+    </div>
+  )
+}
+
+/* "Royal blue": Madar's logo colours (electric blue, violet, silver) on deep navy. Overrides the dv2 tokens,
+   so every page and shared component follows without its own colours. */
+const QR_CSS = `
+  .dv2-scope.qr {
+    --abyss:#070B24;--side:#060920;--panel:#0D1336;--panel-2:#111944;--raise:#18215A;
+    --line:#1C2554;--line-2:#29346E;
+    --ink:#F2F4F8;--muted:#AEB5C6;--dim:#8F98AF;
+    --sky:#5B8CFF;--royal:#1550FF;--royal-2:#2F6BFF;--violet:#9B6BFF;
+    --pri-bg:#E9ECF2;--pri-fg:#0A0F2C;--pri-hover:#FFFFFF;
+    --info:#AFC0FF;--info-bg:rgba(21,80,255,.18);--ai:#C9B6FF;--ai-bg:rgba(123,43,255,.20);
+    --surface-input:#0A1030;--surface-inverse:#18215A;
+    --topbar-bg:rgba(7,11,36,.86);--tabbar-bg:rgba(7,11,36,.96);--hover-bg:rgba(255,255,255,.04);--nav-active-bg:rgba(255,255,255,.10);
+    --border-focus:#5B8CFF;
+    flex-direction: column;
+    background: radial-gradient(1200px 520px at 80% -10%, #16207A 0%, #070B24 60%);
+  }
+  .dv2-scope.qr[data-theme="light"] {
+    --abyss:#F3F5FA;--panel:#FFFFFF;--panel-2:#F5F7FB;--raise:#E9EDF5;--line:#E1E5EE;--line-2:#CBD2E0;
+    --ink:#0A0F2C;--muted:#4A5370;--dim:#636C86;
+    --sky:#1550FF;--royal:#1550FF;--violet:#7B2BFF;
+    --pri-bg:#0A0F2C;--pri-fg:#FFFFFF;--pri-hover:#16207A;
+    --info:#1F3FBF;--info-bg:rgba(21,80,255,.08);--ai:#5B21B6;--ai-bg:rgba(123,43,255,.08);
+    --border-focus:#1550FF;--royal-2:#2F6BFF;
+    --surface-input:#FFFFFF;--surface-inverse:#171A2E;
+    --topbar-bg:rgba(255,255,255,.9);--tabbar-bg:rgba(255,255,255,.96);--hover-bg:rgba(10,15,44,.04);--nav-active-bg:rgba(10,15,44,.07);
+    background: #F3F5FA;
+  }
+  .qr .qr-top { flex: none; display: flex; align-items: center; gap: 18px; padding: 12px 32px; border-bottom: 1px solid var(--line); background: var(--topbar-bg); backdrop-filter: blur(12px); position: relative; z-index: 30; }
+  .qr .qr-brand { display: flex; align-items: center; gap: 10px; flex: none; }
+  .qr .qr-brand b { font-size: 17px; font-weight: 600; color: var(--ink); }
+  .qr .qr-product { font-size: 11px; color: var(--muted); border: 1px solid var(--line-2); border-radius: 999px; padding: 2px 9px; }
+  .qr .qr-nav { display: flex; gap: 4px; flex-wrap: wrap; min-width: 0; }
+  .qr .qr-nav button { position: relative; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13.5px; padding: 8px 14px; border-radius: 999px; cursor: pointer; }
+  .qr .qr-nav button:hover { color: var(--ink); background: var(--hover-bg); }
+  .qr .qr-nav button.is-active { color: var(--ink); background: var(--nav-active-bg); }
+  .qr .qr-nav .dv2-badge { margin-inline-start: 6px; }
+  .qr .qr-end { margin-inline-start: auto; display: flex; align-items: center; gap: 6px; flex: none; }
+  .qr .qr-company { font-size: 13px; color: var(--muted); padding-inline: 6px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .qr .dv2-col { height: auto; flex: 1; min-height: 0; }
+  .qr .dv2-content { margin-inline: auto; }
+  .qr .np-kpi { border-radius: 18px; }
+  .qr .np-seg { border-radius: 999px; padding: 3px; }
+  .qr .np-seg button { border-radius: 999px; }
+  .qr:not([data-theme="light"]) .qt-btn.pri { background: linear-gradient(180deg, #FFFFFF, #CDD2DC); }
+  .qr .qr-skel { display: flex; flex-direction: column; gap: 16px; }
+  .qr .qr-skel > div { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+  .qr .qr-skel i { display: block; height: 96px; border-radius: 18px; background: linear-gradient(90deg, var(--panel) 0%, var(--panel-2) 50%, var(--panel) 100%); background-size: 200% 100%; animation: qr-shine 1.4s ease-in-out infinite; }
+  @keyframes qr-shine { from { background-position: 100% 0 } to { background-position: -100% 0 } }
+  @media (prefers-reduced-motion: reduce) { .qr .qr-skel i { animation: none; } }
+  @media (max-width: 1100px) { .qr .qr-wide { display: none; } }
+  @media (max-width: 900px) {
+    .qr .qr-top { padding: calc(env(safe-area-inset-top, 0px) + 8px) 14px 8px; }
+    .qr .qr-nav { display: none; }
+    .qr .qr-skel > div { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
   @media print {
-    .dv2-side, .dv2-top, .dv2-tabbar, .qt-no-print { display: none !important; }
-    .dv2-app, .dv2-col { height: auto !important; overflow: visible !important; display: block !important; }
+    .qr-top, .dv2-tabbar, .qt-no-print { display: none !important; }
+    .dv2-app, .dv2-col { height: auto !important; overflow: visible !important; display: block !important; background: #fff !important; }
     .dv2-content { padding: 0 !important; max-width: none !important; }
   }
 `

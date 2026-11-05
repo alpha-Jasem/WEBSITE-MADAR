@@ -104,6 +104,14 @@ export const live = {
     }))
   },
 
+  async saveCustomers(companyId: string, list: QtCustomer[]) {
+    for (let i = 0; i < list.length; i += 500) {
+      check(await supabase.from('qt_customers').upsert(list.slice(i, i + 500).map((c) => ({
+        id: c.id, company_id: companyId, name: c.name, contact_name: c.contactName ?? null, phone: c.phone ?? null, email: c.email ?? null,
+      }))))
+    }
+  },
+
   async saveProduct(companyId: string, p: QtProduct, canSeeCosts: boolean) {
     const row = check(await supabase.from('qt_products').upsert({
       id: p.id, company_id: companyId, sku: p.sku, name: p.name, name_en: p.nameEn ?? null, description: p.description ?? null,

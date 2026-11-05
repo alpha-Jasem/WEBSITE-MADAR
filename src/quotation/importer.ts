@@ -77,11 +77,64 @@ export function requestItemsFromRows(rows: Record<string, unknown>[], fileName: 
   return items
 }
 
+const CUSTOMER_HEADERS: Record<string, 'name' | 'contactName' | 'phone' | 'email'> = {
+  name: 'name', customer: 'name', company: 'name', client: 'name',
+  'الاسم': 'name', 'اسم': 'name', 'العميل': 'name', 'اسم العميل': 'name', 'الشركه': 'name', 'اسم الشركه': 'name', 'المنشاه': 'name',
+  contact: 'contactName', 'contact name': 'contactName', 'المسؤول': 'contactName', 'الشخص المسؤول': 'contactName', 'اسم المسؤول': 'contactName',
+  phone: 'phone', mobile: 'phone', whatsapp: 'phone', 'الجوال': 'phone', 'جوال': 'phone', 'رقم الجوال': 'phone', 'الهاتف': 'phone', 'رقم الهاتف': 'phone', 'واتساب': 'phone', 'الرقم': 'phone',
+  email: 'email', 'e-mail': 'email', 'البريد': 'email', 'الايميل': 'email', 'البريد الالكتروني': 'email',
+}
+
+/** Local mobile numbers (05XXXXXXXX, or 5XXXXXXXX once a sheet drops the leading zero) become 9665XXXXXXXX. */
+function saudiPhone(s: string) {
+  const d = normalize(s).replace(/\D/g, '').replace(/^00/, '')
+  if (/^05\d{8}$/.test(d)) return `966${d.slice(1)}`
+  if (/^5\d{8}$/.test(d)) return `966${d}`
+  return d
+}
+
+export interface CustomerImport {
+  rows: { name: string; contactName?: string; phone?: string; email?: string }[]
+  errors: { row: number; message: string }[]
+}
+
+/** Customer list from Excel/CSV. Rows without a name are reported, repeated names keep the first row. */
+export function previewCustomers(rows: Record<string, unknown>[]): CustomerImport {
+  const out: CustomerImport = { rows: [], errors: [] }
+  const seen = new Set<string>()
+  rows.forEach((raw, i) => {
+    const r: Partial<Record<'name' | 'contactName' | 'phone' | 'email', string>> = {}
+    for (const [k, v] of Object.entries(raw)) {
+      const key = CUSTOMER_HEADERS[normalize(String(k))]
+      if (key && !r[key] && v != null && String(v).trim() !== '') r[key] = String(v).trim()
+    }
+    if (!r.name) { if (Object.keys(raw).some((k) => String(raw[k]).trim())) out.errors.push({ row: i + 2, message: 'بدون اسم عميل' }); return }
+    const key = normalize(r.name)
+    if (seen.has(key)) { out.errors.push({ row: i + 2, message: `مكرر في الملف (${r.name})` }); return }
+    seen.add(key)
+    out.rows.push({ name: r.name, contactName: r.contactName, phone: r.phone ? saudiPhone(r.phone) : undefined, email: r.email })
+  })
+  return out
+}
+
+/** Downloads rows as an .xlsx file; the first row is the header. */
+export async function downloadSheet(rows: Record<string, string | number>[], fileName: string) {
+  const XLSX = await import('xlsx')
+  const ws = XLSX.utils.json_to_sheet(rows)
+  ws['!cols'] = Object.keys(rows[0] ?? {}).map(() => ({ wch: 22 }))
+  const wb = XLSX.utils.book_new()
+  wb.Workbook = { Views: [{ RTL: true }] }
+  XLSX.utils.book_append_sheet(wb, ws, 'Sheet1')
+  XLSX.writeFile(wb, fileName)
+}
+
 /** Reads the first sheet of an .xlsx/.xls/.csv file into header-keyed rows. */
 export async function readSheet(file: File): Promise<Record<string, unknown>[]> {
   const XLSX = await import('xlsx')
-  const buf = await file.arrayBuffer()
-  const wb = XLSX.read(buf, { type: 'array' })
+  // A CSV read as bytes comes out as Latin-1, which garbles Arabic headers; read it as UTF-8 text instead.
+  const wb = /\.csv$/i.test(file.name) || file.type === 'text/csv'
+    ? XLSX.read(await file.text(), { type: 'string' })
+    : XLSX.read(await file.arrayBuffer(), { type: 'array' })
   const ws = wb.Sheets[wb.SheetNames[0]]
   return ws ? XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' }) : []
 }
