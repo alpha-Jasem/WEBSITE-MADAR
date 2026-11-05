@@ -29,6 +29,7 @@ const SECTIONS: Section[] = [
     tabs: [{ label: 'الوكلاء', to: '/admin/ai-agents' }, { label: 'n8n', to: '/admin/n8n' }, { label: 'السجلات', to: '/admin/logs' }, { label: 'التقارير', to: '/admin/reports' }] },
   { id: 'finance', label: 'المالية', icon: 'card', to: '/admin/finance', match: ['/admin/finance', '/admin/quotes', '/admin/expenses', '/admin/bank'],
     tabs: [{ label: 'الدفعات', to: '/admin/finance' }, { label: 'العروض والفواتير', to: '/admin/quotes' }, { label: 'المصروفات والربحية', to: '/admin/expenses' }, { label: 'إشعارات البنك', to: '/admin/bank' }] },
+  { id: 'quotation', label: 'عروض الأسعار', icon: 'doc', to: '/admin/quotation', match: ['/admin/quotation'] },
   { id: 'marketers', label: 'المسوّقون', icon: 'users', to: '/admin/marketers', match: ['/admin/marketers'] },
   { id: 'settings', label: 'الإعدادات', icon: 'gear', to: '/admin/settings', match: ['/admin/settings', '/admin/api'],
     tabs: [{ label: 'الإعدادات', to: '/admin/settings' }, { label: 'API والتكاملات', to: '/admin/api' }] },

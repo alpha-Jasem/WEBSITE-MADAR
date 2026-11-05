@@ -45,6 +45,13 @@ export const ClinicOSLogin = () => {
       return
     }
 
+    // A company with only the Quotation product has its own dashboard. Before the products column exists this read fails and nothing changes.
+    if (!searchParams.get('redirect')) {
+      const { data: co } = await supabase.from('companies').select('products').limit(1).maybeSingle()
+      const products = (co as { products?: string[] } | null)?.products
+      if (Array.isArray(products) && products.includes('quotation') && !products.includes('voice_ai')) { navigate('/quotation', { replace: true }); return }
+    }
+
     navigate(redirectTo, { replace: true })
   }
 
