@@ -1,8 +1,11 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
+import { dateShort } from '../../../lib/format'
+import { useRealtimeRefetch } from '../../../lib/realtime'
 
 type Product = 'voice_ai' | 'quotation'
 interface Made { company: string; product: Product; email: string; password: string; url: string }
+interface Account { id: string; name: string; owner_name: string; owner_email: string; status: string; business_type: string; plan: string; created_at: string; auth_user_id: string | null; products?: string[] }
 
 const PRODUCTS: { id: Product; label: string; hint: string }[] = [
   { id: 'voice_ai', label: 'مدار Voice AI', hint: 'وكيل يرد على الواتساب والمكالمات، مع لوحته' },
@@ -10,6 +13,7 @@ const PRODUCTS: { id: Product; label: string; hint: string }[] = [
 ]
 const TYPES = [['clinic', 'عيادة'], ['real_estate', 'عقار'], ['ecommerce', 'تجارة إلكترونية'], ['other', 'أخرى']] as const
 const PLANS = [['starter', 'ابتدائي'], ['growth', 'نمو'], ['enterprise', 'مؤسسي']] as const
+const STATUS: Record<string, string> = { active: 'نشطة', trial: 'تجريبية', suspended: 'موقوفة' }
 const EMPTY = { company_name: '', owner_name: '', email: '', phone: '' }
 
 // No look-alike characters (0/O, 1/l/I), so a password read aloud or typed from a message is not mistyped.
@@ -19,7 +23,7 @@ const makePassword = () => {
   return Array.from(bytes, b => chars[b % chars.length]).join('')
 }
 
-/** Creates a client's login and its company in one step, for the product picked. Shows the credentials to hand over. */
+/** Creates a client's login and its company in one step, for the product picked. Lists every account and can delete one. */
 export const AdminCreateClient = () => {
   const [product, setProduct] = useState<Product>('voice_ai')
   const [type, setType] = useState('other')
@@ -30,30 +34,59 @@ export const AdminCreateClient = () => {
   const [error, setError] = useState<string | null>(null)
   const [made, setMade] = useState<Made | null>(null)
   const [copied, setCopied] = useState(false)
+  const [accounts, setAccounts] = useState<Account[]>([])
+  const [me, setMe] = useState<string | null>(null)
+  const [del, setDel] = useState<Account | null>(null)
+  const [confirmName, setConfirmName] = useState('')
+
+  const load = useCallback(async () => {
+    const cols = 'id, name, owner_name, owner_email, status, business_type, plan, created_at, auth_user_id'
+    // The products column arrives with the Quotation database update; until then every account is Voice AI.
+    const withProducts = await supabase.from('companies').select(`${cols}, products`).order('created_at', { ascending: false })
+    const res = withProducts.error ? await supabase.from('companies').select(cols).order('created_at', { ascending: false }) : withProducts
+    if (res.error) { setError('تعذّر تحميل الحسابات.'); return }
+    setAccounts((res.data ?? []) as unknown as Account[])
+  }, [])
+  useEffect(() => { load(); supabase.auth.getUser().then(({ data }) => setMe(data.user?.id ?? null)) }, [load])
+  useRealtimeRefetch('admin_create_client', [{ table: 'companies' }], load, true)
 
   const valid = form.company_name.trim() && form.owner_name.trim() && form.email.includes('@')
+
+  const call = async (fn: string, body: Record<string, unknown>) => {
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${fn}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+      body: JSON.stringify(body),
+    })
+    return { ok: res.ok, out: await res.json().catch(() => ({})) as { error?: string } }
+  }
 
   const create = async () => {
     setBusy(true); setError(null)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-create-client`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
-        body: JSON.stringify({
-          email: form.email.trim().toLowerCase(), password, company_name: form.company_name.trim(), owner_name: form.owner_name.trim(),
-          owner_phone: form.phone.trim(), business_type: product === 'quotation' ? 'other' : type, plan: product === 'quotation' ? 'starter' : plan,
-          // Voice AI is the column default, so only Quotation sends it (and needs the products column).
-          ...(product === 'quotation' ? { products: ['quotation'] } : {}),
-        }),
+      const { ok, out } = await call('admin-create-client', {
+        email: form.email.trim().toLowerCase(), password, company_name: form.company_name.trim(), owner_name: form.owner_name.trim(),
+        owner_phone: form.phone.trim(), business_type: product === 'quotation' ? 'other' : type, plan: product === 'quotation' ? 'starter' : plan,
+        // Voice AI is the column default, so only Quotation sends it (and needs the products column).
+        ...(product === 'quotation' ? { products: ['quotation'] } : {}),
       })
-      const out = await res.json().catch(() => ({}))
-      if (!res.ok) {
+      if (!ok) {
         setError(/products/i.test(out.error ?? '') ? 'منتج Quotation يحتاج تحديث قاعدة البيانات أولًا.' : out.error || 'تعذّر إنشاء الحساب.')
         return
       }
       setMade({ company: form.company_name.trim(), product, email: form.email.trim().toLowerCase(), password, url: `${window.location.origin}/login` })
-      setForm(EMPTY); setPassword(makePassword()); setCopied(false)
+      setForm(EMPTY); setPassword(makePassword()); setCopied(false); load()
+    } catch { setError('خطأ في الاتصال بالخادم.') } finally { setBusy(false) }
+  }
+
+  const remove = async () => {
+    if (!del) return
+    setBusy(true); setError(null)
+    try {
+      const { ok, out } = await call('admin-delete-client', { company_id: del.id, confirm_name: confirmName })
+      if (!ok) { setError(out.error || 'تعذّر الحذف.'); return }
+      setDel(null); setConfirmName(''); load()
     } catch { setError('خطأ في الاتصال بالخادم.') } finally { setBusy(false) }
   }
 
@@ -118,10 +151,42 @@ export const AdminCreateClient = () => {
           </label>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button className="mc-btn2 p" disabled={!valid || password.length < 8 || busy} onClick={create}>{busy ? 'جاري الإنشاء…' : 'إنشاء العميل'}</button>
+            <button className="mc-btn2 p" disabled={!valid || password.length < 8 || busy} onClick={create}>{busy && !del ? 'جاري الإنشاء…' : 'إنشاء العميل'}</button>
           </div>
         </div>
       </article>
+
+      <article className="mc-card" style={{ marginTop: 16 }}>
+        <div className="mc-ph"><h3>الحسابات ({accounts.length})</h3></div>
+        <div style={{ overflowX: 'auto' }}><table className="mc-tbl">
+          <thead><tr><th>الشركة</th><th>المنتج</th><th>الحالة</th><th>أُنشئت</th><th /></tr></thead>
+          <tbody>
+            {accounts.length === 0 && <tr><td colSpan={5} className="mc-flat">لا توجد حسابات.</td></tr>}
+            {accounts.map(a => (
+              <tr key={a.id}>
+                <td><b>{a.name}</b><div style={{ color: 'var(--ink-3)', fontSize: 12 }} dir="ltr">{a.owner_email || '—'}</div></td>
+                <td>{a.products?.includes('quotation') ? (a.products.includes('voice_ai') ? 'Voice AI + Quotation' : 'Quotation') : 'Voice AI'}</td>
+                <td>{STATUS[a.status] ?? a.status}{!a.auth_user_id && <div style={{ color: 'var(--ink-3)', fontSize: 12 }}>بدون حساب دخول</div>}</td>
+                <td>{dateShort(a.created_at)}</td>
+                <td>{a.auth_user_id && a.auth_user_id === me ? <span style={{ color: 'var(--ink-3)', fontSize: 12 }}>حسابك</span> : <button className="mc-btn2" onClick={() => { setDel(a); setConfirmName(''); setError(null) }}>حذف</button>}</td>
+              </tr>
+            ))}
+          </tbody></table></div>
+      </article>
+
+      {del && (
+        <div className="mc-modal-bg" onClick={() => setDel(null)}>
+          <div className="mc-modal" onClick={e => e.stopPropagation()}>
+            <h3>حذف «{del.name}»</h3>
+            <div className="mc-delta" style={{ lineHeight: 1.8 }}>حذف نهائي: تروح الشركة وكل بياناتها (المحادثات، المكالمات، الحجوزات، العملاء) وحساب الدخول. ما فيه تراجع.</div>
+            <label className="mc-field">اكتب اسم الشركة للتأكيد<input value={confirmName} onChange={e => setConfirmName(e.target.value)} /></label>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button className="mc-btn2" onClick={() => setDel(null)}>إلغاء</button>
+              <button className="mc-btn2 p" disabled={confirmName.trim() !== del.name.trim() || busy} onClick={remove}>{busy ? 'جاري الحذف…' : 'حذف نهائي'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
