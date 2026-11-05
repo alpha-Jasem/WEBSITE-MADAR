@@ -72,7 +72,8 @@ export const AdminCreateClient = () => {
         ...(product === 'quotation' ? { products: ['quotation'] } : {}),
       })
       if (!ok) {
-        setError(/products/i.test(out.error ?? '') ? 'منتج Quotation يحتاج تحديث قاعدة البيانات أولًا.' : out.error || 'تعذّر إنشاء الحساب.')
+        setError(/already.*registered/i.test(out.error ?? '') ? 'هذا البريد مسجّل من قبل. استخدم بريدًا ثانيًا للعميل.'
+          : /products/i.test(out.error ?? '') ? 'منتج Quotation يحتاج تحديث قاعدة البيانات أولًا.' : out.error || 'تعذّر إنشاء الحساب.')
         return
       }
       setMade({ company: form.company_name.trim(), product, email: form.email.trim().toLowerCase(), password, url: `${window.location.origin}/login` })
@@ -107,8 +108,8 @@ export const AdminCreateClient = () => {
       {error && <div className="mc-banner">{error}</div>}
 
       {made && (
-        <article className="mc-card" style={{ marginBottom: 16 }}>
-          <div className="mc-ph"><h3>جاهز: {made.company}</h3><div className="mc-phr"><button className="mc-btn2 p" onClick={copy}>{copied ? 'تم النسخ' : 'نسخ بيانات الدخول'}</button></div></div>
+        <article className="mc-card" style={{ marginBottom: 16, border: '1px solid var(--green)', background: 'color-mix(in srgb, var(--green) 14%, transparent)' }}>
+          <div className="mc-ph"><h3 style={{ color: 'var(--green)' }}>تم إنشاء الحساب: {made.company}</h3><div className="mc-phr"><button className="mc-btn2 p" onClick={copy}>{copied ? 'تم النسخ' : 'نسخ بيانات الدخول'}</button></div></div>
           <div style={{ padding: '0 20px 16px', lineHeight: 2 }}>
             <div>الرابط: <b dir="ltr">{made.url}</b></div>
             <div>البريد: <b dir="ltr">{made.email}</b></div>
