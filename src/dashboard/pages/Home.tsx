@@ -1,5 +1,5 @@
 import { arReason } from './conversations/model'
-import { SAUDI_TZ, saudiHour } from '@/lib/saudiTime'
+import { SAUDI_TZ, saudiHour, saudiStartOfDay } from '@/lib/saudiTime'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWorkspace } from '@/context/WorkspaceContext'
@@ -13,7 +13,6 @@ import {
 } from './conversations/model'
 import {
   AlertBanner, AgentCard, KpiTiles, NeedsAction, HourlyChart, RecentConversations, TicketsMini, PlanCard, Onboarding, HomeSkeleton,
-  CallSpotlight, offHoursShare,
   PERIOD_WORD, type Period, type HomeAlert, type KpiTile, type InboxEntry, type OnboardStep,
 } from './home/sections'
 
@@ -135,19 +134,17 @@ export function DashboardV2Home() {
     return entries
   }, [agentCalls, tickets, now])
 
-  // ─── hourly chart (the selected period, all 24 hours) ───
+  // ─── hourly chart (today) ───
   const hourly = useMemo(() => {
+    const start = saudiStartOfDay()
     const times = [...agentCalls.map((c) => c.call_time), ...messages.map((m) => m.created_at)]
-    const counts = Array.from({ length: 24 }, () => 0)
-    times.filter((t) => inRange(t, from, now)).forEach((t) => { counts[saudiHour(t)] += 1 })
-    return counts
-  }, [agentCalls, messages, from, now])
-
-  // The two latest phone calls, shown big at the top.
-  const spotlight = useMemo(
-    () => [...phoneCalls].sort((a, b) => ts(b.call_time) - ts(a.call_time)).slice(0, 2),
-    [phoneCalls],
-  )
+    const hours = times.filter((t) => inRange(t, start, start + DAY)).map((t) => saudiHour(t))
+    const lo = Math.min(8, ...hours)
+    const hi = Math.max(20, ...hours)
+    const counts = Array.from({ length: hi - lo + 1 }, () => 0)
+    hours.forEach((h) => { counts[h - lo] += 1 })
+    return { counts, startHour: lo }
+  }, [agentCalls, messages])
 
   const recent = useMemo(
     () => buildConversations(agentCalls, messages, { includePhone: showVoice, includeMessages: true }).slice(0, 5),
@@ -288,34 +285,23 @@ export function DashboardV2Home() {
     urgent: tickets.filter((t) => t.status !== 'resolved' && t.priority === 'high').length,
   }
 
-  const offShare = offHoursShare(hourly)
-  const hourlyAside = offShare == null ? `ما فيه نشاط ${periodWord}` : `${offShare}% منها جت بعد الدوام`
-
   return (
     <div className="nx-page">
       {alert && <AlertBanner alert={alert} />}
 
       <div className="nx-head">
         <div style={{ minWidth: 0 }}>
-          <p className="nx-eyebrow">{[greeting, sub].filter(Boolean).join(' · ')}</p>
-          <h1 className="nx-h1">{showVoice ? 'مركز اتصالك يشتغل 24 ساعة' : 'وكيلك يرد على عملائك 24 ساعة'}</h1>
+          <h1 className="nx-h1">{greeting}</h1>
+          <p className="nx-h1-sub">{sub}</p>
         </div>
-        <div className="nx-head-acts">
-          <span className={`nx-live${lastActive ? '' : ' dim'}`}>{agentStatus}</span>
-          <div className="nx-seg" role="group" aria-label="الفترة">
-            {([['today', 'اليوم'], ['week', 'الأسبوع'], ['month', 'الشهر']] as [Period, string][]).map(([k, l]) => (
-              <button key={k} type="button" aria-pressed={period === k} onClick={() => setPeriod(k)}>{l}</button>
-            ))}
-          </div>
+        <div className="nx-seg" role="group" aria-label="الفترة">
+          {([['today', 'اليوم'], ['week', 'الأسبوع'], ['month', 'الشهر']] as [Period, string][]).map(([k, l]) => (
+            <button key={k} type="button" aria-pressed={period === k} onClick={() => setPeriod(k)}>{l}</button>
+          ))}
         </div>
       </div>
 
-      {showVoice && spotlight.length > 0 ? (
-        <>
-          <CallSpotlight calls={spotlight} onOpen={openCall} onCopy={copyPhone} />
-          <KpiTiles tiles={tiles} wide />
-        </>
-      ) : showVoice ? (
+      {showVoice ? (
         <div className="nx-grid-2">
           <AgentCard
             status={agentStatus} statusTone={lastActive ? 'ok' : 'dim'} active={lastActive} channels={activeChannels} stats={agentStats}
@@ -327,16 +313,18 @@ export function DashboardV2Home() {
         <KpiTiles tiles={tiles} wide />
       )}
 
-      <HourlyChart title={`المحادثات حسب الساعة ${periodWord}`} counts={hourly} aside={hourlyAside} />
+      <div className="nx-grid-2">
+        <NeedsAction
+          entries={inbox.slice(0, INBOX_LIMIT)} total={inbox.length} busyId={busyId}
+          onOpenCall={openCall} onReviewed={reviewed} onOpenTicket={openTicket} onCopy={copyPhone}
+          onViewAll={() => go('conversations?filter=needs')}
+        />
+        <HourlyChart title="المحادثات حسب الساعة" counts={hourly.counts} startHour={hourly.startHour} />
+      </div>
 
       <div className="nx-grid-3">
         <RecentConversations items={recent} onOpen={openItem} onViewAll={() => go('conversations')} />
-        <div className="nx-stack nx-side-col">
-          <NeedsAction
-            entries={inbox.slice(0, INBOX_LIMIT)} total={inbox.length} busyId={busyId}
-            onOpenCall={openCall} onReviewed={reviewed} onOpenTicket={openTicket} onCopy={copyPhone}
-            onViewAll={() => go('conversations?filter=needs')}
-          />
+        <div className="nx-stack">
           {showTickets && <TicketsMini {...ticketCounts} onViewAll={() => go('tickets')} />}
           <PlanCard metrics={visibleMetrics} renewsOn={renewsOn} onDetails={() => go('plan-usage')} />
         </div>

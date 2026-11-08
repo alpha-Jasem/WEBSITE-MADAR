@@ -1,12 +1,10 @@
 import type { ReactNode } from 'react'
 import {
-  Bot, Phone, PhoneOff, Users, Ticket, BarChart3, MessageSquare, Clock, Check, Copy, AlertTriangle, Sparkles, Settings, ListChecks, Play,
+  Bot, Phone, PhoneOff, Users, Ticket, BarChart3, MessageSquare, Clock, Check, Copy, AlertTriangle, Sparkles, Settings, ListChecks,
 } from 'lucide-react'
 import type { AICallLog, SupportTicket } from '@/types/dashboard'
 import type { UsageMetric } from '@/lib/clinicOSProduct'
-import {
-  type ConvItem, type ConvChannel, CHANNEL_LABEL, hourLabel, callDisplayName, callChip, fmtWhen, fmtDuration,
-} from '../conversations/model'
+import { type ConvItem, type ConvChannel, CHANNEL_LABEL, hourLabel } from '../conversations/model'
 import { ConvRow, Chip, Sk } from '../conversations/ui'
 import './night.css'
 
@@ -177,90 +175,29 @@ export function NeedsAction({ entries, total, busyId, onOpenCall, onReviewed, on
 
 // ─── hourly chart ───────────────────────────────────────────────────────────
 
-/** A fixed, decorative waveform per call so the same call always draws the same shape. */
-function waveFor(id: string): number[] {
-  let seed = 0
-  for (let i = 0; i < id.length; i++) seed = (seed * 31 + id.charCodeAt(i)) >>> 0
-  return Array.from({ length: 40 }, (_, i) => {
-    seed = (seed * 1103515245 + 12345) >>> 0
-    const env = Math.sin((i / 39) * Math.PI) * 0.6 + 0.4
-    return Math.round(14 + env * (seed % 86))
-  })
-}
-
-/** The latest phone calls, shown big at the top of Home. */
-export function CallSpotlight({ calls, onOpen, onCopy }: { calls: AICallLog[]; onOpen: (c: AICallLog) => void; onCopy: (phone: string) => void }) {
-  return (
-    <div className="nx-spot-grid">
-      {calls.map((c) => {
-        const name = callDisplayName(c)
-        const [chip, tone] = callChip(c)
-        return (
-          <div key={c.id} className="nx-spot">
-            <div className="nx-spot-top">
-              <span className="nx-spot-av">{name.trim().charAt(0)}</span>
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <b className="nx-spot-name">{name}</b>
-                <small>{fmtWhen(c.call_time)}</small>
-              </div>
-              <span className="nx-spot-dur nx-num">{fmtDuration(c.duration_seconds)}</span>
-            </div>
-            <div className="nx-wave" aria-hidden="true">
-              {waveFor(c.id).map((h, i) => <i key={i} style={{ height: `${h}%` }} />)}
-            </div>
-            <div className="nx-spot-foot">
-              <Chip tone={tone}>{chip}</Chip>
-              <span className="nx-spot-sum">{c.summary || ''}</span>
-              <button type="button" className="nx-btn sm" onClick={() => onOpen(c)}><Play /> استمع</button>
-              {c.phone && (
-                <>
-                  <a className="nx-btn sm" href={`tel:${c.phone}`}><Phone /> اتصل فيه</a>
-                  <button type="button" className="nx-icon-btn" aria-label="نسخ الرقم" title="نسخ الرقم" onClick={() => onCopy(c.phone)}><Copy size={14} /></button>
-                </>
-              )}
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-/** Hours counted as the working day; everything else is "بعد الدوام" on the chart. */
-export const WORK_HOURS: [number, number] = [8, 17]
-const isOffHour = (h: number) => h < WORK_HOURS[0] || h >= WORK_HOURS[1]
-
-/** 24 bars, one per hour; hours outside WORK_HOURS are coloured apart. */
-export function HourlyChart({ title, counts, aside }: { title: string; counts: number[]; aside: string }) {
+export function HourlyChart({ title, counts, startHour }: { title: string; counts: number[]; startHour: number }) {
   const peak = Math.max(0, ...counts)
+  const peakHour = peak > 0 ? startHour + counts.indexOf(peak) : null
   return (
     <div className="nx-card nx-chart">
       <h3>
         <BarChart3 size={17} style={{ color: 'var(--sky)' }} /> {title}
-        <span className="nx-aside">{aside}</span>
+        <span className="nx-aside">{peakHour != null ? `اليوم · الأزحم ${hourLabel(peakHour)}` : 'ما فيه نشاط اليوم للحين'}</span>
       </h3>
-      <div className="nx-bars" role="img" aria-label={`${title}: التوزيع بالساعة`}>
-        {counts.map((v, h) => (
-          <div key={h} className={`nx-bar${isOffHour(h) ? ' off' : ''}`} title={`${hourLabel(h)}: ${v}`}>
-            {v > 0 ? <b>{v}</b> : null}
-            <span className={v ? '' : 'zero'} style={{ height: v ? `${Math.max(6, Math.round((v / peak) * 100) - 14)}%` : 3 }} />
-            <small>{h % 3 === 0 ? hourLabel(h) : ' '}</small>
-          </div>
-        ))}
-      </div>
-      <div className="nx-legend">
-        <span><i className="on" />وقت الدوام ({hourLabel(WORK_HOURS[0])} – {hourLabel(WORK_HOURS[1])})</span>
-        <span><i className="off" />بعد الدوام</span>
+      <div className="nx-bars" role="img" aria-label={`${title}: توزيع اليوم بالساعة`}>
+        {counts.map((v, i) => {
+          const h = startHour + i
+          return (
+            <div key={h} className={`nx-bar ${v > 0 && v === peak ? 'peak' : ''}`} title={`${hourLabel(h)}: ${v}`}>
+              {v > 0 ? <b>{v}</b> : null}
+              <span className={v ? '' : 'zero'} style={{ height: v ? `${Math.max(6, Math.round((v / peak) * 100) - 14)}%` : 3 }} />
+              <small>{i % 2 === 0 ? hourLabel(h) : ' '}</small>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
-}
-
-/** Share of the hourly counts that fell outside working hours, or null when there are none. */
-export function offHoursShare(counts: number[]): number | null {
-  const total = counts.reduce((a, b) => a + b, 0)
-  if (!total) return null
-  return Math.round((counts.reduce((a, v, h) => a + (isOffHour(h) ? v : 0), 0) / total) * 100)
 }
 
 // ─── recent conversations ───────────────────────────────────────────────────

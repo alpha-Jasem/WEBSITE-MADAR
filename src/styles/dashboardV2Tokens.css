@@ -3,7 +3,6 @@
    The look: near-black canvas, cards one step lighter with hairline borders, white
    primary actions, colour only for status and data. Light theme flips the values. */
 @import url('https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap');
 
 .dv2-scope {
   /* surfaces: canvas < card < sunken/raised < hover fill */
@@ -22,9 +21,6 @@
   --topbar-bg:rgba(15,15,15,.92);--tabbar-bg:rgba(10,10,10,.96);--hover-bg:rgba(255,255,255,.04);
   --nav-active-bg:rgba(255,255,255,.07);
   --scrim:rgba(0,0,0,.6);
-  /* data fills on the Voice AI home (waveforms, after-hours bars) */
-  --night-grad:linear-gradient(180deg,#7B9CFF,#8E5BFF);
-  --spot-bg:var(--panel);
 
   /* brand scale (blue) for chips/links in older components */
   --brand-50:rgba(96,165,250,.08);--brand-100:rgba(96,165,250,.12);--brand-200:rgba(96,165,250,.24);
@@ -121,27 +117,6 @@
   --shadow-lg:0 16px 40px -16px rgba(0,0,0,.18);
   --ring-focus:0 0 0 3px rgba(0,0,0,.06);
   color-scheme: light;
-}
-
-/* Voice AI client dashboard ("مركز اتصال ليلي", picked 2026-11-05): blue-tinted graphite,
-   blue→violet data fills, Rubik. Only the client dashboard carries .vx. */
-.dv2-scope.vx {
-  --font-display:'Rubik','Segoe UI',Tahoma,sans-serif;
-  --font-body:'Rubik','Segoe UI',Tahoma,sans-serif;
-  --font-arabic:'Rubik','Segoe UI',Tahoma,sans-serif;
-  --font-numeral:'Rubik','Segoe UI',sans-serif;
-}
-.dv2-scope.vx[data-theme="dark"] {
-  --abyss:#0A0B0E;--side:#0E1014;--panel:#10131A;--panel-2:#141824;--raise:#1F2640;
-  --line:#1C1F27;--line-2:#2C3242;
-  --ink:#E7E9ED;--muted:#AEB5C6;--dim:#7E8596;
-  --sky:#7B9CFF;--violet:#8E5BFF;
-  --pri-bg:#E7E9ED;--pri-hover:#FFFFFF;
-  --info:#A9BBFF;--info-bg:rgba(123,156,255,.12);
-  --topbar-bg:rgba(10,11,14,.92);--tabbar-bg:rgba(14,16,20,.96);
-  --nav-active-bg:#1F2640;
-  --surface-input:#0E1014;
-  --spot-bg:linear-gradient(180deg,#141824,#10131A);
 }
 
 /* Base element look so form controls never fall back to the browser's white
