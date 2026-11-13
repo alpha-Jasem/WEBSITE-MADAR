@@ -473,6 +473,7 @@ main>section{position:relative;z-index:1}
 .logos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:48px}
 .logo{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:16px;min-width:0}
 .logo .pl{background:#F3F5FA;border-radius:12px;height:120px;display:grid;place-items:center;padding:16px}
+.logo .pl img.ink{filter:brightness(0)}
 .logo .pl img{max-height:60px;width:auto;max-width:85%}
 .logo b{font-size:19px}
 .logo span{color:var(--mute);font-size:15px}
@@ -480,6 +481,25 @@ main>section{position:relative;z-index:1}
 .eco span{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line2);border-radius:999px;padding:8px 16px;font-size:15px;color:#CBD2E4}
 .eco img{width:18px;height:18px}
 @media (max-width:720px){.logos{grid-template-columns:1fr}}
+
+/* integrations hub (as on the previous site) */
+.hub{position:relative;width:min(560px,92vw);aspect-ratio:1;margin:40px auto 0}
+.hub-lines{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.hub-lines line{stroke:rgba(96,165,250,.22);stroke-width:.4}
+.hub-lines line.flow{stroke:#4FA3FF;stroke-width:.7;stroke-dasharray:3 60;animation:hflow 3.2s linear infinite;opacity:.9}
+@keyframes hflow{to{stroke-dashoffset:-63}}
+.hub-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;width:118px;height:118px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:radial-gradient(circle at 50% 40%,rgba(79,163,255,.28),rgba(12,26,46,.9));border:1px solid rgba(79,163,255,.5);box-shadow:0 0 60px -10px rgba(79,163,255,.65),inset 0 0 30px rgba(79,163,255,.2)}
+.hub-center img{height:34px;width:auto}
+.hub-center span{font-family:var(--hf);font-size:17px;color:#fff}
+.hub-center::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:1px solid rgba(79,163,255,.25);animation:halo 3s ease-in-out infinite}
+@keyframes halo{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.08);opacity:.15}}
+.hnode{position:absolute;transform:translate(-50%,-50%);z-index:2;width:74px;height:74px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(12,20,34,.85);border:1px solid rgba(255,255,255,.1);transition:transform .4s cubic-bezier(.16,1,.3,1),border-color .4s,box-shadow .4s}
+.hnode:hover{transform:translate(-50%,-50%) scale(1.1);border-color:rgba(79,163,255,.55);box-shadow:0 0 30px -6px rgba(79,163,255,.6)}
+.hnode .ilogo{width:34px;height:34px;background:rgba(234,241,251,.82);-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain;transition:background .3s}
+.hnode:hover .ilogo{background:#fff}
+.hub-note{text-align:center;margin:34px 0 0;font-size:14.5px;color:var(--mute)}
+.hub-note b{color:#60A5FA;font-weight:600}
+@media (max-width:820px){.hub-center{width:80px;height:80px}.hub-center img{height:22px}.hub-center span{font-size:12px}.hnode{width:50px;height:50px}.hnode .ilogo{width:22px;height:22px}}
 
 /* why */
 .why{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:50px;border:1px solid var(--line);background:var(--panel)}
@@ -592,7 +612,7 @@ footer .r a{text-decoration:none}
 <header class="top wrap"><div class="col">
   <a class="brand" href="#hero" aria-label="مدار"><img src="/signal/logo-main.png" width="579" height="431" alt="مدار"><span class="wordmark" dir="ltr">madar<b>.software</b></span></a>
   <nav class="menu" aria-label="الأقسام">
-    <a href="#products">الخدمات</a><a href="#how">كيف نعمل</a><a href="#trust">شركاؤنا</a>
+    <a href="#products">الخدمات</a><a href="#how">كيف نعمل</a><a href="#connect">التكامل</a><a href="#trust">شركاؤنا</a>
     <a class="book" href="#book"><i></i>احجز اجتماعًا</a>
   </nav>
 </div></header>
@@ -600,7 +620,7 @@ footer .r a{text-decoration:none}
 <nav class="rail" aria-label="التنقل في الصفحة">
   <a href="#hero"><i></i><span>البداية</span></a><a href="#products"><i></i><span>الخدمات</span></a><a href="#listen"><i></i><span>جرّب الوكيل</span></a><a href="#how"><i></i><span>كيف نعمل</span></a>
   <a href="#chaos"><i></i><span>يومك</span></a><a href="#dash"><i></i><span>اللوحة</span></a><a href="#nums"><i></i><span>الأرقام</span></a><a href="#jeddah"><i></i><span>جدة</span></a>
-  <a href="#trust"><i></i><span>شركاؤنا</span></a><a href="#why"><i></i><span>لماذا مدار</span></a><a href="#faq"><i></i><span>أسئلة</span></a><a href="#book"><i></i><span>احجز</span></a>
+  <a href="#trust"><i></i><span>شركاؤنا</span></a><a href="#connect"><i></i><span>التكامل</span></a><a href="#why"><i></i><span>لماذا مدار</span></a><a href="#faq"><i></i><span>أسئلة</span></a><a href="#book"><i></i><span>احجز</span></a>
 </nav>
 
 <div class="pbar" aria-hidden="true"><i id="pbar"></i></div>
@@ -752,10 +772,22 @@ footer .r a{text-decoration:none}
   <div class="col">
     <div class="rv"><p class="kick">يثقون بنا</p><h2>شركات <em class="h">تشتغل معنا.</em></h2></div>
     <div class="logos">
-      <div class="logo rv"><div class="pl"><img loading="lazy" decoding="async" src="/signal/logos/onehardset.png" width="720" height="128" alt="ONEHARDSET"></div><b class="lat" style="text-align:right">ONEHARDSET</b><span>أتمتة الرد على استفسارات متجرهم على سلة عبر واتساب، على مدار الساعة.</span></div>
+      <div class="logo rv"><div class="pl"><img loading="lazy" decoding="async" class="ink" src="/signal/logos/onehardset.png" width="720" height="128" alt="ONEHARDSET"></div><b class="lat" style="text-align:right">ONEHARDSET</b><span>أتمتة الرد على استفسارات متجرهم على سلة عبر واتساب، على مدار الساعة.</span></div>
       <div class="logo rv"><div class="pl"><img loading="lazy" decoding="async" src="/signal/logos/jawdah.png" width="764" height="158" alt="جودة العقارية"></div><b>جودة العقارية</b><span>لوحة تحكم لإدارة العقارات، موقع الشركة، وبوابة عرض العقارات.</span></div>
     </div>
-    <div class="eco rv"><span><img loading="lazy" decoding="async" src="/signal/logos/whatsapp.svg" width="18" height="18" alt="">WhatsApp Business</span><span><img loading="lazy" decoding="async" src="/signal/logos/googlecalendar.svg" width="18" height="18" alt="">Google Calendar</span><span><img loading="lazy" decoding="async" src="/signal/logos/googlemaps.svg" width="18" height="18" alt="">Google Maps</span><span>مكالمات صوتية</span><span>CRM</span><span>ERP</span><span>SMS</span><span>البريد الإلكتروني</span></div>
+  </div>
+</section>
+
+<section class="sec wrap" id="connect">
+  <div class="col">
+    <div class="c rv"><p class="kick">التكامل</p><h2>يتصل بأنظمتك، <em class="h">ما يستبدلها.</em></h2>
+      <p class="lede">مدار يشتغل فوق أدواتك الحالية عبر واجهات API جاهزة: واتساب، التقاويم، أنظمة ERP و CRM، المدفوعات، والاتصالات، وكل شي متزامن لحظيًا.</p></div>
+    <div class="hub">
+      <svg class="hub-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><line class="flow" x1="50" y1="50" x2="50" y2="10"/><line x1="50" y1="50" x2="73.5" y2="17.6"/><line class="flow" x1="50" y1="50" x2="88" y2="37.6"/><line x1="50" y1="50" x2="88" y2="62.4"/><line class="flow" x1="50" y1="50" x2="73.5" y2="82.4"/><line x1="50" y1="50" x2="50" y2="90"/><line class="flow" x1="50" y1="50" x2="26.5" y2="82.4"/><line x1="50" y1="50" x2="12" y2="62.4"/><line class="flow" x1="50" y1="50" x2="12" y2="37.6"/><line x1="50" y1="50" x2="26.5" y2="17.6"/></svg>
+      <div class="hub-center"><img loading="lazy" decoding="async" src="/signal/logo-main.png" width="579" height="431" alt="مدار"><span>مدار</span></div>
+      <div class="hnode" style="left:50%;top:10%" title="WhatsApp"><span class="ilogo" style="-webkit-mask-image:url(/signal/logos/.svg);mask-image:url(/signal/logos/.svg)"></span></div><div class="hnode" style="left:73.5%;top:17.6%" title="Google Calendar"><span class="ilogo" style="-webkit-mask-image:url(/signal/logos/.svg);mask-image:url(/signal/logos/.svg)"></span></div><div class="hnode" style="left:88%;top:37.6%" title="Twilio"><span class="ilogo" style="-webkit-mask-image:url(/signal/logos/.svg);mask-image:url(/signal/logos/.svg)"></span></div><div class="hnode" style="left:88%;top:62.4%" title="Stripe"><span class="ilogo" style="-webkit-mask-image:url(/signal/logos/.svg);mask-image:url(/signal/logos/.svg)"></span></div><div class="hnode" style="left:73.5%;top:82.4%" title="Salesforce"><span class="ilogo" style="-webkit-mask-image:url(/signal/logos/.svg);mask-image:url(/signal/logos/.svg)"></span></div><div class="hnode" style="left:50%;top:90%" title="HubSpot"><span class="ilogo" style="-webkit-mask-image:url(/signal/logos/.svg);mask-image:url(/signal/logos/.svg)"></span></div><div class="hnode" style="left:26.5%;top:82.4%" title="Zoho"><span class="ilogo" style="-webkit-mask-image:url(/signal/logos/.svg);mask-image:url(/signal/logos/.svg)"></span></div><div class="hnode" style="left:12%;top:62.4%" title="SAP"><span class="ilogo" style="-webkit-mask-image:url(/signal/logos/.svg);mask-image:url(/signal/logos/.svg)"></span></div><div class="hnode" style="left:12%;top:37.6%" title="Odoo ERP"><span class="ilogo" style="-webkit-mask-image:url(/signal/logos/.svg);mask-image:url(/signal/logos/.svg)"></span></div><div class="hnode" style="left:26.5%;top:17.6%" title="Google Maps"><span class="ilogo" style="-webkit-mask-image:url(/signal/logos/.svg);mask-image:url(/signal/logos/.svg)"></span></div>
+    </div>
+    <p class="hub-note">تكامل جاهز مع <b>واتساب بزنس، Google Calendar، SAP، Odoo، Zoho، Salesforce، HubSpot، Stripe، Twilio</b> والمزيد.</p>
   </div>
 </section>
 
