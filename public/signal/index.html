@@ -859,14 +859,16 @@ footer .r a{text-decoration:none}
     var d='M'+pts[0][0]+' '+pts[0][1];
     for(var i=1;i<pts.length;i++){var p=pts[i-1],q=pts[i],dy=(q[1]-p[1])*.55;d+=' C'+p[0]+' '+(p[1]+dy)+' '+q[0]+' '+(q[1]-dy)+' '+q[0]+' '+q[1]}
     for(i=0;i<paths.length;i++)paths[i].setAttribute('d',d);
-    L=paths[2].getTotalLength();map=[];for(var s=0;s<=N;s++){var pt=paths[2].getPointAtLength(L*s/N);map.push(pt.y)}
+    var hy=L?+head.getAttribute('cy'):null;L=paths[2].getTotalLength();shown=-1;map=[];for(var s=0;s<=N;s++){var pt=paths[2].getPointAtLength(L*s/N);map.push(pt.y)}
     for(s=1;s<=N;s++)if(map[s]<map[s-1])map[s]=map[s-1];
+    if(hy!==null)cur=lenAt(hy);
     for(i=1;i<3;i++){paths[i].style.strokeDasharray=L;}
     var g='';for(i=1;i<pts.length-1;i++){var x=pts[i][0],y=pts[i][1],dir=x>W/2?-1:1;g+='<g class="node"><line x1="'+x+'" y1="'+y+'" x2="'+(x+dir*44)+'" y2="'+y+'"/><circle class="t" cx="'+(x+dir*44)+'" cy="'+y+'" r="2.5"/><circle class="o" cx="'+x+'" cy="'+y+'" r="7"/><circle class="i" cx="'+x+'" cy="'+y+'" r="3"/></g>'}
     nodesG.innerHTML=g;draw();
   }
   /* the line follows the scroll with easing every frame, so it glides instead of jumping between scroll events */
-  function target(){var y=scrollY+innerHeight*.62-(main.getBoundingClientRect().top+scrollY),lo=0,hi=N;
+  function target(){return lenAt(scrollY+innerHeight*.62-(main.getBoundingClientRect().top+scrollY))}
+  function lenAt(y){var lo=0,hi=N;
     if(y<=map[0])return 0;if(y>=map[N])return L;
     while(lo<hi){var mid=(lo+hi)>>1;if(map[mid]<y)lo=mid+1;else hi=mid}
     var a=map[lo-1],b=map[lo],f=b>a?(y-a)/(b-a):1;return L*(lo-1+f)/N}
