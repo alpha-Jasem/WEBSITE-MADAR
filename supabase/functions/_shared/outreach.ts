@@ -60,7 +60,6 @@ const PROSPECT_SECTORS = [
   { key: 'fabrication', rank: 4, terms: ['aluminum and glass fabrication', 'kitchen manufacturer workshop'], need: 26, importance: 22, ability: 11 },
   { key: 'hvac', rank: 5, terms: ['air conditioning maintenance company', 'facility maintenance company'], need: 24, importance: 22, ability: 10 },
   { key: 'clinics', rank: 6, terms: ['medical clinic', 'cosmetic clinic'], need: 24, importance: 20, ability: 11 },
-  { key: 'recruitment', rank: 7, terms: ['domestic workers recruitment office', 'manpower recruitment agency'], need: 22, importance: 20, ability: 10 },
   { key: 'cleaning', rank: 8, terms: ['cleaning company', 'pest control company'], need: 22, importance: 20, ability: 8 },
   { key: 'real_estate', rank: 9, terms: ['real estate office', 'property management company'], need: 20, importance: 22, ability: 9 },
   { key: 'events', rank: 10, terms: ['exhibition organizer', 'event management company'], need: 22, importance: 18, ability: 9 },
