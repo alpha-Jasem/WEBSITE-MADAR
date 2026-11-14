@@ -22,12 +22,3 @@
 /sitemap.xml
   Content-Type: application/xml; charset=utf-8
   Cache-Control: public, max-age=3600
-
-/signal/m/*
-  Cache-Control: public, max-age=604800
-
-/signal/logos/*
-  Cache-Control: public, max-age=604800
-
-/signal/logo-main-64.png
-  Cache-Control: public, max-age=604800
