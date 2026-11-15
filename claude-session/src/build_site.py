@@ -130,4 +130,4 @@ _doc='<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta
 _js='window.__PFDOC='+json.dumps(_doc).replace('</','<\\/')+';'
 html=html.replace('<script>'+sitejs+'</script>','<script>'+_js+'</script><script>'+sitejs+'</script>',1)
 for k,v in M.items(): html=html.replace('{{'+k+'}}',v)
-open('../dist/madar-site.html','w',encoding='utf-8').write(html);print(len(html))
+open('../output/madar-site.html','w',encoding='utf-8').write(html);print(len(html))

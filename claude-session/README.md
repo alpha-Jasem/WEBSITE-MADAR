@@ -4,7 +4,7 @@
 وضعته في مجلد مستقل حتى **ما يلمس** مشروع React/Vite الموجود في جذر الريبو.
 
 - **العرض المباشر (Artifact):** https://claude.ai/artifact/N6on8SW8QukPxtroNfKHqe
-- **الملف الجاهز:** `dist/madar-site.html` — صفحة واحدة مستقلة، افتحها في أي متصفح.
+- **الملف الجاهز:** `output/madar-site.html` — صفحة واحدة مستقلة، افتحها في أي متصفح.
 
 ## الهيكل
 
@@ -12,7 +12,7 @@
 |---|---|
 | `src/site.body.html`, `site.css`, `site2.js` | الموقع التسويقي (الهيرو المداري، الصوت، جولة المنصة الحية، الشركاء، اختيار العقل، الأسعار…) |
 | `src/pf1.js` … `pf8.js`, `pf.css` | منصة العملاء (تطبيق صفحة واحدة بدون مكتبات) |
-| `src/build_site.py` | يجمع كل شيء في `dist/madar-site.html` |
+| `src/build_site.py` | يجمع كل شيء في `output/madar-site.html` |
 | `src/brands.py`, `brands.json` | شعارات القنوات والمتاجر (SVG sprite) |
 | `src/pricing.json` | الأسعار وأسعار ميتا التقديرية |
 | `src/voice.mp3`, `peaks.json` | المقطع الصوتي وموجته |
@@ -25,7 +25,7 @@
 ## البناء
 
 ```bash
-cd src && python3 build_site.py   # يكتب ../dist/madar-site.html
+cd src && python3 build_site.py   # يكتب ../output/madar-site.html
 ```
 
 ## ملفات المنصة

@@ -4,7 +4,7 @@ with sync_playwright() as p:
     pg=b.new_page(viewport={'width':1440,'height':900});errs=[]
     pg.on('pageerror',lambda e:errs.append(str(e)))
     pg.on('console',lambda m:errs.append('C:'+m.text) if m.type=='error' else None)
-    pg.goto('file://../dist/madar-site.html#platform');pg.wait_for_timeout(600)
+    pg.goto('file://../output/madar-site.html#platform');pg.wait_for_timeout(600)
     pg.get_by_role('button',name='دخول',exact=True).click();pg.wait_for_timeout(900)
     for v in ['time','popups','trig','settings']:
         pg.evaluate("v=>window.__pf.go(v)",v);pg.wait_for_timeout(250)

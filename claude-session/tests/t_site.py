@@ -5,7 +5,7 @@ async def main():
         b=await p.chromium.launch(executable_path='/usr/bin/google-chrome',args=['--no-sandbox'])
         pg=await b.new_page(viewport={'width':1366,'height':800})
         errs=[];pg.on('pageerror',lambda e:errs.append(str(e)));pg.on('console',lambda m:errs.append(m.text) if m.type=='error' else None)
-        await pg.goto('file://../dist/madar-site.html');await pg.wait_for_timeout(800)
+        await pg.goto('file://../output/madar-site.html');await pg.wait_for_timeout(800)
         await pg.mouse.move(600,400);await pg.wait_for_timeout(300);await pg.mouse.move(700,420);await pg.wait_for_timeout(400)
         await pg.screenshot(path='/tmp/s_cursor.png')
         top=await pg.evaluate("document.getElementById('map').offsetTop");H=await pg.evaluate("document.getElementById('map').offsetHeight")

@@ -6,7 +6,7 @@ async def main():
         for name,vw,vh in [('d',1366,800),('m',390,780)]:
             pg=await b.new_page(viewport={'width':vw,'height':vh})
             errs=[];pg.on('pageerror',lambda e:errs.append(str(e)));pg.on('console',lambda m:errs.append(m.text) if m.type=='error' else None)
-            await pg.goto('file://../dist/madar-site.html');await pg.wait_for_timeout(800)
+            await pg.goto('file://../output/madar-site.html');await pg.wait_for_timeout(800)
             top=await pg.evaluate("document.getElementById('map').offsetTop");H=await pg.evaluate("document.getElementById('map').offsetHeight")
             for i in range(5):
                 y=top+(H-vh)*(i+.5)/5

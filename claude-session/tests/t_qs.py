@@ -3,7 +3,7 @@ with sync_playwright() as p:
     b=p.chromium.launch(executable_path='/usr/bin/google-chrome',args=['--no-sandbox'])
     pg=b.new_page(viewport={'width':1440,'height':900});errs=[]
     pg.on('pageerror',lambda e:errs.append(str(e)));pg.on('console',lambda m:m.type=='error' and errs.append(m.text))
-    pg.goto('file://../dist/madar-site.html#platform');pg.wait_for_timeout(500)
+    pg.goto('file://../output/madar-site.html#platform');pg.wait_for_timeout(500)
     pg.click('.gbtn');pg.wait_for_timeout(200);pg.click('[data-a=gdone]');pg.wait_for_timeout(300)
     pg.evaluate("window.__pf.go('dhome')") if False else None
     pg.click('.gbtn') if False else None

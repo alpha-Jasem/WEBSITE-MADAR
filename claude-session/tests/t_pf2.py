@@ -6,7 +6,7 @@ async def main():
         pg=await b.new_page(viewport={'width':1440,'height':900})
         errs=[]
         pg.on('pageerror',lambda e:errs.append(str(e)))
-        await pg.goto('file://../dist/madar-site.html#platform')
+        await pg.goto('file://../output/madar-site.html#platform')
         await pg.wait_for_timeout(400)
         await pg.click('#lf button[type=submit]'); await pg.wait_for_timeout(300)
         await pg.evaluate("window.__pf.go('inbox')")

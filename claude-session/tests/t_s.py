@@ -5,7 +5,7 @@ async def main():
         b=await p.chromium.launch(executable_path='/usr/bin/google-chrome',args=['--no-sandbox'])
         pg=await b.new_page(viewport={'width':1366,'height':900})
         errs=[];pg.on('pageerror',lambda e:errs.append(str(e)))
-        await pg.goto('file://../dist/madar-site.html');await pg.wait_for_timeout(800)
+        await pg.goto('file://../output/madar-site.html');await pg.wait_for_timeout(800)
         for i in ('ecom','pricing'):
             await pg.evaluate("i=>{document.getElementById(i).scrollIntoView();window.scrollBy(0,2)}",i);await pg.wait_for_timeout(900)
             el=await pg.query_selector('#'+i);await el.screenshot(path=f'/tmp/s_{i}.png')

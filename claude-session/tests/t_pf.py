@@ -7,7 +7,7 @@ async def main():
         errs=[]
         pg.on('pageerror',lambda e:errs.append(str(e)))
         pg.on('console',lambda m:errs.append('C:'+m.text) if m.type=='error' else None)
-        await pg.goto('file://../dist/madar-site.html#platform')
+        await pg.goto('file://../output/madar-site.html#platform')
         await pg.wait_for_timeout(600)
         await pg.screenshot(path='/tmp/pf_login.png')
         await pg.click('.gbtn'); await pg.wait_for_timeout(200)

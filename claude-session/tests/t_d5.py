@@ -6,7 +6,7 @@ async def main():
         pg=await b.new_page(viewport={'width':1440,'height':900})
         errs=[];pg.on('pageerror',lambda e:errs.append(str(e)))
         pg.on('console',lambda m:errs.append('C:'+m.text) if m.type=='error' else None)
-        await pg.goto('file://../dist/madar-site.html#platform');await pg.wait_for_timeout(500)
+        await pg.goto('file://../output/madar-site.html#platform');await pg.wait_for_timeout(500)
         async def login(k):
             await pg.click('[data-a=devlogin]');await pg.click(f'[data-a=devfill][data-k={k}]');await pg.click('#df button[type=submit]');await pg.wait_for_timeout(250)
         await login('j')
