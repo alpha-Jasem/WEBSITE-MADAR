@@ -1,0 +1,33 @@
+import asyncio
+from playwright.async_api import async_playwright
+async def main():
+    async with async_playwright() as p:
+        b=await p.chromium.launch(executable_path='/usr/bin/google-chrome',args=['--no-sandbox'])
+        pg=await b.new_page(viewport={'width':1440,'height':900})
+        errs=[];pg.on('pageerror',lambda e:errs.append(str(e)))
+        pg.on('console',lambda m:errs.append('C:'+m.text) if m.type=='error' else None)
+        await pg.goto('file://../dist/madar-site.html#platform');await pg.wait_for_timeout(500)
+        await pg.click('[data-a=devlogin]');await pg.wait_for_timeout(200)
+        await pg.fill('#de','faisal@madar.software');await pg.fill('#dp','wrong');await pg.click('#df button[type=submit]');await pg.wait_for_timeout(200)
+        print('err shown','غير صحيحة' in await pg.inner_text('#app'))
+        await pg.click('[data-a=devfill][data-k=f]');await pg.click('#df button[type=submit]');await pg.wait_for_timeout(300)
+        await pg.screenshot(path='/tmp/d2_home.png')
+        for v in ['dmeet','dord','dsubs','drep','quotes','dreq','dteam']:
+            await pg.evaluate("v=>window.__pf.go(v)",v);await pg.wait_for_timeout(150)
+        await pg.evaluate("window.__pf.go('dmeet')");await pg.wait_for_timeout(200)
+        await pg.screenshot(path='/tmp/d2_meet.png')
+        await pg.evaluate("window.__pf.go('drep')");await pg.wait_for_timeout(200);await pg.screenshot(path='/tmp/d2_rep.png')
+        # invite jasim to first meeting hosted by f (index 0 already hosted by f -> click first minv)
+        await pg.evaluate("window.__pf.go('dmeet')");await pg.wait_for_timeout(200)
+        await pg.click('[data-a=minv] >> nth=0');await pg.wait_for_timeout(200)
+        await pg.click('[data-a=logout]');await pg.click('[data-a=devlogin]')
+        await pg.click('[data-a=devfill][data-k=j]');await pg.click('#df button[type=submit]');await pg.wait_for_timeout(300)
+        await pg.screenshot(path='/tmp/d2_jasim.png')
+        print(await pg.evaluate("[...document.querySelectorAll('#side .nv')].map(x=>x.innerText)"))
+        print(await pg.evaluate("document.querySelectorAll('[data-a=invok]').length"))
+        await pg.click('[data-a=invok] >> nth=0');await pg.wait_for_timeout(200)
+        await pg.evaluate("window.__pf.go('dmeet')");await pg.wait_for_timeout(200)
+        await pg.click('[data-a=maddm]');await pg.fill('#ma1','شركة تجريبية');await pg.click('[data-a=maddok]');await pg.wait_for_timeout(200)
+        await pg.evaluate("window.__pf.go('dord')");await pg.wait_for_timeout(200)
+        print(errs);await b.close()
+asyncio.run(main())
