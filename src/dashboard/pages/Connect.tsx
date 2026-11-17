@@ -6,7 +6,7 @@ import { useWaTemplates } from '@/lib/queries/outreach'
 import {
   useConnectRules, saveConnectRule, deleteConnectRule, toggleConnectRule, testConnectRule,
   useApiKeys, createApiKey, revokeApiKey,
-  TRIGGER_LABELS, ACTION_LABELS, WEBHOOK_PRESETS, RECIPES,
+  TRIGGER_LABELS, ACTION_LABELS, WEBHOOK_PRESETS, RECIPES, STORE_EVENTS, ORDER_STATUS_OPTIONS, EVENT_FIELDS,
   type ConnectRule, type TriggerEvent, type ActionType,
 } from '@/lib/queries/connect'
 import { Card, Button, Input, Select, Badge, Dialog } from '@/dashboard/components/primitives'
@@ -60,7 +60,10 @@ function ruleFlow(r: Pick<ConnectRule, 'trigger_event' | 'action_type' | 'action
 }
 
 export function DashboardV2Connect() {
-  const { companyId, isDemo, isOwner } = useWorkspace()
+  const { companyId, isDemo, isOwner, hasModule } = useWorkspace()
+  const hasStore = hasModule('orders')
+  const triggerKeys = (Object.keys(TRIGGER_LABELS) as TriggerEvent[]).filter((k) => hasStore || !STORE_EVENTS.includes(k))
+  const recipes = RECIPES.filter((r) => hasStore || !STORE_EVENTS.includes(r.rule.trigger_event))
   const pushToast = useToast()
   const [tab, setTab] = useState<'rules' | 'api' | 'dev'>('rules')
   const { rules, runs, available } = useConnectRules(companyId, isDemo)
@@ -129,7 +132,7 @@ export function DashboardV2Connect() {
             <Card>
               <CardTitle aside="اضغط على وصفة تبدأ منها"><Zap size={16} style={{ color: 'var(--warn)' }} /> وصفات جاهزة</CardTitle>
               <div className="cn-recipes">
-                {RECIPES.map((r) => (
+                {recipes.map((r) => (
                   <button key={r.title} type="button" className="cn-recipe" onClick={() => setDraft({ ...r.rule, enabled: true })}>
                     <b>{r.title}</b><span>{r.desc}</span>
                   </button>
@@ -224,7 +227,11 @@ export function DashboardV2Connect() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, maxHeight: '65vh', overflowY: 'auto', paddingInlineEnd: 4 }}>
             <Input label="اسم القاعدة" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
             <Select label="لما يصير:" value={draft.trigger_event} onChange={(e) => setDraft({ ...draft, trigger_event: e.target.value as TriggerEvent })}
-              options={(Object.keys(TRIGGER_LABELS) as TriggerEvent[]).map((k) => ({ value: k, label: TRIGGER_LABELS[k] }))} />
+              options={triggerKeys.map((k) => ({ value: k, label: TRIGGER_LABELS[k] }))} />
+            {draft.trigger_event === 'order.status_changed' && (
+              <Select label="لما تصير الحالة (اختياري)" value={draft.conditions.order_status || ''} onChange={(e) => setDraft({ ...draft, conditions: { ...draft.conditions, order_status: e.target.value || undefined } })}
+                options={[{ value: '', label: 'أي تغيير' }, ...ORDER_STATUS_OPTIONS]} />
+            )}
             {draft.trigger_event.startsWith('conversation.') && draft.trigger_event !== 'conversation.transferred' && (
               <Select label="القناة (اختياري)" value={draft.conditions.channel || ''} onChange={(e) => setDraft({ ...draft, conditions: { ...draft.conditions, channel: e.target.value || undefined } })}
                 options={[{ value: '', label: 'كل القنوات' }, { value: 'whatsapp', label: 'واتساب' }, { value: 'phone', label: 'مكالمات' }, { value: 'web', label: 'الموقع' }]} />
@@ -283,7 +290,7 @@ export function DashboardV2Connect() {
                     placeholder={i === 0 ? '{{customer.name}}' : ''}
                     onChange={(e) => { const p = [...((draft.action_config.params as string[] | undefined) || [])]; p[i] = e.target.value; setCfg('params', p) }} />
                 ))}
-                <div className="cn-hint">يُرسل لرقم العميل في الحدث. تقدر تستخدم {'{{customer.name}}'} و {'{{booking.date}}'} و {'{{summary_text}}'}.</div>
+                <div className="cn-hint">يُرسل لرقم العميل في الحدث. تقدر تستخدم {(EVENT_FIELDS[draft.trigger_event] || ['{{customer.name}}', '{{booking.date}}', '{{summary_text}}']).join(' و ')}.</div>
               </>
             )}
           </div>

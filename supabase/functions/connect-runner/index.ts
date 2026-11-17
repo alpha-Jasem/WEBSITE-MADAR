@@ -2,6 +2,7 @@
 //   POST { event_id }        from the database trigger, header x-runner-secret  -> runs the rules for one queued event
 //   POST { sweep: true }     from the one-minute cron, same header              -> retries events left unprocessed
 //   POST { test: rule_id }   from the dashboard (signed-in user's JWT)          -> runs one rule with a sample event
+// Store events (order.created, order.status_changed, cart.abandoned) come from the Salla tables.
 // Actions: webhook (generic JSON, Slack, Discord, Telegram, Zapier/Make/n8n/Sheets), transfer to a team,
 // open a ticket, send a WhatsApp template, or post an in-dashboard notification.
 
@@ -29,6 +30,9 @@ const SAMPLES: Record<string, Payload> = {
   'booking.created': { booking: { id: 'sample', date: '2026-10-20', time: '16:30:00', service: 'استشارة', status: 'confirmed', source: 'ai' }, customer: { name: 'عميل تجريبي', phone: '966500000000' } },
   'customer.created': { customer: { id: 'sample', name: 'عميل تجريبي', phone: '966500000000' } },
   'review.new': { review: { rating: 5, author: 'عميل تجريبي', text: 'خدمة ممتازة' } },
+  'order.created': { order: { id: 1, reference: '100200', status: 'بإنتظار المراجعة', status_slug: 'under_review', total: 249, currency: 'SAR' }, customer: { name: 'عميل تجريبي', phone: '966500000000' } },
+  'order.status_changed': { order: { id: 1, reference: '100200', status: 'تم الشحن', status_slug: 'shipped', total: 249, currency: 'SAR', tracking_link: 'https://example.com/track' }, previous_status: 'قيد التنفيذ', customer: { name: 'عميل تجريبي', phone: '966500000000' } },
+  'cart.abandoned': { cart: { id: 1, total: 180, currency: 'SAR', checkout_url: 'https://example.com/checkout', items_count: 2 }, customer: { name: 'عميل تجريبي', phone: '966500000000' } },
 }
 
 function summarize(event: string, p: Payload): string {
@@ -41,6 +45,9 @@ function summarize(event: string, p: Payload): string {
     case 'booking.created': return `حجز جديد: ${who} · ${p.booking?.service || ''} · ${p.booking?.date || ''} ${String(p.booking?.time || '').slice(0, 5)}`
     case 'customer.created': return `عميل جديد: ${p.customer?.name || ''} ${p.customer?.phone || ''}`
     case 'review.new': return `تقييم جديد ${p.review?.rating || ''}★ من ${p.review?.author || ''}: ${p.review?.text || ''}`
+    case 'order.created': return `طلب جديد #${p.order?.reference || p.order?.id || ''} من ${who} · ${p.order?.total ?? ''} ${p.order?.currency || ''}`.trim()
+    case 'order.status_changed': return `طلب #${p.order?.reference || p.order?.id || ''} صار «${p.order?.status || ''}» · ${who}`
+    case 'cart.abandoned': return `سلة متروكة من ${who} · ${p.cart?.total ?? ''} ${p.cart?.currency || ''}`.trim()
     default: return event
   }
 }
@@ -58,6 +65,7 @@ function matches(rule: Rule, p: Payload): boolean {
   const c = rule.conditions || {}
   if (c.channel && p.conversation?.channel && p.conversation.channel !== c.channel) return false
   if (c.priority && p.ticket?.priority && p.ticket.priority !== c.priority) return false
+  if (c.order_status && p.order && p.order.status_slug !== c.order_status) return false
   if (c.contains) {
     const hay = JSON.stringify(p).toLowerCase()
     if (!hay.includes(String(c.contains).toLowerCase())) return false

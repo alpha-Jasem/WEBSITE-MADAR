@@ -8,13 +8,14 @@ import { supabase } from '../supabase'
 export type TriggerEvent =
   | 'conversation.new' | 'conversation.needs_review' | 'conversation.transferred'
   | 'ticket.created' | 'booking.created' | 'customer.created' | 'review.new'
+  | 'order.created' | 'order.status_changed' | 'cart.abandoned'
 export type ActionType = 'webhook' | 'transfer' | 'ticket' | 'whatsapp' | 'notify'
 
 export interface ConnectRule {
   id: string
   name: string
   trigger_event: TriggerEvent
-  conditions: { channel?: string; contains?: string; priority?: string }
+  conditions: { channel?: string; contains?: string; priority?: string; order_status?: string }
   action_type: ActionType
   action_config: Record<string, unknown>
   enabled: boolean
@@ -32,6 +33,26 @@ export const TRIGGER_LABELS: Record<TriggerEvent, string> = {
   'booking.created': 'انحجز موعد',
   'customer.created': 'انضاف عميل جديد',
   'review.new': 'وصل تقييم جديد',
+  'order.created': 'وصل طلب جديد من المتجر',
+  'order.status_changed': 'تغيّرت حالة طلب',
+  'cart.abandoned': 'عميل ترك سلته',
+}
+
+/** Store events need a connected Salla store (the «orders» section). */
+export const STORE_EVENTS: TriggerEvent[] = ['order.created', 'order.status_changed', 'cart.abandoned']
+
+/** Salla's order status slugs, for the "only when it becomes…" condition. */
+export const ORDER_STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: 'under_review', label: 'بانتظار المراجعة' }, { value: 'in_progress', label: 'قيد التنفيذ' },
+  { value: 'shipped', label: 'تم الشحن' }, { value: 'delivering', label: 'جاري التوصيل' },
+  { value: 'delivered', label: 'تم التوصيل' }, { value: 'completed', label: 'مكتمل' }, { value: 'canceled', label: 'ملغي' },
+]
+
+/** The values a rule can put in its message for each event. */
+export const EVENT_FIELDS: Partial<Record<TriggerEvent, string[]>> = {
+  'order.created': ['{{customer.name}}', '{{order.reference}}', '{{order.total}}'],
+  'order.status_changed': ['{{customer.name}}', '{{order.reference}}', '{{order.status}}', '{{order.tracking_link}}'],
+  'cart.abandoned': ['{{customer.name}}', '{{cart.total}}', '{{cart.checkout_url}}'],
 }
 
 export const ACTION_LABELS: Record<ActionType, string> = {
@@ -63,6 +84,12 @@ export const RECIPES: { title: string; desc: string; rule: Omit<ConnectRule, 'id
     rule: { name: 'تذكرة عاجلة ← Telegram', trigger_event: 'ticket.created', conditions: { priority: 'high' }, action_type: 'webhook', action_config: { preset: 'telegram' } } },
   { title: 'أرسل كل عميل جديد لـ Zapier أو Make', desc: 'اربطه بأي CRM أو أداة ثانية.',
     rule: { name: 'عميل جديد ← Zapier', trigger_event: 'customer.created', conditions: {}, action_type: 'webhook', action_config: { preset: 'zapier' } } },
+  { title: 'ذكّر العميل بسلته المتروكة على واتساب', desc: 'رسالة فيها رابط إكمال الطلب، أول ما تتروك السلة.',
+    rule: { name: 'سلة متروكة ← واتساب', trigger_event: 'cart.abandoned', conditions: {}, action_type: 'whatsapp', action_config: {} } },
+  { title: 'أكّد الطلب الجديد للعميل على واتساب', desc: 'شكر ورقم الطلب أول ما يوصل.',
+    rule: { name: 'طلب جديد ← واتساب', trigger_event: 'order.created', conditions: {}, action_type: 'whatsapp', action_config: {} } },
+  { title: 'بلّغ العميل لما ينشحن طلبه', desc: 'رسالة فيها رابط التتبع لما تصير الحالة «تم الشحن».',
+    rule: { name: 'تم الشحن ← واتساب', trigger_event: 'order.status_changed', conditions: { order_status: 'shipped' }, action_type: 'whatsapp', action_config: {} } },
 ]
 
 const demoId = () => `demo-${Math.random().toString(36).slice(2, 10)}`
