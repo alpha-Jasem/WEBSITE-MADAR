@@ -129,6 +129,24 @@
 .ib-narrow .ib-sheet-close { display: flex; align-items: center; gap: 6px; margin: 10px 16px 0; padding: 8px 12px; border: 1px solid var(--line-2); border-radius: 9px; background: none; color: var(--ink); font: inherit; font-size: 13px; cursor: pointer; }
 
 /* list filter + transfer dialog */
+.ib-head-acts { display: inline-flex; gap: 6px; }
+.ib-head-acts .nx-icon-btn { position: relative; }
+.ib-head-acts .nx-icon-btn.is-on { border-color: var(--ink); color: var(--ink); }
+.ib-badge { position: absolute; top: -5px; inset-inline-start: -5px; min-width: 15px; height: 15px; border-radius: 8px; background: var(--ink); color: var(--panel); font-size: 10px; display: grid; place-items: center; padding: 0 3px; }
+.ib-tabs { display: flex; gap: 2px; padding: 6px 8px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+.ib-tabs button { flex: 1 0 auto; border: 0; background: none; color: var(--muted); font: inherit; font-size: 12.5px; padding: 6px 8px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+.ib-tabs button span { color: var(--dim); font-size: 11px; margin-inline-start: 2px; }
+.ib-tabs button[aria-selected="true"] { background: var(--raise); color: var(--ink); font-weight: 600; }
+.ib-tabs button:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+.ib-filters { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); background: var(--panel-2, var(--panel)); }
+.ib-filters-head { display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
+.ib-filters-head span { display: inline-flex; gap: 6px; align-items: center; }
+.ib-filters label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+.ib-filters select { height: 32px; border-radius: 8px; border: 1px solid var(--line-2); background: var(--panel); color: var(--ink); font: inherit; font-size: 12.5px; padding: 0 8px; }
+.ib-filters .ib-check { flex-direction: row; align-items: flex-start; gap: 8px; cursor: pointer; }
+.ib-check span { display: flex; flex-direction: column; gap: 1px; }
+.ib-check b { color: var(--ink); font-weight: 600; font-size: 12.5px; }
+.ib-check small { color: var(--dim); font-size: 11px; }
 .ib-list-filter { padding: 0 12px 8px; }
 .ib-list-filter select { width: 100%; height: 32px; border-radius: 8px; border: 1px solid var(--line-2); background: var(--panel); color: var(--ink); font: inherit; font-size: 12.5px; padding: 0 8px; }
 .ib-modal { position: fixed; inset: 0; z-index: 1500; background: var(--scrim, rgba(0,0,0,.55)); display: grid; place-items: center; padding: 16px; }
@@ -137,3 +155,11 @@
 .ib-modal-card label { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; color: var(--muted); }
 .ib-modal-card select, .ib-modal-card textarea { border: 1px solid var(--line-2); background: var(--panel-2); color: var(--ink); border-radius: 8px; padding: 8px 10px; font: inherit; font-size: 14px; }
 .ib-modal-acts { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* my availability, in the list header */
+.ib-presence { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; border: 1px solid var(--line, rgba(255,255,255,.1)); border-radius: 8px; font-size: 12px; color: var(--muted); }
+.ib-presence select { background: none; border: 0; color: inherit; font: inherit; cursor: pointer; padding: 0; }
+.ib-presence i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok, #4ade80); flex: none; }
+.ib-presence[data-p="busy"] i { background: var(--warn, #f5b84a); }
+.ib-presence[data-p="break"] i { background: var(--warn, #f5b84a); opacity: .6; }
+.ib-presence[data-p="offline"] i { background: var(--dim, #777); }

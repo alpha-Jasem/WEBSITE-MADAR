@@ -4,10 +4,15 @@ import { useWorkspace } from '@/context/WorkspaceContext'
 import { useCurrentUserId } from '@/lib/queries/ops'
 import { useCompanyStaff, inviteStaffMember, updateStaffMember, removeStaffMember } from '@/lib/dashboardQueries'
 import { useTeams, saveTeam, deleteTeam, setTeamMembers, TEAM_COLORS, type CompanyTeam } from '@/lib/queries/teams'
+import { useAssignmentRules, saveAssignmentRule, ruleFor } from '@/lib/queries/assignmentRules'
+import { DEFAULT_RULE, PRESENCE_LABELS, REOPEN_LABELS, SLA_ACTION_LABELS, STRATEGY_LABELS, type AssignmentRule, type AssignStrategy, type ReopenAction, type SlaAction } from '@/lib/assignment'
 import { PERMISSION_GROUPS, ROLE_LABELS, ROLE_DESCRIPTIONS, ROLE_PRESETS, effectivePermissions } from '@/lib/permissions'
 import { Card, Button, Input, Select, Badge, Dialog } from '@/dashboard/components/primitives'
 import { useToast, Avatar } from '@/dashboard/components/uiExtras'
-import { NightPage, PageHead, CardTitle, EmptyLine, fmtNum } from './shared/night'
+import { NightPage, PageHead, CardTitle, EmptyLine, fmtNum, Kpi, Meter, Seg } from './shared/night'
+import { useConversationEvents } from '@/lib/queries/inbox'
+import { assignmentStats, memberLoads } from '@/lib/assignmentStats'
+import { usePresence } from '@/lib/queries/presence'
 import type { CompanyStaff } from '@/types/dashboard'
 
 const ROLE_OPTIONS = ['manager', 'agent', 'viewer'].map((r) => ({ value: r, label: ROLE_LABELS[r] }))
@@ -36,6 +41,8 @@ export function DashboardV2Team() {
   const pushToast = useToast()
   const { data: staff, refetch } = useCompanyStaff(companyId, isDemo)
   const { teams, members, byTeam, available } = useTeams(companyId, isDemo)
+  const { rules } = useAssignmentRules(companyId, isDemo)
+  const [ruleDraft, setRuleDraft] = useState<Omit<AssignmentRule, 'team_id'>>(DEFAULT_RULE)
   const myId = useCurrentUserId(isDemo)
   const canManage = isOwner || isDemo || can('team.manage')
 
@@ -43,6 +50,19 @@ export function DashboardV2Team() {
   const [permFor, setPermFor] = useState<CompanyStaff | null>(null)
   const [permDraft, setPermDraft] = useState<Set<string>>(new Set())
   const [teamDlg, setTeamDlg] = useState<{ open: boolean; id?: string; name: string; color: string; description: string; userIds: string[]; busy: boolean }>({ open: false, name: '', color: TEAM_COLORS[0], description: '', userIds: [], busy: false })
+  const { events } = useConversationEvents(companyId, isDemo)
+  const { presence } = usePresence(companyId, isDemo)
+  const [statDays, setStatDays] = useState<number>(7)
+  const stats = useMemo(() => assignmentStats(events, { days: statDays, slaFor: (t) => (t ? ruleFor(rules, t).sla_minutes : 0) }), [events, statDays, rules])
+  const loads = useMemo(() => memberLoads(events, [...new Set(members.map((m) => m.auth_user_id))]), [events, members])
+  // A person's cap is the tightest limit among the teams with smart assignment on.
+  const maxOpenOf = (id: string) => {
+    const caps = members.filter((m) => m.auth_user_id === id).map((m) => ruleFor(rules, m.team_id)).filter((r) => r.enabled && r.max_open > 0).map((r) => r.max_open)
+    return caps.length ? Math.min(...caps) : 0
+  }
+  // The team that currently takes new conversations, when it is not the one being edited.
+  const otherIntakeRule = rules.find((x) => x.assign_new && x.team_id !== teamDlg.id)
+  const otherIntake = otherIntakeRule ? teams.find((t) => t.id === otherIntakeRule.team_id)?.name || '' : ''
 
   // Team membership is keyed by login id; in the tour the staff row id stands in for it.
   const uid = (s: CompanyStaff) => (isDemo ? s.id : s.auth_user_id || '')
@@ -99,6 +119,8 @@ export function DashboardV2Team() {
   }
 
   function openTeam(t?: CompanyTeam) {
+    const { team_id: _t, ...r } = t ? ruleFor(rules, t.id) : { team_id: '', ...DEFAULT_RULE }
+    setRuleDraft(r)
     setTeamDlg({
       open: true, id: t?.id, name: t?.name || '', color: t?.color || TEAM_COLORS[teams.length % TEAM_COLORS.length],
       description: t?.description || '', userIds: t ? byTeam.get(t.id) || [] : [], busy: false,
@@ -110,6 +132,7 @@ export function DashboardV2Team() {
     try {
       const teamId = await saveTeam(companyId, isDemo, { id: teamDlg.id, name: teamDlg.name, color: teamDlg.color, description: teamDlg.description })
       await setTeamMembers(companyId, isDemo, teamId, teamDlg.userIds)
+      await saveAssignmentRule(companyId, isDemo, { team_id: teamId, ...ruleDraft })
       setTeamDlg((d) => ({ ...d, open: false, busy: false }))
       pushToast({ kind: 'success', title: 'انحفظ الفريق' })
     } catch {
@@ -147,6 +170,7 @@ export function DashboardV2Team() {
               <b>{s.full_name}</b>
               <div className="tm-chips" style={{ marginTop: 4 }}>
                 {!s.auth_user_id && !isDemo && <Badge tone="warning">بانتظار القبول</Badge>}
+                {(s.auth_user_id || isDemo) && <Badge tone={!presence[uid(s)] || presence[uid(s)] === 'online' ? 'success' : 'neutral'}>{PRESENCE_LABELS[presence[uid(s)] || 'online']}</Badge>}
                 {teamsOf(s).map((t) => <span key={t.id} className="tm-chip"><i style={{ background: t.color }} />{t.name}</span>)}
               </div>
             </div>
@@ -187,6 +211,27 @@ export function DashboardV2Team() {
           )
         })}
       </Card>
+
+      {teams.length > 0 && (
+        <Card>
+          <CardTitle aside={<Seg label="الفترة" value={statDays} onChange={setStatDays} options={[[1, 'اليوم'], [7, '7 أيام'], [30, '30 يوم']] as const} />}>أداء الإسناد</CardTitle>
+          <div className="np-kpis">
+            <Kpi label="محادثات مسندة" value={fmtNum(stats.total)} hint={`${fmtNum(stats.open)} مفتوحة · ${fmtNum(stats.closed)} مغلقة`} />
+            <Kpi label="متوسط أول رد" value={stats.avgReplyMin == null ? '—' : `${stats.avgReplyMin} د`} hint="من الإسناد حتى أول رد" />
+            <Kpi label="الالتزام بالمهلة" value={stats.slaPct == null ? '—' : `${stats.slaPct}%`} hint={stats.slaPct != null ? 'ردود داخل المهلة' : rules.some((r) => r.enabled && r.sla_minutes > 0) ? 'ما فيه ردود محسوبة بعد' : 'ما فيه فريق محدد له مهلة'} />
+            <Kpi label="معدل الإغلاق" value={stats.total ? `${Math.round((stats.closed / stats.total) * 100)}%` : '—'} hint={`${fmtNum(stats.waiting)} بانتظار شخص`} />
+          </div>
+          <div style={{ marginTop: 16 }}>
+            <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 8 }}>ضغط الفريق الآن</div>
+            {loads.length === 0 && <EmptyLine>أضف أعضاء للفرق عشان يظهر ضغط كل شخص.</EmptyLine>}
+            {loads.map((l) => {
+              const cap = maxOpenOf(l.id)
+              return <Meter key={l.id} label={`${nameOf(l.id)}${presence[l.id] && presence[l.id] !== 'online' ? ` (${PRESENCE_LABELS[presence[l.id]]})` : ''}`} value={l.open} max={cap || Math.max(5, ...loads.map((x) => x.open))}
+                display={`${fmtNum(l.open)} مفتوحة${cap ? ` من ${fmtNum(cap)}` : ''} · ${fmtNum(l.today)} اليوم`} color={cap && l.open >= cap ? 'var(--red, #f87171)' : undefined} />
+            })}
+          </div>
+        </Card>
+      )}
 
       <Card>
         <CardTitle>الأدوار الجاهزة</CardTitle>
@@ -243,6 +288,46 @@ export function DashboardV2Team() {
             <div className="tm-colors">
               {TEAM_COLORS.map((c) => <button key={c} type="button" className="tm-color" style={{ background: c }} aria-label={c} aria-pressed={teamDlg.color === c} onClick={() => setTeamDlg((d) => ({ ...d, color: c }))} />)}
             </div>
+          </div>
+          <div style={{ border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <label className="tm-check" style={{ padding: 0 }}>
+              <input type="checkbox" checked={ruleDraft.enabled} onChange={(e) => setRuleDraft((r) => ({ ...r, enabled: e.target.checked }))} />
+              <span style={{ color: 'var(--ink)', fontWeight: 600 }}>الإسناد الذكي</span>
+            </label>
+            <p className="tm-perm-note" style={{ margin: 0 }}>النظام يختار الشخص المناسب من أعضاء الفريق: لما تحوّل محادثة للفريق بدون ما تحدد شخص، وفي الحالات اللي تختارها تحت.</p>
+            {ruleDraft.enabled && (
+              <>
+                <Select
+                  label="طريقة الاختيار" value={ruleDraft.strategy}
+                  options={(Object.keys(STRATEGY_LABELS) as AssignStrategy[]).map((k) => ({ value: k, label: STRATEGY_LABELS[k] }))}
+                  onChange={(e) => setRuleDraft((r) => ({ ...r, strategy: e.target.value as AssignStrategy }))}
+                />
+                <Input label="أقصى عدد محادثات مفتوحة للشخص (0 = بلا حد)" type="number" value={String(ruleDraft.max_open)}
+                  onChange={(e) => setRuleDraft((r) => ({ ...r, max_open: Number(e.target.value) || 0 }))} />
+                <Input label="مهلة أول رد بالدقائق (0 = بلا مهلة)" type="number" value={String(ruleDraft.sla_minutes)}
+                  onChange={(e) => setRuleDraft((r) => ({ ...r, sla_minutes: Number(e.target.value) || 0 }))} />
+                {ruleDraft.sla_minutes > 0 && (
+                  <Select
+                    label="إذا تأخر الرد عن المهلة" value={ruleDraft.sla_action}
+                    options={(Object.keys(SLA_ACTION_LABELS) as SlaAction[]).map((k) => ({ value: k, label: SLA_ACTION_LABELS[k] }))}
+                    onChange={(e) => setRuleDraft((r) => ({ ...r, sla_action: e.target.value as SlaAction }))}
+                  />
+                )}
+                <Select
+                  label="إذا رجع عميل محادثته مغلقة" value={ruleDraft.reopen_action}
+                  options={(Object.keys(REOPEN_LABELS) as ReopenAction[]).map((k) => ({ value: k, label: REOPEN_LABELS[k] }))}
+                  onChange={(e) => setRuleDraft((r) => ({ ...r, reopen_action: e.target.value as ReopenAction }))}
+                />
+                <label className="tm-check" style={{ padding: 0 }}>
+                  <input type="checkbox" checked={ruleDraft.assign_new} onChange={(e) => setRuleDraft((r) => ({ ...r, assign_new: e.target.checked }))} />
+                  <span>كل محادثة جديدة تروح لهذا الفريق وتنسند تلقائيًا{otherIntake && ruleDraft.assign_new ? ` (بدل فريق ${otherIntake})` : ''}</span>
+                </label>
+                <label className="tm-check" style={{ padding: 0 }}>
+                  <input type="checkbox" checked={ruleDraft.assign_on_reply} onChange={(e) => setRuleDraft((r) => ({ ...r, assign_on_reply: e.target.checked }))} />
+                  <span>المحادثة غير المسندة تنسند لأول موظف يرد عليها</span>
+                </label>
+              </>
+            )}
           </div>
           <div>
             <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 6 }}>الأعضاء</div>

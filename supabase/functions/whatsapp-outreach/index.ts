@@ -1,6 +1,6 @@
 // Sends a Meta-approved WhatsApp template to customers through the voice platform's WhatsApp
 // number, and logs every send.
-//   POST { template_id, recipients: [{ phone, name?, params: string[] }], dry_run?, sent_by? }
+//   POST { template_id, recipients: [{ phone, name?, params: string[] }], dry_run?, sent_by?, campaign_id?, step? }
 //        with the signed-in user's JWT  ->  { results: [{ phone, status, error? }] }
 // The company comes from the session. The template must be one the company registered in
 // whatsapp_templates (its name must match a template approved in Meta). At most 25 per call.
@@ -59,6 +59,13 @@ Deno.serve(async (req) => {
     .eq('id', body.template_id).eq('company_id', companyId).eq('enabled', true).maybeSingle()
   if (!tpl) return json({ error: 'template not found' }, 404)
   const expected = Array.isArray(tpl.param_labels) ? tpl.param_labels.length : 0
+  // Sends made for a campaign are tagged with it, but only for the company's own campaign.
+  let campaignId: string | null = null
+  if (typeof body.campaign_id === 'string') {
+    const { data: camp } = await db.from('client_campaigns').select('id').eq('id', body.campaign_id).eq('company_id', companyId).maybeSingle()
+    campaignId = camp?.id ?? null
+  }
+  const step = Number.isInteger(body.step) ? body.step : null
 
   const { data: link } = await db.from('agent_links').select('agent_id').eq('company_id', companyId).eq('provider', 'elevenlabs').limit(1).maybeSingle()
   if (!link) return json({ error: 'no linked agent' }, 409)
@@ -104,6 +111,7 @@ Deno.serve(async (req) => {
       company_id: companyId, template_name: tpl.name, template_label: tpl.label, language: tpl.language,
       to_phone: p.phone, recipient_name: p.name, params: p.params, status, error,
       sent_by_name: String(body.sent_by || '').slice(0, 80) || null,
+      ...(campaignId ? { campaign_id: campaignId, step } : {}),
     })
     results.push({ phone: p.phone, status, ...(error ? { error } : {}) })
   }

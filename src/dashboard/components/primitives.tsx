@@ -291,12 +291,14 @@ export function Switch({ checked, onChange, label, style }: {
 
 // ─── Dialog ────────────────────────────────────────────────────────────────
 
-export function Dialog({ open, title, children, onClose, footer }: {
+export function Dialog({ open, title, children, onClose, footer, width = 460 }: {
   open: boolean
   title: string
   children: ReactNode
   onClose: () => void
   footer?: ReactNode
+  /** Wider dialogs for editors; still never wider than the screen. */
+  width?: number
 }) {
   useEffect(() => {
     if (!open) return
@@ -328,7 +330,7 @@ export function Dialog({ open, title, children, onClose, footer }: {
             style={{
               background: 'var(--surface-raised)', borderRadius: 14, boxShadow: 'var(--shadow-lg)',
               border: '1px solid var(--border-strong)',
-              width: 460, maxWidth: '100%', padding: 22, fontFamily: 'var(--font-body)', maxHeight: 'calc(100vh - 32px)', overflowY: 'auto',
+              width, maxWidth: '100%', padding: 22, fontFamily: 'var(--font-body)', maxHeight: 'calc(100vh - 32px)', overflowY: 'auto',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>

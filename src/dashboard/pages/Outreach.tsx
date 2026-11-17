@@ -103,7 +103,7 @@ export function DashboardV2Outreach() {
 
   return (
     <NightPage>
-      <PageHead title="الرسائل الصادرة" sub="أرسل رسائل واتساب لعملائك بقوالب معتمدة من Meta، من نفس رقم الوكيل" />
+      <PageHead title="قوالب واتساب والإرسال" sub="أرسل رسائل واتساب لعملائك بقوالب معتمدة من Meta، من نفس رقم الوكيل" />
 
       <Card style={{ padding: 14, marginBottom: 16, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
         <Info size={16} style={{ marginTop: 3, flex: 'none' }} />

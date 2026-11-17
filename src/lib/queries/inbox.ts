@@ -21,8 +21,12 @@ export interface ConvEvent {
   created_at: string
 }
 
+export type ConvStatus = 'open' | 'closed' | 'waiting' | 'snoozed'
+
 export interface ConvState {
-  status: 'open' | 'closed'
+  status: ConvStatus
+  /** For a snoozed conversation: when it comes back (ISO), or null for "until the customer writes". */
+  snoozeUntil: string | null
   assigneeId: string | null
   assigneeName: string | null
   teamId: string | null
@@ -47,15 +51,30 @@ let demoCanned: CannedReply[] = []
 const listeners = new Set<() => void>()
 const notify = () => listeners.forEach((l) => l())
 
-/** The state a conversation is in, from its events (oldest first). */
-export function convState(events: ConvEvent[] | undefined): ConvState {
-  let status: ConvState['status'] = 'open'
+/** Status event bodies: open, closed, waiting (for the customer), snoozed:<ISO time> or snoozed:reply. */
+export function parseStatus(body: string): { status: ConvStatus; until: string | null } {
+  if (body === 'closed' || body === 'waiting') return { status: body, until: null }
+  if (body.startsWith('snoozed')) {
+    const until = body.slice(8)
+    return { status: 'snoozed', until: until && until !== 'reply' ? until : null }
+  }
+  return { status: 'open', until: null }
+}
+
+/**
+ * The state a conversation is in, from its events (oldest first). A conversation waiting for the customer
+ * or snoozed opens again when the customer writes after it (lastCustomerAt) or when its snooze time passes.
+ */
+export function convState(events: ConvEvent[] | undefined, opts: { lastCustomerAt?: string | null; now?: number } = {}): ConvState {
+  let status: ConvStatus = 'open'
+  let snoozeUntil: string | null = null
+  let statusAt = ''
   let assigneeId: string | null = null
   let assigneeName: string | null = null
   let teamId: string | null = null
   let teamName: string | null = null
   for (const e of events || []) {
-    if (e.kind === 'status') status = e.body === 'closed' ? 'closed' : 'open'
+    if (e.kind === 'status') { const p = parseStatus(e.body); status = p.status; snoozeUntil = p.until; statusAt = e.created_at }
     if (e.kind === 'assign') { assigneeId = e.assignee_user_id || null; assigneeName = assigneeId ? e.body : null }
     // A transfer hands the conversation to a team; a person inside it is optional.
     if (e.kind === 'transfer') {
@@ -63,7 +82,41 @@ export function convState(events: ConvEvent[] | undefined): ConvState {
       assigneeId = e.assignee_user_id || null; assigneeName = assigneeId ? e.assignee_name || null : null
     }
   }
-  return { status, assigneeId, assigneeName, teamId, teamName }
+  if (status === 'waiting' || status === 'snoozed') {
+    const now = opts.now ?? Date.now()
+    // A conversation time in the future (clock skew, sample data) is not a new message.
+    const last = opts.lastCustomerAt ? Date.parse(opts.lastCustomerAt) : NaN
+    const wrote = last > Date.parse(statusAt) && last <= now
+    const woke = status === 'snoozed' && !!snoozeUntil && Date.parse(snoozeUntil) <= now
+    if (wrote || woke) { status = 'open'; snoozeUntil = null }
+  }
+  return { status, snoozeUntil, assigneeId, assigneeName, teamId, teamName }
+}
+
+/** What smart assignment needs to know about a team: each member's open conversations and who got the last one. */
+export function assignmentContext(all: Map<string, ConvEvent[]>, teamId: string, memberIds: string[]) {
+  const loads: Record<string, number> = {}
+  let lastAssigneeId: string | null = null
+  let lastAt = ''
+  for (const evs of all.values()) {
+    const st = convState(evs)
+    if (st.status === 'open' && st.assigneeId && memberIds.includes(st.assigneeId)) loads[st.assigneeId] = (loads[st.assigneeId] || 0) + 1
+    for (const e of evs) {
+      if (e.kind === 'transfer' && e.team_id === teamId && e.assignee_user_id && e.created_at > lastAt) { lastAt = e.created_at; lastAssigneeId = e.assignee_user_id }
+    }
+  }
+  return { loads, lastAssigneeId }
+}
+
+/** When the current assignee got the conversation, and when they first replied after that. */
+export function assignmentTimes(events: ConvEvent[]) {
+  let assignedAt: string | null = null
+  for (const e of events) {
+    if ((e.kind === 'assign' || e.kind === 'transfer') && e.assignee_user_id) assignedAt = e.created_at
+    else if ((e.kind === 'assign' || e.kind === 'transfer') && !e.assignee_user_id) assignedAt = null
+  }
+  const repliedAt = assignedAt ? events.find((e) => e.kind === 'reply' && e.created_at > assignedAt!)?.created_at ?? null : null
+  return { assignedAt, repliedAt }
 }
 
 /** Every event of the company grouped by conversation key, oldest first. */

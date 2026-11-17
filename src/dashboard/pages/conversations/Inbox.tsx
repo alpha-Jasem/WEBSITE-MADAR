@@ -1,16 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  ChevronRight, Inbox as InboxIcon, RefreshCw, Phone, Copy, ExternalLink, CheckCircle2, Lock, Unlock, Ticket, Send, StickyNote, Bot, UserRound, Users, Tag, Sparkles, X, Plus,
+  ChevronRight, Inbox as InboxIcon, RefreshCw, Phone, Copy, ExternalLink, CheckCircle2, Lock, Unlock, Ticket, Send, StickyNote, Bot, UserRound, Users, Tag, Sparkles, X, Plus, Filter, RotateCcw, Clock,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { saudiDayKey } from '@/lib/saudiTime'
 import { useCustomers } from '@/lib/dashboardQueries'
 import { useCurrentUserId, useTeam } from '@/lib/queries/ops'
 import { useTeams, type CompanyTeam } from '@/lib/queries/teams'
+import { useAssignmentRules, ruleFor, intakeRule } from '@/lib/queries/assignmentRules'
+import { isAvailable, pickAssignee, slaState, PRESENCE_LABELS, type Presence } from '@/lib/assignment'
+import { setMyPresence, usePresence } from '@/lib/queries/presence'
 import { fetchLiveConversations, liveToCall, markCallReviewed, syncPlatformConversations, type LiveConversation } from '@/lib/queries/conversations'
 import {
-  addConversationEvent, convState, deleteCannedReply, saveCannedReply, seedDemoInboxEvents, useCannedReplies, useConversationEvents,
-  type ConvEvent,
+  addConversationEvent, assignmentContext, assignmentTimes, convState, deleteCannedReply, saveCannedReply, seedDemoInboxEvents, useCannedReplies, useConversationEvents,
+  parseStatus, type ConvEvent, type ConvStatus,
 } from '@/lib/queries/inbox'
 import { collectedData, contactKey, normalizePhone, sentimentKind, SENTIMENT_LABEL, sentimentTone, formatValue } from '@/lib/callAnalysis'
 import { sendWhatsAppMessage } from '@/lib/whatsapp'
@@ -21,6 +24,7 @@ import { arReason, buildConversations, callLengthLabel, msgClock, msgInstant, CH
 import { ChannelIcon, Chip, Sk, TagChips } from './ui'
 import { RecordingPlayer } from './RecordingPlayer'
 import { MSG_TYPE_LABEL } from './model'
+import { activeFilterCount, INBOX_TABS, matchesFilters, NO_FILTERS, TAB_LABEL, type InboxFilters, type InboxTab } from './inboxFilters'
 import './inbox.css'
 
 type Line =
@@ -39,6 +43,32 @@ interface Props {
   onSelect: (key: string) => void
   onOpenFull: (key: string) => void
   onTicket: (path: string) => void
+}
+
+/** List and header label for the statuses that replace the agent's own chip. */
+const STATUS_CHIP: Partial<Record<ConvStatus, [string, 'dim' | 'info']>> = { closed: ['مغلقة', 'dim'], waiting: ['بانتظار العميل', 'info'], snoozed: ['مؤجلة', 'dim'] }
+
+/** The status event body for a choice in the snooze menu. */
+function statusBody(choice: string): string {
+  const now = Date.now()
+  if (choice === '1h') return `snoozed:${new Date(now + 3600_000).toISOString()}`
+  if (choice === '3h') return `snoozed:${new Date(now + 3 * 3600_000).toISOString()}`
+  if (choice === 'tomorrow') {
+    // 9 in the morning Saudi time (UTC+3) tomorrow.
+    const riyadh = new Date(now + 3 * 3600_000)
+    const t = Date.UTC(riyadh.getUTCFullYear(), riyadh.getUTCMonth(), riyadh.getUTCDate() + 1, 6, 0, 0)
+    return `snoozed:${new Date(t).toISOString()}`
+  }
+  if (choice === 'reply') return 'snoozed:reply'
+  return choice
+}
+
+function statusEventText(body: string): string {
+  const p = parseStatus(body)
+  if (p.status === 'closed') return 'أغلق المحادثة'
+  if (p.status === 'waiting') return 'خلّاها بانتظار رد العميل'
+  if (p.status === 'snoozed') return p.until ? `أجّل المحادثة لين ${fmtWhen(p.until)}` : 'أجّل المحادثة لين يرد العميل'
+  return 'أعاد فتح المحادثة'
 }
 
 const initials = (name: string) => (name.trim().match(/[\p{L}\p{N}]/u)?.[0] || '؟').toUpperCase()
@@ -72,7 +102,8 @@ export function Inbox({ items: baseItems, allItems, loading, tickets, showTicket
   const { events } = useConversationEvents(companyId, isDemo)
   const { teams, myTeamIds } = useTeams(companyId, isDemo)
   const myId = useCurrentUserId(isDemo)
-  const [filter, setFilter] = useState<string>('all')
+  const [filter, setFilter] = useState<InboxTab>('all')
+  const [f, setF] = useState<InboxFilters>(NO_FILTERS)
   const [live, setLive] = useState<LiveConversation[]>([])
   const [syncing, setSyncing] = useState(false)
   // Phones: the list fills the screen; opening a chat shows it full-screen with a back button, the profile is a sheet.
@@ -111,18 +142,42 @@ export function Inbox({ items: baseItems, allItems, loading, tickets, showTicket
   // Who sees what: everyone with view_all sees every conversation; others only the ones assigned to them or to their teams.
   const mine = useMemo(() => myTeamIds(myId), [myTeamIds, myId])
   const seeAll = can('conversations.view_all')
-  const visible = useMemo(() => items.filter((i) => {
-    const st = convState(events.get(i.key))
+  // Allowed conversations, narrowed by the filter drawer; the tabs then split them and show their counts.
+  const filtered = useMemo(() => items.filter((i) => {
+    const evs = events.get(i.key) || []
+    const st = convState(evs, { lastCustomerAt: i.time })
     const isMine = !!myId && st.assigneeId === myId
     const inMyTeam = !!st.teamId && mine.has(st.teamId)
     if (!seeAll && !isMine && !inMyTeam) return false
-    if (filter === 'all') return true
-    if (filter === 'mine') return isMine
-    if (filter === 'myteams') return inMyTeam
-    if (filter === 'unassigned') return !st.assigneeId && !st.teamId
-    if (filter.startsWith('team:')) return st.teamId === filter.slice(5)
-    return true
-  }), [items, events, filter, seeAll, mine, myId])
+    return matchesFilters(i, evs, st, f)
+  }), [items, events, f, seeAll, mine, myId])
+  const tabOf = useMemo(() => (i: ConvItem): Record<InboxTab, boolean> => {
+    const evs = events.get(i.key) || []
+    const st = convState(evs, { lastCustomerAt: i.time })
+    return {
+      all: true,
+      mine: !!myId && st.assigneeId === myId,
+      unassigned: !st.assigneeId,
+      participated: !!userName && evs.some((e) => e.author_name === userName),
+    }
+  }, [events, myId, userName])
+  const counts = useMemo(() => {
+    const c: Record<InboxTab, number> = { all: 0, mine: 0, unassigned: 0, participated: 0 }
+    for (const i of filtered) { const t = tabOf(i); for (const k of INBOX_TABS) if (t[k]) c[k]++ }
+    return c
+  }, [filtered, tabOf])
+  const visible = useMemo(() => filtered.filter((i) => tabOf(i)[filter]), [filtered, tabOf, filter])
+  // Choices for the drawer, taken from what is actually in the inbox.
+  const choices = useMemo(() => {
+    const people = new Map<string, string>()
+    const tags = new Map<string, string>()
+    for (const i of items) {
+      const st = convState(events.get(i.key), { lastCustomerAt: i.time })
+      if (st.assigneeId) people.set(st.assigneeId, st.assigneeName || '—')
+      for (const t of i.tags) tags.set(t.id, t.label)
+    }
+    return { people: [...people], tags: [...tags], channels: [...new Set(items.map((i) => i.channel))] }
+  }, [items, events])
   const pushToast = useToast()
 
   // Pull anything the live webhook missed, quietly, when the inbox opens.
@@ -149,11 +204,11 @@ export function Inbox({ items: baseItems, allItems, loading, tickets, showTicket
   return (
     <div className={`ib${narrow ? ' ib-narrow' : ''}${narrow && chatOpen && item ? ' is-open' : ''}`}>
       <ListPane items={visible} loading={loading} selectedKey={item?.key || null} onSelect={pick} events={events}
-        filter={filter} onFilter={setFilter} teams={teams}
+        filter={filter} onFilter={setFilter} counts={counts} f={f} onF={setF} teams={teams} choices={choices}
         onSync={isDemo ? undefined : syncNow} syncing={syncing} />
       {item ? (
         <>
-          <ThreadPane key={item.key} item={item} events={events.get(item.key) || []} tickets={tickets} showTickets={showTickets}
+          <ThreadPane key={item.key} item={item} events={events.get(item.key) || []} allEvents={events} tickets={tickets} showTickets={showTickets}
             authorName={userName || 'أنت'} onOpenFull={onOpenFull} onTicket={onTicket}
             onBack={narrow ? () => { setChatOpen(false); setProfileOpen(false) } : undefined} onProfile={narrow ? () => setProfileOpen(true) : undefined} />
           <div className={`ib-profile-wrap${profileOpen ? ' is-open' : ''}`}>
@@ -170,30 +225,106 @@ export function Inbox({ items: baseItems, allItems, loading, tickets, showTicket
 
 // ─── list ─────────────────────────────────────────────────────────────────────
 
-function ListPane({ items, loading, selectedKey, onSelect, events, onSync, syncing, filter, onFilter, teams }: {
+function ListPane({ items, loading, selectedKey, onSelect, events, onSync, syncing, filter, onFilter, counts, f, onF, teams, choices }: {
   items: ConvItem[]; loading: boolean; selectedKey: string | null; onSelect: (k: string) => void; events: Map<string, ConvEvent[]>
-  onSync?: () => void; syncing?: boolean; filter: string; onFilter: (f: string) => void; teams: CompanyTeam[]
+  onSync?: () => void; syncing?: boolean; filter: InboxTab; onFilter: (f: InboxTab) => void; counts: Record<InboxTab, number>
+  f: InboxFilters; onF: (f: InboxFilters) => void; teams: CompanyTeam[]
+  choices: { people: [string, string][]; tags: [string, string][]; channels: string[] }
 }) {
+  const [drawer, setDrawer] = useState(false)
+  const { companyId, isDemo } = useWorkspace()
+  const myId = useCurrentUserId(isDemo)
+  const { presence, available: presenceOn } = usePresence(companyId, isDemo)
+  const pushToast = useToast()
+  const mine: Presence = (myId && presence[myId]) || 'online'
+  const active = activeFilterCount(f)
+  const set = (patch: Partial<InboxFilters>) => onF({ ...f, ...patch })
   return (
     <aside className="ib-list" aria-label="المحادثات">
       <div className="ib-list-head">
-        <b>المحادثات <span className="nx-num">{items.length}</span></b>
-        {onSync && <button type="button" className="nx-icon-btn" aria-label="تحديث من المنصة" title="جلب المحادثات الجديدة" disabled={syncing} onClick={onSync}><RefreshCw size={14} className={syncing ? 'ib-spin' : undefined} /></button>}
+        <b>المحادثات <span className="nx-num">{counts.all}</span></b>
+        <span className="ib-head-acts">
+          {presenceOn && myId && (
+            <label className="ib-presence" data-p={mine} title="حالتك: الإسناد الذكي يعطي المحادثات الجديدة للمتصلين فقط">
+              <i aria-hidden="true" />
+              <select aria-label="حالتك" value={mine} onChange={(e) => void setMyPresence(companyId, isDemo, myId, e.target.value as Presence)
+                .catch(() => pushToast({ kind: 'danger', title: 'ما قدرنا نغيّر حالتك' }))}>
+                {(Object.keys(PRESENCE_LABELS) as Presence[]).map((p) => <option key={p} value={p}>{PRESENCE_LABELS[p]}</option>)}
+              </select>
+            </label>
+          )}
+          <button type="button" className={`nx-icon-btn${active ? ' is-on' : ''}`} aria-label="الفلاتر" aria-expanded={drawer} title="الفلاتر" onClick={() => setDrawer((d) => !d)}>
+            <Filter size={14} />{active > 0 && <span className="ib-badge nx-num">{active}</span>}
+          </button>
+          {onSync && <button type="button" className="nx-icon-btn" aria-label="تحديث من المنصة" title="جلب المحادثات الجديدة" disabled={syncing} onClick={onSync}><RefreshCw size={14} className={syncing ? 'ib-spin' : undefined} /></button>}
+        </span>
       </div>
-      <div className="ib-list-filter">
-        <select aria-label="تصفية حسب الإسناد" value={filter} onChange={(e) => onFilter(e.target.value)}>
-          <option value="all">كل المحادثات</option>
-          <option value="mine">المسندة لي</option>
-          <option value="myteams">محادثات فرقي</option>
-          <option value="unassigned">غير مسندة</option>
-          {teams.map((t) => <option key={t.id} value={`team:${t.id}`}>فريق: {t.name}</option>)}
-        </select>
+      <div className="ib-tabs" role="tablist" aria-label="تقسيم المحادثات">
+        {INBOX_TABS.map((t) => (
+          <button key={t} type="button" role="tab" aria-selected={filter === t} onClick={() => onFilter(t)}>
+            {TAB_LABEL[t]} <span className="nx-num">{counts[t]}</span>
+          </button>
+        ))}
       </div>
+      {drawer && (
+        <div className="ib-filters" aria-label="الفلاتر">
+          <div className="ib-filters-head">
+            <b>الفلاتر</b>
+            <span>
+              {active > 0 && <button type="button" className="nx-btn sm" onClick={() => onF(NO_FILTERS)}><RotateCcw size={12} /> تصفير</button>}
+              <button type="button" className="nx-icon-btn" aria-label="إغلاق الفلاتر" onClick={() => setDrawer(false)}><X size={14} /></button>
+            </span>
+          </div>
+          <label className="ib-check"><input type="checkbox" checked={f.awaiting} onChange={(e) => set({ awaiting: e.target.checked })} /><span><b>بانتظار الرد</b><small>مفتوحة وما رد عليها أحد من الفريق</small></span></label>
+          <label>الحالة
+            <select value={f.status} onChange={(e) => set({ status: e.target.value as InboxFilters['status'] })}>
+              <option value="">الكل</option><option value="open">مفتوحة</option><option value="waiting">بانتظار العميل</option><option value="snoozed">مؤجلة</option><option value="closed">مغلقة</option>
+            </select>
+          </label>
+          {teams.length > 0 && (
+            <label>الفريق
+              <select value={f.teamId} onChange={(e) => set({ teamId: e.target.value })}>
+                <option value="">كل الفرق</option>
+                {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </label>
+          )}
+          {choices.people.length > 0 && (
+            <label>مسندة إلى
+              <select value={f.assigneeId} onChange={(e) => set({ assigneeId: e.target.value })}>
+                <option value="">أي أحد</option>
+                {choices.people.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+              </select>
+            </label>
+          )}
+          {choices.channels.length > 1 && (
+            <label>القناة
+              <select value={f.channel} onChange={(e) => set({ channel: e.target.value })}>
+                <option value="">كل القنوات</option>
+                {choices.channels.map((c) => <option key={c} value={c}>{CHANNEL_LABEL[c as ConvItem['channel']] || c}</option>)}
+              </select>
+            </label>
+          )}
+          {choices.tags.length > 0 && (
+            <label>الوسم
+              <select value={f.tagId} onChange={(e) => set({ tagId: e.target.value })}>
+                <option value="">كل الوسوم</option>
+                {choices.tags.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+              </select>
+            </label>
+          )}
+          <label>الفترة
+            <select value={f.days} onChange={(e) => set({ days: Number(e.target.value) })}>
+              <option value={0}>كل الوقت</option><option value={1}>آخر 24 ساعة</option><option value={7}>آخر 7 أيام</option><option value={30}>آخر 30 يوم</option><option value={90}>آخر 90 يوم</option>
+            </select>
+          </label>
+        </div>
+      )}
       <div className="ib-list-body">
         {loading && items.length === 0 && Array.from({ length: 6 }).map((_, i) => <div key={i} style={{ padding: '10px 14px' }}><Sk h={44} /></div>)}
         {!loading && items.length === 0 && <div className="nx-empty">ما فيه محادثات تطابق الفلاتر.</div>}
         {items.map((i) => {
-          const st = convState(events.get(i.key))
+          const st = convState(events.get(i.key), { lastCustomerAt: i.time })
           const [label, tone] = itemChip(i)
           return (
             <button key={i.key} type="button" className="ib-row" aria-current={selectedKey === i.key ? 'true' : undefined} onClick={() => onSelect(i.key)}>
@@ -202,7 +333,7 @@ function ListPane({ items, loading, selectedKey, onSelect, events, onSync, synci
                 <span className="ib-row-top"><b>{i.name}</b><time>{fmtWhen(i.time)}</time></span>
                 <span className="ib-row-sum">{i.summary || '—'}</span>
                 <span className="ib-row-meta">
-                  <Chip tone={i.live ? 'ok' : st.status === 'closed' ? 'dim' : tone}>{i.live ? '● جارية الآن' : st.status === 'closed' ? 'مغلقة' : label}</Chip>
+                  <Chip tone={i.live ? 'ok' : STATUS_CHIP[st.status]?.[1] || tone}>{i.live ? '● جارية الآن' : STATUS_CHIP[st.status]?.[0] || label}</Chip>
                   {st.teamName && <span className="ib-assignee" title="الفريق"><Users size={11} /> {st.teamName}</span>}
                   {st.assigneeName && <span className="ib-assignee" title="المسؤول"><UserRound size={11} /> {st.assigneeName}</span>}
                   {i.tags.slice(0, 2).map((t) => <span key={t.id} className="nx-tag" data-c={t.color || 'gray'}>{t.label}</span>)}
@@ -218,8 +349,8 @@ function ListPane({ items, loading, selectedKey, onSelect, events, onSync, synci
 
 // ─── conversation ─────────────────────────────────────────────────────────────
 
-function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull, onTicket, onBack, onProfile }: {
-  item: ConvItem; events: ConvEvent[]; tickets: SupportTicket[]; showTickets: boolean; authorName: string
+function ThreadPane({ item, events, allEvents, tickets, showTickets, authorName, onOpenFull, onTicket, onBack, onProfile }: {
+  item: ConvItem; events: ConvEvent[]; allEvents: Map<string, ConvEvent[]>; tickets: SupportTicket[]; showTickets: boolean; authorName: string
   onOpenFull: (k: string) => void; onTicket: (path: string) => void; onBack?: () => void; onProfile?: () => void
 }) {
   const { companyId, isDemo } = useWorkspace()
@@ -228,6 +359,8 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
   const myId = useCurrentUserId(isDemo)
   const { can } = useWorkspace()
   const { teams, byTeam } = useTeams(companyId, isDemo)
+  const { rules } = useAssignmentRules(companyId, isDemo)
+  const { presence } = usePresence(companyId, isDemo)
   const [xfer, setXfer] = useState<{ open: boolean; teamId: string; userId: string; reason: string }>({ open: false, teamId: '', userId: '', reason: '' })
   // The signed-in person can always take a conversation, even when the team list is empty.
   const people = useMemo(() => {
@@ -235,7 +368,11 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
     if (myId && !list.some((p) => p.id === myId)) list.unshift({ id: myId, name: authorName })
     return list
   }, [team, myId, authorName])
-  const state = convState(events)
+  const state = convState(events, { lastCustomerAt: item.time })
+  const sla = useMemo(() => {
+    const { assignedAt, repliedAt } = assignmentTimes(events)
+    return slaState({ assignedAt, repliedAt, slaMinutes: state.teamId ? ruleFor(rules, state.teamId).sla_minutes : 0 })
+  }, [events, rules, state.teamId])
   const call = item.call
   const [chipLabel, chipTone] = itemChip(item)
   const ticket = call ? tickets.find((t) => t.ai_call_id === call.id) : undefined
@@ -291,11 +428,21 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
   async function transfer() {
     const t = teams.find((x) => x.id === xfer.teamId)
     if (!t) return
-    const person = people.find((p) => p.id === xfer.userId)
+    let person = people.find((p) => p.id === xfer.userId)
+    let auto = false
+    // No person chosen and the team has smart assignment on: pick one by its rule.
+    const rule = ruleFor(rules, t.id)
+    if (!person && rule.enabled) {
+      const memberIds = byTeam.get(t.id) || []
+      const away = Object.entries(presence).filter(([, p]) => !isAvailable(p)).map(([id]) => id)
+      const pickedId = pickAssignee({ members: memberIds, ...assignmentContext(allEvents, t.id, memberIds), rule, unavailable: away })
+      person = people.find((p) => p.id === pickedId)
+      auto = !!person
+    }
     setBusy(true)
     try {
       await addConversationEvent(companyId, isDemo, { key: item.key, kind: 'transfer', body: xfer.reason.trim(), teamId: t.id, teamName: t.name, assigneeId: person?.id || null, assigneeName: person?.name || null, authorName })
-      pushToast({ kind: 'success', title: `حُوّلت المحادثة إلى ${t.name}` })
+      pushToast({ kind: 'success', title: auto && person ? `حُوّلت إلى ${t.name} وأُسندت تلقائيًا لـ${person.name}` : `حُوّلت المحادثة إلى ${t.name}` })
       setXfer({ open: false, teamId: '', userId: '', reason: '' })
     } catch (e) { pushToast({ kind: 'danger', title: 'ما قدرنا نحوّل المحادثة', description: e instanceof Error ? e.message : undefined }) }
     finally { setBusy(false) }
@@ -320,7 +467,7 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
           <span className="ib-avatar lg" aria-hidden="true">{initials(item.name)}</span>
           <div style={{ minWidth: 0 }}>
             <h2>{item.name}</h2>
-            <p>{CHANNEL_LABEL[item.channel]}{item.phone ? <> · <span dir="ltr" className="nx-num">{item.phone}</span></> : null} · <Chip tone={item.live ? 'ok' : state.status === 'closed' ? 'dim' : chipTone}>{item.live ? '● جارية الآن' : state.status === 'closed' ? 'مغلقة' : chipLabel}</Chip></p>
+            <p>{CHANNEL_LABEL[item.channel]}{item.phone ? <> · <span dir="ltr" className="nx-num">{item.phone}</span></> : null} · <Chip tone={item.live ? 'ok' : STATUS_CHIP[state.status]?.[1] || chipTone}>{item.live ? '● جارية الآن' : STATUS_CHIP[state.status]?.[0] || chipLabel}</Chip>{state.status === 'snoozed' && state.snoozeUntil && <> · <span className="nx-num">ترجع {fmtWhen(state.snoozeUntil)}</span></>}{sla.state === 'late' && state.status === 'open' && <> · <Chip tone="bad">تأخر الرد {sla.waitedMin} د</Chip></>}</p>
           </div>
         </div>
         <div className="ib-thread-acts">
@@ -342,6 +489,20 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
           {showTickets && call && !isLive && (ticket
             ? <button type="button" className="nx-btn" onClick={() => onTicket(`?ticket=${encodeURIComponent(ticket.id)}`)}><Ticket /> التذكرة</button>
             : <button type="button" className="nx-btn" onClick={() => onTicket(`?new=1&call=${encodeURIComponent(call.id)}`)}><Ticket /> افتح تذكرة</button>)}
+          {state.status !== 'closed' && (
+            <label className="ib-assign">
+              <Clock size={13} />
+              <select aria-label="تأجيل أو انتظار" value="" disabled={busy} onChange={(e) => { if (e.target.value) void log('status', statusBody(e.target.value)) }}>
+                <option value="">{state.status === 'open' ? 'تأجيل…' : STATUS_CHIP[state.status]?.[0]}</option>
+                {state.status !== 'open' && <option value="open">رجّعها مفتوحة</option>}
+                <option value="waiting">بانتظار العميل</option>
+                <option value="1h">أجّل ساعة</option>
+                <option value="3h">أجّل 3 ساعات</option>
+                <option value="tomorrow">أجّل لبكرة 9 الصبح</option>
+                <option value="reply">أجّل لين يرد العميل</option>
+              </select>
+            </label>
+          )}
           <button type="button" className="nx-btn" disabled={busy} onClick={() => log('status', state.status === 'closed' ? 'open' : 'closed')}>
             {state.status === 'closed' ? <><Unlock /> إعادة فتح</> : <><Lock /> إغلاق</>}
           </button>
@@ -354,7 +515,11 @@ function ThreadPane({ item, events, tickets, showTickets, authorName, onOpenFull
         <div ref={bottom} />
       </div>
 
-      <Composer item={item} authorName={authorName} />
+      <Composer item={item} authorName={authorName} onReplied={async () => {
+        // First reply on an unassigned conversation makes the sender its owner, when the team's rule says so.
+        const rule = state.teamId ? ruleFor(rules, state.teamId) : intakeRule(rules)
+        if (!state.assigneeId && myId && rule?.enabled && rule.assign_on_reply) await log('assign', authorName, myId)
+      }} />
 
       {xfer.open && (
         <div className="ib-modal" role="dialog" aria-label="تحويل المحادثة" onClick={(e) => { if (e.target === e.currentTarget) setXfer((x) => ({ ...x, open: false })) }}>
@@ -412,11 +577,11 @@ function ThreadLine({ line, prev, itemTime }: { line: Line; prev?: Line; itemTim
     ? `${e.author_name || 'فريقك'} حوّل المحادثة إلى فريق ${e.team_name || ''}${e.assignee_user_id && e.assignee_name ? ` (${e.assignee_name})` : ''}${e.body ? ` · ${e.body}` : ''}`
     : e.kind === 'assign'
     ? (e.assignee_user_id ? `${e.author_name || 'فريقك'} أسند المحادثة إلى ${e.body}` : `${e.author_name || 'فريقك'} ألغى الإسناد`)
-    : `${e.author_name || 'فريقك'} ${e.body === 'closed' ? 'أغلق المحادثة' : 'أعاد فتح المحادثة'}`
+    : `${e.author_name || 'فريقك'} ${statusEventText(e.body)}`
   return (<>{sep}<div className="ib-sys">{text} · {when}</div></>)
 }
 
-function Composer({ item, authorName }: { item: ConvItem; authorName: string }) {
+function Composer({ item, authorName, onReplied }: { item: ConvItem; authorName: string; onReplied: () => Promise<void> }) {
   const { companyId, isDemo } = useWorkspace()
   const pushToast = useToast()
   const { replies } = useCannedReplies(companyId, isDemo)
@@ -441,6 +606,7 @@ function Composer({ item, authorName }: { item: ConvItem; authorName: string }) 
         if (item.channel === 'whatsapp') { if (!isDemo) await sendWhatsAppReply(item.phone, body) }
         else sendWhatsAppMessage(item.phone, body)
         await addConversationEvent(companyId, isDemo, { key: item.key, kind: 'reply', body, authorName })
+        await onReplied()
       } else {
         await addConversationEvent(companyId, isDemo, { key: item.key, kind: 'note', body, authorName })
       }

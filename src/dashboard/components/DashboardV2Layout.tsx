@@ -5,7 +5,7 @@ import { DURATION_MEDIUM, EASE_OUT } from './motionTokens'
 import {
   LayoutDashboard, CalendarDays, Users, MessageSquare, Star, BarChart3,
   Wallet, BellRing, Settings, AlertTriangle, Plus, Ticket,
-  ClipboardList, BookOpen, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Search, Send, ShoppingBag, UsersRound, Zap,
+  ClipboardList, BookOpen, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Search, Send, ShoppingBag, UsersRound, Zap, Layers, Megaphone, WandSparkles,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useSupportTickets } from '@/lib/dashboardQueries'
@@ -250,6 +250,7 @@ export function DashboardV2Layout() {
   const ALL_NAV_GROUPS: { title: string; items: NavItem[] }[] = [
     { title: 'نظرة عامة', items: [
       { label: 'الرئيسية', path: base, icon: <LayoutDashboard size={16} /> },
+      { label: 'زكي', path: `${base}/zaki`, icon: <WandSparkles size={16} /> },
       { label: 'تحليلات الوكيل', short: 'التحليلات', path: `${base}/agent-analytics`, icon: <Sparkles size={16} />, module: 'voice' },
       { label: 'التقارير والتحليلات', short: 'التقارير', path: `${base}/reports`, icon: <BarChart3 size={16} />, module: 'reports' },
       { label: 'الإيرادات', path: `${base}/revenue`, icon: <Wallet size={16} />, module: 'revenue' },
@@ -258,6 +259,8 @@ export function DashboardV2Layout() {
       { label: 'المحادثات', path: `${base}/conversations`, icon: <MessageSquare size={16} />, module: 'conversations' },
       { label: bookingsLabel(businessType), path: `${base}/bookings`, icon: <CalendarDays size={16} />, module: 'bookings' },
       { label: 'العملاء', path: `${base}/patients`, icon: <Users size={16} />, module: 'customers' },
+      { label: 'الشرائح', path: `${base}/segments`, icon: <Layers size={16} />, module: 'customers' },
+      { label: 'الحملات', path: `${base}/campaigns`, icon: <Megaphone size={16} />, module: 'conversations', perm: 'outreach.send' },
       { label: 'الطلبات', path: `${base}/orders`, icon: <ShoppingBag size={16} />, module: 'orders' },
       { label: 'التذاكر', path: `${base}/tickets`, icon: <Ticket size={16} />, badge: openTicketCount || undefined, module: 'tickets' },
       { label: 'تقييمات Google', path: `${base}/reviews`, icon: <Star size={16} />, module: 'reviews' },
@@ -267,7 +270,7 @@ export function DashboardV2Layout() {
       { label: 'إعدادات الوكيل', short: 'الوكيل', path: `${base}/agents`, icon: <Bot size={16} />, perm: 'agent.settings' },
       { label: 'قاعدة المعرفة', short: 'المعرفة', path: `${base}/knowledge-base`, icon: <BookOpen size={16} />, module: 'knowledge_base' },
       { label: 'سجل المكالمات', path: `${base}/call-logs`, icon: <ClipboardList size={16} />, module: 'voice' },
-      { label: 'الرسائل الصادرة', short: 'الصادر', path: `${base}/outreach`, icon: <Send size={16} />, module: 'conversations', perm: 'outreach.send' },
+      { label: 'قوالب واتساب والإرسال', short: 'القوالب', path: `${base}/outreach`, icon: <Send size={16} />, module: 'conversations', perm: 'outreach.send' },
     ] },
     { title: 'الإعداد', items: [
       { label: 'الخدمات', path: `${base}/services`, icon: <Wrench size={16} />, module: 'services' },

@@ -15,7 +15,10 @@ let demoTeams: CompanyTeam[] = [
   { id: 'demo-team-support', name: 'خدمة العملاء', color: '#7aa2ff', description: 'الرد على الاستفسارات اليومية' },
   { id: 'demo-team-sales', name: 'المبيعات', color: '#4ade80', description: 'العملاء المهتمين بالحجز والشراء' },
 ]
-let demoMembers: TeamMembership[] = []
+let demoMembers: TeamMembership[] = [
+  { team_id: 'demo-team-support', auth_user_id: 'staff-2' },
+  { team_id: 'demo-team-support', auth_user_id: 'staff-3' },
+]
 const listeners = new Set<() => void>()
 const notify = () => listeners.forEach((l) => l())
 

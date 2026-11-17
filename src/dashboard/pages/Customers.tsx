@@ -6,6 +6,9 @@ import { useWorkspace } from '@/context/WorkspaceContext'
 import { useCustomers, updateCustomer } from '@/lib/dashboardQueries'
 import { useConversationData } from '@/lib/queries/conversations'
 import { buildContacts } from './AgentUsers'
+import { addToStaticSegment, saveSegment, segmentMembers, useContacts, useSegments } from '@/lib/queries/segments'
+import { normalizePhone } from '@/lib/callAnalysis'
+import { EMPTY_RULES } from '@/lib/segments'
 import type { Customer } from '@/types/dashboard'
 import { Card, Badge, Button, Dialog, Input, Select } from '@/dashboard/components/primitives'
 import { NightPage, PageHead, Seg, useIsNarrow, fmtNum } from './shared/night'
@@ -43,6 +46,32 @@ export function DashboardV2Customers() {
   const [saving, setSaving] = useState(false)
   const [checked, setChecked] = useState<Set<string>>(new Set())
   const [bulkSaving, setBulkSaving] = useState(false)
+  const { segments, available: segmentsOn } = useSegments(companyId, isDemo)
+  const { contacts } = useContacts(companyId, isDemo)
+  const [segFilter, setSegFilter] = useState('')
+  const segKeys = useMemo(() => {
+    const seg = segments.find((x) => x.id === segFilter)
+    return seg ? new Set(segmentMembers(seg, contacts).map((c) => c.key)) : null
+  }, [segments, segFilter, contacts])
+  const rowKey = (p: Row) => normalizePhone(p.phone) || `id:${p.id}`
+
+  async function addCheckedToSegment(target: string) {
+    const keys = rows.filter((r) => checked.has(r.id)).map(rowKey)
+    if (!keys.length || !target) return
+    try {
+      if (target === 'new') {
+        const name = window.prompt('اسم الشريحة الجديدة')?.trim()
+        if (!name) return
+        await saveSegment(companyId, isDemo, { name, description: null, kind: 'static', rules: EMPTY_RULES, member_keys: keys })
+      } else {
+        const seg = segments.find((x) => x.id === target)
+        if (!seg) return
+        await addToStaticSegment(companyId, isDemo, seg, keys)
+      }
+      pushToast({ kind: 'success', title: `انضاف ${keys.length} للشريحة` })
+      setChecked(new Set())
+    } catch { pushToast({ kind: 'danger', title: 'ما قدرنا نضيفهم' }) }
+  }
 
   useEffect(() => {
     if (selected) {
@@ -123,6 +152,7 @@ export function DashboardV2Customers() {
   const shown = useMemo(() => {
     let filtered = rows.filter((p) => p.name.includes(q) || p.phone.includes(q))
     if (typeFilter !== 'all') filtered = filtered.filter((p) => p.patient_type === typeFilter)
+    if (segKeys) filtered = filtered.filter((p) => segKeys.has(rowKey(p)))
     filtered = [...filtered]
     filtered.sort((a, b) => {
       const av = a[sort.key] ?? ''
@@ -130,7 +160,7 @@ export function DashboardV2Customers() {
       return av < bv ? -sort.dir : av > bv ? sort.dir : 0
     })
     return filtered
-  }, [rows, q, typeFilter, sort])
+  }, [rows, q, typeFilter, sort, segKeys])
 
   const narrow = useIsNarrow()
   const returning = rows.filter((p) => p.patient_type === 'returning').length
@@ -146,6 +176,9 @@ export function DashboardV2Customers() {
       <div className="np-filters">
         <Input placeholder="بحث بالاسم أو الجوال" icon={<Search size={15} />} value={q} onChange={(e) => setQ(e.target.value)} style={{ width: narrow ? '100%' : 260 }} />
         <Seg label="نوع العميل" value={typeFilter} onChange={setTypeFilter} options={TYPE_OPTIONS.map((o) => [o.value, o.label] as const)} />
+        {segmentsOn && segments.length > 0 && (
+          <Select options={[{ value: '', label: 'كل الشرائح' }, ...segments.map((x) => ({ value: x.id, label: x.name }))]} value={segFilter} onChange={(e) => setSegFilter(e.target.value)} style={{ width: 180 }} />
+        )}
         <span className="np-aside np-num">{fmtNum(shown.length)} من {fmtNum(rows.length)}</span>
       </div>
 
@@ -154,6 +187,10 @@ export function DashboardV2Customers() {
           <b>{checked.size} محدد</b>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <Button variant="secondary" size="sm" onClick={() => setChecked(new Set())}>إلغاء التحديد</Button>
+            {segmentsOn && (
+              <Select value="" onChange={(e) => void addCheckedToSegment(e.target.value)} style={{ width: 190 }}
+                options={[{ value: '', label: 'أضف إلى شريحة…' }, ...segments.filter((x) => x.kind === 'static').map((x) => ({ value: x.id, label: x.name })), { value: 'new', label: '+ شريحة جديدة بالمحددين' }]} />
+            )}
             <Button size="sm" onClick={bulkMarkReturning} disabled={bulkSaving}>
               <UserCheck size={14} /> {bulkSaving ? 'جارِ التحديث...' : 'تحديد كعائدين'}
             </Button>
