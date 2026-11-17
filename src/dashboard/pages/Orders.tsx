@@ -1,3 +1,4 @@
+import type React from 'react'
 import { useMemo, useState } from 'react'
 import { Search, ShoppingBag, ShoppingCart, ExternalLink } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
@@ -48,6 +49,12 @@ function fmtWhen(iso: string | null) {
   const time = d.toLocaleTimeString('en-US', { timeZone: SAUDI_TZ, hour: 'numeric', minute: '2-digit', hour12: true })
     .replace('AM', 'ص').replace('PM', 'م')
   return `${day} · ${time}`
+}
+
+function itemsLabel(n: number) {
+  if (n === 1) return 'منتج واحد'
+  if (n === 2) return 'منتجان'
+  return `${fmtNum(n)} ${n <= 10 ? 'منتجات' : 'منتجًا'}`
 }
 
 function fmtAge(iso: string | null) {
@@ -154,10 +161,10 @@ export function DashboardV2Orders() {
           <Card style={{ padding: 0 }}>
             {loading && <SkeletonRows rows={6} columns={7} />}
             {!loading && view === 'orders' && (shownOrders.length > 0
-              ? <OrdersTable rows={shownOrders} narrow={narrow} />
+              ? (narrow ? <OrderCards rows={shownOrders} /> : <OrdersTable rows={shownOrders} narrow={narrow} />)
               : <EmptyState icon={<ShoppingBag size={20} />} title="لا توجد طلبات مطابقة" description="جرّب تغيير كلمة البحث أو الفلتر." />)}
             {!loading && view === 'carts' && (shownCarts.length > 0
-              ? <CartsTable rows={shownCarts} narrow={narrow} />
+              ? (narrow ? <CartCards rows={shownCarts} /> : <CartsTable rows={shownCarts} narrow={narrow} />)
               : <EmptyState icon={<ShoppingCart size={20} />} title="لا توجد سلات مطابقة" description="جرّب تغيير كلمة البحث أو الفلتر." />)}
           </Card>
         </>
@@ -236,6 +243,77 @@ function CartsTable({ rows, narrow }: { rows: SallaCart[]; narrow: boolean }) {
           })}
         </tbody>
       </table>
+    </div>
+  )
+}
+
+/* On a phone a seven-column table scrolls sideways and cuts the status chip, so each row becomes a card. */
+const CARD_LIST: React.CSSProperties = { display: 'flex', flexDirection: 'column' }
+const CARD_ROW: React.CSSProperties = { padding: '14px 16px', borderBottom: '1px solid var(--line)', display: 'flex', flexDirection: 'column', gap: 10 }
+const CARD_LINE: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }
+
+function OrderCards({ rows }: { rows: SallaOrder[] }) {
+  return (
+    <div style={CARD_LIST} role="list">
+      {rows.map((o) => {
+        const name = o.customer_name || 'عميل'
+        const group = orderGroup(o)
+        return (
+          <div key={`${o.merchant_id}:${o.order_id}`} style={CARD_ROW} role="listitem">
+            <div style={CARD_LINE}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                <Avatar name={name} size={34} />
+                <span style={{ minWidth: 0 }}>
+                  <b style={{ display: 'block', color: 'var(--text-primary)', fontSize: 14 }}>{name}</b>
+                  <span className="np-num" style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>#{o.reference_id || o.order_id} · {fmtWhen(o.order_created_at)}</span>
+                </span>
+              </span>
+              <Chip tone={GROUP_TONE[group]}>{o.status_name || 'قيد المعالجة'}</Chip>
+            </div>
+            <div style={CARD_LINE}>
+              <b className="np-num" style={{ color: 'var(--text-primary)', fontSize: 15 }}>{money(o.total, o.currency)}</b>
+              <span style={{ color: 'var(--text-tertiary)', fontSize: 12.5 }}>{o.payment_method ? (PAYMENT_LABEL[o.payment_method] || o.payment_method) : '—'}</span>
+              <ContactActions size={40} phone={o.customer_mobile} message={`مرحباً ${name}، بخصوص طلبك رقم ${o.reference_id || o.order_id}`} />
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function CartCards({ rows }: { rows: SallaCart[] }) {
+  return (
+    <div style={CARD_LIST} role="list">
+      {rows.map((c) => {
+        const name = c.customer_name || 'زائر'
+        const bought = c.status === 'purchased'
+        return (
+          <div key={`${c.merchant_id}:${c.cart_id}`} style={CARD_ROW} role="listitem">
+            <div style={CARD_LINE}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                <Avatar name={name} size={34} />
+                <span style={{ minWidth: 0 }}>
+                  <b style={{ display: 'block', color: 'var(--text-primary)', fontSize: 14 }}>{name}</b>
+                  <span className="np-num" style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>
+                    {c.items_count != null ? `${itemsLabel(c.items_count)} · ` : ''}{fmtAge(bought ? c.purchased_at : c.cart_created_at)}
+                  </span>
+                </span>
+              </span>
+              <Chip tone={bought ? 'ok' : 'warn'}>{bought ? 'تم الشراء' : 'متروكة'}</Chip>
+            </div>
+            <div style={CARD_LINE}>
+              <b className="np-num" style={{ color: 'var(--text-primary)', fontSize: 15 }}>{money(c.total, c.currency)}</b>
+              {bought ? null : (
+                <ContactActions
+                  size={40} phone={c.customer_mobile}
+                  message={`مرحباً ${name}، سلتك لسا بانتظارك${c.checkout_url ? `: ${c.checkout_url}` : ''}`}
+                />
+              )}
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
