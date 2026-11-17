@@ -235,7 +235,7 @@ h3{font-size:17px;font-weight:500;margin:0}
 /* salla / zid */
 .plat{display:flex;gap:10px;margin-top:20px}
 .pl{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--glass);border-radius:14px;padding:10px 18px}
-.pl svg{height:28px;width:auto;max-width:60px}
+.pl svg{height:30px;width:auto;max-width:78px}
 .pl b{font-family:var(--display);font-weight:500;font-size:16px}
 .pl:first-child{background:rgba(0,74,90,.5);border-color:rgba(186,243,230,.25)}
 .pl:last-child{background:rgba(105,58,180,.35);border-color:rgba(190,160,255,.25)}
@@ -253,6 +253,32 @@ h3{font-size:17px;font-weight:500;margin:0}
 .shot .cap b{display:block;font-family:var(--display);font-weight:500;font-size:15px;line-height:1.45}
 .shot .cap small{display:block;color:var(--mute);font-size:12.5px;line-height:1.5}
 .shot .cap svg{width:16px;height:16px;margin-inline-start:auto;color:var(--sky);flex:none;transform:scaleX(-1)}
+
+/* ---------- mobile: the 3D object gets its own window above each panel ---------- */
+@media (max-width:900px){
+  .st.v3{flex-direction:column;justify-content:flex-start;align-items:stretch;padding-top:64px}
+  .st.v3::before{content:"";display:block;flex:none;height:38vh;height:38svh}
+  .st.v3 .wrap{width:100%}
+  .st .side{padding:20px}
+  #products .space{min-height:36vh!important}
+  .prods{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;margin-inline:-16px;padding:0 16px 10px;scrollbar-width:none}
+  .prods::-webkit-scrollbar{display:none}
+  .prods .prod{flex:0 0 80%;scroll-snap-align:center}
+  #products .wswipe{display:block}
+  .dash .mini,.dash .need,.dash .seg{display:none}
+  .dash .drow{grid-template-columns:1fr}
+  .dmain{padding:14px;gap:10px}
+  .steps{grid-template-columns:1fr!important;gap:6px}
+  .steps li{display:flex;align-items:baseline;gap:10px;padding:9px 12px}
+  .steps li::before{display:inline;min-width:12px}
+  .steps b{display:inline;font-size:14px}
+  .steps span{margin-inline-start:auto;text-align:left}
+  .pl{padding:10px 16px}
+  .pl svg{height:30px;max-width:76px}
+  .feat,.inds{gap:8px}
+  .feat div,.inds div{padding:10px 12px}
+  h2{font-size:clamp(26px,7.4vw,34px)}
+}
 @media (max-width:1000px){
   .prods{grid-template-columns:1fr 1fr}
   .work{grid-template-columns:1fr 1fr}
@@ -316,7 +342,7 @@ h3{font-size:17px;font-weight:500;margin:0}
   </section>
 
   <!-- 1 · why madar -->
-  <section class="st" id="why">
+  <section class="st v3" id="why">
     <div class="wrap"><div class="side">
       <span class="kick rv">لماذا اسمنا مدار</span>
       <h2 class="rv d1">كل شي يدور<br><span class="g">حول عميلك.</span></h2>
@@ -331,7 +357,7 @@ h3{font-size:17px;font-weight:500;margin:0}
     <div class="wrap col" style="min-height:calc(100svh - 144px)">
       <div class="head"><span class="kick rv">ما نقدمه</span><h2 class="rv d1">ثلاثة منتجات تشغّلها شهريًا،<br><span class="g">وثلاثة مشاريع نبنيها لك.</span></h2><p class="lead rv d2">اشترك في منتج واحد أو أكثر بنفس الحساب وتديرهم من لوحة واحدة. ونربط رقمك بواتساب الرسمي ونتولى توثيق ميتا.</p></div>
       <div class="space" style="min-height:30vh"></div>
-      <div class="prods">
+      <div class="prods" id="prods">
         <a class="card prod rv" href="#whatsapp"><span class="kind">اشتراك شهري</span><h3>وكيل واتساب الذكي</h3><p>شات بوت يرد على كل رسائل واتساب خلال ثوانٍ، ويجاوب ويحجز ويتابع.</p><ul class="ticks"><li>حجز وتعديل وإلغاء المواعيد.</li><li>تذكير قبل الموعد ومتابعة بعده.</li></ul><span class="more">التفاصيل</span></a>
         <a class="card prod rv d1" href="#voice"><span class="kind">اشتراك شهري</span><h3>مدار Voice AI</h3><p>وكيل صوتي يستقبل مكالماتك ويرد بلهجة سعودية طبيعية.</p><ul class="ticks"><li>كل مكالمة تُستقبل وتُلخّص.</li><li>يحوّل لموظفك الحالات المهمة فقط.</li></ul><span class="more">التفاصيل</span></a>
         <a class="card prod rv d2" href="#quotation"><span class="kind">اشتراك شهري</span><h3>مدار Quotation</h3><p>من طلب المشتري إلى عرض سعر جاهز للإرسال.</p><ul class="ticks"><li>يطابق البنود مع كتالوجك وأسعارك.</li><li>يرفع الخصم أو الهامش المنخفض للمدير.</li></ul><span class="more">التفاصيل</span></a>
@@ -339,11 +365,12 @@ h3{font-size:17px;font-weight:500;margin:0}
         <a class="card prod rv d1" href="#apps"><span class="kind pj">مشروع</span><h3>تطبيق جوال</h3><p>تطبيق لنشاطك على آيفون وأندرويد، منشور على App Store وGoogle Play.</p><ul class="ticks"><li>تصميم وبرمجة ونشر في المتاجر.</li><li>مربوط بأنظمتك وبوكيل مدار.</li></ul><span class="more">التفاصيل</span></a>
         <a class="card prod rv d2" href="#top"><span class="kind pj">مشروع</span><h3>Web 3D Experience</h3><p>تجربة ويب تفاعلية ثلاثية الأبعاد لمنتجك أو مشروعك.</p><ul class="ticks"><li>للإطلاقات والمعارض والمشاريع العقارية.</li><li>هذه الصفحة نفسها مثال عليها.</li></ul><span class="more">ارجع للبداية وجرّبها</span></a>
       </div>
+      <p class="wswipe">اسحب لتشوف باقي المنتجات</p>
     </div>
   </section>
 
   <!-- 3 · whatsapp agent -->
-  <section class="st" id="whatsapp">
+  <section class="st v3" id="whatsapp">
     <div class="wrap"><div class="side w">
       <span class="kick rv">اشتراك شهري · وكيل واتساب الذكي</span>
       <h2 class="rv d1">شات بوت واتساب<br><span class="g">يرد خلال ثوانٍ.</span></h2>
@@ -363,7 +390,7 @@ h3{font-size:17px;font-weight:500;margin:0}
   </section>
 
   <!-- 4 · voice ai -->
-  <section class="st" id="voice">
+  <section class="st v3" id="voice">
     <div class="wrap end"><div class="side w">
       <span class="kick rv">اشتراك شهري · <span class="lat">مدار Voice AI</span></span>
       <h2 class="rv d1">وكيل صوتي يرد على مكالماتك،<br><span class="g">وكأنه من فريقك.</span></h2>
@@ -381,7 +408,7 @@ h3{font-size:17px;font-weight:500;margin:0}
   </section>
 
   <!-- 5 · quotation -->
-  <section class="st" id="quotation">
+  <section class="st v3" id="quotation">
     <div class="wrap"><div class="side w">
       <span class="kick rv">اشتراك شهري · <span class="lat">مدار Quotation</span></span>
       <h2 class="rv d1">من طلب المشتري<br><span class="g">إلى عرض سعر جاهز.</span></h2>
@@ -398,7 +425,7 @@ h3{font-size:17px;font-weight:500;margin:0}
   </section>
 
   <!-- 6 · dashboard -->
-  <section class="st" id="dashboard">
+  <section class="st v3" id="dashboard">
     <div class="wrap col">
       <div class="head"><span class="kick rv">لوحة التحكم</span><h2 class="rv d1">كل بياناتك <span class="g">في مكان واحد.</span></h2><p class="lead rv d2">المكالمات والمحادثات والمواعيد والتقارير، لحظة بلحظة.</p></div>
       <div class="card dash rv d3" id="dash" role="img" aria-label="مثال توضيحي للصفحة الرئيسية في لوحة تحكم مدار">
@@ -437,7 +464,7 @@ h3{font-size:17px;font-weight:500;margin:0}
   </section>
 
   <!-- 8 · mobile apps -->
-  <section class="st" id="apps">
+  <section class="st v3" id="apps">
     <div class="wrap"><div class="side w">
       <span class="kick rv">مشروع · تطبيقات الجوال</span>
       <h2 class="rv d1">تطبيقك على آيفون وأندرويد،<br><span class="g">وفي جيب كل عميل.</span></h2>
@@ -450,12 +477,12 @@ h3{font-size:17px;font-weight:500;margin:0}
   </section>
 
   <!-- 9 · salla + zid -->
-  <section class="st" id="stores">
+  <section class="st v3" id="stores">
     <div class="wrap end"><div class="side w">
       <span class="kick rv">المتاجر الإلكترونية</span>
       <h2 class="rv d1">تطبيق مدار<br><span class="g">داخل سلة وزد.</span></h2>
       <p class="lead rv d2">نثبّت تطبيق مدار في متجرك، فيرتبط مباشرة وتنسحب بياناته تلقائيًا، ويشتغل الشات بوت والوكيل الصوتي بمعلومات حقيقية.</p>
-      <div class="plat rv d2"><span class="pl"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#BAF3E6" d="M18.862 13.439a1.27 1.27 0 0 0-.81-.555 1.27 1.27 0 0 0-.964.18c-3.422 2.231-6.75 2.231-10.178 0a1.27 1.27 0 0 0-.964-.18 1.283 1.283 0 0 0-.434 2.327c2.142 1.394 4.326 2.1 6.49 2.1 2.166 0 4.348-.706 6.488-2.102a1.27 1.27 0 0 0 .555-.81 1.27 1.27 0 0 0-.18-.964zm5.103 2.82-1.171-9.764a5.24 5.24 0 0 0-5.2-4.614H6.406a5.236 5.236 0 0 0-5.198 4.612l-1.17 9.766a5.235 5.235 0 0 0 5.198 5.86h13.529a5.238 5.238 0 0 0 5.198-5.86zm-3.21 2.4c-.532.6-1.265.929-2.066.929H5.311c-.801 0-1.536-.33-2.066-.929a2.73 2.73 0 0 1-.676-2.16l1.157-9.657A2.764 2.764 0 0 1 6.468 4.41h11.064a2.765 2.765 0 0 1 2.742 2.432l1.157 9.656a2.72 2.72 0 0 1-.676 2.161"/></svg><b>سلة</b></span><span class="pl"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 -119.3 454.69 454.69"><path fill="#fff" fill-rule="evenodd" d="M76.66,168.21H0v-30.75h66.62c6.83,0,8.97-1.71,8.97-8.75v-14.09c0-25.62-7.05-33.52-32.67-33.52h-21.35v-30.75h21.35c46.98,0,62.56,17.3,62.56,64.27v24.56c0,17.08-11.74,29.04-28.83,29.04Z"/><path fill="#fff" fill-rule="evenodd" d="M171.19,77.03v69.61c0,34.17-25.62,62.99-59.79,62.99v-31.6c17.08,0,29.89-14.31,29.89-31.39v-69.61h29.89ZM156.03,67.63c9.18,0,17.08-7.47,17.08-17.08s-7.9-17.08-17.08-17.08-17.08,7.9-17.08,17.08,7.47,17.08,17.08,17.08Z"/><path fill="#fff" fill-rule="evenodd" d="M346.72,19.31c-5.55,0-10.01,4.46-10.01,10.01,0,11.25,3.55,22.15,10.01,31.19,6.46-9.04,10.01-19.95,10.01-31.19,0-5.55-4.46-10.01-10.01-10.01ZM360.06,74.88c10.29-12.87,15.98-28.93,15.98-45.56S362.93,0,346.72,0s-29.32,13.11-29.32,29.32,5.7,32.7,15.98,45.56l-19.75,19.75c-12.87-10.29-28.93-15.98-45.56-15.98s-29.32,13.11-29.32,29.32,13.11,29.32,29.32,29.32,32.7-5.7,45.56-15.98l19.75,19.75c-10.29,12.87-15.98,28.93-15.98,45.56s13.11,29.32,29.32,29.32,29.32-13.11,29.32-29.32-5.7-32.7-15.98-45.56l19.75-19.75c12.87,10.29,28.93,15.98,45.56,15.98s29.32-13.11,29.32-29.32-13.11-29.32-29.32-29.32-32.7,5.7-45.56,15.98l-19.75-19.75ZM346.72,88.86l-19.12,19.12,19.12,19.12,19.12-19.12-19.12-19.12ZM394.18,107.97c9.04,6.46,19.95,10.01,31.19,10.01,5.55,0,10.01-4.46,10.01-10.01s-4.46-10.01-10.01-10.01c-11.25,0-22.15,3.55-31.19,10.01ZM346.72,155.43c-6.46,9.04-10.01,19.95-10.01,31.19,0,5.55,4.46,10.01,10.01,10.01s10.01-4.46,10.01-10.01c0-11.25-3.55-22.15-10.01-31.19ZM299.26,107.97c-9.04-6.46-19.95-10.01-31.19-10.01-5.55,0-10.01,4.46-10.01,10.01s4.46,10.01,10.01,10.01c11.25,0,22.15-3.55,31.19-10.01Z"/></svg><b>زد</b></span></div>
+      <div class="plat rv d2"><span class="pl"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#BAF3E6" d="M18.862 13.439a1.27 1.27 0 0 0-.81-.555 1.27 1.27 0 0 0-.964.18c-3.422 2.231-6.75 2.231-10.178 0a1.27 1.27 0 0 0-.964-.18 1.283 1.283 0 0 0-.434 2.327c2.142 1.394 4.326 2.1 6.49 2.1 2.166 0 4.348-.706 6.488-2.102a1.27 1.27 0 0 0 .555-.81 1.27 1.27 0 0 0-.18-.964zm5.103 2.82-1.171-9.764a5.24 5.24 0 0 0-5.2-4.614H6.406a5.236 5.236 0 0 0-5.198 4.612l-1.17 9.766a5.235 5.235 0 0 0 5.198 5.86h13.529a5.238 5.238 0 0 0 5.198-5.86zm-3.21 2.4c-.532.6-1.265.929-2.066.929H5.311c-.801 0-1.536-.33-2.066-.929a2.73 2.73 0 0 1-.676-2.16l1.157-9.657A2.764 2.764 0 0 1 6.468 4.41h11.064a2.765 2.765 0 0 1 2.742 2.432l1.157 9.656a2.72 2.72 0 0 1-.676 2.161"/></svg><b>سلة</b></span><span class="pl" aria-label="زد"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 -119.3 454.69 454.69"><path fill="#fff" fill-rule="evenodd" d="M76.66,168.21H0v-30.75h66.62c6.83,0,8.97-1.71,8.97-8.75v-14.09c0-25.62-7.05-33.52-32.67-33.52h-21.35v-30.75h21.35c46.98,0,62.56,17.3,62.56,64.27v24.56c0,17.08-11.74,29.04-28.83,29.04Z"/><path fill="#fff" fill-rule="evenodd" d="M171.19,77.03v69.61c0,34.17-25.62,62.99-59.79,62.99v-31.6c17.08,0,29.89-14.31,29.89-31.39v-69.61h29.89ZM156.03,67.63c9.18,0,17.08-7.47,17.08-17.08s-7.9-17.08-17.08-17.08-17.08,7.9-17.08,17.08,7.47,17.08,17.08,17.08Z"/><path fill="#fff" fill-rule="evenodd" d="M346.72,19.31c-5.55,0-10.01,4.46-10.01,10.01,0,11.25,3.55,22.15,10.01,31.19,6.46-9.04,10.01-19.95,10.01-31.19,0-5.55-4.46-10.01-10.01-10.01ZM360.06,74.88c10.29-12.87,15.98-28.93,15.98-45.56S362.93,0,346.72,0s-29.32,13.11-29.32,29.32,5.7,32.7,15.98,45.56l-19.75,19.75c-12.87-10.29-28.93-15.98-45.56-15.98s-29.32,13.11-29.32,29.32,13.11,29.32,29.32,29.32,32.7-5.7,45.56-15.98l19.75,19.75c-10.29,12.87-15.98,28.93-15.98,45.56s13.11,29.32,29.32,29.32,29.32-13.11,29.32-29.32-5.7-32.7-15.98-45.56l19.75-19.75c12.87,10.29,28.93,15.98,45.56,15.98s29.32-13.11,29.32-29.32-13.11-29.32-29.32-29.32-32.7,5.7-45.56,15.98l-19.75-19.75ZM346.72,88.86l-19.12,19.12,19.12,19.12,19.12-19.12-19.12-19.12ZM394.18,107.97c9.04,6.46,19.95,10.01,31.19,10.01,5.55,0,10.01-4.46,10.01-10.01s-4.46-10.01-10.01-10.01c-11.25,0-22.15,3.55-31.19,10.01ZM346.72,155.43c-6.46,9.04-10.01,19.95-10.01,31.19,0,5.55,4.46,10.01,10.01,10.01s10.01-4.46,10.01-10.01c0-11.25-3.55-22.15-10.01-31.19ZM299.26,107.97c-9.04-6.46-19.95-10.01-31.19-10.01-5.55,0-10.01,4.46-10.01,10.01s4.46,10.01,10.01,10.01c11.25,0,22.15-3.55,31.19-10.01Z"/></svg></span></div>
       <div class="inds rv d3">
         <div><h3>المبيعات والطلبات</h3><p>يقرأ الطلبات والمنتجات والعملاء.</p></div>
         <div><h3>شركات الشحن</h3><p>يعرف الشركة ورقم الشحنة وحالتها.</p></div>
@@ -467,7 +494,7 @@ h3{font-size:17px;font-weight:500;margin:0}
   </section>
 
   <!-- 10 · integrations + how it works -->
-  <section class="st" id="system">
+  <section class="st v3" id="system">
     <div class="wrap"><div class="side w">
       <span class="kick rv">نظام تشغيل كامل لعملك</span>
       <h2 class="rv d1">المكالمة نقطة البداية،<br><span class="g">وورا كل مكالمة نظام.</span></h2>
@@ -484,7 +511,7 @@ h3{font-size:17px;font-weight:500;margin:0}
   </section>
 
   <!-- 11 · saudi -->
-  <section class="st" id="saudi">
+  <section class="st v3" id="saudi">
     <div class="wrap end"><div class="side w">
       <span class="kick rv">من جدة، لكل المملكة</span>
       <h2 class="rv d1">شركة سعودية،<br><span class="g">تخدم كل نشاط.</span></h2>
@@ -525,7 +552,7 @@ var RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
 function cl(v,a,b){return Math.max(a,Math.min(b,v))}
 function sm(a,b,x){var t=cl((x-a)/(b-a),0,1);return t*t*(3-2*t)}
 function gs(){var u=1-Math.random(),v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(6.2831853*v)}
-var mob=innerWidth<900, N=mob?4200:9000;
+var mob=innerWidth<900,low=(navigator.hardwareConcurrency||8)<=4||(navigator.deviceMemory||8)<=3,N=mob?(low?1800:2800):(low?5000:9000);
 
 /* ---------- reveal ---------- */
 var rvs=[].slice.call(document.querySelectorAll('.rv'));
@@ -692,7 +719,7 @@ function sampleLogo(){try{var S=256,cv=document.createElement('canvas');cv.width
 
 /* stage per section: [x, y, scale], spin speed, tilt toward camera, sway */
 var PLACE=mob?
-  [[0,-0.1,0.72],[0,0.3,0.55],[0,0.1,0.6],[0,0.3,0.55],[0,0.3,0.6],[0,0.3,0.55],[0,0.15,0.62],[0,-1.3,0.4],[0,0.3,0.5],[0,0.25,0.5],[0,0.25,0.5],[0,0.05,0.55],[0,0,0.72]]:
+  [[0,-0.1,0.72],[0,1.4,0.42],[0,0.02,0.42],[0,1.45,0.5],[0,1.45,0.48],[0,1.4,0.46],[0,1.5,0.42],[0,-1.3,0.4],[0,1.4,0.46],[0,1.45,0.48],[0,1.45,0.44],[0,1.95,0.5],[0,0,0.72]]:
   [[0,-0.28,0.82],[-1.75,-0.1,0.72],[0,0.62,0.46],[-1.75,0,0.8],[1.55,0,0.78],[-1.75,-0.05,1.05],[0,-0.35,0.85],[0,-1.1,0.5],[-1.75,-0.05,0.78],[1.6,-0.1,0.82],[-1.6,0,0.68],[1.45,0.05,0.74],[0,-0.3,1.5]];
 var SPIN=[0.12,0.22,0,0,0,0,0.06,0,0,0,0.16,0,0.12];
 var TILT=[0,0,0.12,0,0,0,0.42,0,0,0.22,0,0.32,0];
@@ -700,7 +727,7 @@ var SWAY=[0,0,0.5,0.3,0.25,0.35,0,0.12,0.45,0.4,0,0,0];
 var VOICE=[1,0,0,0,0,0,0,0,0,0,0,0,1];
 
 if(!window.THREE){reveal();return}
-var R=new THREE.WebGLRenderer({canvas:document.getElementById('gl'),antialias:true,alpha:false});R.setClearColor(0x03040a,1);
+var R=new THREE.WebGLRenderer({canvas:document.getElementById('gl'),antialias:!mob,alpha:false,powerPreference:'high-performance'});R.setClearColor(0x03040a,1);
 var scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(45,1,0.1,100);
 var geo=new THREE.BufferGeometry(),pos=arr(),col=arr(),sz=new Float32Array(N);for(var i=0;i<N;i++)sz[i]=0.6+Math.random()*1.1;
 geo.setAttribute('position',new THREE.BufferAttribute(pos,3));geo.setAttribute('color',new THREE.BufferAttribute(col,3));geo.setAttribute('sz',new THREE.BufferAttribute(sz,1));
@@ -713,12 +740,13 @@ var fm=new THREE.ShaderMaterial({uniforms:{uT:{value:0},uS:{value:0},uA:{value:0
   fragmentShader:'varying vec2 vU;uniform float uT,uS,uA,uF;void main(){float d=length(vU-0.5)*2.0;float r=sin(d*70.0-uT*1.4-uS*18.0);float ring=smoothstep(0.93,1.0,r);float fade=1.0-smoothstep(0.05,0.85,d);float a=(ring*fade*(0.32+uA*0.9)+exp(-d*9.0)*(0.18+uA*0.5))*uF;vec3 c=mix(vec3(0.24,0.42,1.0),vec3(0.48,0.36,1.0),smoothstep(0.0,0.6,d));gl_FragColor=vec4(c*a,a);}'});
 var floor=new THREE.Mesh(new THREE.PlaneGeometry(26,26),fm);floor.rotation.x=-Math.PI/2;floor.position.y=-1.35;scene.add(floor);
 var dpm=pm.clone();dpm.uniforms={uPR:pm.uniforms.uPR,uO:{value:1}};
-var DN=mob?500:1100,dg=new THREE.BufferGeometry(),dp=new Float32Array(DN*3),dc=new Float32Array(DN*3),ds=new Float32Array(DN);
+var DN=mob?260:1100,dg=new THREE.BufferGeometry(),dp=new Float32Array(DN*3),dc=new Float32Array(DN*3),ds=new Float32Array(DN);
 for(var j=0;j<DN;j++){dp[j*3]=(Math.random()-.5)*22;dp[j*3+1]=Math.random()*9-1.2;dp[j*3+2]=-Math.random()*30+4;dc[j*3]=0.5;dc[j*3+1]=0.6;dc[j*3+2]=1;ds[j]=0.4+Math.random()*0.7}
 dg.setAttribute('position',new THREE.BufferAttribute(dp,3));dg.setAttribute('color',new THREE.BufferAttribute(dc,3));dg.setAttribute('sz',new THREE.BufferAttribute(ds,1));
 var dust=new THREE.Points(dg,dpm);dust.frustumCulled=false;scene.add(dust);
 
-function size(){var w=innerWidth,h=innerHeight;R.setPixelRatio(Math.min(devicePixelRatio||1,mob?1.5:2));R.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();pm.uniforms.uPR.value=R.getPixelRatio()}
+var prScale=1;
+function size(){var w=innerWidth,h=innerHeight;R.setPixelRatio(Math.min(devicePixelRatio||1,mob?(low?1:1.35):2)*prScale);R.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();pm.uniforms.uPR.value=R.getPixelRatio()}
 addEventListener('resize',size);size();
 
 function stageF(){var y=scrollY+innerHeight/2,s=0;for(var i=0;i<secs.length;i++){var top=secs[i].offsetTop,h=secs[i].offsetHeight;if(y>=top){s=i+cl((y-top)/h,0,1)-0.5}}return cl(s,0,secs.length-1)}
@@ -732,9 +760,10 @@ function startIntro(){docEl.classList.add('intro');introScale();intro={t0:perfor
 skipBtn.addEventListener('click',function(){if(intro){intro.t0=performance.now()-3150;}});
 
 var amp=0,last=performance.now(),place=PLACE[0].slice(),sCur=0,jit=new Float32Array(N*3);for(var q=0;q<N*3;q++)jit[q]=gs()*0.5;
-var camI=0;
+var camI=0,fpsN=0,fpsT=0;
 function frame(now){
-  requestAnimationFrame(frame);var dt=Math.min(.05,(now-last)/1000);last=now;var t=now/1000;
+  requestAnimationFrame(frame);var rawDt=(now-last)/1000,dt=Math.min(.05,rawDt);last=now;var t=now/1000;
+  if(!intro&&prScale===1){fpsN++;fpsT+=rawDt;if(fpsN===90){if(fpsT/90>0.034){prScale=0.75;size()}fpsN=0;fpsT=0}}
   var target=mode==='a'?0.55+0.45*Math.abs(Math.sin(t*9.3)*Math.sin(t*3.1+1)):mode==='c'?0.3+0.3*Math.abs(Math.sin(t*7.7)*Math.sin(t*2.3)):0;
   ampT=Math.max(ampT*0.92,target);amp+=(ampT-amp)*Math.min(1,dt*10);if(RM)amp=Math.min(amp,0.2);
   var A,B,CA,CB,f,burst,i0,i1,voiceW=0,vW=0,P0,P1;
