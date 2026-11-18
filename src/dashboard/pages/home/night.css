@@ -30,7 +30,7 @@
   border: 1px solid var(--line-2); background: transparent; color: var(--ink); white-space: nowrap; cursor: pointer; text-decoration: none; font-family: var(--font-body); }
 .nx-btn:hover { background: var(--hover-bg); }
 .nx-btn:disabled { opacity: .5; cursor: not-allowed; }
-.nx-btn.pri { background: var(--pri-bg); border: 1px solid transparent; color: var(--pri-fg); }
+.nx-btn.pri { background: var(--pri-bg); background-image: var(--gradient-brand); border: 1px solid transparent; color: var(--pri-fg); }
 .nx-btn.pri:hover { background: var(--pri-hover); }
 .nx-btn.ghost { background: transparent; color: var(--muted); border-color: transparent; }
 .nx-btn.ghost:hover { color: var(--ink); background: var(--hover-bg); }

@@ -7,9 +7,9 @@
 
 .dv2-scope {
   /* surfaces: canvas < card < sunken/raised < hover fill */
-  --abyss:#0C0D11;--side:#0E0F14;--panel:#13151B;--panel-2:#181A21;--raise:#20232B;
-  --line:#22242C;--line-2:#2F323C;
-  --ink:#E9EBF0;--muted:#A3A8B3;--dim:#828793;
+  --abyss:#0A0C1D;--side:#0C0E22;--panel:#11142C;--panel-2:#161A36;--raise:#1D2144;
+  --line:#21254A;--line-2:#2D325D;
+  --ink:#ECEDF7;--muted:#A9AECB;--dim:#878CAD;
   /* data / link accents — used for charts, links and focus, never for big fills */
   --sky:#8FA6FF;--royal:#2D5BFF;--royal-2:#4670FF;--violet:#A57BFF;--orange:#FB923C;--green:#4ADE80;
   --ring-1:#2D5BFF;--ring-2:#8B3DFF;--ring-3:#8E929C;
@@ -20,8 +20,8 @@
   --ok:#4ADE80;--ok-bg:rgba(74,222,128,.10);--warn:#FBBF24;--warn-bg:rgba(251,191,36,.10);
   --bad:#F87171;--bad-bg:rgba(248,113,113,.10);
   --info:#93C5FD;--info-bg:rgba(96,165,250,.10);--ai:#C4B5FD;--ai-bg:rgba(167,139,250,.11);
-  --topbar-bg:rgba(12,13,17,.92);--tabbar-bg:rgba(14,15,20,.96);--hover-bg:rgba(255,255,255,.04);
-  --nav-active-bg:rgba(45,91,255,.16);
+  --topbar-bg:rgba(10,12,29,.92);--tabbar-bg:rgba(12,14,34,.96);--hover-bg:rgba(255,255,255,.04);
+  --nav-active-bg:linear-gradient(90deg,rgba(139,61,255,.22),rgba(45,91,255,.22));
   --scrim:rgba(0,0,0,.6);
 
   /* brand scale (blue) for chips/links in older components */
@@ -30,21 +30,21 @@
   --brand-600:#8FA6FF;--brand-700:#B5C4FF;--brand-800:#D6DEFF;--brand-900:#EEF1FF;
   --indigo-400:#C4B5FD;--indigo-500:#A78BFA;--indigo-600:#8B5CF6;--indigo-700:#7C3AED;
   /* neutral scale, dark → light, so slate-100 is a sunken fill and slate-900 near-ink */
-  --slate-50:#111217;--slate-100:#1C1E25;--slate-200:#22242C;--slate-300:#2F323C;--slate-400:#4E525E;
-  --slate-500:#828793;--slate-600:#A3A8B3;--slate-700:#C3C7D0;--slate-800:#D9DCE3;--slate-900:#E9EBF0;--slate-950:#FFFFFF;
+  --slate-50:#0F1228;--slate-100:#181C3A;--slate-200:#21254A;--slate-300:#2D325D;--slate-400:#4A507E;
+  --slate-500:#878CAD;--slate-600:#A9AECB;--slate-700:#C6C9DE;--slate-800:#DCDEEC;--slate-900:#ECEDF7;--slate-950:#FFFFFF;
   --success-500:var(--ok);--success-100:var(--ok-bg);--warning-500:var(--warn);--warning-100:var(--warn-bg);
   --danger-500:var(--bad);--danger-100:var(--bad-bg);--info-500:var(--info);--info-100:var(--info-bg);
   --danger-50:var(--bad-bg);--danger-200:rgba(248,113,113,.28);--danger-600:#FCA5A5;
   --surface-page:var(--abyss);--surface-canvas:var(--abyss);--surface-card:var(--panel);
-  --surface-sunken:var(--panel-2);--surface-raised:var(--panel-2);--surface-input:#111217;
+  --surface-sunken:var(--panel-2);--surface-raised:var(--panel-2);--surface-input:#0F1228;
   /* always dark, so tooltips that hard-code white text stay readable in both themes */
-  --surface-inverse:#22242C;
+  --surface-inverse:#21254A;
   --text-primary:var(--ink);--text-secondary:var(--muted);--text-tertiary:var(--dim);
   --text-on-brand:var(--pri-fg);--text-link:var(--sky);--text-link-hover:#B5C4FF;
   --border-default:var(--line);--border-strong:var(--line-2);--border-focus:#4670FF;
   --accent-primary:var(--pri-bg);--accent-primary-hover:var(--pri-hover);--accent-primary-active:var(--pri-bg);
   --accent-secondary:var(--sky);
-  --gradient-brand:var(--grad);
+  --gradient-brand:linear-gradient(135deg,#2D5BFF,#8B3DFF);
   --gradient-dark:linear-gradient(var(--panel-2),var(--panel-2));
 
   /* typography — one clean sans for everything */

@@ -59,7 +59,7 @@ export const TOPBAR_CSS = `
   .dv2-scope[data-theme="light"] .dv2-udot { box-shadow: 0 0 0 2px #fff; }
   @keyframes dv2-dot-in { from { transform: scale(0); } 60% { transform: scale(1.15); } to { transform: scale(1); } }
 
-  .dv2-pri { height: 40px; border-radius: 10px; border: 0; background: var(--pri-bg); color: var(--pri-fg); display: inline-flex; align-items: center;
+  .dv2-pri { height: 40px; border-radius: 10px; border: 0; background: var(--pri-bg); background-image: var(--gradient-brand); color: var(--pri-fg); display: inline-flex; align-items: center;
     gap: 7px; padding: 0 14px; font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; white-space: nowrap; flex: none;
     transition: background-color 150ms ${EASE_STD}, opacity 150ms ${EASE_STD} !important; }
   .dv2-pri svg { width: 16px; height: 16px; }

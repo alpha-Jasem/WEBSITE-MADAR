@@ -86,7 +86,7 @@ const SIZE_STYLES: Record<ButtonSize, CSSProperties> = {
 // Primary carries the logo gradient (reserved for primary actions); the rest stay
 // quiet navy/outline so the one gradient button on a screen is the obvious next step.
 const VARIANT_STYLES: Record<ButtonVariant, CSSProperties> = {
-  primary: { backgroundColor: 'var(--pri-bg)', backgroundImage: 'none', color: 'var(--pri-fg)', border: '1px solid transparent' },
+  primary: { backgroundColor: 'var(--pri-bg)', backgroundImage: 'var(--gradient-brand)', color: 'var(--pri-fg)', border: '1px solid transparent' },
   secondary: { backgroundColor: 'var(--panel-2)', backgroundImage: 'none', color: 'var(--text-primary)', border: '1px solid var(--border-strong)' },
   ghost: { backgroundColor: 'transparent', backgroundImage: 'none', color: 'var(--text-secondary)', border: '1px solid transparent' },
   danger: { backgroundColor: 'var(--bad-bg)', backgroundImage: 'none', color: 'var(--bad)', border: '1px solid transparent' },
