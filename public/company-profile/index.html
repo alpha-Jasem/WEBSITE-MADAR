@@ -335,7 +335,7 @@ h3{font-size:17px;font-weight:500;margin:0}
           <button class="btn pri" id="talk" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg><span id="talkTx">كلّم مدار</span></button>
           <a class="btn" href="https://cal.eu/jasem-altubaishi-mvxhz5/madar-.-ai" target="_blank" rel="noopener">احجز جلسة تعريفية</a>
         </div>
-        <span class="hnote">مكالمة تجريبية مكتوبة لعرض الفكرة. تبغى تكلّم الوكيل الحقيقي؟ <a href="https://madar.software/#listen" target="_blank" rel="noopener">جرّبه على موقعنا</a>.</span>
+        <span class="hnote">مكالمة صوتية حقيقية مع وكيل مدار. يحتاج إذن المايكروفون.</span>
         <span class="cue">انزل، والكرة تنزل معك</span>
       </div>
     </div>
@@ -572,22 +572,22 @@ else dash.classList.add('in');
 
 /* ---------- call demo (drives the voice amplitude) ---------- */
 var btn=document.getElementById('talk'),btnTx=document.getElementById('talkTx'),st=document.getElementById('state'),stTx=document.getElementById('stTx'),tx=document.getElementById('tx');
-var CONVO=[['a','هلا والله، معك مدار. كيف أقدر أخدمك اليوم؟'],['c','أبغى أحجز موعد بكرة العصر.'],['a','أبشر. عندي بكرة الساعة أربع ونص أو ست. أيهم يناسبك؟'],['c','أربع ونص.'],['a','تم. حجزت لك بكرة الساعة أربع ونص، وبيوصلك تأكيد على واتساب.']];
-var mode='idle',running=false,tmr=[],voice=null,ampT=0;
-function pickVoice(){try{voice=speechSynthesis.getVoices().filter(function(x){return /^ar/i.test(x.lang)})[0]||null}catch(e){voice=null}}
-if('speechSynthesis' in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+var mode='idle',running=false,room=null,audioEl=null,ampT=0;
+var TOKEN_ENDPOINT='https://aacnqiuwrpzgxhzdavaq.supabase.co/functions/v1/madar-nabrah-token';
 function setMode(m,t){mode=m;st.className='state'+(m==='a'?' a':m==='c'?' c':'');stTx.textContent=t}
-function line(who,text){[].forEach.call(tx.children,function(p){p.classList.add('old')});while(tx.children.length>2)tx.removeChild(tx.firstChild);
-  var p=document.createElement('p');if(who==='c')p.className='c';p.innerHTML='<small>'+(who==='a'?'مدار':'العميل')+'</small>';tx.appendChild(p);
-  var i=0,w=text.split(' ');(function f(){if(!running)return;p.appendChild(document.createTextNode((i?' ':'')+w[i]));i++;if(i<w.length)tmr.push(setTimeout(f,who==='a'?260:200))})()}
-function say(k){if(!running)return;if(k>=CONVO.length){end(true);return}
-  var who=CONVO[k][0],text=CONVO[k][1],dur=text.split(' ').length*(who==='a'?300:230)+500;
-  setMode(who,who==='a'?'مدار يتكلم…':'العميل يتكلم…');line(who,text);
-  var next=function(){if(!running)return;setMode('idle','…');tmr.push(setTimeout(function(){say(k+1)},500))};
-  if(who==='a'&&voice){try{var u=new SpeechSynthesisUtterance(text);u.voice=voice;u.lang=voice.lang;u.onboundary=function(){ampT=1};u.onend=next;u.onerror=next;speechSynthesis.speak(u);return}catch(e){}}
-  tmr.push(setTimeout(next,dur))}
-function end(done){running=false;tmr.forEach(clearTimeout);tmr=[];try{speechSynthesis.cancel()}catch(e){}btnTx.textContent='كلّم مدار';setMode('idle',done?'انتهت المكالمة. انحجز الموعد.':'جاهز. اضغط وكلّم مدار.')}
-btn.addEventListener('click',function(){if(running){end(false);return}running=true;tx.innerHTML='';btnTx.textContent='إنهاء المكالمة';say(0)});
+function cleanup(){if(room){try{room.disconnect()}catch(e){}room=null}if(audioEl){audioEl.remove();audioEl=null}}
+function end(msg){running=false;cleanup();btnTx.textContent='كلّم مدار';setMode('idle',msg||'جاهز. اضغط وكلّم مدار.')}
+async function startCall(){if(running)return;running=true;btnTx.textContent='جاري الاتصال…';setMode('idle','جاري الاتصال بالوكيل…');
+ try{await navigator.mediaDevices.getUserMedia({audio:true});var LK=await import('https://esm.sh/livekit-client@2.16.1');
+ var res=await fetch(TOKEN_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});if(!res.ok)throw new Error('token endpoint '+res.status);
+ var data=await res.json(),r=new LK.Room();room=r;
+ r.on(LK.RoomEvent.TrackSubscribed,function(track){if(track.kind!=='audio')return;var el=track.attach();el.autoplay=true;el.style.display='none';document.body.appendChild(el);audioEl=el});
+ r.on(LK.RoomEvent.ActiveSpeakersChanged,function(sp){if(!running)return;var ag=sp.some(function(x){return x.identity!==r.localParticipant.identity});setMode(ag?'a':'c',ag?'مدار يتكلم…':'يسمعك، تكلّم الحين')});
+ r.on(LK.RoomEvent.Disconnected,function(){if(running)end('انتهت المكالمة.')});
+ await r.connect(data.url,data.token);var track=await LK.createLocalAudioTrack();await r.localParticipant.publishTrack(track);
+ btnTx.textContent='إنهاء المكالمة';setMode('c','يسمعك، تكلّم الحين')}
+ catch(e){console.error('madar voice agent start failed',e);end('تعذّر الاتصال، حاول مرة ثانية.')}}
+btn.addEventListener('click',function(){if(running){end('انتهت المكالمة.');return}startCall()});
 
 /* ---------- progress dots ---------- */
 var secs=[].slice.call(document.querySelectorAll('main .st')),progEl=document.getElementById('prog');
