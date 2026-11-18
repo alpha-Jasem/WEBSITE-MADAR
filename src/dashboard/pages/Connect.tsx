@@ -228,6 +228,11 @@ export function DashboardV2Connect() {
             <Input label="اسم القاعدة" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
             <Select label="لما يصير:" value={draft.trigger_event} onChange={(e) => setDraft({ ...draft, trigger_event: e.target.value as TriggerEvent })}
               options={triggerKeys.map((k) => ({ value: k, label: TRIGGER_LABELS[k] }))} />
+            {draft.trigger_event === 'conversation.no_reply' && (
+              <Input label="بعد كم دقيقة بدون رد؟ (5 على الأقل)" type="number" value={String(draft.conditions.minutes ?? 30)}
+                onChange={(e) => setDraft({ ...draft, conditions: { ...draft.conditions, minutes: Math.max(5, Number(e.target.value) || 30) } })} />
+            )}
+            {draft.trigger_event === 'conversation.no_reply' && <div className="cn-hint">تُحسب المحادثات اللي تحتاج مراجعة أو المسندة لأحد من فريقك، ويوقف العد أول ما أحد يرد.</div>}
             {draft.trigger_event === 'order.status_changed' && (
               <Select label="لما تصير الحالة (اختياري)" value={draft.conditions.order_status || ''} onChange={(e) => setDraft({ ...draft, conditions: { ...draft.conditions, order_status: e.target.value || undefined } })}
                 options={[{ value: '', label: 'أي تغيير' }, ...ORDER_STATUS_OPTIONS]} />

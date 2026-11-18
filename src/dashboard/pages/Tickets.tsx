@@ -1,28 +1,36 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Bot, Clock, Plus } from 'lucide-react'
+import { Bot, Clock, Columns3, ListChecks, Plus } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { Button } from '@/dashboard/components/primitives'
 import { useToast, Skeleton } from '@/dashboard/components/uiExtras'
 import {
-  findTicketForCall, useCurrentUserId, useOpsCaps, useOpsTickets, useTeam,
+  addTicketNote, findTicketForCall, updateOpsTicket, useCompanySubtasks, useCurrentUserId, useOpsCaps, useOpsTickets, useTeam, useTicketStages,
   type OpsTicket,
 } from '@/lib/queries/ops'
 import type { TicketStatus } from '@/types/dashboard'
 import { useShellPrimaryAction } from '@/dashboard/components/shellActions'
 import { NewTicketDialog } from './tickets/NewTicketDialog'
 import { TicketDialog } from './tickets/TicketDialog'
+import { StagesDialog } from './tickets/StagesDialog'
 import { PRIORITY, STATUS, customerOf, dueLabel, isAiOpened, isLate, relTime, shortId, typeOf } from './tickets/ticketModel'
 import './tickets/ops.css'
 
 type Filter = 'all' | 'mine' | 'unassigned' | 'late'
 const COLUMNS: TicketStatus[] = ['open', 'in_progress', 'resolved']
+const STATUS_NOTE: Record<TicketStatus, string> = { open: 'أُعيد فتحها', in_progress: 'بدأت المعالجة', resolved: 'تم الحل' }
 
-function TicketCard({ t, onOpen }: { t: OpsTicket; onOpen: () => void }) {
+/** One board column: a company stage, or one of the three statuses when the company has none. */
+interface Col { key: string; label: string; color: string; status: TicketStatus; stageId: string | null }
+
+function TicketCard({ t, onOpen, subtasks }: { t: OpsTicket; onOpen: () => void; subtasks?: { done: number; total: number } }) {
   const p = PRIORITY[t.priority] || PRIORITY.normal
   const late = isLate(t)
   return (
-    <button type="button" className="ops-tk" style={{ ['--pri' as string]: p.color }} onClick={onOpen}>
+    <button
+      type="button" className="ops-tk" style={{ ['--pri' as string]: p.color }} onClick={onOpen}
+      draggable onDragStart={(e) => { e.dataTransfer.setData('text/ticket', t.id); e.dataTransfer.effectAllowed = 'move' }}
+    >
       <span className="id">
         <span style={{ fontFamily: 'var(--font-numeral)' }}>{shortId(t)}</span>
         {isAiOpened(t) && (
@@ -40,6 +48,11 @@ function TicketCard({ t, onOpen }: { t: OpsTicket; onOpen: () => void }) {
         {t.assignee_name
           ? <span className="ops-who" title={t.assignee_name}>{t.assignee_name.trim()[0]}</span>
           : <span className="ops-who none" title="بدون مسؤول">؟</span>}
+        {subtasks && subtasks.total > 0 && (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: subtasks.done === subtasks.total ? 'var(--ok)' : 'var(--muted)' }}>
+            <ListChecks size={13} /> {subtasks.done}/{subtasks.total}
+          </span>
+        )}
       </span>
     </button>
   )
@@ -57,6 +70,11 @@ export function DashboardV2Tickets() {
   const [openId, setOpenId] = useState<string | null>(null)
   const [newOpen, setNewOpen] = useState(false)
   const [callId, setCallId] = useState<string | null>(null)
+  const [stagesOpen, setStagesOpen] = useState(false)
+  const [dropKey, setDropKey] = useState<string | null>(null)
+  const { data: stageRows } = useTicketStages(companyId, isDemo, caps.ticketBoard)
+  const { data: subtaskRows } = useCompanySubtasks(companyId, isDemo, caps.ticketBoard)
+  const stages = useMemo(() => stageRows || [], [stageRows])
   const [params, setParams] = useSearchParams()
   const handledParams = useRef(false)
   useShellPrimaryAction({ label: 'تذكرة جديدة', icon: <Plus />, onClick: () => { setCallId(null); setNewOpen(true) } })
@@ -111,6 +129,40 @@ export function DashboardV2Tickets() {
   const aiShare = all.length ? Math.round((all.filter(isAiOpened).length / all.length) * 100) : 0
   const openTicket = all.find((t) => t.id === openId) || null
 
+  const cols: Col[] = stages.length
+    ? stages.map((s) => ({ key: s.id, label: s.name, color: s.color || STATUS[s.status].color, status: s.status, stageId: s.id }))
+    : COLUMNS.map((k) => ({ key: k, label: STATUS[k].label, color: STATUS[k].color, status: k, stageId: null }))
+  // A ticket sits in its own stage while that stage still matches its status, otherwise in the first stage of its status.
+  const colOf = (t: OpsTicket) => {
+    if (!stages.length) return t.status
+    const own = stages.find((s) => s.id === t.stage_id && s.status === t.status)
+    return (own || stages.find((s) => s.status === t.status) || stages[0]).id
+  }
+  const progress = useMemo(() => {
+    const m = new Map<string, { done: number; total: number }>()
+    for (const s of subtaskRows || []) {
+      const x = m.get(s.ticket_id) || { done: 0, total: 0 }
+      x.total += 1
+      if (s.done) x.done += 1
+      m.set(s.ticket_id, x)
+    }
+    return m
+  }, [subtaskRows])
+
+  async function dropOn(col: Col, ticketId: string) {
+    setDropKey(null)
+    const t = all.find((x) => x.id === ticketId)
+    if (!t || colOf(t) === col.key) return
+    try {
+      await updateOpsTicket(t.id, caps.ticketBoard ? { status: col.status, stage_id: col.stageId } : { status: col.status }, isDemo)
+      const body = col.stageId ? `انتقلت إلى «${col.label}»` : STATUS_NOTE[col.status]
+      await addTicketNote({ ticket_id: t.id, company_id: t.company_id, kind: 'status', body, author_name: authorName }, caps, isDemo).catch(() => {})
+      if (!isDemo) refetch()
+    } catch (e) {
+      pushToast({ kind: 'danger', title: 'تعذّر نقل التذكرة', description: e instanceof Error ? e.message : undefined })
+    }
+  }
+
   const filters: [Filter, string][] = [
     ['all', 'الكل'],
     ...(caps.ticketExtras ? [['mine', meMember ? `المعيّنة لـ ${meMember.full_name}` : 'المعيّنة لي'], ['unassigned', 'بدون مسؤول']] as [Filter, string][] : []),
@@ -140,25 +192,35 @@ export function DashboardV2Tickets() {
             <button key={k} type="button" aria-pressed={filter === k} onClick={() => setFilter(k)}>{l}</button>
           ))}
         </div>
+        {caps.ticketBoard && (
+          <span style={{ marginInlineStart: 'auto' }}>
+            <Button variant="secondary" size="sm" onClick={() => setStagesOpen(true)}><Columns3 size={14} /> تخصيص الأعمدة</Button>
+          </span>
+        )}
       </div>
 
       {error && <div className="ops-note" style={{ background: 'var(--bad-bg)', color: 'var(--bad)' }}>تعذّر تحميل التذاكر: {error}</div>}
 
-      <div className="ops-board">
-        {COLUMNS.map((k) => {
-          const items = list.filter((t) => t.status === k)
+      <div className={`ops-board${cols.length > 3 ? ' many' : ''}`}>
+        {cols.map((c) => {
+          const items = list.filter((t) => colOf(t) === c.key)
           return (
-            <section key={k} className="ops-col" aria-label={STATUS[k].label}>
+            <section
+              key={c.key} className={`ops-col${dropKey === c.key ? ' drop' : ''}`} aria-label={c.label}
+              onDragOver={(e) => { if (e.dataTransfer.types.includes('text/ticket')) { e.preventDefault(); setDropKey(c.key) } }}
+              onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDropKey(null) }}
+              onDrop={(e) => { e.preventDefault(); const id = e.dataTransfer.getData('text/ticket'); if (id) void dropOn(c, id) }}
+            >
               <div className="ops-col-head">
-                <span style={{ width: 9, height: 9, borderRadius: '50%', background: STATUS[k].color }} />
-                {STATUS[k].label}
+                <span style={{ width: 9, height: 9, borderRadius: '50%', background: c.color }} />
+                {c.label}
                 <span className="n">{loading ? '' : items.length}</span>
               </div>
               {loading
                 ? [0, 1].map((i) => <Skeleton key={i} height={96} radius="14px" />)
                 : items.length
-                  ? items.map((t) => <TicketCard key={t.id} t={t} onOpen={() => setOpenId(t.id)} />)
-                  : <div className="ops-empty-line">ما فيه تذاكر هنا</div>}
+                  ? items.map((t) => <TicketCard key={t.id} t={t} onOpen={() => setOpenId(t.id)} subtasks={progress.get(t.id)} />)
+                  : <div className="ops-empty-line">{dropKey === c.key ? 'أفلتها هنا' : 'ما فيه تذاكر هنا'}</div>}
             </section>
           )
         })}
@@ -167,7 +229,9 @@ export function DashboardV2Tickets() {
       <TicketDialog
         ticket={openTicket} onClose={() => setOpenId(null)} caps={caps} team={members} isDemo={isDemo}
         base={base} agentName={agentName} authorName={authorName} canOpenCalls={hasModule('voice')}
+        stages={stages} subtasks={(subtaskRows || []).filter((s) => s.ticket_id === openId)}
       />
+      <StagesDialog open={stagesOpen} onClose={() => setStagesOpen(false)} stages={stages} companyId={companyId} isDemo={isDemo} />
       <NewTicketDialog
         open={newOpen} onClose={() => setNewOpen(false)} callId={callId} companyId={companyId} isDemo={isDemo}
         caps={caps} team={members} authorName={authorName}

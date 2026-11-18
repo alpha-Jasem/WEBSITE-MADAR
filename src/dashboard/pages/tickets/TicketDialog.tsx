@@ -1,11 +1,11 @@
 import { useState, type FormEvent } from 'react'
-import { Check, Info } from 'lucide-react'
+import { Check, Info, Plus, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Dialog } from '@/dashboard/components/primitives'
 import { useToast } from '@/dashboard/components/uiExtras'
 import {
-  addTicketNote, updateOpsTicket, useTicketNotes,
-  type OpsCaps, type OpsTicket, type TeamMember,
+  addTicketNote, addTicketSubtask, removeTicketSubtask, setTicketSubtaskDone, updateOpsTicket, useTicketNotes,
+  type OpsCaps, type OpsTicket, type TeamMember, type TicketStage, type TicketSubtask,
 } from '@/lib/queries/ops'
 import type { TicketStatus } from '@/types/dashboard'
 import { PRIORITY, STATUS, customerOf, dueLabel, isAiOpened, isLate, phoneOf, relTime, shortId, typeOf } from './ticketModel'
@@ -16,7 +16,7 @@ function Chip({ label, color, bg }: { label: string; color: string; bg: string }
   return <span className="ops-chip" style={{ color, background: bg }}>{label}</span>
 }
 
-export function TicketDialog({ ticket, onClose, caps, team, isDemo, base, agentName, authorName, canOpenCalls }: {
+export function TicketDialog({ ticket, onClose, caps, team, isDemo, base, agentName, authorName, canOpenCalls, stages = [], subtasks = [] }: {
   ticket: OpsTicket | null
   onClose: () => void
   caps: OpsCaps
@@ -26,6 +26,8 @@ export function TicketDialog({ ticket, onClose, caps, team, isDemo, base, agentN
   agentName: string
   authorName: string
   canOpenCalls: boolean
+  stages?: TicketStage[]
+  subtasks?: TicketSubtask[]
 }) {
   const pushToast = useToast()
   const navigate = useNavigate()
@@ -33,6 +35,7 @@ export function TicketDialog({ ticket, onClose, caps, team, isDemo, base, agentN
   const { data: notes } = useTicketNotes(ticket?.id ?? null, ticket?.company_id ?? null, isDemo, notesEnabled)
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
+  const [subTitle, setSubTitle] = useState('')
 
   if (!ticket) return <Dialog open={false} title="" onClose={onClose}>{null}</Dialog>
   const t = ticket
@@ -78,6 +81,27 @@ export function TicketDialog({ ticket, onClose, caps, team, isDemo, base, agentN
     }
   }
 
+  async function setStage(stageId: string) {
+    const s = stages.find((x) => x.id === stageId)
+    if (!s) return
+    try {
+      await updateOpsTicket(t.id, { stage_id: s.id, status: s.status }, isDemo)
+      await addTicketNote({ ticket_id: t.id, company_id: t.company_id, kind: 'status', body: `انتقلت إلى «${s.name}»`, author_name: authorName }, caps, isDemo).catch(() => {})
+    } catch (e) {
+      pushToast({ kind: 'danger', title: 'تعذّر نقل التذكرة', description: e instanceof Error ? e.message : undefined })
+    }
+  }
+
+  async function addSub(e: FormEvent) {
+    e.preventDefault()
+    if (!subTitle.trim()) return
+    try { await addTicketSubtask(t, subTitle, subtasks.length, isDemo); setSubTitle('') }
+    catch (err) { pushToast({ kind: 'danger', title: 'تعذّر إضافة المهمة', description: err instanceof Error ? err.message : undefined }) }
+  }
+  const subAct = (fn: () => Promise<void>) => { fn().catch((err) => pushToast({ kind: 'danger', title: 'تعذّر التحديث', description: err instanceof Error ? err.message : undefined })) }
+  const stageNow = stages.find((s) => s.id === t.stage_id && s.status === t.status) || stages.find((s) => s.status === t.status)
+  const doneCount = subtasks.filter((s) => s.done).length
+
   const go = (path: string) => { onClose(); navigate(`${base}${path}`) }
   let source: { label: string; onClick: () => void } | null = null
   if (t.ai_call_id && canOpenCalls) source = { label: 'افتح المكالمة', onClick: () => go(`/conversations?id=call:${t.ai_call_id}`) }
@@ -116,10 +140,34 @@ export function TicketDialog({ ticket, onClose, caps, team, isDemo, base, agentN
             </select>
           </dd>
         </>}
+        {stages.length > 0 && <>
+          <dt><label htmlFor="tk-stage">العمود</label></dt>
+          <dd>
+            <select id="tk-stage" className="ops-input sm" style={{ maxWidth: 220 }} value={stageNow?.id ?? ''} onChange={(e) => setStage(e.target.value)}>
+              {stages.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </dd>
+        </>}
         {source && <><dt>المصدر</dt><dd><button type="button" className="ops-link" onClick={source.onClick}>{source.label}</button></dd></>}
       </dl>
 
       {t.description && <div className="ops-desc">{t.description}</div>}
+
+      {caps.ticketBoard && (
+        <div className="ops-subs">
+          <h4>المهام الفرعية {subtasks.length > 0 && <span>{doneCount}/{subtasks.length}</span>}</h4>
+          {subtasks.map((s) => (
+            <div key={s.id} className={`ops-sub-row${s.done ? ' done' : ''}`}>
+              <label><input type="checkbox" checked={s.done} onChange={(e) => subAct(() => setTicketSubtaskDone(s.id, e.target.checked, isDemo))} /> {s.title}</label>
+              <button type="button" className="ops-icon" aria-label={`حذف ${s.title}`} onClick={() => subAct(() => removeTicketSubtask(s.id, isDemo))}><X size={14} /></button>
+            </div>
+          ))}
+          <form className="ops-reply" onSubmit={addSub} style={{ marginTop: 4 }}>
+            <input className="ops-input sm" aria-label="مهمة فرعية جديدة" placeholder="أضف مهمة فرعية" autoComplete="off" value={subTitle} onChange={(e) => setSubTitle(e.target.value)} />
+            <Button variant="secondary" size="sm" disabled={!subTitle.trim()}><Plus size={14} /> إضافة</Button>
+          </form>
+        </div>
+      )}
 
       <div className="ops-timeline">
         <div className="ops-tl"><i /><div>{isAiOpened(t) ? `${agentName} فتح التذكرة من المكالمة` : 'فتحها الفريق يدويًا'}<small>{relTime(t.created_at)}</small></div></div>

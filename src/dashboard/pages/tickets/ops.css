@@ -106,11 +106,27 @@ textarea.ops-input { min-height: 96px; resize: vertical; line-height: 1.7; }
 .ops-msg.a { align-self: flex-start; background: var(--panel-2); border: 1px solid var(--line); }
 .ops-msg .who { display: block; font-size: 11px; color: var(--dim); margin-bottom: 2px; }
 
+/* Custom board columns and subtasks */
+.ops-board.many { display: flex; overflow-x: auto; padding-bottom: 6px; }
+.ops-board.many .ops-col { flex: 0 0 280px; }
+.ops-col.drop { border-color: var(--ink); background: var(--hover-bg); }
+.ops-tk[draggable="true"] { cursor: grab; }
+.ops-icon { border: 0; background: none; color: var(--muted); cursor: pointer; padding: 6px; border-radius: 8px; display: grid; place-items: center; }
+.ops-icon:hover:not(:disabled) { background: var(--hover-bg); color: var(--ink); }
+.ops-icon:disabled { opacity: .35; cursor: default; }
+.ops-subs { margin-top: 16px; display: flex; flex-direction: column; gap: 4px; }
+.ops-subs h4 { margin: 0 0 4px; font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; gap: 8px; align-items: center; }
+.ops-subs h4 span { color: var(--dim); font-weight: 500; }
+.ops-sub-row { display: flex; align-items: center; gap: 8px; padding: 4px 2px; font-size: 13.5px; color: var(--text-primary); }
+.ops-sub-row label { flex: 1; display: flex; gap: 8px; align-items: center; cursor: pointer; min-width: 0; overflow-wrap: anywhere; }
+.ops-sub-row.done label { color: var(--dim); text-decoration: line-through; }
+
 @media (max-width: 1150px) {
   .ops-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 900px) {
   .ops-board, .ops-grid-2, .ops-form-grid { grid-template-columns: 1fr; }
+  .ops-board.many .ops-col { flex-basis: 82vw; }
 }
 @media (max-width: 520px) {
   .ops-hour-row { grid-template-columns: 58px auto minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }

@@ -2,6 +2,7 @@
 //   POST { event_id }        from the database trigger, header x-runner-secret  -> runs the rules for one queued event
 //   POST { sweep: true }     from the one-minute cron, same header              -> retries events left unprocessed
 //   POST { test: rule_id }   from the dashboard (signed-in user's JWT)          -> runs one rule with a sample event
+// conversation.no_reply events are queued per rule by the connect_no_reply_sweep cron (payload.rule_id).
 // Store events (order.created, order.status_changed, cart.abandoned) come from the Salla tables.
 // Actions: webhook (generic JSON, Slack, Discord, Telegram, Zapier/Make/n8n/Sheets), transfer to a team,
 // open a ticket, send a WhatsApp template, or post an in-dashboard notification.
@@ -30,6 +31,9 @@ const SAMPLES: Record<string, Payload> = {
   'booking.created': { booking: { id: 'sample', date: '2026-10-20', time: '16:30:00', service: 'استشارة', status: 'confirmed', source: 'ai' }, customer: { name: 'عميل تجريبي', phone: '966500000000' } },
   'customer.created': { customer: { id: 'sample', name: 'عميل تجريبي', phone: '966500000000' } },
   'review.new': { review: { rating: 5, author: 'عميل تجريبي', text: 'خدمة ممتازة' } },
+  'conversation.reopened': { conversation: { key: 'chat:0500000000', phone: '966500000000', name: 'عميل تجريبي', channel: 'whatsapp', summary: 'رجع يسأل عن طلبه' }, customer: { name: 'عميل تجريبي', phone: '966500000000' }, days_away: 12, was_closed: true },
+  'conversation.no_reply': { conversation: { key: 'chat:0500000000', phone: '966500000000', name: 'عميل تجريبي', channel: 'whatsapp', summary: 'يبي يكلم موظف' }, customer: { name: 'عميل تجريبي', phone: '966500000000' }, waited_minutes: 30 },
+  'form.submitted': { form: { id: 'sample', name: 'نموذج الموقع' }, customer: { name: 'عميل تجريبي', phone: '0500000000', email: null }, fields: { name: 'عميل تجريبي', phone: '0500000000', message: 'أبي عرض سعر' }, summary: 'الرسالة: أبي عرض سعر', page_url: 'https://example.com' },
   'order.created': { order: { id: 1, reference: '100200', status: 'بإنتظار المراجعة', status_slug: 'under_review', total: 249, currency: 'SAR' }, customer: { name: 'عميل تجريبي', phone: '966500000000' } },
   'order.status_changed': { order: { id: 1, reference: '100200', status: 'تم الشحن', status_slug: 'shipped', total: 249, currency: 'SAR', tracking_link: 'https://example.com/track' }, previous_status: 'قيد التنفيذ', customer: { name: 'عميل تجريبي', phone: '966500000000' } },
   'cart.abandoned': { cart: { id: 1, total: 180, currency: 'SAR', checkout_url: 'https://example.com/checkout', items_count: 2 }, customer: { name: 'عميل تجريبي', phone: '966500000000' } },
@@ -45,6 +49,9 @@ function summarize(event: string, p: Payload): string {
     case 'booking.created': return `حجز جديد: ${who} · ${p.booking?.service || ''} · ${p.booking?.date || ''} ${String(p.booking?.time || '').slice(0, 5)}`
     case 'customer.created': return `عميل جديد: ${p.customer?.name || ''} ${p.customer?.phone || ''}`
     case 'review.new': return `تقييم جديد ${p.review?.rating || ''}★ من ${p.review?.author || ''}: ${p.review?.text || ''}`
+    case 'conversation.reopened': return `رجع ${who} بعد ${p.days_away ?? ''} يوم: ${p.conversation?.summary || ''}`.trim()
+    case 'conversation.no_reply': return `محادثة ${who} بدون رد من الفريق من ${p.waited_minutes ?? ''} دقيقة`
+    case 'form.submitted': return `عميل جديد من نموذج «${p.form?.name || ''}»: ${who}${p.summary ? ` · ${p.summary}` : ''}`
     case 'order.created': return `طلب جديد #${p.order?.reference || p.order?.id || ''} من ${who} · ${p.order?.total ?? ''} ${p.order?.currency || ''}`.trim()
     case 'order.status_changed': return `طلب #${p.order?.reference || p.order?.id || ''} صار «${p.order?.status || ''}» · ${who}`
     case 'cart.abandoned': return `سلة متروكة من ${who} · ${p.cart?.total ?? ''} ${p.cart?.currency || ''}`.trim()
@@ -171,7 +178,10 @@ async function runRule(db: SupabaseClient, rule: Rule, event: string, p: Payload
 }
 
 async function processEvent(db: SupabaseClient, ev: { id: string; company_id: string; event: string; payload: Payload }) {
-  const { data: rules } = await db.from('connect_rules').select('*').eq('company_id', ev.company_id).eq('trigger_event', ev.event).eq('enabled', true)
+  let q = db.from('connect_rules').select('*').eq('company_id', ev.company_id).eq('trigger_event', ev.event).eq('enabled', true)
+  // Timed events (no reply) are queued for one rule, since each rule has its own waiting time.
+  if (typeof ev.payload?.rule_id === 'string') q = q.eq('id', ev.payload.rule_id)
+  const { data: rules } = await q
   for (const rule of (rules || []) as Rule[]) if (matches(rule, ev.payload)) await runRule(db, rule, ev.event, ev.payload)
   await db.from('connect_events').update({ processed_at: new Date().toISOString() }).eq('id', ev.id)
 }

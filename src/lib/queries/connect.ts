@@ -7,6 +7,7 @@ import { supabase } from '../supabase'
 
 export type TriggerEvent =
   | 'conversation.new' | 'conversation.needs_review' | 'conversation.transferred'
+  | 'conversation.reopened' | 'conversation.no_reply' | 'form.submitted'
   | 'ticket.created' | 'booking.created' | 'customer.created' | 'review.new'
   | 'order.created' | 'order.status_changed' | 'cart.abandoned'
 export type ActionType = 'webhook' | 'transfer' | 'ticket' | 'whatsapp' | 'notify'
@@ -15,7 +16,7 @@ export interface ConnectRule {
   id: string
   name: string
   trigger_event: TriggerEvent
-  conditions: { channel?: string; contains?: string; priority?: string; order_status?: string }
+  conditions: { channel?: string; contains?: string; priority?: string; order_status?: string; minutes?: number }
   action_type: ActionType
   action_config: Record<string, unknown>
   enabled: boolean
@@ -29,6 +30,9 @@ export const TRIGGER_LABELS: Record<TriggerEvent, string> = {
   'conversation.new': 'وصلت محادثة جديدة',
   'conversation.needs_review': 'محادثة تحتاج مراجعة',
   'conversation.transferred': 'حُوّلت محادثة لفريق',
+  'conversation.reopened': 'رجع عميل قديم يكلمنا',
+  'conversation.no_reply': 'محادثة ما رد عليها الفريق في الوقت',
+  'form.submitted': 'عبّى أحد نموذج الموقع',
   'ticket.created': 'انفتحت تذكرة',
   'booking.created': 'انحجز موعد',
   'customer.created': 'انضاف عميل جديد',
@@ -53,6 +57,9 @@ export const EVENT_FIELDS: Partial<Record<TriggerEvent, string[]>> = {
   'order.created': ['{{customer.name}}', '{{order.reference}}', '{{order.total}}'],
   'order.status_changed': ['{{customer.name}}', '{{order.reference}}', '{{order.status}}', '{{order.tracking_link}}'],
   'cart.abandoned': ['{{customer.name}}', '{{cart.total}}', '{{cart.checkout_url}}'],
+  'conversation.reopened': ['{{customer.name}}', '{{days_away}}', '{{summary_text}}'],
+  'conversation.no_reply': ['{{customer.name}}', '{{waited_minutes}}', '{{summary_text}}'],
+  'form.submitted': ['{{customer.name}}', '{{form.name}}', '{{summary}}'],
 }
 
 export const ACTION_LABELS: Record<ActionType, string> = {
@@ -84,6 +91,12 @@ export const RECIPES: { title: string; desc: string; rule: Omit<ConnectRule, 'id
     rule: { name: 'تذكرة عاجلة ← Telegram', trigger_event: 'ticket.created', conditions: { priority: 'high' }, action_type: 'webhook', action_config: { preset: 'telegram' } } },
   { title: 'أرسل كل عميل جديد لـ Zapier أو Make', desc: 'اربطه بأي CRM أو أداة ثانية.',
     rule: { name: 'عميل جديد ← Zapier', trigger_event: 'customer.created', conditions: {}, action_type: 'webhook', action_config: { preset: 'zapier' } } },
+  { title: 'رد على عميل النموذج خلال ثواني', desc: 'أول ما أحد يعبّي نموذج موقعك، يوصله واتساب منك.',
+    rule: { name: 'نموذج الموقع ← واتساب', trigger_event: 'form.submitted', conditions: {}, action_type: 'whatsapp', action_config: {} } },
+  { title: 'نبّهني لو محادثة تأخر ردها', desc: 'إشعار داخل اللوحة لو مرت 30 دقيقة بدون رد من الفريق.',
+    rule: { name: 'تأخر الرد ← إشعار', trigger_event: 'conversation.no_reply', conditions: { minutes: 30 }, action_type: 'notify', action_config: { title: 'محادثة تنتظر رد' } } },
+  { title: 'رحّب بالعميل اللي رجع لك', desc: 'لما يرجع عميل بعد إغلاق محادثته أو غياب أسبوع، تروح لفريقك.',
+    rule: { name: 'عميل رجع ← فريق', trigger_event: 'conversation.reopened', conditions: {}, action_type: 'transfer', action_config: {} } },
   { title: 'ذكّر العميل بسلته المتروكة على واتساب', desc: 'رسالة فيها رابط إكمال الطلب، أول ما تتروك السلة.',
     rule: { name: 'سلة متروكة ← واتساب', trigger_event: 'cart.abandoned', conditions: {}, action_type: 'whatsapp', action_config: {} } },
   { title: 'أكّد الطلب الجديد للعميل على واتساب', desc: 'شكر ورقم الطلب أول ما يوصل.',

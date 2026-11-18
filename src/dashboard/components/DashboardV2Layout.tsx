@@ -5,7 +5,7 @@ import { DURATION_MEDIUM, EASE_OUT } from './motionTokens'
 import {
   LayoutDashboard, CalendarDays, Users, MessageSquare, Star, BarChart3,
   Wallet, BellRing, Settings, AlertTriangle, Plus, Ticket,
-  ClipboardList, BookOpen, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Search, Send, ShoppingBag, UsersRound, Zap, Layers, Megaphone, WandSparkles,
+  ClipboardList, BookOpen, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Search, Send, ShoppingBag, UsersRound, Zap, Layers, Megaphone, WandSparkles, FileInput,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useSupportTickets } from '@/lib/dashboardQueries'
@@ -260,6 +260,7 @@ export function DashboardV2Layout() {
       { label: bookingsLabel(businessType), path: `${base}/bookings`, icon: <CalendarDays size={16} />, module: 'bookings' },
       { label: 'العملاء', path: `${base}/patients`, icon: <Users size={16} />, module: 'customers' },
       { label: 'الشرائح', path: `${base}/segments`, icon: <Layers size={16} />, module: 'customers' },
+      { label: 'نماذج الموقع', short: 'النماذج', path: `${base}/forms`, icon: <FileInput size={16} />, module: 'customers', perm: 'integrations.manage' },
       { label: 'الحملات', path: `${base}/campaigns`, icon: <Megaphone size={16} />, module: 'conversations', perm: 'outreach.send' },
       { label: 'الطلبات', path: `${base}/orders`, icon: <ShoppingBag size={16} />, module: 'orders' },
       { label: 'التذاكر', path: `${base}/tickets`, icon: <Ticket size={16} />, badge: openTicketCount || undefined, module: 'tickets' },

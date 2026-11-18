@@ -24,6 +24,7 @@ export interface OpsTicket extends SupportTicket {
   customer_phone?: string | null
   ticket_type?: string | null
   due_at?: string | null
+  stage_id?: string | null
 }
 
 export type TicketNoteKind = 'note' | 'status' | 'assign'
@@ -99,10 +100,12 @@ export interface OpsCaps {
   unanswered: boolean
   agentSettings: boolean
   agentLinks: boolean
+  /** ticket_stages, ticket_subtasks and ai_agent_support_tickets.stage_id */
+  ticketBoard: boolean
 }
 
-const ALL_CAPS: OpsCaps = { ticketExtras: true, ticketCallLink: true, ticketNotes: true, unanswered: true, agentSettings: true, agentLinks: true }
-const NO_CAPS: OpsCaps = { ticketExtras: false, ticketCallLink: false, ticketNotes: false, unanswered: false, agentSettings: false, agentLinks: false }
+const ALL_CAPS: OpsCaps = { ticketExtras: true, ticketCallLink: true, ticketNotes: true, unanswered: true, agentSettings: true, agentLinks: true, ticketBoard: true }
+const NO_CAPS: OpsCaps = { ticketExtras: false, ticketCallLink: false, ticketNotes: false, unanswered: false, agentSettings: false, agentLinks: false, ticketBoard: false }
 
 // ─── Demo store ────────────────────────────────────────────────────────────────
 
@@ -112,6 +115,8 @@ const demo = {
   questions: DEMO_UNANSWERED.map((q) => ({ ...q })),
   kb: DEMO_KB.map((k) => ({ ...k })),
   settings: { ...DEMO_AGENT_SETTINGS } as AgentSettings,
+  stages: [] as TicketStage[],
+  subtasks: [] as TicketSubtask[],
 }
 let demoVersion = 0
 const demoListeners = new Set<() => void>()
@@ -157,8 +162,9 @@ function loadCaps(): Promise<OpsCaps> {
       probe('agent_unanswered_questions', 'id'),
       probe('agent_settings', 'company_id'),
       probe('agent_links', 'agent_id'),
-    ]).then(([ticketExtras, ticketCallLink, ticketNotes, unanswered, agentSettings, agentLinks]) => (
-      { ticketExtras, ticketCallLink, ticketNotes, unanswered, agentSettings, agentLinks }
+      probe('ticket_subtasks', 'id'),
+    ]).then(([ticketExtras, ticketCallLink, ticketNotes, unanswered, agentSettings, agentLinks, ticketBoard]) => (
+      { ticketExtras, ticketCallLink, ticketNotes, unanswered, agentSettings, agentLinks, ticketBoard }
     )).catch(() => { capsPromise = null; return NO_CAPS })
   }
   return capsPromise
@@ -327,7 +333,7 @@ export async function findTicketForCall(callId: string, caps: OpsCaps, isDemo: b
 
 export async function updateOpsTicket(
   id: string,
-  patch: Partial<Pick<OpsTicket, 'status' | 'assignee_user_id' | 'assignee_name' | 'priority'>>,
+  patch: Partial<Pick<OpsTicket, 'status' | 'assignee_user_id' | 'assignee_name' | 'priority' | 'stage_id'>>,
   isDemo: boolean,
 ) {
   const updated_at = new Date().toISOString()
@@ -370,6 +376,79 @@ export async function addTicketNote(
   }
   if (!caps.ticketNotes) return
   const { error } = await supabase.from('ticket_notes').insert({ ...input, author_name: input.author_name || null })
+  if (error) throw error
+}
+
+// ─── Ticket board: stages and subtasks (migration 20261118120000) ──────────────
+
+export interface TicketStage { id: string; name: string; status: TicketStatus; position: number; color: string | null }
+export interface TicketSubtask { id: string; ticket_id: string; title: string; done: boolean; position: number }
+
+export function useTicketStages(companyId: string | null, isDemo: boolean, enabled: boolean) {
+  return useLive<TicketStage[]>(async () => {
+    if (isDemo) return demo.stages.map((s) => ({ ...s }))
+    if (!companyId || !enabled) return []
+    const { data, error } = await supabase.from('ticket_stages').select('id, name, status, position, color').eq('company_id', companyId).order('position')
+    if (error) throw error
+    return (data ?? []) as TicketStage[]
+  }, [companyId, isDemo, enabled], { table: 'ticket_stages', companyId, enabled: !isDemo && enabled })
+}
+
+/**
+ * Saves the whole column list: rows with an id are updated, new ones inserted, missing ones removed
+ * (their tickets fall back to the first stage of their status).
+ */
+export async function saveTicketStages(companyId: string, isDemo: boolean, stages: (Omit<TicketStage, 'id'> & { id?: string })[]) {
+  const rows = stages.map((s, i) => ({ ...s, name: s.name.trim(), position: i })).filter((s) => s.name)
+  if (isDemo) {
+    demoChange(() => { demo.stages = rows.map((s) => ({ ...s, id: s.id || demoId(), color: s.color ?? null })) })
+    return
+  }
+  const { data: current, error: readErr } = await supabase.from('ticket_stages').select('id').eq('company_id', companyId)
+  if (readErr) throw readErr
+  const keep = new Set(rows.filter((r) => r.id).map((r) => r.id))
+  const gone = (current ?? []).map((r) => r.id as string).filter((id) => !keep.has(id))
+  if (gone.length) {
+    const { error } = await supabase.from('ticket_stages').delete().in('id', gone).eq('company_id', companyId)
+    if (error) throw error
+  }
+  for (const r of rows) {
+    const values = { name: r.name, status: r.status, position: r.position, color: r.color ?? null }
+    const { error } = r.id
+      ? await supabase.from('ticket_stages').update(values).eq('id', r.id).eq('company_id', companyId)
+      : await supabase.from('ticket_stages').insert({ company_id: companyId, ...values })
+    if (error) throw error
+  }
+}
+
+/** Every subtask of the company's tickets, for the progress shown on the cards. */
+export function useCompanySubtasks(companyId: string | null, isDemo: boolean, enabled: boolean) {
+  return useLive<TicketSubtask[]>(async () => {
+    if (isDemo) return demo.subtasks.map((s) => ({ ...s }))
+    if (!companyId || !enabled) return []
+    const { data, error } = await supabase.from('ticket_subtasks').select('id, ticket_id, title, done, position').eq('company_id', companyId).order('position').limit(5000)
+    if (error) throw error
+    return (data ?? []) as TicketSubtask[]
+  }, [companyId, isDemo, enabled], { table: 'ticket_subtasks', companyId, enabled: !isDemo && enabled })
+}
+
+export async function addTicketSubtask(t: Pick<OpsTicket, 'id' | 'company_id'>, title: string, position: number, isDemo: boolean) {
+  const clean = title.trim()
+  if (!clean) return
+  if (isDemo) { demoChange(() => { demo.subtasks.push({ id: demoId(), ticket_id: t.id, title: clean, done: false, position }) }); return }
+  const { error } = await supabase.from('ticket_subtasks').insert({ ticket_id: t.id, company_id: t.company_id, title: clean, position })
+  if (error) throw error
+}
+
+export async function setTicketSubtaskDone(id: string, done: boolean, isDemo: boolean) {
+  if (isDemo) { demoChange(() => { const s = demo.subtasks.find((x) => x.id === id); if (s) s.done = done }); return }
+  const { error } = await supabase.from('ticket_subtasks').update({ done }).eq('id', id)
+  if (error) throw error
+}
+
+export async function removeTicketSubtask(id: string, isDemo: boolean) {
+  if (isDemo) { demoChange(() => { demo.subtasks = demo.subtasks.filter((x) => x.id !== id) }); return }
+  const { error } = await supabase.from('ticket_subtasks').delete().eq('id', id)
   if (error) throw error
 }
 
