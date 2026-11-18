@@ -332,8 +332,8 @@ h3{font-size:17px;font-weight:500;margin:0}
         <div class="state" id="state"><i></i><span id="stTx">جاهز. اضغط وكلّم مدار.</span></div>
         <div class="tx" id="tx" aria-live="polite"></div>
         <div class="btns">
-          <button class="btn pri" id="talk" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg><span id="talkTx">كلّم مدار</span></button>
-          <a class="btn" href="https://cal.eu/jasem-altubaishi-mvxhz5/madar-.-ai" target="_blank" rel="noopener">احجز جلسة تعريفية</a>
+          <button class="btn pri" id="talk" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg><span id="talkTx">اتواصل مع وكيل مدار الصوتي</span></button>
+          
         </div>
         <span class="hnote">مكالمة صوتية حقيقية مع وكيل مدار. يحتاج إذن المايكروفون.</span>
         <span class="cue">انزل، والكرة تنزل معك</span>
@@ -576,7 +576,7 @@ var mode='idle',running=false,room=null,audioEl=null,ampT=0;
 var TOKEN_ENDPOINT='https://aacnqiuwrpzgxhzdavaq.supabase.co/functions/v1/madar-nabrah-token';
 function setMode(m,t){mode=m;st.className='state'+(m==='a'?' a':m==='c'?' c':'');stTx.textContent=t}
 function cleanup(){if(room){try{room.disconnect()}catch(e){}room=null}if(audioEl){audioEl.remove();audioEl=null}}
-function end(msg){running=false;cleanup();btnTx.textContent='كلّم مدار';setMode('idle',msg||'جاهز. اضغط وكلّم مدار.')}
+function end(msg){running=false;cleanup();btnTx.textContent='اتواصل مع وكيل مدار الصوتي';setMode('idle',msg||'جاهز. اضغط وكلّم مدار.')}
 async function startCall(){if(running)return;running=true;btnTx.textContent='جاري الاتصال…';setMode('idle','جاري الاتصال بالوكيل…');
  try{await navigator.mediaDevices.getUserMedia({audio:true});var LK=await import('https://esm.sh/livekit-client@2.16.1');
  var res=await fetch(TOKEN_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});if(!res.ok)throw new Error('token endpoint '+res.status);
