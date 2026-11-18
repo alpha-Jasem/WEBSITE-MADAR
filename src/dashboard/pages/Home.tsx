@@ -12,7 +12,7 @@ import {
   buildConversations, callChannel, callDisplayName, fmtWhen, copyText, CHANNEL_LABEL, type ConvChannel, type ConvItem,
 } from './conversations/model'
 import {
-  AlertBanner, AgentCard, KpiTiles, NeedsAction, HourlyChart, RecentConversations, TicketsMini, PlanCard, Onboarding, HomeSkeleton,
+  AlertBanner, AgentCard, KpiTiles, ReplyRing, NeedsAction, HourlyChart, RecentConversations, TicketsMini, PlanCard, Onboarding, HomeSkeleton,
   PERIOD_WORD, type Period, type HomeAlert, type KpiTile, type InboxEntry, type OnboardStep,
 } from './home/sections'
 
@@ -93,7 +93,12 @@ export function DashboardV2Home() {
     const bk = bookings.filter((b) => inRange(b.created_at, from, now))
     const bkPrev = bookings.filter((b) => inRange(b.created_at, prevFrom, from)).length
     const resolved = pc.filter((c) => c.status === 'completed' && !c.needs_review && c.result !== 'referred' && c.result !== 'failed').length
+    // Who answered every conversation in the period (calls and chats): the agent alone, the team, or still open.
+    const all = agentCalls.filter((c) => inRange(c.call_time, from, now))
+    const byAgent = all.filter((c) => c.status === 'completed' && !c.needs_review && c.result !== 'referred' && c.result !== 'failed').length
+    const byTeam = all.filter((c) => c.needs_review || c.result === 'referred').length
     return {
+      ring: { total: all.length, agent: byAgent, team: byTeam, open: Math.max(0, all.length - byAgent - byTeam) },
       calls: pc, callsPrev: pcPrev.length, chats, msgs, msgsPrev, bookings: bk, bookingsPrev: bkPrev, resolved,
       talkSeconds: pc.reduce((a, c) => a + (c.duration_seconds || 0), 0),
       attention: pc.filter((c) => c.needs_review || c.status !== 'completed').length,
@@ -301,17 +306,17 @@ export function DashboardV2Home() {
         </div>
       </div>
 
-      {showVoice ? (
-        <div className="nx-grid-2">
-          <AgentCard
-            status={agentStatus} statusTone={lastActive ? 'ok' : 'dim'} active={lastActive} channels={activeChannels} stats={agentStats}
-            onCalls={() => go('call-logs')} onSettings={() => go('agents')}
-          />
-          <KpiTiles tiles={tiles} />
-        </div>
-      ) : (
-        <KpiTiles tiles={tiles} wide />
-      )}
+      <div className="nx-grid-2">
+        <ReplyRing
+          title={`مين رد على عملائك ${periodWord}`} total={p.ring.total} totalLabel={`محادثة ${periodWord}`}
+          parts={[
+            { label: 'الوكيل', value: p.ring.agent, color: 'var(--ring-1)' },
+            { label: 'فريقك', value: p.ring.team, color: 'var(--ring-2)' },
+            { label: 'ما اكتملت', value: p.ring.open, color: 'var(--ring-3)' },
+          ]}
+        />
+        <KpiTiles tiles={tiles} />
+      </div>
 
       <div className="nx-grid-2">
         <NeedsAction
@@ -325,6 +330,12 @@ export function DashboardV2Home() {
       <div className="nx-grid-3">
         <RecentConversations items={recent} onOpen={openItem} onViewAll={() => go('conversations')} />
         <div className="nx-stack">
+          {showVoice && (
+            <AgentCard
+              status={agentStatus} statusTone={lastActive ? 'ok' : 'dim'} active={lastActive} channels={activeChannels} stats={agentStats}
+              onCalls={() => go('call-logs')} onSettings={() => go('agents')}
+            />
+          )}
           {showTickets && <TicketsMini {...ticketCounts} onViewAll={() => go('tickets')} />}
           <PlanCard metrics={visibleMetrics} renewsOn={renewsOn} onDetails={() => go('plan-usage')} />
         </div>

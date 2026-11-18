@@ -352,7 +352,7 @@ export function DashboardV2Layout() {
 
       <aside className={`dv2-side${collapsed ? ' is-collapsed' : ''}`} aria-label="القائمة الرئيسية">
         <div className="dv2-logo">
-          <img src="/logo-main.png" alt="" />
+          <img src="/logo-orbit.png" alt="" />
           {!collapsed && 'مدار'}
         </div>
         <button type="button" className="dv2-side-search" onClick={() => requestOpenSearch()} aria-label="ابحث أو أنشئ">

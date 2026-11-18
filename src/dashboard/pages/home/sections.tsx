@@ -27,6 +27,46 @@ export function AlertBanner({ alert }: { alert: HomeAlert }) {
   )
 }
 
+// ─── who answered: the logo's three-part ring ───────────────────────────────
+
+export interface RingPart { label: string; value: number; color: string }
+
+/** The orbit logo as a chart: one ring split between the agent, the team and what is still open. */
+export function ReplyRing({ title, parts, total, totalLabel }: { title: string; parts: RingPart[]; total: number; totalLabel: string }) {
+  const r = 70
+  const c = 2 * Math.PI * r
+  const sum = parts.reduce((a, p) => a + p.value, 0)
+  let offset = 0
+  const arcs = parts.map((p) => {
+    const len = sum ? (p.value / sum) * c : 0
+    const gap = sum && len > 0 && len < c ? Math.min(4, len / 2) : 0
+    const arc = { color: p.color, dash: `${Math.max(0, len - gap)} ${c}`, offset: -offset }
+    offset += len
+    return arc
+  })
+  const pct = (v: number) => (sum ? Math.round((v / sum) * 100) : 0)
+  return (
+    <div className="nx-card nx-ring">
+      <h3>{title}</h3>
+      <div className="nx-ring-body">
+        <svg width="168" height="168" viewBox="0 0 180 180" role="img" aria-label={`${title}: ${parts.map((p) => `${p.label} ${pct(p.value)}%`).join('، ')}`}>
+          <circle cx="90" cy="90" r={r} fill="none" stroke="var(--panel-2)" strokeWidth="18" />
+          {sum > 0 && arcs.map((a, i) => (
+            <circle key={i} cx="90" cy="90" r={r} fill="none" stroke={a.color} strokeWidth="18" strokeDasharray={a.dash} strokeDashoffset={a.offset} transform="rotate(-90 90 90)" />
+          ))}
+          <text x="90" y="88" textAnchor="middle" fill="var(--ink)" fontSize="32" fontWeight="600">{fmtN(total)}</text>
+          <text x="90" y="112" textAnchor="middle" fill="var(--dim)" fontSize="12">{totalLabel}</text>
+        </svg>
+        <ul className="nx-ring-legend">
+          {parts.map((p) => (
+            <li key={p.label}><i style={{ background: p.color }} />{p.label}<b>{fmtN(p.value)} · {pct(p.value)}%</b></li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  )
+}
+
 // ─── agent card ─────────────────────────────────────────────────────────────
 
 export function AgentCard({ status, statusTone, active, channels, stats, onCalls, onSettings }: {
