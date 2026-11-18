@@ -75,6 +75,7 @@ const DashboardV2Agents            = lazy(() => import('./dashboard/pages/Agents
 const DashboardV2KnowledgeBase      = lazy(() => import('./dashboard/pages/KnowledgeBase').then(m => ({ default: m.DashboardV2KnowledgeBase })))
 const DashboardV2Segments         = lazy(() => import('./dashboard/pages/Segments').then(m => ({ default: m.DashboardV2Segments })))
 const DashboardV2Forms            = lazy(() => import('./dashboard/pages/Forms').then(m => ({ default: m.DashboardV2Forms })))
+const DashboardV2WhatsAppConnect = lazy(() => import('./dashboard/pages/WhatsAppConnect').then(m => ({ default: m.DashboardV2WhatsAppConnect })))
 const DashboardV2Campaigns        = lazy(() => import('./dashboard/pages/Campaigns').then(m => ({ default: m.DashboardV2Campaigns })))
 const DashboardV2Zaki             = lazy(() => import('./dashboard/pages/Zaki').then(m => ({ default: m.DashboardV2Zaki })))
 const DashboardV2Outreach         = lazy(() => import('./dashboard/pages/Outreach').then(m => ({ default: m.DashboardV2Outreach })))
@@ -110,6 +111,7 @@ const dashboardChildRoutes = (
     <Route path="knowledge-base" element={<ModuleRoute module="knowledge_base"><DashboardV2KnowledgeBase /></ModuleRoute>} />
     <Route path="outreach" element={<ModuleRoute module="conversations"><PermissionRoute permission="outreach.send"><DashboardV2Outreach /></PermissionRoute></ModuleRoute>} />
     <Route path="segments" element={<ModuleRoute module="customers"><DashboardV2Segments /></ModuleRoute>} />
+    <Route path="whatsapp" element={<ModuleRoute module="conversations"><PermissionRoute permission="integrations.manage"><DashboardV2WhatsAppConnect /></PermissionRoute></ModuleRoute>} />
     <Route path="forms" element={<ModuleRoute module="customers"><PermissionRoute permission="integrations.manage"><DashboardV2Forms /></PermissionRoute></ModuleRoute>} />
     <Route path="campaigns" element={<ModuleRoute module="conversations"><PermissionRoute permission="outreach.send"><DashboardV2Campaigns /></PermissionRoute></ModuleRoute>} />
     <Route path="zaki" element={<DashboardV2Zaki />} />
