@@ -114,9 +114,57 @@ async function runWebhook(rule: Rule, event: string, p: Payload): Promise<string
   return `أُرسل (${res.status})`
 }
 
-async function runAction(db: SupabaseClient, rule: Rule, event: string, p: Payload): Promise<string> {
+/** Any phone format -> +E.164. A local Saudi 05xxxxxxxx becomes +9665xxxxxxxx. */
+function e164(raw: string): string | null {
+  let d = String(raw || '').replace(/\D/g, '')
+  if (d.startsWith('00')) d = d.slice(2)
+  if (/^05\d{8}$/.test(d)) d = '966' + d.slice(1)
+  else if (/^5\d{8}$/.test(d)) d = '966' + d
+  return /^\d{10,15}$/.test(d) ? `+${d}` : null
+}
+
+const CALLS_PER_DAY = 50
+const CALL_COOLDOWN_HOURS = 6
+
+/** The voice agent phones the customer. `dry` (dashboard test) checks everything but never dials. */
+async function placeCall(db: SupabaseClient, rule: Rule, p: Payload, dry: boolean): Promise<string> {
+  const cfg = rule.action_config || {}
+  const key = Deno.env.get('ELEVENLABS_API_KEY')?.trim()
+  if (!key) throw new Error('الاتصال الصوتي غير مفعّل على النظام')
+  const numberId = String(cfg.phone_number_id || '').trim()
+  if (!numberId) throw new Error('حدّد رقم الاتصال في القاعدة')
+  const phone = e164(p.customer?.phone || p.conversation?.phone || '')
+  if (!phone) throw new Error('ما فيه رقم صحيح للعميل')
+  const { data: link } = await db.from('agent_links').select('agent_id').eq('company_id', rule.company_id).eq('provider', 'elevenlabs').limit(1).maybeSingle()
+  if (!link?.agent_id) throw new Error('ما فيه وكيل صوتي مربوط بالشركة')
+
+  // Limits: one call per number per cooldown, and a daily cap per company, so a loop or abuse can't dial people.
+  const digits = phone.slice(1)
+  const since = new Date(Date.now() - CALL_COOLDOWN_HOURS * 3_600_000).toISOString()
+  const { count: recent } = await db.from('connect_runs').select('id', { count: 'exact', head: true })
+    .eq('company_id', rule.company_id).eq('status', 'ok').like('detail', `اتصل بـ ${digits}%`).gte('created_at', since)
+  if ((recent || 0) > 0) throw new Error(`اتصلنا بهالرقم قبل أقل من ${CALL_COOLDOWN_HOURS} ساعات`)
+  const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0)
+  const { count: today } = await db.from('connect_runs').select('id', { count: 'exact', head: true })
+    .eq('company_id', rule.company_id).eq('status', 'ok').like('detail', 'اتصل بـ %').gte('created_at', dayStart.toISOString())
+  if ((today || 0) >= CALLS_PER_DAY) throw new Error(`وصلت الحد اليومي (${CALLS_PER_DAY} مكالمة)`)
+
+  if (dry) return `تجربة: كان بيتصل الوكيل بالرقم ${phone} (ما انتصل فعليًا)`
+  const res = await fetch('https://api.elevenlabs.io/v1/convai/twilio/outbound-call', {
+    method: 'POST',
+    headers: { 'xi-api-key': key, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ agent_id: link.agent_id, agent_phone_number_id: numberId, to_number: phone }),
+    signal: AbortSignal.timeout(15_000),
+  })
+  const out = await res.json().catch(() => ({}))
+  if (!res.ok || out.success === false) throw new Error(`فشل الاتصال: ${String(out?.detail?.message || out?.message || res.status).slice(0, 120)}`)
+  return `اتصل بـ ${digits}`
+}
+
+async function runAction(db: SupabaseClient, rule: Rule, event: string, p: Payload, dry = false): Promise<string> {
   const cfg = rule.action_config || {}
   switch (rule.action_type) {
+    case 'call': return await placeCall(db, rule, p, dry)
     case 'webhook': return await runWebhook(rule, event, p)
     case 'transfer': {
       if (event === 'conversation.transferred') throw new Error('ما ينفع التحويل التلقائي عند حدث تحويل')
@@ -167,10 +215,10 @@ async function runAction(db: SupabaseClient, rule: Rule, event: string, p: Paylo
   }
 }
 
-async function runRule(db: SupabaseClient, rule: Rule, event: string, p: Payload) {
+async function runRule(db: SupabaseClient, rule: Rule, event: string, p: Payload, dry = false) {
   let status: 'ok' | 'failed' = 'ok'
   let detail = ''
-  try { detail = await runAction(db, rule, event, p) } catch (e) { status = 'failed'; detail = e instanceof Error ? e.message : String(e) }
+  try { detail = await runAction(db, rule, event, p, dry) } catch (e) { status = 'failed'; detail = e instanceof Error ? e.message : String(e) }
   await db.from('connect_runs').insert({ company_id: rule.company_id, rule_id: rule.id, event, status, detail: detail.slice(0, 300) })
   const { data: cur } = await db.from('connect_rules').select('run_count').eq('id', rule.id).maybeSingle()
   await db.from('connect_rules').update({ run_count: ((cur?.run_count as number) || 0) + 1, last_run_at: new Date().toISOString() }).eq('id', rule.id)
@@ -215,7 +263,7 @@ Deno.serve(async (req) => {
     if (!companyId) return json({ error: 'unauthorized' }, 401)
     const { data: rule } = await db.from('connect_rules').select('*').eq('id', body.test).eq('company_id', companyId).maybeSingle()
     if (!rule) return json({ error: 'rule not found' }, 404)
-    const result = await runRule(db, rule as Rule, rule.trigger_event, SAMPLES[rule.trigger_event] || {})
+    const result = await runRule(db, rule as Rule, rule.trigger_event, SAMPLES[rule.trigger_event] || {}, true)
     return json(result)
   }
   return json({ error: 'unauthorized' }, 401)

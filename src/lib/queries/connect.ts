@@ -10,7 +10,7 @@ export type TriggerEvent =
   | 'conversation.reopened' | 'conversation.no_reply' | 'form.submitted'
   | 'ticket.created' | 'booking.created' | 'customer.created' | 'review.new'
   | 'order.created' | 'order.status_changed' | 'cart.abandoned'
-export type ActionType = 'webhook' | 'transfer' | 'ticket' | 'whatsapp' | 'notify'
+export type ActionType = 'webhook' | 'transfer' | 'ticket' | 'whatsapp' | 'notify' | 'call'
 
 export interface ConnectRule {
   id: string
@@ -63,7 +63,7 @@ export const EVENT_FIELDS: Partial<Record<TriggerEvent, string[]>> = {
 }
 
 export const ACTION_LABELS: Record<ActionType, string> = {
-  webhook: 'أرسل لخدمة خارجية', transfer: 'حوّل لفريق', ticket: 'افتح تذكرة', whatsapp: 'أرسل واتساب للعميل', notify: 'أرسل إشعار داخل اللوحة',
+  webhook: 'أرسل لخدمة خارجية', transfer: 'حوّل لفريق', ticket: 'افتح تذكرة', whatsapp: 'أرسل واتساب للعميل', notify: 'أرسل إشعار داخل اللوحة', call: 'اتصل بالعميل بالوكيل الصوتي',
 }
 
 export const WEBHOOK_PRESETS: { id: string; label: string; hint: string }[] = [
@@ -91,6 +91,8 @@ export const RECIPES: { title: string; desc: string; rule: Omit<ConnectRule, 'id
     rule: { name: 'تذكرة عاجلة ← Telegram', trigger_event: 'ticket.created', conditions: { priority: 'high' }, action_type: 'webhook', action_config: { preset: 'telegram' } } },
   { title: 'أرسل كل عميل جديد لـ Zapier أو Make', desc: 'اربطه بأي CRM أو أداة ثانية.',
     rule: { name: 'عميل جديد ← Zapier', trigger_event: 'customer.created', conditions: {}, action_type: 'webhook', action_config: { preset: 'zapier' } } },
+  { title: 'خلّ الوكيل الصوتي يتصل بعميل النموذج', desc: 'أول ما يعبّي أحد النموذج، الوكيل يتصل عليه. يحتاج رقم اتصال مفعّل.',
+    rule: { name: 'نموذج الموقع ← اتصال', trigger_event: 'form.submitted', conditions: {}, action_type: 'call', action_config: {} } },
   { title: 'رد على عميل النموذج خلال ثواني', desc: 'أول ما أحد يعبّي نموذج موقعك، يوصله واتساب منك.',
     rule: { name: 'نموذج الموقع ← واتساب', trigger_event: 'form.submitted', conditions: {}, action_type: 'whatsapp', action_config: {} } },
   { title: 'نبّهني لو محادثة تأخر ردها', desc: 'إشعار داخل اللوحة لو مرت 30 دقيقة بدون رد من الفريق.',

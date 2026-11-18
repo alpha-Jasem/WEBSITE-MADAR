@@ -93,6 +93,7 @@ export function DashboardV2Connect() {
       } else if (!/^https:\/\//.test(cfg('url'))) { pushToast({ kind: 'danger', title: 'الرابط لازم يبدأ بـ https' }); return }
     }
     if (draft.action_type === 'transfer' && !cfg('team_id')) { pushToast({ kind: 'danger', title: 'اختر الفريق' }); return }
+    if (draft.action_type === 'call' && !cfg('phone_number_id').trim()) { pushToast({ kind: 'danger', title: 'اكتب معرّف رقم الاتصال' }); return }
     if (draft.action_type === 'whatsapp' && !cfg('template_id')) { pushToast({ kind: 'danger', title: 'اختر القالب' }); return }
     if (draft.action_type === 'transfer' && draft.trigger_event === 'conversation.transferred') { pushToast({ kind: 'danger', title: 'ما ينفع التحويل التلقائي عند حدث تحويل' }); return }
     if (draft.action_type === 'ticket' && draft.trigger_event === 'ticket.created') { pushToast({ kind: 'danger', title: 'ما ينفع فتح تذكرة عند حدث تذكرة' }); return }
@@ -283,6 +284,12 @@ export function DashboardV2Connect() {
               <>
                 <Input label="عنوان التذكرة" value={cfg('subject')} onChange={(e) => setCfg('subject', e.target.value)} />
                 <Select label="الأولوية" value={cfg('priority') || 'normal'} onChange={(e) => setCfg('priority', e.target.value)} options={[{ value: 'low', label: 'منخفضة' }, { value: 'normal', label: 'عادية' }, { value: 'high', label: 'عالية' }, { value: 'urgent', label: 'عاجلة' }]} />
+              </>
+            )}
+            {draft.action_type === 'call' && (
+              <>
+                <Input label="معرّف رقم الاتصال (phone_number_id)" value={cfg('phone_number_id')} onChange={(e) => setCfg('phone_number_id', e.target.value.trim())} placeholder="phnum_..." />
+                <div className="cn-hint">الوكيل الصوتي المربوط بشركتك يتصل بالعميل من هالرقم. الرقم يتفعّل من منصة الصوت، وحد أقصى مكالمة وحدة لكل رقم كل 6 ساعات و50 مكالمة باليوم. زر «جرّب» ما يتصل فعليًا، بس يتأكد من الإعداد.</div>
               </>
             )}
             {draft.action_type === 'notify' && <Input label="عنوان الإشعار" value={cfg('title')} onChange={(e) => setCfg('title', e.target.value)} />}
