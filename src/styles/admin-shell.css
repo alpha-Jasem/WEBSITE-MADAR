@@ -58,8 +58,8 @@
 .sbx-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sbx-item:hover { background: rgba(255,255,255,.06); color: var(--ink); }
 .sbx-item:hover .sbx-ico { color: var(--ink); }
-.sbx-item.active { background: linear-gradient(270deg, rgba(48,120,255,.2), rgba(48,120,255,.06)); color: var(--ink); font-weight: 600; }
-.sbx-item.active .sbx-ico { background: var(--primary); color: #fff; box-shadow: 0 4px 14px rgba(48,120,255,.5); }
+.sbx-item.active { background: linear-gradient(270deg, rgba(139,61,255,.24), rgba(45,91,255,.08)); color: var(--ink); font-weight: 600; }
+.sbx-item.active .sbx-ico { background: var(--brand-grad); color: #fff; box-shadow: 0 4px 14px rgba(110,80,255,.5); }
 .sbx-item.active::before {
   content: ''; position: absolute; inset-inline-start: -12px; top: 9px; bottom: 9px; width: 3px; border-radius: 0 3px 3px 0;
   background: var(--primary); box-shadow: 0 0 12px var(--primary);

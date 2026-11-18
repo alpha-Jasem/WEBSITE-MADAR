@@ -30,6 +30,7 @@ const SECTIONS: Section[] = [
   { id: 'finance', label: 'المالية', icon: 'card', to: '/admin/finance', match: ['/admin/finance', '/admin/quotes', '/admin/expenses', '/admin/bank'],
     tabs: [{ label: 'الدفعات', to: '/admin/finance' }, { label: 'العروض والفواتير', to: '/admin/quotes' }, { label: 'المصروفات والربحية', to: '/admin/expenses' }, { label: 'إشعارات البنك', to: '/admin/bank' }] },
   { id: 'create', label: 'إنشاء عميل', icon: 'plus', to: '/admin/create-client', match: ['/admin/create-client'] },
+  { id: 'team', label: 'الفريق', icon: 'users', to: '/admin/team', match: ['/admin/team'] },
   { id: 'marketers', label: 'المسوّقون', icon: 'users', to: '/admin/marketers', match: ['/admin/marketers'] },
   { id: 'settings', label: 'الإعدادات', icon: 'gear', to: '/admin/settings', match: ['/admin/settings', '/admin/api'],
     tabs: [{ label: 'الإعدادات', to: '/admin/settings' }, { label: 'API والتكاملات', to: '/admin/api' }] },

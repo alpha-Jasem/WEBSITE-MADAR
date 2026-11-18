@@ -1,17 +1,17 @@
 /* Madar Command Center look (scoped under .mc-root). Generated from the approved reference artifact, then extended by hand below. */
 /* Layout (RTL): sidebar on the right; KPI row; then wide column on the left with a narrow column on the right, exactly like the reference. */
 .mc-root{
-  --bg:#040815; --card:rgba(10,20,50,.62); --card-2:var(--fill); --line:rgba(80,120,255,.16); --line-2:rgba(100,140,255,.34);
+  --bg:#070818; --card:rgba(18,20,52,.64); --card-2:var(--fill); --line:rgba(120,110,255,.18); --line-2:rgba(140,125,255,.36);
   --ink:#eaf0ff; --ink-2:#b5c2e6; --ink-3:#7f8db3; --ink-4:#515e84;
   --blue:#2f6bff; --blue-2:#5b8cff; --violet:#8b5cf6; --green:#34d399; --amber:#f5b942; --red:#ff5d5d;
   --font:'IBM Plex Sans Arabic',system-ui,sans-serif; --head:'Cairo','IBM Plex Sans Arabic',sans-serif;
   color-scheme:dark;
 }
 .mc-root{
-  --fill:rgba(14,28,66,.75); --fill-2:rgba(10,20,50,.6); --fill-hover:rgba(20,38,88,.85); --pop:#0a1740; --link:#8db0ff; --amber-ink:#f5c566;
-  --sb-bg:linear-gradient(180deg,#060c20,#040815); --mtab-bg:rgba(4,8,21,.95);
+  --fill:rgba(24,26,70,.75); --fill-2:rgba(16,18,52,.6); --fill-hover:rgba(34,36,92,.85); --pop:#12143a; --link:#8db0ff; --amber-ink:#f5c566;
+  --sb-bg:linear-gradient(180deg,#0a0b22,#070818); --mtab-bg:rgba(7,8,24,.95); --brand-grad:linear-gradient(135deg,#2D5BFF,#8B3DFF);
   --s-new:#5eead4; --s-contacted:#7cb5ff; --s-replied:#4ade80; --s-meeting:#b79bff; --s-won:#4ade80; --s-noanswer:#f5c566; --s-lost:#ff8d8d;
-  --page-bg:radial-gradient(900px 500px at 15% -10%,rgba(47,107,255,.14),transparent 70%),radial-gradient(700px 500px at 90% 110%,rgba(139,92,246,.10),transparent 70%);
+  --page-bg:radial-gradient(900px 500px at 15% -10%,rgba(47,107,255,.16),transparent 70%),radial-gradient(800px 560px at 90% 110%,rgba(139,61,255,.18),transparent 70%);
 }
 .mc-root[data-mc-theme="light"]{
   --bg:#eef2fb; --card:rgba(255,255,255,.92); --card-2:#ffffff; --line:rgba(30,50,110,.13); --line-2:rgba(47,107,255,.42);
@@ -114,7 +114,7 @@
 .mc-st.mc-a{background:rgba(245,185,66,.16);color:var(--amber-ink);border:1px solid rgba(245,185,66,.3)}.mc-st.mc-b{background:rgba(47,107,255,.18);color:var(--link);border:1px solid rgba(47,107,255,.35)}.mc-st.mc-g{background:rgba(52,211,153,.14);color:#4fe0a8;border:1px solid rgba(52,211,153,.3)}.mc-st.mc-n{background:rgba(120,140,190,.14);color:#aab6d8;border:1px solid rgba(120,140,190,.28)}
 /* chart */
 .mc-tabs{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--fill-2)}
-.mc-tabs button{padding:7px 18px;font:600 13.5px var(--head);color:var(--ink-3)}.mc-tabs .mc-on{background:var(--blue);color:#fff}
+.mc-tabs button{padding:7px 18px;font:600 13.5px var(--head);color:var(--ink-3)}.mc-tabs .mc-on{background:var(--brand-grad);color:#fff}
 .mc-chartbox{padding:0 18px 14px;position:relative}
 .mc-tip{position:absolute;pointer-events:none;background:var(--pop);border:1px solid var(--line-2);border-radius:10px;padding:8px 14px;font-size:12.5px;display:none;z-index:2;white-space:nowrap}
 .mc-tip b{font:700 15px var(--head)}
@@ -175,7 +175,7 @@
 .mc-addrow button{height:40px;padding:0 16px;border-radius:12px;background:var(--blue);font:700 13.5px var(--head);color:#fff}
 .mc-flat{width:100%;padding:18px 16px;text-align:center;color:var(--ink-3);font-size:13px}
 .mc-btn2{height:40px;padding:0 18px;border-radius:12px;font:700 13.5px var(--head);background:var(--fill);border:1px solid var(--line)}
-.mc-btn2.p{background:linear-gradient(90deg,#2f6bff,#4f9bff);border:0}
+.mc-btn2.p{background:var(--brand-grad,linear-gradient(90deg,#2f6bff,#4f9bff));border:0;color:#fff}
 .mc-btn2:disabled{opacity:.5;cursor:not-allowed}
 .mc-chartnote{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;color:var(--ink-3);font-size:13px;padding-bottom:30px}
 .mc-tbl{width:100%;border-collapse:collapse;font-size:13.5px}
@@ -389,3 +389,7 @@ body.plasma-admin[data-mc-theme="light"]{background:#eef2fb !important}
 .mc-pushbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 12px;padding:12px 14px;border-radius:14px;background:rgba(47,107,255,.12);border:1px solid rgba(47,107,255,.4)}
 .mc-pushtxt{flex:1 1 220px;display:grid;gap:2px;min-width:0}.mc-pushtxt b{font:800 14.5px var(--head)}.mc-pushtxt span{font-size:12.5px;color:var(--ink-2);line-height:1.6}
 .mc-pushx{width:32px;height:32px;border-radius:50%;color:var(--ink-3);font-size:20px;line-height:1}
+
+/* Plain fields used by the team tools (meetings, availability, chat) */
+.mc-inp{min-height:42px;padding:0 12px;border-radius:10px;border:1px solid var(--line-2);background:var(--fill-2);color:var(--ink);font:inherit;font-size:13.5px;min-width:0}
+.mc-inp:focus{outline:2px solid var(--blue);outline-offset:1px}

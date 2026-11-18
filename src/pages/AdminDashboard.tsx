@@ -17,6 +17,7 @@ import { AdminOutreach } from '../components/dashboard/admin/AdminOutreach'
 import { AdminFinance } from '../components/dashboard/admin/AdminFinance'
 import { AdminCampaigns } from '../components/dashboard/admin/AdminCampaigns'
 import { AdminMarketers } from '../components/dashboard/admin/AdminMarketers'
+import { AdminTeamOps } from '../components/dashboard/admin/AdminTeamOps'
 import { AdminQuotes } from '../components/dashboard/admin/AdminQuotes'
 import { AdminExpenses } from '../components/dashboard/admin/AdminExpenses'
 import { AdminBankNotices } from '../components/dashboard/admin/AdminBankNotices'
@@ -54,6 +55,9 @@ export const AdminDashboard = () => {
         <Route path="finance" element={<AdminFinance />} />
         <Route path="campaigns" element={<AdminCampaigns />} />
         <Route path="marketers" element={<AdminMarketers />} />
+        <Route path="team" element={<AdminTeamOps />} />
+        <Route path="team/availability" element={<AdminTeamOps initialTab="availability" />} />
+        <Route path="team/chat" element={<AdminTeamOps initialTab="chat" />} />
         <Route path="quotes" element={<AdminQuotes />} />
         <Route path="expenses" element={<AdminExpenses />} />
         <Route path="bank" element={<AdminBankNotices />} />

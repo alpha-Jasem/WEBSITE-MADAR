@@ -2,7 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 :root {
-  --bg:        #050a18;
+  --bg:        #070818;
   --surface:   rgba(255,255,255,0.045);
   --surface-2: rgba(255,255,255,0.065);
   --surface-3: rgba(255,255,255,0.10);
@@ -22,6 +22,8 @@
   --primary-tint:  rgba(48,120,255,0.18);
   --primary-tint2: rgba(48,120,255,0.32);
   --primary-ink:   oklch(0.82 0.18 255);
+  --violet:        #8B3DFF;
+  --brand-grad:    linear-gradient(135deg, #2D5BFF, #8B3DFF);
 
   /* status */
   --green:      oklch(0.68 0.17 152);
@@ -52,11 +54,11 @@ html, body { margin: 0; padding: 0; }
 body.plasma-admin {
   font-family: var(--font);
   background:
-    radial-gradient(ellipse 85% 65% at 95% -8%,  oklch(0.40 0.28 252) 0%, transparent 55%),
-    radial-gradient(ellipse 55% 55% at -8% 95%,  oklch(0.36 0.26 265) 0%, transparent 55%),
-    radial-gradient(ellipse 45% 55% at 45% 110%, oklch(0.28 0.20 270) 0%, transparent 50%),
-    radial-gradient(ellipse 30% 30% at 10% 20%,  oklch(0.32 0.22 248) 0%, transparent 45%),
-    #050a18;
+    radial-gradient(ellipse 85% 65% at 95% -8%,  oklch(0.40 0.26 262) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 55% at -8% 95%,  oklch(0.38 0.26 292) 0%, transparent 55%),
+    radial-gradient(ellipse 45% 55% at 45% 110%, oklch(0.30 0.22 285) 0%, transparent 50%),
+    radial-gradient(ellipse 30% 30% at 10% 20%,  oklch(0.32 0.22 270) 0%, transparent 45%),
+    #070818;
   min-height: 100vh;
   color: var(--ink);
   direction: rtl;
@@ -276,12 +278,12 @@ input, textarea, select { font-family: inherit; }
 }
 .btn:active { transform: translateY(1px); }
 .btn-primary {
-  background: var(--primary); color: #fff;
-  box-shadow: 0 2px 16px oklch(0.60 0.27 258 / 0.5), 0 0 40px oklch(0.60 0.27 258 / 0.15) !important;
+  background: var(--brand-grad); color: #fff;
+  box-shadow: 0 2px 16px oklch(0.60 0.27 270 / 0.5), 0 0 40px oklch(0.60 0.27 285 / 0.18) !important;
 }
 .btn-primary:hover {
-  background: var(--primary-600);
-  box-shadow: 0 4px 24px oklch(0.60 0.27 258 / 0.7), 0 0 50px oklch(0.60 0.27 258 / 0.2) !important;
+  background: var(--brand-grad); filter: brightness(1.12);
+  box-shadow: 0 4px 24px oklch(0.60 0.27 275 / 0.7), 0 0 50px oklch(0.60 0.27 285 / 0.24) !important;
 }
 .btn-ghost {
   background: rgba(255,255,255,0.06) !important;
@@ -430,7 +432,7 @@ input, textarea, select { font-family: inherit; }
   transition: all .14s;
 }
 .pill:hover { background: rgba(255,255,255,0.10) !important; color: var(--ink) !important; }
-.pill.active { background: var(--primary) !important; border-color: var(--primary) !important; color: #fff !important; }
+.pill.active { background: var(--brand-grad) !important; border-color: transparent !important; color: #fff !important; }
 .pill .cnt { opacity: .55; margin-inline-start: 4px; font-weight: 600; }
 
 /* utility */
@@ -504,7 +506,7 @@ input, textarea, select { font-family: inherit; }
 .feat-row { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,0.06) !important; }
 .feat-row:last-child { border-bottom: none; }
 .switch { width: 42px; height: 24px; border-radius: 99px; background: rgba(255,255,255,0.15) !important; position: relative; transition: background .2s; flex-shrink: 0; }
-.switch.on { background: var(--primary) !important; }
+.switch.on { background: var(--brand-grad) !important; }
 .switch::after { content: ''; position: absolute; top: 3px; inset-inline-end: 3px; width: 18px; height: 18px; border-radius: 99px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .2s; }
 .switch.on::after { transform: translateX(-18px); }
 [dir=rtl] .switch.on::after { transform: translateX(-18px); }
