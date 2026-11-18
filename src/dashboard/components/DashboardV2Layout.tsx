@@ -9,9 +9,8 @@ import {
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useSupportTickets } from '@/lib/dashboardQueries'
-import { CLINIC_PLANS, getUsageMetrics, usagePercentage } from '@/lib/clinicOSProduct'
-import { useOrbSeed, type ThemePref } from './AccountMenu'
-import { OrbAvatar } from './OrbAvatar'
+import { getUsageMetrics, usagePercentage } from '@/lib/clinicOSProduct'
+import { type ThemePref } from './AccountMenu'
 import { SupportChat } from './SupportChat'
 import { GlobalSearch } from './GlobalSearch'
 import { TopBar, TOPBAR_CSS } from './TopBar'
@@ -174,7 +173,7 @@ export function DashboardV2Layout() {
   useSystemChrome('#0F0F0F')
   const navigate = useNavigate()
   const location = useLocation()
-  const { companyId, isDemo, accountError, refreshAccount, businessType, hasModule, canOpen, can, packageType, usageMetrics, companyName, companyLogoUrl } = useWorkspace()
+  const { companyId, isDemo, accountError, refreshAccount, businessType, hasModule, canOpen, can, packageType, usageMetrics, companyName } = useWorkspace()
   const showBookings = hasModule('bookings')
   // Theme preference: light / dark / follow the system ("تلقائي"), set from the account menu.
   const [themePref, setThemePref] = useState<ThemePref>(() => {
@@ -207,7 +206,6 @@ export function DashboardV2Layout() {
   const colRef = useRef<HTMLDivElement>(null)
   const { data: tickets } = useSupportTickets(companyId, isDemo)
   const openTicketCount = (tickets || []).filter((t) => t.status === 'open').length
-  const orbSeed = useOrbSeed()
   // The phone sheet: "more" (items not in the tab bar) or the full menu (from the top-bar toggle).
   const [sheetMode, setSheetMode] = useState<'more' | 'all'>('more')
   useViewportFitCover()
@@ -314,8 +312,6 @@ export function DashboardV2Layout() {
   const metrics = (isDemo ? getUsageMetrics(packageType) : usageMetrics).filter((m) => m.limit > 0)
   const topMetric = metrics.reduce<typeof metrics[number] | null>((best, m) => (!best || usagePercentage(m) > usagePercentage(best) ? m : best), null)
   const topPct = topMetric ? usagePercentage(topMetric) : 0
-  const planName = CLINIC_PLANS[packageType]?.name
-  const ctxTone = topPct >= 100 ? 'bad' : topPct >= 80 ? 'warn' : ''
 
   // Top-bar title: the current page.
   const activeItem = allItems.find((it) => isActive(it.path))
@@ -353,21 +349,12 @@ export function DashboardV2Layout() {
       <aside className={`dv2-side${collapsed ? ' is-collapsed' : ''}`} aria-label="القائمة الرئيسية">
         <div className="dv2-logo">
           <img src="/logo-orbit.png" alt="" />
-          {!collapsed && 'مدار'}
+          {!collapsed && <span dir="ltr">Madar software</span>}
         </div>
         <button type="button" className="dv2-side-search" onClick={() => requestOpenSearch()} aria-label="ابحث أو أنشئ">
           <Search size={15} />
           {!collapsed && <><span>ابحث أو أنشئ</span><kbd className="dv2-kbd">⌘K</kbd></>}
         </button>
-        <div className="dv2-ctx" title={company}>
-          <OrbAvatar seed={orbSeed} size={collapsed ? 26 : 28} imageUrl={companyLogoUrl || null} />
-          {!collapsed && (
-            <div className="dv2-ctx-txt">
-              <b>{company}</b>
-              <small><i className={`dv2-dot${ctxTone ? ` ${ctxTone}` : ''}`} />{planName ? `باقة ${planName}` : 'مساحة العمل'}</small>
-            </div>
-          )}
-        </div>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           {NAV_GROUPS.map((group, gi) => (
             <div key={group.title || gi} style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
