@@ -77,6 +77,7 @@ const DashboardV2Segments         = lazy(() => import('./dashboard/pages/Segment
 const DashboardV2Forms            = lazy(() => import('./dashboard/pages/Forms').then(m => ({ default: m.DashboardV2Forms })))
 const DashboardV2WhatsAppConnect = lazy(() => import('./dashboard/pages/WhatsAppConnect').then(m => ({ default: m.DashboardV2WhatsAppConnect })))
 const DashboardV2Campaigns        = lazy(() => import('./dashboard/pages/Campaigns').then(m => ({ default: m.DashboardV2Campaigns })))
+const DashboardV2LiveOps          = lazy(() => import('./dashboard/pages/LiveOps').then(m => ({ default: m.DashboardV2LiveOps })))
 const DashboardV2Zaki             = lazy(() => import('./dashboard/pages/Zaki').then(m => ({ default: m.DashboardV2Zaki })))
 const DashboardV2Outreach         = lazy(() => import('./dashboard/pages/Outreach').then(m => ({ default: m.DashboardV2Outreach })))
 const DashboardV2CallLogs          = lazy(() => import('./dashboard/pages/CallLogs').then(m => ({ default: m.DashboardV2CallLogs })))
@@ -114,6 +115,7 @@ const dashboardChildRoutes = (
     <Route path="whatsapp" element={<ModuleRoute module="conversations"><PermissionRoute permission="integrations.manage"><DashboardV2WhatsAppConnect /></PermissionRoute></ModuleRoute>} />
     <Route path="forms" element={<ModuleRoute module="customers"><PermissionRoute permission="integrations.manage"><DashboardV2Forms /></PermissionRoute></ModuleRoute>} />
     <Route path="campaigns" element={<ModuleRoute module="conversations"><PermissionRoute permission="outreach.send"><DashboardV2Campaigns /></PermissionRoute></ModuleRoute>} />
+    <Route path="live" element={<ModuleRoute module="conversations"><DashboardV2LiveOps /></ModuleRoute>} />
     <Route path="zaki" element={<DashboardV2Zaki />} />
     <Route path="call-logs" element={<ModuleRoute module="voice"><DashboardV2CallLogs /></ModuleRoute>} />
     <Route path="agent-analytics" element={<ModuleRoute module="voice"><DashboardV2AgentAnalytics /></ModuleRoute>} />

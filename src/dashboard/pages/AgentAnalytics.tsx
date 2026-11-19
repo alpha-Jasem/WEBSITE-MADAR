@@ -16,6 +16,7 @@ import {
   type ChannelFilter, type MetricId, type TopicRow, type InsightCard,
 } from './analytics/model'
 import { Sparkline, SentimentBar, SentimentLegend } from './analytics/ui'
+import { BusyHoursMap } from './analytics/Heatmap'
 import './home/night.css'
 import './analytics/analytics.css'
 
@@ -195,6 +196,13 @@ export function DashboardV2AgentAnalytics() {
                 : selected.id === 'count' || selected.id === 'review' || selected.id === 'cost'
                   ? <BarChart values={selected.series} labels={labels} ariaLabel={selected.label} format={selected.format} height={narrow ? 180 : 220} highlightLast={period !== 'today'} />
                   : <AreaChart values={selected.series} labels={labels} ariaLabel={selected.label} format={selected.format} height={narrow ? 180 : 220} />}
+            </div>
+          )}
+
+          {inRange.length > 0 && (
+            <div className="nx-card">
+              <CardTitle aside={PERIOD_PHRASE[period]}><BarChart3 size={16} style={{ color: 'var(--sky)' }} /> أوقات الضغط</CardTitle>
+              <BusyHoursMap calls={inRange} />
             </div>
           )}
 

@@ -5,7 +5,7 @@ import { DURATION_MEDIUM, EASE_OUT } from './motionTokens'
 import {
   LayoutDashboard, CalendarDays, Users, MessageSquare, Star, BarChart3,
   Wallet, BellRing, Settings, AlertTriangle, Plus, Ticket,
-  ClipboardList, BookOpen, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Search, Send, ShoppingBag, UsersRound, Zap, Layers, Megaphone, WandSparkles, FileInput, MessageCircle,
+  ClipboardList, BookOpen, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Search, Send, ShoppingBag, UsersRound, Zap, Layers, Megaphone, WandSparkles, FileInput, MessageCircle, Radio,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useSupportTickets } from '@/lib/dashboardQueries'
@@ -254,6 +254,7 @@ export function DashboardV2Layout() {
       { label: 'الإيرادات', path: `${base}/revenue`, icon: <Wallet size={16} />, module: 'revenue' },
     ] },
     { title: 'التواصل', items: [
+      { label: 'المراقبة الحية', short: 'مباشر', path: `${base}/live`, icon: <Radio size={16} />, module: 'conversations' },
       { label: 'المحادثات', path: `${base}/conversations`, icon: <MessageSquare size={16} />, module: 'conversations' },
       { label: 'التذاكر', path: `${base}/tickets`, icon: <Ticket size={16} />, badge: openTicketCount || undefined, module: 'tickets' },
       { label: 'سجل المكالمات', path: `${base}/call-logs`, icon: <ClipboardList size={16} />, module: 'voice' },

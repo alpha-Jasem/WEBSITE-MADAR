@@ -135,3 +135,12 @@
 }
 .ax-ins > p.ax-long { color: var(--ink); background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; flex: none; }
 .ax-ins > b strong { color: var(--ink); font-weight: 600; }
+
+/* Busy-hours map */
+.ax-heat-grid { display: grid; grid-template-columns: 64px repeat(8, minmax(0, 1fr)); gap: 4px; align-items: center; }
+.ax-heat-row { display: contents; }
+.ax-heat-h, .ax-heat-d { font-size: 11px; color: var(--muted); text-align: center; white-space: nowrap; }
+.ax-heat-d { text-align: start; }
+.ax-heat-c { display: block; height: 28px; border-radius: 6px; }
+.ax-heat-note { margin: 12px 0 0; font-size: 13px; color: var(--text-secondary); }
+@media (max-width: 600px) { .ax-heat-grid { grid-template-columns: 48px repeat(8, minmax(0, 1fr)); gap: 3px; } .ax-heat-h { font-size: 9px; } .ax-heat-c { height: 22px; } }
