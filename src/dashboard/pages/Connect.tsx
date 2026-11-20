@@ -130,33 +130,9 @@ export function DashboardV2Connect() {
       {tab === 'rules' && (
         <>
           {!available && <Card><EmptyLine>الأتمتة غير مفعّلة على هذا الحساب بعد.</EmptyLine></Card>}
-          {canEdit && (
-            <Card>
-              <CardTitle aside="اختر حالة وتجهز لك القاعدة">قوالب حالات الاستخدام</CardTitle>
-              <div className="cn-recipes">
-                {useCases.map((r) => (
-                  <button key={r.title} type="button" className="cn-recipe" onClick={() => setDraft({ ...r.rule, enabled: true })}>
-                    <b>{r.title}</b><span>{r.desc}</span>
-                  </button>
-                ))}
-              </div>
-            </Card>
-          )}
-          {canEdit && (
-            <Card>
-              <CardTitle aside="اضغط على وصفة تبدأ منها"><Zap size={16} style={{ color: 'var(--warn)' }} /> وصفات جاهزة</CardTitle>
-              <div className="cn-recipes">
-                {recipes.map((r) => (
-                  <button key={r.title} type="button" className="cn-recipe" onClick={() => setDraft({ ...r.rule, enabled: true })}>
-                    <b>{r.title}</b><span>{r.desc}</span>
-                  </button>
-                ))}
-              </div>
-            </Card>
-          )}
           <Card>
             <CardTitle aside={canEdit ? <Button size="sm" onClick={() => setDraft({ ...BLANK })}><Plus size={14} /> قاعدة جديدة</Button> : undefined}>قواعدك</CardTitle>
-            {rules.length === 0 && <EmptyLine>ما سوّيت قواعد بعد. ابدأ من وصفة فوق أو أنشئ قاعدتك.</EmptyLine>}
+            {rules.length === 0 && <EmptyLine>ما سوّيت قواعد بعد. ابدأ من قالب جاهز تحت أو أنشئ قاعدتك.</EmptyLine>}
             {rules.map((r) => (
               <div key={r.id} className="np-row" style={{ flexWrap: 'wrap' }}>
                 <div className="np-row-main">
@@ -175,6 +151,22 @@ export function DashboardV2Connect() {
               </div>
             ))}
           </Card>
+          {canEdit && (
+            <Card>
+              <details open={rules.length === 0}>
+                <summary style={{ cursor: 'pointer', fontWeight: 600, fontSize: 14, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Zap size={16} style={{ color: 'var(--warn)' }} /> ابدأ من قالب جاهز <small style={{ color: 'var(--dim)', fontWeight: 400 }}>اضغط على قالب وتجهز لك القاعدة</small>
+                </summary>
+                <div className="cn-recipes" style={{ marginTop: 12 }}>
+                  {[...useCases, ...recipes].map((r) => (
+                    <button key={r.title} type="button" className="cn-recipe" onClick={() => setDraft({ ...r.rule, enabled: true })}>
+                      <b>{r.title}</b><span>{r.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </details>
+            </Card>
+          )}
           {runs.length > 0 && (
             <Card>
               <CardTitle>آخر التشغيلات</CardTitle>
