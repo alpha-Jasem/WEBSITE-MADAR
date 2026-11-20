@@ -5,7 +5,7 @@ import { DURATION_MEDIUM, EASE_OUT } from './motionTokens'
 import {
   LayoutDashboard, CalendarDays, Users, MessageSquare, Star, BarChart3,
   Wallet, BellRing, Settings, AlertTriangle, Plus, Ticket,
-  ClipboardList, BookOpen, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Search, Send, ShoppingBag, UsersRound, Zap, Layers, Megaphone, WandSparkles, FileInput, MessageCircle, Radio,
+  ClipboardList, BookOpen, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Send, ShoppingBag, UsersRound, Zap, Layers, Megaphone, WandSparkles, FileInput, MessageCircle, Radio,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useSupportTickets } from '@/lib/dashboardQueries'
@@ -352,10 +352,6 @@ export function DashboardV2Layout() {
           <img src="/logo-orbit.png" alt="" />
           {!collapsed && <span dir="ltr">Madar software</span>}
         </div>
-        <button type="button" className="dv2-side-search" onClick={() => requestOpenSearch()} aria-label="ابحث أو أنشئ">
-          <Search size={15} />
-          {!collapsed && <><span>ابحث أو أنشئ</span><kbd className="dv2-kbd">⌘K</kbd></>}
-        </button>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           {NAV_GROUPS.map((group, gi) => (
             <div key={group.title || gi} style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
