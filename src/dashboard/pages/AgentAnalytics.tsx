@@ -18,6 +18,7 @@ import { PREV_PHRASE,
 import { Sparkline, SentimentBar, SentimentLegend } from './analytics/ui'
 import { BusyHoursMap } from './analytics/Heatmap'
 import { ContainmentBar } from './analytics/Containment'
+import { ChannelSatisfaction } from './analytics/ChannelSatisfaction'
 import './home/night.css'
 import './analytics/analytics.css'
 
@@ -83,6 +84,7 @@ export function DashboardV2AgentAnalytics() {
   }, [calls])
 
   const { buckets, inRange, previous } = useMemo(() => filterCalls(calls, period, channel), [calls, period, channel])
+  const allInRange = useMemo(() => filterCalls(calls, period, 'all').inRange, [calls, period])
   const metrics = useMemo(() => computeMetrics(inRange, previous, buckets, period), [inRange, previous, buckets, period])
   const topics = useMemo(() => computeTopics(inRange), [inRange])
   const fieldStats = useMemo(() => computeFieldStats(inRange), [inRange])
@@ -204,6 +206,12 @@ export function DashboardV2AgentAnalytics() {
             <div className="nx-card">
               <CardTitle aside={PERIOD_PHRASE[period]}><BarChart3 size={16} style={{ color: 'var(--sky)' }} /> نسبة الاحتواء</CardTitle>
               <ContainmentBar calls={inRange} previous={previous} phrase={PREV_PHRASE[period]} />
+            </div>
+          )}
+          {channelsPresent.length > 1 && allInRange.length > 0 && (
+            <div className="nx-card">
+              <CardTitle aside={PERIOD_PHRASE[period]}><BarChart3 size={16} style={{ color: 'var(--ok)' }} /> رضا العملاء حسب القناة</CardTitle>
+              <ChannelSatisfaction calls={allInRange} />
             </div>
           )}
           {inRange.length > 0 && (
