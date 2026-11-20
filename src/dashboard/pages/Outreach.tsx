@@ -4,7 +4,7 @@ import { useWorkspace } from '@/context/WorkspaceContext'
 import { useCustomers } from '@/lib/dashboardQueries'
 import { useConversationData } from '@/lib/queries/conversations'
 import {
-  deleteWaTemplate, fillTemplate, placeholderCount, saveWaTemplate, sendOutreach, useOutreachLog, useWaTemplates,
+  deleteWaTemplate, fillTemplate, metaTemplates, placeholderCount, saveWaTemplate, sendOutreach, useOutreachLog, useWaTemplates,
   type SendResult, type WaTemplate,
 } from '@/lib/queries/outreach'
 import { buildContacts } from './AgentUsers'
@@ -22,6 +22,8 @@ const NO_BOOKING_TEMPLATE = {
   label: 'متابعة من سأل ولم يحجز', name: 'no_booking_followup', language: 'ar', param_labels: ['اسم العميل'],
   body: 'أهلًا {{1}}، شكرًا لتواصلك معنا. لاحظنا إنك سألت عن موعد وما اكتمل الحجز. تبغى نساعدك تحجز الحين؟ رد علينا هنا وبنرتب لك أقرب موعد متاح.',
 }
+
+const META_STATUS: Record<string, string> = { PENDING: 'بانتظار الاعتماد', APPROVED: 'معتمد', REJECTED: 'مرفوض', PAUSED: 'موقوف', DISABLED: 'معطّل' }
 
 /** Outreach: Meta-approved WhatsApp templates and sending them to customers. */
 export function DashboardV2Outreach() {
@@ -85,6 +87,13 @@ export function DashboardV2Outreach() {
     } finally { setBusy(false) }
   }
 
+  async function metaAction(action: Parameters<typeof metaTemplates>[1], done: string) {
+    setBusy(true)
+    try { await metaTemplates(isDemo, action); pushToast({ kind: 'success', title: done }) }
+    catch (e) { pushToast({ kind: 'danger', title: 'ما تمت العملية', description: e instanceof Error ? e.message : undefined }) }
+    finally { setBusy(false) }
+  }
+
   const valueFor = (name: string) => (tpl?.param_labels || []).map((_, i) => (values[i] || '').replaceAll('{name}', name || ''))
   const payload = () => recipients.map((r) => ({ phone: r.phone, name: r.name, params: valueFor(r.name) }))
   const ready = !!tpl && recipients.length > 0 && (tpl.param_labels || []).every((_, i) => (values[i] || '').trim())
@@ -124,7 +133,7 @@ export function DashboardV2Outreach() {
       {available && (
         <>
           <Card style={{ marginBottom: 16 }}>
-            <CardTitle aside={<Button size="sm" onClick={() => startTemplate(null)}><Plus size={14} /> قالب جديد</Button>}>القوالب</CardTitle>
+            <CardTitle aside={<div style={{ display: 'flex', gap: 8 }}>{!isDemo && <Button size="sm" variant="secondary" disabled={busy} onClick={() => void metaAction({ action: 'sync' }, 'تحدّثت حالة القوالب')}>تحديث الحالة</Button>}<Button size="sm" onClick={() => startTemplate(null)}><Plus size={14} /> قالب جديد</Button></div>}>القوالب</CardTitle>
             {templates.length === 0 ? (
               <EmptyState icon={<Send size={20} />} title="ما سجّلت أي قالب" description="أضف اسم قالب معتمد من Meta ونصه عشان تقدر ترسل به." />
             ) : (
@@ -136,6 +145,10 @@ export function DashboardV2Outreach() {
                       <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }} dir="ltr">{t.name}</div>
                       <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 4 }}>{t.body}</div>
                     </div>
+                    {t.meta_status && <Badge tone={t.meta_status === 'APPROVED' ? 'success' : t.meta_status === 'PENDING' ? 'warning' : 'danger'}>{META_STATUS[t.meta_status] || t.meta_status}</Badge>}
+                    {!isDemo && t.meta_status !== 'APPROVED' && t.meta_status !== 'PENDING' && (
+                      <Button size="sm" variant="secondary" disabled={busy} onClick={() => void metaAction({ action: 'submit', template_id: t.id }, 'انرفع القالب لميتا وينتظر الاعتماد')}>ارفع لميتا</Button>
+                    )}
                     <Button size="sm" variant="secondary" onClick={() => startTemplate(t)} aria-label="تعديل"><Pencil size={13} /></Button>
                     <Button size="sm" variant="secondary" aria-label="حذف" onClick={() => void deleteWaTemplate(companyId, isDemo, t.id).then(() => { if (tplId === t.id) setTplId('') })}><Trash2 size={13} /></Button>
                   </div>

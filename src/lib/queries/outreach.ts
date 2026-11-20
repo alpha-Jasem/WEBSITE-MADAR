@@ -12,6 +12,9 @@ export interface WaTemplate {
   body: string
   param_labels: string[]
   enabled: boolean
+  /** Approval state in Meta: PENDING, APPROVED, REJECTED, ... Null when never submitted from here. */
+  meta_status?: string | null
+  meta_error?: string | null
 }
 
 export interface OutreachRow {
@@ -54,13 +57,29 @@ export function useWaTemplates(companyId: string | null, isDemo: boolean) {
   const load = useCallback(async () => {
     if (isDemo) { setTemplates([...demoTemplates]); return }
     if (!companyId) return
-    const { data, error } = await supabase.from('whatsapp_templates').select('id, name, language, label, body, param_labels, enabled').eq('company_id', companyId).order('created_at')
+    const { data, error } = await supabase.from('whatsapp_templates').select('id, name, language, label, body, param_labels, enabled, meta_status, meta_error').eq('company_id', companyId).order('created_at')
     if (error) { setAvailable(false); return }
     setAvailable(true)
     setTemplates((data || []) as WaTemplate[])
   }, [companyId, isDemo])
   useEffect(() => { void load(); listeners.add(load); return () => { listeners.delete(load) } }, [load])
   return { templates, available }
+}
+
+/** Submits a registered template to Meta for approval, or refreshes the status of all of them. */
+export async function metaTemplates(isDemo: boolean, action: { action: 'submit'; template_id: string } | { action: 'sync' }): Promise<string> {
+  if (isDemo) {
+    if (action.action === 'submit') { demoTemplates = demoTemplates.map((x) => (x.id === action.template_id ? { ...x, meta_status: 'PENDING' } : x)); notify() }
+    return 'demo'
+  }
+  const { data, error } = await supabase.functions.invoke('whatsapp-template-sync', { body: action })
+  if (error) {
+    let msg = ''
+    try { msg = ((await (error as { context?: Response }).context?.json?.()) as { message?: string } | undefined)?.message || '' } catch { /* keep the generic message */ }
+    throw new Error(msg || 'تعذّر الاتصال بميتا الحين')
+  }
+  notify()
+  return (data as { status?: string } | null)?.status || 'ok'
 }
 
 export async function saveWaTemplate(companyId: string | null, isDemo: boolean, t: Omit<WaTemplate, 'id' | 'enabled'> & { id?: string }) {
