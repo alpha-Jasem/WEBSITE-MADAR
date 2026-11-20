@@ -7,7 +7,7 @@ import { supabase } from '../supabase'
 
 export type TriggerEvent =
   | 'conversation.new' | 'conversation.needs_review' | 'conversation.transferred'
-  | 'conversation.reopened' | 'conversation.no_reply' | 'form.submitted'
+  | 'conversation.reopened' | 'conversation.no_reply' | 'conversation.no_booking' | 'form.submitted'
   | 'ticket.created' | 'booking.created' | 'customer.created' | 'review.new'
   | 'order.created' | 'order.status_changed' | 'cart.abandoned'
 export type ActionType = 'webhook' | 'transfer' | 'ticket' | 'whatsapp' | 'notify' | 'call'
@@ -16,7 +16,7 @@ export interface ConnectRule {
   id: string
   name: string
   trigger_event: TriggerEvent
-  conditions: { channel?: string; contains?: string; priority?: string; order_status?: string; minutes?: number }
+  conditions: { channel?: string; contains?: string; priority?: string; order_status?: string; minutes?: number; hours?: number }
   action_type: ActionType
   action_config: Record<string, unknown>
   enabled: boolean
@@ -32,6 +32,7 @@ export const TRIGGER_LABELS: Record<TriggerEvent, string> = {
   'conversation.transferred': 'حُوّلت محادثة لفريق',
   'conversation.reopened': 'رجع عميل قديم يكلمنا',
   'conversation.no_reply': 'محادثة ما رد عليها الفريق في الوقت',
+  'conversation.no_booking': 'عميل سأل ولم يحجز',
   'form.submitted': 'عبّى أحد نموذج الموقع',
   'ticket.created': 'انفتحت تذكرة',
   'booking.created': 'انحجز موعد',
@@ -59,6 +60,7 @@ export const EVENT_FIELDS: Partial<Record<TriggerEvent, string[]>> = {
   'cart.abandoned': ['{{customer.name}}', '{{cart.total}}', '{{cart.checkout_url}}'],
   'conversation.reopened': ['{{customer.name}}', '{{days_away}}', '{{summary_text}}'],
   'conversation.no_reply': ['{{customer.name}}', '{{waited_minutes}}', '{{summary_text}}'],
+  'conversation.no_booking': ['{{customer.name}}', '{{hours_since}}', '{{summary_text}}'],
   'form.submitted': ['{{customer.name}}', '{{form.name}}', '{{summary}}'],
 }
 
@@ -109,6 +111,8 @@ export const RECIPES: { title: string; desc: string; rule: Omit<ConnectRule, 'id
 
 /** Use-case templates: the six everyday jobs, each one click away from a working rule. */
 export const USE_CASES: { title: string; desc: string; rule: Omit<ConnectRule, 'id' | 'enabled' | 'run_count' | 'last_run_at'> }[] = [
+  { title: 'تابع عميل سأل ولم يحجز', desc: 'بعد يوم من محادثة ما انتهت بحجز، يوصله تذكير على واتساب.',
+    rule: { name: 'ما حجز ← تذكير', trigger_event: 'conversation.no_booking', conditions: { hours: 24 }, action_type: 'whatsapp', action_config: {} } },
   { title: 'حجز موعد', desc: 'أول ما ينحجز موعد، يوصل العميل تأكيد على واتساب.',
     rule: { name: 'حجز موعد ← تأكيد واتساب', trigger_event: 'booking.created', conditions: {}, action_type: 'whatsapp', action_config: {} } },
   { title: 'تحصيل دفعة', desc: 'رسالة فيها المبلغ ورقم الطلب أول ما يوصل الطلب، تذكّر العميل يدفع.',

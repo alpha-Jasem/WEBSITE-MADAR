@@ -2,6 +2,7 @@
 //   POST { event_id }        from the database trigger, header x-runner-secret  -> runs the rules for one queued event
 //   POST { sweep: true }     from the one-minute cron, same header              -> retries events left unprocessed
 //   POST { test: rule_id }   from the dashboard (signed-in user's JWT)          -> runs one rule with a sample event
+// conversation.no_booking events are queued per rule by the connect_no_booking_sweep cron, like no_reply.
 // conversation.no_reply events are queued per rule by the connect_no_reply_sweep cron (payload.rule_id).
 // Store events (order.created, order.status_changed, cart.abandoned) come from the Salla tables.
 // Actions: webhook (generic JSON, Slack, Discord, Telegram, Zapier/Make/n8n/Sheets), transfer to a team,
@@ -32,6 +33,7 @@ const SAMPLES: Record<string, Payload> = {
   'customer.created': { customer: { id: 'sample', name: 'عميل تجريبي', phone: '966500000000' } },
   'review.new': { review: { rating: 5, author: 'عميل تجريبي', text: 'خدمة ممتازة' } },
   'conversation.reopened': { conversation: { key: 'chat:0500000000', phone: '966500000000', name: 'عميل تجريبي', channel: 'whatsapp', summary: 'رجع يسأل عن طلبه' }, customer: { name: 'عميل تجريبي', phone: '966500000000' }, days_away: 12, was_closed: true },
+  'conversation.no_booking': { conversation: { phone: '966500000000', name: 'عميل تجريبي', channel: 'whatsapp', summary: 'سأل عن موعد ولم يحجز', intent: 'new_booking' }, customer: { name: 'عميل تجريبي', phone: '966500000000' }, hours_since: 24 },
   'conversation.no_reply': { conversation: { key: 'chat:0500000000', phone: '966500000000', name: 'عميل تجريبي', channel: 'whatsapp', summary: 'يبي يكلم موظف' }, customer: { name: 'عميل تجريبي', phone: '966500000000' }, waited_minutes: 30 },
   'form.submitted': { form: { id: 'sample', name: 'نموذج الموقع' }, customer: { name: 'عميل تجريبي', phone: '0500000000', email: null }, fields: { name: 'عميل تجريبي', phone: '0500000000', message: 'أبي عرض سعر' }, summary: 'الرسالة: أبي عرض سعر', page_url: 'https://example.com' },
   'order.created': { order: { id: 1, reference: '100200', status: 'بإنتظار المراجعة', status_slug: 'under_review', total: 249, currency: 'SAR' }, customer: { name: 'عميل تجريبي', phone: '966500000000' } },
@@ -50,6 +52,7 @@ function summarize(event: string, p: Payload): string {
     case 'customer.created': return `عميل جديد: ${p.customer?.name || ''} ${p.customer?.phone || ''}`
     case 'review.new': return `تقييم جديد ${p.review?.rating || ''}★ من ${p.review?.author || ''}: ${p.review?.text || ''}`
     case 'conversation.reopened': return `رجع ${who} بعد ${p.days_away ?? ''} يوم: ${p.conversation?.summary || ''}`.trim()
+    case 'conversation.no_booking': return `${who} سأل ولم يحجز من ${p.hours_since ?? ''} ساعة: ${p.conversation?.summary || ''}`.trim()
     case 'conversation.no_reply': return `محادثة ${who} بدون رد من الفريق من ${p.waited_minutes ?? ''} دقيقة`
     case 'form.submitted': return `عميل جديد من نموذج «${p.form?.name || ''}»: ${who}${p.summary ? ` · ${p.summary}` : ''}`
     case 'order.created': return `طلب جديد #${p.order?.reference || p.order?.id || ''} من ${who} · ${p.order?.total ?? ''} ${p.order?.currency || ''}`.trim()

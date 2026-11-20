@@ -246,6 +246,11 @@ export function DashboardV2Connect() {
               <Input label="بعد كم دقيقة بدون رد؟ (5 على الأقل)" type="number" value={String(draft.conditions.minutes ?? 30)}
                 onChange={(e) => setDraft({ ...draft, conditions: { ...draft.conditions, minutes: Math.max(5, Number(e.target.value) || 30) } })} />
             )}
+            {draft.trigger_event === 'conversation.no_booking' && (
+              <Input label="بعد كم ساعة من آخر محادثة؟ (ساعة على الأقل)" type="number" value={String(draft.conditions.hours ?? 24)}
+                onChange={(e) => setDraft({ ...draft, conditions: { ...draft.conditions, hours: Math.max(1, Number(e.target.value) || 24) } })} />
+            )}
+            {draft.trigger_event === 'conversation.no_booking' && <div className="cn-hint">يُحسب العميل اللي سأل عن موعد أو سعر وما انتهت محادثته بحجز. نتحقق قبل الإرسال إنه ما حجز بعدها، ونرسل مرة وحدة فقط.</div>}
             {draft.trigger_event === 'conversation.no_reply' && <div className="cn-hint">تُحسب المحادثات اللي تحتاج مراجعة أو المسندة لأحد من فريقك، ويوقف العد أول ما أحد يرد.</div>}
             {draft.trigger_event === 'order.status_changed' && (
               <Select label="لما تصير الحالة (اختياري)" value={draft.conditions.order_status || ''} onChange={(e) => setDraft({ ...draft, conditions: { ...draft.conditions, order_status: e.target.value || undefined } })}
