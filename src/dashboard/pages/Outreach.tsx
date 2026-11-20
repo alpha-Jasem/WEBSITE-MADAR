@@ -17,6 +17,12 @@ interface Person { key: string; name: string; phone: string }
 
 const LANGS = [{ value: 'ar', label: 'العربية (ar)' }, { value: 'en', label: 'الإنجليزية (en)' }, { value: 'en_US', label: 'English US (en_US)' }]
 
+/** Suggested template for the "asked but did not book" follow-up. It must still be created and approved in Meta under the same name. */
+const NO_BOOKING_TEMPLATE = {
+  label: 'متابعة من سأل ولم يحجز', name: 'no_booking_followup', language: 'ar', param_labels: ['اسم العميل'],
+  body: 'أهلًا {{1}}، شكرًا لتواصلك معنا. لاحظنا إنك سألت عن موعد وما اكتمل الحجز. تبغى نساعدك تحجز الحين؟ رد علينا هنا وبنرتب لك أقرب موعد متاح.',
+}
+
 /** Outreach: Meta-approved WhatsApp templates and sending them to customers. */
 export function DashboardV2Outreach() {
   const { companyId, isDemo, userName } = useWorkspace()
@@ -222,6 +228,9 @@ export function DashboardV2Outreach() {
         footer={<><Button variant="secondary" onClick={() => setEditing(null)}>إلغاء</Button><Button onClick={submitTemplate} disabled={busy}>حفظ</Button></>}>
         {editing && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {!editing.id && (
+              <Button variant="secondary" size="sm" onClick={() => setEditing({ ...editing, ...NO_BOOKING_TEMPLATE })}>قالب مقترح: متابعة من سأل ولم يحجز</Button>
+            )}
             <Input label="اسم تعريفي" placeholder="مثل: تذكير بزيارة" value={editing.label || ''} onChange={(e) => setEditing((x) => ({ ...x, label: e.target.value }))} />
             <Input label="اسم القالب في Meta (بالحرف)" placeholder="visit_reminder" dir="ltr" value={editing.name || ''} onChange={(e) => setEditing((x) => ({ ...x, name: e.target.value }))} />
             <Select label="اللغة" value={editing.language || 'ar'} options={LANGS} onChange={(e) => setEditing((x) => ({ ...x, language: e.target.value }))} />
