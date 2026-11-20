@@ -19,6 +19,7 @@ import { Sparkline, SentimentBar, SentimentLegend } from './analytics/ui'
 import { BusyHoursMap } from './analytics/Heatmap'
 import { ContainmentBar } from './analytics/Containment'
 import { ChannelSatisfaction } from './analytics/ChannelSatisfaction'
+import { QualityReview, flagConversations } from './analytics/QualityReview'
 import './home/night.css'
 import './analytics/analytics.css'
 
@@ -84,6 +85,7 @@ export function DashboardV2AgentAnalytics() {
   }, [calls])
 
   const { buckets, inRange, previous } = useMemo(() => filterCalls(calls, period, channel), [calls, period, channel])
+  const flagged = useMemo(() => flagConversations(inRange), [inRange])
   const allInRange = useMemo(() => filterCalls(calls, period, 'all').inRange, [calls, period])
   const metrics = useMemo(() => computeMetrics(inRange, previous, buckets, period), [inRange, previous, buckets, period])
   const topics = useMemo(() => computeTopics(inRange), [inRange])
@@ -206,6 +208,12 @@ export function DashboardV2AgentAnalytics() {
             <div className="nx-card">
               <CardTitle aside={PERIOD_PHRASE[period]}><BarChart3 size={16} style={{ color: 'var(--sky)' }} /> نسبة الاحتواء</CardTitle>
               <ContainmentBar calls={inRange} previous={previous} phrase={PREV_PHRASE[period]} />
+            </div>
+          )}
+          {inRange.length > 0 && (
+            <div className="nx-card">
+              <CardTitle aside={PERIOD_PHRASE[period]}><ClipboardCheck size={16} style={{ color: 'var(--warn)' }} /> مراجعة الجودة</CardTitle>
+              <QualityReview flagged={flagged} total={inRange.length} onOpen={(c) => navigate(`${base}/conversations?id=${encodeURIComponent(`call:${c.id}`)}`)} />
             </div>
           )}
           {channelsPresent.length > 1 && allInRange.length > 0 && (
