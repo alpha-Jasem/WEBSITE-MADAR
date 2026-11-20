@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { RefreshCw } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
-import { Card, Button } from '@/dashboard/components/primitives'
+import { Card, Button, Input } from '@/dashboard/components/primitives'
+import { useToast } from '@/dashboard/components/uiExtras'
+import { supabase } from '@/lib/supabase'
 import { NightPage, PageHead, CardTitle, EmptyLine, Chip, type ChipTone } from './shared/night'
 import { useWaStatus } from '@/lib/queries/whatsappStatus'
 
@@ -17,9 +20,33 @@ const CSS = `
 `
 
 export function DashboardV2WhatsAppConnect() {
-  const { isDemo, companyName } = useWorkspace()
+  const { isDemo, isOwner, companyName } = useWorkspace()
+  const pushToast = useToast()
+  const [token, setToken] = useState('')
+  const [waba, setWaba] = useState('')
+  const [busy, setBusy] = useState(false)
   const base = isDemo ? '/demo-review' : '/dashboard'
   const { status, error, loading, reload } = useWaStatus(isDemo)
+
+  async function link(action: 'connect' | 'disconnect') {
+    if (isDemo) { pushToast({ kind: 'info', title: 'عرض تجريبي: ما انربط شيء فعليًا' }); return }
+    setBusy(true)
+    try {
+      const { data, error: err } = await supabase.functions.invoke('whatsapp-connect', { body: action === 'connect' ? { action, access_token: token, waba_id: waba } : { action } })
+      if (err) {
+        let msg = ''
+        try { msg = ((await (err as { context?: Response }).context?.json?.()) as { message?: string } | undefined)?.message || '' } catch { /* generic message below */ }
+        throw new Error(msg || 'تعذّر الاتصال الحين')
+      }
+      if (action === 'connect') {
+        setToken(''); setWaba('')
+        const out = data as { account_name?: string | null; can_manage_templates?: boolean } | null
+        pushToast({ kind: 'success', title: 'انربط حساب ميتا', description: out?.can_manage_templates ? undefined : 'المفتاح ما عنده صلاحية إدارة القوالب (whatsapp_business_management)، فرفع القوالب ما يشتغل.' })
+      } else pushToast({ kind: 'success', title: 'انفصل الربط' })
+      await reload()
+    } catch (e) { pushToast({ kind: 'danger', title: 'ما تم', description: e instanceof Error ? e.message : undefined }) }
+    finally { setBusy(false) }
+  }
 
   let tone: ChipTone = 'warn'
   let headline = 'جارِ قراءة الحالة...'
@@ -62,13 +89,34 @@ export function DashboardV2WhatsAppConnect() {
             <div className="wa-row">
               <div className="main">
                 <b>الرد الحر من صندوق المحادثات</b>
-                <small>{status.can_reply ? 'مفعّل: فريقك يكتب للعميل مباشرة خلال 24 ساعة من آخر رسالة منه.' : 'غير مفعّل: يحتاج مفتاح وصول من حساب ميتا للأعمال، وفريق مدار يضيفه لك.'}</small>
+                <small>{status.can_reply ? 'مفعّل: فريقك يكتب للعميل مباشرة خلال 24 ساعة من آخر رسالة منه.' : 'غير مفعّل: اربط حساب ميتا للأعمال من البطاقة تحت.'}</small>
               </div>
               <Chip tone={status.can_reply ? 'ok' : 'warn'}>{status.can_reply ? 'مفعّل' : 'غير مفعّل'}</Chip>
             </div>
           </>
         )}
       </Card>
+
+      {isOwner && status && (
+        <Card>
+          <CardTitle>{status.can_reply ? 'حساب ميتا مربوط' : 'اربط حساب ميتا'}</CardTitle>
+          {status.can_reply ? (
+            <>
+              <p className="wa-note" style={{ margin: '0 0 12px' }}>الرد الحر ورفع القوالب شغالين على حسابك. لتغيير الربط، أدخل مفتاح ومعرّف جديدين.</p>
+              <Button variant="secondary" size="sm" disabled={busy} onClick={() => void link('disconnect')}>افصل الربط</Button>
+            </>
+          ) : (
+            <p className="wa-note" style={{ margin: '0 0 12px' }}>
+              من مدير الأعمال في ميتا: أنشئ مفتاح وصول دائم لمستخدم نظام بصلاحيتي whatsapp_business_messaging و whatsapp_business_management، وانسخ معرّف حساب واتساب للأعمال (WABA ID). نتأكد منهم مع ميتا قبل الحفظ.
+            </p>
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 520, marginTop: status.can_reply ? 16 : 0 }}>
+            <Input label="مفتاح الوصول" type="password" dir="ltr" autoComplete="off" value={token} onChange={(e) => setToken(e.target.value)} />
+            <Input label="معرّف حساب واتساب للأعمال (WABA ID)" dir="ltr" inputMode="numeric" value={waba} onChange={(e) => setWaba(e.target.value)} />
+            <div><Button disabled={busy || !token.trim() || !waba.trim()} onClick={() => void link('connect')}>{busy ? 'جارِ الربط...' : 'اربط'}</Button></div>
+          </div>
+        </Card>
+      )}
 
       {status && !(status.connected && !status.token_expired) && (
         <Card>
