@@ -163,3 +163,16 @@
 .ib-presence[data-p="busy"] i { background: var(--warn, #f5b84a); }
 .ib-presence[data-p="break"] i { background: var(--warn, #f5b84a); opacity: .6; }
 .ib-presence[data-p="offline"] i { background: var(--dim, #777); }
+
+/* thread header: one or two main actions, the rest in "المزيد" */
+.ib-more { position: relative; }
+.ib-more-scrim { position: fixed; inset: 0; z-index: 40; }
+.ib-more-menu { position: absolute; top: calc(100% + 6px); inset-inline-end: 0; z-index: 41; min-width: 230px; padding: 6px; display: flex; flex-direction: column; gap: 2px;
+  background: var(--panel); border: 1px solid var(--line-2); border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,.35); }
+.ib-more-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 8px; border-radius: 8px; color: var(--muted); font-size: 12.5px; }
+.ib-more-row > span { display: inline-flex; align-items: center; gap: 6px; }
+.ib-more-row select { background: var(--raise); border: 1px solid var(--line-2); border-radius: 7px; color: var(--ink); font: inherit; font-size: 12.5px; height: 28px; max-width: 130px; cursor: pointer; }
+.ib-more-row select option { color: #111; }
+.ib-more-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px; border: 0; background: none; border-radius: 8px; color: var(--ink); font: inherit; font-size: 13px; cursor: pointer; text-align: start; }
+.ib-more-item:hover, .ib-more-row:hover { background: var(--hover-bg); }
+.ib-narrow .ib-thread-acts { overflow: visible; flex-wrap: wrap; }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  ChevronRight, Inbox as InboxIcon, RefreshCw, Phone, Copy, ExternalLink, CheckCircle2, Lock, Unlock, Ticket, Send, StickyNote, Bot, UserRound, Users, Tag, Sparkles, X, Plus, Filter, RotateCcw, Clock,
+  ChevronRight, Inbox as InboxIcon, RefreshCw, Phone, Copy, ExternalLink, CheckCircle2, Lock, Unlock, Ticket, Send, StickyNote, Bot, UserRound, Users, Tag, Sparkles, X, Plus, Filter, RotateCcw, Clock, MoreHorizontal,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { saudiDayKey } from '@/lib/saudiTime'
@@ -378,6 +378,7 @@ function ThreadPane({ item, events, allEvents, tickets, showTickets, authorName,
   const ticket = call ? tickets.find((t) => t.ai_call_id === call.id) : undefined
   const bottom = useRef<HTMLDivElement>(null)
   const [busy, setBusy] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
 
   const lines = useMemo<Line[]>(() => {
     const out: Line[] = []
@@ -471,41 +472,52 @@ function ThreadPane({ item, events, allEvents, tickets, showTickets, authorName,
           </div>
         </div>
         <div className="ib-thread-acts">
-          <label className="ib-assign">
-            <UserRound size={13} />
-            <select aria-label="إسناد المحادثة" value={state.assigneeId || ''} disabled={busy}
-              onChange={(e) => {
-                const m = people.find((p) => p.id === e.target.value)
-                void log('assign', m?.name || '', m?.id || null)
-              }}>
-              <option value="">غير مسندة</option>
-              {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-          </label>
-          {can('conversations.transfer') && myId && state.assigneeId !== myId && <button type="button" className="nx-btn" disabled={busy} onClick={() => void log('assign', authorName, myId)}><UserRound /> استلمها</button>}
-          {can('conversations.transfer') && teams.length > 0 && <button type="button" className="nx-btn" disabled={busy} onClick={() => setXfer({ open: true, teamId: state.teamId || teams[0].id, userId: '', reason: '' })}><Users /> حوّل لفريق</button>}
-          {onProfile && <button type="button" className="nx-btn" onClick={onProfile}><UserRound /> الملف</button>}
+          {can('conversations.transfer') && myId && state.assigneeId !== myId && <button type="button" className="nx-btn pri" disabled={busy} onClick={() => void log('assign', authorName, myId)}><UserRound /> استلمها</button>}
           {needsReview && !isLive && <button type="button" className="nx-btn" disabled={busy} onClick={reviewed}><CheckCircle2 /> تمت المراجعة</button>}
-          {showTickets && call && !isLive && (ticket
-            ? <button type="button" className="nx-btn" onClick={() => onTicket(`?ticket=${encodeURIComponent(ticket.id)}`)}><Ticket /> التذكرة</button>
-            : <button type="button" className="nx-btn" onClick={() => onTicket(`?new=1&call=${encodeURIComponent(call.id)}`)}><Ticket /> افتح تذكرة</button>)}
-          {state.status !== 'closed' && (
-            <label className="ib-assign">
-              <Clock size={13} />
-              <select aria-label="تأجيل أو انتظار" value="" disabled={busy} onChange={(e) => { if (e.target.value) void log('status', statusBody(e.target.value)) }}>
-                <option value="">{state.status === 'open' ? 'تأجيل…' : STATUS_CHIP[state.status]?.[0]}</option>
-                {state.status !== 'open' && <option value="open">رجّعها مفتوحة</option>}
-                <option value="waiting">بانتظار العميل</option>
-                <option value="1h">أجّل ساعة</option>
-                <option value="3h">أجّل 3 ساعات</option>
-                <option value="tomorrow">أجّل لبكرة 9 الصبح</option>
-                <option value="reply">أجّل لين يرد العميل</option>
-              </select>
-            </label>
-          )}
           <button type="button" className="nx-btn" disabled={busy} onClick={() => log('status', state.status === 'closed' ? 'open' : 'closed')}>
             {state.status === 'closed' ? <><Unlock /> إعادة فتح</> : <><Lock /> إغلاق</>}
           </button>
+          <div className="ib-more">
+            <button type="button" className="nx-btn" aria-haspopup="menu" aria-expanded={moreOpen} onClick={() => setMoreOpen((v) => !v)}><MoreHorizontal /> المزيد</button>
+            {moreOpen && (
+              <>
+                <div className="ib-more-scrim" onClick={() => setMoreOpen(false)} />
+                <div className="ib-more-menu" role="menu">
+                  <label className="ib-more-row">
+                    <span><UserRound size={13} /> إسناد إلى</span>
+                    <select aria-label="إسناد المحادثة" value={state.assigneeId || ''} disabled={busy}
+                      onChange={(e) => {
+                        const m = people.find((p) => p.id === e.target.value)
+                        void log('assign', m?.name || '', m?.id || null)
+                        setMoreOpen(false)
+                      }}>
+                      <option value="">غير مسندة</option>
+                      {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                  </label>
+                  {state.status !== 'closed' && (
+                    <label className="ib-more-row">
+                      <span><Clock size={13} /> تأجيل</span>
+                      <select aria-label="تأجيل أو انتظار" value="" disabled={busy} onChange={(e) => { if (e.target.value) { void log('status', statusBody(e.target.value)); setMoreOpen(false) } }}>
+                        <option value="">{state.status === 'open' ? 'اختر…' : STATUS_CHIP[state.status]?.[0]}</option>
+                        {state.status !== 'open' && <option value="open">رجّعها مفتوحة</option>}
+                        <option value="waiting">بانتظار العميل</option>
+                        <option value="1h">أجّل ساعة</option>
+                        <option value="3h">أجّل 3 ساعات</option>
+                        <option value="tomorrow">أجّل لبكرة 9 الصبح</option>
+                        <option value="reply">أجّل لين يرد العميل</option>
+                      </select>
+                    </label>
+                  )}
+                  {can('conversations.transfer') && teams.length > 0 && <button type="button" role="menuitem" className="ib-more-item" disabled={busy} onClick={() => { setMoreOpen(false); setXfer({ open: true, teamId: state.teamId || teams[0].id, userId: '', reason: '' }) }}><Users size={14} /> حوّل لفريق</button>}
+                  {onProfile && <button type="button" role="menuitem" className="ib-more-item" onClick={() => { setMoreOpen(false); onProfile() }}><UserRound size={14} /> ملف العميل</button>}
+                  {showTickets && call && !isLive && (ticket
+                    ? <button type="button" role="menuitem" className="ib-more-item" onClick={() => { setMoreOpen(false); onTicket(`?ticket=${encodeURIComponent(ticket.id)}`) }}><Ticket size={14} /> فتح التذكرة</button>
+                    : <button type="button" role="menuitem" className="ib-more-item" onClick={() => { setMoreOpen(false); onTicket(`?new=1&call=${encodeURIComponent(call.id)}`) }}><Ticket size={14} /> افتح تذكرة</button>)}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </header>
 

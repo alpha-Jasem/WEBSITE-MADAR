@@ -232,7 +232,7 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
             </button>
           ))}
         </div>
-        <button type="button" className="nx-btn" onClick={() => setTagsOpen(true)}>إدارة الوسوم</button>
+        <button type="button" className="nx-btn" onClick={() => setTagsOpen(true)}>الوسوم</button>
         {tagOptions.length > 0 && (
           <select
             className="nx-input" style={{ width: 'auto', minWidth: 130 }} aria-label="الوسم" value={tagFilter}
