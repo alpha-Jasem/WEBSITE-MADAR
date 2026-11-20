@@ -82,16 +82,16 @@ export function DashboardV2Zaki() {
         }
       }
     } catch (e) {
-      setLog([...next, { role: 'assistant', content: e instanceof Error ? e.message : 'زكي غير متاح الآن' }])
+      setLog([...next, { role: 'assistant', content: e instanceof Error ? e.message : 'مدار غير متاح الآن' }])
     } finally { setBusy(false) }
   }
 
   return (
     <NightPage>
-      <PageHead icon={<Sparkles size={20} />} title="زكي" sub="اسأل عن شغلك بكلامك: المحادثات، العملاء، الحجوزات، الحملات والفريق. زكي يقرأ بياناتك فقط وما يرسل أو يعدّل شيء."
+      <PageHead icon={<Sparkles size={20} />} title="مدار" sub="اسأل عن شغلك بكلامك: المحادثات، العملاء، الحجوزات، الحملات والفريق. مدار يقرأ بياناتك فقط وما يرسل أو يعدّل شيء."
         actions={<span className="gr-acts"><button type="button" className="gr-btn zk-hist-toggle" onClick={() => setHistOpen((o) => !o)}><History /> السجل</button><button type="button" className="gr-btn primary" onClick={fresh}><Plus /> سؤال جديد</button></span>} />
       <div className="zk">
-        <aside className={`zk-hist${histOpen ? ' is-open' : ''}`} aria-label="محادثاتك مع زكي">
+        <aside className={`zk-hist${histOpen ? ' is-open' : ''}`} aria-label="محادثاتك مع مدار">
           <header><b style={{ fontSize: 13, color: 'var(--ink)' }}>محادثاتك</b></header>
           <ul>
             {threads.length === 0 && <li style={{ fontSize: 12, color: 'var(--dim)', padding: 8 }}>ما فيه محادثات سابقة.</li>}
@@ -110,7 +110,7 @@ export function DashboardV2Zaki() {
               <div className="zk-hello">
                 <span className="zk-msg bot" style={{ alignSelf: 'center' }}><span className="zk-av" style={{ width: 44, height: 44 }}><Sparkles size={22} /></span></span>
                 <h2>هلا {userName ? userName.split(' ')[0] : ''}، وش تبي تعرف؟</h2>
-                <p>زكي يطالع بيانات شركتك ويرد عليك بالأرقام. جرّب واحد من هذي:</p>
+                <p>مدار يطالع بيانات شركتك ويرد عليك بالأرقام. جرّب واحد من هذي:</p>
                 <div className="zk-sugg">{SUGGESTIONS.map((s) => <button key={s} type="button" onClick={() => void ask(s)}>{s}</button>)}</div>
               </div>
             )}
@@ -122,11 +122,11 @@ export function DashboardV2Zaki() {
                   <div>{m.content}{m.tools && m.tools.length > 0 && <div className="zk-tools">اطّلع على: {m.tools.join('، ')}</div>}</div>
                 </div>
               ))}
-            {busy && <div className="zk-msg bot"><span className="zk-av"><Sparkles size={14} /></span><span className="zk-dots" aria-label="زكي يكتب"><i /><i /><i /></span></div>}
+            {busy && <div className="zk-msg bot"><span className="zk-av"><Sparkles size={14} /></span><span className="zk-dots" aria-label="مدار يكتب"><i /><i /><i /></span></div>}
             <div ref={end} />
           </div>
           <form className="zk-input" onSubmit={(e) => { e.preventDefault(); void ask(text) }}>
-            <textarea rows={1} value={text} placeholder="اسأل زكي…" aria-label="سؤالك لزكي" onChange={(e) => setText(e.target.value)}
+            <textarea rows={1} value={text} placeholder="اسأل مدار…" aria-label="سؤالك لمدار" onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void ask(text) } }} />
             <button type="submit" className="gr-btn primary" style={{ height: 40 }} disabled={busy || !text.trim()} aria-label="إرسال"><Send /></button>
           </form>
@@ -161,7 +161,7 @@ function demoAnswer(q: string, d: { calls: AICallLog[]; contacts: Contact[]; cam
     return { text: `هالأسبوع ${week.length} محادثة احتاجت مراجعة، أبرزها:\n${week.slice(0, 4).map((c) => `- ${(c.summary || c.review_reason || 'بدون ملخص').slice(0, 90)}`).join('\n')}\nأضف أجوبتها في قاعدة المعرفة عشان الوكيل يرد عليها بنفسه المرة الجاية.`, tools: ['الأسئلة اللي ما انجاوبت'] }
   }
   if (/حجز|موعد|مواعيد|بكرة/.test(q)) {
-    return { text: 'أشوف الحجوزات من صفحة الحجوزات في نسختك الفعلية. في العرض التجريبي هذا السؤال يجاوب عليه زكي من جدول مواعيدك مباشرة.', tools: ['الحجوزات'] }
+    return { text: 'أشوف الحجوزات من صفحة الحجوزات في نسختك الفعلية. في العرض التجريبي هذا السؤال يجاوب عليه مدار من جدول مواعيدك مباشرة.', tools: ['الحجوزات'] }
   }
   if (/فريق|ضغط|موظف|مسند/.test(q)) {
     const open = d.contacts.filter((c) => c.status === 'open')

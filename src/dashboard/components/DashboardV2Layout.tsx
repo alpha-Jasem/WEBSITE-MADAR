@@ -248,7 +248,7 @@ export function DashboardV2Layout() {
   const ALL_NAV_GROUPS: { title: string; items: NavItem[] }[] = [
     { title: 'نظرة عامة', items: [
       { label: 'الرئيسية', path: base, icon: <LayoutDashboard size={16} /> },
-      { label: 'زكي', path: `${base}/zaki`, icon: <WandSparkles size={16} /> },
+      { label: 'مدار', path: `${base}/zaki`, icon: <WandSparkles size={16} /> },
       { label: 'التقارير والتحليلات', short: 'التقارير', path: `${base}/reports`, icon: <BarChart3 size={16} />, module: 'reports' },
       { label: 'تحليلات الوكيل', short: 'التحليلات', path: `${base}/agent-analytics`, icon: <Sparkles size={16} />, module: 'voice' },
       { label: 'الإيرادات', path: `${base}/revenue`, icon: <Wallet size={16} />, module: 'revenue' },

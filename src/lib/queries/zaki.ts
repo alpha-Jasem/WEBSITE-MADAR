@@ -16,7 +16,7 @@ async function call<T>(body: Record<string, unknown>): Promise<T> {
     body: JSON.stringify(body),
   })
   const out = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(out.reply || 'زكي غير متاح الآن')
+  if (!res.ok) throw new Error(out.reply || 'مدار غير متاح الآن')
   return out as T
 }
 
