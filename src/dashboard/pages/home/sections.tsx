@@ -178,12 +178,9 @@ export function NeedsAction({ entries, total, busyId, onOpenCall, onReviewed, on
                   )}
                   {it.kind === 'human' && it.call && (
                     <>
-                      <button type="button" className="nx-btn sm ghost" onClick={() => onOpenCall(it.call!)}>افتح المحادثة</button>
-                      {it.linkedTicket && (
-                        <button type="button" className="nx-btn sm" onClick={() => onOpenTicket(it.linkedTicket!)}><Ticket /> التذكرة</button>
-                      )}
+                      <button type="button" className="nx-btn sm pri" onClick={() => onOpenCall(it.call!)}>افتح المحادثة</button>
                       <button type="button" className="nx-btn sm" disabled={busyId === it.call.id} onClick={() => onReviewed(it.call!)}>
-                        {busyId === it.call.id ? '…' : 'تم'}
+                        {busyId === it.call.id ? '…' : 'تمت المراجعة'}
                       </button>
                     </>
                   )}
