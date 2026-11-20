@@ -6,7 +6,7 @@ import { useWaTemplates } from '@/lib/queries/outreach'
 import {
   useConnectRules, saveConnectRule, deleteConnectRule, toggleConnectRule, testConnectRule,
   useApiKeys, createApiKey, revokeApiKey,
-  TRIGGER_LABELS, ACTION_LABELS, WEBHOOK_PRESETS, RECIPES, STORE_EVENTS, ORDER_STATUS_OPTIONS, EVENT_FIELDS,
+  TRIGGER_LABELS, ACTION_LABELS, WEBHOOK_PRESETS, RECIPES, USE_CASES, STORE_EVENTS, ORDER_STATUS_OPTIONS, EVENT_FIELDS,
   type ConnectRule, type TriggerEvent, type ActionType,
 } from '@/lib/queries/connect'
 import { Card, Button, Input, Select, Badge, Dialog } from '@/dashboard/components/primitives'
@@ -63,6 +63,7 @@ export function DashboardV2Connect() {
   const { companyId, isDemo, isOwner, hasModule } = useWorkspace()
   const hasStore = hasModule('orders')
   const triggerKeys = (Object.keys(TRIGGER_LABELS) as TriggerEvent[]).filter((k) => hasStore || !STORE_EVENTS.includes(k))
+  const useCases = USE_CASES.filter((r) => hasStore || !STORE_EVENTS.includes(r.rule.trigger_event))
   const recipes = RECIPES.filter((r) => hasStore || !STORE_EVENTS.includes(r.rule.trigger_event))
   const pushToast = useToast()
   const [tab, setTab] = useState<'rules' | 'api' | 'dev'>('rules')
@@ -129,6 +130,18 @@ export function DashboardV2Connect() {
       {tab === 'rules' && (
         <>
           {!available && <Card><EmptyLine>الأتمتة غير مفعّلة على هذا الحساب بعد.</EmptyLine></Card>}
+          {canEdit && (
+            <Card>
+              <CardTitle aside="اختر حالة وتجهز لك القاعدة">قوالب حالات الاستخدام</CardTitle>
+              <div className="cn-recipes">
+                {useCases.map((r) => (
+                  <button key={r.title} type="button" className="cn-recipe" onClick={() => setDraft({ ...r.rule, enabled: true })}>
+                    <b>{r.title}</b><span>{r.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </Card>
+          )}
           {canEdit && (
             <Card>
               <CardTitle aside="اضغط على وصفة تبدأ منها"><Zap size={16} style={{ color: 'var(--warn)' }} /> وصفات جاهزة</CardTitle>

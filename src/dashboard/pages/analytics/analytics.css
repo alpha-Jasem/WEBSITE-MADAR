@@ -144,3 +144,12 @@
 .ax-heat-c { display: block; height: 28px; border-radius: 6px; }
 .ax-heat-note { margin: 12px 0 0; font-size: 13px; color: var(--text-secondary); }
 @media (max-width: 600px) { .ax-heat-grid { grid-template-columns: 48px repeat(8, minmax(0, 1fr)); gap: 3px; } .ax-heat-h { font-size: 9px; } .ax-heat-c { height: 22px; } }
+
+/* Containment rate */
+.ax-contain { display: flex; flex-direction: column; gap: 10px; }
+.ax-contain-top { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.ax-contain-top b { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.ax-contain-top span, .ax-contain-top small { color: var(--muted); font-size: 13px; }
+.ax-contain-track { position: relative; height: 10px; border-radius: 99px; background: var(--panel-2); }
+.ax-contain-track i { position: absolute; inset-block: 0; inset-inline-start: 0; border-radius: 99px; background: var(--sky); }
+.ax-contain-track u { position: absolute; inset-block: -4px; width: 2px; background: var(--ink); opacity: .7; }

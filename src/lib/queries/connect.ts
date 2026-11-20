@@ -107,6 +107,22 @@ export const RECIPES: { title: string; desc: string; rule: Omit<ConnectRule, 'id
     rule: { name: 'تم الشحن ← واتساب', trigger_event: 'order.status_changed', conditions: { order_status: 'shipped' }, action_type: 'whatsapp', action_config: {} } },
 ]
 
+/** Use-case templates: the six everyday jobs, each one click away from a working rule. */
+export const USE_CASES: { title: string; desc: string; rule: Omit<ConnectRule, 'id' | 'enabled' | 'run_count' | 'last_run_at'> }[] = [
+  { title: 'حجز موعد', desc: 'أول ما ينحجز موعد، يوصل العميل تأكيد على واتساب.',
+    rule: { name: 'حجز موعد ← تأكيد واتساب', trigger_event: 'booking.created', conditions: {}, action_type: 'whatsapp', action_config: {} } },
+  { title: 'تحصيل دفعة', desc: 'رسالة فيها المبلغ ورقم الطلب أول ما يوصل الطلب، تذكّر العميل يدفع.',
+    rule: { name: 'طلب جديد ← تذكير دفع', trigger_event: 'order.created', conditions: {}, action_type: 'whatsapp', action_config: {} } },
+  { title: 'متابعة شكوى', desc: 'أي محادثة تحتاج مراجعة وفيها كلمة «شكوى» تتحول لتذكرة عاجلة.',
+    rule: { name: 'شكوى ← تذكرة عاجلة', trigger_event: 'conversation.needs_review', conditions: { contains: 'شكوى' }, action_type: 'ticket', action_config: { priority: 'urgent', subject: '{{summary_text}}' } } },
+  { title: 'تأهيل عميل محتمل', desc: 'من يسأل عن السعر يروح لفريق المبيعات فورًا وهو لسه متحمس.',
+    rule: { name: 'سؤال سعر ← المبيعات', trigger_event: 'conversation.new', conditions: { contains: 'سعر' }, action_type: 'transfer', action_config: {} } },
+  { title: 'طلب تقييم الرضا', desc: 'بعد ما يكتمل الطلب، رسالة تطلب رأي العميل.',
+    rule: { name: 'طلب مكتمل ← طلب تقييم', trigger_event: 'order.status_changed', conditions: { order_status: 'completed' }, action_type: 'whatsapp', action_config: {} } },
+  { title: 'تحديث حالة طلب', desc: 'يوصل العميل خبر لما يصير طلبه «جاري التوصيل».',
+    rule: { name: 'جاري التوصيل ← واتساب', trigger_event: 'order.status_changed', conditions: { order_status: 'delivering' }, action_type: 'whatsapp', action_config: {} } },
+]
+
 const demoId = () => `demo-${Math.random().toString(36).slice(2, 10)}`
 let demoRules: ConnectRule[] = []
 let demoRuns: ConnectRun[] = []

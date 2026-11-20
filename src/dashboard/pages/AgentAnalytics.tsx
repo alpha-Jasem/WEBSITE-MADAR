@@ -11,12 +11,13 @@ import { PERIOD_OPTIONS, PERIOD_PHRASE, type Period } from './shared/periods'
 import { useIsNarrow } from './shared/night'
 import { Chip, Sk } from './conversations/ui'
 import { CHANNEL_LABEL } from './conversations/model'
-import {
+import { PREV_PHRASE,
   filterCalls, computeMetrics, computeTopics, computeFieldStats, insightText, recommendations,
   type ChannelFilter, type MetricId, type TopicRow, type InsightCard,
 } from './analytics/model'
 import { Sparkline, SentimentBar, SentimentLegend } from './analytics/ui'
 import { BusyHoursMap } from './analytics/Heatmap'
+import { ContainmentBar } from './analytics/Containment'
 import './home/night.css'
 import './analytics/analytics.css'
 
@@ -199,6 +200,12 @@ export function DashboardV2AgentAnalytics() {
             </div>
           )}
 
+          {inRange.length > 0 && (
+            <div className="nx-card">
+              <CardTitle aside={PERIOD_PHRASE[period]}><BarChart3 size={16} style={{ color: 'var(--sky)' }} /> نسبة الاحتواء</CardTitle>
+              <ContainmentBar calls={inRange} previous={previous} phrase={PREV_PHRASE[period]} />
+            </div>
+          )}
           {inRange.length > 0 && (
             <div className="nx-card">
               <CardTitle aside={PERIOD_PHRASE[period]}><BarChart3 size={16} style={{ color: 'var(--sky)' }} /> أوقات الضغط</CardTitle>

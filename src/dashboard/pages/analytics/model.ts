@@ -108,7 +108,7 @@ function delta(cur: number, prev: number, phrase: string): [string, 'up' | 'down
   return [`${d > 0 ? '+' : ''}${d}% عن ${phrase}`, d > 0 ? 'up' : 'down']
 }
 
-const PREV_PHRASE: Record<Period, string> = { today: 'أمس', week: 'الأسبوع السابق', month: 'الشهر السابق' }
+export const PREV_PHRASE: Record<Period, string> = { today: 'أمس', week: 'الأسبوع السابق', month: 'الشهر السابق' }
 
 export function computeMetrics(inRange: AICallLog[], previous: AICallLog[], buckets: Bucket[], period: Period): Metric[] {
   const groups = perBucket(inRange, buckets)
@@ -307,4 +307,13 @@ export function recommendations(inRange: AICallLog[], allCalls: AICallLog[], fie
     })
   }
   return out
+}
+
+/** Containment: the share of conversations the agent handled without handing them to the team.
+ *  A conversation is NOT contained when it was referred to a person, flagged for review, or failed. */
+export function containment(calls: AICallLog[]): { rate: number | null; contained: number; escalated: number } {
+  let escalated = 0
+  for (const c of calls) if (c.result === 'referred' || c.needs_review || c.status === 'failed') escalated++
+  const contained = calls.length - escalated
+  return { rate: calls.length ? contained / calls.length : null, contained, escalated }
 }
