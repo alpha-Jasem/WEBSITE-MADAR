@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
   const message = String(body.message || '').trim().slice(0, 1500)
   if (!message) return json({ error: 'empty' }, 400)
   const openaiKey = Deno.env.get('OPENAI_API_KEY')
-  if (!openaiKey) return json({ error: 'not_configured', reply: 'زكي غير مفعّل حاليًا.' }, 200)
+  if (!openaiKey) return json({ error: 'not_configured', reply: 'مدار غير مفعّل حاليًا.' }, 200)
 
   // Daily cap per company, shared with the support assistant's counter.
   const today = riyadhDate()
@@ -180,7 +180,7 @@ Deno.serve(async (req) => {
   await db.from('ai_assistant_messages').insert({ conversation_id: threadId, company_id: company, user_id: user.id, portal: 'client', route: 'zaki', role: 'user', content: message })
 
   const { data: co } = await db.from('companies').select('name, business_type').eq('id', company).maybeSingle()
-  const system = `أنت «زكي»، مساعد ذكي داخل لوحة تحكم شركة ${co?.name || ''}. تجاوب عن بيانات الشركة فقط باستخدام الأدوات المتاحة، وكلها للقراءة.
+  const system = `أنت «مدار»، مساعد ذكي داخل لوحة تحكم شركة ${co?.name || ''}. تجاوب عن بيانات الشركة فقط باستخدام الأدوات المتاحة، وكلها للقراءة.
 القواعد:
 - اليوم في الرياض: ${today}. حوّل «اليوم»، «أمس»، «هالأسبوع» لتواريخ صحيحة.
 - لا تخترع أرقامًا أو أسماء. إذا الأداة ما رجعت بيانات قل ذلك بوضوح.
@@ -202,7 +202,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({ model, messages, tools: TOOLS, tool_choice: 'auto', max_tokens: 600 }),
     })
     const out = await res.json().catch(() => ({}))
-    if (!res.ok) { reply = /credit|quota|billing/i.test(JSON.stringify(out)) ? 'زكي متوقف مؤقتًا لانتهاء رصيد الذكاء الاصطناعي.' : 'تعذّر الاتصال الآن، حاول بعد شوي.'; break }
+    if (!res.ok) { reply = /credit|quota|billing/i.test(JSON.stringify(out)) ? 'مدار متوقف مؤقتًا لانتهاء رصيد الذكاء الاصطناعي.' : 'تعذّر الاتصال الآن، حاول بعد شوي.'; break }
     const msg = out.choices?.[0]?.message
     if (!msg) { reply = 'ما وصلني رد، حاول مرة ثانية.'; break }
     messages.push(msg)
