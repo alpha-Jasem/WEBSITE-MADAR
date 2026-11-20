@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>محادثة</title>
+<style>
+  :root { --c: #4f6bff; --bg: #0f0f12; --panel: #17171c; --line: #2a2a33; --ink: #f4f4f6; --dim: #9a9aa6; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: "IBM Plex Sans Arabic", Tahoma, system-ui, sans-serif; font-size: 15px; display: flex; flex-direction: column; overflow: hidden; }
+  header { flex: none; display: flex; align-items: center; gap: 10px; padding: 14px 16px; background: var(--panel); border-bottom: 1px solid var(--line); }
+  .av { width: 36px; height: 36px; border-radius: 50%; background: var(--c); color: #fff; display: grid; place-items: center; font-weight: 700; flex: none; overflow: hidden; }
+  .av img { width: 100%; height: 100%; object-fit: cover; }
+  .who { flex: 1; min-width: 0; }
+  .who b { display: block; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .who small { color: var(--dim); font-size: 12px; display: flex; align-items: center; gap: 6px; }
+  .who small i { width: 7px; height: 7px; border-radius: 50%; background: #3ecf8e; display: inline-block; }
+  .who small i.off { background: #777; }
+  .x { border: 0; background: none; color: var(--dim); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; font-size: 22px; line-height: 1; }
+  .x:hover, .x:focus-visible { background: #ffffff14; color: var(--ink); }
+  #log { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
+  .m { max-width: 84%; padding: 10px 13px; border-radius: 16px; line-height: 1.75; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: anywhere; }
+  .m.bot { background: var(--panel); border: 1px solid var(--line); border-end-start-radius: 4px; align-self: flex-start; }
+  .m.me { background: var(--c); color: #fff; border-end-end-radius: 4px; align-self: flex-end; }
+  .m.note { align-self: center; background: none; color: var(--dim); font-size: 13px; text-align: center; }
+  .typing { display: inline-flex; gap: 4px; padding: 4px 0; }
+  .typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--dim); animation: b 1s infinite ease-in-out; }
+  .typing i:nth-child(2) { animation-delay: .15s; } .typing i:nth-child(3) { animation-delay: .3s; }
+  @keyframes b { 0%, 80%, 100% { opacity: .3; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+  .chips { flex: none; display: flex; gap: 8px; flex-wrap: wrap; padding: 0 16px 10px; }
+  .chips button { border: 1px solid var(--c); background: none; color: var(--ink); border-radius: 999px; padding: 7px 13px; font: inherit; font-size: 13.5px; cursor: pointer; }
+  .chips button:hover, .chips button:focus-visible { background: var(--c); color: #fff; }
+  form { flex: none; display: flex; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); background: var(--panel); }
+  textarea { flex: 1; resize: none; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 12px; padding: 10px 12px; font: inherit; max-height: 110px; min-height: 42px; }
+  textarea:focus { outline: 2px solid var(--c); outline-offset: 1px; }
+  .send { flex: none; width: 44px; height: 42px; align-self: flex-end; border: 0; border-radius: 12px; background: var(--c); color: #fff; cursor: pointer; display: grid; place-items: center; }
+  .send:disabled { opacity: .5; cursor: default; }
+  .send svg { transform: scaleX(-1); }
+  .foot { flex: none; text-align: center; color: var(--dim); font-size: 11px; padding: 0 0 8px; background: var(--panel); }
+  .gone { margin: auto; text-align: center; color: var(--dim); padding: 30px; line-height: 1.9; }
+  @media (prefers-reduced-motion: reduce) { #log { scroll-behavior: auto; } .typing i { animation: none; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="av" id="av" aria-hidden="true">م</div>
+  <div class="who"><b id="title">تحدث معنا</b><small><i id="dot"></i><span id="status">متصل الآن</span></small></div>
+  <button class="x" id="close" type="button" aria-label="إغلاق المحادثة">×</button>
+</header>
+<div id="log" role="log" aria-live="polite"></div>
+<div class="chips" id="chips"></div>
+<form id="f" autocomplete="off">
+  <textarea id="t" rows="1" maxlength="1000" placeholder="اكتب رسالتك..." aria-label="رسالتك"></textarea>
+  <button class="send" id="s" type="submit" aria-label="إرسال"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg></button>
+</form>
+<div class="foot">بواسطة مدار</div>
+<script>
+(function () {
+  'use strict'
+  var API = 'https://aacnqiuwrpzgxhzdavaq.supabase.co/functions/v1/site-chat'
+  var q = new URLSearchParams(location.search)
+  var key = q.get('key') || ''
+  var preview = q.get('preview') === '1'
+  var $ = function (id) { return document.getElementById(id) }
+  var log = $('log'), input = $('t'), send = $('s'), chipsBox = $('chips')
+  var cfg = { title: 'تحدث معنا', greeting: 'أهلًا بك! كيف أقدر أساعدك؟', color: '#4f6bff', logo_url: '', chips: [], live: true, agent_name: '' }
+  var busy = false, greeted = false, session = ''
+
+  try { session = localStorage.getItem('madar_chat_session') || '' } catch (e) {}
+  if (!/^[A-Za-z0-9_-]{8,64}$/.test(session)) {
+    session = Array.prototype.map.call(crypto.getRandomValues(new Uint8Array(16)), function (b) { return ('0' + b.toString(16)).slice(-2) }).join('')
+    try { localStorage.setItem('madar_chat_session', session) } catch (e) {}
+  }
+
+  function safeColor(c) { return /^#[0-9a-fA-F]{6}$/.test(c || '') ? c : '#4f6bff' }
+  function add(text, cls) {
+    var d = document.createElement('div')
+    d.className = 'm ' + cls
+    d.textContent = text
+    log.appendChild(d)
+    log.scrollTop = log.scrollHeight
+    return d
+  }
+  function apply() {
+    document.documentElement.style.setProperty('--c', safeColor(cfg.color))
+    $('title').textContent = cfg.title || 'تحدث معنا'
+    var av = $('av')
+    av.textContent = ''
+    if (cfg.logo_url && /^https:\/\//.test(cfg.logo_url)) {
+      var im = document.createElement('img'); im.alt = ''; im.src = cfg.logo_url; av.appendChild(im)
+    } else av.textContent = (cfg.agent_name || cfg.title || 'م').trim().charAt(0)
+    $('dot').className = cfg.live ? '' : 'off'
+    $('status').textContent = cfg.live ? 'متصل الآن' : 'غير متاح الآن'
+    chipsBox.textContent = ''
+    ;(cfg.chips || []).slice(0, 4).forEach(function (c) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = String(c).slice(0, 40)
+      b.onclick = function () { submit(String(c)) }
+      chipsBox.appendChild(b)
+    })
+    if (!greeted) { greeted = true; add(cfg.greeting || '', 'bot') }
+    else { var first = log.querySelector('.m.bot'); if (first && log.children.length === 1) first.textContent = cfg.greeting || '' }
+  }
+  function gone(msg) {
+    log.innerHTML = ''
+    var d = document.createElement('div'); d.className = 'gone'; d.textContent = msg
+    log.appendChild(d)
+    chipsBox.textContent = ''
+    input.disabled = true; send.disabled = true
+  }
+
+  async function submit(text) {
+    text = (text || input.value).trim()
+    if (!text || busy) return
+    if (!cfg.live && !preview) { add('المساعد غير متاح الآن. اترك رسالتك وسنتواصل معك.', 'note') }
+    busy = true; send.disabled = true; input.value = ''; chipsBox.textContent = ''
+    add(text, 'me')
+    var typing = add('', 'bot'); typing.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>'
+    try {
+      if (preview) {
+        await new Promise(function (r) { setTimeout(r, 700) })
+        typing.textContent = 'هذا رد تجريبي. هنا يظهر رد المساعد الحقيقي من معلومات شركتك.'
+      } else {
+        var res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: key, session: session, message: text, page_url: q.get('page') || '' }) })
+        var out = await res.json().catch(function () { return {} })
+        if (res.ok && out.reply) typing.textContent = out.reply
+        else if (res.status === 429) typing.textContent = 'أرسلت رسائل كثيرة بسرعة. جرّب بعد قليل.'
+        else if (out.code === 'off') typing.textContent = 'المساعد غير متاح الآن. اترك رقم جوالك على موقعنا وسنتواصل معك.'
+        else typing.textContent = 'تعذّر الرد الآن. حاول مرة ثانية بعد قليل.'
+      }
+    } catch (e) { typing.textContent = 'تعذّر الاتصال. تأكد من الإنترنت وحاول مرة ثانية.' }
+    busy = false; send.disabled = false; input.focus(); log.scrollTop = log.scrollHeight
+  }
+
+  $('f').addEventListener('submit', function (e) { e.preventDefault(); submit() })
+  input.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } })
+  input.addEventListener('input', function () { input.style.height = 'auto'; input.style.height = Math.min(110, input.scrollHeight) + 'px' })
+  $('close').onclick = function () { try { parent.postMessage({ type: 'madar-chat-close' }, '*') } catch (e) {} }
+
+  // Live preview from the dashboard builder: it sends the settings as they are edited.
+  window.addEventListener('message', function (e) {
+    var d = e.data
+    if (!preview || !d || d.type !== 'madar-preview' || !d.config) return
+    var c = d.config
+    cfg = { title: String(c.title || ''), greeting: String(c.greeting || ''), color: c.color, logo_url: String(c.logo_url || ''), chips: Array.isArray(c.chips) ? c.chips : [], live: true, agent_name: '' }
+    apply()
+  })
+
+  if (preview) {
+    cfg.title = q.get('title') || cfg.title; cfg.greeting = q.get('greeting') || cfg.greeting; cfg.color = q.get('color') ? '#' + q.get('color').replace('#', '') : cfg.color
+    apply()
+  } else if (!/^[0-9a-f-]{36}$/i.test(key)) {
+    gone('هذه المحادثة غير مفعّلة.')
+  } else {
+    fetch(API + '?key=' + encodeURIComponent(key)).then(function (r) { return r.ok ? r.json() : Promise.reject() })
+      .then(function (c) { cfg = Object.assign(cfg, c); apply() })
+      .catch(function () { gone('هذه المحادثة غير مفعّلة حاليًا.') })
+  }
+})()
+</script>
+</body>
+</html>

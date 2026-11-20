@@ -63,6 +63,7 @@ const DashboardV2Reports       = lazy(() => import('./dashboard/pages/Reports').
 const DashboardV2Reminders     = lazy(() => import('./dashboard/pages/Reminders').then(m => ({ default: m.DashboardV2Reminders })))
 const DashboardV2Integrations  = lazy(() => import('./dashboard/pages/Integrations').then(m => ({ default: m.DashboardV2Integrations })))
 const DashboardV2Team             = lazy(() => import('./dashboard/pages/Team').then(m => ({ default: m.DashboardV2Team })))
+const DashboardV2SiteWidget       = lazy(() => import('./dashboard/pages/SiteWidget').then(m => ({ default: m.DashboardV2SiteWidget })))
 const DashboardV2Connect          = lazy(() => import('./dashboard/pages/Connect').then(m => ({ default: m.DashboardV2Connect })))
 const DashboardV2Settings      = lazy(() => import('./dashboard/pages/Settings').then(m => ({ default: m.DashboardV2Settings })))
 const DashboardV2Services      = lazy(() => import('./dashboard/pages/Services').then(m => ({ default: m.DashboardV2Services })))
@@ -100,6 +101,7 @@ const dashboardChildRoutes = (
     <Route path="plan-usage" element={<DashboardV2MadarAgentUsage />} />
     <Route path="reminders" element={<ModuleRoute module="reminders"><DashboardV2Reminders /></ModuleRoute>} />
     <Route path="integrations" element={<PermissionRoute permission="integrations.manage"><DashboardV2Integrations /></PermissionRoute>} />
+    <Route path="site-widget" element={<PermissionRoute permission="integrations.manage"><DashboardV2SiteWidget /></PermissionRoute>} />
     <Route path="connect" element={<PermissionRoute permission="integrations.manage"><DashboardV2Connect /></PermissionRoute>} />
     <Route path="team" element={<PermissionRoute permission="team.manage"><DashboardV2Team /></PermissionRoute>} />
     <Route path="services" element={<ModuleRoute module="services"><DashboardV2Services /></ModuleRoute>} />
