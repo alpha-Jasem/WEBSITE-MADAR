@@ -5,7 +5,7 @@ import { DURATION_MEDIUM, EASE_OUT } from './motionTokens'
 import {
   LayoutDashboard, CalendarDays, Users, MessageSquare, Star, BarChart3,
   Wallet, BellRing, Settings, AlertTriangle, Plus, Ticket,
-  ClipboardList, BookOpen, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Send, ShoppingBag, UsersRound, Zap, Layers, Megaphone, WandSparkles, FileInput, MessageCircle, Radio,
+  ClipboardList, BookOpen, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Send, ShoppingBag, UsersRound, Zap, Layers, Megaphone, WandSparkles, FileInput, MessageCircle, Radio, ChevronDown,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useSupportTickets } from '@/lib/dashboardQueries'
@@ -88,6 +88,9 @@ export const SHELL_CSS = `
   .dv2-dot.bad { background: var(--bad); }
   .dv2-side.is-collapsed .dv2-ctx { padding: 4px 0; justify-content: center; border-color: transparent; background: none; }
   .dv2-nav-group { font-size: 11.5px; color: var(--dim); padding: 14px 10px 4px; font-weight: 500; }
+  .dv2-nav-fold { display: flex; align-items: center; justify-content: space-between; width: 100%; background: none; border: 0; cursor: pointer; text-align: start; font-family: inherit; }
+  .dv2-nav-fold:hover { color: var(--ink); }
+  .dv2-nav-fold svg { transition: transform 150ms var(--ease-out); }
   .dv2-side.is-collapsed .dv2-nav-group { height: 1px; padding: 0; margin: 10px 6px; background: var(--line); overflow: hidden; color: transparent; }
   .dv2-nav { display: flex; align-items: center; gap: 10px; height: 34px; padding: 0 10px; border-radius: 8px; color: var(--muted);
     font-weight: 500; font-size: 13.5px; border: 0; background: none; text-align: start; width: 100%; cursor: pointer; position: relative; flex: none; }
@@ -207,6 +210,8 @@ export function DashboardV2Layout() {
   const { data: tickets } = useSupportTickets(companyId, isDemo)
   const openTicketCount = (tickets || []).filter((t) => t.status === 'open').length
   // The phone sheet: "more" (items not in the tab bar) or the full menu (from the top-bar toggle).
+  const [openFolds, setOpenFolds] = useState<Set<string>>(new Set())
+  const toggleFold = (t: string) => setOpenFolds((p) => { const n = new Set(p); if (n.has(t)) n.delete(t); else n.add(t); return n })
   const [sheetMode, setSheetMode] = useState<'more' | 'all'>('more')
   useViewportFitCover()
 
@@ -244,40 +249,42 @@ export function DashboardV2Layout() {
   }
 
   const base = isDemo ? '/demo-review' : '/dashboard'
-  // Grouped by what people do: look at numbers, talk to customers, grow, run the business, set up the agent, connect systems.
-  const ALL_NAV_GROUPS: { title: string; items: NavItem[] }[] = [
-    { title: 'نظرة عامة', items: [
+  // Few groups, named by what the owner is doing. Rarely used pages sit in folded groups (they open by themselves when one is active).
+  const ALL_NAV_GROUPS: { title: string; fold?: boolean; items: NavItem[] }[] = [
+    { title: '', items: [
       { label: 'الرئيسية', path: base, icon: <LayoutDashboard size={16} /> },
       { label: 'مدار', path: `${base}/zaki`, icon: <WandSparkles size={16} /> },
-      { label: 'التقارير والتحليلات', short: 'التقارير', path: `${base}/reports`, icon: <BarChart3 size={16} />, module: 'reports' },
-      { label: 'تحليلات الوكيل', short: 'التحليلات', path: `${base}/agent-analytics`, icon: <Sparkles size={16} />, module: 'voice' },
-      { label: 'الإيرادات', path: `${base}/revenue`, icon: <Wallet size={16} />, module: 'revenue' },
     ] },
-    { title: 'التواصل', items: [
-      { label: 'المراقبة الحية', short: 'مباشر', path: `${base}/live`, icon: <Radio size={16} />, module: 'conversations' },
+    { title: 'المحادثات', items: [
       { label: 'المحادثات', path: `${base}/conversations`, icon: <MessageSquare size={16} />, module: 'conversations' },
+      { label: 'المراقبة الحية', short: 'مباشر', path: `${base}/live`, icon: <Radio size={16} />, module: 'conversations' },
       { label: 'التذاكر', path: `${base}/tickets`, icon: <Ticket size={16} />, badge: openTicketCount || undefined, module: 'tickets' },
       { label: 'سجل المكالمات', path: `${base}/call-logs`, icon: <ClipboardList size={16} />, module: 'voice' },
-      { label: 'المتابعات', path: `${base}/reminders`, icon: <BellRing size={16} />, module: 'reminders' },
-      { label: 'تقييمات Google', path: `${base}/reviews`, icon: <Star size={16} />, module: 'reviews' },
     ] },
-    { title: 'العملاء والتسويق', items: [
+    { title: 'العملاء والحملات', items: [
       { label: 'العملاء', path: `${base}/patients`, icon: <Users size={16} />, module: 'customers' },
-      { label: 'الشرائح', path: `${base}/segments`, icon: <Layers size={16} />, module: 'customers' },
-      { label: 'الحملات', path: `${base}/campaigns`, icon: <Megaphone size={16} />, module: 'conversations', perm: 'outreach.send' },
-      { label: 'قوالب واتساب والإرسال', short: 'القوالب', path: `${base}/outreach`, icon: <Send size={16} />, module: 'conversations', perm: 'outreach.send' },
-      { label: 'نماذج الموقع', short: 'النماذج', path: `${base}/forms`, icon: <FileInput size={16} />, module: 'customers', perm: 'integrations.manage' },
-    ] },
-    { title: 'العمليات', items: [
       { label: bookingsLabel(businessType), path: `${base}/bookings`, icon: <CalendarDays size={16} />, module: 'bookings' },
       { label: 'الطلبات', path: `${base}/orders`, icon: <ShoppingBag size={16} />, module: 'orders' },
-      { label: 'الخدمات', path: `${base}/services`, icon: <Wrench size={16} />, module: 'services' },
+      { label: 'الحملات', path: `${base}/campaigns`, icon: <Megaphone size={16} />, module: 'conversations', perm: 'outreach.send' },
+      { label: 'المتابعات', path: `${base}/reminders`, icon: <BellRing size={16} />, module: 'reminders' },
     ] },
-    { title: 'الوكيل الذكي', items: [
+    { title: 'الأتمتة والمعرفة', items: [
       { label: 'إعدادات الوكيل', short: 'الوكيل', path: `${base}/agents`, icon: <Bot size={16} />, perm: 'agent.settings' },
       { label: 'قاعدة المعرفة', short: 'المعرفة', path: `${base}/knowledge-base`, icon: <BookOpen size={16} />, module: 'knowledge_base' },
     ] },
-    { title: 'الربط والإعداد', items: [
+    { title: 'التحليلات', items: [
+      { label: 'التقارير والتحليلات', short: 'التقارير', path: `${base}/reports`, icon: <BarChart3 size={16} />, module: 'reports' },
+      { label: 'تحليلات الوكيل', short: 'التحليلات', path: `${base}/agent-analytics`, icon: <Sparkles size={16} />, module: 'voice' },
+      { label: 'الإيرادات', path: `${base}/revenue`, icon: <Wallet size={16} />, module: 'revenue' },
+      { label: 'تقييمات Google', path: `${base}/reviews`, icon: <Star size={16} />, module: 'reviews' },
+    ] },
+    { title: 'أدوات إضافية', fold: true, items: [
+      { label: 'الشرائح', path: `${base}/segments`, icon: <Layers size={16} />, module: 'customers' },
+      { label: 'قوالب واتساب والإرسال', short: 'القوالب', path: `${base}/outreach`, icon: <Send size={16} />, module: 'conversations', perm: 'outreach.send' },
+      { label: 'نماذج الموقع', short: 'النماذج', path: `${base}/forms`, icon: <FileInput size={16} />, module: 'customers', perm: 'integrations.manage' },
+      { label: 'الخدمات', path: `${base}/services`, icon: <Wrench size={16} />, module: 'services' },
+    ] },
+    { title: 'الإعدادات والربط', fold: true, items: [
       { label: 'ربط واتساب', short: 'واتساب', path: `${base}/whatsapp`, icon: <MessageCircle size={16} />, module: 'conversations', perm: 'integrations.manage' },
       { label: 'الربط والأتمتة', short: 'الربط', path: `${base}/connect`, icon: <Zap size={16} />, perm: 'integrations.manage' },
       { label: 'التكاملات', path: `${base}/integrations`, icon: <Plug size={16} />, perm: 'integrations.manage' },
@@ -353,12 +360,19 @@ export function DashboardV2Layout() {
           {!collapsed && <span dir="ltr">Madar software</span>}
         </div>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {NAV_GROUPS.map((group, gi) => (
-            <div key={group.title || gi} style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              {group.title && <div className="dv2-nav-group">{group.title}</div>}
-              {group.items.map(navButton)}
-            </div>
-          ))}
+          {NAV_GROUPS.map((group, gi) => {
+            const folded = !!group.fold && !collapsed && !openFolds.has(group.title) && !group.items.some((it) => isActive(it.path))
+            return (
+              <div key={group.title || gi} style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                {group.title && (group.fold && !collapsed ? (
+                  <button type="button" className="dv2-nav-group dv2-nav-fold" aria-expanded={!folded} onClick={() => toggleFold(group.title)}>
+                    <span>{group.title}</span><ChevronDown size={13} style={{ transform: folded ? 'rotate(90deg)' : undefined }} />
+                  </button>
+                ) : <div className="dv2-nav-group">{group.title}</div>)}
+                {!folded && group.items.map(navButton)}
+              </div>
+            )
+          })}
         </nav>
 
         {topMetric && !collapsed && (
