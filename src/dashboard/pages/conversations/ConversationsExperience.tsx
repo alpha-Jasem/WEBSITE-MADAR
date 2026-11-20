@@ -46,7 +46,7 @@ function useWide(min: number) {
   }, [q])
   return wide
 }
-const PROVIDER_LABEL: Record<string, string> = { nabrah: 'نبرة', elevenlabs: 'المنصة الصوتية' }
+const PROVIDER_LABEL: Record<string, string> = { nabrah: 'المنصة الصوتية', elevenlabs: 'المنصة الصوتية' }
 
 /** The unified conversations experience. `calls` mode backs /call-logs: the same list
  *  and detail, limited to the agent's calls, with an Excel export. */
