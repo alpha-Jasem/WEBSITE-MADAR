@@ -2,11 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { dateLong, dateShort, nf, timeShort } from '../../../lib/format'
 import { useRealtimeRefetch } from '../../../lib/realtime'
+import { AdminTeamTasks } from './AdminTeamTasks'
+import { AdminTeamSnippets } from './AdminTeamSnippets'
 
 // Team tools from Faisal's developer console, rebuilt on real data: meetings, weekly availability,
 // team chat and the team list. Everything is admins-only (RLS on every table).
 
-type Tab = 'meetings' | 'availability' | 'chat' | 'team'
+type Tab = 'tasks' | 'meetings' | 'availability' | 'chat' | 'templates' | 'team'
 interface Member { id: string; email: string; full_name: string | null }
 interface Meeting {
   id: string; company_name: string | null; contact_name: string; phone: string | null; email: string | null; service: string | null
@@ -25,7 +27,7 @@ const nameOf = (m: Member | undefined) => m?.full_name?.trim() || m?.email?.spli
 /** "2026-11-20T14:30" typed in Riyadh time -> UTC ISO. */
 const fromLocalInput = (v: string) => new Date(`${v}:00+03:00`).toISOString()
 
-export const AdminTeamOps = ({ initialTab = 'meetings' }: { initialTab?: Tab }) => {
+export const AdminTeamOps = ({ initialTab = 'tasks' }: { initialTab?: Tab }) => {
   const [tab, setTab] = useState<Tab>(initialTab)
   const [me, setMe] = useState<string | null>(null)
   const [members, setMembers] = useState<Member[]>([])
@@ -125,7 +127,7 @@ export const AdminTeamOps = ({ initialTab = 'meetings' }: { initialTab?: Tab }) 
           <h3>الفريق</h3>
           <div className="mc-phr">
             <div className="mc-tabs" role="tablist">
-              {([['meetings', 'الاجتماعات'], ['availability', 'أوقات التوفر'], ['chat', unread ? `محادثة الفريق (${nf(unread)})` : 'محادثة الفريق'], ['team', 'أعضاء الفريق']] as const).map(([k, l]) => (
+              {([['tasks', 'المهام'], ['meetings', 'الاجتماعات'], ['availability', 'أوقات التوفر'], ['chat', unread ? `محادثة الفريق (${nf(unread)})` : 'محادثة الفريق'], ['templates', 'قوالب الرسائل'], ['team', 'أعضاء الفريق']] as const).map(([k, l]) => (
                 <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'mc-on' : ''} onClick={() => setTab(k)}>{l}</button>
               ))}
             </div>
@@ -133,6 +135,9 @@ export const AdminTeamOps = ({ initialTab = 'meetings' }: { initialTab?: Tab }) 
             {tab === 'availability' && <button className="mc-btn2 p" onClick={saveAvail}>حفظ</button>}
           </div>
         </div>
+
+        {tab === 'tasks' && <AdminTeamTasks members={members} me={me} onError={setError} />}
+        {tab === 'templates' && <AdminTeamSnippets onError={setError} onCopied={flash} />}
 
         {tab === 'meetings' && (
           <div style={{ padding: '0 20px 20px' }}>
