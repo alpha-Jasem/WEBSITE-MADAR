@@ -69,7 +69,7 @@ export const AdminCommandDeck = () => {
     const [p, d, t, g, c] = await Promise.all([
       supabase.from('payments').select('id, customer_name, status, total_amount, net_amount, tax_amount, confirmed_at, received_at, reference, method, deal_id').limit(3000),
       supabase.from('deals').select('*').limit(1000),
-      supabase.from('admin_tasks').select('id, title, due_at, priority, done, done_at').order('created_at', { ascending: false }).limit(100),
+      supabase.from('admin_tasks').select('id, title, due_at, priority, done, done_at').eq('is_team', false).order('created_at', { ascending: false }).limit(100),
       supabase.from('agency_goals').select('target').eq('period', monthKey()).eq('kind', 'collections').maybeSingle(),
       supabase.from('integration_checks').select('key, label, status'),
     ])

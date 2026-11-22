@@ -14,7 +14,7 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 const API = 'https://api.todoist.com/api/v1'
 
 interface RTask { id: string; content: string; project_id: string; priority: number; due: { date?: string; datetime?: string } | null }
-interface Local { id: string; title: string; due_at: string | null; priority: 'high' | 'medium' | 'low'; done: boolean; source: string; external_id: string | null; project_id: string | null; synced_done: boolean }
+interface Local { id: string; title: string; due_at: string | null; priority: 'high' | 'medium' | 'low'; done: boolean; source: string; external_id: string | null; project_id: string | null; synced_done: boolean; is_team?: boolean }
 
 const prioFromRemote = (p: number): Local['priority'] => (p >= 4 ? 'high' : p === 3 ? 'medium' : 'low')
 const prioToRemote = (p: Local['priority']) => (p === 'high' ? 4 : p === 'medium' ? 3 : 1)
@@ -100,7 +100,7 @@ Deno.serve(async req => {
     const remote = new Map<string, RTask>()
     for (const pid of selected) for (const t of await activeTasks(token, pid)) remote.set(t.id, t)
 
-    const { data: localRows } = await service.from('admin_tasks').select('id, title, due_at, priority, done, source, external_id, project_id, synced_done')
+    const { data: localRows } = await service.from('admin_tasks').select('id, title, due_at, priority, done, source, external_id, project_id, synced_done, is_team')
     const local = (localRows ?? []) as Local[]
     const byExternal = new Map(local.filter(l => l.source === 'todoist' && l.external_id).map(l => [l.external_id!, l]))
     const stats = { pulled: 0, updated: 0, pushed: 0, closed: 0, reopened: 0, completed_remotely: 0 }
@@ -127,7 +127,7 @@ Deno.serve(async req => {
     }
 
     // push local tasks that never reached Todoist
-    for (const row of local.filter(l => l.source === 'local' && !l.external_id && !l.done)) {
+    for (const row of local.filter(l => l.source === 'local' && !l.is_team && !l.external_id && !l.done)) {
       const body: Record<string, unknown> = { content: row.title, project_id: selected[0], priority: prioToRemote(row.priority) }
       if (row.due_at) body.due_datetime = new Date(row.due_at).toISOString().replace(/\.\d{3}Z$/, 'Z')
       const made = await td(token, '/tasks', { method: 'POST', body: JSON.stringify(body), headers: { 'X-Request-Id': row.id } })

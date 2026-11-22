@@ -3,22 +3,22 @@ import { supabase } from '../../../lib/supabase'
 import { dateShort, nf } from '../../../lib/format'
 import { useRealtimeRefetch } from '../../../lib/realtime'
 
-// Team task board (from the developers' console), on the shared admin_tasks table so tasks created in the
-// command deck or synced from the task app show up here too. Each task can be assigned to an admin.
+// Team task board (from the developers' console): plain tasks created by hand, assigned to an admin. They live in
+// admin_tasks marked is_team, and are never synced to the task app; the command deck keeps the personal list.
 
 interface Member { id: string; email: string; full_name: string | null }
 interface Task {
-  id: string; title: string; notes: string | null; due_at: string | null; priority: 'low' | 'normal' | 'high'
+  id: string; title: string; notes: string | null; due_at: string | null; priority: 'low' | 'medium' | 'high'
   done: boolean; in_progress: boolean; assignee_id: string | null; created_by: string | null; created_at: string; source: string | null
 }
 type View = 'all' | 'mine' | 'open'
-const PRIORITY: Record<Task['priority'], string> = { high: 'عالية', normal: 'عادية', low: 'منخفضة' }
+const PRIORITY: Record<Task['priority'], string> = { high: 'عالية', medium: 'عادية', low: 'منخفضة' }
 const nameOf = (m: Member | undefined) => m?.full_name?.trim() || m?.email?.split('@')[0] || 'غير مسندة'
 /** A date typed in Riyadh time -> end of that day in UTC. */
 const dueFromInput = (v: string) => (v ? new Date(`${v}T23:59:00+03:00`).toISOString() : null)
 const inputFromDue = (iso: string | null) => (iso ? new Date(Date.parse(iso) + 3 * 3600_000).toISOString().slice(0, 10) : '')
 
-const BLANK = { title: '', notes: '', due: '', priority: 'normal' as Task['priority'], assignee_id: '' }
+const BLANK = { title: '', notes: '', due: '', priority: 'medium' as Task['priority'], assignee_id: '' }
 
 export function AdminTeamTasks({ members, me, onError }: { members: Member[]; me: string | null; onError: (m: string | null) => void }) {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -29,6 +29,7 @@ export function AdminTeamTasks({ members, me, onError }: { members: Member[]; me
   const load = useCallback(async () => {
     const { data, error } = await supabase.from('admin_tasks')
       .select('id, title, notes, due_at, priority, done, in_progress, assignee_id, created_by, created_at, source')
+      .eq('is_team', true)
       .order('created_at', { ascending: false }).limit(400)
     if (error) { onError('تعذّر تحميل المهام. غالبًا تحديث قاعدة البيانات لم يُطبَّق بعد.'); return }
     setTasks((data ?? []) as Task[])
@@ -60,7 +61,7 @@ export function AdminTeamTasks({ members, me, onError }: { members: Member[]; me
     }
     const { error } = draft.id
       ? await supabase.from('admin_tasks').update(row).eq('id', draft.id)
-      : await supabase.from('admin_tasks').insert({ ...row, created_by: me })
+      : await supabase.from('admin_tasks').insert({ ...row, created_by: me, is_team: true })
     setBusy(false)
     if (error) { onError('تعذّر حفظ المهمة.'); return }
     onError(null); setDraft(null); void load()
@@ -95,7 +96,6 @@ export function AdminTeamTasks({ members, me, onError }: { members: Member[]; me
                   {t.in_progress && !t.done && <span className="mc-chip">قيد التنفيذ</span>}
                   {t.priority === 'high' && !t.done && <span className="mc-chip" style={{ color: 'var(--red, #f87171)' }}>أولوية {PRIORITY.high}</span>}
                   {t.due_at && <span style={{ color: late ? 'var(--red, #f87171)' : undefined }}>{late ? 'متأخرة · ' : 'تستحق '}{dateShort(t.due_at)}</span>}
-                  {t.source === 'todoist' && <span>من تطبيق المهام</span>}
                 </div>
                 {t.notes && <div style={{ fontSize: 12.5, color: 'var(--ink-2)', marginTop: 4, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{t.notes}</div>}
               </div>

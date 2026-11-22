@@ -26,7 +26,7 @@ export function AdminTeamPerformance({ members, me, onError, onNote }: { members
   const load = useCallback(async () => {
     const [a, t, m, d] = await Promise.all([
       supabase.from('staff_attendance').select('id, user_id, clock_in, clock_out').gte('clock_in', from).order('clock_in', { ascending: false }).limit(1000),
-      supabase.from('admin_tasks').select('assignee_id, done, done_at').limit(2000),
+      supabase.from('admin_tasks').select('assignee_id, done, done_at').eq('is_team', true).limit(2000),
       supabase.from('meetings').select('host_id, status, starts_at').gte('starts_at', from).limit(1000),
       supabase.from('deals').select('id', { count: 'exact', head: true }).eq('stage', 'won').gte('closed_at', from),
     ])
