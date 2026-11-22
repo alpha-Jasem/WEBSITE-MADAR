@@ -34,3 +34,10 @@ body.plasma-admin{ background:#0b0d1a; font-family:'Noto Sans Arabic','Segoe UI'
 .mc-lay button:hover{color:var(--ink)}
 .mc-lay button.mc-on{background:rgba(90,123,255,.18);color:var(--ink)}
 .mc-lay button:focus-visible{outline:2px solid var(--primary);outline-offset:1px}
+
+/* Faisal's side: his console fills the screen; a small button returns to the owner's admin */
+.mc-faisal{position:fixed;inset:0;background:#0b0d1a;z-index:5}
+.mc-faisal-frame{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#0b0d1a}
+.mc-faisal-load{position:absolute;inset:0;display:grid;place-items:center;color:var(--ink-3)}
+.mc-faisal-back{position:fixed;bottom:14px;inset-inline-end:14px;z-index:10;height:34px;padding:0 14px;border-radius:999px;font-size:12px;font-weight:600;color:var(--ink);background:rgba(27,32,56,.92);border:1px solid var(--line-2);backdrop-filter:blur(8px)}
+.mc-faisal-back:hover{background:var(--fill-hover)}

@@ -1,7 +1,7 @@
 import { useSystemChrome } from '../../../hooks/useSystemChrome'
 import { useRealtimeRefetch } from '../../../lib/realtime'
 import { usePush } from '../../../lib/push'
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode, Suspense, lazy } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
 import { AdminPulseProvider, useAdminPulse } from './adminPulse'
@@ -13,11 +13,13 @@ import '../../../styles/admin-mc.css'
 import '../../../styles/admin-orbit.css'
 import '../../../styles/admin-faisal.css'
 
+const FaisalPlatform = lazy(() => import('./FaisalPlatform'))
+
 interface Tab { label: string; to: string }
 interface Section { id: string; label: string; icon: McIconName; to: string; match: string[]; exact?: boolean; tabs?: Tab[] }
 
 // The sidebar has the eight sections of the reference design. Pages that already exist live as tabs under them.
-const OWNER_SECTIONS: Section[] = [
+const SECTIONS: Section[] = [
   { id: 'command', label: 'مركز القيادة', icon: 'grid', to: '/admin', match: ['/admin'], exact: true },
   { id: 'sales', label: 'المبيعات', icon: 'chart', to: '/admin/outreach', match: ['/admin/outreach', '/admin/no-website', '/admin/contacted', '/admin/pipeline', '/admin/sales-blitz'],
     tabs: [{ label: 'Outreach', to: '/admin/outreach' }, { label: 'بدون موقع', to: '/admin/no-website' }, { label: 'تم التواصل', to: '/admin/contacted' }, { label: 'الصفقات', to: '/admin/pipeline' }] },
@@ -38,44 +40,22 @@ const OWNER_SECTIONS: Section[] = [
     tabs: [{ label: 'الإعدادات', to: '/admin/settings' }, { label: 'API والتكاملات', to: '/admin/api' }, { label: 'مركز المطوّر', to: '/admin/developer' }] },
 ]
 
-// «سايد بار فيصل»: the navigation of the developers' console (dashboard, meetings, orders and sales, clients, availability,
-// team chat, subscribers, reports, quotes, support requests, team, my account), grouped into a few items and mapped to the real admin pages.
-const FAISAL_SECTIONS: Section[] = [
-  { id: 'command', label: 'لوحة المطوّر', icon: 'grid', to: '/admin', match: ['/admin'], exact: true },
-  { id: 'f-meet', label: 'الاجتماعات والتوفر', icon: 'bell', to: '/admin/team/meetings', match: ['/admin/team/meetings', '/admin/team/availability'],
-    tabs: [{ label: 'الاجتماعات', to: '/admin/team/meetings' }, { label: 'أوقات التوفر', to: '/admin/team/availability' }] },
-  { id: 'sales', label: 'الطلبات والمبيعات', icon: 'chart', to: '/admin/pipeline', match: ['/admin/pipeline', '/admin/outreach', '/admin/no-website', '/admin/contacted', '/admin/sales-blitz', '/admin/finance', '/admin/expenses', '/admin/bank', '/admin/campaigns'],
-    tabs: [{ label: 'الصفقات', to: '/admin/pipeline' }, { label: 'Outreach', to: '/admin/outreach' }, { label: 'تم التواصل', to: '/admin/contacted' }, { label: 'الدفعات', to: '/admin/finance' }, { label: 'المصروفات والربحية', to: '/admin/expenses' }, { label: 'إشعارات البنك', to: '/admin/bank' }] },
-  { id: 'customers', label: 'العملاء والمشتركون', icon: 'users', to: '/admin/companies', match: ['/admin/companies', '/admin/accounts', '/admin/conversations', '/admin/onboarding', '/admin/create-client'],
-    tabs: [{ label: 'الشركات', to: '/admin/companies' }, { label: 'المشتركون', to: '/admin/accounts' }, { label: 'التجهيز والتسليم', to: '/admin/onboarding' }, { label: 'المحادثات', to: '/admin/conversations' }, { label: 'إنشاء عميل', to: '/admin/create-client' }] },
-  { id: 'f-quotes', label: 'عروض الأسعار', icon: 'card', to: '/admin/quotes', match: ['/admin/quotes'] },
-  { id: 'f-reports', label: 'التقارير', icon: 'layers', to: '/admin/reports', match: ['/admin/reports', '/admin/logs', '/admin/n8n'],
-    tabs: [{ label: 'التقارير', to: '/admin/reports' }, { label: 'السجلات', to: '/admin/logs' }, { label: 'n8n', to: '/admin/n8n' }] },
-  { id: 'f-support', label: 'طلبات الدعم', icon: 'bot', to: '/admin/ai-agents', match: ['/admin/ai-agents', '/admin/ai', '/admin/ai-settings', '/admin/ai-knowledge', '/admin/ai-test', '/admin/whatsapp', '/admin/agents-control', '/admin/call-assistant'],
-    tabs: [{ label: 'الوكلاء والتذاكر', to: '/admin/ai-agents' }, { label: 'جارفيس', to: '/admin/ai' }, { label: 'الإيجنت البائع', to: '/admin/agents-control' }, { label: 'معرفة الإيجنت', to: '/admin/ai-knowledge' }, { label: 'واتساب', to: '/admin/whatsapp' }] },
-  { id: 'team', label: 'الفريق', icon: 'users', to: '/admin/team', match: ['/admin/team', '/admin/library', '/admin/marketers'],
-    tabs: [{ label: 'العمل اليومي', to: '/admin/team' }, { label: 'المكتبة', to: '/admin/library' }, { label: 'المسوّقون', to: '/admin/marketers' }] },
-  { id: 'f-dev', label: 'مركز المطوّر', icon: 'gear', to: '/admin/developer', match: ['/admin/developer', '/admin/api'],
-    tabs: [{ label: 'مركز المطوّر', to: '/admin/developer' }, { label: 'API والتكاملات', to: '/admin/api' }] },
-  { id: 'settings', label: 'حسابي', icon: 'gear', to: '/admin/settings', match: ['/admin/settings'] },
-]
+// Two sides: the owner's own admin (this shell) and Faisal's developer console, mounted full-screen at /admin/faisal.
+// Faisal's account opens on his side; everyone else on the owner's. The choice made with the switcher is remembered per user.
 type Layout = 'owner' | 'faisal'
-const LAYOUTS: Record<Layout, { label: string; sections: Section[]; mobile: string[] }> = {
-  owner: { label: 'سايد باري', sections: OWNER_SECTIONS, mobile: ['command', 'sales', 'ai', 'finance'] },
-  faisal: { label: 'سايد فيصل', sections: FAISAL_SECTIONS, mobile: ['command', 'f-meet', 'sales', 'customers'] },
-}
+const FAISAL_PATH = '/admin/faisal'
 const layoutKey = (email: string) => `madar_admin_layout:${email.toLowerCase()}`
-/** Faisal's account opens on his layout, everyone else on the owner's; a choice made with the switcher is remembered per user. */
 const defaultLayout = (email: string): Layout => (email.toLowerCase().startsWith('faisal@') ? 'faisal' : 'owner')
 const readLayout = (email: string): Layout => {
   try { const v = localStorage.getItem(layoutKey(email)); if (v === 'owner' || v === 'faisal') return v } catch { /* storage unavailable */ }
   return defaultLayout(email)
 }
+const MOBILE_TABS = ['command', 'sales', 'ai', 'finance']
 const ALL_PAGES: { label: string; to: string; hint: string }[] = [
   { label: 'مركز القيادة', to: '/admin', hint: 'ملخص يومك' },
   { label: 'الاجتماعات', to: '/admin/team/meetings', hint: 'الفريق' }, { label: 'الحضور والأداء', to: '/admin/team/performance', hint: 'الفريق' },
   { label: 'المهام', to: '/admin/team', hint: 'الفريق' }, { label: 'المكتبة', to: '/admin/library', hint: 'الفريق' }, { label: 'مركز المطوّر', to: '/admin/developer', hint: 'الإعدادات' },
-  ...OWNER_SECTIONS.flatMap(s => (s.tabs ?? [{ label: s.label, to: s.to }]).map(t => ({ label: t.label, to: t.to, hint: s.label }))),
+  ...SECTIONS.flatMap(s => (s.tabs ?? [{ label: s.label, to: s.to }]).map(t => ({ label: t.label, to: t.to, hint: s.label }))),
 ]
 const THEME_KEY = 'madar_admin_theme'
 type Theme = 'dark' | 'light'
@@ -93,14 +73,18 @@ function Shell({ children }: { children: ReactNode }) {
   const [menu, setMenu] = useState(false)
   const [palette, setPalette] = useState(false)
   const [email, setEmail] = useState('')
-  const [layoutPick, setLayoutPick] = useState<Layout | null>(null)
   const [theme, setTheme] = useState<Theme>(readTheme)
 
-  const layout: Layout = layoutPick ?? readLayout(email)
-  const SECTIONS = LAYOUTS[layout].sections
-  const MOBILE_TABS = LAYOUTS[layout].mobile
+  const layout: Layout = location.pathname === FAISAL_PATH ? 'faisal' : 'owner'
   const section = SECTIONS.find(s => isIn(s, location.pathname)) ?? SECTIONS[0]
-  const pickLayout = (l: Layout) => { setLayoutPick(l); try { localStorage.setItem(layoutKey(email), l) } catch { /* storage unavailable */ } }
+  const pickLayout = (l: Layout) => {
+    try { localStorage.setItem(layoutKey(email), l) } catch { /* storage unavailable */ }
+    navigate(l === 'faisal' ? FAISAL_PATH : '/admin')
+  }
+  // Faisal's account (or a remembered choice) lands on his side when it opens the admin home.
+  useEffect(() => {
+    if (email && location.pathname === '/admin' && readLayout(email) === 'faisal') navigate(FAISAL_PATH, { replace: true })
+  }, [email, location.pathname, navigate])
   const badges: Record<string, number> = { sales: pulse.due.length + pulse.meetingsToday.length }
 
   useEffect(() => {
@@ -188,6 +172,17 @@ function Shell({ children }: { children: ReactNode }) {
   const initial = (name[0] ?? 'ج').toUpperCase()
   const nav = (to: string) => { navigate(to); setDrawer(false) }
 
+  if (layout === 'faisal') {
+    return (
+      <div className="mc-root mc-faisal" dir="rtl" data-mc-theme={theme}>
+        <Suspense fallback={<div className="mc-faisal-load">جارٍ التحميل...</div>}>
+          <FaisalPlatform onExit={() => pickLayout('owner')} />
+        </Suspense>
+        <button type="button" className="mc-faisal-back" onClick={() => pickLayout('owner')}>سايد باري</button>
+      </div>
+    )
+  }
+
   return (
     <div className="mc-root" dir="rtl" data-mc-theme={theme}>
       <div className={`mc-app ${drawer ? 'mc-drawer-open' : ''}`}>
@@ -207,8 +202,8 @@ function Shell({ children }: { children: ReactNode }) {
             ))}
           </nav>
           <div className="mc-lay" role="group" aria-label="شكل القائمة">
-            {(['faisal', 'owner'] as Layout[]).map(l => (
-              <button key={l} type="button" aria-pressed={layout === l} className={layout === l ? 'mc-on' : ''} onClick={() => pickLayout(l)}>{LAYOUTS[l].label}</button>
+            {([['faisal', 'سايد فيصل'], ['owner', 'سايد باري']] as [Layout, string][]).map(([l, label]) => (
+              <button key={l} type="button" aria-pressed={layout === l} className={layout === l ? 'mc-on' : ''} onClick={() => pickLayout(l)}>{label}</button>
             ))}
           </div>
         </aside>
