@@ -1,0 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+/* Admin theme taken from the developers' console (claude-session): dark navy with blue-violet accents, opaque cards,
+   a blurred sidebar with a bar on the active item. Loaded after admin-orbit and only re-points tokens and a few components,
+   so every admin page takes it. Light mode keeps the existing light tokens. Admin only (scoped to .mc-root). */
+
+.mc-root:not([data-mc-theme="light"]){
+  --bg:#0b0d1a; --card:#161a2c; --card-2:#1b2038; --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.18);
+  --ink:#f2f4ff; --ink-2:#a3a8c3; --ink-3:#8a8fae; --ink-4:#6b7090;
+  --blue:#2c5fe0; --blue-2:#5a7bff; --violet:#6c4fe8; --green:#3ddc97; --amber:#f5b84b; --red:#ff7a7a;
+  --fill:#1b2038; --fill-2:#12152a; --fill-hover:#222848; --pop:#1b2038; --link:#8fa6ff; --amber-ink:#f5b84b;
+  --sb-bg:#0f1224; --mtab-bg:rgba(15,18,36,.94);
+  --page-bg:radial-gradient(1100px 520px at 80% -12%,rgba(90,123,255,.10),transparent 70%),radial-gradient(900px 480px at 0% 110%,rgba(108,79,232,.08),transparent 70%);
+  --font:'Noto Sans Arabic','Segoe UI',Tahoma,sans-serif; --head:'Noto Sans Arabic','Segoe UI',Tahoma,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+  --surface:#161a2c; --surface-2:#1b2038; --surface-3:#222848; --border:rgba(255,255,255,.09); --border-2:rgba(255,255,255,.06); --modal-bg:#161a2c;
+  --primary:#5a7bff; --primary-600:#2c5fe0; --primary-700:#2447b8; --primary-tint:rgba(90,123,255,.16); --primary-tint2:rgba(90,123,255,.30); --primary-ink:#9db3ff;
+  --brand-grad:linear-gradient(135deg,#2c5fe0,#6c4fe8);
+  --shadow:0 10px 30px rgba(0,0,0,.35); --shadow-lg:0 24px 64px rgba(0,0,0,.6);
+  color-scheme:dark;
+}
+body.plasma-admin{ background:#0b0d1a; font-family:'Noto Sans Arabic','Segoe UI',Tahoma,sans-serif; }
+.mc-root:not([data-mc-theme="light"]) .sbx{ background:rgba(13,15,30,.88); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border-inline-start:1px solid var(--line); }
+.mc-root:not([data-mc-theme="light"]) .sbx-group-label{ color:var(--ink-4); letter-spacing:.06em; }
+.mc-root:not([data-mc-theme="light"]) .sbx-item.active{ background:rgba(90,123,255,.16); color:#fff; }
+.mc-root:not([data-mc-theme="light"]) .sbx-item.active .sbx-ico{ background:none; box-shadow:none; color:#9db3ff; }
+.mc-root:not([data-mc-theme="light"]) .sbx-item.active::before{ background:#5a7bff; box-shadow:none; }
+.mc-root:not([data-mc-theme="light"]) .sbx-item:hover{ background:rgba(255,255,255,.05); }
+.mc-root:not([data-mc-theme="light"]) .mc-card{ border-radius:14px; }
+.mc-root:not([data-mc-theme="light"]) .mc-btn2.p{ background:linear-gradient(135deg,#2c5fe0,#6c4fe8); }
+.mc-root:not([data-mc-theme="light"]) .mc-inp{ background:#0f1224; border-color:var(--line); border-radius:11px; }

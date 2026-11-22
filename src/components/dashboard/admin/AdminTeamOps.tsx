@@ -3,12 +3,12 @@ import { supabase } from '../../../lib/supabase'
 import { dateLong, dateShort, nf, timeShort } from '../../../lib/format'
 import { useRealtimeRefetch } from '../../../lib/realtime'
 import { AdminTeamTasks } from './AdminTeamTasks'
-import { AdminTeamSnippets } from './AdminTeamSnippets'
+import { AdminTeamPerformance } from './AdminTeamPerformance'
 
 // Team tools from Faisal's developer console, rebuilt on real data: meetings, weekly availability,
 // team chat and the team list. Everything is admins-only (RLS on every table).
 
-type Tab = 'tasks' | 'meetings' | 'availability' | 'chat' | 'templates' | 'team'
+type Tab = 'tasks' | 'meetings' | 'availability' | 'performance' | 'chat' | 'team'
 interface Member { id: string; email: string; full_name: string | null }
 interface Meeting {
   id: string; company_name: string | null; contact_name: string; phone: string | null; email: string | null; service: string | null
@@ -127,7 +127,7 @@ export const AdminTeamOps = ({ initialTab = 'tasks' }: { initialTab?: Tab }) => 
           <h3>الفريق</h3>
           <div className="mc-phr">
             <div className="mc-tabs" role="tablist">
-              {([['tasks', 'المهام'], ['meetings', 'الاجتماعات'], ['availability', 'أوقات التوفر'], ['chat', unread ? `محادثة الفريق (${nf(unread)})` : 'محادثة الفريق'], ['templates', 'قوالب الرسائل'], ['team', 'أعضاء الفريق']] as const).map(([k, l]) => (
+              {([['tasks', 'المهام'], ['meetings', 'الاجتماعات'], ['availability', 'أوقات التوفر'], ['performance', 'الحضور والأداء'], ['chat', unread ? `محادثة الفريق (${nf(unread)})` : 'محادثة الفريق'], ['team', 'أعضاء الفريق']] as const).map(([k, l]) => (
                 <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'mc-on' : ''} onClick={() => setTab(k)}>{l}</button>
               ))}
             </div>
@@ -137,7 +137,7 @@ export const AdminTeamOps = ({ initialTab = 'tasks' }: { initialTab?: Tab }) => 
         </div>
 
         {tab === 'tasks' && <AdminTeamTasks members={members} me={me} onError={setError} />}
-        {tab === 'templates' && <AdminTeamSnippets onError={setError} onCopied={flash} />}
+        {tab === 'performance' && <AdminTeamPerformance members={members} me={me} onError={setError} onNote={flash} />}
 
         {tab === 'meetings' && (
           <div style={{ padding: '0 20px 20px' }}>

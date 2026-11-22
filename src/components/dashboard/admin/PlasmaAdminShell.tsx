@@ -11,6 +11,7 @@ import '../../../styles/admin-plasma.css'
 import '../../../styles/admin-shell.css'
 import '../../../styles/admin-mc.css'
 import '../../../styles/admin-orbit.css'
+import '../../../styles/admin-faisal.css'
 
 interface Tab { label: string; to: string }
 interface Section { id: string; label: string; icon: McIconName; to: string; match: string[]; exact?: boolean; tabs?: Tab[] }
@@ -30,10 +31,11 @@ const SECTIONS: Section[] = [
   { id: 'finance', label: 'المالية', icon: 'card', to: '/admin/finance', match: ['/admin/finance', '/admin/quotes', '/admin/expenses', '/admin/bank'],
     tabs: [{ label: 'الدفعات', to: '/admin/finance' }, { label: 'العروض والفواتير', to: '/admin/quotes' }, { label: 'المصروفات والربحية', to: '/admin/expenses' }, { label: 'إشعارات البنك', to: '/admin/bank' }] },
   { id: 'create', label: 'إنشاء عميل', icon: 'plus', to: '/admin/create-client', match: ['/admin/create-client'] },
-  { id: 'team', label: 'الفريق', icon: 'users', to: '/admin/team', match: ['/admin/team'] },
+  { id: 'team', label: 'الفريق', icon: 'users', to: '/admin/team', match: ['/admin/team', '/admin/library'],
+    tabs: [{ label: 'العمل اليومي', to: '/admin/team' }, { label: 'المكتبة', to: '/admin/library' }] },
   { id: 'marketers', label: 'المسوّقون', icon: 'users', to: '/admin/marketers', match: ['/admin/marketers'] },
-  { id: 'settings', label: 'الإعدادات', icon: 'gear', to: '/admin/settings', match: ['/admin/settings', '/admin/api'],
-    tabs: [{ label: 'الإعدادات', to: '/admin/settings' }, { label: 'API والتكاملات', to: '/admin/api' }] },
+  { id: 'settings', label: 'الإعدادات', icon: 'gear', to: '/admin/settings', match: ['/admin/settings', '/admin/api', '/admin/developer'],
+    tabs: [{ label: 'الإعدادات', to: '/admin/settings' }, { label: 'API والتكاملات', to: '/admin/api' }, { label: 'مركز المطوّر', to: '/admin/developer' }] },
 ]
 const ALL_PAGES: { label: string; to: string; hint: string }[] = [
   { label: 'مركز القيادة', to: '/admin', hint: 'ملخص يومك' },

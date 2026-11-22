@@ -18,6 +18,8 @@ import { AdminFinance } from '../components/dashboard/admin/AdminFinance'
 import { AdminCampaigns } from '../components/dashboard/admin/AdminCampaigns'
 import { AdminMarketers } from '../components/dashboard/admin/AdminMarketers'
 import { AdminTeamOps } from '../components/dashboard/admin/AdminTeamOps'
+import { AdminLibrary } from '../components/dashboard/admin/AdminLibrary'
+import { AdminDeveloper } from '../components/dashboard/admin/AdminDeveloper'
 import { AdminQuotes } from '../components/dashboard/admin/AdminQuotes'
 import { AdminExpenses } from '../components/dashboard/admin/AdminExpenses'
 import { AdminBankNotices } from '../components/dashboard/admin/AdminBankNotices'
@@ -57,7 +59,11 @@ export const AdminDashboard = () => {
         <Route path="marketers" element={<AdminMarketers />} />
         <Route path="team" element={<AdminTeamOps />} />
         <Route path="team/meetings" element={<AdminTeamOps initialTab="meetings" />} />
-        <Route path="team/templates" element={<AdminTeamOps initialTab="templates" />} />
+        <Route path="team/performance" element={<AdminTeamOps initialTab="performance" />} />
+        <Route path="library" element={<AdminLibrary />} />
+        <Route path="library/skills" element={<AdminLibrary initialTab="skills" />} />
+        <Route path="library/files" element={<AdminLibrary initialTab="files" />} />
+        <Route path="developer" element={<AdminDeveloper />} />
         <Route path="team/availability" element={<AdminTeamOps initialTab="availability" />} />
         <Route path="team/chat" element={<AdminTeamOps initialTab="chat" />} />
         <Route path="quotes" element={<AdminQuotes />} />
