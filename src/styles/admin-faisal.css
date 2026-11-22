@@ -41,3 +41,10 @@ body.plasma-admin{ background:#0b0d1a; font-family:'Noto Sans Arabic','Segoe UI'
 .mc-faisal-load{position:absolute;inset:0;display:grid;place-items:center;color:var(--ink-3)}
 .mc-faisal-back{position:fixed;bottom:14px;inset-inline-end:14px;z-index:10;height:34px;padding:0 14px;border-radius:999px;font-size:12px;font-weight:600;color:var(--ink);background:rgba(27,32,56,.92);border:1px solid var(--line-2);backdrop-filter:blur(8px)}
 .mc-faisal-back:hover{background:var(--fill-hover)}
+
+/* the real admin page shown over Faisal's content area, and the admin alerts panel opened from his top bar */
+.mc-faisal-page{position:fixed;z-index:6;overflow:auto;background:var(--bg)}
+.mc-faisal-page .mc-main{padding:18px 22px 60px}
+.mc-faisal-bell{position:fixed;top:56px;inset-inline-end:auto;left:12px;z-index:12;width:0;height:0}
+.mc-faisal-bell .mc-panel{top:0;inset-inline-start:0;inset-inline-end:auto;left:0}
+@media(max-width:820px){.mc-faisal-page .mc-main{padding:12px 12px 80px}.mc-faisal-bell .mc-panel{left:8px}}

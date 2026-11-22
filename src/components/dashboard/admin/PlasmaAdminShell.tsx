@@ -176,8 +176,20 @@ function Shell({ children }: { children: ReactNode }) {
     return (
       <div className="mc-root mc-faisal" dir="rtl" data-mc-theme={theme}>
         <Suspense fallback={<div className="mc-faisal-load">جارٍ التحميل...</div>}>
-          <FaisalPlatform onExit={() => pickLayout('owner')} />
+          <FaisalPlatform onExit={() => pickLayout('owner')} onBell={() => setBell(v => !v)} onSearch={() => setPalette(true)} />
         </Suspense>
+        {bell && (
+          <div className="mc-bell-wrap mc-faisal-bell">
+            <div className="mc-pop-bg" onClick={() => setBell(false)} />
+            <div className="mc-panel" role="dialog" aria-label="الإشعارات">
+              <div className="mc-panel-h">الإشعارات</div>
+              {notifs.length === 0 ? <div className="mc-empty">ما عندك شي معلّق. وقتك فاضي للعملاء الجدد.</div> : notifs.map(n => (
+                <button key={n.id} className="mc-notif" onClick={() => navigate(n.to)}><b>{n.title}</b><span>{n.text}</span></button>
+              ))}
+            </div>
+          </div>
+        )}
+        {palette && <Palette onClose={() => setPalette(false)} navigate={navigate} />}
         <button type="button" className="mc-faisal-back" onClick={() => pickLayout('owner')}>سايد باري</button>
       </div>
     )
