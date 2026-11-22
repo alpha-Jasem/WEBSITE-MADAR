@@ -357,6 +357,7 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
   const [search, setSearch] = useState(initialQ)
   const [statusFilter, setStatusFilter] = useState<'all' | Status>(initialQ ? 'all' : 'new')
   const [mobileOnly, setMobileOnly] = useState(!initialQ)
+  const [bigNoSite, setBigNoSite] = useState(false)
   const [catFilter, setCatFilter] = useState('all')
   const [sector, setSectorState] = useState<string>(() => { try { return localStorage.getItem(SECTOR_STORE) || 'all' } catch { return 'all' } })
   const setSector = (k: string) => { setSectorState(k); setCatFilter('all'); setLimit(PAGE_SIZE); try { localStorage.setItem(SECTOR_STORE, k) } catch { /* storage unavailable */ } }
@@ -708,10 +709,11 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
       (sector === 'all' || sectorOf(l) === sector) &&
       (statusFilter === 'all' || l.status === statusFilter) &&
       (!siteMode || !l.website) &&
+      (!bigNoSite || (!l.website && (l.reviews ?? 0) >= 100)) &&
       (catFilter === 'all' || l.category === catFilter) &&
       (!mobileOnly || l.is_mobile) &&
       (!q || l.name.toLowerCase().includes(q) || l.phone.includes(q) || l.category.toLowerCase().includes(q) || l.city.toLowerCase().includes(q)))
-  }, [leads, scored, search, statusFilter, mobileOnly, sort, siteMode, catFilter, sector])
+  }, [leads, scored, search, statusFilter, mobileOnly, bigNoSite, sort, siteMode, catFilter, sector])
 
   const categories = useMemo(() => {
     const base = siteMode ? pool.filter(l => !l.website) : pool
@@ -1011,6 +1013,7 @@ export const AdminOutreach = ({ mode = 'all' }: { mode?: 'all' | 'no-website' })
               </select>
             )}
             <button className="chip" aria-pressed={mobileOnly} onClick={() => setMobileOnly(m => !m)}>جوالات فقط</button>
+            <button className="chip" aria-pressed={bigNoSite} onClick={() => { setBigNoSite(v => !v); setLimit(PAGE_SIZE) }}>بدون موقع · +100 تقييم</button>
             <button className="chip" aria-pressed="false" disabled={filtered.length === 0} onClick={exportCsv}>⬇ تصدير CSV ({filtered.length})</button>
             <button className="chip" aria-pressed="false" disabled={quickIds.length === 0} onClick={() => setQueue({ ids: quickIds, i: 0 })}>▶ تواصل سريع ({quickIds.length})</button>
             <button className="chip" aria-pressed={showStats} onClick={() => setShowStats(v => !v)}>📊 النتائج</button>
