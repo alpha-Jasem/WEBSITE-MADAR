@@ -57,7 +57,7 @@ export const AdminDashboard = () => {
         <Route path="finance" element={<AdminFinance />} />
         <Route path="campaigns" element={<AdminCampaigns />} />
         <Route path="marketers" element={<AdminMarketers />} />
-        <Route path="faisal" element={<></>} />
+        <Route path="faisal" element={<Navigate to="/admin" replace />} />
         <Route path="team" element={<AdminTeamOps />} />
         <Route path="team/meetings" element={<AdminTeamOps initialTab="meetings" />} />
         <Route path="team/performance" element={<AdminTeamOps initialTab="performance" />} />

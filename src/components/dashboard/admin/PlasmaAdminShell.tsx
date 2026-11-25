@@ -40,16 +40,7 @@ const SECTIONS: Section[] = [
     tabs: [{ label: 'الإعدادات', to: '/admin/settings' }, { label: 'API والتكاملات', to: '/admin/api' }, { label: 'مركز المطوّر', to: '/admin/developer' }] },
 ]
 
-// Two sides: the owner's own admin (this shell) and Faisal's developer console, mounted full-screen at /admin/faisal.
-// Faisal's account opens on his side; everyone else on the owner's. The choice made with the switcher is remembered per user.
-type Layout = 'owner' | 'faisal'
-const FAISAL_PATH = '/admin/faisal'
-const layoutKey = (email: string) => `madar_admin_layout:${email.toLowerCase()}`
-const defaultLayout = (email: string): Layout => (email.toLowerCase().startsWith('faisal@') ? 'faisal' : 'owner')
-const readLayout = (email: string): Layout => {
-  try { const v = localStorage.getItem(layoutKey(email)); if (v === 'owner' || v === 'faisal') return v } catch { /* storage unavailable */ }
-  return defaultLayout(email)
-}
+// The admin is Faisal's developer console, mounted full-screen at /admin (the owner's own sidebar layout is no longer reachable).
 const MOBILE_TABS = ['command', 'sales', 'ai', 'finance']
 const ALL_PAGES: { label: string; to: string; hint: string }[] = [
   { label: 'مركز القيادة', to: '/admin', hint: 'ملخص يومك' },
@@ -75,16 +66,7 @@ function Shell({ children }: { children: ReactNode }) {
   const [email, setEmail] = useState('')
   const [theme, setTheme] = useState<Theme>(readTheme)
 
-  const layout: Layout = location.pathname === FAISAL_PATH ? 'faisal' : 'owner'
   const section = SECTIONS.find(s => isIn(s, location.pathname)) ?? SECTIONS[0]
-  const pickLayout = (l: Layout) => {
-    try { localStorage.setItem(layoutKey(email), l) } catch { /* storage unavailable */ }
-    navigate(l === 'faisal' ? FAISAL_PATH : '/admin')
-  }
-  // Faisal's account (or a remembered choice) lands on his side when it opens the admin home.
-  useEffect(() => {
-    if (email && location.pathname === '/admin' && readLayout(email) === 'faisal') navigate(FAISAL_PATH, { replace: true })
-  }, [email, location.pathname, navigate])
   const badges: Record<string, number> = { sales: pulse.due.length + pulse.meetingsToday.length }
 
   useEffect(() => {
@@ -172,11 +154,11 @@ function Shell({ children }: { children: ReactNode }) {
   const initial = (name[0] ?? 'ج').toUpperCase()
   const nav = (to: string) => { navigate(to); setDrawer(false) }
 
-  if (layout === 'faisal') {
+  {
     return (
       <div className="mc-root mc-faisal" dir="rtl" data-mc-theme={theme}>
         <Suspense fallback={<div className="mc-faisal-load">جارٍ التحميل...</div>}>
-          <FaisalPlatform onExit={() => pickLayout('owner')} onBell={() => setBell(v => !v)} onSearch={() => setPalette(true)} />
+          <FaisalPlatform onExit={signOut} onBell={() => setBell(v => !v)} onSearch={() => setPalette(true)} />
         </Suspense>
         {bell && (
           <div className="mc-bell-wrap mc-faisal-bell">
@@ -190,7 +172,6 @@ function Shell({ children }: { children: ReactNode }) {
           </div>
         )}
         {palette && <Palette onClose={() => setPalette(false)} navigate={navigate} />}
-        <button type="button" className="mc-faisal-back" onClick={() => pickLayout('owner')}>سايد باري</button>
       </div>
     )
   }
@@ -213,11 +194,6 @@ function Shell({ children }: { children: ReactNode }) {
               </button>
             ))}
           </nav>
-          <div className="mc-lay" role="group" aria-label="شكل القائمة">
-            {([['faisal', 'سايد فيصل'], ['owner', 'سايد باري']] as [Layout, string][]).map(([l, label]) => (
-              <button key={l} type="button" aria-pressed={layout === l} className={layout === l ? 'mc-on' : ''} onClick={() => pickLayout(l)}>{label}</button>
-            ))}
-          </div>
         </aside>
         <div className="mc-scrim" onClick={() => setDrawer(false)} />
 
