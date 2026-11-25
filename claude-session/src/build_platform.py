@@ -22,8 +22,7 @@ boot = "try{sessionStorage.setItem('madar-pf','dev:f')}catch(e){}location.hash='
 ext = r"""
 (function(){
 var P=window.__pf;if(!P)return;var S=P.S,V=P.V,ACT=P.ACT,ic=P.ic;
-var G=[['المبيعات والعملاء','s',[['adm_outreach','جلب العملاء','search'],['adm_nosite','عملاء بدون موقع','globe'],['adm_pipeline','الصفقات والمسار','chart'],['adm_companies','العملاء والشركات','bld']]],
-['التشغيل والذكاء','o',[['adm_ai','الإيجنت AI','bot'],['adm_campaigns','الحملات','mega'],['adm_ops','التشغيل والتكاملات','plug'],['adm_create','إنشاء عميل','plus']]]];
+var G=[['الإدارة','s',[['adm_sales','المبيعات','chart'],['adm_ai','الإيجنت AI','bot'],['adm_campaigns','الحملات','mega'],['adm_customers','العملاء','team'],['adm_ops','التشغيل','plug'],['adm_finance','المالية','card'],['adm_create','إنشاء عميل','plus'],['adm_team','الفريق','user'],['adm_marketers','المسوّقون','team'],['adm_settings','الإعدادات','gear']]]];
 var LABEL={dhome:'مركز القيادة'};V.dhome=function(){return '<div class="card" style="padding:30px;text-align:center;color:var(--mute)">جارٍ التحميل...</div>'};G.forEach(function(g){g[2].forEach(function(i){LABEL[i[0]]=i[1];V[i[0]]=function(){return '<div class="card" style="padding:30px;text-align:center;color:var(--mute)">جارٍ التحميل...</div>'}})});
 function post(m){try{parent.postMessage(m,'*')}catch(e){}}
 function rect(){var v=document.getElementById('view');if(!v)return null;var r=v.getBoundingClientRect();return{left:r.left,top:r.top,width:r.width,height:r.height}}
@@ -35,9 +34,9 @@ ACT.admsearch=function(){post({madar:'faisal-act',act:'search'})};
 ACT.admbell=function(){post({madar:'faisal-act',act:'bell'})};
 function inject(){
  if(S.role!=='dev')return;var side=document.getElementById('side'),sp=side&&side.querySelector('.sp');if(!sp||document.getElementById('admg-s'))return;
- var h='';G.forEach(function(g){var open=g[2].some(function(i){return i[0]===S.view});
+ var h='';G.forEach(function(g){var open=true;
   h+='<button class="nv'+(open?' on':'')+'" data-a="admgrp" data-k="'+g[1]+'">'+ic('chev')+g[0]+'</button><div id="admg-'+g[1]+'"'+(open?'':' hidden')+'>'+g[2].map(function(i){return '<button class="nv sub" data-v="'+i[0]+'" data-a="nav">'+ic(i[2])+i[1]+'</button>'}).join('')+'</div>'});
- sp.insertAdjacentHTML('beforebegin','<div class="gl">الإدارة</div>'+h);
+ sp.insertAdjacentHTML('beforebegin',''+h);
  var me=document.querySelector('.tb .me');
  if(me&&!document.getElementById('admbtn'))me.insertAdjacentHTML('beforebegin','<span id="admbtn" style="display:contents"><button class="ib" data-a="admsearch" aria-label="بحث الإدارة" title="بحث الإدارة">'+ic('search')+'</button><button class="ib" data-a="admbell" aria-label="تنبيهات الإدارة" title="تنبيهات الإدارة">'+ic('bell')+'</button></span>');
  tell()}

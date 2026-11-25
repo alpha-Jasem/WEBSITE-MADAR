@@ -7,42 +7,71 @@ import { lazy, Suspense, useEffect, useRef, useState, type ComponentType } from 
 // Admin extension: its sidebar has an extra group "الإدارة". When one of those items is chosen the page tells us (postMessage) which
 // view and where its content area is, and we render the real admin page over that area, so the sidebar stays Faisal's.
 
-const lazyNamed = <T extends Record<string, ComponentType<never>>>(load: () => Promise<T>, name: keyof T) =>
-  lazy(() => load().then(m => ({ default: m[name] as ComponentType })))
-
-const Outreach = lazyNamed(() => import('./AdminOutreach'), 'AdminOutreach')
+const L = (file: () => Promise<Record<string, ComponentType<never>>>, name: string) =>
+  lazy(() => file().then(m => ({ default: m[name] as ComponentType })))
+const Outreach = L(() => import('./AdminOutreach'), 'AdminOutreach')
 const NoWebsite = lazy(() => import('./AdminOutreach').then(m => ({ default: () => <m.AdminOutreach mode="no-website" /> })))
-const Pipeline = lazyNamed(() => import('./AdminPipeline'), 'AdminPipeline')
-const Companies = lazyNamed(() => import('./AdminCompanies'), 'AdminCompanies')
-const JarvisAI = lazyNamed(() => import('./AdminAI'), 'AdminAI')
-const Campaigns = lazyNamed(() => import('./AdminCampaigns'), 'AdminCampaigns')
-const CreateClient = lazyNamed(() => import('./AdminCreateClient'), 'AdminCreateClient')
-const Agents = lazyNamed(() => import('./AdminAIAgents'), 'AdminAIAgents')
-const N8n = lazyNamed(() => import('./AdminN8n'), 'AdminN8n')
-const Logs = lazyNamed(() => import('./AdminLogs'), 'AdminLogs')
-const Api = lazyNamed(() => import('./AdminAPI'), 'AdminAPI')
-const Deck = lazyNamed(() => import('./AdminCommandDeck'), 'AdminCommandDeck')
+const Contacted = L(() => import('./AdminContacted'), 'AdminContacted')
+const Pipeline = L(() => import('./AdminPipeline'), 'AdminPipeline')
+const Companies = L(() => import('./AdminCompanies'), 'AdminCompanies')
+const Accounts = L(() => import('./AdminClinicAccounts'), 'AdminClinicAccounts')
+const Onboarding = L(() => import('./AdminOnboarding'), 'AdminOnboarding')
+const Conversations = L(() => import('./AdminConversations'), 'AdminConversations')
+const JarvisAI = L(() => import('./AdminAI'), 'AdminAI')
+const AgentsControl = L(() => import('./AdminAgentsControl'), 'AdminAgentsControl')
+const AgentKnowledge = L(() => import('./AdminAgentKnowledge'), 'AdminAgentKnowledge')
+const AgentTest = L(() => import('./AdminAgentTest'), 'AdminAgentTest')
+const WhatsApp = L(() => import('./AdminWhatsApp'), 'AdminWhatsApp')
+const CallAssistant = L(() => import('./AdminCallAssistant'), 'AdminCallAssistant')
+const AISettings = L(() => import('./AdminAISettings'), 'AdminAISettings')
+const Campaigns = L(() => import('./AdminCampaigns'), 'AdminCampaigns')
+const CreateClient = L(() => import('./AdminCreateClient'), 'AdminCreateClient')
+const Agents = L(() => import('./AdminAIAgents'), 'AdminAIAgents')
+const N8n = L(() => import('./AdminN8n'), 'AdminN8n')
+const Logs = L(() => import('./AdminLogs'), 'AdminLogs')
+const Reports = L(() => import('./AdminOverview'), 'AdminOverview')
+const Finance = L(() => import('./AdminFinance'), 'AdminFinance')
+const Quotes = L(() => import('./AdminQuotes'), 'AdminQuotes')
+const Expenses = L(() => import('./AdminExpenses'), 'AdminExpenses')
+const Bank = L(() => import('./AdminBankNotices'), 'AdminBankNotices')
+const TeamOps = L(() => import('./AdminTeamOps'), 'AdminTeamOps')
+const Library = L(() => import('./AdminLibrary'), 'AdminLibrary')
+const Marketers = L(() => import('./AdminMarketers'), 'AdminMarketers')
+const Settings = L(() => import('./AdminSettings'), 'AdminSettings')
+const Api = L(() => import('./AdminAPI'), 'AdminAPI')
+const Developer = L(() => import('./AdminDeveloper'), 'AdminDeveloper')
+const Deck = L(() => import('./AdminCommandDeck'), 'AdminCommandDeck')
 
-/** Operations and integrations: the agents, automations, logs and API pages as tabs. */
-function OpsPage() {
-  const [tab, setTab] = useState<'agents' | 'n8n' | 'logs' | 'api'>('agents')
-  const Page = { agents: Agents, n8n: N8n, logs: Logs, api: Api }[tab]
+/** A section of the owner's sidebar: its pages as tabs (a section with one page shows no tabs). */
+function Tabbed({ tabs }: { tabs: [string, ComponentType][] }) {
+  const [i, setI] = useState(0)
+  const Page = tabs[i][1]
   return (
     <div>
-      <div className="mc-tabs" role="tablist" style={{ marginBottom: 14 }}>
-        {([['agents', 'الوكلاء والتذاكر'], ['n8n', 'n8n'], ['logs', 'السجلات'], ['api', 'API والتكاملات']] as const).map(([k, l]) => (
-          <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'mc-on' : ''} onClick={() => setTab(k)}>{l}</button>
-        ))}
-      </div>
-      <Suspense fallback={<div className="mc-flat">جارٍ التحميل...</div>}><Page /></Suspense>
+      {tabs.length > 1 && (
+        <div className="mc-tabs" role="tablist" style={{ marginBottom: 14 }}>
+          {tabs.map(([l], k) => <button key={l} role="tab" aria-selected={i === k} className={i === k ? 'mc-on' : ''} onClick={() => setI(k)}>{l}</button>)}
+        </div>
+      )}
+      <Suspense fallback={<div className="mc-flat">جارٍ التحميل...</div>}><Page key={i} /></Suspense>
     </div>
   )
 }
+const section = (tabs: [string, ComponentType][]) => () => <Tabbed tabs={tabs} />
 
+// The ids match the group list in claude-session/src/build_platform.py. Each is one section of the owner's sidebar.
 const PAGES: Record<string, ComponentType> = {
   dhome: Deck, // his home shows the command center: the hero and the real numbers
-  adm_outreach: Outreach, adm_nosite: NoWebsite, adm_pipeline: Pipeline, adm_companies: Companies,
-  adm_ai: JarvisAI, adm_campaigns: Campaigns, adm_ops: OpsPage, adm_create: CreateClient,
+  adm_sales: section([['Outreach', Outreach], ['بدون موقع', NoWebsite], ['تم التواصل', Contacted], ['الصفقات', Pipeline]]),
+  adm_ai: section([['جارفيس', JarvisAI], ['الإيجنت البائع', AgentsControl], ['معرفة الإيجنت', AgentKnowledge], ['تجربة الإيجنت', AgentTest], ['واتساب', WhatsApp], ['مساعد المكالمات', CallAssistant], ['الإعدادات', AISettings]]),
+  adm_campaigns: Campaigns,
+  adm_customers: section([['الشركات', Companies], ['الحسابات والاشتراكات', Accounts], ['التجهيز والتسليم', Onboarding], ['المحادثات', Conversations]]),
+  adm_ops: section([['الوكلاء', Agents], ['n8n', N8n], ['السجلات', Logs], ['التقارير', Reports]]),
+  adm_finance: section([['الدفعات', Finance], ['العروض والفواتير', Quotes], ['المصروفات والربحية', Expenses], ['إشعارات البنك', Bank]]),
+  adm_create: CreateClient,
+  adm_team: section([['العمل اليومي', TeamOps], ['المكتبة', Library]]),
+  adm_marketers: Marketers,
+  adm_settings: section([['الإعدادات', Settings], ['API والتكاملات', Api], ['مركز المطوّر', Developer]]),
 }
 interface Box { left: number; top: number; width: number; height: number }
 
