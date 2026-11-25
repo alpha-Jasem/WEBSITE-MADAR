@@ -40,6 +40,8 @@ if (typeof window !== 'undefined') {
 
 
 const MarketerPortal    = lazy(() => import('./pages/MarketerPortal'))
+// /jasem opens the owner's own admin layout (the flag lasts for this tab); /admin is Faisal's console
+const OwnerEntry = () => { try { sessionStorage.setItem('madar_admin_owner', '1') } catch { /* storage unavailable */ } return <Navigate to="/admin" replace /> }
 const AdminDashboard    = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
 
 // ClinicOS
@@ -230,6 +232,7 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/jasem" element={<ProtectedRoute requiredRole="admin"><OwnerEntry /></ProtectedRoute>} />
             <Route
               path="/admin/*"
               element={

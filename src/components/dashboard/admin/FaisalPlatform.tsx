@@ -21,6 +21,7 @@ const Agents = lazyNamed(() => import('./AdminAIAgents'), 'AdminAIAgents')
 const N8n = lazyNamed(() => import('./AdminN8n'), 'AdminN8n')
 const Logs = lazyNamed(() => import('./AdminLogs'), 'AdminLogs')
 const Api = lazyNamed(() => import('./AdminAPI'), 'AdminAPI')
+const Deck = lazyNamed(() => import('./AdminCommandDeck'), 'AdminCommandDeck')
 
 /** Operations and integrations: the agents, automations, logs and API pages as tabs. */
 function OpsPage() {
@@ -39,6 +40,7 @@ function OpsPage() {
 }
 
 const PAGES: Record<string, ComponentType> = {
+  dhome: Deck, // his home shows the command center: the hero and the real numbers
   adm_outreach: Outreach, adm_nosite: NoWebsite, adm_pipeline: Pipeline, adm_companies: Companies,
   adm_ai: JarvisAI, adm_campaigns: Campaigns, adm_ops: OpsPage, adm_create: CreateClient,
 }

@@ -7,7 +7,7 @@ import base64, json, sys
 sys.path.insert(0, '.')
 import brands
 
-logo = 'data:image/webp;base64,' + base64.b64encode(open('../assets/img0.webp', 'rb').read()).decode()
+logo = 'data:image/png;base64,' + base64.b64encode(open('../../public/admin-logo-mark.png', 'rb').read()).decode()
 _p = [open(f, encoding='utf-8').read() for f in ('pf1.js', 'pf2.js', 'pf3.js', 'pf4.js', 'pf5.js', 'pf6.js', 'pf7.js', 'pf8.js')]
 pricing = open('pricing.json', encoding='utf-8').read()
 pfjs = 'var PRICING=' + pricing + ';' + _p[0].replace('/*PF2*/', _p[1] + _p[2] + _p[3] + _p[4] + _p[5] + _p[6] + _p[7])
@@ -24,7 +24,7 @@ ext = r"""
 var P=window.__pf;if(!P)return;var S=P.S,V=P.V,ACT=P.ACT,ic=P.ic;
 var G=[['المبيعات والعملاء','s',[['adm_outreach','جلب العملاء','search'],['adm_nosite','عملاء بدون موقع','globe'],['adm_pipeline','الصفقات والمسار','chart'],['adm_companies','العملاء والشركات','bld']]],
 ['التشغيل والذكاء','o',[['adm_ai','الإيجنت AI','bot'],['adm_campaigns','الحملات','mega'],['adm_ops','التشغيل والتكاملات','plug'],['adm_create','إنشاء عميل','plus']]]];
-var LABEL={};G.forEach(function(g){g[2].forEach(function(i){LABEL[i[0]]=i[1];V[i[0]]=function(){return '<div class="card" style="padding:30px;text-align:center;color:var(--mute)">جارٍ التحميل...</div>'}})});
+var LABEL={dhome:'مركز القيادة'};V.dhome=function(){return '<div class="card" style="padding:30px;text-align:center;color:var(--mute)">جارٍ التحميل...</div>'};G.forEach(function(g){g[2].forEach(function(i){LABEL[i[0]]=i[1];V[i[0]]=function(){return '<div class="card" style="padding:30px;text-align:center;color:var(--mute)">جارٍ التحميل...</div>'}})});
 function post(m){try{parent.postMessage(m,'*')}catch(e){}}
 function rect(){var v=document.getElementById('view');if(!v)return null;var r=v.getBoundingClientRect();return{left:r.left,top:r.top,width:r.width,height:r.height}}
 function tell(){var t=document.getElementById('ttl');if(t&&LABEL[S.view])t.textContent=LABEL[S.view];post({madar:'faisal-view',view:S.view,rect:rect()})}

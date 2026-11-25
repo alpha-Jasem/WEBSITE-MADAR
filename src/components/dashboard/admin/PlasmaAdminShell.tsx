@@ -40,7 +40,8 @@ const SECTIONS: Section[] = [
     tabs: [{ label: 'الإعدادات', to: '/admin/settings' }, { label: 'API والتكاملات', to: '/admin/api' }, { label: 'مركز المطوّر', to: '/admin/developer' }] },
 ]
 
-// The admin is Faisal's developer console, mounted full-screen at /admin (the owner's own sidebar layout is no longer reachable).
+// The admin is Faisal's developer console, mounted full-screen at /admin. The owner's own sidebar layout opens at /jasem (a per-tab flag).
+const OWNER_KEY = 'madar_admin_owner'
 const MOBILE_TABS = ['command', 'sales', 'ai', 'finance']
 const ALL_PAGES: { label: string; to: string; hint: string }[] = [
   { label: 'مركز القيادة', to: '/admin', hint: 'ملخص يومك' },
@@ -66,6 +67,8 @@ function Shell({ children }: { children: ReactNode }) {
   const [email, setEmail] = useState('')
   const [theme, setTheme] = useState<Theme>(readTheme)
 
+  const [owner, setOwner] = useState(() => { try { return sessionStorage.getItem(OWNER_KEY) === '1' } catch { return false } })
+  const toFaisal = () => { try { sessionStorage.removeItem(OWNER_KEY) } catch { /* storage unavailable */ } setOwner(false); navigate('/admin') }
   const section = SECTIONS.find(s => isIn(s, location.pathname)) ?? SECTIONS[0]
   const badges: Record<string, number> = { sales: pulse.due.length + pulse.meetingsToday.length }
 
@@ -154,7 +157,7 @@ function Shell({ children }: { children: ReactNode }) {
   const initial = (name[0] ?? 'ج').toUpperCase()
   const nav = (to: string) => { navigate(to); setDrawer(false) }
 
-  {
+  if (!owner) {
     return (
       <div className="mc-root mc-faisal" dir="rtl" data-mc-theme={theme}>
         <Suspense fallback={<div className="mc-faisal-load">جارٍ التحميل...</div>}>
@@ -194,6 +197,9 @@ function Shell({ children }: { children: ReactNode }) {
               </button>
             ))}
           </nav>
+          <div className="mc-lay" role="group">
+            <button type="button" onClick={toFaisal}>لوحة فيصل</button>
+          </div>
         </aside>
         <div className="mc-scrim" onClick={() => setDrawer(false)} />
 
