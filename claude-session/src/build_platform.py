@@ -24,6 +24,8 @@ ext = r"""
 var P=window.__pf;if(!P)return;var S=P.S,V=P.V,ACT=P.ACT,ic=P.ic;
 var G=[['الإدارة','s',[['adm_sales','المبيعات','chart'],['adm_ai','الإيجنت AI','bot'],['adm_campaigns','الحملات','mega'],['adm_customers','العملاء','team'],['adm_ops','التشغيل','plug'],['adm_finance','المالية','card'],['adm_create','إنشاء عميل','plus'],['adm_team','الفريق','user'],['adm_marketers','المسوّقون','team'],['adm_settings','الإعدادات','gear']]]];
 var LABEL={dhome:'مركز القيادة'};V.dhome=function(){return '<div class="card" style="padding:30px;text-align:center;color:var(--mute)">جارٍ التحميل...</div>'};G.forEach(function(g){g[2].forEach(function(i){LABEL[i[0]]=i[1];V[i[0]]=function(){return '<div class="card" style="padding:30px;text-align:center;color:var(--mute)">جارٍ التحميل...</div>'}})});
+/* his demo-data screens that the admin group covers with real data are hidden from his sidebar */
+var hide=document.createElement('style');hide.textContent=['dcli','dsubs','drep','quotes','dreq','dord'].map(function(v){return '.nv[data-v="'+v+'"]'}).join(',')+'{display:none!important}';document.head.appendChild(hide);
 function post(m){try{parent.postMessage(m,'*')}catch(e){}}
 function rect(){var v=document.getElementById('view');if(!v)return null;var r=v.getBoundingClientRect();return{left:r.left,top:r.top,width:r.width,height:r.height}}
 function tell(){var t=document.getElementById('ttl');if(t&&LABEL[S.view])t.textContent=LABEL[S.view];post({madar:'faisal-view',view:S.view,rect:rect()})}
