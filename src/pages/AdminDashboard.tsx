@@ -65,7 +65,6 @@ export const AdminDashboard = () => {
         <Route path="library/skills" element={<AdminLibrary initialTab="skills" />} />
         <Route path="library/files" element={<AdminLibrary initialTab="files" />} />
         <Route path="developer" element={<AdminDeveloper />} />
-        <Route path="team/availability" element={<AdminTeamOps initialTab="availability" />} />
         <Route path="team/chat" element={<AdminTeamOps initialTab="chat" />} />
         <Route path="quotes" element={<AdminQuotes />} />
         <Route path="expenses" element={<AdminExpenses />} />

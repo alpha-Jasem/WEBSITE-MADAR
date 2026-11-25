@@ -5,24 +5,19 @@ import { useRealtimeRefetch } from '../../../lib/realtime'
 import { AdminTeamTasks } from './AdminTeamTasks'
 import { AdminTeamPerformance } from './AdminTeamPerformance'
 
-// Team tools from Faisal's developer console, rebuilt on real data: meetings, weekly availability,
+// Team tools from Faisal's developer console, rebuilt on real data: meetings,
 // team chat and the team list. Everything is admins-only (RLS on every table).
 
-type Tab = 'tasks' | 'meetings' | 'availability' | 'performance' | 'chat' | 'team'
+type Tab = 'tasks' | 'meetings' | 'performance' | 'chat' | 'team'
 interface Member { id: string; email: string; full_name: string | null }
 interface Meeting {
   id: string; company_name: string | null; contact_name: string; phone: string | null; email: string | null; service: string | null
   starts_at: string; duration_min: number; host_id: string | null; status: 'upcoming' | 'done' | 'cancelled'; source: 'manual' | 'site' | 'whatsapp' | 'outreach'; notes: string | null
 }
-interface Day { on: boolean; from: string; to: string }
-interface Avail { days: Day[]; duration_min: number; email_alerts: boolean }
 interface Msg { id: string; from_id: string; to_id: string | null; body: string; read_at: string | null; created_at: string }
 
 const DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
 const SOURCE: Record<Meeting['source'], string> = { manual: 'يدوي', site: 'الموقع', whatsapp: 'واتساب', outreach: 'Outreach' }
-const DEFAULT_AVAIL: Avail = {
-  days: DAYS.map((_, i) => ({ on: i < 5, from: '10:00', to: '17:00' })), duration_min: 30, email_alerts: true,
-}
 const nameOf = (m: Member | undefined) => m?.full_name?.trim() || m?.email?.split('@')[0] || 'عضو'
 /** "2026-11-20T14:30" typed in Riyadh time -> UTC ISO. */
 const fromLocalInput = (v: string) => new Date(`${v}:00+03:00`).toISOString()
@@ -32,8 +27,6 @@ export const AdminTeamOps = ({ initialTab = 'tasks' }: { initialTab?: Tab }) => 
   const [me, setMe] = useState<string | null>(null)
   const [members, setMembers] = useState<Member[]>([])
   const [meetings, setMeetings] = useState<Meeting[]>([])
-  const [avail, setAvail] = useState<Avail>(DEFAULT_AVAIL)
-  const [allAvail, setAllAvail] = useState<Record<string, Avail>>({})
   const [msgs, setMsgs] = useState<Msg[]>([])
   const [error, setError] = useState<string | null>(null)
   const [note, setNote] = useState<string | null>(null)
@@ -47,10 +40,9 @@ export const AdminTeamOps = ({ initialTab = 'tasks' }: { initialTab?: Tab }) => 
   const load = useCallback(async () => {
     const { data: u } = await supabase.auth.getUser()
     setMe(u.user?.id ?? null)
-    const [mem, mt, av, ms, leads] = await Promise.all([
+    const [mem, mt, ms, leads] = await Promise.all([
       supabase.from('users').select('id, email, full_name').eq('role', 'admin'),
       supabase.from('meetings').select('*').order('starts_at', { ascending: false }).limit(300),
-      supabase.from('staff_availability').select('*'),
       supabase.from('team_messages').select('*').order('created_at', { ascending: true }).limit(500),
       supabase.from('outreach_leads').select('id, name, phone, meeting_at, status').not('meeting_at', 'is', null).limit(300),
     ])
@@ -62,14 +54,10 @@ export const AdminTeamOps = ({ initialTab = 'tasks' }: { initialTab?: Tab }) => 
       duration_min: 30, host_id: null, status: l.status === 'meeting' ? 'upcoming' : 'done', source: 'outreach', notes: null,
     }))
     setMeetings([...((mt.data ?? []) as Meeting[]), ...fromLeads])
-    const map: Record<string, Avail> = {}
-    ;(av.data ?? []).forEach((r: { user_id: string; days: Day[]; duration_min: number; email_alerts: boolean }) => { map[r.user_id] = { days: r.days, duration_min: r.duration_min, email_alerts: r.email_alerts } })
-    setAllAvail(map)
-    if (u.user?.id && map[u.user.id]) setAvail(map[u.user.id])
     setMsgs((ms.data ?? []) as Msg[])
   }, [])
   useEffect(() => { void load() }, [load])
-  useRealtimeRefetch('admin_team_ops', [{ table: 'meetings' }, { table: 'team_messages' }, { table: 'staff_availability' }], load, true)
+  useRealtimeRefetch('admin_team_ops', [{ table: 'meetings' }, { table: 'team_messages' }], load, true)
   useEffect(() => { if (tab === 'chat') endRef.current?.scrollIntoView({ block: 'end' }) }, [tab, msgs.length, to])
 
   const byId = useMemo(() => new Map(members.map(m => [m.id, m])), [members])
@@ -92,14 +80,6 @@ export const AdminTeamOps = ({ initialTab = 'tasks' }: { initialTab?: Tab }) => 
     if (m.source === 'outreach') return
     const { error: e } = await supabase.from('meetings').update({ status }).eq('id', m.id)
     if (e) setError('تعذّر تحديث الاجتماع.'); else void load()
-  }
-
-  // ─── availability ───
-  const setDay = (i: number, patch: Partial<Day>) => setAvail(a => ({ ...a, days: a.days.map((d, j) => (j === i ? { ...d, ...patch } : d)) }))
-  async function saveAvail() {
-    if (!me) return
-    const { error: e } = await supabase.from('staff_availability').upsert({ user_id: me, days: avail.days, duration_min: avail.duration_min, email_alerts: avail.email_alerts, updated_at: new Date().toISOString() })
-    if (e) setError('تعذّر حفظ الأوقات.'); else { setError(null); flash('انحفظت أوقاتك') }
   }
 
   // ─── chat ───
@@ -127,12 +107,11 @@ export const AdminTeamOps = ({ initialTab = 'tasks' }: { initialTab?: Tab }) => 
           <h3>الفريق</h3>
           <div className="mc-phr">
             <div className="mc-tabs" role="tablist">
-              {([['tasks', 'المهام'], ['meetings', 'الاجتماعات'], ['availability', 'أوقات التوفر'], ['performance', 'الحضور والأداء'], ['chat', unread ? `محادثة الفريق (${nf(unread)})` : 'محادثة الفريق'], ['team', 'أعضاء الفريق']] as const).map(([k, l]) => (
+              {([['tasks', 'المهام'], ['meetings', 'الاجتماعات'], ['performance', 'الحضور والأداء'], ['chat', unread ? `محادثة الفريق (${nf(unread)})` : 'محادثة الفريق'], ['team', 'أعضاء الفريق']] as const).map(([k, l]) => (
                 <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'mc-on' : ''} onClick={() => setTab(k)}>{l}</button>
               ))}
             </div>
             {tab === 'meetings' && <button className="mc-btn2 p" onClick={() => setAdding(true)}>اجتماع جديد</button>}
-            {tab === 'availability' && <button className="mc-btn2 p" onClick={saveAvail}>حفظ</button>}
           </div>
         </div>
 
@@ -165,51 +144,6 @@ export const AdminTeamOps = ({ initialTab = 'tasks' }: { initialTab?: Tab }) => 
                 ))}
               </tbody></table></div>
             <div className="mc-delta" style={{ marginTop: 10 }}>اجتماعات Outreach تظهر هنا للقراءة. تعديلها يتم من صفحة العميل في Outreach.</div>
-          </div>
-        )}
-
-        {tab === 'availability' && (
-          <div style={{ padding: '0 20px 20px', display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit,minmax(320px,1fr))' }}>
-            <div>
-              <b style={{ display: 'block', marginBottom: 8 }}>جدولي الأسبوعي</b>
-              {DAYS.map((d, i) => (
-                <div key={d} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--line)', flexWrap: 'wrap' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, width: 110, cursor: 'pointer' }}>
-                    <input type="checkbox" checked={avail.days[i].on} onChange={e => setDay(i, { on: e.target.checked })} /> {d}
-                  </label>
-                  {avail.days[i].on ? (
-                    <>
-                      <input type="time" value={avail.days[i].from} onChange={e => setDay(i, { from: e.target.value })} className="mc-inp" dir="ltr" aria-label={`${d} من`} />
-                      <span style={{ color: 'var(--ink-3)' }}>إلى</span>
-                      <input type="time" value={avail.days[i].to} onChange={e => setDay(i, { to: e.target.value })} className="mc-inp" dir="ltr" aria-label={`${d} إلى`} />
-                    </>
-                  ) : <span style={{ color: 'var(--ink-3)', fontSize: 13 }}>غير متاح</span>}
-                </div>
-              ))}
-              <label style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 14, maxWidth: 220 }}>مدة الاجتماع
-                <select className="mc-inp" value={avail.duration_min} onChange={e => setAvail(a => ({ ...a, duration_min: Number(e.target.value) }))}>
-                  {[15, 30, 45, 60].map(n => <option key={n} value={n}>{n} دقيقة</option>)}
-                </select>
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, cursor: 'pointer' }}>
-                <input type="checkbox" checked={avail.email_alerts} onChange={e => setAvail(a => ({ ...a, email_alerts: e.target.checked }))} /> أبغى إشعار على البريد عند حجز اجتماع
-              </label>
-            </div>
-            <div>
-              <b style={{ display: 'block', marginBottom: 8 }}>الأوقات المتاحة للعملاء الآن</b>
-              {DAYS.map((d, i) => {
-                const rows = members.filter(m => allAvail[m.id]?.days?.[i]?.on)
-                return (
-                  <div key={d} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--line)', flexWrap: 'wrap' }}>
-                    <span style={{ width: 90 }}>{d}</span>
-                    {rows.length === 0 ? <span style={{ color: 'var(--ink-3)', fontSize: 13 }}>لا أحد</span> : rows.map(m => (
-                      <span key={m.id} className="mc-chip">{nameOf(m).split(' ')[0]} <span dir="ltr">{allAvail[m.id].days[i].from}–{allAvail[m.id].days[i].to}</span></span>
-                    ))}
-                  </div>
-                )
-              })}
-              <div className="mc-delta" style={{ marginTop: 10 }}>العميل لا يحجز من الموقع من هنا للحين. الأوقات تُحفظ لتوزيع الاجتماعات بين الفريق عند تفعيل الحجز من الموقع.</div>
-            </div>
           </div>
         )}
 
