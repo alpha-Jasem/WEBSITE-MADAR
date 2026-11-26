@@ -24,7 +24,7 @@
 
 [[redirects]]
   from = "/appmadar"
-  to = "https://madar.karzoun.chat/"
+  to = "https://madar.karzoun.chat/login"
   status = 302
   force = true
 

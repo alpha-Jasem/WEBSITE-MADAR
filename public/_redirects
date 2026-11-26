@@ -5,6 +5,6 @@
 /robots.txt /robots.txt 200
 /company-profile /company-profile/index.html 200
 /company-profile-madar /company-profile-madar/index.html 200
-/appmadar https://madar.karzoun.chat/ 302!
+/appmadar https://madar.karzoun.chat/login 302!
 /appmadar/* https://madar.karzoun.chat/:splat 302!
 /* /index.html 200
