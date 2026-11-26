@@ -28,9 +28,13 @@ var LABEL={dhome:'مركز القيادة'};V.dhome=function(){return '<div clas
 var hide=document.createElement('style');hide.textContent=['dcli','dsubs','drep','quotes','dreq','dord','dav'].map(function(v){return '.nv[data-v="'+v+'"]'}).join(',')+'{display:none!important}';document.head.appendChild(hide);
 function post(m){try{parent.postMessage(m,'*')}catch(e){}}
 function rect(){var v=document.getElementById('view');if(!v)return null;var r=v.getBoundingClientRect();return{left:r.left,top:r.top,width:r.width,height:r.height}}
-function tell(){var t=document.getElementById('ttl');if(t&&LABEL[S.view])t.textContent=LABEL[S.view];post({madar:'faisal-view',view:S.view,rect:rect()})}
+function tell(){var t=document.getElementById('ttl');if(t&&LABEL[S.view])t.textContent=LABEL[S.view];var sd=document.getElementById('side');post({madar:'faisal-view',view:S.view,rect:rect(),drawer:!!(sd&&sd.classList.contains('open'))})}
 window.__pfExtraNav=function(){setTimeout(tell,0)};
 window.addEventListener('resize',tell);
+/* phone: the drawer sits inside this page, so the admin page laid over the content must step aside while it is open; a tap outside closes it */
+var hs=document.createElement('style');hs.textContent='@media(max-width:820px){.tb{gap:6px}.tb h1{min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:16px}}';document.head.appendChild(hs);
+var _m=ACT.menu;ACT.menu=function(el){_m(el);tell()};
+document.addEventListener('click',function(e){var sd=document.getElementById('side');if(sd&&sd.classList.contains('open')&&!(e.target.closest&&(e.target.closest('#side')||e.target.closest('[data-a="menu"]')))){sd.classList.remove('open');tell()}},true);
 ACT.admgrp=function(el){var w=document.getElementById('admg-'+el.dataset.k);if(w){w.hidden=!w.hidden;el.classList.toggle('on',!w.hidden)}};
 ACT.admsearch=function(){post({madar:'faisal-act',act:'search'})};
 ACT.admbell=function(){post({madar:'faisal-act',act:'bell'})};

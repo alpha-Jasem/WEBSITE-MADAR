@@ -79,15 +79,16 @@ export default function FaisalPlatform({ onExit, onBell, onSearch }: { onExit: (
   const [doc, setDoc] = useState<string | null>(null)
   const [view, setView] = useState<string | null>(null)
   const [box, setBox] = useState<Box | null>(null)
+  const [drawer, setDrawer] = useState(false)
   const frame = useRef<HTMLIFrameElement>(null)
 
   useEffect(() => { void import('../../../faisal/platformDoc').then(m => setDoc(m.default)) }, [])
   useEffect(() => {
     const onMsg = (e: MessageEvent) => {
       if (e.source !== frame.current?.contentWindow || !e.data) return
-      const d = e.data as { madar?: string; view?: string; rect?: Box; act?: string }
+      const d = e.data as { madar?: string; view?: string; rect?: Box; act?: string; drawer?: boolean }
       if (d.madar === 'faisal-exit') onExit()
-      else if (d.madar === 'faisal-view') { setView(d.view ?? null); setBox(d.rect ?? null) }
+      else if (d.madar === 'faisal-view') { setView(d.view ?? null); setBox(d.rect ?? null); setDrawer(!!d.drawer) }
       else if (d.madar === 'faisal-act') { if (d.act === 'bell') onBell(); else if (d.act === 'search') onSearch() }
     }
     window.addEventListener('message', onMsg)
@@ -99,7 +100,7 @@ export default function FaisalPlatform({ onExit, onBell, onSearch }: { onExit: (
   return (
     <>
       <iframe ref={frame} className="mc-faisal-frame" title="لوحة فيصل" srcDoc={doc} />
-      {Page && box && (
+      {Page && box && !drawer && (
         <div className="mc-faisal-page" style={{ left: box.left, top: box.top, width: box.width, height: box.height }}>
           <main className="mc-main"><div className="mc-content">
             <Suspense fallback={<div className="mc-flat">جارٍ التحميل...</div>}><Page /></Suspense>
