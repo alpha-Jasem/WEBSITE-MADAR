@@ -32,7 +32,8 @@ function tell(){var t=document.getElementById('ttl');if(t&&LABEL[S.view])t.textC
 window.__pfExtraNav=function(){setTimeout(tell,0)};
 window.addEventListener('resize',tell);
 /* phone: the drawer sits inside this page, so the admin page laid over the content must step aside while it is open; a tap outside closes it */
-var hs=document.createElement('style');hs.textContent='@media(max-width:820px){.tb{gap:6px}.tb h1{min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:16px}}';document.head.appendChild(hs);
+var hs=document.createElement('style');hs.textContent='#admmtab,.tb .admlogo{display:none}@media(max-width:820px){.tb{gap:6px}.tb h1{min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:16px}.demo{display:none}.tb .admlogo{display:block;width:28px;height:auto;flex:none}.side.open+.main:after{content:"";position:fixed;inset:0;background:rgba(2,5,14,.6);z-index:40}#admmtab{display:grid;grid-template-columns:repeat(5,1fr);padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));background:rgba(15,18,36,.94);border-top:1px solid var(--line)}#admmtab button{all:unset;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:3px;font:600 11px "Noto Sans Arabic",sans-serif;color:var(--dim);min-height:50px;padding:5px 0;cursor:pointer}#admmtab button.on{color:#8fa6ff}#admmtab .ic{width:21px;height:21px}}';document.head.appendChild(hs);
+var MT=[['dhome','القيادة','home'],['adm_sales','المبيعات','chart'],['adm_ai','الإيجنت','bot'],['adm_customers','العملاء','team']];
 var _m=ACT.menu;ACT.menu=function(el){_m(el);tell()};
 document.addEventListener('click',function(e){var sd=document.getElementById('side');if(sd&&sd.classList.contains('open')&&!(e.target.closest&&(e.target.closest('#side')||e.target.closest('[data-a="menu"]')))){sd.classList.remove('open');tell()}},true);
 ACT.admgrp=function(el){var w=document.getElementById('admg-'+el.dataset.k);if(w){w.hidden=!w.hidden;el.classList.toggle('on',!w.hidden)}};
@@ -45,6 +46,9 @@ function inject(){
  sp.insertAdjacentHTML('beforebegin',''+h);
  var me=document.querySelector('.tb .me');
  if(me&&!document.getElementById('admbtn'))me.insertAdjacentHTML('beforebegin','<span id="admbtn" style="display:contents"><button class="ib" data-a="admsearch" aria-label="بحث الإدارة" title="بحث الإدارة">'+ic('search')+'</button><button class="ib" data-a="admbell" aria-label="تنبيهات الإدارة" title="تنبيهات الإدارة">'+ic('bell')+'</button></span>');
+ var mn=document.querySelector('.main'),mb=document.querySelector('.tb .mb');
+ if(mn&&!document.getElementById('admmtab'))mn.insertAdjacentHTML('beforeend','<nav id="admmtab">'+MT.map(function(i){return '<button data-v="'+i[0]+'" data-a="nav" class="'+(S.view===i[0]?'on':'')+'">'+ic(i[2])+i[1]+'</button>'}).join('')+'<button data-a="menu">'+ic('dots')+'المزيد</button></nav>');
+ if(mb&&!document.querySelector('.tb .admlogo'))mb.insertAdjacentHTML('afterend','<img class="admlogo" alt="" src="'+window.__LOGO+'">');
  tell()}
 var app=document.getElementById('app');if(app)new MutationObserver(inject).observe(app,{childList:true,subtree:false});
 inject();
