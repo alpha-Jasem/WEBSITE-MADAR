@@ -62,6 +62,12 @@
     Content-Security-Policy = "default-src 'self'; object-src 'self'"
 
 [[headers]]
+  for = "/madar-orbit-*.png"
+  [headers.values]
+    Cross-Origin-Resource-Policy = "cross-origin"
+    Cache-Control = "public, max-age=86400"
+
+[[headers]]
   for = "/*"
   [headers.values]
     # SPA routes are rewritten to index.html, but header rules match the request
