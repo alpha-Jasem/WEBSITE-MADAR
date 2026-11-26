@@ -100,3 +100,9 @@
   [headers.values]
     Cross-Origin-Resource-Policy = "cross-origin"
     Cache-Control = "public, max-age=86400"
+
+[[headers]]
+  for = "/madar-login-bg.jpg"
+  [headers.values]
+    Cross-Origin-Resource-Policy = "cross-origin"
+    Cache-Control = "public, max-age=86400"
