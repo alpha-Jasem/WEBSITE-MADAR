@@ -39,6 +39,7 @@ const Library = L(() => import('./AdminLibrary'), 'AdminLibrary')
 const Marketers = L(() => import('./AdminMarketers'), 'AdminMarketers')
 const Settings = L(() => import('./AdminSettings'), 'AdminSettings')
 const Api = L(() => import('./AdminAPI'), 'AdminAPI')
+const PartnerSettings = L(() => import('./AdminPartnerSettings'), 'AdminPartnerSettings')
 const Developer = L(() => import('./AdminDeveloper'), 'AdminDeveloper')
 const Deck = L(() => import('./AdminCommandDeck'), 'AdminCommandDeck')
 
@@ -71,7 +72,7 @@ const PAGES: Record<string, ComponentType> = {
   adm_create: CreateClient,
   adm_team: section([['العمل اليومي', TeamOps], ['المكتبة', Library]]),
   adm_marketers: Marketers,
-  adm_settings: section([['الإعدادات', Settings], ['API والتكاملات', Api], ['مركز المطوّر', Developer]]),
+  adm_settings: section([['الإعدادات', Settings], ['API والتكاملات', Api], ['مركز المطوّر', Developer], ['إعدادات الشريك', PartnerSettings]]),
 }
 interface Box { left: number; top: number; width: number; height: number }
 

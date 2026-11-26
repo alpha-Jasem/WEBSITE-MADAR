@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  ChevronRight, Inbox as InboxIcon, RefreshCw, Phone, Copy, ExternalLink, CheckCircle2, Lock, Unlock, Ticket, Send, StickyNote, Bot, UserRound, Users, Tag, Sparkles, X, Plus, Filter, RotateCcw, Clock, MoreHorizontal,
+  ChevronRight, Inbox as InboxIcon, RefreshCw, Phone, Copy, ExternalLink, CheckCircle2, Lock, Unlock, Ticket, Send, StickyNote, Bot, UserRound, Users, Tag, Sparkles, X, Plus, Filter, RotateCcw, Clock, MoreHorizontal, Zap,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { saudiDayKey } from '@/lib/saudiTime'
 import { useCustomers } from '@/lib/dashboardQueries'
 import { useCurrentUserId, useTeam } from '@/lib/queries/ops'
 import { useTeams, type CompanyTeam } from '@/lib/queries/teams'
+import { useMacros, type Macro } from '@/lib/queries/macros'
 import { useAssignmentRules, ruleFor, intakeRule } from '@/lib/queries/assignmentRules'
 import { isAvailable, pickAssignee, slaState, PRESENCE_LABELS, type Presence } from '@/lib/assignment'
 import { setMyPresence, usePresence } from '@/lib/queries/presence'
@@ -448,6 +449,28 @@ function ThreadPane({ item, events, allEvents, tickets, showTickets, authorName,
     } catch (e) { pushToast({ kind: 'danger', title: 'ما قدرنا نحوّل المحادثة', description: e instanceof Error ? e.message : undefined }) }
     finally { setBusy(false) }
   }
+  const { macros } = useMacros(companyId, isDemo)
+  async function runMacro(m: Macro) {
+    setMoreOpen(false)
+    setBusy(true)
+    try {
+      for (const a of m.actions) {
+        if (a.type === 'note') await addConversationEvent(companyId, isDemo, { key: item.key, kind: 'note', body: a.value, authorName })
+        else if (a.type === 'status') await addConversationEvent(companyId, isDemo, { key: item.key, kind: 'status', body: a.value, authorName })
+        else if (a.type === 'transfer') {
+          const t = teams.find((x) => x.id === a.team_id)
+          if (t) await addConversationEvent(companyId, isDemo, { key: item.key, kind: 'transfer', body: a.value, teamId: t.id, teamName: t.name, authorName })
+        } else if (a.type === 'reply') {
+          if (!item.phone) { pushToast({ kind: 'info', title: 'تخطّينا خطوة الرد', description: 'ما فيه رقم لهذا العميل' }); continue }
+          if (item.channel === 'whatsapp') { if (!isDemo) await sendWhatsAppReply(item.phone, a.value) }
+          else sendWhatsAppMessage(item.phone, a.value)
+          await addConversationEvent(companyId, isDemo, { key: item.key, kind: 'reply', body: a.value, authorName })
+        }
+      }
+      pushToast({ kind: 'success', title: `تم تنفيذ «${m.name}»` })
+    } catch (e) { pushToast({ kind: 'danger', title: 'توقف الماكرو في النص', description: e instanceof Error ? e.message : undefined }) }
+    finally { setBusy(false) }
+  }
   const teamPeople = people.filter((p) => (byTeam.get(xfer.teamId) || []).includes(p.id))
 
   async function reviewed() {
@@ -510,6 +533,12 @@ function ThreadPane({ item, events, allEvents, tickets, showTickets, authorName,
                     </label>
                   )}
                   {can('conversations.transfer') && teams.length > 0 && <button type="button" role="menuitem" className="ib-more-item" disabled={busy} onClick={() => { setMoreOpen(false); setXfer({ open: true, teamId: state.teamId || teams[0].id, userId: '', reason: '' }) }}><Users size={14} /> حوّل لفريق</button>}
+                  {macros.length > 0 && can('conversations.reply') && (
+                    <div className="ib-more-row" style={{ display: 'grid', gap: 4 }}>
+                      <span><Zap size={13} /> ماكرو</span>
+                      {macros.map((m) => <button key={m.id} type="button" role="menuitem" className="ib-more-item" disabled={busy} onClick={() => void runMacro(m)}>{m.name}</button>)}
+                    </div>
+                  )}
                   {onProfile && <button type="button" role="menuitem" className="ib-more-item" onClick={() => { setMoreOpen(false); onProfile() }}><UserRound size={14} /> ملف العميل</button>}
                   {showTickets && call && !isLive && (ticket
                     ? <button type="button" role="menuitem" className="ib-more-item" onClick={() => { setMoreOpen(false); onTicket(`?ticket=${encodeURIComponent(ticket.id)}`) }}><Ticket size={14} /> فتح التذكرة</button>

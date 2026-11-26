@@ -258,6 +258,7 @@ export function DashboardV2Layout() {
     { title: 'المحادثات', items: [
       { label: 'المحادثات', path: `${base}/conversations`, icon: <MessageSquare size={16} />, module: 'conversations' },
       { label: 'المراقبة الحية', short: 'مباشر', path: `${base}/live`, icon: <Radio size={16} />, module: 'conversations' },
+      { label: 'محادثة الفريق', short: 'الفريق', path: `${base}/team-chat`, icon: <UsersRound size={16} /> },
       { label: 'التذاكر', path: `${base}/tickets`, icon: <Ticket size={16} />, badge: openTicketCount || undefined, module: 'tickets' },
       { label: 'سجل المكالمات', path: `${base}/call-logs`, icon: <ClipboardList size={16} />, module: 'voice' },
     ] },
@@ -279,6 +280,7 @@ export function DashboardV2Layout() {
       { label: 'تقييمات Google', path: `${base}/reviews`, icon: <Star size={16} />, module: 'reviews' },
     ] },
     { title: 'أدوات إضافية', fold: true, items: [
+      { label: 'الماكرو', path: `${base}/macros`, icon: <Zap size={16} />, module: 'conversations' },
       { label: 'الشرائح', path: `${base}/segments`, icon: <Layers size={16} />, module: 'customers' },
       { label: 'قوالب واتساب والإرسال', short: 'القوالب', path: `${base}/outreach`, icon: <Send size={16} />, module: 'conversations', perm: 'outreach.send' },
       { label: 'نماذج الموقع', short: 'النماذج', path: `${base}/forms`, icon: <FileInput size={16} />, module: 'customers', perm: 'integrations.manage' },
@@ -290,6 +292,7 @@ export function DashboardV2Layout() {
       { label: 'الربط والأتمتة', short: 'الربط', path: `${base}/connect`, icon: <Zap size={16} />, perm: 'integrations.manage' },
       { label: 'التكاملات', path: `${base}/integrations`, icon: <Plug size={16} />, perm: 'integrations.manage' },
       { label: 'الفريق والصلاحيات', short: 'الفريق', path: `${base}/team`, icon: <UsersRound size={16} />, perm: 'team.manage' },
+      { label: 'إعدادات مساحة العمل', short: 'المساحة', path: `${base}/workspace-settings`, icon: <Settings size={16} /> },
       { label: 'الإعدادات', path: `${base}/settings`, icon: <Settings size={16} /> },
     ] },
   ]

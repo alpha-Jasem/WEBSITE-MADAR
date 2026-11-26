@@ -76,6 +76,9 @@ const DashboardV2CallsAnalytics    = lazy(() => import('./dashboard/pages/CallsA
 const DashboardV2WhatsAppAnalytics = lazy(() => import('./dashboard/pages/WhatsAppAnalytics').then(m => ({ default: m.DashboardV2WhatsAppAnalytics })))
 const DashboardV2Agents            = lazy(() => import('./dashboard/pages/Agents').then(m => ({ default: m.DashboardV2Agents })))
 const DashboardV2KnowledgeBase      = lazy(() => import('./dashboard/pages/KnowledgeBase').then(m => ({ default: m.DashboardV2KnowledgeBase })))
+const DashboardV2Macros           = lazy(() => import('./dashboard/pages/Macros').then(m => ({ default: m.DashboardV2Macros })))
+const DashboardV2TeamChat         = lazy(() => import('./dashboard/pages/TeamChat').then(m => ({ default: m.DashboardV2TeamChat })))
+const DashboardV2WorkspaceSettings = lazy(() => import('./dashboard/pages/WorkspaceSettings').then(m => ({ default: m.DashboardV2WorkspaceSettings })))
 const DashboardV2Segments         = lazy(() => import('./dashboard/pages/Segments').then(m => ({ default: m.DashboardV2Segments })))
 const DashboardV2Forms            = lazy(() => import('./dashboard/pages/Forms').then(m => ({ default: m.DashboardV2Forms })))
 const DashboardV2WhatsAppConnect = lazy(() => import('./dashboard/pages/WhatsAppConnect').then(m => ({ default: m.DashboardV2WhatsAppConnect })))
@@ -115,6 +118,9 @@ const dashboardChildRoutes = (
     <Route path="agents" element={<PermissionRoute permission="agent.settings"><DashboardV2Agents /></PermissionRoute>} />
     <Route path="knowledge-base" element={<ModuleRoute module="knowledge_base"><DashboardV2KnowledgeBase /></ModuleRoute>} />
     <Route path="outreach" element={<ModuleRoute module="conversations"><PermissionRoute permission="outreach.send"><DashboardV2Outreach /></PermissionRoute></ModuleRoute>} />
+    <Route path="macros" element={<ModuleRoute module="conversations"><DashboardV2Macros /></ModuleRoute>} />
+    <Route path="team-chat" element={<DashboardV2TeamChat />} />
+    <Route path="workspace-settings" element={<DashboardV2WorkspaceSettings />} />
     <Route path="segments" element={<ModuleRoute module="customers"><DashboardV2Segments /></ModuleRoute>} />
     <Route path="whatsapp" element={<ModuleRoute module="conversations"><PermissionRoute permission="integrations.manage"><DashboardV2WhatsAppConnect /></PermissionRoute></ModuleRoute>} />
     <Route path="forms" element={<ModuleRoute module="customers"><PermissionRoute permission="integrations.manage"><DashboardV2Forms /></PermissionRoute></ModuleRoute>} />

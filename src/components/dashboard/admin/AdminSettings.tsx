@@ -1,17 +1,19 @@
 ﻿import { useEffect, useState } from 'react'
 import { IntegrationHealthPanel } from './IntegrationHealthPanel'
 import { AgencySettingsPanel } from './AgencySettingsPanel'
+import { AdminPartnerSettings } from './AdminPartnerSettings'
 import { supabase } from '../../../lib/supabase'
 import type { Company, Plan } from '../../../types'
 import { PLAN_LABELS, PLAN_PRICES } from '../../../lib/constants'
 
-type TabKey = 'plans' | 'onboarding' | 'alerts' | 'security'
+type TabKey = 'plans' | 'onboarding' | 'alerts' | 'security' | 'partner'
 
 const tabs: Array<{ key: TabKey; label: string }> = [
   { key: 'plans', label: 'الباقات' },
   { key: 'onboarding', label: 'التجهيز' },
   { key: 'alerts', label: 'التنبيهات' },
   { key: 'security', label: 'الأمان' },
+  { key: 'partner', label: 'إعدادات الشريك' },
 ]
 
 const planLimits: Record<Plan, number> = { starter: 2000, growth: 10000, enterprise: 50000 }
@@ -73,6 +75,8 @@ export const AdminSettings = () => {
           </button>
         ))}
       </div>
+
+      {activeTab === 'partner' && <AdminPartnerSettings />}
 
       {activeTab === 'plans' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
