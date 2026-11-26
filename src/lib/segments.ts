@@ -4,7 +4,7 @@ import type { Contact } from './contacts'
 // "all" (and) or "any" (or); each group joins its own conditions the same way and can be negated.
 // Pure, so it is easy to test; the page and the campaign audience both use it.
 
-export type FieldId = 'name' | 'phone' | 'type' | 'visits' | 'last_contact' | 'first_contact' | 'channel' | 'tag' | 'status' | 'team' | 'assigned'
+export type FieldId = 'name' | 'phone' | 'type' | 'visits' | 'last_contact' | 'first_contact' | 'channel' | 'tag' | 'status' | 'team' | 'assigned' | 'stage'
 export type Op =
   | 'contains' | 'not_contains' | 'starts_with' | 'empty' | 'not_empty'
   | 'is' | 'is_not' | 'gt' | 'lt' | 'eq' | 'within' | 'before' | 'never' | 'has' | 'not_has'
@@ -41,9 +41,10 @@ export const FIELDS: Record<FieldId, FieldDef> = {
   status: { label: 'حالة آخر محادثة', kind: 'enum', ops: ['is', 'is_not'], options: STATUS_CHOICES },
   team: { label: 'الفريق', kind: 'enum', ops: ['is', 'is_not', 'empty'] },
   assigned: { label: 'الإسناد', kind: 'enum', ops: ['empty', 'not_empty'] },
+  stage: { label: 'مرحلة العميل', kind: 'enum', ops: ['is', 'is_not', 'empty'] },
 }
 
-export const FIELD_ORDER: FieldId[] = ['type', 'last_contact', 'first_contact', 'visits', 'channel', 'tag', 'status', 'team', 'assigned', 'name', 'phone']
+export const FIELD_ORDER: FieldId[] = ['type', 'last_contact', 'first_contact', 'visits', 'channel', 'tag', 'status', 'team', 'stage', 'assigned', 'name', 'phone']
 
 /** Ops that need no value. */
 export const NO_VALUE: Op[] = ['empty', 'not_empty', 'never']
@@ -94,6 +95,7 @@ function testCondition(c: Contact, cond: Condition, now: number): boolean {
     case 'status': return enumIs(c.status)
     case 'team': return enumIs(c.teamId)
     case 'assigned': return enumIs(c.assigneeId)
+    case 'stage': return enumIs(c.stageId ?? null)
   }
 }
 

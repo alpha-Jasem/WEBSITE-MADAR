@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Layers, Plus, Pencil, Trash2, Users, Send, X, Search } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useTeams } from '@/lib/queries/teams'
+import { useLeadStages } from '@/lib/queries/workspaceSettings'
 import { deleteSegment, saveSegment, segmentMembers, useContacts, useSegments, type Segment } from '@/lib/queries/segments'
 import {
   describeRules, EMPTY_RULES, FIELD_ORDER, FIELDS, NO_VALUE, OP_LABELS, SEGMENT_TEMPLATES,
@@ -22,16 +23,18 @@ const NEW_DRAFT: Draft = { name: '', description: '', kind: 'dynamic', rules: EM
 function useChoices(contacts: Contact[]) {
   const { companyId, isDemo } = useWorkspace()
   const { teams } = useTeams(companyId, isDemo)
+  const { stages } = useLeadStages(companyId, isDemo)
   return useMemo(() => {
     const tags = new Map<string, string>()
     for (const c of contacts) c.tagIds.forEach((id, i) => tags.set(id, c.tagLabels[i] || id))
     const out: Partial<Record<FieldId, Choice[]>> = {
       tag: [...tags].map(([value, label]) => ({ value, label })),
       team: teams.map((t) => ({ value: t.id, label: t.name })),
+      stage: stages.map((s) => ({ value: s.id, label: s.label })),
     }
     const lookup = (field: FieldId, value: string) => out[field]?.find((o) => o.value === value)?.label || value
     return { options: out, lookup }
-  }, [contacts, teams])
+  }, [contacts, teams, stages])
 }
 
 /** Customer segments: saved groups of customers by conditions, with a live count before saving. */

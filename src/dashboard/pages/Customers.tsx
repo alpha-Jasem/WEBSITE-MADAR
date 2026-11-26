@@ -8,6 +8,7 @@ import { useConversationData } from '@/lib/queries/conversations'
 import { buildContacts } from './AgentUsers'
 import { addToStaticSegment, saveSegment, segmentMembers, useContacts, useSegments } from '@/lib/queries/segments'
 import { normalizePhone } from '@/lib/callAnalysis'
+import { useCustomFields, useLeadStages, type CustomField, type LeadStage } from '@/lib/queries/workspaceSettings'
 import { EMPTY_RULES } from '@/lib/segments'
 import type { Customer } from '@/types/dashboard'
 import { Card, Badge, Button, Dialog, Input, Select } from '@/dashboard/components/primitives'
@@ -30,11 +31,40 @@ const TYPE_OPTIONS = [
   { value: 'returning', label: 'عائد' },
 ]
 
+/** The saved value of each custom field, typed; empty values are left out. */
+function packCustom(fields: CustomField[], raw: Record<string, string>): Record<string, string | number | boolean> {
+  const out: Record<string, string | number | boolean> = {}
+  for (const f of fields) {
+    const v = (raw[f.id] ?? '').trim()
+    if (!v) continue
+    out[f.id] = f.field_type === 'number' ? (Number.isFinite(Number(v)) ? Number(v) : v) : f.field_type === 'yes_no' ? v === 'yes' || v === 'true' : v
+  }
+  return out
+}
+
+function StageChip({ stage }: { stage?: LeadStage }) {
+  if (!stage) return <span style={{ color: 'var(--text-tertiary)' }}>—</span>
+  return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5 }}><i style={{ width: 8, height: 8, borderRadius: '50%', background: stage.color }} />{stage.label}</span>
+}
+
+function FieldInput({ field, value, onChange }: { field: CustomField; value: string; onChange: (v: string) => void }) {
+  if (field.field_type === 'select') return <Select label={field.label} options={[{ value: '', label: '—' }, ...field.options.map((o) => ({ value: o, label: o }))]} value={value} onChange={(e) => onChange(e.target.value)} />
+  if (field.field_type === 'yes_no') return <Select label={field.label} options={[{ value: '', label: '—' }, { value: 'yes', label: 'نعم' }, { value: 'no', label: 'لا' }]} value={value === 'true' ? 'yes' : value === 'false' ? 'no' : value} onChange={(e) => onChange(e.target.value)} />
+  return <Input label={field.label} type={field.field_type === 'number' ? 'number' : field.field_type === 'date' ? 'date' : 'text'} value={value} onChange={(e) => onChange(e.target.value)} />
+}
+
 export function DashboardV2Customers() {
   const { companyId, isDemo, hasModule } = useWorkspace()
   const navigate = useNavigate()
   const base = isDemo ? '/demo-review' : '/dashboard'
-  const { data: patients, loading: customersLoading, refetch } = useCustomers(companyId, isDemo)
+  const { data: rawPatients, loading: customersLoading, refetch } = useCustomers(companyId, isDemo)
+  const { stages } = useLeadStages(companyId, isDemo)
+  const { fields } = useCustomFields(companyId, isDemo)
+  // In the demo nothing is saved, so stage and field changes are kept here for the session.
+  const [demoEdits, setDemoEdits] = useState<Record<string, Pick<Customer, 'stage_id' | 'custom_data'>>>({})
+  const patients = useMemo(() => (rawPatients ? rawPatients.map((p) => (demoEdits[p.id] ? { ...p, ...demoEdits[p.id] } : p)) : rawPatients), [rawPatients, demoEdits])
+  const stageById = useMemo(() => new Map(stages.map((s) => [s.id, s])), [stages])
+  const [stageFilter, setStageFilter] = useState('')
   const { calls, callsLoading } = useConversationData(companyId, isDemo)
   const loading = customersLoading || callsLoading
   const pushToast = useToast()
@@ -42,7 +72,7 @@ export function DashboardV2Customers() {
   const [typeFilter, setTypeFilter] = useState('all')
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'last_visit_at', dir: -1 })
   const [selected, setSelected] = useState<Customer | null>(null)
-  const [form, setForm] = useState({ name: '', phone: '', last_visit_at: '', total_visits: 0, patient_type: 'new' as Customer['patient_type'] })
+  const [form, setForm] = useState({ name: '', phone: '', last_visit_at: '', total_visits: 0, patient_type: 'new' as Customer['patient_type'], stage_id: '', custom: {} as Record<string, string> })
   const [saving, setSaving] = useState(false)
   const [checked, setChecked] = useState<Set<string>>(new Set())
   const [bulkSaving, setBulkSaving] = useState(false)
@@ -81,6 +111,8 @@ export function DashboardV2Customers() {
         last_visit_at: selected.last_visit_at ? selected.last_visit_at.split('T')[0] : '',
         total_visits: selected.total_visits,
         patient_type: selected.patient_type,
+        stage_id: selected.stage_id || '',
+        custom: Object.fromEntries(Object.entries(selected.custom_data || {}).map(([k, v]) => [k, v == null ? '' : String(v)])),
       })
     }
   }, [selected])
@@ -89,7 +121,9 @@ export function DashboardV2Customers() {
     if (!selected) return
     setSaving(true)
     try {
+      const custom_data = packCustom(fields, form.custom)
       if (isDemo) {
+        setDemoEdits((m) => ({ ...m, [selected.id]: { stage_id: form.stage_id || null, custom_data } }))
         pushToast({ kind: 'success', title: 'تم الحفظ (عرض تجريبي)' })
       } else {
         await updateCustomer(selected.id, {
@@ -99,6 +133,9 @@ export function DashboardV2Customers() {
           last_visit_at: form.last_visit_at ? new Date(form.last_visit_at).toISOString() : undefined,
           total_visits: form.total_visits,
           patient_type: form.patient_type,
+          // Only sent when set or changed, so editing a customer still works before the stage columns exist.
+          ...((form.stage_id || selected.stage_id) ? { stage_id: form.stage_id || null } : {}),
+          ...((Object.keys(custom_data).length || Object.keys(selected.custom_data || {}).length) ? { custom_data } : {}),
         })
         await refetch()
         pushToast({ kind: 'success', title: 'تم حفظ بيانات العميل' })
@@ -133,6 +170,21 @@ export function DashboardV2Customers() {
     }
   }
 
+  async function bulkSetStage(stageId: string) {
+    const ids = Array.from(checked)
+    if (!ids.length || !stageId) return
+    const value = stageId === 'none' ? null : stageId
+    setBulkSaving(true)
+    try {
+      if (isDemo) setDemoEdits((m) => ({ ...m, ...Object.fromEntries(ids.map((id) => [id, { stage_id: value, custom_data: (patients || []).find((p) => p.id === id)?.custom_data ?? null }])) }))
+      else { await Promise.all(ids.map((id) => updateCustomer(id, { company_id: companyId || undefined, stage_id: value }))); await refetch() }
+      pushToast({ kind: 'success', title: `انتقل ${ids.length} عميل${isDemo ? ' (عرض تجريبي)' : ''}` })
+      setChecked(new Set())
+    } catch (e) {
+      pushToast({ kind: 'danger', title: 'تعذّر النقل', description: e instanceof Error ? e.message : undefined })
+    } finally { setBulkSaving(false) }
+  }
+
   function toggleSort(key: SortKey) {
     setSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: 1 }))
   }
@@ -153,6 +205,7 @@ export function DashboardV2Customers() {
     let filtered = rows.filter((p) => p.name.includes(q) || p.phone.includes(q))
     if (typeFilter !== 'all') filtered = filtered.filter((p) => p.patient_type === typeFilter)
     if (segKeys) filtered = filtered.filter((p) => segKeys.has(rowKey(p)))
+    if (stageFilter) filtered = filtered.filter((p) => (stageFilter === 'none' ? !p.stage_id : p.stage_id === stageFilter))
     filtered = [...filtered]
     filtered.sort((a, b) => {
       const av = a[sort.key] ?? ''
@@ -160,7 +213,7 @@ export function DashboardV2Customers() {
       return av < bv ? -sort.dir : av > bv ? sort.dir : 0
     })
     return filtered
-  }, [rows, q, typeFilter, sort, segKeys])
+  }, [rows, q, typeFilter, sort, segKeys, stageFilter])
 
   const narrow = useIsNarrow()
   const returning = rows.filter((p) => p.patient_type === 'returning').length
@@ -179,6 +232,9 @@ export function DashboardV2Customers() {
         {segmentsOn && segments.length > 0 && (
           <Select options={[{ value: '', label: 'كل الشرائح' }, ...segments.map((x) => ({ value: x.id, label: x.name }))]} value={segFilter} onChange={(e) => setSegFilter(e.target.value)} style={{ width: 180 }} />
         )}
+        {stages.length > 0 && (
+          <Select options={[{ value: '', label: 'كل المراحل' }, ...stages.map((s) => ({ value: s.id, label: s.label })), { value: 'none', label: 'بدون مرحلة' }]} value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} style={{ width: 170 }} />
+        )}
         <span className="np-aside np-num">{fmtNum(shown.length)} من {fmtNum(rows.length)}</span>
       </div>
 
@@ -190,6 +246,10 @@ export function DashboardV2Customers() {
             {segmentsOn && (
               <Select value="" onChange={(e) => void addCheckedToSegment(e.target.value)} style={{ width: 190 }}
                 options={[{ value: '', label: 'أضف إلى شريحة…' }, ...segments.filter((x) => x.kind === 'static').map((x) => ({ value: x.id, label: x.name })), { value: 'new', label: '+ شريحة جديدة بالمحددين' }]} />
+            )}
+            {stages.length > 0 && (
+              <Select value="" onChange={(e) => void bulkSetStage(e.target.value)} style={{ width: 170 }}
+                options={[{ value: '', label: 'انقل إلى مرحلة…' }, ...stages.map((s) => ({ value: s.id, label: s.label })), { value: 'none', label: 'بدون مرحلة' }]} />
             )}
             <Button size="sm" onClick={bulkMarkReturning} disabled={bulkSaving}>
               <UserCheck size={14} /> {bulkSaving ? 'جارِ التحديث...' : 'تحديد كعائدين'}
@@ -213,6 +273,7 @@ export function DashboardV2Customers() {
                   <th><SortableHeader label="آخر زيارة" active={sort.key === 'last_visit_at'} dir={sort.dir} onClick={() => toggleSort('last_visit_at')} /></th>
                   <th><SortableHeader label={visitsLabel} active={sort.key === 'total_visits'} dir={sort.dir} onClick={() => toggleSort('total_visits')} /></th>
                   <th>النوع</th>
+                  {stages.length > 0 && <th>المرحلة</th>}
                   <th>تواصل</th>
                 </tr>
               </thead>
@@ -229,6 +290,7 @@ export function DashboardV2Customers() {
                     <td className="np-num">{p.last_visit_at ? p.last_visit_at.split('T')[0] : '—'}</td>
                     <td className="np-num">{p.total_visits}</td>
                     <td><Badge tone={p.patient_type === 'returning' ? 'success' : 'brand'}>{p.patient_type === 'returning' ? 'عائد' : 'جديد'}</Badge></td>
+                    {stages.length > 0 && <td><StageChip stage={p.stage_id ? stageById.get(p.stage_id) : undefined} /></td>}
                     <td>{p.phone ? <ContactActions size={narrow ? 40 : 28} phone={p.phone} message={`مرحباً ${p.name}`} /> : null}</td>
                   </tr>
                 ))}
@@ -258,6 +320,8 @@ export function DashboardV2Customers() {
               <Input label={visitsLabel} type="number" value={String(form.total_visits)} onChange={(e) => setForm((f) => ({ ...f, total_visits: Number(e.target.value) || 0 }))} />
             </div>
             <Select label="النوع" options={EDIT_TYPE_OPTIONS} value={form.patient_type} onChange={(e) => setForm((f) => ({ ...f, patient_type: e.target.value as Customer['patient_type'] }))} />
+            {stages.length > 0 && <Select label="المرحلة" options={[{ value: '', label: 'بدون مرحلة' }, ...stages.map((s) => ({ value: s.id, label: s.label }))]} value={form.stage_id} onChange={(e) => setForm((f) => ({ ...f, stage_id: e.target.value }))} />}
+            {fields.map((fd) => <FieldInput key={fd.id} field={fd} value={form.custom[fd.id] ?? ''} onChange={(v) => setForm((f) => ({ ...f, custom: { ...f.custom, [fd.id]: v } }))} />)}
           </div>
         )}
       </Dialog>

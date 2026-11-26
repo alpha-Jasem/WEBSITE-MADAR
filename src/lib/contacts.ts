@@ -24,6 +24,8 @@ export interface Contact {
   status: ConvStatus | null
   teamId: string | null
   assigneeId: string | null
+  /** Lead stage of the saved customer, when set. */
+  stageId?: string | null
   customerId?: string
   /** Key of their latest conversation in the inbox. */
   convKey?: string
@@ -48,7 +50,7 @@ export function buildContactList(customers: Customer[], items: ConvItem[], event
     byKey.set(key, {
       key, name: known(c.name) || c.phone || 'بدون اسم', phone: c.phone || '', type: c.patient_type, visits: c.total_visits || 0,
       firstAt: c.created_at || null, lastAt: c.last_visit_at || null, channels: [], tagIds: (c.tags || []).map((t) => `c:${t}`), tagLabels: (c.tags || []).map((t) => CUSTOMER_TAG_LABELS[t] || t),
-      status: null, teamId: null, assigneeId: null, customerId: c.id,
+      status: null, teamId: null, assigneeId: null, stageId: c.stage_id ?? null, customerId: c.id,
     })
   }
 

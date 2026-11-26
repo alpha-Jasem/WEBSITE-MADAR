@@ -87,6 +87,9 @@ export interface Customer {
   city?: string
   patient_type: 'new' | 'returning'
   tags: CustomerTag[]
+  /** Lead stage (lead_stages.id) and the company's own custom fields (custom_fields.id -> value). */
+  stage_id?: string | null
+  custom_data?: Record<string, string | number | boolean | null> | null
   notes?: string
   no_show_count: number
   total_visits: number
