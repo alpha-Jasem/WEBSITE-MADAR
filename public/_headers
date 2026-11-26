@@ -40,3 +40,11 @@
 
 /signal/logo-main-64.png
   Cache-Control: public, max-age=604800
+
+/madar-orbit-logo.png
+  Cross-Origin-Resource-Policy: cross-origin
+  Cache-Control: public, max-age=86400
+
+/madar-orbit-icon.png
+  Cross-Origin-Resource-Policy: cross-origin
+  Cache-Control: public, max-age=86400
