@@ -50,7 +50,9 @@ const PROVIDER_LABEL: Record<string, string> = { nabrah: 'المنصة الصو�
 
 /** The unified conversations experience. `calls` mode backs /call-logs: the same list
  *  and detail, limited to the agent's calls, with an Excel export. */
-export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
+export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' | 'web' | 'whatsapp' }) {
+  // `web` and `whatsapp` are one channel's inbox each (the site chat page and the WhatsApp page).
+  const oneChannel = mode === 'web' || mode === 'whatsapp' ? mode : null
   const { companyId, isDemo, hasModule } = useWorkspace()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
@@ -64,11 +66,14 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
 
   const { rules: tagRules } = useTagRules(companyId, isDemo)
   const [tagsOpen, setTagsOpen] = useState(false)
-  const items = useMemo(() => buildConversations(calls, messages, {
-    includePhone: mode === 'calls' || showVoice,
-    includeMessages: mode === 'all',
-    tagRules,
-  }), [calls, messages, mode, showVoice, tagRules])
+  const items = useMemo(() => {
+    const built = buildConversations(calls, messages, {
+      includePhone: !oneChannel && (mode === 'calls' || showVoice),
+      includeMessages: mode === 'all' || mode === 'whatsapp',
+      tagRules,
+    })
+    return oneChannel ? built.filter((i) => i.channel === oneChannel) : built
+  }, [calls, messages, mode, oneChannel, showVoice, tagRules])
 
   const openId = params.get('id')
   const filter = (params.get('filter') as Filter) || 'all'
@@ -76,7 +81,7 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
   const tagFilter = params.get('tag') || 'all'
   const wide = useWide(1100)
   const viewParam = params.get('view')
-  const view: View = viewParam === 'table' ? 'table' : viewParam === 'list' ? 'list' : (mode === 'all' ? 'inbox' : 'list')
+  const view: View = viewParam === 'table' ? 'table' : viewParam === 'list' ? 'list' : (mode === 'calls' ? 'list' : 'inbox')
   const selKey = params.get('sel')
   const search = params.get('q') || ''
   const [limit, setLimit] = useState(PAGE)
@@ -95,9 +100,11 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
   const filterOptions: [Filter, string][] = [
     ['all', 'الكل'],
     ['needs', 'تحتاج تدخل'],
-    ...((mode === 'calls' ? channelsPresent.has('phone') : showVoice) ? [['phone', 'مكالمات'] as [Filter, string]] : []),
-    ...((mode === 'all' || channelsPresent.has('whatsapp')) ? [['whatsapp', 'واتساب'] as [Filter, string]] : []),
-    ...((mode === 'all' || channelsPresent.has('web')) ? [['web', 'الموقع'] as [Filter, string]] : []),
+    ...(oneChannel ? [] : [
+      ...((mode === 'calls' ? channelsPresent.has('phone') : showVoice) ? [['phone', 'مكالمات'] as [Filter, string]] : []),
+      ...((mode === 'all' || channelsPresent.has('whatsapp')) ? [['whatsapp', 'واتساب'] as [Filter, string]] : []),
+      ...((mode === 'all' || channelsPresent.has('web')) ? [['web', 'الموقع'] as [Filter, string]] : []),
+    ]),
   ]
 
   const hasVerdicts = useMemo(() => items.some((i) => i.verdict !== 'none'), [items])
@@ -156,7 +163,7 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
     const back = (
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <button type="button" className="nx-link" onClick={() => setParam('id', null)}>
-          <ChevronRight size={16} /> {mode === 'calls' ? 'سجل المكالمات' : 'المحادثات'}
+          <ChevronRight size={16} /> {mode === 'calls' ? 'سجل المكالمات' : mode === 'web' ? 'الدردشة على الموقع' : mode === 'whatsapp' ? 'واتساب' : 'المحادثات'}
         </button>
         {pos >= 0 && seq.length > 1 && (
           <span className="ax-pager">
@@ -192,9 +199,11 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
   }
 
   // ─── list ───
-  const title = mode === 'calls' ? 'سجل المكالمات' : 'المحادثات'
+  const title = mode === 'calls' ? 'سجل المكالمات' : mode === 'web' ? 'الدردشة على الموقع' : mode === 'whatsapp' ? 'واتساب' : 'المحادثات'
   const subtitle = mode === 'calls'
     ? 'كل مكالمة رد عليها الوكيل الذكي، بالنص والملخص والنتيجة'
+    : mode === 'web' ? 'محادثات زوار موقعك مع الوكيل الذكي'
+    : mode === 'whatsapp' ? 'محادثات عملائك على رقم الواتساب المربوط'
     : `كل اللي رد عليه الوكيل الذكي، ${showVoice ? 'مكالمات وواتساب وموقع' : 'واتساب وموقع'} في مكان واحد`
 
   return (
@@ -206,7 +215,7 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <div className="nx-seg" role="group" aria-label="طريقة العرض">
-            {mode === 'all' && <button type="button" aria-pressed={view === 'inbox'} onClick={() => setParam('view', 'inbox', true)}><PanelsLeftRight size={13} /> صندوق</button>}
+            {mode !== 'calls' && <button type="button" aria-pressed={view === 'inbox'} onClick={() => setParam('view', 'inbox', true)}><PanelsLeftRight size={13} /> صندوق</button>}
             <button type="button" aria-pressed={view === 'list'} onClick={() => setParam('view', 'list', true)}><List size={13} /> قائمة</button>
             <button type="button" aria-pressed={view === 'table'} onClick={() => setParam('view', 'table', true)}><Table2 size={13} /> جدول</button>
           </div>
@@ -275,7 +284,9 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' }) {
           <div className="nx-empty">
             <Inbox size={22} style={{ display: 'block', margin: '0 auto 6px' }} />
             {items.length === 0
-              ? (mode === 'calls' ? 'ما فيه مكالمات بعد. أول ما يرد الوكيل على مكالمة تظهر هنا.' : 'ما فيه محادثات بعد. أول ما يرد الوكيل على عميل تظهر هنا.')
+              ? (mode === 'calls' ? 'ما فيه مكالمات بعد. أول ما يرد الوكيل على مكالمة تظهر هنا.'
+                : mode === 'web' ? 'ما فيه محادثات بعد. تظهر هنا محادثات الدردشة على الموقع أول ما يبدأ الزوار يكتبون.'
+                : 'ما فيه محادثات بعد. أول ما يرد الوكيل على عميل تظهر هنا.')
               : filter === 'needs' && !search ? 'كل شي تمام، ما فيه شي ينتظرك.' : 'ما فيه محادثات تطابق البحث.'}
           </div>
         ) : (

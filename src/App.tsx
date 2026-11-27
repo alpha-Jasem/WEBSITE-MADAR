@@ -84,7 +84,7 @@ const DashboardV2TeamChat         = lazy(() => import('./dashboard/pages/TeamCha
 const DashboardV2WorkspaceSettings = lazy(() => import('./dashboard/pages/WorkspaceSettings').then(m => ({ default: m.DashboardV2WorkspaceSettings })))
 const DashboardV2Segments         = lazy(() => import('./dashboard/pages/Segments').then(m => ({ default: m.DashboardV2Segments })))
 const DashboardV2Forms            = lazy(() => import('./dashboard/pages/Forms').then(m => ({ default: m.DashboardV2Forms })))
-const DashboardV2WhatsAppConnect = lazy(() => import('./dashboard/pages/WhatsAppConnect').then(m => ({ default: m.DashboardV2WhatsAppConnect })))
+const DashboardV2WhatsApp = lazy(() => import('./dashboard/pages/Conversations').then(m => ({ default: m.DashboardV2WhatsApp })))
 const DashboardV2Campaigns        = lazy(() => import('./dashboard/pages/Campaigns').then(m => ({ default: m.DashboardV2Campaigns })))
 const DashboardV2LiveOps          = lazy(() => import('./dashboard/pages/LiveOps').then(m => ({ default: m.DashboardV2LiveOps })))
 const DashboardV2Zaki             = lazy(() => import('./dashboard/pages/Zaki').then(m => ({ default: m.DashboardV2Zaki })))
@@ -138,7 +138,7 @@ const dashboardChildRoutes = (
     <Route path="team-chat" element={<DashboardV2TeamChat />} />
     <Route path="workspace-settings" element={<DashboardV2WorkspaceSettings />} />
     <Route path="segments" element={<ModuleRoute module="customers"><DashboardV2Segments /></ModuleRoute>} />
-    <Route path="whatsapp" element={<ModuleRoute module="conversations"><PermissionRoute permission="integrations.manage"><DashboardV2WhatsAppConnect /></PermissionRoute></ModuleRoute>} />
+    <Route path="whatsapp" element={<ModuleRoute module="conversations"><PermissionRoute permission="conversations.view"><DashboardV2WhatsApp /></PermissionRoute></ModuleRoute>} />
     <Route path="forms" element={<ModuleRoute module="customers"><PermissionRoute permission="integrations.manage"><DashboardV2Forms /></PermissionRoute></ModuleRoute>} />
     <Route path="campaigns" element={<ModuleRoute module="conversations"><PermissionRoute permission="outreach.send"><DashboardV2Campaigns /></PermissionRoute></ModuleRoute>} />
     <Route path="live" element={<ModuleRoute module="conversations"><DashboardV2LiveOps /></ModuleRoute>} />

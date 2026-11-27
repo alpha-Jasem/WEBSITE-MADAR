@@ -277,7 +277,7 @@ export function DashboardV2Layout() {
     ] },
     { title: 'التفاعل', items: [
       { label: 'جهات الاتصال', short: 'العملاء', path: `${base}/patients`, icon: <Users size={16} />, module: 'customers' },
-      { label: 'واتساب', path: `${base}/whatsapp`, icon: <Send size={16} />, module: 'conversations', perm: 'integrations.manage' },
+      { label: 'واتساب', path: `${base}/whatsapp`, icon: <Send size={16} />, module: 'conversations', perm: 'conversations.view' },
       { label: 'الدردشة على الموقع', short: 'المحادثات', path: `${base}/conversations`, icon: <MessageSquare size={16} />, module: 'conversations' },
       { label: 'سجل المكالمات', short: 'المكالمات', path: `${base}/call-logs`, icon: <ClipboardList size={16} />, module: 'voice' },
       { label: 'التذاكر', path: `${base}/tickets`, icon: <Ticket size={16} />, badge: openTicketCount || undefined, module: 'tickets' },
