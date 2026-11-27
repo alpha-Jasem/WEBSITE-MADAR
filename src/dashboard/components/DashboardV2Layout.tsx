@@ -286,10 +286,10 @@ export function DashboardV2Layout() {
       { label: 'التذاكر', path: `${base}/tickets`, icon: <Ticket size={16} />, badge: openTicketCount || undefined, module: 'tickets' },
     ] },
     { title: 'التكاملات', items: [
-      { label: 'الإضافات', path: `${base}/site-widget`, icon: <Globe size={16} />, perm: 'integrations.manage' },
+      { label: 'الإضافات', path: `${base}/plugins`, icon: <Globe size={16} />, perm: 'integrations.manage' },
     ] },
     { title: '', pin: true, items: [
-      { label: 'المطورون', short: 'المطورون', path: `${base}/connect`, icon: <Code2 size={16} />, perm: 'integrations.manage' },
+      { label: 'المطورون', short: 'المطورون', path: `${base}/developers`, icon: <Code2 size={16} />, perm: 'integrations.manage' },
     ] },
     { title: 'الإعدادات', fold: true, items: [
       { label: 'الفريق والصلاحيات', short: 'الفريق', path: `${base}/team`, icon: <UsersRound size={16} />, perm: 'team.manage' },

@@ -74,3 +74,61 @@ export function useSiteWidget(companyId: string | null, isDemo: boolean) {
     available, save,
   }
 }
+
+// ─── web-call widget: same row and public key, its own settings ───
+
+export interface CallWidget {
+  public_key: string
+  call_enabled: boolean
+  call_agent_id: string
+  call_label: string
+  call_allowed_origins: string[]
+  color: string
+  position: 'right' | 'left'
+}
+
+export const DEFAULT_CALL: CallWidget = { public_key: '', call_enabled: false, call_agent_id: '', call_label: 'اتصل بنا', call_allowed_origins: [], color: '#4f6bff', position: 'right' }
+
+/** The embed line; the button's look is written into it, so changing the look needs a new copy. */
+export function callSnippet(w: Pick<CallWidget, 'public_key' | 'call_label' | 'color' | 'position'>) {
+  const esc = (s: string) => s.replace(/[&"<>]/g, (c) => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!))
+  return `<script src="https://madar.software/widget/call.js" data-key="${w.public_key}" data-label="${esc(w.call_label)}" data-color="${w.color}" data-position="${w.position}" async></script>`
+}
+
+const CALL_COLS = 'public_key, call_enabled, call_agent_id, call_label, call_allowed_origins, color, position'
+
+export function useCallWidget(companyId: string | null, isDemo: boolean) {
+  const [data, setData] = useState<CallWidget | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [available, setAvailable] = useState(true)
+
+  const load = useCallback(async () => {
+    if (isDemo || !companyId) return
+    const { data: row, error } = await supabase.from('site_widgets').select(CALL_COLS).eq('company_id', companyId).maybeSingle()
+    setLoading(false)
+    if (error) { setAvailable(false); return }
+    setAvailable(true)
+    setData(row ? { ...DEFAULT_CALL, ...row, call_agent_id: row.call_agent_id || '', call_allowed_origins: row.call_allowed_origins || [] } as CallWidget : null)
+  }, [companyId, isDemo])
+  useEffect(() => { void load() }, [load])
+
+  /** Saves only the call settings, so the chat widget's settings stay as they are. */
+  const save = useCallback(async (next: CallWidget): Promise<CallWidget> => {
+    const clean = { ...next, call_label: next.call_label.trim().slice(0, 30) || 'اتصل بنا', call_allowed_origins: next.call_allowed_origins.map((o) => o.trim()).filter(Boolean).slice(0, 20) }
+    if (isDemo || !companyId) { const d = { ...clean, public_key: clean.public_key || DEMO_KEY }; setData(d); return d }
+    const { data: row, error } = await supabase
+      .from('site_widgets')
+      .upsert({
+        company_id: companyId, call_enabled: clean.call_enabled, call_agent_id: clean.call_agent_id || null,
+        call_label: clean.call_label, call_allowed_origins: clean.call_allowed_origins, updated_at: new Date().toISOString(),
+      }, { onConflict: 'company_id' })
+      .select(CALL_COLS)
+      .single()
+    if (error) throw error
+    const saved = { ...DEFAULT_CALL, ...row, call_agent_id: row.call_agent_id || '', call_allowed_origins: row.call_allowed_origins || [] } as CallWidget
+    setData(saved)
+    return saved
+  }, [companyId, isDemo])
+
+  return { data: data ?? (isDemo ? { ...DEFAULT_CALL, public_key: DEMO_KEY } : null), loading: isDemo ? false : loading, available, save }
+}

@@ -69,6 +69,8 @@ const DashboardV2Integrations  = lazy(() => import('./dashboard/pages/Integratio
 const DashboardV2Team             = lazy(() => import('./dashboard/pages/Team').then(m => ({ default: m.DashboardV2Team })))
 const DashboardV2SiteWidget       = lazy(() => import('./dashboard/pages/SiteWidget').then(m => ({ default: m.DashboardV2SiteWidget })))
 const DashboardV2Connect          = lazy(() => import('./dashboard/pages/Connect').then(m => ({ default: m.DashboardV2Connect })))
+const DashboardV2Plugins          = lazy(() => import('./dashboard/pages/Plugins').then(m => ({ default: m.DashboardV2Plugins })))
+const DashboardV2Developers       = lazy(() => import('./dashboard/pages/Developers').then(m => ({ default: m.DashboardV2Developers })))
 const DashboardV2Settings      = lazy(() => import('./dashboard/pages/Settings').then(m => ({ default: m.DashboardV2Settings })))
 const DashboardV2Services      = lazy(() => import('./dashboard/pages/Services').then(m => ({ default: m.DashboardV2Services })))
 const DashboardV2AuditLog      = lazy(() => import('./dashboard/pages/AuditLog').then(m => ({ default: m.DashboardV2AuditLog })))
@@ -123,6 +125,8 @@ const dashboardChildRoutes = (
     <Route path="integrations" element={<PermissionRoute permission="integrations.manage"><DashboardV2Integrations /></PermissionRoute>} />
     <Route path="site-widget" element={<PermissionRoute permission="integrations.manage"><DashboardV2SiteWidget /></PermissionRoute>} />
     <Route path="connect" element={<PermissionRoute permission="integrations.manage"><DashboardV2Connect /></PermissionRoute>} />
+    <Route path="plugins" element={<PermissionRoute permission="integrations.manage"><DashboardV2Plugins /></PermissionRoute>} />
+    <Route path="developers" element={<PermissionRoute permission="integrations.manage"><DashboardV2Developers /></PermissionRoute>} />
     <Route path="team" element={<PermissionRoute permission="team.manage"><DashboardV2Team /></PermissionRoute>} />
     <Route path="services" element={<ModuleRoute module="services"><DashboardV2Services /></ModuleRoute>} />
     <Route path="audit-log" element={<PermissionRoute permission="audit.view"><DashboardV2AuditLog /></PermissionRoute>} />
