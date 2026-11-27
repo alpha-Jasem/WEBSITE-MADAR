@@ -5,7 +5,8 @@
 // NABRAH_API_KEY function secret and never leaves the server. Deploy with JWT verification ON.
 //   agents                      -> the agents you may see
 //   agent    { agent_id }       -> one agent's configuration
-//   calls    { agent_id, limit?, offset?, tag? } -> call summaries for one agent (tag: one campaign's calls)
+//   calls    { agent_id, limit?, offset?, tag?, status?, call_type?, days? } -> call summaries for one agent
+//   recording { call_id }       -> a short-lived link to the call's audio (null when it has none)
 //   call     { call_id }        -> one call: transcript, analysis, tool logs
 //   voice_insights { days, agent_id? } -> call insights (totals, statuses, daily, hourly) for your agents
 //   admin only: voices, contacts, conversations, tickets, ticket_counts, tools, analysis_groups,
@@ -131,7 +132,23 @@ Deno.serve(async (req) => {
       const tag = String(body?.tag ?? '')
       const search: Record<string, unknown> = { agent_id: id, limit, offset }
       if (/^madar_[a-f0-9]{12}$/.test(tag)) search.tag = tag
+      // Call log filters: lifecycle status, call type, and how many days back.
+      const status = String(body?.status ?? '')
+      if (/^[a-z_-]{3,20}$/.test(status)) search.status = status
+      const callType = String(body?.call_type ?? '')
+      if (['inbound', 'outbound', 'web'].includes(callType)) search.call_type = callType
+      const days = Number(body?.days)
+      if (days > 0 && days <= 366) search.created_at_start = new Date(Date.now() - days * 86_400_000).toISOString()
       return json(await nabrah('/call/search', key, { method: 'POST', body: JSON.stringify(search) }))
+    }
+    if (op === 'recording') {
+      // A 15-minute signed link to one call's audio, for a call of an agent you may see.
+      const id = String(body?.call_id ?? '')
+      if (!ID.test(id)) return json({ error: 'not found' }, 404)
+      const call = await nabrah(`/call/${id}`, key)
+      if (!mayUse(String(call?.agent_id ?? ''))) return json({ error: 'not found' }, 404)
+      try { return json({ url: (await nabrah(`/call/get-download-link/${id}`, key))?.url ?? null }) }
+      catch { return json({ url: null }) }
     }
     if (op === 'voice_insights') {
       // Call insights for a range. A company sees only its linked agents (summed when it has several);

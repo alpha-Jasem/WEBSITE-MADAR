@@ -89,7 +89,8 @@ const DashboardV2Campaigns        = lazy(() => import('./dashboard/pages/Campaig
 const DashboardV2LiveOps          = lazy(() => import('./dashboard/pages/LiveOps').then(m => ({ default: m.DashboardV2LiveOps })))
 const DashboardV2Zaki             = lazy(() => import('./dashboard/pages/Zaki').then(m => ({ default: m.DashboardV2Zaki })))
 const DashboardV2Outreach         = lazy(() => import('./dashboard/pages/Outreach').then(m => ({ default: m.DashboardV2Outreach })))
-const DashboardV2CallLogs          = lazy(() => import('./dashboard/pages/CallLogs').then(m => ({ default: m.DashboardV2CallLogs })))
+// The call log reads the voice platform's calls; the older log of synced calls stays in CallLogs.tsx, unrouted.
+const DashboardV2CallLogs          = lazy(() => import('./dashboard/pages/VoiceCallLogs').then(m => ({ default: m.DashboardV2VoiceCallLogs })))
 const DashboardV2VoiceAgents       = lazy(() => import('./dashboard/pages/VoiceAgents').then(m => ({ default: m.DashboardV2VoiceAgents })))
 const DashboardV2CallCampaigns     = lazy(() => import('./dashboard/pages/VoicePlatformPages').then(m => ({ default: m.DashboardV2CallCampaigns })))
 const DashboardV2WebCalls          = lazy(() => import('./dashboard/pages/VoicePlatformPages').then(m => ({ default: m.DashboardV2WebCalls })))
