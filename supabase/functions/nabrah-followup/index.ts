@@ -48,10 +48,10 @@ Deno.serve(async (req) => {
   const due = rules.filter((r) => conditionsMet((r.conditions ?? []) as string[], analysis))
   if (!due.length) return json({ ok: true, sent: 0 })
 
-  // The sender: the company's Meta token and the first number on its WhatsApp Business Account.
-  const { data: acc } = await db.from('whatsapp_cloud_accounts').select('access_token, waba_id').eq('company_id', companyId).maybeSingle()
-  let phoneNumberId: string | null = null
-  if (acc?.access_token && acc?.waba_id) {
+  // The sender: the company's Meta token and its connected number (else the first number on its WhatsApp Business Account).
+  const { data: acc } = await db.from('whatsapp_cloud_accounts').select('access_token, waba_id, phone_number_id').eq('company_id', companyId).maybeSingle()
+  let phoneNumberId: string | null = acc?.phone_number_id ?? null
+  if (!phoneNumberId && acc?.access_token && acc?.waba_id) {
     const r = await fetch(`${GRAPH}/${acc.waba_id}/phone_numbers?fields=id`, { headers: { Authorization: `Bearer ${acc.access_token}` } })
     phoneNumberId = r.ok ? (await r.json().catch(() => ({})))?.data?.[0]?.id ?? null : null
   }

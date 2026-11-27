@@ -89,14 +89,15 @@ export async function syncPlatformConversations(force = false): Promise<{ synced
     const { data: sessionData } = await supabase.auth.getSession()
     const token = sessionData.session?.access_token
     if (!token) return null
-    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-conversations-sync`, {
+    // The voice agent's conversations, and the company's WhatsApp inbox on the voice platform.
+    const call = (fn: string) => fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${fn}`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, apikey: import.meta.env.VITE_SUPABASE_ANON_KEY ?? '', 'Content-Type': 'application/json' },
       body: '{}',
-    })
-    if (!res.ok) return null
-    const out = await res.json()
-    return { synced: Number(out.synced) || 0, pending: Number(out.pending) || 0 }
+    }).then((r) => (r.ok ? r.json() : null)).catch(() => null)
+    const outs = (await Promise.all([call('agent-conversations-sync'), call('nabrah-whatsapp-sync')])).filter(Boolean)
+    if (!outs.length) return null
+    return { synced: outs.reduce((s, o) => s + (Number(o.synced) || 0), 0), pending: outs.reduce((s, o) => s + (Number(o.pending) || 0), 0) }
   } catch { return null }
 }
 

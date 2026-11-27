@@ -1,144 +1,211 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { RefreshCw } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Inbox, MessageCircle, Copy, Check } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
-import { Card, Button, Input } from '@/dashboard/components/primitives'
+import { Card, Button, Input, Dialog, Select, Switch } from '@/dashboard/components/primitives'
 import { useToast } from '@/dashboard/components/uiExtras'
 import { supabase } from '@/lib/supabase'
-import { NightPage, PageHead, CardTitle, EmptyLine, Chip, type ChipTone } from './shared/night'
-import { useWaStatus } from '@/lib/queries/whatsappStatus'
+import { useVoiceRead, type VoiceAgent } from '@/lib/queries/voicePlatform'
+import { NightPage, PageHead, Chip } from './shared/night'
+import { useWaStatus, type WaStatus } from '@/lib/queries/whatsappStatus'
+
+// واتساب: connect the company's own number as an inbox (3 steps like the reference: number, Meta IDs, token),
+// then choose the agent that answers on it. The whatsapp-connect function checks everything with Meta first.
 
 const CSS = `
+.wa-steps-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.wa-steps-bar span { height: 5px; border-radius: 99px; background: var(--line-2); }
+.wa-steps-bar span[data-on="true"] { background: var(--ink); }
+.wa-head { display: flex; align-items: center; gap: 12px; }
+.wa-ico { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--panel-2, var(--line)); color: var(--ink); flex: none; }
+.wa-hint { font-size: 12.5px; color: var(--muted); line-height: 1.8; margin: 0; }
+.wa-tab { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; border: 1px solid var(--line); border-radius: 12px; font-size: 13.5px; font-weight: 600; color: var(--ink); }
+.wa-num { direction: ltr; unicode-bidi: embed; font-family: var(--font-numeral); }
+.wa-copy { display: flex; gap: 8px; align-items: center; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: 12.5px; direction: ltr; overflow-wrap: anywhere; }
+.wa-copy code { flex: 1; min-width: 0; }
 .wa-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .wa-row:last-child { border-bottom: 0; }
 .wa-row .main { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 2px; }
 .wa-row b { font-size: 14px; font-weight: 600; color: var(--ink); }
 .wa-row small { font-size: 12.5px; color: var(--muted); line-height: 1.7; }
-.wa-num { direction: ltr; unicode-bidi: embed; font-family: var(--font-numeral); }
-.wa-steps { margin: 0; padding-inline-start: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; color: var(--text-primary); line-height: 1.8; }
-.wa-note { font-size: 12.5px; color: var(--text-tertiary); line-height: 1.8; margin: 10px 0 0; }
 `
+const STEPS = [
+  { title: 'الصندوق والرقم', hint: 'اسم الصندوق ورقم واتساب الذي تُرسل منه (E.164 مع +).' },
+  { title: 'معرّفات ميتا', hint: 'من تطبيقك في ميتا: صفحة «إرسال رسالة»، اختر رقمك وتطلع لك المعرّفات جنبه.' },
+  { title: 'المفتاح والتوزيع', hint: 'مفتاح وصول دائم لمستخدم نظام بصلاحيتي whatsapp_business_messaging و whatsapp_business_management.' },
+]
+const DEMO_AGENTS = [{ agent_id: 'demo-a1', name: 'وكيل الاستقبال' }, { agent_id: 'demo-a2', name: 'وكيل المتابعة' }] as VoiceAgent[]
 
-export function DashboardV2WhatsAppConnect() {
-  const { isDemo, isOwner, companyName } = useWorkspace()
+async function callConnect(body: Record<string, unknown>) {
+  const { data, error } = await supabase.functions.invoke('whatsapp-connect', { body })
+  if (error) {
+    let msg = ''
+    try { msg = ((await (error as { context?: Response }).context?.json?.()) as { message?: string } | undefined)?.message || '' } catch { /* generic message below */ }
+    throw new Error(msg || 'تعذّر الاتصال الحين')
+  }
+  return data as { inbox_id?: string; webhook?: { callback_url: string | null; verify_token: string | null } | null; can_manage_templates?: boolean }
+}
+
+function CopyLine({ label, value }: { label: string; value: string }) {
+  const [done, setDone] = useState(false)
+  return (
+    <div style={{ display: 'grid', gap: 4 }}>
+      <span style={{ fontSize: 12.5, fontWeight: 600 }}>{label}</span>
+      <div className="wa-copy"><code>{value}</code>
+        <button type="button" className="gr-btn" aria-label={`نسخ ${label}`} onClick={() => { navigator.clipboard?.writeText(value).then(() => { setDone(true); setTimeout(() => setDone(false), 1500) }).catch(() => {}) }}>{done ? <Check size={14} /> : <Copy size={14} />}</button>
+      </div>
+    </div>
+  )
+}
+
+/** «إعدادات واتساب»: the 3-step inbox setup when nothing is connected, the answering agent once it is. */
+export function WhatsAppSettingsDialog({ open, onClose, status, reload }: { open: boolean; onClose: () => void; status: WaStatus | null; reload: () => Promise<void> | void }) {
+  const { isDemo, companyId } = useWorkspace()
   const pushToast = useToast()
-  const [token, setToken] = useState('')
-  const [waba, setWaba] = useState('')
+  const agentsRead = useVoiceRead<{ agents: VoiceAgent[] }>(isDemo || !open ? null : companyId || 'admin', 'agents')
+  const agents = isDemo ? DEMO_AGENTS : agentsRead.data?.agents ?? []
+  const connected = !!status?.connected && !!status?.can_reply
+  const [step, setStep] = useState(0)
+  const [f, setF] = useState({ name: '', phone: '', phoneId: '', waba: '', token: '', auto: true })
   const [busy, setBusy] = useState(false)
-  const base = isDemo ? '/demo-review' : '/dashboard'
-  const { status, error, loading, reload } = useWaStatus(isDemo)
+  const [done, setDone] = useState<{ webhook: { callback_url: string | null; verify_token: string | null } | null } | null>(null)
+  const [agentId, setAgentId] = useState('')
 
-  async function link(action: 'connect' | 'disconnect') {
-    if (isDemo) { pushToast({ kind: 'info', title: 'عرض تجريبي: ما انربط شيء فعليًا' }); return }
+  useEffect(() => { if (open) { setStep(0); setDone(null); setAgentId(status?.agent_id || '') } }, [open, status?.agent_id])
+  const set = (k: keyof typeof f, v: string | boolean) => setF((x) => ({ ...x, [k]: v }))
+
+  const phone = f.phone.replace(/[\s-]/g, '')
+  const stepOk = [
+    f.name.trim().length > 0 && /^\+[1-9]\d{7,14}$/.test(phone),
+    /^\d{8,25}$/.test(f.phoneId.trim()) && /^\d{8,25}$/.test(f.waba.trim()),
+    f.token.trim().length >= 40 && !/\s/.test(f.token.trim()),
+  ]
+
+  async function save() {
+    if (isDemo) { pushToast({ kind: 'info', title: 'عرض تجريبي: ما انربط شيء فعليًا' }); setDone({ webhook: null }); return }
     setBusy(true)
     try {
-      const { data, error: err } = await supabase.functions.invoke('whatsapp-connect', { body: action === 'connect' ? { action, access_token: token, waba_id: waba } : { action } })
-      if (err) {
-        let msg = ''
-        try { msg = ((await (err as { context?: Response }).context?.json?.()) as { message?: string } | undefined)?.message || '' } catch { /* generic message below */ }
-        throw new Error(msg || 'تعذّر الاتصال الحين')
-      }
-      if (action === 'connect') {
-        setToken(''); setWaba('')
-        const out = data as { account_name?: string | null; can_manage_templates?: boolean } | null
-        pushToast({ kind: 'success', title: 'انربط حساب ميتا', description: out?.can_manage_templates ? undefined : 'المفتاح ما عنده صلاحية إدارة القوالب (whatsapp_business_management)، فرفع القوالب ما يشتغل.' })
-      } else pushToast({ kind: 'success', title: 'انفصل الربط' })
+      const out = await callConnect({ action: 'connect', name: f.name.trim(), phone_number: phone, phone_number_id: f.phoneId.trim(), waba_id: f.waba.trim(), access_token: f.token.trim(), auto_assign: f.auto })
+      setF((x) => ({ ...x, token: '' }))
+      setDone({ webhook: out?.webhook ?? null })
+      pushToast({ kind: 'success', title: 'انشأ صندوق الواتساب', description: out?.can_manage_templates ? undefined : 'المفتاح ما عنده صلاحية إدارة القوالب، فرفع القوالب ما يشتغل.' })
       await reload()
     } catch (e) { pushToast({ kind: 'danger', title: 'ما تم', description: e instanceof Error ? e.message : undefined }) }
     finally { setBusy(false) }
   }
-
-  let tone: ChipTone = 'warn'
-  let headline = 'جارِ قراءة الحالة...'
-  if (status) {
-    if (!status.agent_linked) { tone = 'bad'; headline = 'ما فيه وكيل مربوط بحسابك' }
-    else if (!status.connected) { tone = 'bad'; headline = 'ما انربط رقم واتساب بالوكيل' }
-    else if (status.token_expired) { tone = 'bad'; headline = 'انتهى ربط ميتا، لازم يتجدد' }
-    else if (status.messaging === false) { tone = 'warn'; headline = 'الرقم مربوط لكن الرسائل متوقفة' }
-    else { tone = 'ok'; headline = 'الرقم مربوط والوكيل يرد' }
+  async function assign() {
+    if (!agentId) return
+    if (isDemo) { pushToast({ kind: 'info', title: 'عرض تجريبي: ما انربط شيء فعليًا' }); return }
+    setBusy(true)
+    try { await callConnect({ action: 'assign', agent_id: agentId }); pushToast({ kind: 'success', title: 'الوكيل صار يرد على الرقم' }); await reload() }
+    catch (e) { pushToast({ kind: 'danger', title: 'ما تم', description: e instanceof Error ? e.message : undefined }) }
+    finally { setBusy(false) }
+  }
+  async function disconnect() {
+    if (isDemo) { pushToast({ kind: 'info', title: 'عرض تجريبي: ما انفصل شيء فعليًا' }); return }
+    setBusy(true)
+    try { await callConnect({ action: 'disconnect' }); pushToast({ kind: 'success', title: 'انفصل الربط' }); await reload(); onClose() }
+    catch (e) { pushToast({ kind: 'danger', title: 'ما تم', description: e instanceof Error ? e.message : undefined }) }
+    finally { setBusy(false) }
   }
 
+  const agentPicker = (
+    <div style={{ display: 'grid', gap: 10 }}>
+      <Select label="الوكيل اللي يرد على الرقم" value={agentId} onChange={(e) => setAgentId(e.target.value)}
+        options={[{ value: '', label: agents.length ? 'اختر وكيلًا' : 'ما عندك وكلاء بعد' }, ...agents.map((a) => ({ value: a.agent_id, label: a.name }))]} />
+      <div><Button disabled={busy || !agentId} onClick={() => void assign()}>{status?.agent_id && status.agent_id === agentId ? 'حفظ' : 'ربط الوكيل'}</Button></div>
+    </div>
+  )
+
+  let content
+  if (done) {
+    content = (
+      <div style={{ display: 'grid', gap: 14 }}>
+        <p className="wa-hint">انشأ الصندوق. {done.webhook ? 'أضف رابط الاستقبال ورمز التحقق تحت في ميتا (إعداد الويب هوك) واشترك في حقل messages عشان توصلك الرسائل.' : 'إذا ما وصلتك رسائل العملاء، تواصل مع فريق مدار يكملون إعداد الاستقبال في ميتا.'}</p>
+        {done.webhook?.callback_url && <CopyLine label="رابط الاستقبال (Callback URL)" value={done.webhook.callback_url} />}
+        {done.webhook?.verify_token && <CopyLine label="رمز التحقق (Verify token)" value={done.webhook.verify_token} />}
+        {agentPicker}
+      </div>
+    )
+  } else if (connected) {
+    content = (
+      <div style={{ display: 'grid', gap: 14 }}>
+        <div className="wa-row"><div className="main"><b>{status?.name || 'رقم الواتساب'}</b><small className="wa-num">{status?.phone_number || '—'}</small></div>
+          <Chip tone={status?.token_expired ? 'bad' : 'ok'}>{status?.token_expired ? 'انفصل من ميتا' : 'مربوط'}</Chip></div>
+        {agentPicker}
+        <div style={{ borderTop: '1px solid var(--line)', paddingTop: 12 }}>
+          <p className="wa-hint" style={{ marginBottom: 8 }}>فصل الربط يوقف الرد والإرسال من الرقم في لوحتك.</p>
+          <Button variant="danger" size="sm" disabled={busy} onClick={() => void disconnect()}>افصل الربط</Button>
+        </div>
+      </div>
+    )
+  } else {
+    content = (
+      <div style={{ display: 'grid', gap: 14 }}>
+        <div style={{ display: 'grid', gap: 6 }}>
+          <span style={{ fontSize: 12.5, color: 'var(--muted)' }}>الخطوة {step + 1} من 3</span>
+          <div className="wa-steps-bar">{[0, 1, 2].map((i) => <span key={i} data-on={i <= step} />)}</div>
+        </div>
+        <p className="wa-hint">{STEPS[step].hint}</p>
+        {step === 0 && <>
+          <Input label="اسم الصندوق" placeholder="مثال: خط الدعم" value={f.name} onChange={(e) => set('name', e.target.value)} />
+          <Input label="رقم الهاتف" placeholder="+966512345678" value={f.phone} onChange={(e) => set('phone', e.target.value)} style={{ direction: 'ltr' }} />
+          <p className="wa-hint">E.164: الرقم الذي تُرسل منه الرسائل (رمز الدولة مع +).</p>
+        </>}
+        {step === 1 && <>
+          <Input label="معرّف رقم الهاتف (Phone number ID)" value={f.phoneId} onChange={(e) => set('phoneId', e.target.value)} style={{ direction: 'ltr' }} />
+          <Input label="معرّف حساب واتساب للأعمال (WABA ID)" value={f.waba} onChange={(e) => set('waba', e.target.value)} style={{ direction: 'ltr' }} />
+        </>}
+        {step === 2 && <>
+          <Input label="مفتاح ميتا (API key)" type="password" value={f.token} onChange={(e) => set('token', e.target.value)} style={{ direction: 'ltr' }} />
+          <Switch checked={f.auto} onChange={(v: boolean) => set('auto', v)} label="توزيع المحادثات تلقائيًا على الفريق" />
+          <p className="wa-hint">نتأكد من المفتاح والمعرّفات مع ميتا قبل الحفظ، والمفتاح ما يرجع يظهر بعد الحفظ.</p>
+        </>}
+      </div>
+    )
+  }
+
+  const footer = done || connected
+    ? <Button variant="secondary" onClick={onClose}>إغلاق</Button>
+    : <>
+        <Button variant="secondary" onClick={() => (step === 0 ? onClose() : setStep(step - 1))}>{step === 0 ? 'إلغاء' : 'رجوع'}</Button>
+        {step < 2
+          ? <Button disabled={!stepOk[step]} onClick={() => setStep(step + 1)}>متابعة</Button>
+          : <Button disabled={busy || !stepOk[2]} onClick={() => void save()}>{busy ? 'جارِ الحفظ…' : 'حفظ'}</Button>}
+      </>
+
+  return (
+    <Dialog open={open} title="إعدادات واتساب" onClose={onClose} width={560} footer={footer}>
+      <style>{CSS}</style>
+      <div style={{ display: 'grid', gap: 14 }}>
+        <p className="wa-hint">اضبط روبوت المحادثة وبيانات اعتماد صندوق واتساب للأعمال.</p>
+        <div className="wa-tab"><Inbox size={15} /> الصندوق</div>
+        <div className="wa-head">
+          <div className="wa-ico"><MessageCircle size={20} /></div>
+          <div><b style={{ fontSize: 16, color: 'var(--ink)' }}>{connected && !done ? 'صندوق واتساب' : 'إنشاء صندوق واتساب'}</b>
+            <div style={{ fontSize: 12.5, color: 'var(--muted)' }}>{done ? 'الاستقبال والوكيل' : connected ? 'الرقم والوكيل' : STEPS[step].title}</div></div>
+        </div>
+        {content}
+      </div>
+    </Dialog>
+  )
+}
+
+/** The WhatsApp page before a number is connected. */
+export function DashboardV2WhatsAppConnect() {
+  const { isDemo, isOwner } = useWorkspace()
+  const { status, error, loading, reload } = useWaStatus(isDemo)
+  const [open, setOpen] = useState(false)
   return (
     <NightPage>
       <style>{CSS}</style>
-      <PageHead
-        title="ربط واتساب" sub={`رقم واتساب ${companyName || 'نشاطك'} الرسمي، اللي يرد عليه الوكيل ويرسل منه فريقك`}
-        actions={<Button variant="secondary" onClick={() => void reload()}><RefreshCw size={14} /> تحديث</Button>}
-      />
-
-      <Card>
-        <CardTitle>الحالة</CardTitle>
-        {error && <EmptyLine>{error}</EmptyLine>}
-        {!error && loading && !status && <EmptyLine>جارِ التحميل...</EmptyLine>}
-        {status && (
-          <>
-            <div className="wa-row">
-              <div className="main">
-                <b>رقم الاستقبال والرد</b>
-                <small>{status.connected ? <>الرقم: <span className="wa-num">{status.phone_number || '—'}</span>{status.name ? ` · ${status.name}` : ''}</> : 'ما فيه رقم مربوط للوكيل'}</small>
-              </div>
-              <Chip tone={tone}>{headline}</Chip>
-            </div>
-            <div className="wa-row">
-              <div className="main">
-                <b>رسائل القوالب والحملات والأتمتة</b>
-                <small>{status.connected && !status.token_expired ? 'تشتغل من نفس الرقم.' : 'تتوقف لين يتربط الرقم.'}</small>
-              </div>
-              <Chip tone={status.connected && !status.token_expired ? 'ok' : 'bad'}>{status.connected && !status.token_expired ? 'شغالة' : 'متوقفة'}</Chip>
-            </div>
-            <div className="wa-row">
-              <div className="main">
-                <b>الرد الحر من صندوق المحادثات</b>
-                <small>{status.can_reply ? 'مفعّل: فريقك يكتب للعميل مباشرة خلال 24 ساعة من آخر رسالة منه.' : 'غير مفعّل: اربط حساب ميتا للأعمال من البطاقة تحت.'}</small>
-              </div>
-              <Chip tone={status.can_reply ? 'ok' : 'warn'}>{status.can_reply ? 'مفعّل' : 'غير مفعّل'}</Chip>
-            </div>
-          </>
-        )}
+      <PageHead title="واتساب" sub="محادثات عملائك على رقم الواتساب المربوط" />
+      <Card style={{ padding: 28, display: 'grid', justifyItems: 'center', gap: 10, textAlign: 'center' }}>
+        <div className="wa-ico"><MessageCircle size={20} /></div>
+        <b style={{ fontSize: 16, color: 'var(--ink)' }}>صندوق واتساب غير مرتبط</b>
+        <p className="wa-hint" style={{ maxWidth: 440 }}>{error || (loading && !status ? 'جارِ قراءة الحالة...' : 'اربط رقم واتساب نشاطك عشان تشوف محادثات عملائك هنا وترد عليهم، ويرد الوكيل تلقائيًا.')}</p>
+        {isOwner ? <Button onClick={() => setOpen(true)}>ربط الصندوق</Button> : <p className="wa-hint">الربط لصاحب الحساب فقط.</p>}
       </Card>
-
-      {isOwner && status && (
-        <Card>
-          <CardTitle>{status.can_reply ? 'حساب ميتا مربوط' : 'اربط حساب ميتا'}</CardTitle>
-          {status.can_reply ? (
-            <>
-              <p className="wa-note" style={{ margin: '0 0 12px' }}>الرد الحر ورفع القوالب شغالين على حسابك. لتغيير الربط، أدخل مفتاح ومعرّف جديدين.</p>
-              <Button variant="secondary" size="sm" disabled={busy} onClick={() => void link('disconnect')}>افصل الربط</Button>
-            </>
-          ) : (
-            <p className="wa-note" style={{ margin: '0 0 12px' }}>
-              من مدير الأعمال في ميتا: أنشئ مفتاح وصول دائم لمستخدم نظام بصلاحيتي whatsapp_business_messaging و whatsapp_business_management، وانسخ معرّف حساب واتساب للأعمال (WABA ID). نتأكد منهم مع ميتا قبل الحفظ.
-            </p>
-          )}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 520, marginTop: status.can_reply ? 16 : 0 }}>
-            <Input label="مفتاح الوصول" type="password" dir="ltr" autoComplete="off" value={token} onChange={(e) => setToken(e.target.value)} />
-            <Input label="معرّف حساب واتساب للأعمال (WABA ID)" dir="ltr" inputMode="numeric" value={waba} onChange={(e) => setWaba(e.target.value)} />
-            <div><Button disabled={busy || !token.trim() || !waba.trim()} onClick={() => void link('connect')}>{busy ? 'جارِ الربط...' : 'اربط'}</Button></div>
-          </div>
-        </Card>
-      )}
-
-      {status && !(status.connected && !status.token_expired) && (
-        <Card>
-          <CardTitle>كيف نربط الرقم</CardTitle>
-          <ol className="wa-steps">
-            <li>جهّز حساب ميتا للأعمال (Business) باسم نشاطك، وتكون أنت مدير فيه.</li>
-            <li>جهّز رقم جوال جديد للنشاط يوصله رمز تحقق. لازم ما يكون مسجّل على واتساب العادي، ولا مستخدم في نظام ثاني.</li>
-            <li>تواصل مع فريق مدار، ويدخلون بحسابك على ميتا ويربطون الرقم بوكيلك.</li>
-            <li>ينعتمد لك قالب رسالة واحد على الأقل من ميتا، عشان الحملات والأتمتة تبدأ المحادثة.</li>
-          </ol>
-          <p className="wa-note">كل رقم يخدم وكيل واحد. إذا الرقم مستخدم في مشروع ثاني، نحتاج رقم جديد لهالحساب.</p>
-        </Card>
-      )}
-
-      {status?.connected && !status.token_expired && (
-        <Card>
-          <CardTitle>وين أستخدمه؟</CardTitle>
-          <div className="wa-row"><div className="main"><b>القوالب والإرسال</b><small>أضف قوالب ميتا المعتمدة وأرسل منها.</small></div><Link to={`${base}/outreach`}><Button variant="secondary" size="sm">افتح</Button></Link></div>
-          <div className="wa-row"><div className="main"><b>الحملات</b><small>رسائل جماعية أو رحلة عميل على الرقم نفسه.</small></div><Link to={`${base}/campaigns`}><Button variant="secondary" size="sm">افتح</Button></Link></div>
-          <div className="wa-row"><div className="main"><b>الأتمتة</b><small>رسائل تلقائية عند الطلب أو الفورم أو رجوع العميل.</small></div><Link to={`${base}/connect`}><Button variant="secondary" size="sm">افتح</Button></Link></div>
-        </Card>
-      )}
+      <WhatsAppSettingsDialog open={open} onClose={() => setOpen(false)} status={status} reload={reload} />
     </NightPage>
   )
 }

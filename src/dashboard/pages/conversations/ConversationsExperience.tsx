@@ -46,11 +46,11 @@ function useWide(min: number) {
   }, [q])
   return wide
 }
-const PROVIDER_LABEL: Record<string, string> = { nabrah: 'المنصة الصوتية', elevenlabs: 'المنصة الصوتية' }
+const PROVIDER_LABEL: Record<string, string> = { nabrah: 'المنصة الصوتية', elevenlabs: 'المنصة الصوتية', nabrah_whatsapp: 'صندوق واتساب' }
 
 /** The unified conversations experience. `calls` mode backs /call-logs: the same list
  *  and detail, limited to the agent's calls, with an Excel export. */
-export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' | 'web' | 'whatsapp' }) {
+export function ConversationsExperience({ mode, actions }: { mode: 'all' | 'calls' | 'web' | 'whatsapp'; actions?: ReactNode }) {
   // `web` and `whatsapp` are one channel's inbox each (the site chat page and the WhatsApp page).
   const oneChannel = mode === 'web' || mode === 'whatsapp' ? mode : null
   const { companyId, isDemo, hasModule } = useWorkspace()
@@ -222,6 +222,7 @@ export function ConversationsExperience({ mode }: { mode: 'all' | 'calls' | 'web
           {mode === 'calls' && (
             <button type="button" className="nx-btn" onClick={handleExport}><Download /> تصدير Excel</button>
           )}
+          {actions}
         </div>
       </div>
 

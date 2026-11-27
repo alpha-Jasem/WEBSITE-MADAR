@@ -12,9 +12,12 @@ export interface WaStatus {
   name?: string | null
   token_expired?: boolean
   messaging?: boolean
+  /** The agent answering on the number, when it is the company's own inbox. */
+  agent_id?: string | null
+  agent_name?: string | null
 }
 
-const DEMO: WaStatus = { agent_linked: true, connected: true, can_reply: true, phone_number: '+966 5X XXX XXXX', name: 'اسم نشاطك', token_expired: false, messaging: true }
+const DEMO: WaStatus = { agent_linked: true, connected: true, can_reply: true, phone_number: '+966 5X XXX XXXX', name: 'اسم نشاطك', token_expired: false, messaging: true, agent_id: 'demo-a1', agent_name: 'وكيل الاستقبال' }
 
 export function useWaStatus(isDemo: boolean) {
   const [status, setStatus] = useState<WaStatus | null>(isDemo ? DEMO : null)
