@@ -251,46 +251,48 @@ export function DashboardV2Layout() {
   const base = isDemo ? '/demo-review' : '/dashboard'
   // Few groups, named by what the owner is doing. Rarely used pages sit in folded groups (they open by themselves when one is active).
   const ALL_NAV_GROUPS: { title: string; fold?: boolean; items: NavItem[] }[] = [
-    { title: '', items: [
-      { label: 'الرئيسية', path: base, icon: <LayoutDashboard size={16} /> },
+    // Same grouping and order as the reference platform (workspace, build, interact, integrations);
+    // what Madar adds on top sits in the folded groups at the end.
+    { title: 'مساحة العمل', items: [
+      { label: 'نظرة عامة', short: 'الرئيسية', path: base, icon: <LayoutDashboard size={16} /> },
+      { label: 'تحليلات المكالمات', short: 'المكالمات', path: `${base}/calls-analytics`, icon: <BarChart3 size={16} />, module: 'voice' },
+      { label: 'تحليلات واتساب', short: 'واتساب', path: `${base}/whatsapp-analytics`, icon: <MessageCircle size={16} />, module: 'conversations' },
       { label: 'مدار', path: `${base}/zaki`, icon: <WandSparkles size={16} /> },
     ] },
-    { title: 'المحادثات', items: [
-      { label: 'المحادثات', path: `${base}/conversations`, icon: <MessageSquare size={16} />, module: 'conversations' },
+    { title: 'البناء', items: [
+      { label: 'الوكلاء', path: `${base}/agents`, icon: <Bot size={16} />, perm: 'agent.settings' },
+      { label: 'قاعدة المعرفة', short: 'المعرفة', path: `${base}/knowledge-base`, icon: <BookOpen size={16} />, module: 'knowledge_base' },
+      { label: 'المتابعات', path: `${base}/reminders`, icon: <BellRing size={16} />, module: 'reminders' },
+      { label: 'تحليلات الوكيل', short: 'التحليلات', path: `${base}/agent-analytics`, icon: <Sparkles size={16} />, module: 'voice' },
+    ] },
+    { title: 'التفاعل', items: [
+      { label: 'جهات الاتصال', short: 'العملاء', path: `${base}/patients`, icon: <Users size={16} />, module: 'customers' },
+      { label: 'واتساب', path: `${base}/whatsapp`, icon: <Send size={16} />, module: 'conversations', perm: 'integrations.manage' },
+      { label: 'الدردشة على الموقع', short: 'المحادثات', path: `${base}/conversations`, icon: <MessageSquare size={16} />, module: 'conversations' },
+      { label: 'سجل المكالمات', short: 'المكالمات', path: `${base}/call-logs`, icon: <ClipboardList size={16} />, module: 'voice' },
+      { label: 'التذاكر', path: `${base}/tickets`, icon: <Ticket size={16} />, badge: openTicketCount || undefined, module: 'tickets' },
+    ] },
+    { title: 'التكاملات', items: [
+      { label: 'الإضافات', path: `${base}/site-widget`, icon: <Globe size={16} />, perm: 'integrations.manage' },
+      { label: 'الربط والأتمتة', short: 'الربط', path: `${base}/connect`, icon: <Zap size={16} />, perm: 'integrations.manage' },
+      { label: 'التكاملات', path: `${base}/integrations`, icon: <Plug size={16} />, perm: 'integrations.manage' },
+    ] },
+    { title: 'إضافات مدار', fold: true, items: [
       { label: 'المراقبة الحية', short: 'مباشر', path: `${base}/live`, icon: <Radio size={16} />, module: 'conversations' },
       { label: 'محادثة الفريق', short: 'الفريق', path: `${base}/team-chat`, icon: <UsersRound size={16} /> },
-      { label: 'التذاكر', path: `${base}/tickets`, icon: <Ticket size={16} />, badge: openTicketCount || undefined, module: 'tickets' },
-      { label: 'سجل المكالمات', path: `${base}/call-logs`, icon: <ClipboardList size={16} />, module: 'voice' },
-    ] },
-    { title: 'العملاء والحملات', items: [
-      { label: 'العملاء', path: `${base}/patients`, icon: <Users size={16} />, module: 'customers' },
       { label: bookingsLabel(businessType), path: `${base}/bookings`, icon: <CalendarDays size={16} />, module: 'bookings' },
       { label: 'الطلبات', path: `${base}/orders`, icon: <ShoppingBag size={16} />, module: 'orders' },
       { label: 'الحملات', path: `${base}/campaigns`, icon: <Megaphone size={16} />, module: 'conversations', perm: 'outreach.send' },
-      { label: 'المتابعات', path: `${base}/reminders`, icon: <BellRing size={16} />, module: 'reminders' },
-    ] },
-    { title: 'الأتمتة والمعرفة', items: [
-      { label: 'إعدادات الوكيل', short: 'الوكيل', path: `${base}/agents`, icon: <Bot size={16} />, perm: 'agent.settings' },
-      { label: 'قاعدة المعرفة', short: 'المعرفة', path: `${base}/knowledge-base`, icon: <BookOpen size={16} />, module: 'knowledge_base' },
-    ] },
-    { title: 'التحليلات', items: [
-      { label: 'التقارير والتحليلات', short: 'التقارير', path: `${base}/reports`, icon: <BarChart3 size={16} />, module: 'reports' },
-      { label: 'تحليلات الوكيل', short: 'التحليلات', path: `${base}/agent-analytics`, icon: <Sparkles size={16} />, module: 'voice' },
+      { label: 'التقارير', path: `${base}/reports`, icon: <BarChart3 size={16} />, module: 'reports' },
       { label: 'الإيرادات', path: `${base}/revenue`, icon: <Wallet size={16} />, module: 'revenue' },
       { label: 'تقييمات Google', path: `${base}/reviews`, icon: <Star size={16} />, module: 'reviews' },
-    ] },
-    { title: 'أدوات إضافية', fold: true, items: [
       { label: 'الماكرو', path: `${base}/macros`, icon: <Zap size={16} />, module: 'conversations' },
       { label: 'الشرائح', path: `${base}/segments`, icon: <Layers size={16} />, module: 'customers' },
       { label: 'قوالب واتساب والإرسال', short: 'القوالب', path: `${base}/outreach`, icon: <Send size={16} />, module: 'conversations', perm: 'outreach.send' },
       { label: 'نماذج الموقع', short: 'النماذج', path: `${base}/forms`, icon: <FileInput size={16} />, module: 'customers', perm: 'integrations.manage' },
       { label: 'الخدمات', path: `${base}/services`, icon: <Wrench size={16} />, module: 'services' },
     ] },
-    { title: 'الإعدادات والربط', fold: true, items: [
-      { label: 'ربط واتساب', short: 'واتساب', path: `${base}/whatsapp`, icon: <MessageCircle size={16} />, module: 'conversations', perm: 'integrations.manage' },
-      { label: 'ودجت الموقع', short: 'الودجت', path: `${base}/site-widget`, icon: <Globe size={16} />, perm: 'integrations.manage' },
-      { label: 'الربط والأتمتة', short: 'الربط', path: `${base}/connect`, icon: <Zap size={16} />, perm: 'integrations.manage' },
-      { label: 'التكاملات', path: `${base}/integrations`, icon: <Plug size={16} />, perm: 'integrations.manage' },
+    { title: 'الإعدادات', fold: true, items: [
       { label: 'الفريق والصلاحيات', short: 'الفريق', path: `${base}/team`, icon: <UsersRound size={16} />, perm: 'team.manage' },
       { label: 'إعدادات مساحة العمل', short: 'المساحة', path: `${base}/workspace-settings`, icon: <Settings size={16} /> },
       { label: 'الإعدادات', path: `${base}/settings`, icon: <Settings size={16} /> },
