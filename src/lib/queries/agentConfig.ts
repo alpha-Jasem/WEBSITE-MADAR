@@ -70,7 +70,7 @@ function makeStore<T extends { id: string; created_at: string }>(table: string, 
     notify()
   }
 
-  return { useList, save, remove }
+  return { useList, save, remove, refresh: notify }
 }
 
 const tools = makeStore<AgentTool>('agent_tools', 'id, name, description, method, url, params, enabled, created_at', [
@@ -98,3 +98,18 @@ export const saveVoiceService = services.save
 export const deleteVoiceService = services.remove
 
 export const STATUS_LABELS: Record<ServiceStatus, string> = { pending: 'قيد الربط', active: 'يعمل', paused: 'موقوف' }
+
+export type CampaignStatus = 'draft' | 'launching' | 'launched' | 'failed'
+export interface VoiceCampaign {
+  id: string; name: string; agent_id: string; call_from: string; numbers: string[]; status: CampaignStatus
+  tag: string | null; call_ids: string[]; error: string | null; launched_at: string | null; created_at: string
+}
+const campaigns = makeStore<VoiceCampaign>('voice_campaigns', 'id, name, agent_id, call_from, numbers, status, tag, call_ids, error, launched_at, created_at', [
+  { id: 'demo-cmp-1', name: 'متابعة عملاء الشهر', agent_id: 'demo-agent', call_from: '0500000000', numbers: ['+966500000001', '+966500000002', '+966500000003'],
+    status: 'draft', tag: null, call_ids: [], error: null, launched_at: null, created_at: now() },
+])
+export const useVoiceCampaigns = campaigns.useList
+export const saveVoiceCampaign = campaigns.save
+export const deleteVoiceCampaign = campaigns.remove
+export const refreshVoiceCampaigns = campaigns.refresh
+export const CAMPAIGN_STATUS_LABELS: Record<CampaignStatus, string> = { draft: 'مسودة', launching: 'جاري الإطلاق', launched: 'أُطلقت', failed: 'فشل الإطلاق' }

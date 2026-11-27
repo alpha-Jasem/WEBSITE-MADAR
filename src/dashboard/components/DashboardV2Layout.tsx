@@ -5,7 +5,7 @@ import { DURATION_MEDIUM, EASE_OUT } from './motionTokens'
 import {
   LayoutDashboard, CalendarDays, Users, MessageSquare, Star, BarChart3,
   Wallet, BellRing, Settings, AlertTriangle, Plus, Ticket,
-  ClipboardList, BookOpen, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Send, ShoppingBag, UsersRound, Zap, Layers, Megaphone, WandSparkles, FileInput, MessageCircle, Radio, ChevronDown, Globe, ListChecks, PhoneIncoming, PhoneOutgoing,
+  ClipboardList, BookOpen, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Send, ShoppingBag, UsersRound, Zap, Layers, Megaphone, WandSparkles, FileInput, MessageCircle, Radio, ChevronDown, Globe, ListChecks, PhoneIncoming, PhoneOutgoing, Mic, Code2,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useSupportTickets } from '@/lib/dashboardQueries'
@@ -274,6 +274,8 @@ export function DashboardV2Layout() {
     { title: 'القنوات', items: [
       { label: 'خدمات الوارد', short: 'الوارد', path: `${base}/inbound-services`, icon: <PhoneIncoming size={16} />, module: 'voice', perm: 'integrations.manage' },
       { label: 'خدمات الصادر', short: 'الصادر', path: `${base}/outbound-services`, icon: <PhoneOutgoing size={16} />, module: 'voice', perm: 'integrations.manage' },
+      { label: 'حملات الاتصال', short: 'الحملات', path: `${base}/outbound-campaigns`, icon: <Megaphone size={16} />, module: 'voice', perm: 'integrations.manage' },
+      { label: 'مكالمات الويب', short: 'الويب', path: `${base}/web-calls`, icon: <Mic size={16} />, module: 'voice' },
     ] },
     { title: 'التفاعل', items: [
       { label: 'جهات الاتصال', short: 'العملاء', path: `${base}/patients`, icon: <Users size={16} />, module: 'customers' },
@@ -285,6 +287,7 @@ export function DashboardV2Layout() {
     { title: 'التكاملات', items: [
       { label: 'الإضافات', path: `${base}/site-widget`, icon: <Globe size={16} />, perm: 'integrations.manage' },
       { label: 'المطورون والأتمتة', short: 'المطورون', path: `${base}/connect`, icon: <Zap size={16} />, perm: 'integrations.manage' },
+      { label: 'مرجع API', short: 'API', path: `${base}/api-reference`, icon: <Code2 size={16} />, perm: 'integrations.manage' },
       { label: 'التكاملات', path: `${base}/integrations`, icon: <Plug size={16} />, perm: 'integrations.manage' },
     ] },
     { title: 'إضافات مدار', fold: true, items: [

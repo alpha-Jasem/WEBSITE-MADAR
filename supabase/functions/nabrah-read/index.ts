@@ -5,7 +5,7 @@
 // NABRAH_API_KEY function secret and never leaves the server. Deploy with JWT verification ON.
 //   agents                      -> the agents you may see
 //   agent    { agent_id }       -> one agent's configuration
-//   calls    { agent_id, limit?, offset? } -> call summaries for one agent
+//   calls    { agent_id, limit?, offset?, tag? } -> call summaries for one agent (tag: one campaign's calls)
 //   call     { call_id }        -> one call: transcript, analysis, tool logs
 //   admin only: voices, contacts, conversations, tickets, ticket_counts, tools, analysis_groups,
 //               knowledge_bases, sip_inbound, sip_outbound, inbound_links, whatsapp_inboxes, ai_insights
@@ -89,7 +89,10 @@ Deno.serve(async (req) => {
       if (!ID.test(id) || !mayUse(id)) return json({ error: 'not found' }, 404)
       const limit = Math.min(Math.max(Number(body?.limit) || 25, 1), 50)
       const offset = Math.max(Number(body?.offset) || 0, 0)
-      return json(await nabrah('/call/search', key, { method: 'POST', body: JSON.stringify({ agent_id: id, limit, offset }) }))
+      const tag = String(body?.tag ?? '')
+      const search: Record<string, unknown> = { agent_id: id, limit, offset }
+      if (/^madar_[a-f0-9]{12}$/.test(tag)) search.tag = tag
+      return json(await nabrah('/call/search', key, { method: 'POST', body: JSON.stringify(search) }))
     }
     if (op === 'call') {
       const id = String(body?.call_id ?? '')

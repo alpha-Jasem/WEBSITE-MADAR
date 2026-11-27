@@ -88,6 +88,9 @@ const DashboardV2Zaki             = lazy(() => import('./dashboard/pages/Zaki').
 const DashboardV2Outreach         = lazy(() => import('./dashboard/pages/Outreach').then(m => ({ default: m.DashboardV2Outreach })))
 const DashboardV2CallLogs          = lazy(() => import('./dashboard/pages/CallLogs').then(m => ({ default: m.DashboardV2CallLogs })))
 const DashboardV2VoiceAgents       = lazy(() => import('./dashboard/pages/VoiceAgents').then(m => ({ default: m.DashboardV2VoiceAgents })))
+const DashboardV2CallCampaigns     = lazy(() => import('./dashboard/pages/VoicePlatformPages').then(m => ({ default: m.DashboardV2CallCampaigns })))
+const DashboardV2WebCalls          = lazy(() => import('./dashboard/pages/VoicePlatformPages').then(m => ({ default: m.DashboardV2WebCalls })))
+const DashboardV2ApiReference      = lazy(() => import('./dashboard/pages/VoicePlatformPages').then(m => ({ default: m.DashboardV2ApiReference })))
 const DashboardV2Tools             = lazy(() => import('./dashboard/pages/AgentConfigPages').then(m => ({ default: m.DashboardV2Tools })))
 const DashboardV2AnalysisGroups    = lazy(() => import('./dashboard/pages/AgentConfigPages').then(m => ({ default: m.DashboardV2AnalysisGroups })))
 const DashboardV2InboundServices   = lazy(() => import('./dashboard/pages/AgentConfigPages').then(m => ({ default: () => <m.DashboardV2VoiceServices direction="inbound" /> })))
@@ -139,6 +142,9 @@ const dashboardChildRoutes = (
     <Route path="inbound-services" element={<ModuleRoute module="voice"><PermissionRoute permission="integrations.manage"><DashboardV2InboundServices /></PermissionRoute></ModuleRoute>} />
     <Route path="outbound-services" element={<ModuleRoute module="voice"><PermissionRoute permission="integrations.manage"><DashboardV2OutboundServices /></PermissionRoute></ModuleRoute>} />
     <Route path="voice-agents" element={<ModuleRoute module="voice"><DashboardV2VoiceAgents /></ModuleRoute>} />
+    <Route path="outbound-campaigns" element={<ModuleRoute module="voice"><PermissionRoute permission="integrations.manage"><DashboardV2CallCampaigns /></PermissionRoute></ModuleRoute>} />
+    <Route path="web-calls" element={<ModuleRoute module="voice"><DashboardV2WebCalls /></ModuleRoute>} />
+    <Route path="api-reference" element={<PermissionRoute permission="integrations.manage"><DashboardV2ApiReference /></PermissionRoute>} />
     <Route path="agent-users" element={<Navigate to="../patients" replace />} />
     <Route path="settings" element={<DashboardV2Settings />} />
     {/* Retired pages keep their links alive instead of rendering a blank outlet. */}
