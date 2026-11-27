@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Bot, Clock, Columns3, ListChecks, Plus } from 'lucide-react'
+import { Bot, Clock, Columns3, Download, LayoutGrid, ListChecks, Plus } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { Button } from '@/dashboard/components/primitives'
 import { useToast, Skeleton } from '@/dashboard/components/uiExtras'
@@ -14,9 +14,12 @@ import { NewTicketDialog } from './tickets/NewTicketDialog'
 import { TicketDialog } from './tickets/TicketDialog'
 import { StagesDialog } from './tickets/StagesDialog'
 import { PRIORITY, STATUS, customerOf, dueLabel, isAiOpened, isLate, relTime, shortId, typeOf } from './tickets/ticketModel'
+// The page follows the reference ticketing layout: board or cards, filters, and status / assignment counts.
 import './tickets/ops.css'
 
-type Filter = 'all' | 'mine' | 'unassigned' | 'late'
+type Filter = 'all' | 'mine' | 'unassigned' | 'assigned'
+type StatusFilter = 'all' | TicketStatus
+type View = 'kanban' | 'cards'
 const COLUMNS: TicketStatus[] = ['open', 'in_progress', 'resolved']
 const STATUS_NOTE: Record<TicketStatus, string> = { open: 'أُعيد فتحها', in_progress: 'بدأت المعالجة', resolved: 'تم الحل' }
 
@@ -67,6 +70,13 @@ export function DashboardV2Tickets() {
   const { data: team } = useTeam(companyId, isDemo)
   const me = useCurrentUserId(isDemo)
   const [filter, setFilter] = useState<Filter>('all')
+  const [statusF, setStatusF] = useState<StatusFilter>('all')
+  const [view, setView] = useState<View>('kanban')
+  const [days, setDays] = useState(30)
+  const [priorityF, setPriorityF] = useState('')
+  const [typeF, setTypeF] = useState('')
+  const [assigneeF, setAssigneeF] = useState('')
+  const [contactQ, setContactQ] = useState('')
   const [openId, setOpenId] = useState<string | null>(null)
   const [newOpen, setNewOpen] = useState(false)
   const [callId, setCallId] = useState<string | null>(null)
@@ -117,17 +127,42 @@ export function DashboardV2Tickets() {
     else pushToast({ kind: 'danger', title: 'ما لقينا هالتذكرة', description: 'يمكن انحذفت أو تخص حساب ثاني.' })
   }, [params, setParams, loading, all, pushToast])
 
-  const list = all.filter((t) => {
-    if (filter === 'mine') return !!me && t.assignee_user_id === me
-    if (filter === 'unassigned') return !t.assignee_user_id && !t.assignee_name && t.status !== 'resolved'
-    if (filter === 'late') return isLate(t)
+  // Filters in the order of the reference page: period, priority, type, assignee, contact;
+  // then the status and assignment counts, each of which narrows the list too.
+  const isAssigned = (t: OpsTicket) => !!(t.assignee_user_id || t.assignee_name)
+  const base0 = all.filter((t) => {
+    if (days && Date.now() - Date.parse(t.created_at) > days * 86_400_000) return false
+    if (priorityF && t.priority !== priorityF) return false
+    if (typeF && typeOf(t) !== typeF) return false
+    if (assigneeF && (t.assignee_user_id || t.assignee_name) !== assigneeF) return false
+    if (contactQ.trim()) {
+      const q = contactQ.trim().toLowerCase()
+      if (![customerOf(t), t.customer_phone].some((v) => String(v ?? '').toLowerCase().includes(q))) return false
+    }
     return true
   })
-  const count = (s: TicketStatus) => all.filter((t) => t.status === s).length
-  const lateCount = all.filter((t) => isLate(t)).length
-  const unassignedOpen = all.filter((t) => t.status === 'open' && !t.assignee_user_id && !t.assignee_name).length
-  const aiShare = all.length ? Math.round((all.filter(isAiOpened).length / all.length) * 100) : 0
+  const byAssign = (t: OpsTicket, f: Filter) =>
+    f === 'mine' ? !!me && t.assignee_user_id === me : f === 'unassigned' ? !isAssigned(t) : f === 'assigned' ? isAssigned(t) : true
+  const list = base0.filter((t) => byAssign(t, filter) && (statusF === 'all' || t.status === statusF))
+  const statusCount = (s: StatusFilter) => base0.filter((t) => byAssign(t, filter) && (s === 'all' || t.status === s)).length
+  const assignCount = (f: Filter) => base0.filter((t) => (statusF === 'all' || t.status === statusF) && byAssign(t, f)).length
+  const types = useMemo(() => [...new Set(all.map(typeOf))], [all])
+  const assignees = useMemo(() => {
+    const m = new Map<string, string>()
+    for (const t of all) { const k = t.assignee_user_id || t.assignee_name; if (k) m.set(k, t.assignee_name || 'عضو الفريق') }
+    return [...m.entries()]
+  }, [all])
   const openTicket = all.find((t) => t.id === openId) || null
+
+  function exportCsv() {
+    const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`
+    const head = ['الرقم', 'الموضوع', 'العميل', 'الجوال', 'النوع', 'الأولوية', 'الحالة', 'المسؤول', 'تاريخ الإنشاء']
+    const lines = list.map((t) => [shortId(t), t.subject, customerOf(t), t.customer_phone, typeOf(t), PRIORITY[t.priority]?.label, STATUS[t.status]?.label, t.assignee_name, new Date(t.created_at).toLocaleString('ar-SA-u-ca-gregory-nu-latn')].map(esc).join(','))
+    const blob = new Blob(['﻿' + [head.map(esc).join(','), ...lines].join('\n')], { type: 'text/csv;charset=utf-8' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob); a.download = `tickets-${new Date().toISOString().slice(0, 10)}.csv`; a.click()
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000)
+  }
 
   const cols: Col[] = stages.length
     ? stages.map((s) => ({ key: s.id, label: s.name, color: s.color || STATUS[s.status].color, status: s.status, stageId: s.id }))
@@ -163,35 +198,47 @@ export function DashboardV2Tickets() {
     }
   }
 
-  const filters: [Filter, string][] = [
+  const assignFilters: [Filter, string][] = [
     ['all', 'الكل'],
-    ...(caps.ticketExtras ? [['mine', meMember ? `المعيّنة لـ ${meMember.full_name}` : 'المعيّنة لي'], ['unassigned', 'بدون مسؤول']] as [Filter, string][] : []),
-    ['late', 'متأخرة'],
+    ...(caps.ticketExtras ? [['mine', 'تذاكري'], ['unassigned', 'غير مُسندة'], ['assigned', 'مُسندة']] as [Filter, string][] : []),
   ]
+  const statusFilters: [StatusFilter, string][] = [['all', 'الكل'], ...COLUMNS.map((s) => [s, STATUS[s].label] as [StatusFilter, string])]
+  const sel = { height: 34, borderRadius: 9, border: '1px solid var(--line-2)', background: 'var(--panel)', color: 'var(--text-primary)', font: 'inherit', fontSize: 12.5, padding: '0 10px' }
 
   return (
     <div className="ops-page">
       <div className="ops-head">
         <div>
           <h1 className="ops-h1">التذاكر</h1>
-          <p className="ops-sub">طلبات العملاء اللي تحتاج متابعة من فريقك. الوكيل الذكي يفتحها تلقائيًا من المكالمات</p>
+          <p className="ops-sub">أدر تذاكر العملاء عبر جميع القنوات. الوكيل الذكي يفتحها تلقائيًا من المكالمات.</p>
         </div>
-        <span className="shell-dup"><Button onClick={() => { setCallId(null); setNewOpen(true) }}><Plus size={15} /> تذكرة جديدة</Button></span>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontSize: 13, color: 'var(--muted)' }}><b style={{ color: 'var(--ink)' }}>{loading ? '…' : list.length}</b> تذكرة</span>
+          <div className="ops-seg" role="group" aria-label="طريقة العرض">
+            <button type="button" aria-pressed={view === 'kanban'} onClick={() => setView('kanban')}><Columns3 size={13} /> أعمدة</button>
+            <button type="button" aria-pressed={view === 'cards'} onClick={() => setView('cards')}><LayoutGrid size={13} /> بطاقات</button>
+          </div>
+          <Button variant="secondary" disabled={list.length === 0} onClick={exportCsv}><Download size={14} /> تصدير</Button>
+          <span className="shell-dup"><Button onClick={() => { setCallId(null); setNewOpen(true) }}><Plus size={15} /> تذكرة جديدة</Button></span>
+        </div>
       </div>
 
-      <div className="ops-kpis">
-        <div className="ops-kpi"><span>مفتوحة</span><b>{count('open')}</b><i>{caps.ticketExtras ? `${unassignedOpen} بدون مسؤول` : 'بانتظار فريقك'}</i></div>
-        <div className="ops-kpi"><span>قيد المعالجة</span><b>{count('in_progress')}</b><i>يتابعها فريقك</i></div>
-        <div className="ops-kpi"><span>متأخرة</span><b style={{ color: lateCount ? 'var(--bad)' : undefined }}>{lateCount}</b><i>تجاوزت وقت الرد</i></div>
-        <div className="ops-kpi"><span>فتحها الوكيل الذكي</span><b>{aiShare}%</b><i>والباقي فتحها فريقك</i></div>
-      </div>
-
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div className="ops-seg" role="group" aria-label="تصفية التذاكر">
-          {filters.map(([k, l]) => (
-            <button key={k} type="button" aria-pressed={filter === k} onClick={() => setFilter(k)}>{l}</button>
-          ))}
-        </div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        <select aria-label="الفترة" style={sel} value={days} onChange={(e) => setDays(Number(e.target.value))}>
+          <option value={7}>آخر 7 أيام</option><option value={30}>آخر 30 يومًا</option><option value={90}>آخر 90 يومًا</option><option value={0}>كل الوقت</option>
+        </select>
+        <select aria-label="الأولوية" style={sel} value={priorityF} onChange={(e) => setPriorityF(e.target.value)}>
+          <option value="">الأولوية</option>{Object.entries(PRIORITY).map(([k, p]) => <option key={k} value={k}>{p.label}</option>)}
+        </select>
+        <select aria-label="النوع" style={sel} value={typeF} onChange={(e) => setTypeF(e.target.value)}>
+          <option value="">كل الأنواع</option>{types.map((t) => <option key={t} value={t}>{t}</option>)}
+        </select>
+        {caps.ticketExtras && (
+          <select aria-label="المُسند إليه" style={sel} value={assigneeF} onChange={(e) => setAssigneeF(e.target.value)}>
+            <option value="">المُسند إليه</option>{assignees.map(([k, n]) => <option key={k} value={k}>{n}</option>)}
+          </select>
+        )}
+        <input aria-label="جهة الاتصال" placeholder="جهة الاتصال" value={contactQ} onChange={(e) => setContactQ(e.target.value)} style={{ ...sel, minWidth: 150 }} />
         {caps.ticketBoard && (
           <span style={{ marginInlineStart: 'auto' }}>
             <Button variant="secondary" size="sm" onClick={() => setStagesOpen(true)}><Columns3 size={14} /> تخصيص الأعمدة</Button>
@@ -199,9 +246,32 @@ export function DashboardV2Tickets() {
         )}
       </div>
 
+      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 12, color: 'var(--dim)' }}>الحالة</span>
+          <div className="ops-seg" role="group" aria-label="الحالة">
+            {statusFilters.map(([k, l]) => <button key={k} type="button" aria-pressed={statusF === k} onClick={() => setStatusF(k)}>{l} <b style={{ fontFamily: 'var(--font-numeral)' }}>{loading ? '' : statusCount(k)}</b></button>)}
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 12, color: 'var(--dim)' }}>الإسناد</span>
+          <div className="ops-seg" role="group" aria-label="الإسناد">
+            {assignFilters.map(([k, l]) => <button key={k} type="button" aria-pressed={filter === k} onClick={() => setFilter(k)}>{l} <b style={{ fontFamily: 'var(--font-numeral)' }}>{loading ? '' : assignCount(k)}</b></button>)}
+          </div>
+        </div>
+      </div>
+
       {error && <div className="ops-note" style={{ background: 'var(--bad-bg)', color: 'var(--bad)' }}>تعذّر تحميل التذاكر: {error}</div>}
 
-      <div className={`ops-board${cols.length > 3 ? ' many' : ''}`}>
+      {view === 'cards' && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
+          {loading ? [0, 1, 2].map((i) => <Skeleton key={i} height={96} radius="14px" />)
+            : list.length ? list.map((t) => <TicketCard key={t.id} t={t} onOpen={() => setOpenId(t.id)} subtasks={progress.get(t.id)} />)
+            : <div className="ops-empty-line">لا توجد تذاكر. عدّل الفلاتر أو أنشئ تذكرة جديدة.</div>}
+        </div>
+      )}
+
+      {view === 'kanban' && <div className={`ops-board${cols.length > 3 ? ' many' : ''}`}>
         {cols.map((c) => {
           const items = list.filter((t) => colOf(t) === c.key)
           return (
@@ -220,11 +290,11 @@ export function DashboardV2Tickets() {
                 ? [0, 1].map((i) => <Skeleton key={i} height={96} radius="14px" />)
                 : items.length
                   ? items.map((t) => <TicketCard key={t.id} t={t} onOpen={() => setOpenId(t.id)} subtasks={progress.get(t.id)} />)
-                  : <div className="ops-empty-line">{dropKey === c.key ? 'أفلتها هنا' : 'ما فيه تذاكر هنا'}</div>}
+                  : <div className="ops-empty-line">{dropKey === c.key ? 'أفلتها هنا' : 'لا توجد تذاكر'}</div>}
             </section>
           )
         })}
-      </div>
+      </div>}
 
       <TicketDialog
         ticket={openTicket} onClose={() => setOpenId(null)} caps={caps} team={members} isDemo={isDemo}
