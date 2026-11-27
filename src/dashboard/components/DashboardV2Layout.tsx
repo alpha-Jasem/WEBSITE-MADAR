@@ -264,6 +264,7 @@ export function DashboardV2Layout() {
     ] },
     { title: 'البناء', items: [
       { label: 'الوكلاء', path: `${base}/agents`, icon: <Bot size={16} />, perm: 'agent.settings' },
+      { label: 'وكلاء الصوت', short: 'الصوت', path: `${base}/voice-agents`, icon: <Bot size={16} />, module: 'voice' },
       { label: 'الأدوات', path: `${base}/tools`, icon: <Wrench size={16} />, module: 'voice', perm: 'agent.settings' },
       { label: 'قاعدة المعرفة', short: 'المعرفة', path: `${base}/knowledge-base`, icon: <BookOpen size={16} />, module: 'knowledge_base' },
       { label: 'مجموعات التحليل', short: 'التحليل', path: `${base}/analysis-groups`, icon: <ListChecks size={16} />, module: 'voice', perm: 'agent.settings' },
