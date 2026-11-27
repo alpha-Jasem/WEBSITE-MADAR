@@ -600,6 +600,21 @@ export async function createCustomer(data: Partial<Customer>) {
   return result as Customer
 }
 
+/** Adds many contacts at once (CSV / Excel import), in chunks; returns how many were saved. */
+export async function importCustomers(companyId: string, rows: { name: string; phone: string }[]) {
+  let saved = 0
+  for (let i = 0; i < rows.length; i += 200) {
+    const chunk = rows.slice(i, i + 200).map((r) => ({
+      company_id: companyId, name: r.name, phone: r.phone, patient_type: 'new', tags: [], no_show_count: 0, total_appointments: 0,
+    }))
+    const { error } = await supabase.from(TABLES.customers).insert(chunk)
+    if (error) throw Object.assign(new Error(error.message), { saved })
+    saved += chunk.length
+  }
+  await logAuditEvent({ company_id: companyId, action: 'patient.imported', note: `استيراد ${saved} جهة اتصال من ملف` }).catch(() => {})
+  return saved
+}
+
 export async function createResource(data: Partial<StaffMember>) {
   const payload = {
     company_id: data.company_id,

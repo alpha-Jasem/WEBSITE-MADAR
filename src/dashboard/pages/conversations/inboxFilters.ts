@@ -3,9 +3,10 @@ import type { ConvItem } from './model'
 
 // The inbox list: four tabs with counts plus a filter drawer.
 
-export type InboxTab = 'all' | 'mine' | 'unassigned' | 'participated'
-export const INBOX_TABS: InboxTab[] = ['all', 'mine', 'unassigned', 'participated']
-export const TAB_LABEL: Record<InboxTab, string> = { all: 'الكل', mine: 'خاصتي', unassigned: 'غير مسندة', participated: 'شاركت فيها' }
+// Same four tabs as the reference inbox. «غير المقروء» = open and nobody from the team has touched it yet.
+export type InboxTab = 'all' | 'mine' | 'unassigned' | 'unread'
+export const INBOX_TABS: InboxTab[] = ['all', 'mine', 'unassigned', 'unread']
+export const TAB_LABEL: Record<InboxTab, string> = { all: 'الكل', mine: 'لي', unassigned: 'غير معيّنة', unread: 'غير المقروء' }
 
 export interface InboxFilters {
   /** Open and nobody from the team has replied yet. */

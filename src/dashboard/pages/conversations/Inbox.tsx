@@ -159,11 +159,11 @@ export function Inbox({ items: baseItems, allItems, loading, tickets, showTicket
       all: true,
       mine: !!myId && st.assigneeId === myId,
       unassigned: !st.assigneeId,
-      participated: !!userName && evs.some((e) => e.author_name === userName),
+      unread: st.status === 'open' && evs.length === 0,
     }
-  }, [events, myId, userName])
+  }, [events, myId])
   const counts = useMemo(() => {
-    const c: Record<InboxTab, number> = { all: 0, mine: 0, unassigned: 0, participated: 0 }
+    const c: Record<InboxTab, number> = { all: 0, mine: 0, unassigned: 0, unread: 0 }
     for (const i of filtered) { const t = tabOf(i); for (const k of INBOX_TABS) if (t[k]) c[k]++ }
     return c
   }, [filtered, tabOf])
@@ -266,6 +266,12 @@ function ListPane({ items, loading, selectedKey, onSelect, events, onSync, synci
             {TAB_LABEL[t]} <span className="nx-num">{counts[t]}</span>
           </button>
         ))}
+      </div>
+      <div style={{ display: 'flex', gap: 6, padding: '0 10px 8px', flexWrap: 'wrap' }}>
+        <select aria-label="الحالة" value={f.status} onChange={(e) => set({ status: e.target.value as InboxFilters['status'] })}
+          style={{ flex: '1 1 140px', minWidth: 0, height: 32, borderRadius: 8, border: '1px solid var(--line-2)', background: 'var(--panel)', color: 'var(--text-primary)', font: 'inherit', fontSize: 12.5, padding: '0 8px' }}>
+          <option value="">كل الحالات</option><option value="open">مفتوحة</option><option value="waiting">بانتظار العميل</option><option value="snoozed">مؤجلة</option><option value="closed">مغلقة</option>
+        </select>
       </div>
       {drawer && (
         <div className="ib-filters" aria-label="الفلاتر">

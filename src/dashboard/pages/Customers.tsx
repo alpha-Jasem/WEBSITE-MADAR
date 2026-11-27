@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Download, LayoutGrid, List, Plus, Search, Users, UserCheck } from 'lucide-react'
+import { Download, LayoutGrid, List, Plus, Search, Upload, Users, UserCheck } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
-import { createCustomer, useCustomers, updateCustomer } from '@/lib/dashboardQueries'
+import { createCustomer, importCustomers, useCustomers, updateCustomer } from '@/lib/dashboardQueries'
 import { useConversationData } from '@/lib/queries/conversations'
 import { buildContacts } from './AgentUsers'
 import { addToStaticSegment, saveSegment, segmentMembers, useContacts, useSegments } from '@/lib/queries/segments'
@@ -36,6 +36,31 @@ const TYPE_OPTIONS = [
   { value: 'new', label: 'جديد' },
   { value: 'returning', label: 'عائد' },
 ]
+
+const IMPORT_LIMIT = 2000
+const NAME_HEAD = /^(الاسم|اسم|اسم العميل|name|full ?name|customer)$/i
+const PHONE_HEAD = /^(الجوال|الهاتف|رقم الجوال|رقم الهاتف|الرقم|جوال|phone|mobile|phone ?number|number|tel)$/i
+
+/** Name and phone pairs from a CSV or Excel file: a header row picks the columns, else the first two columns. */
+async function readContactsFile(file: File): Promise<{ name: string; phone: string }[]> {
+  const XLSX = await import('xlsx')
+  // raw keeps CSV cells as text, so a leading 0 in a phone number survives.
+  const book = XLSX.read(await file.arrayBuffer(), { type: 'array', raw: true })
+  const sheet = book.Sheets[book.SheetNames[0]]
+  const grid = (XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false, defval: '', raw: false }) as unknown[][]).map((r) => r.map((c) => String(c ?? '').trim()))
+  if (grid.length === 0) return []
+  const head = grid[0]
+  let nameCol = head.findIndex((h) => NAME_HEAD.test(h))
+  let phoneCol = head.findIndex((h) => PHONE_HEAD.test(h))
+  const hasHeader = nameCol >= 0 || phoneCol >= 0
+  if (!hasHeader) {
+    // No header: the column that looks like numbers is the phone, the other the name.
+    const digits = (s: string) => s.replace(/\D/g, '').length >= 8
+    phoneCol = head.findIndex(digits)
+    nameCol = head.findIndex((_, i) => i !== phoneCol)
+  }
+  return grid.slice(hasHeader ? 1 : 0).map((r) => ({ name: nameCol >= 0 ? r[nameCol] ?? '' : '', phone: phoneCol >= 0 ? r[phoneCol] ?? '' : '' }))
+}
 
 /** The saved value of each custom field, typed; empty values are left out. */
 function packCustom(fields: CustomField[], raw: Record<string, string>): Record<string, string | number | boolean> {
@@ -80,6 +105,8 @@ export function DashboardV2Customers() {
   const [view, setView] = useState<'cards' | 'table'>('table')
   const [newOpen, setNewOpen] = useState(false)
   const [draft, setDraft] = useState({ name: '', phone: '' })
+  const [importing, setImporting] = useState<{ ready: { name: string; phone: string }[]; skipped: number; total: number } | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
   const [selected, setSelected] = useState<Customer | null>(null)
   const [form, setForm] = useState({ name: '', phone: '', last_visit_at: '', total_visits: 0, patient_type: 'new' as Customer['patient_type'], stage_id: '', custom: {} as Record<string, string> })
   const [saving, setSaving] = useState(false)
@@ -210,6 +237,46 @@ export function DashboardV2Customers() {
     } finally { setSaving(false) }
   }
 
+  // Import: read the file, drop rows without a valid number and numbers already saved or repeated, then confirm.
+  async function pickFile(file: File | undefined) {
+    if (!file) return
+    try {
+      const parsed = await readContactsFile(file)
+      const known = new Set(rows.map((r) => normalizePhone(r.phone)).filter(Boolean))
+      const seen = new Set<string>()
+      const ready: { name: string; phone: string }[] = []
+      for (const raw of parsed) {
+        // Excel stores 0551234567 as the number 551234567; put the 0 back for Saudi mobiles.
+        const r = { ...raw, phone: /^5\d{8}$/.test(raw.phone) ? `0${raw.phone}` : raw.phone }
+        const key = normalizePhone(r.phone)
+        if (!key || key.replace(/\D/g, '').length < 8 || known.has(key) || seen.has(key)) continue
+        seen.add(key)
+        ready.push({ name: r.name.slice(0, 120) || r.phone, phone: r.phone.slice(0, 30) })
+      }
+      if (parsed.length === 0) { pushToast({ kind: 'danger', title: 'الملف فاضي أو ما قدرنا نقراه' }); return }
+      setImporting({ ready: ready.slice(0, IMPORT_LIMIT), skipped: parsed.length - ready.length + Math.max(0, ready.length - IMPORT_LIMIT), total: parsed.length })
+    } catch {
+      pushToast({ kind: 'danger', title: 'ما قدرنا نقرا الملف', description: 'استخدم ملف CSV أو Excel فيه عمود للاسم وعمود للجوال.' })
+    } finally { if (fileRef.current) fileRef.current.value = '' }
+  }
+
+  async function runImport() {
+    if (!importing || importing.ready.length === 0) return
+    if (isDemo) { pushToast({ kind: 'success', title: `انضاف ${importing.ready.length} جهة اتصال (عرض تجريبي)` }); setImporting(null); return }
+    if (!companyId) return
+    setSaving(true)
+    try {
+      const n = await importCustomers(companyId, importing.ready)
+      await refetch()
+      pushToast({ kind: 'success', title: `انضاف ${n} جهة اتصال` })
+      setImporting(null)
+    } catch (e) {
+      const saved = (e as { saved?: number }).saved ?? 0
+      await refetch()
+      pushToast({ kind: 'danger', title: saved ? `انضاف ${saved} وتوقف الباقي` : 'تعذّر الاستيراد', description: e instanceof Error ? e.message : undefined })
+    } finally { setSaving(false) }
+  }
+
   function exportCsv() {
     const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`
     const head = ['الاسم', 'الجوال', 'آخر نشاط', visitsLabel, 'النوع', 'المرحلة']
@@ -262,6 +329,8 @@ export function DashboardV2Customers() {
         title="جهات الاتصال"
         sub={loading ? 'جارِ التحميل…' : `أدر جهات اتصال مساحة العمل واحتفظ بسياق التواصل في مكان واحد. ${fmtNum(returning)} عائد، وكل من تواصل مع الوكيل الذكي يُحفظ هنا تلقائيًا.`}
         actions={<>
+          <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls,text/csv" hidden onChange={(e) => void pickFile(e.target.files?.[0])} />
+          <Button variant="secondary" onClick={() => fileRef.current?.click()}><Upload size={14} /> استيراد</Button>
           <Button variant="secondary" disabled={shown.length === 0} onClick={exportCsv}><Download size={14} /> تصدير</Button>
           <Button onClick={() => setNewOpen(true)}><Plus size={14} /> جهة اتصال جديدة</Button>
         </>}
@@ -373,6 +442,24 @@ export function DashboardV2Customers() {
           ? <EmptyState icon={<Users size={20} />} title="لا توجد جهات اتصال بعد" description="أنشئ أول جهة اتصال لبدء تتبع المكالمات والتذاكر حسب الشخص." />
           : <EmptyState icon={<Users size={20} />} title="لا توجد جهات اتصال مطابقة" description="جرّب تغيير كلمة البحث أو الفلاتر." />)}
       </Card>
+
+      <Dialog open={!!importing} title="استيراد جهات اتصال" onClose={() => setImporting(null)} width={520}
+        footer={<><Button variant="secondary" onClick={() => setImporting(null)}>إلغاء</Button><Button onClick={() => void runImport()} disabled={saving || !importing?.ready.length}>{saving ? 'جارِ الاستيراد...' : `استيراد ${importing?.ready.length ?? 0}`}</Button></>}>
+        {importing && (
+          <div style={{ display: 'grid', gap: 12, fontSize: 13.5, lineHeight: 1.8 }}>
+            <div>في الملف <b>{fmtNum(importing.total)}</b> صف. جاهز للإضافة <b>{fmtNum(importing.ready.length)}</b>{importing.skipped ? <>، وتخطينا <b>{fmtNum(importing.skipped)}</b> (بدون رقم صحيح، أو الرقم موجود عندك، أو مكرر في الملف{importing.total > IMPORT_LIMIT ? `، أو فوق حد ${IMPORT_LIMIT}` : ''}).</> : '.'}</div>
+            {importing.ready.length > 0 && (
+              <div className="np-table-wrap">
+                <table className="np-table">
+                  <thead><tr><th>الاسم</th><th>الجوال</th></tr></thead>
+                  <tbody>{importing.ready.slice(0, 5).map((r, i) => <tr key={i}><td>{r.name}</td><td className="np-num" dir="ltr" style={{ textAlign: 'end' }}>{r.phone}</td></tr>)}</tbody>
+                </table>
+              </div>
+            )}
+            <small style={{ color: 'var(--text-tertiary)' }}>الملف يكون CSV أو Excel، فيه عمود «الاسم» وعمود «الجوال» (أو أول عمودين بدون عناوين).</small>
+          </div>
+        )}
+      </Dialog>
 
       <Dialog open={newOpen} title="جهة اتصال جديدة" onClose={() => setNewOpen(false)}
         footer={<><Button variant="secondary" onClick={() => setNewOpen(false)}>إلغاء</Button><Button onClick={() => void createContact()} disabled={saving}>{saving ? 'جارِ الحفظ...' : 'إضافة'}</Button></>}>
