@@ -1,5 +1,6 @@
 import { ConversationsExperience } from './conversations/ConversationsExperience'
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Settings } from 'lucide-react'
 import { DashboardV2WhatsAppConnect, WhatsAppSettingsDialog } from './WhatsAppConnect'
 import { useWorkspace } from '@/context/WorkspaceContext'
@@ -16,12 +17,14 @@ export function DashboardV2Conversations() {
 export function DashboardV2WhatsApp() {
   const { isDemo, can, isOwner } = useWorkspace()
   const { status, loading, reload } = useWaStatus(isDemo)
-  const [settings, setSettings] = useState(false)
+  const [params, setParams] = useSearchParams()
+  const [settings, setSettings] = useState(params.get('connect') === '1' && isOwner)
+  const closeSettings = () => { setSettings(false); if (params.has('connect')) { const n = new URLSearchParams(params); n.delete('connect'); setParams(n, { replace: true }) } }
   if (loading && !status) return <NightPage><PageHead title="واتساب" /><Card style={{ padding: 16 }}><div className="np-empty">جارِ التحميل…</div></Card></NightPage>
   if (status?.can_reply) return (
     <>
       <ConversationsExperience mode="whatsapp" actions={isOwner ? <button type="button" className="nx-btn" onClick={() => setSettings(true)}><Settings /> الإعدادات</button> : null} />
-      <WhatsAppSettingsDialog open={settings} onClose={() => setSettings(false)} status={status} reload={reload} />
+      <WhatsAppSettingsDialog open={settings} onClose={closeSettings} status={status} reload={reload} />
     </>
   )
   if (can('integrations.manage')) return <DashboardV2WhatsAppConnect />

@@ -103,6 +103,20 @@ Deno.serve(async (req) => {
     return (await linkedCompany(agentId)) === companyId
   }
 
+  /** Points the agent's post-analysis callback at nabrah-followup (it counts live usage and sends follow-ups). */
+  async function ensureHook(agentId: string, owner: string): Promise<boolean> {
+    const secret = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')?.trim()
+    if (!secret) return false
+    const value = await followupSecret(secret, owner)
+    const current = await nabrah(`/agent/${agentId}`, key as string)
+    const hook = `${url}/functions/v1/nabrah-followup`
+    const cb = current?.post_analysis_callback
+    if (cb?.url === hook && Array.isArray(cb.parameters) && cb.parameters.some((p: { value?: string }) => p?.value === value)) return true
+    const next = { ...toBody(current ?? {}), post_analysis_callback: { url: hook, parameters: [{ name: 'X-Madar-Secret', location: 'header', data_type: 'string', value }] } }
+    await nabrah(`/agent/${agentId}`, key as string, { method: 'PUT', body: JSON.stringify(next) })
+    return true
+  }
+
   try {
     if (op === 'voices') return json({ voices: await nabrah('/agent/voices', key) })
 
@@ -110,7 +124,11 @@ Deno.serve(async (req) => {
       const fields = pick(body?.fields)
       if (!String(fields.name ?? '').trim()) return json({ error: 'name required' }, 400)
       const created = await nabrah('/agent', key, { method: 'POST', body: JSON.stringify({ agent_type: 'basic', stack: 'latest', languages: ['ar'], ...fields }) })
-      if (companyId && created?.agent_id) await db.from('agent_links').insert({ provider: 'nabrah', agent_id: String(created.agent_id), company_id: companyId, label: String(fields.name).slice(0, 80) })
+      if (companyId && created?.agent_id) {
+        await db.from('agent_links').insert({ provider: 'nabrah', agent_id: String(created.agent_id), company_id: companyId, label: String(fields.name).slice(0, 80) })
+        // So every call of a company's agent moves its usage the moment it is analysed.
+        await ensureHook(String(created.agent_id), companyId).catch(() => null)
+      }
       return json({ agent: created })
     }
 
@@ -142,17 +160,9 @@ Deno.serve(async (req) => {
 
     if (op === 'followup_hook') {
       // Points the agent's post-analysis callback at nabrah-followup. This replaces any callback set before.
-      const secret = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')?.trim()
-      if (!secret) return json({ error: 'server misconfigured' }, 500)
       const owner = await linkedCompany(agentId)
       if (!owner) return json({ error: 'agent not linked' }, 409)
-      const value = await followupSecret(secret, owner)
-      const current = await nabrah(`/agent/${agentId}`, key)
-      const hook = `${url}/functions/v1/nabrah-followup`
-      const cb = current?.post_analysis_callback
-      if (cb?.url === hook && Array.isArray(cb.parameters) && cb.parameters.some((p: { value?: string }) => p?.value === value)) return json({ ok: true })
-      const next = { ...toBody(current ?? {}), post_analysis_callback: { url: hook, parameters: [{ name: 'X-Madar-Secret', location: 'header', data_type: 'string', value }] } }
-      await nabrah(`/agent/${agentId}`, key, { method: 'PUT', body: JSON.stringify(next) })
+      if (!(await ensureHook(agentId, owner))) return json({ error: 'server misconfigured' }, 500)
       return json({ ok: true })
     }
 

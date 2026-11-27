@@ -378,7 +378,7 @@ export function DashboardV2Settings() {
               <div key={i.id} className="np-row">
                 <div className="np-row-main"><b>{i.name}</b></div>
                 <Chip tone={ok ? 'ok' : 'muted'}>{ok ? 'متصل' : 'غير متصل'}</Chip>
-                <Button variant="secondary" size="sm" onClick={() => navigate(`${base}/integrations`)}>{ok ? 'إدارة' : 'ربط'}</Button>
+                <Button variant="secondary" size="sm" onClick={() => navigate(i.provider === 'whatsapp' ? `${base}/whatsapp?connect=1` : `${base}/integrations`)}>{ok ? 'إدارة' : 'ربط'}</Button>
               </div>
             )
           })}

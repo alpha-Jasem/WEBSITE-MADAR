@@ -91,7 +91,9 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
   const [subscriptionEndDate, setSubscriptionEndDate] = useState<string | null>(null)
   const [usageCycleStart, setUsageCycleStart] = useState<string | null>(null)
   const [usageCycleEnd, setUsageCycleEnd] = useState<string | null>(null)
-  const [usageMetrics, setUsageMetrics] = useState<UsageMetric[]>([])
+  const [baseUsageMetrics, setUsageMetrics] = useState<UsageMetric[]>([])
+  // Voice minutes counted from the company's own agents' calls; moves live (see below).
+  const [voiceUsage, setVoiceUsage] = useState<{ minutes: number; limit: number } | null>(null)
   const [usageSummary, setUsageSummary] = useState<ClinicUsageSummary>({ bookings: 0, conversations: 0, afterHours: 0, lostOpportunities: 0, smartCallMinutes: 0, recoveredCalls: 0, humanHandoffs: 0 })
 
   const load = async () => {
@@ -270,6 +272,33 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     setPackageTypeState(p)
     localStorage.setItem(PACKAGE_KEY, p)
   }
+
+  // Live voice usage: counted by the nabrah-usage function (on open, every minute, and after each analysed call),
+  // written to clinic_os_usage, and pushed to every open screen through realtime.
+  useEffect(() => {
+    if (accountLoading || isDemo || !companyId) { setVoiceUsage(null); return }
+    let cancelled = false
+    const refresh = async () => {
+      if (document.visibilityState === 'hidden') return
+      const { data } = await supabase.functions.invoke('nabrah-usage', { body: {} })
+      if (!cancelled && data && !data.error && !data.none) setVoiceUsage({ minutes: Number(data.minutes) || 0, limit: Number(data.limit) || 0 })
+    }
+    void refresh()
+    const timer = setInterval(() => { void refresh() }, 60_000)
+    const channel = supabase.channel(`usage-${companyId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'clinic_os_usage', filter: `company_id=eq.${companyId}` }, (payload) => {
+        const row = payload.new as { smart_call_minutes_used?: number } | undefined
+        if (row && typeof row.smart_call_minutes_used === 'number') setVoiceUsage((v) => (v ? { ...v, minutes: row.smart_call_minutes_used as number } : v))
+      })
+      .subscribe()
+    return () => { cancelled = true; clearInterval(timer); void supabase.removeChannel(channel) }
+  }, [accountLoading, isDemo, companyId])
+
+  const usageMetrics = useMemo<UsageMetric[]>(() => {
+    if (!voiceUsage || voiceUsage.limit <= 0) return baseUsageMetrics
+    const calls: UsageMetric = { key: 'smart_calls', label: 'دقائق الاتصال الذكي', used: voiceUsage.minutes, limit: voiceUsage.limit }
+    return baseUsageMetrics.some((m) => m.key === 'smart_calls') ? baseUsageMetrics.map((m) => (m.key === 'smart_calls' ? calls : m)) : [...baseUsageMetrics, calls]
+  }, [baseUsageMetrics, voiceUsage])
 
   const modules = useMemo(() => resolveModules(businessType, moduleOverrides), [businessType, moduleOverrides])
   const hasModule = useCallback((id: ModuleId) => modules.has(id), [modules])

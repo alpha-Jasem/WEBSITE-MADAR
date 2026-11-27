@@ -42,7 +42,7 @@ export function DashboardV2WhatsAppAnalytics() {
           <EmptyState
             icon={<PlugZap size={20} />} title="لا يوجد اتصال واتساب"
             description="اربط رقم واتساب المنشأة بمساحة العمل لبدء عرض التحليلات."
-            action={<Button size="sm" onClick={() => navigate(`${base}/integrations`)}>ربط واتساب</Button>}
+            action={<Button size="sm" onClick={() => navigate(`${base}/whatsapp?connect=1`)}>ربط واتساب</Button>}
           />
         </Card>
       ) : (

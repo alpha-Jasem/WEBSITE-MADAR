@@ -1,21 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Bot } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { CLINIC_PLANS, getOverallUsage, getUsageMetrics, usagePercentage } from '@/lib/clinicOSProduct'
-import { supabase } from '@/lib/supabase'
 import { Card, Badge } from '@/dashboard/components/primitives'
 import { Skeleton } from '@/dashboard/components/uiExtras'
 import { NightPage, PageHead, CardTitle, Meter, Kpi } from './shared/night'
 
 const nf = new Intl.NumberFormat('en-US')
-const POLL_MS = 60_000
-
-interface AgentVoiceUsage {
-  character_count: number | null
-  character_limit: number | null
-  next_reset_unix: number | null
-  tier: string | null
-}
 
 function CircularGauge({ percent, size = 180, stroke = 16 }: { percent: number; size?: number; stroke?: number }) {
   const [hover, setHover] = useState(false)
@@ -61,43 +52,11 @@ export function DashboardV2MadarAgentUsage() {
     subscriptionEndDate, accountLoading,
   } = useWorkspace()
 
-  const [elevenlabs, setElevenlabs] = useState<AgentVoiceUsage | null>(null)
-  const [elevenlabsLoading, setElevenlabsLoading] = useState(!isDemo)
-  const [elevenlabsError, setElevenlabsError] = useState(false)
-
-  useEffect(() => {
-    if (accountLoading) return
-    if (isDemo) {
-      setElevenlabs({ character_count: 48200, character_limit: 100000, next_reset_unix: null, tier: 'creator' })
-      setElevenlabsLoading(false)
-      return
-    }
-    let cancelled = false
-    async function load() {
-      const { data, error } = await supabase.functions.invoke('clinic-usage', { body: {} })
-      if (cancelled) return
-      if (error || !data || data.error) {
-        setElevenlabsError(true)
-      } else {
-        setElevenlabsError(false)
-        if (data.elevenlabs) setElevenlabs(data.elevenlabs)
-      }
-      setElevenlabsLoading(false)
-    }
-    load()
-    const interval = setInterval(load, POLL_MS)
-    return () => { cancelled = true; clearInterval(interval) }
-  }, [isDemo, accountLoading])
-
   const plan = CLINIC_PLANS[packageType]
   const metrics = isDemo ? getUsageMetrics(packageType) : usageMetrics
-  const overall = isSubscribed || isDemo ? getOverallUsage(packageType, metrics) : 0
+  const overall = isSubscribed || isDemo || metrics.length > 0 ? getOverallUsage(packageType, metrics) : 0
 
-  const elevenlabsPercent = elevenlabs?.character_limit
-    ? Math.min(100, Math.round(((elevenlabs.character_count || 0) / elevenlabs.character_limit) * 100))
-    : null
-
-  const combinedPercent = elevenlabsPercent != null ? Math.max(overall, elevenlabsPercent) : overall
+  const combinedPercent = overall
 
   if (accountLoading) {
     return (
@@ -149,7 +108,7 @@ export function DashboardV2MadarAgentUsage() {
         <Card delay={0.08}>
           <CardTitle>تفاصيل الاستخدام هذا الشهر</CardTitle>
           {metrics.length === 0 && (
-            <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>تظهر الحدود فور تفعيل الاشتراك</div>
+            <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>يظهر الاستخدام أول ما ينربط وكيل صوتي بحسابك</div>
           )}
           {metrics.map((m) => {
             const p = usagePercentage(m)
@@ -162,33 +121,6 @@ export function DashboardV2MadarAgentUsage() {
             )
           })}
 
-          <div style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--border-default)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, marginBottom: 6 }}>
-              <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                استهلاك المكالمات الصوتية (حرف)
-                {elevenlabsLoading && <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>(جارِ التحديث...)</span>}
-              </span>
-              {!elevenlabsLoading && (
-                <Badge tone={elevenlabs?.character_limit ? 'success' : elevenlabsError ? 'danger' : 'neutral'}>
-                  {elevenlabs?.character_limit ? 'متصل بمدار ايجنت' : elevenlabsError ? 'تعذّر الاتصال' : 'بانتظار أول استخدام'}
-                </Badge>
-              )}
-            </div>
-            {elevenlabs?.character_limit && (
-              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>
-                {nf.format(elevenlabs.character_count || 0)} / {nf.format(elevenlabs.character_limit)}
-              </div>
-            )}
-            {elevenlabsPercent != null ? (
-              <div className="np-meter">
-                <i style={{ width: `${elevenlabsPercent}%`, ...(elevenlabsPercent >= 80 ? { background: elevenlabsPercent >= 100 ? 'var(--bad)' : 'var(--warn)' } : {}) }} />
-              </div>
-            ) : (
-              <div style={{ fontSize: 12, color: elevenlabsError ? 'var(--danger-500)' : 'var(--text-tertiary)' }}>
-                {elevenlabsError ? 'تعذّر جلب بيانات الحساب — تواصل مع فريق الدعم' : 'سيبدأ العرض فور أول استخدام لمدار ايجنت'}
-              </div>
-            )}
-          </div>
         </Card>
       </div>
 

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { MessageCircle, Calendar, Star, Phone, AtSign, Lock } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useIntegrations, toggleIntegration } from '@/lib/dashboardQueries'
@@ -41,6 +42,8 @@ const MANAGED = new Set(['whatsapp', 'voip'])
 
 export function DashboardV2Integrations() {
   const { companyId, isDemo, hasModule } = useWorkspace()
+  const navigate = useNavigate()
+  const base = isDemo ? '/demo-review' : '/dashboard'
   const { data: rawIntegrations, loading, refetch } = useIntegrations(companyId, isDemo)
   const [optimisticStatus, setOptimisticStatus] = useState<Record<string, IntegrationStatus>>({})
   // Integrations for sections this company doesn't have (e.g. Google reviews for a store) are hidden.
@@ -96,7 +99,9 @@ export function DashboardV2Integrations() {
                 </div>
                 <Chip tone={i.status === 'connected' ? 'ok' : 'muted'}>{i.status === 'connected' ? 'متصل' : 'غير متصل'}</Chip>
               </div>
-              {MANAGED.has(i.provider) ? (
+              {i.provider === 'whatsapp' ? (
+                <Button size="sm" variant="secondary" style={{ marginTop: 14, alignSelf: 'flex-start' }} onClick={() => navigate(`${base}/whatsapp?connect=1`)}>{i.status === 'connected' ? 'إدارة' : 'ربط'}</Button>
+              ) : MANAGED.has(i.provider) ? (
                 <div style={{ marginTop: 14, fontSize: 12, color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: 5 }}>
                   <Lock size={11} /> يُربط ويُدار من فريق مدار. للتغيير كلمنا.
                 </div>

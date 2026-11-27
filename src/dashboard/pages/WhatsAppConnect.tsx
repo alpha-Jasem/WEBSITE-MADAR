@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Inbox, MessageCircle, Copy, Check } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { Card, Button, Input, Dialog, Select, Switch } from '@/dashboard/components/primitives'
@@ -194,7 +195,10 @@ export function WhatsAppSettingsDialog({ open, onClose, status, reload }: { open
 export function DashboardV2WhatsAppConnect() {
   const { isDemo, isOwner } = useWorkspace()
   const { status, error, loading, reload } = useWaStatus(isDemo)
-  const [open, setOpen] = useState(false)
+  // Arriving from a "connect WhatsApp" button opens the steps straight away.
+  const [params, setParams] = useSearchParams()
+  const [open, setOpen] = useState(params.get('connect') === '1' && isOwner)
+  const close = () => { setOpen(false); if (params.has('connect')) { const n = new URLSearchParams(params); n.delete('connect'); setParams(n, { replace: true }) } }
   return (
     <NightPage>
       <style>{CSS}</style>
@@ -205,7 +209,7 @@ export function DashboardV2WhatsAppConnect() {
         <p className="wa-hint" style={{ maxWidth: 440 }}>{error || (loading && !status ? 'جارِ قراءة الحالة...' : 'اربط رقم واتساب نشاطك عشان تشوف محادثات عملائك هنا وترد عليهم، ويرد الوكيل تلقائيًا.')}</p>
         {isOwner ? <Button onClick={() => setOpen(true)}>ربط الصندوق</Button> : <p className="wa-hint">الربط لصاحب الحساب فقط.</p>}
       </Card>
-      <WhatsAppSettingsDialog open={open} onClose={() => setOpen(false)} status={status} reload={reload} />
+      <WhatsAppSettingsDialog open={open} onClose={close} status={status} reload={reload} />
     </NightPage>
   )
 }
