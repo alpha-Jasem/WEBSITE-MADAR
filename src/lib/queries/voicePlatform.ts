@@ -25,6 +25,14 @@ export async function voiceRead<T = unknown>(op: string, args: Record<string, un
   return data as T
 }
 
+/** Agent changes (create, update, copy, delete, voices) through the nabrah-agent function. */
+export async function agentWrite<T = unknown>(op: 'voices' | 'create' | 'update' | 'copy' | 'delete', args: Record<string, unknown> = {}): Promise<T> {
+  const { data, error } = await supabase.functions.invoke('nabrah-agent', { body: { op, ...args } })
+  if (error) throw error
+  if (data?.error) throw new Error(String(data.error))
+  return data as T
+}
+
 /** One read with loading / error state; re-runs when `key` changes. */
 export function useVoiceRead<T>(key: string | null, op: string, args: Record<string, unknown> = {}) {
   const [data, setData] = useState<T | null>(null)

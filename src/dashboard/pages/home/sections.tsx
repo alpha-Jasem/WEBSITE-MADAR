@@ -212,14 +212,14 @@ export function NeedsAction({ entries, total, busyId, onOpenCall, onReviewed, on
 
 // ─── hourly chart ───────────────────────────────────────────────────────────
 
-export function HourlyChart({ title, counts, startHour }: { title: string; counts: number[]; startHour: number }) {
+export function HourlyChart({ title, counts, startHour, spanWord = 'اليوم' }: { title: string; counts: number[]; startHour: number; spanWord?: string }) {
   const peak = Math.max(0, ...counts)
   const peakHour = peak > 0 ? startHour + counts.indexOf(peak) : null
   return (
     <div className="nx-card nx-chart">
       <h3>
         <BarChart3 size={17} style={{ color: 'var(--sky)' }} /> {title}
-        <span className="nx-aside">{peakHour != null ? `اليوم · الأزحم ${hourLabel(peakHour)}` : 'ما فيه نشاط اليوم للحين'}</span>
+        <span className="nx-aside">{peakHour != null ? `${spanWord} · الأزحم ${hourLabel(peakHour)}` : `ما فيه نشاط ${spanWord}`}</span>
       </h3>
       <div className="nx-bars" role="img" aria-label={`${title}: توزيع اليوم بالساعة`}>
         {counts.map((v, i) => {

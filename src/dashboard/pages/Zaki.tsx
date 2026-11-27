@@ -9,7 +9,7 @@ import type { Contact } from '@/lib/contacts'
 import type { Campaign } from '@/lib/campaigns'
 import type { AICallLog } from '@/types/dashboard'
 import { useToast } from '@/dashboard/components/uiExtras'
-import { NightPage, PageHead } from './shared/night'
+import { NightPage, NightStyles, PageHead } from './shared/night'
 import { fmtWhen } from './conversations/model'
 import './growth.css'
 
@@ -23,7 +23,7 @@ const SUGGESTIONS = [
 ]
 
 /** Zaki: ask about your own business in plain Arabic; answers come from read-only lookups of your data. */
-export function DashboardV2Zaki() {
+export function DashboardV2Zaki({ compact = false }: { compact?: boolean }) {
   const { isDemo, companyId, userName } = useWorkspace()
   const pushToast = useToast()
   const { calls } = useConversationData(companyId, isDemo)
@@ -86,12 +86,18 @@ export function DashboardV2Zaki() {
     } finally { setBusy(false) }
   }
 
+  const Wrap = compact ? CompactWrap : NightPage
   return (
-    <NightPage>
-      <PageHead icon={<Sparkles size={20} />} title="مدار" sub="اسأل عن شغلك بكلامك: المحادثات، العملاء، الحجوزات، الحملات والفريق. مدار يقرأ بياناتك فقط وما يرسل أو يعدّل شيء."
-        actions={<span className="gr-acts"><button type="button" className="gr-btn zk-hist-toggle" onClick={() => setHistOpen((o) => !o)}><History /> السجل</button><button type="button" className="gr-btn primary" onClick={fresh}><Plus /> سؤال جديد</button></span>} />
-      <div className="zk">
-        <aside className={`zk-hist${histOpen ? ' is-open' : ''}`} aria-label="محادثاتك مع مدار">
+    <Wrap>
+      {compact
+        ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '10px 12px', borderBottom: '1px solid var(--line)' }}>
+            <b style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--ink)', fontSize: 14 }}><Sparkles size={16} /> مدار</b>
+            <span className="gr-acts"><button type="button" className="gr-btn" onClick={() => setHistOpen((o) => !o)}><History /> السجل</button><button type="button" className="gr-btn primary" onClick={fresh}><Plus /> جديد</button></span>
+          </div>
+        : <PageHead icon={<Sparkles size={20} />} title="مدار" sub="اسأل عن شغلك بكلامك: المحادثات، العملاء، الحجوزات، الحملات والفريق. مدار يقرأ بياناتك فقط وما يرسل أو يعدّل شيء."
+            actions={<span className="gr-acts"><button type="button" className="gr-btn zk-hist-toggle" onClick={() => setHistOpen((o) => !o)}><History /> السجل</button><button type="button" className="gr-btn primary" onClick={fresh}><Plus /> سؤال جديد</button></span>} />}
+      <div className="zk" style={compact ? { gridTemplateColumns: 'minmax(0, 1fr)', height: 'auto', flex: 1, minHeight: 0, gap: 0 } : undefined}>
+        <aside className={`zk-hist${histOpen ? ' is-open' : ''}`} aria-label="محادثاتك مع مدار" style={compact && !histOpen ? { display: 'none' } : undefined}>
           <header><b style={{ fontSize: 13, color: 'var(--ink)' }}>محادثاتك</b></header>
           <ul>
             {threads.length === 0 && <li style={{ fontSize: 12, color: 'var(--dim)', padding: 8 }}>ما فيه محادثات سابقة.</li>}
@@ -132,8 +138,13 @@ export function DashboardV2Zaki() {
           </form>
         </section>
       </div>
-    </NightPage>
+    </Wrap>
   )
+}
+
+/** The floating panel body: same chat, without the page chrome. */
+function CompactWrap({ children }: { children: React.ReactNode }) {
+  return <div className="np-page" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0 }}><NightStyles />{children}</div>
 }
 
 // ─── tour answers ───────────────────────────────────────────────────────────────

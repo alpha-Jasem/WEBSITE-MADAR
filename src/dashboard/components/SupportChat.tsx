@@ -1,9 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { MessageCircle, X, Send, Sparkles } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { supabase } from '@/lib/supabase'
 import { useOnOpenSupportRequest } from './shellActions'
+
+// The corner chat holds two tabs: the مدار assistant (answers from the company's own data)
+// and the support chat (questions about the account and the product).
+const Assistant = lazy(() => import('@/dashboard/pages/Zaki').then((m) => ({ default: () => <m.DashboardV2Zaki compact /> })))
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -16,6 +20,7 @@ export function SupportChat() {
   const location = useLocation()
   const { companyId, isDemo } = useWorkspace()
   const [open, setOpen] = useState(false)
+  const [tab, setTab] = useState<'assistant' | 'support'>('assistant')
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: 'assistant', content: 'أهلاً! أنا دعم مدار الذكي. اسألني عن أي شي بخصوص حسابك — الحجوزات، الاستخدام، أو أي مشكلة تواجهك.' },
   ])
@@ -29,7 +34,7 @@ export function SupportChat() {
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
-  }, [messages, open])
+  }, [messages, open, tab])
 
   async function send() {
     const text = input.trim()
@@ -65,6 +70,11 @@ export function SupportChat() {
     }
   }
 
+  const tabStyle = (on: boolean) => ({
+    flex: 1, border: 0, background: on ? 'var(--raise)' : 'none', color: on ? 'var(--text-primary)' : 'var(--text-tertiary)',
+    font: 'inherit', fontSize: 12.5, fontWeight: 600, padding: '7px 10px', borderRadius: 8, cursor: 'pointer',
+  })
+
   return (
     <div className="dv2-floating" style={{ position: 'fixed', bottom: 24, left: 24, zIndex: 1400 }}>
       <style>{`
@@ -82,57 +92,67 @@ export function SupportChat() {
       `}</style>
       {open && (
         <div className="dv2-chat-panel" style={{
-          width: 340, height: 460, background: 'var(--surface-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)',
+          width: 'min(400px, calc(100vw - 48px))', height: 'min(580px, calc(100dvh - 120px))', background: 'var(--surface-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)',
           border: '1px solid var(--border-default)', display: 'flex', flexDirection: 'column', marginBottom: 12, overflow: 'hidden',
         }}>
-          <div style={{
-            padding: '12px 16px', background: 'var(--panel-2)', color: 'var(--text-primary)', borderBottom: '1px solid var(--border-default)',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Sparkles size={16} />
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 13 }}>دعم مدار الذكي</div>
-                <div style={{ fontSize: 10.5, color: 'var(--ok)' }}>متاح الآن</div>
-              </div>
-            </div>
-            <span onClick={() => setOpen(false)} style={{ cursor: 'pointer' }}><X size={17} /></span>
+          <div role="tablist" style={{ display: 'flex', gap: 4, padding: 6, borderBottom: '1px solid var(--border-default)', background: 'var(--panel-2)' }}>
+            <button type="button" role="tab" aria-selected={tab === 'assistant'} style={tabStyle(tab === 'assistant')} onClick={() => setTab('assistant')}>مدار</button>
+            <button type="button" role="tab" aria-selected={tab === 'support'} style={tabStyle(tab === 'support')} onClick={() => setTab('support')}>الدعم</button>
           </div>
-          <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {messages.map((m, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                <div style={{
-                  maxWidth: '80%', padding: '9px 12px', borderRadius: 'var(--radius-lg)', fontSize: 13, lineHeight: 1.6,
-                  background: m.role === 'user' ? 'var(--pri-bg)' : 'var(--raise)',
-                  color: m.role === 'user' ? 'var(--pri-fg)' : 'var(--text-primary)',
-                }}>{m.content}</div>
-              </div>
-            ))}
-            {sending && (
-              <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>جارِ الكتابة...</div>
-            )}
-          </div>
-          {remaining != null && remaining < 15 && (
-            <div style={{ fontSize: 10.5, color: 'var(--warning-500)', padding: '0 14px 6px', textAlign: 'center' }}>
-              متبقٍ {remaining} رسالة اليوم
+
+          {tab === 'assistant' ? (
+            <div style={{ flex: 1, minHeight: 0 }}>
+              <Suspense fallback={<div style={{ padding: 16, fontSize: 13, color: 'var(--text-tertiary)' }}>جارِ التحميل...</div>}>
+                <Assistant />
+              </Suspense>
             </div>
+          ) : (
+            <>
+              <div style={{ padding: '10px 16px', color: 'var(--text-primary)', borderBottom: '1px solid var(--border-default)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Sparkles size={16} />
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 13 }}>دعم مدار الذكي</div>
+                  <div style={{ fontSize: 10.5, color: 'var(--ok)' }}>متاح الآن</div>
+                </div>
+              </div>
+              <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {messages.map((m, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                    <div style={{
+                      maxWidth: '80%', padding: '9px 12px', borderRadius: 'var(--radius-lg)', fontSize: 13, lineHeight: 1.6,
+                      background: m.role === 'user' ? 'var(--pri-bg)' : 'var(--raise)',
+                      color: m.role === 'user' ? 'var(--pri-fg)' : 'var(--text-primary)',
+                    }}>{m.content}</div>
+                  </div>
+                ))}
+                {sending && (
+                  <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>جارِ الكتابة...</div>
+                )}
+              </div>
+              {remaining != null && remaining < 15 && (
+                <div style={{ fontSize: 10.5, color: 'var(--warning-500)', padding: '0 14px 6px', textAlign: 'center' }}>
+                  متبقٍ {remaining} رسالة اليوم
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 8, padding: 12, borderTop: '1px solid var(--border-default)' }}>
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') send() }}
+                  placeholder="اكتب رسالتك..."
+                  aria-label="رسالتك للدعم"
+                  style={{ flex: 1, padding: '9px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-strong)', fontSize: 13, outline: 'none' }}
+                />
+                <button
+                  type="button" onClick={send} disabled={sending} aria-label="إرسال"
+                  style={{
+                    width: 36, height: 36, borderRadius: 'var(--radius-md)', background: 'var(--pri-bg)', color: 'var(--pri-fg)',
+                    border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0,
+                  }}
+                ><Send size={15} /></button>
+              </div>
+            </>
           )}
-          <div style={{ display: 'flex', gap: 8, padding: 12, borderTop: '1px solid var(--border-default)' }}>
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') send() }}
-              placeholder="اكتب رسالتك..."
-              style={{ flex: 1, padding: '9px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-strong)', fontSize: 13, outline: 'none' }}
-            />
-            <button
-              onClick={send} disabled={sending}
-              style={{
-                width: 36, height: 36, borderRadius: 'var(--radius-md)', background: 'var(--pri-bg)', color: 'var(--pri-fg)',
-                border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0,
-              }}
-            ><Send size={15} /></button>
-          </div>
         </div>
       )}
       <div className={open ? undefined : 'dv2-chat-launcher'} style={{ position: 'relative', width: 44, height: 44, marginInlineStart: 'auto' }}>
@@ -140,7 +160,7 @@ export function SupportChat() {
           className="dv2-agent-btn"
           role="button"
           tabIndex={0}
-          aria-label={open ? 'إغلاق الدعم' : 'دعم مدار'}
+          aria-label={open ? 'إغلاق' : 'مدار والدعم'}
           onClick={() => setOpen((v) => !v)}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen((v) => !v) } }}
           style={{

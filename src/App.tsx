@@ -54,7 +54,8 @@ const MfaChallengePage     = lazy(() => import('./pages/clinicOS/MfaChallenge').
 
 // The dashboard, shared by real tenants and the /demo-review sales tour.
 const DashboardV2Layout        = lazy(() => import('./dashboard/components/DashboardV2Layout').then(m => ({ default: m.DashboardV2Layout })))
-const DashboardV2Home          = lazy(() => import('./dashboard/pages/Home').then(m => ({ default: m.DashboardV2Home })))
+// The overview follows the reference layout (workspace stats, call performance); the older home stays in Home.tsx, unrouted.
+const DashboardV2Home          = lazy(() => import('./dashboard/pages/WorkspaceOverview').then(m => ({ default: m.DashboardV2WorkspaceOverview })))
 const DashboardV2Bookings      = lazy(() => import('./dashboard/pages/Bookings').then(m => ({ default: m.DashboardV2Bookings })))
 const DashboardV2Customers      = lazy(() => import('./dashboard/pages/Customers').then(m => ({ default: m.DashboardV2Customers })))
 const DashboardV2Conversations = lazy(() => import('./dashboard/pages/Conversations').then(m => ({ default: m.DashboardV2Conversations })))
@@ -75,6 +76,8 @@ const DashboardV2Tickets       = lazy(() => import('./dashboard/pages/Tickets').
 const DashboardV2CallsAnalytics    = lazy(() => import('./dashboard/pages/CallsAnalytics').then(m => ({ default: m.DashboardV2CallsAnalytics })))
 const DashboardV2WhatsAppAnalytics = lazy(() => import('./dashboard/pages/WhatsAppAnalytics').then(m => ({ default: m.DashboardV2WhatsAppAnalytics })))
 const DashboardV2Agents            = lazy(() => import('./dashboard/pages/Agents').then(m => ({ default: m.DashboardV2Agents })))
+const DashboardV2AgentsList        = lazy(() => import('./dashboard/pages/AgentsStudio').then(m => ({ default: m.DashboardV2AgentsList })))
+const DashboardV2AgentEditor       = lazy(() => import('./dashboard/pages/AgentsStudio').then(m => ({ default: m.DashboardV2AgentEditor })))
 const DashboardV2KnowledgeBase      = lazy(() => import('./dashboard/pages/KnowledgeBase').then(m => ({ default: m.DashboardV2KnowledgeBase })))
 const DashboardV2Macros           = lazy(() => import('./dashboard/pages/Macros').then(m => ({ default: m.DashboardV2Macros })))
 const DashboardV2TeamChat         = lazy(() => import('./dashboard/pages/TeamChat').then(m => ({ default: m.DashboardV2TeamChat })))
@@ -94,7 +97,8 @@ const DashboardV2ApiReference      = lazy(() => import('./dashboard/pages/VoiceP
 const DashboardV2Tools             = lazy(() => import('./dashboard/pages/AgentConfigPages').then(m => ({ default: m.DashboardV2Tools })))
 const DashboardV2AnalysisGroups    = lazy(() => import('./dashboard/pages/AgentConfigPages').then(m => ({ default: m.DashboardV2AnalysisGroups })))
 const DashboardV2InboundServices   = lazy(() => import('./dashboard/pages/AgentConfigPages').then(m => ({ default: () => <m.DashboardV2VoiceServices direction="inbound" /> })))
-const DashboardV2OutboundServices  = lazy(() => import('./dashboard/pages/AgentConfigPages').then(m => ({ default: () => <m.DashboardV2VoiceServices direction="outbound" /> })))
+// Outbound: the numbers, with a «الحملات» button that opens the call campaigns in a side drawer.
+const DashboardV2OutboundServices  = lazy(() => Promise.all([import('./dashboard/pages/AgentConfigPages'), import('./dashboard/pages/VoicePlatformPages')]).then(([a, b]) => ({ default: () => <b.OutboundWithCampaigns renderServices={(extra) => <a.DashboardV2VoiceServices direction="outbound" headExtra={extra} />} /> })))
 const DashboardV2AgentAnalytics    = lazy(() => import('./dashboard/pages/AgentAnalytics').then(m => ({ default: m.DashboardV2AgentAnalytics })))
 
 // The dashboard is mounted twice — once for real tenants and once for the
@@ -123,7 +127,11 @@ const dashboardChildRoutes = (
     <Route path="orders" element={<ModuleRoute module="orders"><DashboardV2Orders /></ModuleRoute>} />
     <Route path="calls-analytics" element={<ModuleRoute module="voice"><DashboardV2CallsAnalytics /></ModuleRoute>} />
     <Route path="whatsapp-analytics" element={<ModuleRoute module="conversations"><DashboardV2WhatsAppAnalytics /></ModuleRoute>} />
-    <Route path="agents" element={<PermissionRoute permission="agent.settings"><DashboardV2Agents /></PermissionRoute>} />
+    <Route path="agents" element={<PermissionRoute permission="agent.settings"><DashboardV2AgentsList /></PermissionRoute>} />
+    <Route path="agents/:agentId/edit" element={<PermissionRoute permission="agent.settings"><DashboardV2AgentEditor /></PermissionRoute>} />
+    <Route path="agents/new" element={<PermissionRoute permission="agent.settings"><DashboardV2AgentEditor /></PermissionRoute>} />
+    {/* The older channel/hours settings page, off the menu, still reachable by link. */}
+    <Route path="agent-settings" element={<PermissionRoute permission="agent.settings"><DashboardV2Agents /></PermissionRoute>} />
     <Route path="knowledge-base" element={<ModuleRoute module="knowledge_base"><DashboardV2KnowledgeBase /></ModuleRoute>} />
     <Route path="outreach" element={<ModuleRoute module="conversations"><PermissionRoute permission="outreach.send"><DashboardV2Outreach /></PermissionRoute></ModuleRoute>} />
     <Route path="macros" element={<ModuleRoute module="conversations"><DashboardV2Macros /></ModuleRoute>} />

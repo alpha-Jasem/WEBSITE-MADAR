@@ -253,29 +253,27 @@ export function DashboardV2Layout() {
 
   const base = isDemo ? '/demo-review' : '/dashboard'
   // Few groups, named by what the owner is doing. Rarely used pages sit in folded groups (they open by themselves when one is active).
-  const ALL_NAV_GROUPS: { title: string; fold?: boolean; items: NavItem[] }[] = [
+  const ALL_NAV_GROUPS: { title: string; fold?: boolean; pin?: boolean; items: NavItem[] }[] = [
     // Same grouping and order as the reference platform (workspace, build, interact, integrations);
     // what Madar adds on top sits in the folded groups at the end.
+    { title: 'مساحات عملي', items: [
+      { label: 'مساحات عملي', short: 'المساحة', path: `${base}/workspace-settings`, icon: <Layers size={16} /> },
+    ] },
     { title: 'مساحة العمل', items: [
       { label: 'نظرة عامة', short: 'الرئيسية', path: base, icon: <LayoutDashboard size={16} /> },
       { label: 'تحليلات المكالمات', short: 'المكالمات', path: `${base}/calls-analytics`, icon: <BarChart3 size={16} />, module: 'voice' },
       { label: 'تحليلات واتساب', short: 'واتساب', path: `${base}/whatsapp-analytics`, icon: <MessageCircle size={16} />, module: 'conversations' },
-      { label: 'مدار', path: `${base}/zaki`, icon: <WandSparkles size={16} /> },
     ] },
     { title: 'البناء', items: [
       { label: 'الوكلاء', path: `${base}/agents`, icon: <Bot size={16} />, perm: 'agent.settings' },
-      { label: 'وكلاء الصوت', short: 'الصوت', path: `${base}/voice-agents`, icon: <Bot size={16} />, module: 'voice' },
       { label: 'الأدوات', path: `${base}/tools`, icon: <Wrench size={16} />, module: 'voice', perm: 'agent.settings' },
       { label: 'قاعدة المعرفة', short: 'المعرفة', path: `${base}/knowledge-base`, icon: <BookOpen size={16} />, module: 'knowledge_base' },
       { label: 'مجموعات التحليل', short: 'التحليل', path: `${base}/analysis-groups`, icon: <ListChecks size={16} />, module: 'voice', perm: 'agent.settings' },
       { label: 'المتابعات', path: `${base}/reminders`, icon: <BellRing size={16} />, module: 'reminders' },
-      { label: 'تحليلات الوكيل', short: 'التحليلات', path: `${base}/agent-analytics`, icon: <Sparkles size={16} />, module: 'voice' },
     ] },
     { title: 'القنوات', items: [
       { label: 'خدمات الوارد', short: 'الوارد', path: `${base}/inbound-services`, icon: <PhoneIncoming size={16} />, module: 'voice', perm: 'integrations.manage' },
       { label: 'خدمات الصادر', short: 'الصادر', path: `${base}/outbound-services`, icon: <PhoneOutgoing size={16} />, module: 'voice', perm: 'integrations.manage' },
-      { label: 'حملات الاتصال', short: 'الحملات', path: `${base}/outbound-campaigns`, icon: <Megaphone size={16} />, module: 'voice', perm: 'integrations.manage' },
-      { label: 'مكالمات الويب', short: 'الويب', path: `${base}/web-calls`, icon: <Mic size={16} />, module: 'voice' },
     ] },
     { title: 'التفاعل', items: [
       { label: 'جهات الاتصال', short: 'العملاء', path: `${base}/patients`, icon: <Users size={16} />, module: 'customers' },
@@ -286,28 +284,12 @@ export function DashboardV2Layout() {
     ] },
     { title: 'التكاملات', items: [
       { label: 'الإضافات', path: `${base}/site-widget`, icon: <Globe size={16} />, perm: 'integrations.manage' },
-      { label: 'المطورون والأتمتة', short: 'المطورون', path: `${base}/connect`, icon: <Zap size={16} />, perm: 'integrations.manage' },
-      { label: 'مرجع API', short: 'API', path: `${base}/api-reference`, icon: <Code2 size={16} />, perm: 'integrations.manage' },
-      { label: 'التكاملات', path: `${base}/integrations`, icon: <Plug size={16} />, perm: 'integrations.manage' },
     ] },
-    { title: 'إضافات مدار', fold: true, items: [
-      { label: 'المراقبة الحية', short: 'مباشر', path: `${base}/live`, icon: <Radio size={16} />, module: 'conversations' },
-      { label: 'محادثة الفريق', short: 'الفريق', path: `${base}/team-chat`, icon: <UsersRound size={16} /> },
-      { label: bookingsLabel(businessType), path: `${base}/bookings`, icon: <CalendarDays size={16} />, module: 'bookings' },
-      { label: 'الطلبات', path: `${base}/orders`, icon: <ShoppingBag size={16} />, module: 'orders' },
-      { label: 'الحملات', path: `${base}/campaigns`, icon: <Megaphone size={16} />, module: 'conversations', perm: 'outreach.send' },
-      { label: 'التقارير', path: `${base}/reports`, icon: <BarChart3 size={16} />, module: 'reports' },
-      { label: 'الإيرادات', path: `${base}/revenue`, icon: <Wallet size={16} />, module: 'revenue' },
-      { label: 'تقييمات Google', path: `${base}/reviews`, icon: <Star size={16} />, module: 'reviews' },
-      { label: 'الماكرو', path: `${base}/macros`, icon: <Zap size={16} />, module: 'conversations' },
-      { label: 'الشرائح', path: `${base}/segments`, icon: <Layers size={16} />, module: 'customers' },
-      { label: 'قوالب واتساب والإرسال', short: 'القوالب', path: `${base}/outreach`, icon: <Send size={16} />, module: 'conversations', perm: 'outreach.send' },
-      { label: 'نماذج الموقع', short: 'النماذج', path: `${base}/forms`, icon: <FileInput size={16} />, module: 'customers', perm: 'integrations.manage' },
-      { label: 'الخدمات', path: `${base}/services`, icon: <Wrench size={16} />, module: 'services' },
+    { title: '', pin: true, items: [
+      { label: 'المطورون', short: 'المطورون', path: `${base}/connect`, icon: <Code2 size={16} />, perm: 'integrations.manage' },
     ] },
     { title: 'الإعدادات', fold: true, items: [
       { label: 'الفريق والصلاحيات', short: 'الفريق', path: `${base}/team`, icon: <UsersRound size={16} />, perm: 'team.manage' },
-      { label: 'إعدادات مساحة العمل', short: 'المساحة', path: `${base}/workspace-settings`, icon: <Settings size={16} /> },
       { label: 'الإعدادات', path: `${base}/settings`, icon: <Settings size={16} /> },
     ] },
   ]
@@ -379,7 +361,7 @@ export function DashboardV2Layout() {
           {!collapsed && <span dir="ltr">Madar software</span>}
         </div>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {NAV_GROUPS.map((group, gi) => {
+          {NAV_GROUPS.filter((g) => !g.pin).map((group, gi) => {
             const folded = !!group.fold && !collapsed && !openFolds.has(group.title) && !group.items.some((it) => isActive(it.path))
             return (
               <div key={group.title || gi} style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -394,8 +376,14 @@ export function DashboardV2Layout() {
           })}
         </nav>
 
+        {NAV_GROUPS.some((g) => g.pin) && (
+          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {NAV_GROUPS.filter((g) => g.pin).flatMap((g) => g.items).map(navButton)}
+          </div>
+        )}
+
         {topMetric && !collapsed && (
-          <div className="dv2-side-foot" style={{ marginTop: 'auto' }}>
+          <div className="dv2-side-foot" style={{ marginTop: NAV_GROUPS.some((g) => g.pin) ? undefined : 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
               <span>{topMetric.label}</span>
               <b dir="ltr">{topMetric.used.toLocaleString('en')} / {topMetric.limit.toLocaleString('en')}</b>

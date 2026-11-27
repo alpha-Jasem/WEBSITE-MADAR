@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Megaphone, Mic, PhoneOff, Plus, Rocket, Trash2, Code2, Copy } from 'lucide-react'
+import { Megaphone, Mic, PhoneOff, Plus, Rocket, Trash2, Code2, Copy, X } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { supabase } from '@/lib/supabase'
 import { useVoiceRead, type VoiceAgent, type VoiceCallSummary } from '@/lib/queries/voicePlatform'
@@ -33,6 +33,33 @@ function useAgents() {
 
 // ---------------------------------------------------------------- outbound campaigns
 type CampaignDraft = { name: string; agent_id: string; call_from: string; numbersText: string }
+
+/** The outbound services page with a «الحملات» button that opens the campaigns in a side drawer. */
+export function OutboundWithCampaigns({ renderServices }: { renderServices: (headExtra: React.ReactNode) => React.ReactNode }) {
+  const [open, setOpen] = useState(false)
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+  return (
+    <>
+      {renderServices(<Button variant="secondary" onClick={() => setOpen(true)}><Megaphone size={14} /> الحملات</Button>)}
+      {open && (
+        <div role="presentation" onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', zIndex: 1300 }}>
+          <aside role="dialog" aria-modal="true" aria-label="الحملات" onClick={(e) => e.stopPropagation()}
+            style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 'min(720px, 100vw)', background: 'var(--surface-card, var(--panel))', borderInlineEnd: '1px solid var(--border-default)', overflowY: 'auto', boxShadow: 'var(--shadow-lg)' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '10px 12px 0' }}>
+              <button type="button" className="gr-btn" aria-label="إغلاق" onClick={() => setOpen(false)}><X /></button>
+            </div>
+            <DashboardV2CallCampaigns />
+          </aside>
+        </div>
+      )}
+    </>
+  )
+}
 
 /** Outbound campaigns: one agent calls a list of numbers from one of the company's outbound lines. */
 export function DashboardV2CallCampaigns() {
@@ -153,6 +180,49 @@ function CampaignResults({ campaign }: { campaign: VoiceCampaign }) {
 }
 
 // ---------------------------------------------------------------- web calls
+/** A browser call to one voice agent: start(agentId) asks for the mic and connects; hangUp() ends it. */
+export function useWebCall() {
+  const { isDemo } = useWorkspace()
+  const pushToast = useToast()
+  const [state, setState] = useState<'idle' | 'connecting' | 'live'>('idle')
+  const [agentId, setLive] = useState<string | null>(null)
+  const roomRef = useRef<{ disconnect: () => Promise<void> | void } | null>(null)
+  const audioEls = useRef<HTMLMediaElement[]>([])
+
+  async function hangUp() {
+    try { await roomRef.current?.disconnect() } catch { /* already gone */ }
+    roomRef.current = null
+    audioEls.current.forEach((el) => el.remove()); audioEls.current = []
+    setState('idle'); setLive(null)
+  }
+  useEffect(() => () => { void hangUp() }, [])
+
+  async function start(id: string) {
+    if (isDemo) { pushToast({ kind: 'info', title: 'المكالمة التجريبية تشتغل في حسابك الحقيقي فقط' }); return }
+    if (!id || state !== 'idle') return
+    setState('connecting'); setLive(id)
+    try {
+      const { data, error } = await supabase.functions.invoke('nabrah-call', { body: { op: 'web_call', agent_id: id } })
+      if (error || !data?.token || !data?.url) throw new Error('token')
+      const { Room, RoomEvent, Track } = await import('livekit-client')
+      const room = new Room()
+      room.on(RoomEvent.TrackSubscribed, (track) => {
+        if (track.kind !== Track.Kind.Audio) return
+        const el = track.attach(); el.style.display = 'none'; document.body.appendChild(el); audioEls.current.push(el)
+      })
+      room.on(RoomEvent.Disconnected, () => { void hangUp() })
+      await room.connect(data.url, data.token)
+      await room.localParticipant.setMicrophoneEnabled(true)
+      roomRef.current = room
+      setState('live')
+    } catch {
+      pushToast({ kind: 'danger', title: 'ما قدرنا نبدأ المكالمة', description: 'تأكد إن المتصفح سمح بالمايكروفون' })
+      await hangUp()
+    }
+  }
+  return { state, agentId, start, hangUp }
+}
+
 /** Web calls: talk to a voice agent from the browser, the same experience a site visitor gets from the call widget. */
 export function DashboardV2WebCalls() {
   const { isDemo } = useWorkspace()

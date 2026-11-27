@@ -210,7 +210,7 @@ type ServiceDraft = { id?: string; name: string; phone: string; provider: string
 const STATUS_TONE: Record<ServiceStatus, 'success' | 'warning' | 'neutral'> = { active: 'success', pending: 'warning', paused: 'neutral' }
 
 /** Call services: the numbers a company uses for incoming calls (forwarded to the agent) and outgoing calls (campaigns, instant calls). */
-export function DashboardV2VoiceServices({ direction }: { direction: 'inbound' | 'outbound' }) {
+export function DashboardV2VoiceServices({ direction, headExtra }: { direction: 'inbound' | 'outbound'; headExtra?: ReactNode }) {
   const { companyId, isDemo, can } = useWorkspace()
   const { items: all, available, loading } = useVoiceServices(companyId, isDemo)
   const items = all.filter((s) => s.direction === direction)
@@ -231,7 +231,7 @@ export function DashboardV2VoiceServices({ direction }: { direction: 'inbound' |
     <ConfigPage
       title={inbound ? 'خدمات الوارد' : 'خدمات الصادر'}
       sub={inbound ? 'أرقام الاتصال التي يستقبل عليها الوكيل مكالمات عملائك، مثل رقم 9200 محوّل إلى الوكيل' : 'خطوط الاتصال التي يتصل منها الوكيل بعملائك، للحملات والاتصال الفوري'}
-      createLabel="خدمة جديدة" available={available} loading={loading} items={items} canEdit={can('integrations.manage')} onNew={() => setDraft(empty)}
+      createLabel="خدمة جديدة" available={available} loading={loading} items={items} canEdit={can('integrations.manage')} onNew={() => setDraft(empty)} extraActions={headExtra}
       emptyIcon={inbound ? <PhoneIncoming size={20} /> : <PhoneOutgoing size={20} />}
       emptyTitle={inbound ? 'ما عندك خدمات وارد' : 'ما عندك خدمات صادر'} emptyText="سجّل رقمك هنا لنتابع ربطه بالوكيل معك."
       renderCard={(s: VoiceService) => (
