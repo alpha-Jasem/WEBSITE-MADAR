@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Search, Users, UserCheck } from 'lucide-react'
+import { Download, LayoutGrid, List, Plus, Search, Users, UserCheck } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
-import { useCustomers, updateCustomer } from '@/lib/dashboardQueries'
+import { createCustomer, useCustomers, updateCustomer } from '@/lib/dashboardQueries'
 import { useConversationData } from '@/lib/queries/conversations'
 import { buildContacts } from './AgentUsers'
 import { addToStaticSegment, saveSegment, segmentMembers, useContacts, useSegments } from '@/lib/queries/segments'
@@ -19,6 +19,12 @@ import { EmptyState, SkeletonRows, useToast, Avatar, SortableHeader, ContactActi
 type Row = Customer & { fromConversation?: boolean; openId?: string }
 
 type SortKey = 'name' | 'last_visit_at' | 'total_visits'
+const SORTS: { value: string; label: string; key: SortKey; dir: 1 | -1 }[] = [
+  { value: 'recent', label: 'آخر نشاط (الأحدث)', key: 'last_visit_at', dir: -1 },
+  { value: 'oldest', label: 'آخر نشاط (الأقدم)', key: 'last_visit_at', dir: 1 },
+  { value: 'name', label: 'الاسم (أ–ي)', key: 'name', dir: 1 },
+  { value: 'most', label: 'الأكثر تواصلًا', key: 'total_visits', dir: -1 },
+]
 
 const EDIT_TYPE_OPTIONS = [
   { value: 'new', label: 'جديد' },
@@ -71,6 +77,9 @@ export function DashboardV2Customers() {
   const [q, setQ] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'last_visit_at', dir: -1 })
+  const [view, setView] = useState<'cards' | 'table'>('table')
+  const [newOpen, setNewOpen] = useState(false)
+  const [draft, setDraft] = useState({ name: '', phone: '' })
   const [selected, setSelected] = useState<Customer | null>(null)
   const [form, setForm] = useState({ name: '', phone: '', last_visit_at: '', total_visits: 0, patient_type: 'new' as Customer['patient_type'], stage_id: '', custom: {} as Record<string, string> })
   const [saving, setSaving] = useState(false)
@@ -185,6 +194,34 @@ export function DashboardV2Customers() {
     } finally { setBulkSaving(false) }
   }
 
+  async function createContact() {
+    const name = draft.name.trim()
+    const phone = draft.phone.trim()
+    if (!name || !phone) { pushToast({ kind: 'danger', title: 'اكتب الاسم والجوال' }); return }
+    if (isDemo) { pushToast({ kind: 'success', title: 'انضافت جهة الاتصال (عرض تجريبي)' }); setNewOpen(false); return }
+    setSaving(true)
+    try {
+      await createCustomer({ company_id: companyId || undefined, name, phone, patient_type: 'new' })
+      await refetch()
+      pushToast({ kind: 'success', title: 'انضافت جهة الاتصال' })
+      setNewOpen(false); setDraft({ name: '', phone: '' })
+    } catch (e) {
+      pushToast({ kind: 'danger', title: 'تعذّر الإضافة', description: e instanceof Error ? e.message : undefined })
+    } finally { setSaving(false) }
+  }
+
+  function exportCsv() {
+    const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`
+    const head = ['الاسم', 'الجوال', 'آخر نشاط', visitsLabel, 'النوع', 'المرحلة']
+    const lines = shown.map((p) => [p.name, p.phone, p.last_visit_at ? p.last_visit_at.split('T')[0] : '', p.total_visits, p.patient_type === 'returning' ? 'عائد' : 'جديد', p.stage_id ? stageById.get(p.stage_id)?.label : ''].map(esc).join(','))
+    const blob = new Blob(['﻿' + [head.map(esc).join(','), ...lines].join('\n')], { type: 'text/csv;charset=utf-8' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob); a.download = `contacts-${new Date().toISOString().slice(0, 10)}.csv`; a.click()
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000)
+  }
+
+  const openRow = (p: Row) => (p.fromConversation ? navigate(`${base}/conversations?id=${encodeURIComponent(p.openId || '')}`) : setSelected(p))
+
   function toggleSort(key: SortKey) {
     setSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: 1 }))
   }
@@ -222,11 +259,20 @@ export function DashboardV2Customers() {
   return (
     <NightPage>
       <PageHead
-        title="العملاء"
-        sub={loading ? 'جارِ التحميل…' : `${fmtNum(rows.length)} عميل · ${fmtNum(returning)} عائد · كل من تواصل مع الوكيل الذكي يُحفظ هنا تلقائيًا`}
+        title="جهات الاتصال"
+        sub={loading ? 'جارِ التحميل…' : `أدر جهات اتصال مساحة العمل واحتفظ بسياق التواصل في مكان واحد. ${fmtNum(returning)} عائد، وكل من تواصل مع الوكيل الذكي يُحفظ هنا تلقائيًا.`}
+        actions={<>
+          <Button variant="secondary" disabled={shown.length === 0} onClick={exportCsv}><Download size={14} /> تصدير</Button>
+          <Button onClick={() => setNewOpen(true)}><Plus size={14} /> جهة اتصال جديدة</Button>
+        </>}
       />
 
       <div className="np-filters">
+        <b className="np-num" style={{ fontSize: 14 }}>{fmtNum(rows.length)} جهات اتصال</b>
+        <Select options={SORTS.map((s) => ({ value: s.value, label: s.label }))} style={{ width: 190 }}
+          value={SORTS.find((s) => s.key === sort.key && s.dir === sort.dir)?.value ?? ''}
+          onChange={(e) => { const s = SORTS.find((x) => x.value === e.target.value); if (s) setSort({ key: s.key, dir: s.dir }) }} />
+        <Seg label="طريقة العرض" value={view} onChange={setView} options={[['cards', <span key="c" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><LayoutGrid size={13} /> عرض بطاقات</span>], ['table', <span key="t" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><List size={13} /> عرض جدول</span>]] as const} />
         <Input placeholder="بحث بالاسم أو الجوال" icon={<Search size={15} />} value={q} onChange={(e) => setQ(e.target.value)} style={{ width: narrow ? '100%' : 260 }} />
         <Seg label="نوع العميل" value={typeFilter} onChange={setTypeFilter} options={TYPE_OPTIONS.map((o) => [o.value, o.label] as const)} />
         {segmentsOn && segments.length > 0 && (
@@ -258,9 +304,34 @@ export function DashboardV2Customers() {
         </motion.div>
       )}
 
-      <Card style={{ padding: 0 }}>
+      {view === 'cards' && !loading && shown.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 12 }}>
+          {shown.map((p) => (
+            <Card key={p.id} interactive style={{ padding: 14, display: 'grid', gap: 10, cursor: 'pointer' }}>
+              <button type="button" onClick={() => openRow(p)} style={{ all: 'unset', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                <Avatar name={p.name} size={38} />
+                <span style={{ minWidth: 0 }}>
+                  <b style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</b>
+                  <span className="np-num" dir="ltr" style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>{p.phone || '—'}</span>
+                </span>
+              </button>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', fontSize: 12 }}>
+                <Badge tone={p.patient_type === 'returning' ? 'success' : 'brand'}>{p.patient_type === 'returning' ? 'عائد' : 'جديد'}</Badge>
+                {p.fromConversation && <Badge tone="neutral">من المحادثات</Badge>}
+                {p.stage_id && <StageChip stage={stageById.get(p.stage_id)} />}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: 'var(--text-tertiary)' }}>
+                <span>آخر نشاط: <span className="np-num">{p.last_visit_at ? p.last_visit_at.split('T')[0] : '—'}</span></span>
+                {p.phone ? <ContactActions size={28} phone={p.phone} message={`مرحباً ${p.name}`} /> : null}
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Card style={{ padding: 0, display: view === 'cards' && !loading && shown.length > 0 ? 'none' : undefined }}>
         {loading && <SkeletonRows rows={6} columns={7} />}
-        {!loading && shown.length > 0 && (
+        {!loading && shown.length > 0 && view === 'table' && (
           <div className="np-table-wrap">
             <table className="np-table" style={{ minWidth: 700 }}>
               <thead>
@@ -279,7 +350,7 @@ export function DashboardV2Customers() {
               </thead>
               <tbody>
                 {shown.map((p) => (
-                  <tr key={p.id} className={`clickable${checked.has(p.id) ? ' is-selected' : ''}`} onClick={() => (p.fromConversation ? navigate(`${base}/conversations?id=${encodeURIComponent(p.openId || '')}`) : setSelected(p))}>
+                  <tr key={p.id} className={`clickable${checked.has(p.id) ? ' is-selected' : ''}`} onClick={() => openRow(p)}>
                     <td onClick={(e) => e.stopPropagation()}>
                       {!p.fromConversation && <label className="np-check"><input type="checkbox" aria-label={`تحديد ${p.name}`} checked={checked.has(p.id)} onChange={() => toggleCheck(p.id)} /></label>}
                     </td>
@@ -298,10 +369,18 @@ export function DashboardV2Customers() {
             </table>
           </div>
         )}
-        {!loading && shown.length === 0 && (
-          <EmptyState icon={<Users size={20} />} title="لا يوجد عملاء مطابقون" description="جرّب تغيير كلمة البحث أو الفلاتر." />
-        )}
+        {!loading && shown.length === 0 && (rows.length === 0
+          ? <EmptyState icon={<Users size={20} />} title="لا توجد جهات اتصال بعد" description="أنشئ أول جهة اتصال لبدء تتبع المكالمات والتذاكر حسب الشخص." />
+          : <EmptyState icon={<Users size={20} />} title="لا توجد جهات اتصال مطابقة" description="جرّب تغيير كلمة البحث أو الفلاتر." />)}
       </Card>
+
+      <Dialog open={newOpen} title="جهة اتصال جديدة" onClose={() => setNewOpen(false)}
+        footer={<><Button variant="secondary" onClick={() => setNewOpen(false)}>إلغاء</Button><Button onClick={() => void createContact()} disabled={saving}>{saving ? 'جارِ الحفظ...' : 'إضافة'}</Button></>}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <Input label="الاسم" value={draft.name} onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} />
+          <Input label="الجوال" placeholder="05xxxxxxxx" value={draft.phone} onChange={(e) => setDraft((d) => ({ ...d, phone: e.target.value }))} />
+        </div>
+      </Dialog>
 
       <Dialog
         open={!!selected} title="تعديل بيانات العميل" onClose={() => setSelected(null)}
