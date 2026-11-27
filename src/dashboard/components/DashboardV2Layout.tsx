@@ -283,7 +283,7 @@ export function DashboardV2Layout() {
     ] },
     { title: 'التكاملات', items: [
       { label: 'الإضافات', path: `${base}/site-widget`, icon: <Globe size={16} />, perm: 'integrations.manage' },
-      { label: 'الربط والأتمتة', short: 'الربط', path: `${base}/connect`, icon: <Zap size={16} />, perm: 'integrations.manage' },
+      { label: 'المطورون والأتمتة', short: 'المطورون', path: `${base}/connect`, icon: <Zap size={16} />, perm: 'integrations.manage' },
       { label: 'التكاملات', path: `${base}/integrations`, icon: <Plug size={16} />, perm: 'integrations.manage' },
     ] },
     { title: 'إضافات مدار', fold: true, items: [

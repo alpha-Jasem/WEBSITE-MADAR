@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { Plus, Pencil, Trash2, Wrench, ListChecks, PhoneIncoming, PhoneOutgoing, X } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
+import { supabase } from '@/lib/supabase'
 import {
   useAgentTools, saveAgentTool, deleteAgentTool, useAnalysisGroups, saveAnalysisGroup, deleteAnalysisGroup,
   useVoiceServices, saveVoiceService, deleteVoiceService, STATUS_LABELS,
@@ -14,13 +15,13 @@ import './growth.css'
 const textarea = { width: '100%', boxSizing: 'border-box', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'transparent', color: 'inherit', padding: 10, font: 'inherit' } as const
 
 /** Shared list page: header, "not available yet" note, empty state, cards, and a dialog the caller fills. */
-function ConfigPage<T extends { id: string }>({ title, sub, createLabel, available, loading, items, emptyIcon, emptyTitle, emptyText, canEdit, onNew, renderCard, dialog }: {
+function ConfigPage<T extends { id: string }>({ title, sub, createLabel, available, loading, items, emptyIcon, emptyTitle, emptyText, canEdit, onNew, renderCard, dialog, extraActions }: {
   title: string; sub: string; createLabel: string; available: boolean; loading: boolean; items: T[]; emptyIcon: ReactNode
-  emptyTitle: string; emptyText: string; canEdit: boolean; onNew: () => void; renderCard: (item: T) => ReactNode; dialog: ReactNode
+  emptyTitle: string; emptyText: string; canEdit: boolean; onNew: () => void; renderCard: (item: T) => ReactNode; dialog: ReactNode; extraActions?: ReactNode
 }) {
   return (
     <NightPage>
-      <PageHead title={title} sub={sub} actions={available && canEdit ? <Button onClick={onNew}><Plus size={14} /> {createLabel}</Button> : undefined} />
+      <PageHead title={title} sub={sub} actions={available && canEdit ? <>{extraActions}<Button onClick={onNew}><Plus size={14} /> {createLabel}</Button></> : undefined} />
       {!available && <Card style={{ padding: 16 }}><div className="np-empty">هذي الصفحة تتفعّل بعد تحديث قاعدة البيانات.</div></Card>}
       {available && items.length === 0 && !loading && <Card><EmptyState icon={emptyIcon} title={emptyTitle} description={emptyText} /></Card>}
       {available && items.length > 0 && <div className="gr-grid">{items.map(renderCard)}</div>}
@@ -84,9 +85,28 @@ export function DashboardV2Tools() {
   }
   const setParam = (i: number, patch: Partial<ToolParam>) => setDraft((d) => d && { ...d, params: d.params.map((p, k) => (k === i ? { ...p, ...patch } : p)) })
 
+  const [syncing, setSyncing] = useState(false)
+  /** Pushes the enabled tools to the company's linked voice agent. */
+  async function syncToAgent() {
+    if (isDemo) { pushToast({ kind: 'info', title: 'في العرض التجريبي ما نزامن مع وكيل حقيقي' }); return }
+    setSyncing(true)
+    try {
+      const { data, error } = await supabase.functions.invoke('agent-tools-sync', { body: {} })
+      if (error) throw error
+      if (data?.reason === 'no_linked_agent') pushToast({ kind: 'danger', title: 'ما فيه وكيل صوت مربوط بحسابك' })
+      else if (data?.error) pushToast({ kind: 'danger', title: 'تعذّرت المزامنة', description: String(data.error).slice(0, 160) })
+      else {
+        const r = (data?.results?.[0] || {}) as { create?: string[]; update?: string[]; remove?: string[] }
+        pushToast({ kind: 'success', title: 'انربطت الأدوات بالوكيل', description: `جديدة ${r.create?.length || 0}، محدّثة ${r.update?.length || 0}، محذوفة ${r.remove?.length || 0}` })
+      }
+    } catch { pushToast({ kind: 'danger', title: 'تعذّرت المزامنة' }) }
+    finally { setSyncing(false) }
+  }
+
   return (
     <ConfigPage
-      title="الأدوات" sub="نقاط HTTP يستدعيها الوكيل أثناء المحادثة، مثل جلب سعر أو التحقق من موعد" createLabel="أداة جديدة"
+      extraActions={<Button variant="secondary" disabled={syncing} onClick={() => void syncToAgent()}>ربط بالوكيل</Button>}
+      title="الأدوات" sub="نقاط HTTP يستدعيها الوكيل أثناء المحادثة، مثل جلب سعر أو التحقق من موعد. بعد أي تعديل اضغط «ربط بالوكيل»" createLabel="أداة جديدة"
       available={available} loading={loading} items={items} canEdit={can('agent.settings')} onNew={() => setDraft({ ...NEW_TOOL, params: [] })}
       emptyIcon={<Wrench size={20} />} emptyTitle="ما عندك أدوات بعد" emptyText="أضف أداة ليقدر الوكيل يجلب معلومة من نظامك أو ينفّذ إجراء."
       renderCard={(t) => (
