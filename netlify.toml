@@ -23,6 +23,18 @@
   status = 200
 
 [[redirects]]
+  from = "/appmadar"
+  to = "https://madar.karzoun.chat/login"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/appmadar/*"
+  to = "https://madar.karzoun.chat/:splat"
+  status = 302
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
@@ -94,3 +106,15 @@
   for = "/signal/logo-main-64.png"
   [headers.values]
     Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/madar-orbit-*.png"
+  [headers.values]
+    Cross-Origin-Resource-Policy = "cross-origin"
+    Cache-Control = "public, max-age=86400"
+
+[[headers]]
+  for = "/madar-login-bg.jpg"
+  [headers.values]
+    Cross-Origin-Resource-Policy = "cross-origin"
+    Cache-Control = "public, max-age=86400"
