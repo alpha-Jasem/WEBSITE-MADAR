@@ -87,6 +87,10 @@ const DashboardV2LiveOps          = lazy(() => import('./dashboard/pages/LiveOps
 const DashboardV2Zaki             = lazy(() => import('./dashboard/pages/Zaki').then(m => ({ default: m.DashboardV2Zaki })))
 const DashboardV2Outreach         = lazy(() => import('./dashboard/pages/Outreach').then(m => ({ default: m.DashboardV2Outreach })))
 const DashboardV2CallLogs          = lazy(() => import('./dashboard/pages/CallLogs').then(m => ({ default: m.DashboardV2CallLogs })))
+const DashboardV2Tools             = lazy(() => import('./dashboard/pages/AgentConfigPages').then(m => ({ default: m.DashboardV2Tools })))
+const DashboardV2AnalysisGroups    = lazy(() => import('./dashboard/pages/AgentConfigPages').then(m => ({ default: m.DashboardV2AnalysisGroups })))
+const DashboardV2InboundServices   = lazy(() => import('./dashboard/pages/AgentConfigPages').then(m => ({ default: () => <m.DashboardV2VoiceServices direction="inbound" /> })))
+const DashboardV2OutboundServices  = lazy(() => import('./dashboard/pages/AgentConfigPages').then(m => ({ default: () => <m.DashboardV2VoiceServices direction="outbound" /> })))
 const DashboardV2AgentAnalytics    = lazy(() => import('./dashboard/pages/AgentAnalytics').then(m => ({ default: m.DashboardV2AgentAnalytics })))
 
 // The dashboard is mounted twice — once for real tenants and once for the
@@ -129,6 +133,10 @@ const dashboardChildRoutes = (
     <Route path="zaki" element={<DashboardV2Zaki />} />
     <Route path="call-logs" element={<ModuleRoute module="voice"><DashboardV2CallLogs /></ModuleRoute>} />
     <Route path="agent-analytics" element={<ModuleRoute module="voice"><DashboardV2AgentAnalytics /></ModuleRoute>} />
+    <Route path="tools" element={<ModuleRoute module="voice"><PermissionRoute permission="agent.settings"><DashboardV2Tools /></PermissionRoute></ModuleRoute>} />
+    <Route path="analysis-groups" element={<ModuleRoute module="voice"><PermissionRoute permission="agent.settings"><DashboardV2AnalysisGroups /></PermissionRoute></ModuleRoute>} />
+    <Route path="inbound-services" element={<ModuleRoute module="voice"><PermissionRoute permission="integrations.manage"><DashboardV2InboundServices /></PermissionRoute></ModuleRoute>} />
+    <Route path="outbound-services" element={<ModuleRoute module="voice"><PermissionRoute permission="integrations.manage"><DashboardV2OutboundServices /></PermissionRoute></ModuleRoute>} />
     <Route path="agent-users" element={<Navigate to="../patients" replace />} />
     <Route path="settings" element={<DashboardV2Settings />} />
     {/* Retired pages keep their links alive instead of rendering a blank outlet. */}

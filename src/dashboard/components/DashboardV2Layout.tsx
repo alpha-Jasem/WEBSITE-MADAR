@@ -5,7 +5,7 @@ import { DURATION_MEDIUM, EASE_OUT } from './motionTokens'
 import {
   LayoutDashboard, CalendarDays, Users, MessageSquare, Star, BarChart3,
   Wallet, BellRing, Settings, AlertTriangle, Plus, Ticket,
-  ClipboardList, BookOpen, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Send, ShoppingBag, UsersRound, Zap, Layers, Megaphone, WandSparkles, FileInput, MessageCircle, Radio, ChevronDown, Globe,
+  ClipboardList, BookOpen, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Send, ShoppingBag, UsersRound, Zap, Layers, Megaphone, WandSparkles, FileInput, MessageCircle, Radio, ChevronDown, Globe, ListChecks, PhoneIncoming, PhoneOutgoing,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useSupportTickets } from '@/lib/dashboardQueries'
@@ -26,7 +26,7 @@ import { useSystemChrome } from '@/hooks/useSystemChrome'
 
 // New keys: the old ones were written on every mount, so every existing user has
 // "light" / "collapsed" stored and would never see the Night defaults.
-const THEME_KEY = 'dv2_theme_night'
+const THEME_KEY = 'dv2_theme_light_default'
 const COLLAPSE_KEY = 'dv2_sidebar_collapsed_v2'
 
 interface NavItem {
@@ -68,6 +68,9 @@ export const SHELL_CSS = `
     border-inline-end: 1px solid var(--line); padding: 14px 10px 10px; display: flex; flex-direction: column; gap: 1px;
     transition: width 200ms var(--ease-out); scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; box-sizing: border-box; }
   .dv2-side.is-collapsed { width: 64px; padding-inline: 10px; }
+  /* light page, dark sidebar: the sidebar keeps the dark palette while the content follows the chosen theme */
+  .dv2-app[data-theme="light"] .dv2-side { --side:#121212; --panel:#1B1B1B; --raise:#2A2A2A; --line:#262626; --line-2:#383838;
+    --ink:#F4F4F4; --muted:#B4B4B4; --dim:#8C8C8C; --hover-bg:rgba(255,255,255,.07); --nav-active-bg:rgba(255,255,255,.13); }
   .dv2-logo { display: flex; align-items: center; gap: 9px; padding: 2px 8px 12px; font-family: var(--font-display);
     font-weight: 600; font-size: 15px; color: var(--ink); }
   .dv2-logo img { width: 24px; height: 24px; object-fit: contain; flex: none; }
@@ -181,7 +184,7 @@ export function DashboardV2Layout() {
   // Theme preference: light / dark / follow the system ("تلقائي"), set from the account menu.
   const [themePref, setThemePref] = useState<ThemePref>(() => {
     const v = readStored(THEME_KEY)
-    return v === 'light' || v === 'system' ? v : 'dark'
+    return v === 'dark' || v === 'system' ? v : 'light'
   })
   const [systemDark, setSystemDark] = useState(() => {
     try { return window.matchMedia('(prefers-color-scheme: dark)').matches } catch { return true }
@@ -261,9 +264,15 @@ export function DashboardV2Layout() {
     ] },
     { title: 'البناء', items: [
       { label: 'الوكلاء', path: `${base}/agents`, icon: <Bot size={16} />, perm: 'agent.settings' },
+      { label: 'الأدوات', path: `${base}/tools`, icon: <Wrench size={16} />, module: 'voice', perm: 'agent.settings' },
       { label: 'قاعدة المعرفة', short: 'المعرفة', path: `${base}/knowledge-base`, icon: <BookOpen size={16} />, module: 'knowledge_base' },
+      { label: 'مجموعات التحليل', short: 'التحليل', path: `${base}/analysis-groups`, icon: <ListChecks size={16} />, module: 'voice', perm: 'agent.settings' },
       { label: 'المتابعات', path: `${base}/reminders`, icon: <BellRing size={16} />, module: 'reminders' },
       { label: 'تحليلات الوكيل', short: 'التحليلات', path: `${base}/agent-analytics`, icon: <Sparkles size={16} />, module: 'voice' },
+    ] },
+    { title: 'القنوات', items: [
+      { label: 'خدمات الوارد', short: 'الوارد', path: `${base}/inbound-services`, icon: <PhoneIncoming size={16} />, module: 'voice', perm: 'integrations.manage' },
+      { label: 'خدمات الصادر', short: 'الصادر', path: `${base}/outbound-services`, icon: <PhoneOutgoing size={16} />, module: 'voice', perm: 'integrations.manage' },
     ] },
     { title: 'التفاعل', items: [
       { label: 'جهات الاتصال', short: 'العملاء', path: `${base}/patients`, icon: <Users size={16} />, module: 'customers' },
