@@ -269,7 +269,10 @@ export function DashboardV2Layout() {
       { label: 'الأدوات', path: `${base}/tools`, icon: <Wrench size={16} />, module: 'voice', perm: 'agent.settings' },
       { label: 'قاعدة المعرفة', short: 'المعرفة', path: `${base}/knowledge-base`, icon: <BookOpen size={16} />, module: 'knowledge_base' },
       { label: 'مجموعات التحليل', short: 'التحليل', path: `${base}/analysis-groups`, icon: <ListChecks size={16} />, module: 'voice', perm: 'agent.settings' },
-      { label: 'المتابعات', path: `${base}/reminders`, icon: <BellRing size={16} />, module: 'reminders' },
+      // Post-call WhatsApp follow-ups for voice companies; others keep the booking reminders under the same name.
+      canOpen('voice')
+        ? { label: 'المتابعات', path: `${base}/followups`, icon: <BellRing size={16} />, perm: 'agent.settings' }
+        : { label: 'المتابعات', path: `${base}/reminders`, icon: <BellRing size={16} />, module: 'reminders' },
     ] },
     { title: 'القنوات', items: [
       { label: 'خدمات الوارد', short: 'الوارد', path: `${base}/inbound-services`, icon: <PhoneIncoming size={16} />, module: 'voice', perm: 'integrations.manage' },

@@ -5,10 +5,13 @@
 //   update { agent_id, fields }    -> reads the agent, applies the edited fields, writes it back whole
 //   copy   { agent_id }            -> a copy named «نسخة من …», linked to the same company
 //   delete { agent_id }            -> deletes the agent and its link (irreversible; the page confirms first)
+//   fields { agent_id }            -> the agent's variable names and analysis fields, for follow-ups
+//   followup_hook { agent_id }     -> sets the agent's post-analysis callback to nabrah-followup
 // Company users reach only agents linked to their company; admins reach every agent.
 // The API key is the NABRAH_API_KEY function secret and never leaves the server.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { followupSecret } from '../_shared/followup.ts'
 
 const API = 'https://api.nabrah.ai/api/ext'
 const cors = {
@@ -120,6 +123,37 @@ Deno.serve(async (req) => {
       const saved = await nabrah(`/agent/${agentId}`, key, { method: 'PUT', body: JSON.stringify(next) })
       if (typeof next.name === 'string') await db.from('agent_links').update({ label: next.name.slice(0, 80) }).eq('provider', 'nabrah').eq('agent_id', agentId)
       return json({ agent: saved })
+    }
+
+    if (op === 'fields') {
+      // What a follow-up can use: the agent's variables and the fields of its linked analysis groups.
+      const agent = await nabrah(`/agent/${agentId}`, key)
+      const variables = (Array.isArray(agent?.variables) ? agent.variables : []).map((v: { name?: string }) => String(v?.name ?? '')).filter(Boolean)
+      const groups = Array.isArray(agent?.analysis_groups) ? agent.analysis_groups as { id?: string; analysis_group_id?: string }[] : []
+      const analysis: { name: string; type: string; group: string }[] = []
+      for (const g of groups) {
+        const gid = String(g?.id ?? g?.analysis_group_id ?? '')
+        if (!ID.test(gid)) continue
+        const full = await nabrah(`/analysis/${gid}`, key).catch(() => null)
+        for (const c of Array.isArray(full?.data_collections) ? full.data_collections : []) analysis.push({ name: String(c?.name ?? ''), type: String(c?.type ?? ''), group: String(full?.name ?? '') })
+      }
+      return json({ variables, analysis: analysis.filter((f) => f.name) })
+    }
+
+    if (op === 'followup_hook') {
+      // Points the agent's post-analysis callback at nabrah-followup. This replaces any callback set before.
+      const secret = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')?.trim()
+      if (!secret) return json({ error: 'server misconfigured' }, 500)
+      const owner = await linkedCompany(agentId)
+      if (!owner) return json({ error: 'agent not linked' }, 409)
+      const value = await followupSecret(secret, owner)
+      const current = await nabrah(`/agent/${agentId}`, key)
+      const hook = `${url}/functions/v1/nabrah-followup`
+      const cb = current?.post_analysis_callback
+      if (cb?.url === hook && Array.isArray(cb.parameters) && cb.parameters.some((p: { value?: string }) => p?.value === value)) return json({ ok: true })
+      const next = { ...toBody(current ?? {}), post_analysis_callback: { url: hook, parameters: [{ name: 'X-Madar-Secret', location: 'header', data_type: 'string', value }] } }
+      await nabrah(`/agent/${agentId}`, key, { method: 'PUT', body: JSON.stringify(next) })
+      return json({ ok: true })
     }
 
     if (op === 'copy') {

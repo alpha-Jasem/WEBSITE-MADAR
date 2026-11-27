@@ -63,6 +63,7 @@ const DashboardV2Reviews       = lazy(() => import('./dashboard/pages/Reviews').
 const DashboardV2Revenue       = lazy(() => import('./dashboard/pages/Revenue').then(m => ({ default: m.DashboardV2Revenue })))
 const DashboardV2Orders        = lazy(() => import('./dashboard/pages/Orders').then(m => ({ default: m.DashboardV2Orders })))
 const DashboardV2Reports       = lazy(() => import('./dashboard/pages/Reports').then(m => ({ default: m.DashboardV2Reports })))
+const DashboardV2Followups     = lazy(() => import('./dashboard/pages/Followups').then(m => ({ default: m.DashboardV2Followups })))
 const DashboardV2Reminders     = lazy(() => import('./dashboard/pages/Reminders').then(m => ({ default: m.DashboardV2Reminders })))
 const DashboardV2Integrations  = lazy(() => import('./dashboard/pages/Integrations').then(m => ({ default: m.DashboardV2Integrations })))
 const DashboardV2Team             = lazy(() => import('./dashboard/pages/Team').then(m => ({ default: m.DashboardV2Team })))
@@ -117,6 +118,7 @@ const dashboardChildRoutes = (
     <Route path="revenue" element={<ModuleRoute module="revenue"><DashboardV2Revenue /></ModuleRoute>} />
     <Route path="reports" element={<ModuleRoute module="reports"><DashboardV2Reports /></ModuleRoute>} />
     <Route path="plan-usage" element={<DashboardV2MadarAgentUsage />} />
+    <Route path="followups" element={<ModuleRoute module="voice"><PermissionRoute permission="agent.settings"><DashboardV2Followups /></PermissionRoute></ModuleRoute>} />
     <Route path="reminders" element={<ModuleRoute module="reminders"><DashboardV2Reminders /></ModuleRoute>} />
     <Route path="integrations" element={<PermissionRoute permission="integrations.manage"><DashboardV2Integrations /></PermissionRoute>} />
     <Route path="site-widget" element={<PermissionRoute permission="integrations.manage"><DashboardV2SiteWidget /></PermissionRoute>} />
