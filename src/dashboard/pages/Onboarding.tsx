@@ -105,7 +105,7 @@ export function DashboardV2Onboarding() {
   const [instructions, setInstructions] = useState('')
   const [plan, setPlan] = useState<Plan | null>(null)
   const [answers, setAnswers] = useState<number[]>([])
-  const [useGroup, setUseGroup] = useState(true)
+  const [useGroup, setUseGroup] = useState(false)
   const [workIdx, setWorkIdx] = useState(0)
   const [error, setError] = useState('')
   const [agentId, setAgentId] = useState('')
@@ -121,7 +121,6 @@ export function DashboardV2Onboarding() {
     await updateCompany(companyId, { clinic_settings: { ...companySettings, onboarded: true, ...(tour ? { tour: 'pending' } : {}) } }).catch(() => null)
     await refreshAccount().catch(() => null)
   }
-  async function skip() { await markDone(); navigate(base, { replace: true }) }
 
   async function saveName() {
     setError('')
@@ -155,7 +154,7 @@ export function DashboardV2Onboarding() {
       }
       window.clearInterval(tick); setWorkIdx(WORKING.length)
       await new Promise((r) => setTimeout(r, 500))
-      setPlan(p); setAnswers(p.questions.map((q) => Math.max(0, q.options.findIndex((o) => o.recommended))))
+      setPlan(p); setAnswers(p.questions.map(() => -1))
       setStep(p.questions.length ? 'review' : 'analysis')
     } catch (e) {
       window.clearInterval(tick); setError(errText(e)); setStep('failed')
@@ -228,7 +227,7 @@ export function DashboardV2Onboarding() {
           <span className="ic"><LayoutTemplate size={19} /></span><span><b>استخدام قالب</b><small>اختر مجال نشاطك وما يتولاه الوكيل، خطوة بخطوة.</small></span><Next size={16} className="chev" />
         </button>
       </div>
-      <div className="ob-row"><button type="button" className="ob-ghost" onClick={() => setStep('name')}>رجوع</button><button type="button" className="ob-ghost" style={{ border: 0, color: 'var(--muted)' }} onClick={() => void skip()}>تخطي الآن</button></div>
+      <div className="ob-row"><button type="button" className="ob-ghost" onClick={() => setStep('name')}>رجوع</button><span /></div>
     </div>
   )
   if (step === 'industry') body = (
@@ -283,7 +282,7 @@ export function DashboardV2Onboarding() {
   )
   if (step === 'review' && plan) body = (
     <div className="ob-box wide">{dots}
-      <div><h2>مراجعة الخيارات</h2><p className="sub">غيّر أي خيار أدناه، أو أبقِ الخيار الموصى به.</p></div>
+      <div><h2>مراجعة الخيارات</h2><p className="sub">اختر خيارًا لكل سؤال لتتابع. الخيار الموصى به مكتوب عليه.</p></div>
       {plan.questions.map((q, qi) => (
         <div key={qi} className="ob-q"><b>{q.q}</b>
           {q.options.map((o, oi) => (
@@ -293,18 +292,18 @@ export function DashboardV2Onboarding() {
           ))}
         </div>
       ))}
-      <div className="ob-row"><span /><button type="button" className="ob-btn" onClick={() => setStep('analysis')}>متابعة <Next size={16} /></button></div>
+      <div className="ob-row"><span /><button type="button" className="ob-btn" disabled={answers.some((a) => a < 0)} onClick={() => setStep('analysis')}>متابعة <Next size={16} /></button></div>
     </div>
   )
   if ((step === 'analysis' || step === 'creating') && plan) body = (
     <div className="ob-box wide">{dots}
-      <div><h2>مجموعات التحليل</h2><p className="sub">اختر المجموعات التي تريد ربطها بهذا الوكيل. تُعبّأ حقولها تلقائيًا من كل مكالمة.</p></div>
+      <div><h2>مجموعات التحليل</h2><p className="sub">اضغط على المجموعة لتربطها بهذا الوكيل ثم أنشئ الوكيل. تُعبّأ حقولها تلقائيًا من كل مكالمة.</p></div>
       <button type="button" className="ob-grp" style={{ textAlign: 'start', color: 'inherit', font: 'inherit', cursor: 'pointer' }} aria-pressed={useGroup} onClick={() => setUseGroup((v) => !v)}>
         <div className="ob-row"><span style={{ display: 'flex', gap: 12, alignItems: 'center' }}><span className="ob-chk" style={{ border: '2px solid var(--line-2,#555)', background: useGroup ? 'var(--ink)' : 'none' }}>{useGroup && <Check size={13} />}</span><span><b style={{ fontSize: 15 }}>{plan.analysis.name}</b><small style={{ display: 'block', color: 'var(--muted)' }}>{plan.analysis.fields.length} حقول</small></span></span></div>
         <div className="ob-fields">{plan.analysis.fields.map((f) => <div key={f.name} className="ob-field"><em>{TYPE_LABEL[f.type]}</em><b>{f.name}</b><small>{f.description}</small></div>)}</div>
       </button>
       {error && <div className="ob-err" role="alert">{error}</div>}
-      <div className="ob-row">{back(plan.questions.length ? 'review' : 'method')}<button type="button" className="ob-btn" disabled={busy || step === 'creating'} onClick={() => void create()}>{step === 'creating' ? <><Loader2 size={16} style={{ animation: 'ob-spin 1s linear infinite' }} /> جارِ إنشاء الوكيل…</> : 'إنشاء الوكيل'}</button></div>
+      <div className="ob-row">{back(plan.questions.length ? 'review' : 'method')}<button type="button" className="ob-btn" disabled={busy || step === 'creating' || (!useGroup && plan.analysis.fields.length > 0)} onClick={() => void create()}>{step === 'creating' ? <><Loader2 size={16} style={{ animation: 'ob-spin 1s linear infinite' }} /> جارِ إنشاء الوكيل…</> : 'إنشاء الوكيل'}</button></div>
     </div>
   )
 
