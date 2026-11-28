@@ -1,5 +1,5 @@
 // Pushes a company's enabled tools (agent_tools) to its voice agents on the voice platform.
-//   POST { dry_run?: boolean }  with the signed-in user's JWT. The company comes from the session, never the body.
+//   POST { dry_run?: boolean, agent_id?: string }  (agent_id limits the linking to one of the company's agents)  with the signed-in user's JWT. The company comes from the session, never the body.
 // Every tool is created on the platform as "m<company>_<name>" (tools are shared by the whole workspace, so the
 // company prefix keeps each company's tools apart) and linked to every agent the company owns. Tools that were
 // disabled or deleted in the dashboard are removed from the platform. GET and DELETE tools send their parameters in
@@ -22,6 +22,18 @@ async function nabrah(path: string, key: string, init: RequestInit = {}) {
   const text = await res.text()
   if (!res.ok) throw new Error(`${init.method ?? 'GET'} ${path} -> ${res.status} ${text.slice(0, 160)}`)
   return text ? JSON.parse(text) : null
+}
+
+const READ_ONLY = ['agent_id', 'project_id', 'created_by_email', 'created_at', 'last_update', 'tools', 'system_tools', 'analysis_groups', 'knowledge_bases', 'voice_object', 'version']
+/** The agent as the platform returned it, turned into a body it accepts back (ids for links, no read-only fields). */
+function toBody(agent: Record<string, unknown>): Record<string, unknown> {
+  const body: Record<string, unknown> = { ...agent }
+  const ids = (list: unknown) => Array.isArray(list) ? list.map((x) => (x && typeof x === 'object' ? (x as Record<string, unknown>).id ?? (x as Record<string, unknown>).tool_id ?? (x as Record<string, unknown>).analysis_group_id ?? (x as Record<string, unknown>).kb_id : x)).filter(Boolean) : undefined
+  if (body.tool_ids === undefined) body.tool_ids = ids(agent.tools) ?? []
+  if (body.analysis_group_ids === undefined) body.analysis_group_ids = ids(agent.analysis_groups) ?? []
+  if (body.knowledge_base_ids === undefined && agent.knowledge_bases !== undefined) body.knowledge_base_ids = ids(agent.knowledge_bases) ?? []
+  for (const k of READ_ONLY) delete body[k]
+  return body
 }
 
 interface Param { name: string; description: string; required: boolean }
@@ -54,7 +66,10 @@ Deno.serve(async (req) => {
   const prefix = `m${String(companyId).replace(/-/g, '').slice(0, 8)}_`
 
   const db = createClient(url, serviceKey, { auth: { persistSession: false } })
-  const { data: links } = await db.from('agent_links').select('agent_id').eq('company_id', companyId).eq('provider', 'nabrah')
+  const { data: allLinks } = await db.from('agent_links').select('agent_id').eq('company_id', companyId).eq('provider', 'nabrah')
+  // Optionally only one agent (never an agent the company does not own).
+  const only = typeof body?.agent_id === 'string' ? body.agent_id : ''
+  const links = only ? (allLinks ?? []).filter((l: { agent_id: string }) => l.agent_id === only) : allLinks
   if (!links?.length) return json({ synced: false, reason: 'no_linked_agent' })
   const { data: rows, error: toolsErr } = await db.from('agent_tools').select('name, description, method, url, params').eq('company_id', companyId).eq('enabled', true)
   if (toolsErr) return json({ error: 'could not read tools' }, 500)
@@ -85,12 +100,16 @@ Deno.serve(async (req) => {
     }
     if (!dryRun) {
       for (const { agent_id } of links as { agent_id: string }[]) {
-        const have = new Set((((await nabrah(`/tool/agent/${agent_id}`, key)) ?? []) as { id: string }[]).map((t) => t.id))
-        for (const id of ids.values()) {
-          if (have.has(id)) continue
-          await nabrah('/tool/link', key, { method: 'POST', body: JSON.stringify({ tool_id: id, agent_id }) })
-          plan.linked++
-        }
+        // The platform's link endpoint answered "tool not found" for these tools, so they are attached the way
+        // the agent editor does it: through the agent's tool_ids, keeping the tools it already has.
+        const have = (((await nabrah(`/tool/agent/${agent_id}`, key)) ?? []) as { id: string }[]).map((t) => t.id)
+        const missing = [...ids.values()].filter((id) => !have.includes(id))
+        if (!missing.length) continue
+        const agent = (await nabrah(`/agent/${agent_id}`, key)) as Record<string, unknown>
+        const next = toBody(agent)
+        next.tool_ids = [...have, ...missing]
+        await nabrah(`/agent/${agent_id}`, key, { method: 'PUT', body: JSON.stringify(next) })
+        plan.linked += missing.length
       }
     }
   } catch (e) {
