@@ -75,7 +75,7 @@
     var hdBg = fill === 'header' ? 'linear-gradient(135deg,' + brand + ',color-mix(in srgb,' + brand + ' 68%,#000))' : 'transparent'
     var hdFg = fill === 'header' ? '#fff' : onBg
     var hdDim = fill === 'header' ? 'rgba(255,255,255,.82)' : dim
-    var glow = fill === 'dark' ? ',radial-gradient(ellipse at 50% -10%,' + brand + '66,transparent 62%)' : ''
+    var glow = fill === 'dark' ? 'radial-gradient(ellipse at 50% -10%,' + brand + '66,transparent 62%),' : ''
     var shadow = p.shadow === 'none' ? 'none' : p.shadow === 'strong' ? '0 24px 64px rgba(0,0,0,.45)' : '0 14px 40px rgba(0,0,0,.25)'
     var br = num(p.btnRadius, 0, 30, 22), w = num(p.width, 240, 380, 288), rad = num(p.radius, 0, 40, 22)
     var btnBg = p.btnStyle === 'filled' ? (fill === 'full' ? '#fff' : brand) : fill === 'full' ? 'rgba(255,255,255,.18)' : 'color-mix(in srgb,' + brand + ' 14%,transparent)'
@@ -93,7 +93,7 @@
       '.btn img{width:100%;height:100%;object-fit:cover;display:block}',
       '.btn:hover{transform:scale(1.05)}.btn:focus-visible,.cb:focus-visible{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 5px ' + color + '}',
       '.btn[hidden],.card[hidden]{display:none}.btn.err{background:#b42318}',
-      '.card{width:' + w + 'px;max-width:calc(100vw - 32px);background:' + bg + glow + ';color:' + onBg + ';border-radius:' + rad + 'px;box-shadow:' + shadow + ';overflow:hidden;' + (isDark || fill === 'soft' ? 'border:1px solid rgba(128,128,150,.22);' : 'border:1px solid rgba(0,0,0,.06);') + '}',
+      '.card{width:' + w + 'px;max-width:calc(100vw - 32px);background:' + glow + bg + ';color:' + onBg + ';border-radius:' + rad + 'px;box-shadow:' + shadow + ';overflow:hidden;' + (isDark || fill === 'soft' ? 'border:1px solid rgba(128,128,150,.22);' : 'border:1px solid rgba(0,0,0,.06);') + '}',
       '.hd{background:' + hdBg + ';color:' + hdFg + ';padding:22px 18px 16px;text-align:center;display:grid;justify-items:center;gap:6px;position:relative}',
       p.curve ? '.hd{padding-bottom:30px}.hd::after{content:"";position:absolute;inset:auto 0 -1px 0;height:16px;background:' + bg + ';border-radius:50% 50% 0 0/100% 100% 0 0}' : '',
       '.av{width:62px;height:62px;border-radius:' + (p.avatarShape === 'rounded' ? '18px' : '50%') + ';background:#0b0b10;display:grid;place-items:center;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.35);color:#fff}',
@@ -101,14 +101,14 @@
       '.title{font-size:17px;font-weight:700;line-height:1.3}.sub{font-size:12.5px;color:' + hdDim + '}',
       '.bd{padding:6px 16px 14px;display:grid;justify-items:center;gap:10px}',
       '.wave{width:100%;max-width:' + (w - 40) + 'px;height:54px;display:block}',
-      '.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 12px;border-radius:999px;background:rgba(128,128,150,.16);color:' + dim + '}',
+      '.pill{white-space:nowrap;display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 12px;border-radius:999px;background:rgba(128,128,150,.16);color:' + dim + '}',
       '.pill i{width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block}.pill.off i{background:#f59e0b}',
       '.row{display:flex;gap:8px;width:100%}',
       '.cb{flex:1;border:0;height:42px;border-radius:' + br + 'px;font-size:13.5px;font-weight:600;cursor:pointer;background:' + btnBg + ';color:' + btnFg + '}',
       '.cb.end{background:' + endBack + ';color:' + endFg + '}.cb.on{opacity:.65}',
-      '.pw{font-size:10.5px;color:' + dim + ';opacity:.8;text-decoration:none;direction:ltr;font-family:system-ui,sans-serif}.pw:hover{opacity:1;text-decoration:underline}',
+      '.pw{display:block;text-align:center;padding:0 0 10px;font-size:10.5px;color:' + dim + ';opacity:.8;text-decoration:none;direction:ltr;font-family:system-ui,sans-serif}.pw:hover{opacity:1;text-decoration:underline}',
       '.time{direction:ltr;font-variant-numeric:tabular-nums;font-size:12px;color:' + dim + '}',
-      p.layout === 'compact' ? '.card{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 12px}.pw{flex-basis:100%;text-align:center}.hd{padding:0;background:none;color:' + onBg + ';display:flex;gap:10px;text-align:start;justify-items:start}.hd::after{display:none}.av{width:44px;height:44px;border-radius:' + (p.avatarShape === 'rounded' ? '12px' : '50%') + '}.bd{padding:0;flex:1;grid-auto-flow:column;gap:8px;justify-items:end}.wave{display:none}.time{display:none}.row{width:auto}.cb{flex:none;padding:0 12px;height:38px}.sub{color:' + dim + '}' : '',
+      p.layout === 'compact' ? '.card{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 12px}.pw{flex-basis:100%;padding:0}.hd{padding:0;background:none;color:' + onBg + ';display:flex;gap:10px;text-align:start;justify-items:start}.hd::after{display:none}.av{width:44px;height:44px;border-radius:' + (p.avatarShape === 'rounded' ? '12px' : '50%') + '}.bd{padding:0;flex:1;grid-auto-flow:column;gap:8px;justify-items:end}.wave{display:none}.time{display:none}.row{width:auto}.cb{flex:none;padding:0 12px;height:38px}.sub{color:' + dim + '}' : '',
       p.layout === 'centered' ? '.hd{padding-top:26px}.av{width:76px;height:76px}.hd{color:' + onBg + '}.sub{color:' + dim + '}' : '',
       '@media (prefers-reduced-motion:reduce){.btn{transition:none!important}}'
     ].join('')
@@ -125,8 +125,8 @@
       '<div class="card" hidden role="status" aria-live="polite">' +
         '<div class="hd"><div class="av">' + avatar + '</div><div><div class="title"></div>' + (p.subOn ? '<div class="sub"></div>' : '') + '</div></div>' +
         '<div class="bd">' + (p.indicatorOn ? '<canvas class="wave" aria-hidden="true"></canvas>' : '') + '<span class="pill"><i></i><span class="st"></span></span><span class="time"></span>' +
-          '<div class="row">' + (p.muteOn ? '<button type="button" class="cb mute">كتم</button>' : '') + '<button type="button" class="cb end">إنهاء</button></div>' +
-          '<a class="pw" href="https://madar.software" target="_blank" rel="noopener">Powered by madar.software</a></div>' +
+          '<div class="row">' + (p.muteOn ? '<button type="button" class="cb mute">كتم</button>' : '') + '<button type="button" class="cb end">إنهاء</button></div></div>' +
+        '<a class="pw" href="https://madar.software" target="_blank" rel="noopener">Powered by madar.software</a>' +
       '</div>'
     btn = wrap.querySelector('.btn'); card = wrap.querySelector('.card'); wave = wrap.querySelector('.wave')
     titleEl = wrap.querySelector('.title'); subEl = wrap.querySelector('.sub'); statusEl = wrap.querySelector('.st'); timeEl = wrap.querySelector('.time')

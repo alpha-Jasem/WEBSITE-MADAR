@@ -142,7 +142,8 @@ Deno.serve(async (req) => {
   if (agent && (agent.paused || agent.channels?.web === false)) return json({ error: 'off', code: 'off' }, 409)
 
   const history: Line[] = Array.isArray(row?.transcript) ? (row!.transcript as Line[]) : []
-  const agentReplies = history.filter((l) => l.speaker === 'agent').length
+  // The saved greeting is the first agent line and is not a reply.
+  const agentReplies = history.filter((l) => l.speaker === 'agent').length - (history[0]?.speaker === 'agent' ? 1 : 0)
   if (history.length >= MAX_LINES || agentReplies >= widget.replyLimit) return json({ reply: widget.handoff ? 'وصلنا للحد الأقصى لهذه المحادثة. اترك رقم جوالك وسيتواصل معك أحد من الفريق.' : 'وصلنا للحد الأقصى لهذه المحادثة.', handoff: widget.handoff, ended: true })
 
   const agentName = widget.displayName || agent?.agent_name || 'مدار'
