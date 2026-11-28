@@ -6,6 +6,7 @@ import { agentWrite, useVoiceRead, voiceRead, type VoiceAgent } from '@/lib/quer
 import { Badge, Button, Card, Dialog, Input, Select, Switch } from '@/dashboard/components/primitives'
 import { EmptyState, useToast } from '@/dashboard/components/uiExtras'
 import { NightPage, PageHead } from './shared/night'
+import { CallPanel } from '@/dashboard/components/CallPanel'
 import { useWebCall } from './VoicePlatformPages'
 import './growth.css'
 
@@ -97,6 +98,7 @@ export function DashboardV2AgentsList() {
         footer={<><Button variant="secondary" onClick={() => setConfirmDel(null)}>إلغاء</Button><Button variant="danger" onClick={() => confirmDel && void remove(confirmDel)}>حذف نهائي</Button></>}>
         <p style={{ margin: 0, lineHeight: 1.8 }}>«{confirmDel?.name}» بينحذف نهائيًا مع إعداداته، وما يمكن استرجاعه. المكالمات اللي تجيه بتوقف.</p>
       </Dialog>
+      <CallPanel state={call.state} speaker={call.speaker} level={call.level} seconds={call.seconds} agentName={agents.find((x) => x.agent_id === call.agentId)?.name ?? ''} onHangUp={() => void call.hangUp()} />
     </NightPage>
   )
 }

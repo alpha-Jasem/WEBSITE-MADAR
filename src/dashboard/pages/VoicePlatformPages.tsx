@@ -9,6 +9,7 @@ import {
 } from '@/lib/queries/agentConfig'
 import { Badge, Button, Card, Dialog, Input, Select } from '@/dashboard/components/primitives'
 import { EmptyState, useToast } from '@/dashboard/components/uiExtras'
+import { CallPanel, type CallSpeaker } from '@/dashboard/components/CallPanel'
 import { NightPage, PageHead } from './shared/night'
 import './growth.css'
 
@@ -180,12 +181,16 @@ function CampaignResults({ campaign }: { campaign: VoiceCampaign }) {
 }
 
 // ---------------------------------------------------------------- web calls
-/** A browser call to one voice agent: start(agentId) asks for the mic and connects; hangUp() ends it. */
+/** A browser call to one voice agent: start(agentId) asks for the mic and connects; hangUp() ends it.
+ *  While live it also reports who is speaking (`speaker`), how loud (`level`, 0 to 1) and the call length. */
 export function useWebCall() {
   const { isDemo } = useWorkspace()
   const pushToast = useToast()
   const [state, setState] = useState<'idle' | 'connecting' | 'live'>('idle')
   const [agentId, setLive] = useState<string | null>(null)
+  const [speaker, setSpeaker] = useState<CallSpeaker>('none')
+  const [level, setLevel] = useState(0)
+  const [seconds, setSeconds] = useState(0)
   const roomRef = useRef<{ disconnect: () => Promise<void> | void } | null>(null)
   const audioEls = useRef<HTMLMediaElement[]>([])
 
@@ -193,9 +198,16 @@ export function useWebCall() {
     try { await roomRef.current?.disconnect() } catch { /* already gone */ }
     roomRef.current = null
     audioEls.current.forEach((el) => el.remove()); audioEls.current = []
-    setState('idle'); setLive(null)
+    setState('idle'); setLive(null); setSpeaker('none'); setLevel(0)
   }
   useEffect(() => () => { void hangUp() }, [])
+
+  // The call clock.
+  useEffect(() => {
+    if (state !== 'live') { setSeconds(0); return }
+    const t = setInterval(() => setSeconds((n) => n + 1), 1000)
+    return () => clearInterval(t)
+  }, [state])
 
   async function start(id: string) {
     if (isDemo) { pushToast({ kind: 'info', title: 'المكالمة التجريبية تشتغل في حسابك الحقيقي فقط' }); return }
@@ -210,50 +222,12 @@ export function useWebCall() {
         if (track.kind !== Track.Kind.Audio) return
         const el = track.attach(); el.style.display = 'none'; document.body.appendChild(el); audioEls.current.push(el)
       })
-      room.on(RoomEvent.Disconnected, () => { void hangUp() })
-      await room.connect(data.url, data.token)
-      await room.localParticipant.setMicrophoneEnabled(true)
-      roomRef.current = room
-      setState('live')
-    } catch {
-      pushToast({ kind: 'danger', title: 'ما قدرنا نبدأ المكالمة', description: 'تأكد إن المتصفح سمح بالمايكروفون' })
-      await hangUp()
-    }
-  }
-  return { state, agentId, start, hangUp }
-}
-
-/** Web calls: talk to a voice agent from the browser, the same experience a site visitor gets from the call widget. */
-export function DashboardV2WebCalls() {
-  const { isDemo } = useWorkspace()
-  const pushToast = useToast()
-  const { agents, loading } = useAgents()
-  const [agentId, setAgentId] = useState('')
-  const [state, setState] = useState<'idle' | 'connecting' | 'live'>('idle')
-  const roomRef = useRef<{ disconnect: () => Promise<void> | void } | null>(null)
-  const audioEls = useRef<HTMLMediaElement[]>([])
-  const selected = agentId || agents[0]?.agent_id || ''
-
-  async function hangUp() {
-    try { await roomRef.current?.disconnect() } catch { /* already gone */ }
-    roomRef.current = null
-    audioEls.current.forEach((el) => el.remove()); audioEls.current = []
-    setState('idle')
-  }
-  useEffect(() => () => { void hangUp() }, [])
-
-  async function start() {
-    if (isDemo) { pushToast({ kind: 'info', title: 'المكالمة التجريبية تشتغل في حسابك الحقيقي فقط' }); return }
-    if (!selected) return
-    setState('connecting')
-    try {
-      const { data, error } = await supabase.functions.invoke('nabrah-call', { body: { op: 'web_call', agent_id: selected } })
-      if (error || !data?.token || !data?.url) throw new Error('token')
-      const { Room, RoomEvent, Track } = await import('livekit-client')
-      const room = new Room()
-      room.on(RoomEvent.TrackSubscribed, (track) => {
-        if (track.kind !== Track.Kind.Audio) return
-        const el = track.attach(); el.style.display = 'none'; document.body.appendChild(el); audioEls.current.push(el)
+      // Who is speaking: the loudest active speaker, you (the local participant) or the agent.
+      room.on(RoomEvent.ActiveSpeakersChanged, (list) => {
+        const top = [...list].sort((x, y) => y.audioLevel - x.audioLevel)[0]
+        if (!top) { setSpeaker('none'); setLevel(0); return }
+        setSpeaker(top.identity === room.localParticipant.identity ? 'user' : 'agent')
+        setLevel(top.audioLevel)
       })
       room.on(RoomEvent.Disconnected, () => { void hangUp() })
       await room.connect(data.url, data.token)
@@ -265,6 +239,17 @@ export function DashboardV2WebCalls() {
       await hangUp()
     }
   }
+  return { state, agentId, speaker, level, seconds, start, hangUp }
+}
+
+/** Web calls: talk to a voice agent from the browser, the same experience a site visitor gets from the call widget. */
+export function DashboardV2WebCalls() {
+  const { isDemo } = useWorkspace()
+  const { agents, loading } = useAgents()
+  const [agentId, setAgentId] = useState('')
+  const call = useWebCall()
+  const selected = agentId || agents[0]?.agent_id || ''
+  const state = call.state
 
   return (
     <NightPage>
@@ -273,11 +258,11 @@ export function DashboardV2WebCalls() {
         {!loading && agents.length === 0 && !isDemo && <div className="np-empty">ما فيه وكلاء صوت مربوطين بحسابك.</div>}
         {agents.length > 0 && <Select label="الوكيل" options={agents.map((a) => ({ value: a.agent_id, label: a.name }))} value={selected} onChange={(e) => setAgentId(e.target.value)} />}
         {state === 'live'
-          ? <Button variant="secondary" onClick={() => void hangUp()}><PhoneOff size={14} /> إنهاء المكالمة</Button>
-          : <Button disabled={state === 'connecting' || !selected} onClick={() => void start()}><Mic size={14} /> {state === 'connecting' ? 'جاري الاتصال…' : 'ابدأ مكالمة'}</Button>}
-        {state === 'live' && <div className="np-empty">المكالمة شغّالة. تكلّم، والوكيل يسمعك ويرد.</div>}
+          ? <Button variant="secondary" onClick={() => void call.hangUp()}><PhoneOff size={14} /> إنهاء المكالمة</Button>
+          : <Button disabled={state === 'connecting' || !selected} onClick={() => void call.start(selected)}><Mic size={14} /> {state === 'connecting' ? 'جاري الاتصال…' : 'ابدأ مكالمة'}</Button>}
         <small style={{ color: 'var(--text-tertiary)' }}>المكالمة تُحسب من رصيد الدقائق وتظهر في سجل المكالمات بعد ما تنتهي. لزر الاتصال على موقعك افتح «الإضافات».</small>
       </Card>
+      <CallPanel state={call.state} speaker={call.speaker} level={call.level} seconds={call.seconds} agentName={agents.find((a) => a.agent_id === call.agentId)?.name ?? ''} onHangUp={() => void call.hangUp()} />
     </NightPage>
   )
 }
