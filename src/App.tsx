@@ -97,6 +97,10 @@ const DashboardV2CallLogs          = lazy(() => import('./dashboard/pages/VoiceC
 const DashboardV2VoiceAgents       = lazy(() => import('./dashboard/pages/VoiceAgents').then(m => ({ default: m.DashboardV2VoiceAgents })))
 const DashboardV2CallCampaigns     = lazy(() => import('./dashboard/pages/VoicePlatformPages').then(m => ({ default: m.DashboardV2CallCampaigns })))
 const DashboardV2WebCalls          = lazy(() => import('./dashboard/pages/VoicePlatformPages').then(m => ({ default: m.DashboardV2WebCalls })))
+const DashboardV2CallWidgets       = lazy(() => import('./dashboard/pages/widgets/WidgetList').then(m => ({ default: () => <m.DashboardV2WidgetList kind="call" /> })))
+const DashboardV2ChatWidgets       = lazy(() => import('./dashboard/pages/widgets/WidgetList').then(m => ({ default: () => <m.DashboardV2WidgetList kind="chat" /> })))
+const DashboardV2CallWidgetWizard  = lazy(() => import('./dashboard/pages/widgets/CallWidgetWizard').then(m => ({ default: m.DashboardV2CallWidgetWizard })))
+const DashboardV2ChatWidgetWizard  = lazy(() => import('./dashboard/pages/widgets/ChatWidgetWizard').then(m => ({ default: m.DashboardV2ChatWidgetWizard })))
 const DashboardV2ApiReference      = lazy(() => import('./dashboard/pages/VoicePlatformPages').then(m => ({ default: m.DashboardV2ApiReference })))
 const DashboardV2Tools             = lazy(() => import('./dashboard/pages/AgentConfigPages').then(m => ({ default: m.DashboardV2Tools })))
 const DashboardV2AnalysisGroups    = lazy(() => import('./dashboard/pages/AgentConfigPages').then(m => ({ default: m.DashboardV2AnalysisGroups })))
@@ -126,6 +130,10 @@ const dashboardChildRoutes = (
     <Route path="site-widget" element={<PermissionRoute permission="integrations.manage"><DashboardV2SiteWidget /></PermissionRoute>} />
     <Route path="connect" element={<PermissionRoute permission="integrations.manage"><DashboardV2Connect /></PermissionRoute>} />
     <Route path="plugins" element={<PermissionRoute permission="integrations.manage"><DashboardV2Plugins /></PermissionRoute>} />
+    <Route path="plugins/widgets" element={<ModuleRoute module="voice"><PermissionRoute permission="integrations.manage"><DashboardV2CallWidgets /></PermissionRoute></ModuleRoute>} />
+    <Route path="plugins/widgets/:id" element={<ModuleRoute module="voice"><PermissionRoute permission="integrations.manage"><DashboardV2CallWidgetWizard /></PermissionRoute></ModuleRoute>} />
+    <Route path="plugins/chat-widgets" element={<PermissionRoute permission="integrations.manage"><DashboardV2ChatWidgets /></PermissionRoute>} />
+    <Route path="plugins/chat-widgets/:id" element={<PermissionRoute permission="integrations.manage"><DashboardV2ChatWidgetWizard /></PermissionRoute>} />
     <Route path="developers" element={<PermissionRoute permission="integrations.manage"><DashboardV2Developers /></PermissionRoute>} />
     <Route path="team" element={<PermissionRoute permission="team.manage"><DashboardV2Team /></PermissionRoute>} />
     <Route path="services" element={<ModuleRoute module="services"><DashboardV2Services /></ModuleRoute>} />

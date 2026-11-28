@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>تحدث معنا</title>
+<style>
+  html, body { height: 100%; margin: 0; }
+  body { display: flex; background: #f1f2f5; color: #16161d; font-family: "IBM Plex Sans Arabic", Tahoma, system-ui, sans-serif; }
+  body.p { background: transparent; }
+  @media (prefers-color-scheme: dark) { body:not(.p) { background: #101015; color: #f4f4f6; } }
+</style>
+</head>
+<body>
+<!-- The public direct-link page for a web-call widget (?key=…), and the dashboard's live preview (?preview=1). -->
+<script>
+  (function () {
+    var q = new URLSearchParams(location.search)
+    var s = document.createElement('script')
+    s.src = '/widget/call.js'
+    if (q.get('preview') === '1') { s.setAttribute('data-preview', '1'); document.body.className = 'p' }
+    else { s.setAttribute('data-page', '1'); s.setAttribute('data-key', q.get('key') || '') }
+    document.body.appendChild(s)
+  })()
+</script>
+</body>
+</html>

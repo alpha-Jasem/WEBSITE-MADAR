@@ -6,20 +6,28 @@
 <meta name="robots" content="noindex">
 <title>محادثة</title>
 <style>
-  :root { --c: #4f6bff; --bg: #0f0f12; --panel: #17171c; --line: #2a2a33; --ink: #f4f4f6; --dim: #9a9aa6; }
+  :root { --c: #4f6bff; --bg: #ffffff; --panel: #f4f5f8; --line: #e3e5ea; --ink: #16161d; --dim: #6b7280; --hd-fg: #fff; --font: "IBM Plex Sans Arabic", Tahoma, system-ui, sans-serif; }
+  :root.dark { --bg: #0f0f12; --panel: #17171c; --line: #2a2a33; --ink: #f4f4f6; --dim: #9a9aa6; }
+  :root.glass { --bg: transparent; }
+  :root.glass body { background: color-mix(in srgb, var(--panel) 70%, transparent); }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
-  body { background: var(--bg); color: var(--ink); font-family: "IBM Plex Sans Arabic", Tahoma, system-ui, sans-serif; font-size: 15px; display: flex; flex-direction: column; overflow: hidden; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; display: flex; flex-direction: column; overflow: hidden; }
   header { flex: none; display: flex; align-items: center; gap: 10px; padding: 14px 16px; background: var(--panel); border-bottom: 1px solid var(--line); }
+  header.gradient { background: linear-gradient(135deg, var(--c), color-mix(in srgb, var(--c) 62%, #000)); border: 0; color: #fff; --dim: rgba(255,255,255,.8); --ink: #fff; }
+  header.solid { background: var(--c); border: 0; color: #fff; --dim: rgba(255,255,255,.8); --ink: #fff; }
+  header.plain { background: transparent; }
   .av { width: 36px; height: 36px; border-radius: 50%; background: var(--c); color: #fff; display: grid; place-items: center; font-weight: 700; flex: none; overflow: hidden; }
+  header.gradient .av, header.solid .av { background: rgba(255,255,255,.22); }
   .av img { width: 100%; height: 100%; object-fit: cover; }
   .who { flex: 1; min-width: 0; }
-  .who b { display: block; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .who b { display: block; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); }
   .who small { color: var(--dim); font-size: 12px; display: flex; align-items: center; gap: 6px; }
   .who small i { width: 7px; height: 7px; border-radius: 50%; background: #3ecf8e; display: inline-block; }
-  .who small i.off { background: #777; }
-  .x { border: 0; background: none; color: var(--dim); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; font-size: 22px; line-height: 1; }
-  .x:hover, .x:focus-visible { background: #ffffff14; color: var(--ink); }
+  .who small i.off { background: #9a9aa6; }
+  .hb { border: 0; background: none; color: var(--dim); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; font-size: 22px; line-height: 1; display: grid; place-items: center; }
+  .hb:hover, .hb:focus-visible { background: #ffffff22; color: var(--ink); }
+  .hb[hidden] { display: none; }
   #log { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
   .m { max-width: 84%; padding: 10px 13px; border-radius: 16px; line-height: 1.75; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: anywhere; }
   .m.bot { background: var(--panel); border: 1px solid var(--line); border-end-start-radius: 4px; align-self: flex-start; }
@@ -32,47 +40,82 @@
   .chips { flex: none; display: flex; gap: 8px; flex-wrap: wrap; padding: 0 16px 10px; }
   .chips button { border: 1px solid var(--c); background: none; color: var(--ink); border-radius: 999px; padding: 7px 13px; font: inherit; font-size: 13.5px; cursor: pointer; }
   .chips button:hover, .chips button:focus-visible { background: var(--c); color: #fff; }
-  form { flex: none; display: flex; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); background: var(--panel); }
+  form.msg { flex: none; display: flex; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); background: var(--panel); }
   textarea { flex: 1; resize: none; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 12px; padding: 10px 12px; font: inherit; max-height: 110px; min-height: 42px; }
-  textarea:focus { outline: 2px solid var(--c); outline-offset: 1px; }
+  :root.glass textarea { background: transparent; }
+  textarea:focus, .pf input:focus { outline: 2px solid var(--c); outline-offset: 1px; }
+  textarea:disabled { opacity: .55; }
   .send { flex: none; width: 44px; height: 42px; align-self: flex-end; border: 0; border-radius: 12px; background: var(--c); color: #fff; cursor: pointer; display: grid; place-items: center; }
   .send:disabled { opacity: .5; cursor: default; }
   .send svg { transform: scaleX(-1); }
   .foot { flex: none; text-align: center; color: var(--dim); font-size: 11px; padding: 0 0 8px; background: var(--panel); }
   .gone { margin: auto; text-align: center; color: var(--dim); padding: 30px; line-height: 1.9; }
-  @media (prefers-reduced-motion: reduce) { #log { scroll-behavior: auto; } .typing i { animation: none; } }
+  .pf { flex: 1; overflow-y: auto; padding: 18px 16px; display: flex; flex-direction: column; gap: 12px; }
+  .pf p { margin: 0 0 4px; color: var(--dim); line-height: 1.8; }
+  .pf label { display: grid; gap: 5px; font-size: 13px; color: var(--dim); }
+  .pf input[type=text], .pf input[type=email], .pf input[type=tel] { border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 10px; padding: 10px 12px; font: inherit; }
+  .pf .consent { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; color: var(--dim); line-height: 1.7; }
+  .pf .go, .nc { border: 0; border-radius: 12px; background: var(--c); color: #fff; padding: 11px 16px; font: inherit; font-weight: 600; cursor: pointer; }
+  .pf .err { color: #e5484d; font-size: 12.5px; min-height: 1em; }
+  .nc { align-self: center; margin-top: 4px; }
+  #call { position: absolute; inset: 0; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(6px); display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; z-index: 5; text-align: center; }
+  #call.on { display: flex; }
+  #call .orb { width: 86px; height: 86px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--c) 70%, #fff), var(--c)); box-shadow: 0 0 0 0 color-mix(in srgb, var(--c) 45%, transparent); animation: pulse 1.8s infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--c) 45%, transparent); } 100% { box-shadow: 0 0 0 26px transparent; } }
+  #call b { font-size: 16px; } #call small { color: var(--dim); direction: ltr; }
+  #call button { border: 0; border-radius: 12px; background: #dc2626; color: #fff; padding: 10px 22px; font: inherit; font-weight: 600; cursor: pointer; }
+  [hidden] { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { #log { scroll-behavior: auto; } .typing i, #call .orb { animation: none; } }
 </style>
 </head>
 <body>
-<header>
+<header id="hd" class="plain">
   <div class="av" id="av" aria-hidden="true">م</div>
   <div class="who"><b id="title">تحدث معنا</b><small><i id="dot"></i><span id="status">متصل الآن</span></small></div>
-  <button class="x" id="close" type="button" aria-label="إغلاق المحادثة">×</button>
+  <button class="hb" id="vc" type="button" aria-label="مكالمة صوتية" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg></button>
+  <button class="hb" id="close" type="button" aria-label="إغلاق المحادثة">×</button>
 </header>
 <div id="log" role="log" aria-live="polite"></div>
+<div class="pf" id="pf" hidden>
+  <p id="pfIntro"></p>
+  <label id="fName">الاسم<input type="text" id="iName" autocomplete="name" maxlength="60"></label>
+  <label id="fEmail">البريد الإلكتروني<input type="email" id="iEmail" autocomplete="email" maxlength="120" dir="ltr"></label>
+  <label id="fPhone">رقم الجوال<input type="tel" id="iPhone" autocomplete="tel" maxlength="20" dir="ltr"></label>
+  <label class="consent" id="fConsent"><input type="checkbox" id="iConsent"><span id="consentText"></span></label>
+  <div class="err" id="pfErr" role="alert"></div>
+  <button class="go" id="pfGo" type="button">ابدأ المحادثة</button>
+</div>
 <div class="chips" id="chips"></div>
-<form id="f" autocomplete="off">
-  <textarea id="t" rows="1" maxlength="1000" placeholder="اكتب رسالتك..." aria-label="رسالتك"></textarea>
+<form id="f" class="msg" autocomplete="off">
+  <textarea id="t" rows="1" maxlength="1000" placeholder="اكتب رسالتك…" aria-label="رسالتك"></textarea>
   <button class="send" id="s" type="submit" aria-label="إرسال"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg></button>
 </form>
-<div class="foot">بواسطة مدار</div>
+<div class="foot" id="foot">بواسطة مدار</div>
+<div id="call" role="dialog" aria-label="مكالمة صوتية"><div class="orb" aria-hidden="true"></div><b id="callSt">جارِ الاتصال…</b><small id="callT"></small><button type="button" id="callEnd">إنهاء المكالمة</button></div>
 <script>
 (function () {
   'use strict'
   var API = 'https://aacnqiuwrpzgxhzdavaq.supabase.co/functions/v1/site-chat'
+  var CALL_API = 'https://aacnqiuwrpzgxhzdavaq.supabase.co/functions/v1/web-call-token'
+  var LIVEKIT = 'https://esm.sh/livekit-client@2.16.1'
   var q = new URLSearchParams(location.search)
   var key = q.get('key') || ''
   var preview = q.get('preview') === '1'
   var $ = function (id) { return document.getElementById(id) }
-  var log = $('log'), input = $('t'), send = $('s'), chipsBox = $('chips')
-  var cfg = { title: 'تحدث معنا', greeting: 'أهلًا بك! كيف أقدر أساعدك؟', color: '#4f6bff', logo_url: '', chips: [], live: true, agent_name: '' }
-  var busy = false, greeted = false, session = ''
+  var log = $('log'), input = $('t'), send = $('s'), chipsBox = $('chips'), form = $('f'), pf = $('pf')
+  var DEF = { title: 'تحدث معنا', greeting: 'أهلًا بك! كيف أقدر أساعدك؟', color: '#4f6bff', theme: 'auto', header: 'solid', font: 'system', glass: false, logo_url: '', chips: [], live: true, agent_name: '', voice: false, texts: {}, prechat: { on: false } }
+  var cfg = Object.assign({}, DEF)
+  var busy = false, session = '', state = 'chat', visitor = null, ended = false
+  var FONTS = { system: '"IBM Plex Sans Arabic", Tahoma, system-ui, sans-serif', rounded: 'Nunito, "Segoe UI", Tahoma, system-ui, sans-serif', serif: 'Georgia, "Times New Roman", serif', mono: 'ui-monospace, Menlo, Consolas, monospace' }
+  var T = function (k, d) { return (cfg.texts && cfg.texts[k]) || d }
 
-  try { session = localStorage.getItem('madar_chat_session') || '' } catch (e) {}
-  if (!/^[A-Za-z0-9_-]{8,64}$/.test(session)) {
+  function newSession() {
     session = Array.prototype.map.call(crypto.getRandomValues(new Uint8Array(16)), function (b) { return ('0' + b.toString(16)).slice(-2) }).join('')
     try { localStorage.setItem('madar_chat_session', session) } catch (e) {}
   }
+  try { session = localStorage.getItem('madar_chat_session') || '' } catch (e) {}
+  if (!/^[A-Za-z0-9_-]{8,64}$/.test(session)) newSession()
+  try { visitor = JSON.parse(sessionStorage.getItem('madar_visitor_' + key) || 'null') } catch (e) {}
 
   function safeColor(c) { return /^#[0-9a-fA-F]{6}$/.test(c || '') ? c : '#4f6bff' }
   function add(text, cls) {
@@ -83,37 +126,89 @@
     log.scrollTop = log.scrollHeight
     return d
   }
-  function apply() {
-    document.documentElement.style.setProperty('--c', safeColor(cfg.color))
-    $('title').textContent = cfg.title || 'تحدث معنا'
-    var av = $('av')
-    av.textContent = ''
-    if (cfg.logo_url && /^https:\/\//.test(cfg.logo_url)) {
-      var im = document.createElement('img'); im.alt = ''; im.src = cfg.logo_url; av.appendChild(im)
-    } else av.textContent = (cfg.agent_name || cfg.title || 'م').trim().charAt(0)
-    $('dot').className = cfg.live ? '' : 'off'
-    $('status').textContent = cfg.live ? 'متصل الآن' : 'غير متاح الآن'
-    chipsBox.textContent = ''
-    ;(cfg.chips || []).slice(0, 4).forEach(function (c) {
-      var b = document.createElement('button'); b.type = 'button'; b.textContent = String(c).slice(0, 40)
-      b.onclick = function () { submit(String(c)) }
-      chipsBox.appendChild(b)
-    })
-    if (!greeted) { greeted = true; add(cfg.greeting || '', 'bot') }
-    else { var first = log.querySelector('.m.bot'); if (first && log.children.length === 1) first.textContent = cfg.greeting || '' }
+  function theme() {
+    var dark = cfg.theme === 'dark' || (cfg.theme !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    document.documentElement.classList.toggle('dark', dark)
+    document.documentElement.classList.toggle('glass', !!cfg.glass)
   }
+  function mode(m) { return m === 'hidden' || m === 'required' ? m : 'optional' }
+
+  // One place decides what the frame shows: the chat, the pre-chat form, "nobody available" or "conversation ended".
+  function render() {
+    theme()
+    var root = document.documentElement
+    root.style.setProperty('--c', safeColor(cfg.color))
+    root.style.setProperty('--font', FONTS[cfg.font] || FONTS.system)
+    $('hd').className = cfg.header === 'gradient' || cfg.header === 'solid' ? cfg.header : 'plain'
+    $('title').textContent = cfg.title || 'تحدث معنا'
+    var av = $('av'); av.textContent = ''
+    if (cfg.logo_url && /^https:\/\//.test(cfg.logo_url)) { var im = document.createElement('img'); im.alt = ''; im.src = cfg.logo_url; av.appendChild(im) }
+    else av.textContent = (cfg.agent_name || cfg.title || 'م').trim().charAt(0)
+    $('dot').className = cfg.live && state !== 'offline' ? '' : 'off'
+    $('status').textContent = cfg.live && state !== 'offline' ? 'متصل الآن' : 'غير متاح الآن'
+    $('vc').hidden = !cfg.voice || preview
+    if (preview && cfg.voice) $('vc').hidden = false
+    input.placeholder = T('placeholder', 'اكتب رسالتك…')
+
+    var showForm = state === 'prechat'
+    pf.hidden = !showForm; log.hidden = showForm; form.hidden = showForm; chipsBox.hidden = showForm
+    if (showForm) {
+      var pc = cfg.prechat || {}
+      $('pfIntro').textContent = T('preIntro', 'عرّفنا عليك قبل ما نبدأ.')
+      ;[['fName', pc.name], ['fEmail', pc.email], ['fPhone', pc.phone]].forEach(function (x) {
+        var el = $(x[0]), m = mode(x[1]); el.hidden = m === 'hidden'
+        var base = x[0] === 'fName' ? 'الاسم' : x[0] === 'fEmail' ? 'البريد الإلكتروني' : 'رقم الجوال'
+        el.firstChild.textContent = base + (m === 'required' ? ' *' : ' (اختياري)')
+      })
+      $('fConsent').hidden = !pc.consent; $('consentText').textContent = pc.consent || ''
+      return
+    }
+    log.textContent = ''
+    add(cfg.greeting || '', 'bot')
+    chipsBox.textContent = ''
+    if (state === 'chat') {
+      ;(cfg.chips || []).slice(0, 4).forEach(function (c) {
+        var b = document.createElement('button'); b.type = 'button'; b.textContent = String(c).slice(0, 40)
+        b.onclick = function () { submit(String(c)) }
+        chipsBox.appendChild(b)
+      })
+    }
+    var lock = state === 'offline' || state === 'ended'
+    input.disabled = lock; send.disabled = lock
+    if (state === 'offline') add(T('offline', 'ما فيه أحد متاح الحين، بنرجع لك قريب.'), 'note')
+    if (state === 'ended') {
+      add(T('ended', 'انتهت المحادثة. أرسل رسالة لبدء محادثة جديدة.'), 'note')
+      var b2 = document.createElement('button'); b2.type = 'button'; b2.className = 'nc'; b2.textContent = T('newChat', 'محادثة جديدة')
+      b2.onclick = function () { if (preview) return; newSession(); ended = false; state = needsForm() ? 'prechat' : 'chat'; render() }
+      log.appendChild(b2)
+    }
+  }
+  function needsForm() { return !!(cfg.prechat && cfg.prechat.on) && !visitor }
   function gone(msg) {
-    log.innerHTML = ''
+    log.hidden = false; pf.hidden = true; log.innerHTML = ''
     var d = document.createElement('div'); d.className = 'gone'; d.textContent = msg
     log.appendChild(d)
     chipsBox.textContent = ''
     input.disabled = true; send.disabled = true
   }
 
+  $('pfGo').onclick = function () {
+    var pc = cfg.prechat || {}, v = { name: $('iName').value.trim(), email: $('iEmail').value.trim(), phone: $('iPhone').value.trim() }, err = ''
+    if (mode(pc.name) === 'required' && !v.name) err = 'الاسم مطلوب.'
+    else if (mode(pc.email) === 'required' && !/^\S+@\S+\.\S+$/.test(v.email)) err = 'اكتب بريدًا إلكترونيًا صحيحًا.'
+    else if (v.email && !/^\S+@\S+\.\S+$/.test(v.email)) err = 'البريد الإلكتروني غير صحيح.'
+    else if (mode(pc.phone) === 'required' && v.phone.replace(/\D/g, '').length < 9) err = 'اكتب رقم جوال صحيح.'
+    else if (pc.consent && !$('iConsent').checked) err = 'لازم توافق قبل ما نبدأ.'
+    $('pfErr').textContent = err
+    if (err || preview) return
+    visitor = v
+    try { sessionStorage.setItem('madar_visitor_' + key, JSON.stringify(v)) } catch (e) {}
+    state = 'chat'; render(); input.focus()
+  }
+
   async function submit(text) {
     text = (text || input.value).trim()
-    if (!text || busy) return
-    if (!cfg.live && !preview) { add('المساعد غير متاح الآن. اترك رسالتك وسنتواصل معك.', 'note') }
+    if (!text || busy || state !== 'chat') return
     busy = true; send.disabled = true; input.value = ''; chipsBox.textContent = ''
     add(text, 'me')
     var typing = add('', 'bot'); typing.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>'
@@ -122,39 +217,68 @@
         await new Promise(function (r) { setTimeout(r, 700) })
         typing.textContent = 'هذا رد تجريبي. هنا يظهر رد المساعد الحقيقي من معلومات شركتك.'
       } else {
-        var res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: key, session: session, message: text, page_url: q.get('page') || '' }) })
+        var res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: key, session: session, message: text, page_url: q.get('page') || '', visitor: visitor || undefined }) })
         var out = await res.json().catch(function () { return {} })
-        if (res.ok && out.reply) typing.textContent = out.reply
+        if (res.ok && out.reply) { typing.textContent = out.reply; if (out.ended) { state = 'ended'; render() } }
         else if (res.status === 429) typing.textContent = 'أرسلت رسائل كثيرة بسرعة. جرّب بعد قليل.'
-        else if (out.code === 'off') typing.textContent = 'المساعد غير متاح الآن. اترك رقم جوالك على موقعنا وسنتواصل معك.'
+        else if (out.code === 'off') { state = 'offline'; render() }
+        else if (out.code === 'origin') typing.textContent = 'هذه المحادثة غير مفعّلة على هذا الموقع.'
         else typing.textContent = 'تعذّر الرد الآن. حاول مرة ثانية بعد قليل.'
       }
     } catch (e) { typing.textContent = 'تعذّر الاتصال. تأكد من الإنترنت وحاول مرة ثانية.' }
-    busy = false; send.disabled = false; input.focus(); log.scrollTop = log.scrollHeight
+    busy = false; if (state === 'chat') { send.disabled = false; input.focus() } log.scrollTop = log.scrollHeight
   }
 
-  $('f').addEventListener('submit', function (e) { e.preventDefault(); submit() })
+  form.addEventListener('submit', function (e) { e.preventDefault(); submit() })
   input.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } })
   input.addEventListener('input', function () { input.style.height = 'auto'; input.style.height = Math.min(110, input.scrollHeight) + 'px' })
   $('close').onclick = function () { try { parent.postMessage({ type: 'madar-chat-close' }, '*') } catch (e) {} }
 
-  // Live preview from the dashboard builder: it sends the settings as they are edited.
+  // ── voice call from inside the chat (same agent as the widget's voice setting) ──
+  var room = null, audios = [], clock = null, t0 = 0
+  function mmss(s) { return ('0' + Math.floor(s / 60)).slice(-2) + ':' + ('0' + (s % 60)).slice(-2) }
+  function endCall() {
+    if (clock) { clearInterval(clock); clock = null }
+    if (room) { try { room.disconnect() } catch (e) {} room = null }
+    audios.forEach(function (a) { a.remove() }); audios = []
+    $('call').classList.remove('on')
+  }
+  $('callEnd').onclick = endCall
+  $('vc').onclick = async function () {
+    if (preview || room) return
+    $('call').classList.add('on'); $('callSt').textContent = 'جارِ الاتصال…'; $('callT').textContent = ''
+    try {
+      var mic = await navigator.mediaDevices.getUserMedia({ audio: true }); mic.getTracks().forEach(function (t) { t.stop() })
+      var res = await fetch(CALL_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: key, page_url: q.get('page') || '' }) })
+      if (!res.ok) throw new Error('token')
+      var data = await res.json()
+      var LK = await import(LIVEKIT)
+      var r = new LK.Room(); room = r
+      r.on(LK.RoomEvent.TrackSubscribed, function (track) { if (track.kind !== 'audio') return; var el = track.attach(); el.autoplay = true; el.style.display = 'none'; document.body.appendChild(el); audios.push(el) })
+      r.on(LK.RoomEvent.Disconnected, endCall)
+      await r.connect(data.url, data.token)
+      await r.localParticipant.setMicrophoneEnabled(true)
+      t0 = Date.now(); $('callSt').textContent = 'متصل — تكلّم الآن'
+      clock = setInterval(function () { $('callT').textContent = mmss(Math.floor((Date.now() - t0) / 1000)) }, 1000)
+    } catch (e) { $('callSt').textContent = 'تعذّر الاتصال'; setTimeout(endCall, 1800) }
+  }
+  window.addEventListener('pagehide', endCall)
+
+  // Live preview from the dashboard builder: it sends the settings (and which state to show) as they are edited.
   window.addEventListener('message', function (e) {
     var d = e.data
     if (!preview || !d || d.type !== 'madar-preview' || !d.config) return
-    var c = d.config
-    cfg = { title: String(c.title || ''), greeting: String(c.greeting || ''), color: c.color, logo_url: String(c.logo_url || ''), chips: Array.isArray(c.chips) ? c.chips : [], live: true, agent_name: '' }
-    apply()
+    cfg = Object.assign({}, DEF, d.config, { live: true })
+    state = ['prechat', 'offline', 'ended'].indexOf(d.state) >= 0 ? d.state : 'chat'
+    document.documentElement.style.maxWidth = ''
+    render()
   })
 
-  if (preview) {
-    cfg.title = q.get('title') || cfg.title; cfg.greeting = q.get('greeting') || cfg.greeting; cfg.color = q.get('color') ? '#' + q.get('color').replace('#', '') : cfg.color
-    apply()
-  } else if (!/^[0-9a-f-]{36}$/i.test(key)) {
-    gone('هذه المحادثة غير مفعّلة.')
-  } else {
+  if (preview) { cfg.title = q.get('title') || cfg.title; render(); try { parent.postMessage({ type: 'madar-preview-ready' }, '*') } catch (e) {} }
+  else if (!/^[0-9a-f-]{36}$/i.test(key)) gone('هذه المحادثة غير مفعّلة.')
+  else {
     fetch(API + '?key=' + encodeURIComponent(key)).then(function (r) { return r.ok ? r.json() : Promise.reject() })
-      .then(function (c) { cfg = Object.assign(cfg, c); apply() })
+      .then(function (c) { cfg = Object.assign(cfg, c); state = !cfg.live ? 'offline' : needsForm() ? 'prechat' : 'chat'; render() })
       .catch(function () { gone('هذه المحادثة غير مفعّلة حاليًا.') })
   }
 })()
