@@ -61,7 +61,9 @@ Deno.serve(async (req) => {
   const wantAgents = (list: unknown) => [...new Set(Array.isArray(list) ? list.map(String).filter((a) => mine.has(a)) : [])]
 
   async function inboundLinks(inboundId: string): Promise<{ link_id: string; agent_id: string }[]> {
-    const all = ((await nabrah('/agent-inbound-link', key as string)) ?? []) as { link_id: string; agent?: { agent_id?: string }; sip_inbound?: { id?: string }; agent_id?: string; inbound_id?: string }[]
+    const raw = await nabrah('/agent-inbound-link', key as string)
+    // The platform wraps the list ({ links: [...] }); a bare array is accepted too.
+    const all = (Array.isArray(raw) ? raw : raw?.links ?? raw?.items ?? []) as { link_id: string; agent?: { agent_id?: string }; sip_inbound?: { id?: string }; agent_id?: string; inbound_id?: string }[]
     return all.filter((l) => (l.sip_inbound?.id ?? l.inbound_id) === inboundId).map((l) => ({ link_id: l.link_id, agent_id: String(l.agent?.agent_id ?? l.agent_id ?? '') }))
   }
   async function setInboundAgents(inboundId: string, want: string[]) {
