@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { Plus, Pencil, Trash2, Wrench, ListChecks, PhoneIncoming, PhoneOutgoing, X } from 'lucide-react'
+import { Plus, Pencil, Trash2, Wrench, ListChecks, PhoneIncoming, PhoneOutgoing, Search, X } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { supabase } from '@/lib/supabase'
 import {
@@ -10,22 +10,52 @@ import {
 import { useVoiceRead, type VoiceAgent } from '@/lib/queries/voicePlatform'
 import { Badge, Button, Card, Dialog, Input, Select } from '@/dashboard/components/primitives'
 import { EmptyState, useToast } from '@/dashboard/components/uiExtras'
-import { NightPage, PageHead } from './shared/night'
+import { NightPage } from './shared/night'
 import './growth.css'
 
 const textarea = { width: '100%', boxSizing: 'border-box', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'transparent', color: 'inherit', padding: 10, font: 'inherit' } as const
 
-/** Shared list page: header, "not available yet" note, empty state, cards, and a dialog the caller fills. */
-function ConfigPage<T extends { id: string }>({ title, sub, createLabel, available, loading, items, emptyIcon, emptyTitle, emptyText, canEdit, onNew, renderCard, dialog, extraActions }: {
+const CFG_CSS = `
+.cfg-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 22px 24px; }
+.cfg-head h1 { margin: 0; font-size: 26px; font-weight: 700; color: var(--ink); }
+.cfg-head p { margin: 4px 0 0; font-size: 13.5px; color: var(--muted); max-width: 64ch; }
+.cfg-acts { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.cfg-new { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 18px; border-radius: 12px; border: 0; background: var(--ink); color: var(--panel); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.cfg-new:focus-visible, .cfg-list .gr-btn:focus-visible { outline: 3px solid var(--accent, #6c4cf1); outline-offset: 2px; }
+.cfg-search { display: flex; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 6px 8px; }
+.cfg-search label { flex: 1; display: flex; align-items: center; gap: 10px; border-radius: 12px; padding: 0 12px; height: 42px; border: 1px solid var(--line); color: var(--muted); }
+.cfg-search input { flex: 1; border: 0; outline: 0; background: transparent; color: var(--ink); font: inherit; font-size: 14px; min-width: 0; }
+.cfg-list { display: grid; gap: 12px; }
+.cfg-list .gr-card { display: grid; grid-template-columns: 1fr auto; column-gap: 16px; row-gap: 6px; align-items: center; border-radius: 20px; padding: 16px 20px; background: var(--panel); }
+.cfg-list .gr-card h4 { font-size: 15.5px; font-weight: 700; }
+.cfg-list .gr-card > .gr-acts { grid-column: 2; grid-row: 1 / span 6; margin: 0; flex-wrap: nowrap; }
+.cfg-list .gr-btn { height: 38px; padding: 0 14px; border-radius: 12px; background: var(--panel); }
+.cfg-list .gr-btn.del { width: 38px; padding: 0; justify-content: center; color: var(--bad, #dc2626); background: color-mix(in srgb, var(--bad, #dc2626) 10%, transparent); border-color: color-mix(in srgb, var(--bad, #dc2626) 25%, var(--line)); }
+@media (max-width: 640px) { .cfg-list .gr-card { grid-template-columns: 1fr; } .cfg-list .gr-card > .gr-acts { grid-column: 1; grid-row: auto; } }
+`
+
+/** Shared list page, laid out like the voice platform's: a header card, a search box, then one wide row per item. */
+function ConfigPage<T extends { id: string }>({ title, sub, createLabel, available, loading, items, emptyIcon, emptyTitle, emptyText, canEdit, onNew, renderCard, dialog, extraActions, searchPlaceholder }: {
   title: string; sub: string; createLabel: string; available: boolean; loading: boolean; items: T[]; emptyIcon: ReactNode
-  emptyTitle: string; emptyText: string; canEdit: boolean; onNew: () => void; renderCard: (item: T) => ReactNode; dialog: ReactNode; extraActions?: ReactNode
+  emptyTitle: string; emptyText: string; canEdit: boolean; onNew: () => void; renderCard: (item: T) => ReactNode; dialog: ReactNode; extraActions?: ReactNode; searchPlaceholder?: string
 }) {
+  const [q, setQ] = useState('')
+  const needle = q.trim().toLowerCase()
+  const shown = needle ? items.filter((it) => [(it as { name?: string }).name, (it as { description?: string | null }).description, (it as { phone?: string }).phone, (it as { url?: string }).url].some((v) => String(v ?? '').toLowerCase().includes(needle))) : items
   return (
     <NightPage>
-      <PageHead title={title} sub={sub} actions={available && canEdit ? <>{extraActions}<Button onClick={onNew}><Plus size={14} /> {createLabel}</Button></> : undefined} />
+      <style>{CFG_CSS}</style>
+      <div className="cfg-head">
+        <div><h1>{title}</h1><p>{sub}</p></div>
+        {available && canEdit && <div className="cfg-acts">{extraActions}<button type="button" className="cfg-new" onClick={onNew}><Plus size={16} /> {createLabel}</button></div>}
+      </div>
+      {available && items.length > 0 && (
+        <div className="cfg-search"><label><Search size={16} /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder={searchPlaceholder || 'ابحث بالاسم…'} aria-label="بحث" /></label></div>
+      )}
       {!available && <Card style={{ padding: 16 }}><div className="np-empty">هذي الصفحة تتفعّل بعد تحديث قاعدة البيانات.</div></Card>}
       {available && items.length === 0 && !loading && <Card><EmptyState icon={emptyIcon} title={emptyTitle} description={emptyText} /></Card>}
-      {available && items.length > 0 && <div className="gr-grid">{items.map(renderCard)}</div>}
+      {available && items.length > 0 && shown.length === 0 && <Card><div className="np-empty">ما فيه نتائج تطابق البحث.</div></Card>}
+      {available && shown.length > 0 && <div className="cfg-list">{shown.map(renderCard)}</div>}
       {dialog}
     </NightPage>
   )
@@ -35,7 +65,7 @@ function CardActions({ onEdit, onDelete }: { onEdit: () => void; onDelete: () =>
   return (
     <div className="gr-acts">
       <button type="button" className="gr-btn" onClick={onEdit}><Pencil /> تعديل</button>
-      <button type="button" className="gr-btn" onClick={onDelete}><Trash2 /> حذف</button>
+      <button type="button" className="gr-btn del" onClick={onDelete} aria-label="حذف" title="حذف"><Trash2 /></button>
     </div>
   )
 }
@@ -107,7 +137,7 @@ export function DashboardV2Tools() {
   return (
     <ConfigPage
       extraActions={<Button variant="secondary" disabled={syncing} onClick={() => void syncToAgent()}>ربط بالوكيل</Button>}
-      title="الأدوات" sub="نقاط HTTP يستدعيها الوكيل أثناء المحادثة، مثل جلب سعر أو التحقق من موعد. بعد أي تعديل اضغط «ربط بالوكيل»" createLabel="أداة جديدة"
+      title="الأدوات" sub="نقاط HTTP يستدعيها الوكيل أثناء المحادثة، مثل جلب سعر أو التحقق من موعد. بعد أي تعديل اضغط «ربط بالوكيل»" createLabel="أداة جديدة" searchPlaceholder="ابحث في الأدوات بالاسم…"
       available={available} loading={loading} items={items} canEdit={can('agent.settings')} onNew={() => setDraft({ ...NEW_TOOL, params: [] })}
       emptyIcon={<Wrench size={20} />} emptyTitle="ما عندك أدوات بعد" emptyText="أضف أداة ليقدر الوكيل يجلب معلومة من نظامك أو ينفّذ إجراء."
       renderCard={(t) => (
@@ -176,7 +206,7 @@ export function DashboardV2AnalysisGroups() {
 
   return (
     <ConfigPage
-      title="مجموعات التحليل" sub="قوالب قابلة لإعادة الاستخدام لما يُستخرج من كل مكالمة، تربطها بوكيل أو أكثر" createLabel="مجموعة جديدة"
+      title="مجموعات التحليل" sub="قوالب قابلة لإعادة الاستخدام لما يُستخرج من كل مكالمة، تربطها بوكيل أو أكثر" createLabel="مجموعة جديدة" searchPlaceholder="ابحث في المجموعات بالاسم…"
       available={available} loading={loading} items={items} canEdit={can('agent.settings')} onNew={() => setDraft({ name: '', description: '', fields: [{ name: '', type: 'text', description: '' }], agent_ids: [] })}
       emptyIcon={<ListChecks size={20} />} emptyTitle="ما عندك مجموعات تحليل" emptyText="أنشئ أول مجموعة لتنظيم نتائج المكالمات."
       renderCard={(g: AnalysisGroup) => (
@@ -277,7 +307,7 @@ export function DashboardV2VoiceServices({ direction, headExtra }: { direction: 
     <ConfigPage
       title={inbound ? 'خدمات الوارد' : 'خدمات الصادر'}
       sub={inbound ? 'أرقام الاتصال التي يستقبل عليها الوكيل مكالمات عملائك، مثل رقم 9200 محوّل إلى الوكيل' : 'خطوط الاتصال التي يتصل منها الوكيل بعملائك، للحملات والاتصال الفوري'}
-      createLabel="خدمة جديدة" available={available} loading={loading} items={items} canEdit={can('integrations.manage')} onNew={() => setDraft(empty)} extraActions={headExtra}
+      createLabel="خدمة جديدة" searchPlaceholder="بحث بالاسم أو الرقم…" available={available} loading={loading} items={items} canEdit={can('integrations.manage')} onNew={() => setDraft(empty)} extraActions={headExtra}
       emptyIcon={inbound ? <PhoneIncoming size={20} /> : <PhoneOutgoing size={20} />}
       emptyTitle={inbound ? 'ما عندك خدمات وارد' : 'ما عندك خدمات صادر'} emptyText="أنشئ خط SIP من مزوّد الاتصال عندك، أو سجّل رقمك ونتابع ربطه معك."
       renderCard={(s: VoiceService) => (
