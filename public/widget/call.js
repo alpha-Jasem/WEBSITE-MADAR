@@ -2,8 +2,8 @@
  * Madar web call. Put this once in the page, before </body>:
  *   <script src="https://madar.software/widget/call.js" data-key="WIDGET_KEY" async></script>
  * Visitors press the button, allow the microphone, and talk to the company's voice agent in the browser.
- * During the call a small card shows who is speaking: the orb waves while the agent talks, glows green while the
- * visitor talks, and breathes while the agent listens.
+ * During the call a small card shows who is speaking: layered light ribbons widen with the voice, purple while the agent
+ * talks, green while the visitor talks, quiet while the agent listens.
  * The agent and allowed websites are set in the dashboard (الإضافات ← ودجة المكالمة عبر الويب).
  * Optional: data-label (button text), data-color (#rrggbb), data-position ("right" or "left").
  */
@@ -38,31 +38,17 @@
     '.btn:hover{transform:scale(1.04)}.btn:focus-visible,.end:focus-visible{outline:3px solid #fff;outline-offset:2px}',
     '.btn[hidden],.card[hidden]{display:none}',
     '.btn.err{background:#b42318}',
-    '.card{width:300px;max-width:calc(100vw - 32px);background:#17171c;color:#f4f4f6;border:1px solid #2a2a33;border-radius:20px;box-shadow:0 18px 50px rgba(0,0,0,.4);padding:12px 14px;display:flex;align-items:center;gap:12px}',
-    '.orb{position:relative;width:60px;height:60px;flex:none;display:grid;place-items:center;--lv:0;--c:#8b8b98}',
-    '.orb[data-s="agent"]{--c:' + color + '}.orb[data-s="user"]{--c:#22c55e}.orb[data-s="connecting"]{--c:#f59e0b}',
-    '.core{position:relative;z-index:2;width:36px;height:36px;border-radius:50%;background:var(--c);display:grid;place-items:center;color:#fff;transform:scale(calc(1 + var(--lv) * .28));transition:transform .12s linear,background .3s}',
-    '.ring{position:absolute;inset:6px;border-radius:50%;border:2px solid var(--c);opacity:0}',
-    '.orb[data-s="agent"] .ring,.orb[data-s="user"] .ring{animation:wave 1.6s ease-out infinite}',
-    '.orb .ring:nth-child(2){animation-delay:.5s!important}.orb .ring:nth-child(3){animation-delay:1s!important}',
-    '.orb[data-s="listen"] .core{animation:breath 3s ease-in-out infinite}',
-    '.orb[data-s="connecting"] .core{animation:blink 1s ease-in-out infinite}',
-    '.bars{display:flex;gap:3px;align-items:center;height:16px}',
-    '.bars i{width:3px;height:100%;border-radius:2px;background:#fff;animation:bar .9s ease-in-out infinite}',
-    '.bars i:nth-child(2){animation-delay:.15s}.bars i:nth-child(3){animation-delay:.3s}.bars i:nth-child(4){animation-delay:.45s}',
+    '.card{width:320px;max-width:calc(100vw - 32px);background:#17171c;color:#f4f4f6;border:1px solid #2a2a33;border-radius:20px;box-shadow:0 18px 50px rgba(0,0,0,.4);padding:12px 14px;display:flex;align-items:center;gap:12px}',
+    '.wave{width:104px;height:60px;flex:none;display:block}',
     '.main{flex:1;min-width:0;display:grid;gap:2px}',
     '.main b{font-size:14px;font-weight:600}.main span{font-size:12.5px;color:#a8a8b3}',
     '.time{direction:ltr;text-align:right;font-variant-numeric:tabular-nums}',
     '.end{border:0;width:42px;height:42px;border-radius:50%;background:#dc2626;color:#fff;cursor:pointer;display:grid;place-items:center;flex:none}',
-    '@keyframes wave{0%{transform:scale(.7);opacity:.55}100%{transform:scale(1.45);opacity:0}}',
-    '@keyframes breath{50%{transform:scale(1.08)}}@keyframes blink{50%{opacity:.45}}@keyframes bar{0%,100%{transform:scaleY(.25)}50%{transform:scaleY(1)}}',
-    '@media (prefers-reduced-motion:reduce){.orb .ring,.orb .core,.bars i,.btn{animation:none!important;transition:none!important}',
-    '.orb[data-s="agent"] .ring,.orb[data-s="user"] .ring{opacity:.35;transform:scale(1.15)}.bars i{transform:scaleY(.7)}}'
+    '@media (prefers-reduced-motion:reduce){.btn{transition:none!important}}'
   ].join('')
   root.appendChild(style)
 
   var PHONE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>'
-  var MIC = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg>'
   var END = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>'
 
   var wrap = document.createElement('div')
@@ -70,29 +56,66 @@
   wrap.innerHTML =
     '<button type="button" class="btn">' + PHONE + '<span class="t"></span></button>' +
     '<div class="card" hidden role="status" aria-live="polite">' +
-      '<div class="orb" data-s="connecting"><span class="ring"></span><span class="ring"></span><span class="ring"></span><span class="core"></span></div>' +
+      '<canvas class="wave" aria-hidden="true"></canvas>' +
       '<div class="main"><b class="title"></b><span class="hint"></span><span class="time"></span></div>' +
       '<button type="button" class="end" aria-label="إنهاء المكالمة">' + END + '</button>' +
     '</div>'
   root.appendChild(wrap)
-  var btn = wrap.querySelector('.btn'), card = wrap.querySelector('.card'), orb = wrap.querySelector('.orb'), core = wrap.querySelector('.core')
+  var btn = wrap.querySelector('.btn'), card = wrap.querySelector('.card'), wave = wrap.querySelector('.wave')
   var titleEl = wrap.querySelector('.title'), hintEl = wrap.querySelector('.hint'), timeEl = wrap.querySelector('.time'), end = wrap.querySelector('.end')
 
   var room = null, audios = [], st = 'idle', clock = null, startedAt = 0
   function mmss(s) { return ('0' + Math.floor(s / 60)).slice(-2) + ':' + ('0' + (s % 60)).slice(-2) }
   function stopClock() { if (clock) { clearInterval(clock); clock = null } }
   function showButton(text, isErr) {
-    card.hidden = true; btn.hidden = false
+    card.hidden = true; btn.hidden = false; stopWave()
     btn.querySelector('.t').textContent = text || label
     btn.className = isErr ? 'btn err' : 'btn'
     btn.setAttribute('aria-label', text || label)
   }
-  // mode: connecting | agent | user | listen
+  // mode: connecting | agent | user | listen. level (0..1) is the loudness of whoever speaks.
+  var RGB = { agent: [139, 116, 255], user: [34, 197, 94], listen: [143, 152, 196], connecting: [245, 158, 11] }
+  var cur = RGB.connecting.slice(), curMode = 'connecting', curLevel = 0, sm = 0, raf = 0, lastT = 0
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  var wctx = wave.getContext('2d'), WW = 104, WH = 60
+  function setupWave() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2)
+    wave.width = Math.round(WW * dpr); wave.height = Math.round(WH * dpr); wctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+  }
+  function col(a, k) { k = k == null ? 1 : k; return 'rgba(' + Math.round(cur[0] * k) + ',' + Math.round(cur[1] * k) + ',' + Math.round(cur[2] * k) + ',' + a + ')' }
+  // Three layered ribbons across a mirror line; they widen and speed up with the voice.
+  function frame(now) {
+    var dt = Math.min(0.05, (now - lastT) / 1000); lastT = now
+    var t = now / 1000, tgt = RGB[curMode]
+    for (var i = 0; i < 3; i++) cur[i] += (tgt[i] - cur[i]) * Math.min(1, dt * 6)
+    var want = curMode === 'agent' || curMode === 'user' ? Math.min(1, Math.max(0.22, curLevel * 4)) : curMode === 'connecting' ? 0.2 + 0.12 * Math.sin(t * 4) : 0.06 + 0.03 * Math.sin(t * 1.6)
+    sm += (want - sm) * Math.min(1, dt * 10)
+    var a = reduce ? (curMode === 'agent' || curMode === 'user' ? 0.5 : 0.08) : sm, sp = reduce ? 0 : t, cy = WH / 2
+    wctx.clearRect(0, 0, WW, WH)
+    wctx.strokeStyle = col(0.2); wctx.lineWidth = 1; wctx.beginPath(); wctx.moveTo(WW * 0.04, cy); wctx.lineTo(WW * 0.96, cy); wctx.stroke()
+    for (var L = 2; L >= 0; L--) {
+      var A = a * WH * (0.46 - L * 0.1) + WH * 0.02, top = []
+      for (var x = WW * 0.04; x <= WW * 0.96; x += 2) {
+        var u = (x - WW * 0.04) / (WW * 0.92), env = Math.sin(u * Math.PI)
+        top.push([x, cy + Math.sin(u * (6 + L * 2) + sp * (2.4 + L * 0.8) + L * 1.3) * A * env])
+      }
+      wctx.beginPath(); top.forEach(function (p, i) { if (i) wctx.lineTo(p[0], p[1]); else wctx.moveTo(p[0], p[1]) })
+      for (var j = top.length - 1; j >= 0; j--) wctx.lineTo(top[j][0], cy - (top[j][1] - cy) * 0.9)
+      wctx.closePath()
+      var g = wctx.createLinearGradient(0, 0, 0, WH)
+      g.addColorStop(0, col(0)); g.addColorStop(0.5, col(0.3 + a * 0.3 - L * 0.06, 1 + L * 0.1)); g.addColorStop(1, col(0))
+      wctx.fillStyle = g; wctx.fill()
+      wctx.beginPath(); top.forEach(function (p, i) { if (i) wctx.lineTo(p[0], p[1]); else wctx.moveTo(p[0], p[1]) })
+      wctx.strokeStyle = col(0.95 - L * 0.25, 1.15); wctx.lineWidth = 2 - L * 0.4; wctx.stroke()
+    }
+    raf = requestAnimationFrame(frame)
+  }
+  function startWave() { if (!raf) { setupWave(); lastT = performance.now(); raf = requestAnimationFrame(frame) } }
+  function stopWave() { if (raf) { cancelAnimationFrame(raf); raf = 0 } }
   function showCard(mode, level) {
     btn.hidden = true; card.hidden = false
-    orb.setAttribute('data-s', mode)
-    orb.style.setProperty('--lv', String(Math.min(1, Math.max(0, level || 0)).toFixed(2)))
-    core.innerHTML = mode === 'agent' ? '<span class="bars"><i></i><i></i><i></i><i></i></span>' : MIC
+    curMode = mode; curLevel = level || 0
+    startWave()
     titleEl.textContent = TXT[mode][0]; hintEl.textContent = TXT[mode][1]
     timeEl.textContent = startedAt ? mmss(Math.floor((Date.now() - startedAt) / 1000)) : ''
   }
