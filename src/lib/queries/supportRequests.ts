@@ -10,6 +10,8 @@ export interface SupportRequest {
   subject: string
   details: string
   status: RequestStatus
+  admin_reply: string | null
+  replied_at: string | null
   created_at: string
 }
 
@@ -28,7 +30,7 @@ export function useSupportRequests(companyId: string | null, isDemo: boolean, em
   const load = useCallback(async () => {
     if (isDemo) { setLoading(false); return }
     if (!companyId) return
-    const { data } = await supabase.from('support_requests').select('id, kind, subject, details, status, created_at').eq('company_id', companyId).order('created_at', { ascending: false }).limit(100)
+    const { data } = await supabase.from('support_requests').select('id, kind, subject, details, status, admin_reply, replied_at, created_at').eq('company_id', companyId).order('created_at', { ascending: false }).limit(100)
     setItems((data ?? []) as SupportRequest[])
     setLoading(false)
   }, [companyId, isDemo])
@@ -37,7 +39,7 @@ export function useSupportRequests(companyId: string | null, isDemo: boolean, em
   const send = useCallback(async (r: { kind: RequestKind; subject: string; details: string; reference: string }) => {
     const row = { kind: r.kind, subject: r.subject.trim().slice(0, 200), details: r.details.trim().slice(0, 5000), reference: r.reference.trim().slice(0, 300) || null }
     if (isDemo || !companyId) {
-      setItems((l) => [{ id: `demo-${Date.now()}`, kind: row.kind, subject: row.subject, details: row.details, status: 'open', created_at: new Date().toISOString() }, ...l])
+      setItems((l) => [{ id: `demo-${Date.now()}`, kind: row.kind, subject: row.subject, details: row.details, status: 'open', admin_reply: null, replied_at: null, created_at: new Date().toISOString() }, ...l])
       return
     }
     const { error } = await supabase.from('support_requests').insert({ company_id: companyId, email, ...row })

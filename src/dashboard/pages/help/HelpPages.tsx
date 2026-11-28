@@ -328,6 +328,7 @@ export function DashboardV2HelpRequests() {
               <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}><b>{r.subject}</b><Chip tone={r.status === 'open' ? 'info' : r.status === 'answered' ? 'ok' : 'muted'}>{STATUS_LABELS[r.status]}</Chip></div>
               <small>{KIND_LABELS[r.kind]} · {when(r.created_at)}</small>
               <small style={{ color: 'var(--ink)', lineHeight: 1.8 }}>{r.details.length > 220 ? r.details.slice(0, 220) + '…' : r.details}</small>
+              {r.admin_reply && <div style={{ marginTop: 6, padding: '10px 12px', borderRadius: 12, background: 'var(--hover-bg)', fontSize: 13.5, lineHeight: 1.9, whiteSpace: 'pre-wrap' }}><small style={{ display: 'block', color: 'var(--muted)', marginBottom: 2 }}>رد فريق مدار{r.replied_at ? ` · ${when(r.replied_at)}` : ''}</small>{r.admin_reply}</div>}
             </div>
           ))}
       </div>

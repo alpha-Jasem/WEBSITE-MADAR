@@ -3,6 +3,7 @@ import { useAppManifest } from '../hooks/useAppManifest'
 import { PlasmaAdminShell } from '../components/dashboard/admin/PlasmaAdminShell'
 import { AdminCommandDeck } from '../components/dashboard/admin/AdminCommandDeck'
 import { AdminCompanies } from '../components/dashboard/admin/AdminCompanies'
+import { AdminSupport } from '../components/dashboard/admin/AdminSupport'
 import { AdminLogs } from '../components/dashboard/admin/AdminLogs'
 import { AdminSettings } from '../components/dashboard/admin/AdminSettings'
 import { AdminN8n } from '../components/dashboard/admin/AdminN8n'
@@ -45,6 +46,7 @@ export const AdminDashboard = () => {
         <Route path="accounts" element={<AdminClinicAccounts />} />
         <Route path="leads" element={<Navigate to="/admin/outreach" replace />} />
         <Route path="logs" element={<AdminLogs />} />
+        <Route path="support" element={<AdminSupport />} />
         <Route path="settings" element={<AdminSettings />} />
         <Route path="n8n" element={<AdminN8n />} />
         <Route path="pipeline" element={<AdminPipeline />} />
