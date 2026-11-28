@@ -3,10 +3,11 @@ import { Plus, Pencil, Trash2, Wrench, ListChecks, PhoneIncoming, PhoneOutgoing,
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { supabase } from '@/lib/supabase'
 import {
-  useAgentTools, saveAgentTool, deleteAgentTool, useAnalysisGroups, saveAnalysisGroup, deleteAnalysisGroup,
+  useAgentTools, saveAgentTool, deleteAgentTool, useAnalysisGroups, saveAnalysisGroup, deleteAnalysisGroup, syncAnalysisGroups,
   useVoiceServices, saveVoiceService, deleteVoiceService, STATUS_LABELS,
   type AgentTool, type AnalysisGroup, type AnalysisField, type ToolParam, type VoiceService, type ServiceStatus,
 } from '@/lib/queries/agentConfig'
+import { useVoiceRead, type VoiceAgent } from '@/lib/queries/voicePlatform'
 import { Badge, Button, Card, Dialog, Input, Select } from '@/dashboard/components/primitives'
 import { EmptyState, useToast } from '@/dashboard/components/uiExtras'
 import { NightPage, PageHead } from './shared/night'
@@ -148,7 +149,7 @@ export function DashboardV2Tools() {
 }
 
 // ---------------------------------------------------------------- analysis groups
-type GroupDraft = { id?: string; name: string; description: string; fields: AnalysisField[] }
+type GroupDraft = { id?: string; name: string; description: string; fields: AnalysisField[]; agent_ids: string[] }
 const FIELD_TYPES = [{ value: 'text', label: 'نص' }, { value: 'number', label: 'رقم' }, { value: 'yes_no', label: 'نعم / لا' }]
 const TYPE_LABEL: Record<AnalysisField['type'], string> = { text: 'نص', number: 'رقم', yes_no: 'نعم / لا' }
 
@@ -156,6 +157,9 @@ const TYPE_LABEL: Record<AnalysisField['type'], string> = { text: 'نص', number
 export function DashboardV2AnalysisGroups() {
   const { companyId, isDemo, can } = useWorkspace()
   const { items, available, loading } = useAnalysisGroups(companyId, isDemo)
+  const agentsRead = useVoiceRead<{ agents: VoiceAgent[] }>(isDemo ? null : companyId || 'admin', 'agents')
+  const agents = agentsRead.data?.agents ?? []
+  const agentName = (id: string) => agents.find((a) => a.agent_id === id)?.name ?? 'وكيل'
   const [draft, setDraft] = useState<GroupDraft | null>(null)
   const { busy, run, del, pushToast } = useSaver(() => setDraft(null))
 
@@ -163,24 +167,28 @@ export function DashboardV2AnalysisGroups() {
     if (!draft) return
     if (!draft.name.trim()) { pushToast({ kind: 'danger', title: 'اكتب اسم المجموعة' }); return }
     if (draft.fields.length === 0 || draft.fields.some((f) => !f.name.trim())) { pushToast({ kind: 'danger', title: 'أضف حقلًا واحدًا على الأقل واكتب اسم كل حقل' }); return }
-    void run(() => saveAnalysisGroup(companyId, isDemo, { id: draft.id, name: draft.name.trim(), description: draft.description.trim() || null, fields: draft.fields }), 'انحفظت المجموعة')
+    void run(async () => {
+      await saveAnalysisGroup(companyId, isDemo, { id: draft.id, name: draft.name.trim(), description: draft.description.trim() || null, fields: draft.fields, agent_ids: draft.agent_ids })
+      if (!isDemo) await syncAnalysisGroups()
+    }, 'انحفظت المجموعة وانربطت بالوكلاء')
   }
   const setField = (i: number, patch: Partial<AnalysisField>) => setDraft((d) => d && { ...d, fields: d.fields.map((f, k) => (k === i ? { ...f, ...patch } : f)) })
 
   return (
     <ConfigPage
       title="مجموعات التحليل" sub="قوالب قابلة لإعادة الاستخدام لما يُستخرج من كل مكالمة، تربطها بوكيل أو أكثر" createLabel="مجموعة جديدة"
-      available={available} loading={loading} items={items} canEdit={can('agent.settings')} onNew={() => setDraft({ name: '', description: '', fields: [{ name: '', type: 'text', description: '' }] })}
+      available={available} loading={loading} items={items} canEdit={can('agent.settings')} onNew={() => setDraft({ name: '', description: '', fields: [{ name: '', type: 'text', description: '' }], agent_ids: [] })}
       emptyIcon={<ListChecks size={20} />} emptyTitle="ما عندك مجموعات تحليل" emptyText="أنشئ أول مجموعة لتنظيم نتائج المكالمات."
       renderCard={(g: AnalysisGroup) => (
         <div key={g.id} className="gr-card">
           <h4>{g.name} <Badge tone="brand">{g.fields.length} حقول</Badge></h4>
+          <p style={{ fontSize: 12.5 }}>{g.agent_ids?.length ? `تشتغل على: ${g.agent_ids.map(agentName).join('، ')}` : 'ما انربطت بأي وكيل بعد'}</p>
           {g.description && <p>{g.description}</p>}
           <ul style={{ margin: 0, paddingInlineStart: 18, display: 'grid', gap: 3, fontSize: 13, color: 'var(--text-secondary)' }}>
             {g.fields.map((f, i) => <li key={i}>{f.name} <span style={{ color: 'var(--text-tertiary)' }}>({TYPE_LABEL[f.type]})</span></li>)}
           </ul>
-          {can('agent.settings') && <CardActions onEdit={() => setDraft({ id: g.id, name: g.name, description: g.description || '', fields: g.fields.map((f) => ({ ...f })) })}
-            onDelete={() => void del(g.name, () => deleteAnalysisGroup(companyId, isDemo, g.id))} />}
+          {can('agent.settings') && <CardActions onEdit={() => setDraft({ id: g.id, name: g.name, description: g.description || '', fields: g.fields.map((f) => ({ ...f })), agent_ids: [...(g.agent_ids || [])] })}
+            onDelete={() => void del(g.name, () => (isDemo || !g.nabrah_id ? deleteAnalysisGroup(companyId, isDemo, g.id) : syncAnalysisGroups(g.id)))} />}
         </div>
       )}
       dialog={
@@ -198,6 +206,18 @@ export function DashboardV2AnalysisGroups() {
               </div>
             ))}
             <Button variant="secondary" onClick={() => setDraft({ ...draft, fields: [...draft.fields, { name: '', type: 'text', description: '' }] })}><Plus size={14} /> أضف حقل</Button>
+            <b style={{ fontSize: 13 }}>الوكلاء اللي يطبّقونها على مكالماتهم</b>
+            {isDemo ? <p style={{ fontSize: 12.5, margin: 0, color: 'var(--text-tertiary)' }}>في العرض التجريبي ما نربط بوكلاء حقيقيين.</p>
+              : agents.length === 0 ? <p style={{ fontSize: 12.5, margin: 0, color: 'var(--text-tertiary)' }}>{agentsRead.loading ? 'جارِ تحميل الوكلاء…' : 'ما فيه وكلاء مربوطين بحسابك.'}</p>
+              : <div style={{ display: 'grid', gap: 6 }}>
+                  {agents.map((a) => (
+                    <label key={a.agent_id} style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}>
+                      <input type="checkbox" checked={draft.agent_ids.includes(a.agent_id)}
+                        onChange={(e) => setDraft({ ...draft, agent_ids: e.target.checked ? [...draft.agent_ids, a.agent_id] : draft.agent_ids.filter((x) => x !== a.agent_id) })} />
+                      {a.name || a.agent_id}
+                    </label>
+                  ))}
+                </div>}
           </>}
         </DialogShell>
       }

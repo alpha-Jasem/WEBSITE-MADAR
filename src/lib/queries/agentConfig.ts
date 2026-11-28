@@ -12,7 +12,7 @@ export interface AgentTool {
 }
 
 export interface AnalysisField { name: string; type: 'text' | 'number' | 'yes_no'; description: string }
-export interface AnalysisGroup { id: string; name: string; description: string | null; fields: AnalysisField[]; created_at: string }
+export interface AnalysisGroup { id: string; name: string; description: string | null; fields: AnalysisField[]; created_at: string; nabrah_id?: string | null; agent_ids: string[] }
 
 export type ServiceStatus = 'pending' | 'active' | 'paused'
 export interface VoiceService {
@@ -81,13 +81,29 @@ export const useAgentTools = tools.useList
 export const saveAgentTool = tools.save
 export const deleteAgentTool = tools.remove
 
-const groups = makeStore<AnalysisGroup>('analysis_groups', 'id, name, description, fields, created_at', [
-  { id: 'demo-group-sales', name: 'تأهيل العميل', description: 'ما يُستخرج من كل مكالمة بيع', created_at: now(),
+const groups = makeStore<AnalysisGroup>('analysis_groups', 'id, name, description, fields, created_at, nabrah_id, agent_ids', [
+  { id: 'demo-group-sales', name: 'تأهيل العميل', description: 'ما يُستخرج من كل مكالمة بيع', created_at: now(), agent_ids: [],
     fields: [{ name: 'مهتم؟', type: 'yes_no', description: 'هل أبدى العميل اهتمامًا بالشراء' }, { name: 'الميزانية', type: 'number', description: 'الميزانية التي ذكرها بالريال' }] },
 ])
 export const useAnalysisGroups = groups.useList
 export const saveAnalysisGroup = groups.save
 export const deleteAnalysisGroup = groups.remove
+
+/** Calls the analysis-sync function: with no argument it pushes every group to the voice platform and attaches
+ *  each to its chosen agents; with deleteId it removes that group everywhere (platform, agents and the row). */
+export async function syncAnalysisGroups(deleteId?: string): Promise<void> {
+  const { data: s } = await supabase.auth.getSession()
+  const token = s.session?.access_token
+  if (!token) throw new Error('سجّل دخولك من جديد')
+  const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analysis-sync`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, apikey: import.meta.env.VITE_SUPABASE_ANON_KEY ?? '', 'Content-Type': 'application/json' },
+    body: JSON.stringify(deleteId ? { delete_id: deleteId } : {}),
+  })
+  const out = await res.json().catch(() => ({}))
+  if (!res.ok || out.error || out.synced === false) throw new Error(String(out.error || 'تعذّرت المزامنة مع المنصة الصوتية').slice(0, 200))
+  groups.refresh()
+}
 
 const services = makeStore<VoiceService>('voice_services', 'id, direction, name, phone, provider, status, notes, created_at', [
   { id: 'demo-svc-in', direction: 'inbound', name: 'الرقم الموحد', phone: '920000000', provider: 'مزوّد الاتصال', status: 'active', notes: 'تحويل المكالمات إلى وكيل الصوت', created_at: now() },
