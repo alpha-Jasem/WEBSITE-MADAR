@@ -10,7 +10,7 @@ import {
 import type { TicketStatus } from '@/types/dashboard'
 import { PRIORITY, STATUS, customerOf, dueLabel, isAiOpened, isLate, phoneOf, relTime, shortId, typeOf } from './ticketModel'
 
-const STATUS_NOTE: Record<TicketStatus, string> = { open: 'أُعيد فتحها', in_progress: 'بدأت المعالجة', resolved: 'تم الحل' }
+const STATUS_NOTE: Record<TicketStatus, string> = { open: 'أُعيد فتحها', in_progress: 'علّقها الفريق', resolved: 'أُغلقت', snoozed: 'أُجّلت' }
 
 function Chip({ label, color, bg }: { label: string; color: string; bg: string }) {
   return <span className="ops-chip" style={{ color, background: bg }}>{label}</span>
@@ -50,7 +50,7 @@ export function TicketDialog({ ticket, onClose, caps, team, isDemo, base, agentN
     try {
       await updateOpsTicket(t.id, { status }, isDemo)
       await addTicketNote({ ticket_id: t.id, company_id: t.company_id, kind: 'status', body: STATUS_NOTE[status], author_name: authorName }, caps, isDemo).catch(() => {})
-      pushToast({ kind: 'success', title: status === 'resolved' ? 'تم حل التذكرة' : STATUS_NOTE[status] })
+      pushToast({ kind: 'success', title: status === 'resolved' ? 'أُغلقت التذكرة' : STATUS_NOTE[status] })
       if (status === 'resolved') onClose()
     } catch (e) {
       pushToast({ kind: 'danger', title: 'تعذّر تحديث التذكرة', description: e instanceof Error ? e.message : undefined })
@@ -113,9 +113,10 @@ export function TicketDialog({ ticket, onClose, caps, team, isDemo, base, agentN
       open title={t.subject} onClose={onClose}
       footer={<>
         {t.status !== 'open' && <Button variant="secondary" disabled={busy} onClick={() => setStatus('open')}>إعادة فتح</Button>}
-        {t.status === 'open' && <Button variant="secondary" disabled={busy} onClick={() => setStatus('in_progress')}>بدء المعالجة</Button>}
+        {t.status === 'open' && <Button variant="secondary" disabled={busy} onClick={() => setStatus('in_progress')}>تعليق</Button>}
+        {t.status !== 'snoozed' && t.status !== 'resolved' && <Button variant="secondary" disabled={busy} onClick={() => setStatus('snoozed')}>تأجيل</Button>}
         {t.status !== 'resolved'
-          ? <Button disabled={busy} onClick={() => setStatus('resolved')}><Check size={15} /> تم الحل</Button>
+          ? <Button disabled={busy} onClick={() => setStatus('resolved')}><Check size={15} /> إغلاق التذكرة</Button>
           : <Button variant="secondary" onClick={onClose}>إغلاق</Button>}
       </>}
     >

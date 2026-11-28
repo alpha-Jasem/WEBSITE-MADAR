@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowRight, BookOpen, FileText, Plus, Table2, Trash2, Upload } from 'lucide-react'
+import { ArrowRight, BookOpen, FileText, Pencil, Plus, Table2, Trash2, Upload } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useVoiceRead, type VoiceAgent } from '@/lib/queries/voicePlatform'
-import { kbAddDocument, kbCreate, kbDelete, kbDeleteDocument, kbGet, kbList, kbSetAgents, type KbDoc, type KbKind, type KnowledgeBase } from '@/lib/queries/knowledgeBases'
+import { kbAddDocument, kbCreate, kbDelete, kbDeleteDocument, kbGet, kbList, kbSetAgents, kbUpdate, type KbDoc, type KbKind, type KnowledgeBase } from '@/lib/queries/knowledgeBases'
 import { Button, Card, Dialog, Input } from '@/dashboard/components/primitives'
 import { EmptyState, useToast } from '@/dashboard/components/uiExtras'
 import { NightPage } from './shared/night'
@@ -43,6 +43,7 @@ const CSS = `
 .kb-row:last-child { border-bottom: 0; } .kb-row b { flex: 1; min-width: 0; font-size: 14px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .kb-agents { display: grid; gap: 8px; }
 .kb-agents label { display: flex; gap: 8px; align-items: center; font-size: 13.5px; }
+.kb-key { direction: ltr; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11.5px; padding: 2px 8px; border-radius: 8px; border: 1px solid var(--line); color: var(--muted); }
 .kb-back { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13.5px; cursor: pointer; padding: 0; }
 `
 
@@ -189,6 +190,9 @@ function KbDetail({ id, seed, agents, isDemo, canEdit, onBack }: {
   const [busy, setBusy] = useState(false)
   const [over, setOver] = useState(false)
   const [sheetDesc, setSheetDesc] = useState('')
+  const [cols, setCols] = useState('')
+  const [staged, setStaged] = useState<File | null>(null)
+  const [editing, setEditing] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async () => {
@@ -210,14 +214,22 @@ function KbDetail({ id, seed, agents, isDemo, canEdit, onBack }: {
 
   async function upload(file: File | undefined) {
     if (!file || !kb) return
+    if (isTable && !staged) { setStaged(file); return }
     if (isDemo) {
       const d: KbDoc = { id: `d-${Date.now()}`, status: 'ready', filename: file.name }
-      setKb({ ...kb, documents: isTable ? [d] : [...docs, d], document_count: isTable ? 1 : docs.length + 1 }); return
+      setKb({ ...kb, documents: isTable ? [d] : [...docs, d], document_count: isTable ? 1 : docs.length + 1 }); setStaged(null); return
     }
     setBusy(true)
-    try { await kbAddDocument(kb.id, file, isTable ? sheetDesc.trim() : undefined); pushToast({ kind: 'success', title: 'انرفع الملف، وبيجهز للبحث بعد لحظات' }); await load() }
+    try { await kbAddDocument(kb.id, file, isTable ? sheetDesc.trim() : undefined, isTable ? cols.trim() : undefined); pushToast({ kind: 'success', title: 'انرفع الملف، وبيجهز للبحث بعد لحظات' }); setStaged(null); await load() }
     catch (e) { pushToast({ kind: 'danger', title: 'تعذّر رفع الملف', description: e instanceof Error ? e.message : undefined }) }
     finally { setBusy(false); if (fileRef.current) fileRef.current.value = '' }
+  }
+  function pick(file: File | undefined) { if (!file) return; if (isTable) setStaged(file); else void upload(file) }
+  async function saveEdit(name: string, desc: string) {
+    if (!kb) return
+    if (isDemo) { setKb({ ...kb, name, desc }); setEditing(false); return }
+    try { await kbUpdate(kb.id, name, desc); setEditing(false); pushToast({ kind: 'success', title: 'انحفظت التعديلات' }); await load() }
+    catch (e) { pushToast({ kind: 'danger', title: 'تعذّر الحفظ', description: e instanceof Error ? e.message : undefined }) }
   }
   async function removeDoc(d: KbDoc) {
     if (!kb) return
@@ -238,25 +250,43 @@ function KbDetail({ id, seed, agents, isDemo, canEdit, onBack }: {
       <style>{CSS}</style>
       <button type="button" className="kb-back" onClick={onBack}><ArrowRight size={16} /> قواعد المعرفة</button>
       <div className="kb-head">
-        <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 14, alignItems: 'center', minWidth: 0 }}>
           <span className="kb-tile"><KindIcon k={kb.kind} /></span>
-          <div><h1 style={{ fontSize: 22 }}>{kb.name}</h1>{kb.desc && <p>{kb.desc}</p>}</div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <h1 style={{ fontSize: 22 }}>{kb.name}</h1>
+              <span className="kb-chip">{kindLabel(kb.kind)}</span>
+              {kb.key && <span className="kb-key">{kb.key}</span>}
+            </div>
+            {kb.desc && <p>{kb.desc}</p>}
+          </div>
         </div>
-        <span className="kb-chip">{kindLabel(kb.kind)}</span>
+        {canEdit && <button type="button" className="kb-btn sec" onClick={() => setEditing(true)}><Pencil size={15} /> تعديل</button>}
       </div>
+      <EditDialog open={editing} kb={kb} onClose={() => setEditing(false)} onSave={saveEdit} />
 
       {canEdit && (
-        <Card style={{ padding: 18, display: 'grid', gap: 12 }}>
-          <b style={{ fontSize: 14, color: 'var(--ink)' }}>{isTable ? (docs.length ? 'استبدال الجدول' : 'رفع الجدول') : 'رفع مستند'}</b>
-          {isTable && <Input label="وصف الأعمدة (اختياري)" value={sheetDesc} placeholder="مثال: كل صف فرع، مع الحي وساعات العمل والهاتف" onChange={(e) => setSheetDesc(e.target.value)} />}
+        <Card style={{ padding: 18, display: 'grid', gap: 14 }}>
+          <b style={{ fontSize: 14, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: 8 }}><KindIcon k={kb.kind} size={16} /> {isTable ? (docs.length ? 'استبدال الورقة' : 'رفع الورقة') : 'رفع مستند'}</b>
           <div className="kb-drop" data-over={over}
             onDragOver={(e) => { e.preventDefault(); setOver(true) }} onDragLeave={() => setOver(false)}
-            onDrop={(e) => { e.preventDefault(); setOver(false); void upload(e.dataTransfer.files?.[0]) }}>
+            onDrop={(e) => { e.preventDefault(); setOver(false); pick(e.dataTransfer.files?.[0]) }}>
             <Upload size={22} />
-            <span>{isTable ? 'اسحب ملف CSV أو Excel هنا (حتى 2 ميجابايت)' : 'اسحب ملف PDF هنا (حتى 20 ميجابايت)'}</span>
-            <input ref={fileRef} id="kb-file" type="file" hidden accept={isTable ? '.csv,.xlsx,.xls' : '.pdf,application/pdf'} onChange={(e) => void upload(e.target.files?.[0])} />
+            <span style={{ color: 'var(--ink)', fontWeight: 600 }}>{staged ? staged.name : isTable ? 'أفلت ملف CSV أو Excel هنا، أو انقر للتصفح' : 'أفلت ملف PDF هنا، أو انقر للتصفح'}</span>
+            <span className="kb-hint">{isTable ? 'CSV أو XLSX أو XLS — حتى 2 ميجابايت و10,000 صف.' : 'PDF فقط — حتى 20 ميجابايت.'}</span>
+            <input ref={fileRef} id="kb-file" type="file" hidden accept={isTable ? '.csv,.xlsx,.xls' : '.pdf,application/pdf'} onChange={(e) => pick(e.target.files?.[0])} />
             <button type="button" className="kb-btn sec" disabled={busy} onClick={() => fileRef.current?.click()}>{busy ? 'جارِ الرفع…' : 'اختر ملفًا'}</button>
           </div>
+          {isTable && <>
+            <label className="kb-field">وصف الورقة (اختياري)
+              <textarea rows={3} value={sheetDesc} placeholder="ما معنى الأعمدة وكيف يسأل الناس عن هذه البيانات." onChange={(e) => setSheetDesc(e.target.value)} />
+            </label>
+            <label className="kb-field">الأعمدة القابلة للبحث (اختياري)
+              <Input value={cols} placeholder="معرّف المورّد، الاسم، المنطقة" onChange={(e) => setCols(e.target.value)} />
+              <span className="kb-hint">أسماء الأعمدة مفصولة بفواصل يمكن للوكيل التصفية بها. اتركه فارغًا للسماح بجميع الأعمدة.</span>
+            </label>
+            <div><button type="button" className="kb-btn" disabled={!staged || busy} onClick={() => void upload(staged ?? undefined)}>{busy ? 'جارِ الرفع…' : docs.length ? 'استبدال الورقة' : 'رفع الورقة'}</button></div>
+          </>}
         </Card>
       )}
 
@@ -290,5 +320,25 @@ function KbDetail({ id, seed, agents, isDemo, canEdit, onBack }: {
         <span className="kb-hint">الوكيل يبحث في القاعدة المربوطة فيه أثناء المكالمة، حسب وصفها.</span>
       </Card>
     </NightPage>
+  )
+}
+
+function EditDialog({ open, kb, onClose, onSave }: { open: boolean; kb: KnowledgeBase; onClose: () => void; onSave: (name: string, desc: string) => void | Promise<void> }) {
+  const [name, setName] = useState(kb.name)
+  const [desc, setDesc] = useState(kb.desc ?? '')
+  const [busy, setBusy] = useState(false)
+  useEffect(() => { if (open) { setName(kb.name); setDesc(kb.desc ?? '') } }, [open, kb])
+  const ready = name.trim().length > 0 && desc.trim().length > 0
+  return (
+    <Dialog open={open} title="تعديل قاعدة المعرفة" onClose={onClose} width={520}
+      footer={<><Button variant="secondary" onClick={onClose}>إلغاء</Button><Button disabled={!ready || busy} onClick={async () => { setBusy(true); try { await onSave(name.trim(), desc.trim()) } finally { setBusy(false) } }}>{busy ? 'جارِ الحفظ…' : 'حفظ'}</Button></>}>
+      <div style={{ display: 'grid', gap: 16 }}>
+        <Input label="الاسم" value={name} onChange={(e) => setName(e.target.value)} />
+        <label className="kb-field">الوصف
+          <textarea rows={4} value={desc} onChange={(e) => setDesc(e.target.value)} />
+          <span className="kb-hint">يستخدمه الوكيل لتحديد متى يبحث في قاعدة المعرفة هذه.</span>
+        </label>
+      </div>
+    </Dialog>
   )
 }

@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Copy, Download, Eye, FileText, Globe, LayoutGrid, List, Pause, Phone, PhoneIncoming, PhoneMissed, PhoneOutgoing, Play, Search, SlidersHorizontal } from 'lucide-react'
+import { ChevronDown, ChevronUp, Copy, Download, Eye, FileText, Globe, LayoutGrid, List, Pause, Phone, PhoneIncoming, PhoneMissed, PhoneOutgoing, Play, Search, SlidersHorizontal } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useVoiceRead, voiceRead, type VoiceAgent, type VoiceCallDetail, type VoiceCallSummary } from '@/lib/queries/voicePlatform'
 import { Badge, Button, Card, Dialog, Select } from '@/dashboard/components/primitives'
 import { useToast } from '@/dashboard/components/uiExtras'
-import { NightPage, PageHead } from './shared/night'
+import { NightPage } from './shared/night'
+import { HeadCard, NB_CSS } from './shared/nbPage'
 import './growth.css'
 
 // Call log from the voice platform: every call of the company's agents, with search, filters,
@@ -42,6 +43,20 @@ function demoCalls(): VoiceCallSummary[] {
   }))
 }
 
+const CL_CSS = `
+.cl-view { display: flex; gap: 2px; border: 1px solid var(--line); border-radius: 12px; padding: 3px; }
+.cl-view button { width: 34px; height: 34px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); display: grid; place-items: center; cursor: pointer; }
+.cl-view button[aria-pressed="true"] { background: var(--hover-bg); color: var(--ink); }
+.cl-adv { border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 12px; }
+.cl-adv-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+.cl-adv-head b { display: block; font-size: 14px; color: var(--ink); } .cl-adv-head small { color: var(--muted); font-size: 12.5px; }
+.cl-link { border: 0; background: none; color: var(--muted); font: inherit; font-size: 12.5px; cursor: pointer; padding: 0; text-decoration: underline; }
+.cl-link:disabled { opacity: .4; cursor: default; text-decoration: none; }
+.cl-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.cl-f { display: grid; gap: 6px; font-size: 12px; color: var(--muted); }
+.cl-f input, .cl-f select { height: 42px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: inherit; font-size: 13.5px; padding: 0 12px; min-width: 0; }
+`
+
 export function DashboardV2VoiceCallLogs() {
   const { companyId, isDemo } = useWorkspace()
   const pushToast = useToast()
@@ -53,6 +68,15 @@ export function DashboardV2VoiceCallLogs() {
   const [callType, setCallType] = useState('')
   const [days, setDays] = useState(30)
   const [q, setQ] = useState('')
+  // Advanced filters (applied to what is loaded): exact call date range, call id, tags, from and to numbers.
+  const [dFrom, setDFrom] = useState('')
+  const [dTo, setDTo] = useState('')
+  const [idQ, setIdQ] = useState('')
+  const [tagQ, setTagQ] = useState('')
+  const [fromNum, setFromNum] = useState('')
+  const [toNum, setToNum] = useState('')
+  const advActive = [dFrom, dTo, idQ, tagQ, fromNum, toNum].filter(Boolean).length
+  const clearAdv = () => { setDFrom(''); setDTo(''); setIdQ(''); setTagQ(''); setFromNum(''); setToNum('') }
   const [view, setView] = useState<'list' | 'cards'>('list')
   const [pages, setPages] = useState(1)
   const [rows, setRows] = useState<VoiceCallSummary[] | null>(null)
@@ -61,6 +85,7 @@ export function DashboardV2VoiceCallLogs() {
   const [open, setOpen] = useState<VoiceCallDetail | null>(null)
   const [playing, setPlaying] = useState<{ id: string; url: string } | null>(null)
 
+  useEffect(() => { if (dFrom) { const need = Math.ceil((Date.now() - Date.parse(dFrom)) / 86_400_000) + 1; if (need > days) setDays(Math.min(366, need)) } }, [dFrom, days])
   const agentIds = (agentId ? [agentId] : agents.map((a) => a.agent_id)).join(',')
   useEffect(() => { setPages(1); setPicked(new Set()) }, [agentId, status, callType, days])
   useEffect(() => {
@@ -97,10 +122,25 @@ export function DashboardV2VoiceCallLogs() {
   // Search by number, call id, agent or tag, within what is loaded.
   const list = useMemo(() => {
     const term = q.trim().toLowerCase()
-    const all = rows ?? []
-    if (!term) return all
-    return all.filter((c) => [c.call_from, c.call_to, c.id, c.agent_name, ...tagNames(c)].some((v) => String(v ?? '').toLowerCase().includes(term)))
-  }, [rows, q])
+    const tags = tagQ.split(/[,،]/).map((t) => t.trim().toLowerCase()).filter(Boolean)
+    const from = dFrom ? Date.parse(dFrom) : 0
+    const to = dTo ? Date.parse(dTo) + 86_400_000 : 0
+    return (rows ?? []).filter((c) => {
+      if (term && ![c.call_from, c.call_to, c.id, c.agent_name, ...tagNames(c)].some((v) => String(v ?? '').toLowerCase().includes(term))) return false
+      const at = Date.parse(c.created_at)
+      if (from && at < from) return false
+      if (to && at >= to) return false
+      if (idQ && !c.id.toLowerCase().includes(idQ.trim().toLowerCase())) return false
+      if (tags.length && !tags.every((t) => tagNames(c).some((n) => n.toLowerCase().includes(t)))) return false
+      if (fromNum && c.call_from !== fromNum) return false
+      if (toNum && c.call_to !== toNum) return false
+      return true
+    })
+  }, [rows, q, dFrom, dTo, idQ, tagQ, fromNum, toNum])
+  const numbers = useMemo(() => ({
+    from: [...new Set((rows ?? []).map((c) => c.call_from).filter(Boolean))] as string[],
+    to: [...new Set((rows ?? []).map((c) => c.call_to).filter(Boolean))] as string[],
+  }), [rows])
   const allPicked = list.length > 0 && list.every((c) => picked.has(c.id))
   const toggle = (id: string) => setPicked((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n })
 
@@ -152,37 +192,58 @@ export function DashboardV2VoiceCallLogs() {
 
   return (
     <NightPage>
-      <PageHead title="سجل المكالمات" sub="سجل شامل مع التصدير والتصفية المتقدمة وإجراءات جماعية لمكالمات مساحة العمل."
-        actions={<>
-          <Button variant="secondary" onClick={() => setShowFilters((v) => !v)}><SlidersHorizontal size={14} /> الفلاتر المتقدمة</Button>
-          <Button disabled={list.length === 0} onClick={exportCsv}><Download size={14} /> {picked.size ? `تصدير CSV (${picked.size})` : 'تصدير CSV'}</Button>
-        </>} />
+      <style>{NB_CSS + CL_CSS}</style>
+      <HeadCard title="سجل المكالمات" sub="سجل شامل مع التصدير والتصفية المتقدمة وإجراءات جماعية لمكالمات مساحة العمل.">
+        <button type="button" className="nb-btn sec" aria-expanded={showFilters} onClick={() => setShowFilters((v) => !v)}>
+          <SlidersHorizontal size={15} /> الفلاتر المتقدمة{advActive > 0 ? ` (${advActive})` : ''} {showFilters ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </button>
+        <button type="button" className="nb-btn" disabled={list.length === 0} onClick={exportCsv}><Download size={15} /> {picked.size ? `تصدير CSV (${picked.size})` : 'تصدير CSV'}</button>
+      </HeadCard>
 
-      <Card style={{ padding: 12, display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'flex-end' }}>
-        <label style={{ flex: '3 1 260px', minWidth: 0, display: 'flex', alignItems: 'center', gap: 8, border: '1px solid var(--border-strong)', borderRadius: 10, padding: '0 12px', height: 42 }}>
-          <Search size={15} style={{ color: 'var(--dim)' }} />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ابحث بالرقم أو معرّف المكالمة أو الوكيل أو الوسوم…" aria-label="بحث في المكالمات"
-            style={{ flex: 1, minWidth: 0, border: 0, background: 'transparent', color: 'inherit', font: 'inherit', fontSize: 13, outline: 'none' }} />
-        </label>
-        <div role="group" aria-label="طريقة العرض" style={{ display: 'flex', gap: 2, border: '1px solid var(--border-strong)', borderRadius: 10, padding: 3 }}>
-          <button type="button" className={`gr-btn${view === 'list' ? ' primary' : ''}`} aria-pressed={view === 'list'} aria-label="عرض جدول" onClick={() => setView('list')}><List /></button>
-          <button type="button" className={`gr-btn${view === 'cards' ? ' primary' : ''}`} aria-pressed={view === 'cards'} aria-label="عرض بطاقات" onClick={() => setView('cards')}><LayoutGrid /></button>
+      <div className="nb-card" style={{ display: 'grid', gap: 14 }}>
+        <div className="nb-filters">
+          <label className="nb-search"><Search size={16} />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ابحث بالرقم أو معرّف المكالمة أو الوكيل أو الوسوم…" aria-label="بحث في المكالمات" />
+          </label>
+          <div className="cl-view" role="group" aria-label="طريقة العرض">
+            <button type="button" aria-pressed={view === 'list'} aria-label="عرض جدول" onClick={() => setView('list')}><List size={15} /></button>
+            <button type="button" aria-pressed={view === 'cards'} aria-label="عرض بطاقات" onClick={() => setView('cards')}><LayoutGrid size={15} /></button>
+          </div>
+          <select className="nb-select" aria-label="الوكلاء" value={agentId} onChange={(e) => setAgentId(e.target.value)}>
+            <option value="">{`الوكلاء (${agents.length})`}</option>
+            {agents.map((a) => <option key={a.agent_id} value={a.agent_id}>{a.name}</option>)}
+          </select>
+          <select className="nb-select" aria-label="الحالة" value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="">الحالة</option>
+            {['completed', 'no_answer', 'busy', 'failed'].map((k) => <option key={k} value={k}>{STATUS[k].label}</option>)}
+          </select>
+          <select className="nb-select" aria-label="أنواع المكالمات" value={callType} onChange={(e) => setCallType(e.target.value)}>
+            <option value="">أنواع المكالمات</option>
+            {Object.entries(TYPE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
         </div>
-        <div style={{ minWidth: 170, flex: '1 1 170px' }}>
-          <Select value={agentId} onChange={(e) => setAgentId(e.target.value)} options={[{ value: '', label: `الوكلاء (${agents.length})` }, ...agents.map((a) => ({ value: a.agent_id, label: a.name }))]} />
-        </div>
-        <div style={{ minWidth: 150, flex: '1 1 150px' }}>
-          <Select value={status} onChange={(e) => setStatus(e.target.value)} options={[{ value: '', label: 'الحالة' }, ...['completed', 'no_answer', 'busy', 'failed'].map((k) => ({ value: k, label: STATUS[k].label }))]} />
-        </div>
-        <div style={{ minWidth: 150, flex: '1 1 150px' }}>
-          <Select value={callType} onChange={(e) => setCallType(e.target.value)} options={[{ value: '', label: 'أنواع المكالمات' }, ...Object.entries(TYPE).map(([k, v]) => ({ value: k, label: v }))]} />
-        </div>
+
         {showFilters && (
-          <div style={{ minWidth: 150, flex: '1 1 150px' }}>
-            <Select label="الفترة" value={String(days)} onChange={(e) => setDays(Number(e.target.value))} options={[{ value: '1', label: 'اليوم' }, { value: '7', label: 'آخر 7 أيام' }, { value: '30', label: 'آخر 30 يوم' }, { value: '90', label: 'آخر 90 يوم' }]} />
+          <div className="cl-adv">
+            <div className="cl-adv-head">
+              <div><b>الفلاتر المتقدمة</b><small>قم بتضييق سجل المكالمات باستخدام الحقول الدقيقة ونطاقات التاريخ.</small></div>
+              <button type="button" className="cl-link" disabled={advActive === 0} onClick={clearAdv}>مسح الفلاتر المتقدمة</button>
+            </div>
+            <div className="cl-grid">
+              <label className="cl-f">تاريخ المكالمة، من<input type="date" value={dFrom} max={dTo || undefined} onChange={(e) => setDFrom(e.target.value)} /></label>
+              <label className="cl-f">تاريخ المكالمة، إلى<input type="date" value={dTo} min={dFrom || undefined} onChange={(e) => setDTo(e.target.value)} /></label>
+              <label className="cl-f">معرّف المكالمة<input value={idQ} onChange={(e) => setIdQ(e.target.value)} placeholder="معرّف المكالمة" /></label>
+              <label className="cl-f">الوسوم<input value={tagQ} onChange={(e) => setTagQ(e.target.value)} placeholder="وسوم (مفصولة بفاصلة)" /></label>
+              <label className="cl-f">من
+                <select value={fromNum} onChange={(e) => setFromNum(e.target.value)}><option value="">من</option>{numbers.from.map((n) => <option key={n} value={n}>{n}</option>)}</select>
+              </label>
+              <label className="cl-f">إلى
+                <select value={toNum} onChange={(e) => setToNum(e.target.value)}><option value="">إلى</option>{numbers.to.map((n) => <option key={n} value={n}>{n}</option>)}</select>
+              </label>
+            </div>
           </div>
         )}
-      </Card>
+      </div>
 
       {playing && <audio src={playing.url} controls autoPlay style={{ width: '100%' }} onEnded={() => setPlaying(null)} />}
 

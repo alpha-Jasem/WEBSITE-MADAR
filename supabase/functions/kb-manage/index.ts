@@ -5,6 +5,7 @@
 //               { op: 'set_agents', id, agent_ids }           -> which of the company's agents search it
 //               { op: 'delete_document', id, doc_id }
 //               { op: 'delete', id }
+//               { op: 'update', id, name, desc }              -> rename a knowledge base / change when the agent searches it
 //   POST (multipart) op=add_document, id=<kb id>, file=<PDF, or CSV/XLSX for a table>, sheet_desc? -> uploads a document
 // with the signed-in user's JWT. Knowledge bases are shared by the whole workspace, so each company's carry a key prefix
 // ("m<company>_") and a company only ever sees, changes or attaches its own. Needs NABRAH_API_KEY. Deploy with JWT ON.
@@ -135,6 +136,14 @@ Deno.serve(async (req) => {
       return json({ ok: true })
     }
 
+    if (op === 'update') {
+      const name = String(body.name ?? '').trim(), desc = String(body.desc ?? '').trim()
+      if (!name || name.length > 120) return json({ error: 'اكتب اسم قاعدة المعرفة' }, 400)
+      if (!desc) return json({ error: 'اكتب وصفًا يعرّف الوكيل متى يستخدمها' }, 400)
+      await nabrah(`/kb/${kbId}`, key, { method: 'PATCH', body: JSON.stringify({ name, desc }) })
+      return json({ ok: true })
+    }
+
     if (op === 'delete') {
       await setAgents(kbId, [])
       await nabrah(`/kb/${kbId}`, key, { method: 'DELETE' })
@@ -166,11 +175,14 @@ Deno.serve(async (req) => {
       if (isTable) {
         const desc = String(form?.get('sheet_desc') ?? '').trim()
         if (desc) f.append('sheet_desc', desc.slice(0, 500))
+        const cols = String(form?.get('searchable_columns') ?? '').split(/[,،]/).map((c) => c.trim()).filter(Boolean).slice(0, 30)
+        if (cols.length) f.append('searchable_columns', JSON.stringify(cols))
         // A table knowledge base holds one sheet: a new file replaces the current one.
         const docs = (kb.documents ?? []) as { id: string }[]
         if (docs.length) {
           const r = new FormData(); r.append('file', file, file.name)
           if (desc) r.append('sheet_desc', desc.slice(0, 500))
+          if (cols.length) r.append('searchable_columns', JSON.stringify(cols))
           await nabrah(`/document/${docs[0].id}/file`, key, { method: 'PUT', body: r }, true)
           return json({ ok: true, replaced: true })
         }

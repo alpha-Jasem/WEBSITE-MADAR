@@ -20,7 +20,7 @@ const CFG_CSS = `
 .cfg-head h1 { margin: 0; font-size: 26px; font-weight: 700; color: var(--ink); }
 .cfg-head p { margin: 4px 0 0; font-size: 13.5px; color: var(--muted); max-width: 64ch; }
 .cfg-acts { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.cfg-new { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 18px; border-radius: 12px; border: 0; background: var(--ink); color: var(--panel); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.cfg-new { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 12px; border: 0; background: var(--ink); color: var(--panel); font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; }
 .cfg-new:focus-visible, .cfg-list .gr-btn:focus-visible { outline: 3px solid var(--accent, #6c4cf1); outline-offset: 2px; }
 .cfg-search { display: flex; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 6px 8px; }
 .cfg-search label { flex: 1; display: flex; align-items: center; gap: 10px; border-radius: 12px; padding: 0 12px; height: 42px; border: 1px solid var(--line); color: var(--muted); }
@@ -35,9 +35,9 @@ const CFG_CSS = `
 `
 
 /** Shared list page, laid out like the voice platform's: a header card, a search box, then one wide row per item. */
-function ConfigPage<T extends { id: string }>({ title, sub, createLabel, available, loading, items, emptyIcon, emptyTitle, emptyText, canEdit, onNew, renderCard, dialog, extraActions, searchPlaceholder }: {
+function ConfigPage<T extends { id: string }>({ title, sub, createLabel, available, loading, items, emptyIcon, emptyTitle, emptyText, canEdit, onNew, renderCard, dialog, extraActions, searchPlaceholder, searchIcon, emptyAction }: {
   title: string; sub: string; createLabel: string; available: boolean; loading: boolean; items: T[]; emptyIcon: ReactNode
-  emptyTitle: string; emptyText: string; canEdit: boolean; onNew: () => void; renderCard: (item: T) => ReactNode; dialog: ReactNode; extraActions?: ReactNode; searchPlaceholder?: string
+  emptyTitle: string; emptyText: string; canEdit: boolean; onNew: () => void; renderCard: (item: T) => ReactNode; dialog: ReactNode; extraActions?: ReactNode; searchPlaceholder?: string; searchIcon?: ReactNode; emptyAction?: ReactNode
 }) {
   const [q, setQ] = useState('')
   const needle = q.trim().toLowerCase()
@@ -50,10 +50,10 @@ function ConfigPage<T extends { id: string }>({ title, sub, createLabel, availab
         {available && canEdit && <div className="cfg-acts">{extraActions}<button type="button" className="cfg-new" onClick={onNew}><Plus size={16} /> {createLabel}</button></div>}
       </div>
       {available && items.length > 0 && (
-        <div className="cfg-search"><label><Search size={16} /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder={searchPlaceholder || 'ابحث بالاسم…'} aria-label="بحث" /></label></div>
+        <div className="cfg-search"><label>{searchIcon ?? <Search size={16} />}<input value={q} onChange={(e) => setQ(e.target.value)} placeholder={searchPlaceholder || 'ابحث بالاسم…'} aria-label="بحث" /></label></div>
       )}
       {!available && <Card style={{ padding: 16 }}><div className="np-empty">هذي الصفحة تتفعّل بعد تحديث قاعدة البيانات.</div></Card>}
-      {available && items.length === 0 && !loading && <Card><EmptyState icon={emptyIcon} title={emptyTitle} description={emptyText} /></Card>}
+      {available && items.length === 0 && !loading && <Card><EmptyState icon={emptyIcon} title={emptyTitle} description={emptyText} action={emptyAction} /></Card>}
       {available && items.length > 0 && shown.length === 0 && <Card><div className="np-empty">ما فيه نتائج تطابق البحث.</div></Card>}
       {available && shown.length > 0 && <div className="cfg-list">{shown.map(renderCard)}</div>}
       {dialog}
@@ -305,11 +305,12 @@ export function DashboardV2VoiceServices({ direction, headExtra }: { direction: 
 
   return (
     <ConfigPage
-      title={inbound ? 'خدمات الوارد' : 'خدمات الصادر'}
-      sub={inbound ? 'أرقام الاتصال التي يستقبل عليها الوكيل مكالمات عملائك، مثل رقم 9200 محوّل إلى الوكيل' : 'خطوط الاتصال التي يتصل منها الوكيل بعملائك، للحملات والاتصال الفوري'}
-      createLabel="خدمة جديدة" searchPlaceholder="بحث بالاسم أو الرقم…" available={available} loading={loading} items={items} canEdit={can('integrations.manage')} onNew={() => setDraft(empty)} extraActions={headExtra}
+      title={inbound ? 'الوارد' : 'الصادر'}
+      sub={inbound ? 'وجّه المكالمات الواردة إلى وكلاء المساحة، وافتح أي خدمة لتغيير الوكلاء الذين يردون عليها.' : 'إدارة جذوع الصادر المستخدمة في مكالمات الحملات والاتصال الآلي.'}
+      createLabel={inbound ? 'وارد جديد' : 'صادر جديد'} searchPlaceholder="بحث بالاسم أو الرقم…" searchIcon={inbound ? <PhoneIncoming size={16} /> : <PhoneOutgoing size={16} />}
+      emptyAction={can('integrations.manage') ? <button type="button" className="cfg-new" onClick={() => setDraft(empty)}><Plus size={16} /> {inbound ? 'وارد جديد' : 'صادر جديد'}</button> : undefined} available={available} loading={loading} items={items} canEdit={can('integrations.manage')} onNew={() => setDraft(empty)} extraActions={headExtra}
       emptyIcon={inbound ? <PhoneIncoming size={20} /> : <PhoneOutgoing size={20} />}
-      emptyTitle={inbound ? 'ما عندك خدمات وارد' : 'ما عندك خدمات صادر'} emptyText="أنشئ خط SIP من مزوّد الاتصال عندك، أو سجّل رقمك ونتابع ربطه معك."
+      emptyTitle={inbound ? 'لا توجد خدمات وارد بعد' : 'لا توجد خدمات صادر بعد'} emptyText={inbound ? 'أنشئ خط SIP وارد، ثم اربط وكيلًا أو أكثر للرد على المكالمات.' : 'أنشئ خدمة SIP صادرة للبدء بإجراء المكالمات من مساحة العمل.'}
       renderCard={(s: VoiceService) => (
         <div key={s.id} className="gr-card">
           <h4>{s.name} <Badge tone={STATUS_TONE[s.status]}>{s.nabrah_id ? 'مربوط بالمنصة' : STATUS_LABELS[s.status]}</Badge></h4>
@@ -323,7 +324,7 @@ export function DashboardV2VoiceServices({ direction, headExtra }: { direction: 
         </div>
       )}
       dialog={
-        <DialogShell open={!!draft} title={draft?.linked ? 'الوكلاء على الخط' : draft?.id ? 'تعديل الخدمة' : 'خدمة جديدة'} onClose={() => setDraft(null)} busy={busy} onSave={submit}>
+        <DialogShell open={!!draft} title={draft?.linked ? 'الوكلاء على الخط' : draft?.id ? 'تعديل الخدمة' : inbound ? 'إنشاء خدمة وارد' : 'إنشاء خدمة صادر'} onClose={() => setDraft(null)} busy={busy} onSave={submit}>
           {draft && (draft.linked ? <>
             <p style={{ margin: 0, fontSize: 13 }}>{draft.name} <span dir="ltr">{draft.phone}</span></p>
             {agents.length === 0 ? <p style={{ fontSize: 12.5, margin: 0, color: 'var(--text-tertiary)' }}>ما فيه وكلاء مربوطين بحسابك.</p> : <>

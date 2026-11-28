@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Bot, Clock, Columns3, Download, LayoutGrid, ListChecks, Plus } from 'lucide-react'
+import { Bot, Clock, Columns3, Download, LayoutGrid, ListChecks, MoreHorizontal, Plus, Search, Ticket } from 'lucide-react'
+import { NB_CSS } from './shared/nbPage'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { Button } from '@/dashboard/components/primitives'
 import { useToast, Skeleton } from '@/dashboard/components/uiExtras'
@@ -20,8 +21,8 @@ import './tickets/ops.css'
 type Filter = 'all' | 'mine' | 'unassigned' | 'assigned'
 type StatusFilter = 'all' | TicketStatus
 type View = 'kanban' | 'cards'
-const COLUMNS: TicketStatus[] = ['open', 'in_progress', 'resolved']
-const STATUS_NOTE: Record<TicketStatus, string> = { open: 'أُعيد فتحها', in_progress: 'بدأت المعالجة', resolved: 'تم الحل' }
+const COLUMNS: TicketStatus[] = ['open', 'in_progress', 'resolved', 'snoozed']
+const STATUS_NOTE: Record<TicketStatus, string> = { open: 'أُعيد فتحها', in_progress: 'علّقها الفريق', resolved: 'أُغلقت', snoozed: 'أُجّلت' }
 
 /** One board column: a company stage, or one of the three statuses when the company has none. */
 interface Col { key: string; label: string; color: string; status: TicketStatus; stageId: string | null }
@@ -61,6 +62,26 @@ function TicketCard({ t, onOpen, subtasks }: { t: OpsTicket; onOpen: () => void;
   )
 }
 
+const TK_CSS = `
+.tk-count { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); font-size: 13px; }
+.tk-count b { color: var(--ink); }
+.tk-view { display: inline-flex; gap: 2px; padding: 3px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); }
+.tk-view button { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.tk-view button[aria-pressed="true"] { background: var(--hover-bg); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+.tk-menu { position: absolute; z-index: 21; inset-inline-end: 0; top: 44px; min-width: 190px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 30px rgba(0,0,0,.14); padding: 6px; }
+.tk-menu button { width: 100%; display: flex; align-items: center; gap: 8px; border: 0; background: none; color: var(--ink); font: inherit; font-size: 13.5px; padding: 9px 10px; border-radius: 9px; cursor: pointer; text-align: start; }
+.tk-menu button:hover { background: var(--hover-bg); }
+.tk-two { display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px; }
+@media (max-width: 860px) { .tk-two { grid-template-columns: 1fr; } }
+.tk-box { display: grid; gap: 10px; }
+.tk-box > b { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.tk-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.tk-chip { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: inherit; font-size: 13px; cursor: pointer; }
+.tk-chip .n { min-width: 22px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--hover-bg); color: var(--muted); font-size: 11.5px; display: inline-grid; place-items: center; }
+.tk-chip[aria-pressed="true"] { background: var(--hover-bg); border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); font-weight: 600; }
+.tk-chip:focus-visible, .tk-view button:focus-visible { outline: 3px solid var(--accent, #6c4cf1); outline-offset: 2px; }
+`
+
 export function DashboardV2Tickets() {
   const { companyId, isDemo, userName, hasModule, accountLoading } = useWorkspace()
   const pushToast = useToast()
@@ -77,6 +98,8 @@ export function DashboardV2Tickets() {
   const [typeF, setTypeF] = useState('')
   const [assigneeF, setAssigneeF] = useState('')
   const [contactQ, setContactQ] = useState('')
+  const [q, setQ] = useState('')
+  const [moreOpen, setMoreOpen] = useState(false)
   const [openId, setOpenId] = useState<string | null>(null)
   const [newOpen, setNewOpen] = useState(false)
   const [callId, setCallId] = useState<string | null>(null)
@@ -135,6 +158,7 @@ export function DashboardV2Tickets() {
     if (priorityF && t.priority !== priorityF) return false
     if (typeF && typeOf(t) !== typeF) return false
     if (assigneeF && (t.assignee_user_id || t.assignee_name) !== assigneeF) return false
+    if (q.trim() && ![t.subject, customerOf(t), t.customer_phone, shortId(t)].some((v) => String(v ?? '').toLowerCase().includes(q.trim().toLowerCase()))) return false
     if (contactQ.trim()) {
       const q = contactQ.trim().toLowerCase()
       if (![customerOf(t), t.customer_phone].some((v) => String(v ?? '').toLowerCase().includes(q))) return false
@@ -203,60 +227,74 @@ export function DashboardV2Tickets() {
     ...(caps.ticketExtras ? [['mine', 'تذاكري'], ['unassigned', 'غير مُسندة'], ['assigned', 'مُسندة']] as [Filter, string][] : []),
   ]
   const statusFilters: [StatusFilter, string][] = [['all', 'الكل'], ...COLUMNS.map((s) => [s, STATUS[s].label] as [StatusFilter, string])]
-  const sel = { height: 34, borderRadius: 9, border: '1px solid var(--line-2)', background: 'var(--panel)', color: 'var(--text-primary)', font: 'inherit', fontSize: 12.5, padding: '0 10px' }
+  const dot = (c: string) => <span style={{ width: 8, height: 8, borderRadius: '50%', background: c, flex: 'none' }} />
+  const statusDot: Record<string, string> = { all: 'var(--sky)', open: STATUS.open.color, in_progress: STATUS.in_progress.color, resolved: STATUS.resolved.color, snoozed: STATUS.snoozed.color }
+  const assignDot: Record<string, string> = { all: 'var(--sky)', mine: 'var(--info)', unassigned: 'var(--warn)', assigned: 'var(--ok)' }
 
   return (
     <div className="ops-page">
+      <style>{NB_CSS + TK_CSS}</style>
       <div className="ops-head">
         <div>
           <h1 className="ops-h1">التذاكر</h1>
           <p className="ops-sub">أدر تذاكر العملاء عبر جميع القنوات. الوكيل الذكي يفتحها تلقائيًا من المكالمات.</p>
         </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontSize: 13, color: 'var(--muted)' }}><b style={{ color: 'var(--ink)' }}>{loading ? '…' : list.length}</b> تذكرة</span>
-          <div className="ops-seg" role="group" aria-label="طريقة العرض">
-            <button type="button" aria-pressed={view === 'kanban'} onClick={() => setView('kanban')}><Columns3 size={13} /> أعمدة</button>
-            <button type="button" aria-pressed={view === 'cards'} onClick={() => setView('cards')}><LayoutGrid size={13} /> بطاقات</button>
+        <div className="nb-acts">
+          <span className="tk-count"><Ticket size={15} /> <b className="nx-num">{loading ? '…' : list.length}</b> تذكرة</span>
+          <div className="tk-view" role="group" aria-label="طريقة العرض">
+            <button type="button" aria-pressed={view === 'cards'} onClick={() => setView('cards')}><LayoutGrid size={14} /> بطاقات</button>
+            <button type="button" aria-pressed={view === 'kanban'} onClick={() => setView('kanban')}><Columns3 size={14} /> أعمدة</button>
           </div>
-          <Button variant="secondary" disabled={list.length === 0} onClick={exportCsv}><Download size={14} /> تصدير</Button>
-          <span className="shell-dup"><Button onClick={() => { setCallId(null); setNewOpen(true) }}><Plus size={15} /> تذكرة جديدة</Button></span>
+          <button type="button" className="nb-btn sec" disabled={list.length === 0} onClick={exportCsv}><Download size={15} /> تصدير</button>
+          {caps.ticketBoard && (
+            <span style={{ position: 'relative' }}>
+              <button type="button" className="nb-btn sec" style={{ padding: '0 11px' }} aria-label="المزيد" aria-expanded={moreOpen} onClick={() => setMoreOpen((v) => !v)}><MoreHorizontal size={16} /></button>
+              {moreOpen && (
+                <>
+                  <div style={{ position: 'fixed', inset: 0, zIndex: 20 }} onClick={() => setMoreOpen(false)} />
+                  <div className="tk-menu" role="menu">
+                    <button type="button" role="menuitem" onClick={() => { setMoreOpen(false); setStagesOpen(true) }}><Columns3 size={14} /> تخصيص الأعمدة</button>
+                  </div>
+                </>
+              )}
+            </span>
+          )}
+          <span className="shell-dup"><button type="button" className="nb-btn" onClick={() => { setCallId(null); setNewOpen(true) }}><Plus size={16} /> تذكرة جديدة</button></span>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-        <select aria-label="الفترة" style={sel} value={days} onChange={(e) => setDays(Number(e.target.value))}>
-          <option value={7}>آخر 7 أيام</option><option value={30}>آخر 30 يومًا</option><option value={90}>آخر 90 يومًا</option><option value={0}>كل الوقت</option>
-        </select>
-        <select aria-label="الأولوية" style={sel} value={priorityF} onChange={(e) => setPriorityF(e.target.value)}>
-          <option value="">الأولوية</option>{Object.entries(PRIORITY).map(([k, p]) => <option key={k} value={k}>{p.label}</option>)}
-        </select>
-        <select aria-label="النوع" style={sel} value={typeF} onChange={(e) => setTypeF(e.target.value)}>
-          <option value="">كل الأنواع</option>{types.map((t) => <option key={t} value={t}>{t}</option>)}
-        </select>
-        {caps.ticketExtras && (
-          <select aria-label="المُسند إليه" style={sel} value={assigneeF} onChange={(e) => setAssigneeF(e.target.value)}>
-            <option value="">المُسند إليه</option>{assignees.map(([k, n]) => <option key={k} value={k}>{n}</option>)}
+      <div className="nb-card tk-filters">
+        <div className="nb-filters">
+          <label className="nb-search"><Search size={16} /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ابحث بالموضوع أو جهة الاتصال أو رقم التذكرة" aria-label="بحث في التذاكر" /></label>
+          <select className="nb-select" aria-label="الفترة" value={days} onChange={(e) => setDays(Number(e.target.value))}>
+            <option value={7}>آخر 7 أيام</option><option value={30}>آخر 30 يومًا</option><option value={90}>آخر 90 يومًا</option><option value={0}>كل الوقت</option>
           </select>
-        )}
-        <input aria-label="جهة الاتصال" placeholder="جهة الاتصال" value={contactQ} onChange={(e) => setContactQ(e.target.value)} style={{ ...sel, minWidth: 150 }} />
-        {caps.ticketBoard && (
-          <span style={{ marginInlineStart: 'auto' }}>
-            <Button variant="secondary" size="sm" onClick={() => setStagesOpen(true)}><Columns3 size={14} /> تخصيص الأعمدة</Button>
-          </span>
-        )}
+          <select className="nb-select" aria-label="الأولوية" value={priorityF} onChange={(e) => setPriorityF(e.target.value)}>
+            <option value="">الأولوية</option>{Object.entries(PRIORITY).map(([k, p]) => <option key={k} value={k}>{p.label}</option>)}
+          </select>
+          <select className="nb-select" aria-label="النوع" value={typeF} onChange={(e) => setTypeF(e.target.value)}>
+            <option value="">كل الأنواع</option>{types.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+          {caps.ticketExtras && (
+            <select className="nb-select" aria-label="المُسند إليه" value={assigneeF} onChange={(e) => setAssigneeF(e.target.value)}>
+              <option value="">المُسند إليه</option>{assignees.map(([k, n]) => <option key={k} value={k}>{n}</option>)}
+            </select>
+          )}
+          <input className="nb-select" aria-label="جهة الاتصال" placeholder="جهة الاتصال" value={contactQ} onChange={(e) => setContactQ(e.target.value)} style={{ minWidth: 150 }} />
+        </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 12, color: 'var(--dim)' }}>الحالة</span>
-          <div className="ops-seg" role="group" aria-label="الحالة">
-            {statusFilters.map(([k, l]) => <button key={k} type="button" aria-pressed={statusF === k} onClick={() => setStatusF(k)}>{l} <b style={{ fontFamily: 'var(--font-numeral)' }}>{loading ? '' : statusCount(k)}</b></button>)}
+      <div className="tk-two">
+        <div className="nb-card tk-box">
+          <b>الحالة</b>
+          <div className="tk-chips" role="group" aria-label="الحالة">
+            {statusFilters.map(([k, l]) => <button key={k} type="button" className="tk-chip" aria-pressed={statusF === k} onClick={() => setStatusF(k)}>{dot(statusDot[k])}{l}<span className="n nx-num">{loading ? '' : statusCount(k)}</span></button>)}
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 12, color: 'var(--dim)' }}>الإسناد</span>
-          <div className="ops-seg" role="group" aria-label="الإسناد">
-            {assignFilters.map(([k, l]) => <button key={k} type="button" aria-pressed={filter === k} onClick={() => setFilter(k)}>{l} <b style={{ fontFamily: 'var(--font-numeral)' }}>{loading ? '' : assignCount(k)}</b></button>)}
+        <div className="nb-card tk-box">
+          <b>الإسناد</b>
+          <div className="tk-chips" role="group" aria-label="الإسناد">
+            {assignFilters.map(([k, l]) => <button key={k} type="button" className="tk-chip" aria-pressed={filter === k} onClick={() => setFilter(k)}>{dot(assignDot[k])}{l}<span className="n nx-num">{loading ? '' : assignCount(k)}</span></button>)}
           </div>
         </div>
       </div>
@@ -267,7 +305,7 @@ export function DashboardV2Tickets() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
           {loading ? [0, 1, 2].map((i) => <Skeleton key={i} height={96} radius="14px" />)
             : list.length ? list.map((t) => <TicketCard key={t.id} t={t} onOpen={() => setOpenId(t.id)} subtasks={progress.get(t.id)} />)
-            : <div className="ops-empty-line">لا توجد تذاكر. عدّل الفلاتر أو أنشئ تذكرة جديدة.</div>}
+            : <div className="ops-empty-line">لا توجد تذاكر. عدّل عوامل التصفية أو أنشئ تذكرة جديدة للبدء.</div>}
         </div>
       )}
 

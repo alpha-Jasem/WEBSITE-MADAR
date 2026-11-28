@@ -3,8 +3,9 @@ import type { TicketPriority, TicketStatus } from '@/types/dashboard'
 
 export const STATUS: Record<TicketStatus, { label: string; color: string }> = {
   open: { label: 'مفتوحة', color: 'var(--sky)' },
-  in_progress: { label: 'قيد المعالجة', color: 'var(--warn)' },
-  resolved: { label: 'محلولة', color: 'var(--ok)' },
+  in_progress: { label: 'معلقة', color: 'var(--warn)' },
+  resolved: { label: 'مغلقة', color: 'var(--info)' },
+  snoozed: { label: 'مؤجلة', color: 'var(--ai)' },
 }
 
 export const PRIORITY: Record<TicketPriority, { label: string; color: string; bg: string }> = {

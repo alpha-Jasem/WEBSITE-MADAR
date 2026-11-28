@@ -301,7 +301,7 @@ export interface GoogleReview {
 }
 
 export type TicketPriority = 'low' | 'normal' | 'high'
-export type TicketStatus = 'open' | 'in_progress' | 'resolved'
+export type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'snoozed'
 
 export interface SupportTicket {
   id: string

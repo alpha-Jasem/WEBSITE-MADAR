@@ -30,10 +30,12 @@ export const kbGet = async (id: string) => {
 export const kbCreate = (name: string, desc: string, kind: 'documents' | 'table') => call({ json: { op: 'create', name, desc, kind } })
 export const kbSetAgents = (id: string, agent_ids: string[]) => call({ json: { op: 'set_agents', id, agent_ids } })
 export const kbDelete = (id: string) => call({ json: { op: 'delete', id } })
+export const kbUpdate = (id: string, name: string, desc: string) => call({ json: { op: 'update', id, name, desc } })
 export const kbDeleteDocument = (id: string, doc_id: string) => call({ json: { op: 'delete_document', id, doc_id } })
-export function kbAddDocument(id: string, file: File, sheetDesc?: string) {
+export function kbAddDocument(id: string, file: File, sheetDesc?: string, searchableColumns?: string) {
   const f = new FormData()
   f.append('op', 'add_document'); f.append('id', id); f.append('file', file, file.name)
   if (sheetDesc) f.append('sheet_desc', sheetDesc)
+  if (searchableColumns) f.append('searchable_columns', searchableColumns)
   return call({ form: f })
 }

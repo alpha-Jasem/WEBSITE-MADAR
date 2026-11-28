@@ -8,6 +8,7 @@ import { useFollowups, saveFollowup, setFollowupEnabled, deleteFollowup, DEMO_FI
 import { Button, Card, Dialog, Input, Select } from '@/dashboard/components/primitives'
 import { EmptyState, SkeletonRows, useToast } from '@/dashboard/components/uiExtras'
 import { NightPage, PageHead, Toggle, Chip } from './shared/night'
+import { HeadCard, NB_CSS, SearchCard } from './shared/nbPage'
 import './growth.css'
 
 // المتابعات: a WhatsApp template sent automatically after a call, per agent, when the call's analysis matches.
@@ -33,15 +34,16 @@ export function DashboardV2Followups() {
   const [draft, setDraft] = useState<Draft | null>(null)
   const [confirmDel, setConfirmDel] = useState<Followup | null>(null)
   const [tab, setTab] = useState<'call' | 'reminders'>('call')
+  const [q, setQ] = useState('')
   const chips = canOpen('reminders') ? (
-    <div className="gr-chips" role="tablist" aria-label="نوع المتابعة">
-      <button type="button" role="tab" className="gr-chip" aria-selected={tab === 'call'} aria-pressed={tab === 'call'} onClick={() => setTab('call')}>بعد المكالمة</button>
-      <button type="button" role="tab" className="gr-chip" aria-selected={tab === 'reminders'} aria-pressed={tab === 'reminders'} onClick={() => setTab('reminders')}><BellRing size={12} /> تذكير المواعيد</button>
+    <div className="nb-tabs" role="tablist" aria-label="نوع المتابعة">
+      <button type="button" role="tab" className="nb-tab" aria-selected={tab === 'call'} aria-pressed={tab === 'call'} onClick={() => setTab('call')}>بعد المكالمة</button>
+      <button type="button" role="tab" className="nb-tab" aria-selected={tab === 'reminders'} aria-pressed={tab === 'reminders'} onClick={() => setTab('reminders')}><BellRing size={13} /> تذكير المواعيد</button>
     </div>
   ) : null
 
   const agentName = (id: string) => agents.find((a) => a.agent_id === id)?.name ?? 'وكيل محذوف'
-  const shown = list.filter((f) => !agentFilter || f.agent_id === agentFilter)
+  const shown = list.filter((f) => (!agentFilter || f.agent_id === agentFilter) && (!q.trim() || f.name.toLowerCase().includes(q.trim().toLowerCase())))
   const lastSend = (id: string) => sends.find((s) => s.followup_id === id)
   const sentCount = (id: string) => sends.filter((s) => s.followup_id === id && s.status === 'sent').length
 
@@ -57,21 +59,26 @@ export function DashboardV2Followups() {
 
   if (tab === 'reminders') return (
     <NightPage>
-      <PageHead title="متابعات واتساب" sub="تذكير العملاء بمواعيدهم تلقائيًا عبر واتساب. اختر القالب المعتمد لكل قاعدة وتبدأ تشتغل." />
-      {chips}
+      <style>{NB_CSS}</style>
+      <HeadCard title="متابعات واتساب" sub="تذكير العملاء بمواعيدهم تلقائيًا عبر واتساب. اختر القالب المعتمد لكل قاعدة وتبدأ تشتغل." />
+      <div className="nb-card">{chips}</div>
       <DashboardV2Reminders embedded />
     </NightPage>
   )
 
   return (
     <NightPage>
-      <PageHead title="متابعات واتساب" sub="أنشئ متابعات واتساب تلقائية بعد المكالمة، مرتبطة بالوكلاء والمتغيرات ونتائج التحليل."
-        actions={<Button onClick={() => setDraft({ ...EMPTY, agent_id: agentFilter || agents[0]?.agent_id || '' })}><Plus size={14} /> قالب واتساب جديد</Button>} />
-      {chips}
-      <div style={{ maxWidth: 260 }}>
-        <Select value={agentFilter} onChange={(e) => setAgentFilter(e.target.value)}
-          options={[{ value: '', label: 'كل الوكلاء' }, ...agents.map((a) => ({ value: a.agent_id, label: a.name }))]} />
-      </div>
+      <style>{NB_CSS}</style>
+      <HeadCard title="متابعات واتساب" sub="أنشئ متابعات واتساب تلقائية بعد المكالمة، مرتبطة بالوكلاء والمتغيرات ونتائج التحليل.">
+        <button type="button" className="nb-btn" onClick={() => setDraft({ ...EMPTY, agent_id: agentFilter || agents[0]?.agent_id || '' })}><Plus size={16} /> قالب واتساب جديد</button>
+      </HeadCard>
+      <SearchCard value={q} onChange={setQ} placeholder="ابحث بالاسم أو عنوان الرسالة…">
+        {chips}
+        <select className="nb-select" aria-label="الوكيل" value={agentFilter} onChange={(e) => setAgentFilter(e.target.value)}>
+          <option value="">كل الوكلاء</option>
+          {agents.map((a) => <option key={a.agent_id} value={a.agent_id}>{a.name}</option>)}
+        </select>
+      </SearchCard>
       {loading && <Card><SkeletonRows rows={3} columns={2} /></Card>}
       {!loading && error && <Card style={{ padding: 16 }}><div className="np-empty">ما قدرنا نجيب المتابعات الحين.</div></Card>}
       {!loading && !error && shown.length === 0 && (
