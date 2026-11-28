@@ -72,7 +72,8 @@ export function ConversationsExperience({ mode, actions }: { mode: 'all' | 'call
       includeMessages: mode === 'all' || mode === 'whatsapp',
       tagRules,
     })
-    return oneChannel ? built.filter((i) => i.channel === oneChannel) : built
+    // The site chat page holds written chats only: a visitor's voice call from the website belongs to the call log.
+    return oneChannel ? built.filter((i) => i.channel === oneChannel && !(oneChannel === 'web' && i.call?.provider === 'nabrah')) : built
   }, [calls, messages, mode, oneChannel, showVoice, tagRules])
 
   const openId = params.get('id')

@@ -7,6 +7,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { recomputeVoiceUsage } from '../_shared/voice-usage.ts'
+import { ingestNabrahCall } from '../_shared/call-ingest.ts'
 import { conditionsMet, customerNumber, flattenAnalysis, followupSecret, renderParam, waNumber, type FollowupCall } from '../_shared/followup.ts'
 
 const GRAPH = 'https://graph.facebook.com/v21.0'
@@ -44,6 +45,8 @@ Deno.serve(async (req) => {
   // Every analysed call also moves the company's live usage (best effort; the dashboard re-counts on its own too).
   const nabrahKey = Deno.env.get('NABRAH_API_KEY')?.trim()
   if (nabrahKey) await recomputeVoiceUsage(db, nabrahKey, companyId).catch(() => null)
+  // ...and brings the call into the dashboard: call row, ticket when it needs a person, the caller as a contact.
+  if (nabrahKey) await ingestNabrahCall(db, nabrahKey, companyId, callId).catch(() => null)
 
   const { data: rules } = await db.from('agent_followups').select('id, template_id, params, recipient, conditions')
     .eq('company_id', companyId).eq('agent_id', agentId).eq('enabled', true)
