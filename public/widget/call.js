@@ -310,7 +310,7 @@
         if (!c.label && a('data-label')) c.label = a('data-label')
         if (!c.position && a('data-position')) c.position = a('data-position')
         mount(c)
-        if (PAGE) wrap.style.margin = 'auto'
+        if (PAGE) host.style.margin = 'auto'
       })
       .catch(function () { if (PAGE) { var d = document.createElement('p'); d.textContent = 'هذه الصفحة غير متاحة.'; document.body.appendChild(d) } })
   }
