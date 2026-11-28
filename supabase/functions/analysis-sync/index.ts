@@ -40,14 +40,15 @@ function toBody(agent: Record<string, unknown>): Record<string, unknown> {
 interface Field { name: string; type: 'text' | 'number' | 'yes_no'; description: string }
 const TYPE: Record<Field['type'], string> = { text: 'string', number: 'number', yes_no: 'boolean' }
 
-/** The group as the platform wants it. `ascii` falls back to plain keys (field_1...) with the readable name kept in the description. */
-function groupBody(name: string, fields: Field[], ascii: boolean) {
-  const key = (f: Field, i: number) => ascii ? `field_${i + 1}` : f.name.trim().replace(/[؟?!.,،:;]+/g, '').replace(/\s+/g, '_').slice(0, 60) || `field_${i + 1}`
+/** The group as the platform wants it, in three levels of strictness: 0 keeps Arabic names everywhere; 1 keeps the Arabic group
+ *  name but plain field keys (field_1...) with the readable name in the description; 2 also makes the group name plain. */
+function groupBody(name: string, fields: Field[], level: 0 | 1 | 2, rowId: string) {
+  const key = (f: Field, i: number) => level === 0 ? (f.name.trim().replace(/[؟?!.,،:;]+/g, '').replace(/\s+/g, '_').slice(0, 60) || `field_${i + 1}`) : `field_${i + 1}`
   return {
-    name: ascii ? name.replace(/[^A-Za-z0-9_]+/g, '_').replace(/^_+|_+$/g, '') || 'group' : name,
+    name: level === 2 ? `g_${rowId.replace(/-/g, '').slice(0, 10)}` : name,
     data_collections: fields.map((f, i) => ({
       name: key(f, i), type: TYPE[f.type] ?? 'string', constraints: {},
-      description: (ascii ? `${f.name.trim()}: ` : '') + (f.description?.trim() || f.name.trim()),
+      description: (level === 0 ? '' : `${f.name.trim()}: `) + (f.description?.trim() || f.name.trim()),
     })),
   }
 }
@@ -105,13 +106,15 @@ Deno.serve(async (req) => {
     let created = 0, updated = 0
     for (const r of (rows ?? []) as { id: string; name: string; fields: Field[]; nabrah_id: string | null; agent_ids: string[] | null }[]) {
       const fields = Array.isArray(r.fields) ? r.fields : []
-      const send = async (ascii: boolean) => {
-        const b = JSON.stringify(groupBody(r.name, fields, ascii))
+      const send = async (level: 0 | 1 | 2) => {
+        const b = JSON.stringify(groupBody(r.name, fields, level, r.id))
         return r.nabrah_id ? await nabrah(`/analysis/${r.nabrah_id}`, key, { method: 'PUT', body: b }) : await nabrah('/analysis', key, { method: 'POST', body: b })
       }
       let out
-      try { out = await send(false) }
-      catch (e) { if (e instanceof ApiError && e.status === 422) out = await send(true); else throw e }
+      for (const level of [0, 1, 2] as const) {
+        try { out = await send(level); break }
+        catch (e) { if (!(e instanceof ApiError && e.status === 422) || level === 2) throw e }
+      }
       const id = String(out?.id ?? r.nabrah_id)
       if (!r.nabrah_id) { created++; await db.from('analysis_groups').update({ nabrah_id: id }).eq('id', r.id) } else updated++
       owned.add(id)
