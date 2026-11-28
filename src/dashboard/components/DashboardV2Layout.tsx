@@ -11,6 +11,7 @@ import { useWorkspace } from '@/context/WorkspaceContext'
 import { useSupportTickets } from '@/lib/dashboardQueries'
 import { getUsageMetrics, usagePercentage } from '@/lib/clinicOSProduct'
 import { type ThemePref } from './AccountMenu'
+import { SupportChat } from './SupportChat'
 import { GlobalSearch } from './GlobalSearch'
 import { TopBar, TOPBAR_CSS } from './TopBar'
 import { WhatsNew } from './WhatsNew'
@@ -151,10 +152,6 @@ export const SHELL_CSS = `
     .dv2-responsive-grid { grid-template-columns: 1fr !important; }
     .dv2-responsive-grid-2 { grid-template-columns: 1fr 1fr !important; }
     .dv2-kpi-hero-grid { grid-template-columns: 1fr !important; }
-  }
-  /* the top bar's "اسأل مدار" replaces the floating chat launcher on wide screens */
-  @media (min-width: 901px) {
-    .dv2-chat-launcher { display: none !important; }
   }
   @media (prefers-reduced-motion: reduce) {
     .dv2-side, .dv2-nav { transition: none; }
@@ -488,6 +485,7 @@ export function DashboardV2Layout() {
       </AnimatePresence>
 
       <GlobalSearch base={base} />
+      <SupportChat />
       <WhatsNew base={base} />
       <ShortcutsOverlay />
       {showBookings && (
