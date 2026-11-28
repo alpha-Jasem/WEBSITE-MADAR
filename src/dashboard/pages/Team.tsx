@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Plus, Trash2, Users, Pencil, ShieldCheck } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useCurrentUserId } from '@/lib/queries/ops'
@@ -47,6 +48,13 @@ export function DashboardV2Team() {
   const canManage = isOwner || isDemo || can('team.manage')
 
   const [invite, setInvite] = useState<{ open: boolean; full_name: string; email: string; role: string; busy: boolean }>({ open: false, full_name: '', email: '', role: 'agent', busy: false })
+  const [params, setParams] = useSearchParams()
+  // «دعوة» on a workspace card opens this page with the invite dialog already open.
+  useEffect(() => {
+    if (params.get('invite') !== '1') return
+    setInvite((i) => ({ ...i, open: true }))
+    params.delete('invite'); setParams(params, { replace: true })
+  }, [params, setParams])
   const [permFor, setPermFor] = useState<CompanyStaff | null>(null)
   const [permDraft, setPermDraft] = useState<Set<string>>(new Set())
   const [teamDlg, setTeamDlg] = useState<{ open: boolean; id?: string; name: string; color: string; description: string; userIds: string[]; busy: boolean }>({ open: false, name: '', color: TEAM_COLORS[0], description: '', userIds: [], busy: false })

@@ -6,7 +6,7 @@ import { DURATION_MEDIUM, EASE_OUT } from './motionTokens'
 import {
   LayoutDashboard, CalendarDays, Users, MessageSquare, Star, BarChart3,
   Wallet, BellRing, Settings, AlertTriangle, Plus, Ticket,
-  ClipboardList, BookOpen, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Send, ShoppingBag, UsersRound, Zap, Layers, Megaphone, WandSparkles, FileInput, MessageCircle, Radio, ChevronDown, Globe, ListChecks, PhoneIncoming, PhoneOutgoing, Mic, Code2,
+  ClipboardList, BookOpen, MoreHorizontal, X, Wrench, Sparkles, Contact, Bot, Plug, Send, ShoppingBag, UsersRound, Zap, Layers, Megaphone, WandSparkles, FileInput, MessageCircle, Radio, ChevronDown, Check, Globe, ListChecks, PhoneIncoming, PhoneOutgoing, Mic, Code2,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useSupportTickets } from '@/lib/dashboardQueries'
@@ -77,6 +77,15 @@ export const SHELL_CSS = `
     font-weight: 600; font-size: 15px; color: var(--ink); }
   .dv2-logo img { width: 24px; height: 24px; object-fit: contain; flex: none; }
   .dv2-side.is-collapsed .dv2-logo { justify-content: center; padding-inline: 0; }
+  .dv2-ws { position: relative; margin: 0 0 10px; flex: none; }
+  .dv2-ws-btn { width: 100%; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: inherit; cursor: pointer; text-align: start; }
+  .dv2-ws-btn:hover { border-color: var(--line-2); }
+  .dv2-ws-av { width: 30px; height: 30px; border-radius: 50%; flex: none; background: var(--gradient-brand); }
+  .dv2-ws-txt { flex: 1; min-width: 0; display: grid; line-height: 1.3; } .dv2-ws-txt small { font-size: 11px; color: var(--dim); } .dv2-ws-txt b { font-size: 13.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dv2-ws-menu { position: absolute; inset-inline: 0; top: calc(100% + 6px); z-index: 30; border: 1px solid var(--line-2); border-radius: 12px; background: var(--panel); padding: 6px; display: grid; gap: 2px; box-shadow: var(--shadow-lg); }
+  .dv2-ws-item { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; border: 0; background: none; color: var(--ink); font: inherit; font-size: 13.5px; cursor: pointer; text-align: start; width: 100%; }
+  .dv2-ws-item:hover { background: var(--hover-bg); } .dv2-ws-item .dv2-ws-av { width: 24px; height: 24px; }
+  .dv2-ws-sep { height: 1px; background: var(--line); margin: 4px 2px; }
   .dv2-side-search { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 10px; margin: 0 0 8px; border-radius: 8px;
     border: 1px solid var(--line); background: var(--panel); color: var(--dim); font-size: 13px; cursor: pointer; width: 100%; text-align: start; flex: none; }
   .dv2-side-search:hover { border-color: var(--line-2); color: var(--muted); }
@@ -270,7 +279,7 @@ export function DashboardV2Layout() {
     // Same grouping and order as the reference platform (workspace, build, interact, integrations);
     // what Madar adds on top sits in the folded groups at the end.
     { title: 'مساحات عملي', items: [
-      { label: 'مساحات عملي', short: 'المساحة', path: `${base}/workspace-settings`, icon: <Layers size={16} /> },
+      { label: 'مساحات عملي', short: 'المساحة', path: `${base}/workspaces`, icon: <Layers size={16} /> },
     ] },
     { title: 'مساحة العمل', items: [
       { label: 'نظرة عامة', short: 'الرئيسية', path: base, icon: <LayoutDashboard size={16} /> },
@@ -385,6 +394,7 @@ export function DashboardV2Layout() {
           <img src="/logo-orbit.png" alt="" />
           {!collapsed && <span dir="ltr">Madar software</span>}
         </div>
+        {!collapsed && <WorkspaceSwitcher name={companyName} base={base} />}
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           {NAV_GROUPS.filter((g) => !g.pin).map((group, gi) => {
             const folded = !!group.fold && !collapsed && !openFolds.has(group.title) && !group.items.some((it) => isActive(it.path))
@@ -519,6 +529,39 @@ export function DashboardV2Layout() {
         <span className="dv2-mobile-only"><Fab actions={[{ label: 'موعد جديد', icon: <Plus size={15} />, onClick: () => navigate(`${base}/bookings?new=1`) }]} /></span>
       )}
     </ToastProvider>
+    </div>
+  )
+}
+
+/** The workspace card at the top of the sidebar: shows the current workspace and lists the workspaces the person can open. */
+function WorkspaceSwitcher({ name, base }: { name: string; base: string }) {
+  const navigate = useNavigate()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const close = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false) }
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', close); document.addEventListener('keydown', esc)
+    return () => { document.removeEventListener('mousedown', close); document.removeEventListener('keydown', esc) }
+  }, [open])
+  const label = name || 'مساحة العمل'
+  return (
+    <div className="dv2-ws" ref={ref}>
+      <button type="button" className="dv2-ws-btn" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        <span className="dv2-ws-av" aria-hidden="true" />
+        <span className="dv2-ws-txt"><small>مساحة العمل</small><b>{label}</b></span>
+        <ChevronDown size={15} style={{ color: 'var(--dim)', transform: open ? 'rotate(180deg)' : undefined, transition: 'transform 160ms' }} />
+      </button>
+      {open && (
+        <div className="dv2-ws-menu" role="menu">
+          <button type="button" role="menuitemradio" aria-checked="true" className="dv2-ws-item" onClick={() => { setOpen(false); navigate(base) }}>
+            <span className="dv2-ws-av" aria-hidden="true" /><span style={{ flex: 1 }}>{label}</span><Check size={15} />
+          </button>
+          <div className="dv2-ws-sep" />
+          <button type="button" role="menuitem" className="dv2-ws-item" style={{ color: 'var(--muted)' }} onClick={() => { setOpen(false); navigate(`${base}/workspaces`) }}>كل مساحات العمل</button>
+        </div>
+      )}
     </div>
   )
 }

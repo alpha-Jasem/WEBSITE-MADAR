@@ -84,6 +84,7 @@ const DashboardV2AgentEditor       = lazy(() => import('./dashboard/pages/Agents
 const DashboardV2KnowledgeBase      = lazy(() => import('./dashboard/pages/KnowledgeBase').then(m => ({ default: m.DashboardV2KnowledgeBase })))
 const DashboardV2Macros           = lazy(() => import('./dashboard/pages/Macros').then(m => ({ default: m.DashboardV2Macros })))
 const DashboardV2TeamChat         = lazy(() => import('./dashboard/pages/TeamChat').then(m => ({ default: m.DashboardV2TeamChat })))
+const DashboardV2Workspaces = lazy(() => import('./dashboard/pages/WorkspacesList').then(m => ({ default: m.DashboardV2Workspaces })))
 const DashboardV2WorkspaceSettings = lazy(() => import('./dashboard/pages/WorkspaceSettings').then(m => ({ default: m.DashboardV2WorkspaceSettings })))
 const DashboardV2Segments         = lazy(() => import('./dashboard/pages/Segments').then(m => ({ default: m.DashboardV2Segments })))
 const DashboardV2Forms            = lazy(() => import('./dashboard/pages/Forms').then(m => ({ default: m.DashboardV2Forms })))
@@ -170,6 +171,7 @@ const dashboardChildRoutes = (
     <Route path="macros" element={<ModuleRoute module="conversations"><DashboardV2Macros /></ModuleRoute>} />
     <Route path="team-chat" element={<DashboardV2TeamChat />} />
     <Route path="workspace-settings" element={<DashboardV2WorkspaceSettings />} />
+    <Route path="workspaces" element={<DashboardV2Workspaces />} />
     <Route path="segments" element={<ModuleRoute module="customers"><DashboardV2Segments /></ModuleRoute>} />
     <Route path="whatsapp" element={<ModuleRoute module="conversations"><PermissionRoute permission="conversations.view"><DashboardV2WhatsApp /></PermissionRoute></ModuleRoute>} />
     <Route path="forms" element={<ModuleRoute module="customers"><PermissionRoute permission="integrations.manage"><DashboardV2Forms /></PermissionRoute></ModuleRoute>} />
