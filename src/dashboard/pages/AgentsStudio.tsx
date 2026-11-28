@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Bot, Copy, Mic, Pencil, PhoneOff, Plus, Trash2, ArrowRight } from 'lucide-react'
+import { ArrowRight, Bot, CalendarDays, Clock, Copy, Pencil, Phone, PhoneOff, Plus, Search, Trash2 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { agentWrite, useVoiceRead, voiceRead, type VoiceAgent } from '@/lib/queries/voicePlatform'
 import { Badge, Button, Card, Dialog, Input, Select, Switch } from '@/dashboard/components/primitives'
@@ -30,6 +30,44 @@ let demoAgents = DEMO_AGENTS
 const LANGS: [string, string][] = [['ar', 'العربية'], ['en', 'الإنجليزية'], ['ur', 'الأردية'], ['ms', 'الملايو'], ['fr', 'الفرنسية'], ['de', 'الألمانية'], ['es', 'الإسبانية'], ['tr', 'التركية'], ['id', 'الإندونيسية']]
 const errText = (e: unknown) => (e instanceof Error && e.message === 'forbidden' ? 'ما عندك صلاحية تعديل الوكلاء' : 'ما قدرنا نكمل، حاول مرة ثانية')
 
+
+const LIST_CSS = `
+.ag-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 22px 24px; }
+.ag-head h1 { margin: 0; font-size: 26px; font-weight: 700; color: var(--ink); }
+.ag-head p { margin: 4px 0 10px; font-size: 13.5px; color: var(--muted); }
+.ag-count { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+.ag-count b { min-width: 26px; height: 22px; padding: 0 8px; border-radius: 999px; border: 1px solid var(--line); display: inline-grid; place-items: center; color: var(--ink); font-size: 12px; }
+.ag-new { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 18px; border-radius: 12px; border: 0; background: var(--ink); color: var(--panel); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.ag-new:focus-visible, .ag-ic:focus-visible { outline: 3px solid var(--accent, #6c4cf1); outline-offset: 2px; }
+.ag-search { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 6px 8px; }
+.ag-search label { flex: 1; display: flex; align-items: center; gap: 10px; border-radius: 12px; padding: 0 12px; height: 42px; background: var(--panel-2, transparent); border: 1px solid var(--line); color: var(--muted); }
+.ag-search input { flex: 1; border: 0; outline: 0; background: transparent; color: var(--ink); font: inherit; font-size: 14px; min-width: 0; }
+.ag-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+.ag-card { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+.ag-top { display: flex; gap: 14px; align-items: center; padding: 16px 18px; }
+.ag-av { width: 64px; height: 64px; border-radius: 18px; flex: none; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+.ag-info { min-width: 0; display: grid; gap: 6px; }
+.ag-name { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 15.5px; font-weight: 700; color: var(--ink); }
+.ag-v { font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; background: var(--hover-bg); color: var(--muted); }
+.ag-meta { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.ag-meta span { display: inline-flex; align-items: center; gap: 5px; }
+.ag-acts { display: flex; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--line); margin-top: auto; }
+.ag-ic { width: 38px; height: 38px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); display: grid; place-items: center; cursor: pointer; }
+.ag-ic:hover { background: var(--hover-bg); }
+.ag-ic:disabled { opacity: .45; cursor: not-allowed; }
+.ag-ic.call { background: var(--hover-bg); }
+.ag-ic.live { background: var(--bad, #dc2626); border-color: transparent; color: #fff; }
+.ag-ic.del { color: var(--bad, #dc2626); background: color-mix(in srgb, var(--bad, #dc2626) 10%, transparent); border-color: color-mix(in srgb, var(--bad, #dc2626) 25%, var(--line)); }
+`
+
+/** Every agent gets its own dark gradient tile, picked from its id, so a list of agents is easy to tell apart at a glance. */
+function avatarOf(id: string): CSSProperties {
+  let h = 0
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0
+  const a = h % 360, b = (a + 70 + (h >> 8) % 80) % 360
+  return { background: `radial-gradient(circle at 18% 88%, hsl(${a} 85% 48% / .95), transparent 58%), radial-gradient(circle at 86% 14%, hsl(${b} 75% 42% / .85), transparent 58%), #0b0d14` }
+}
+
 function useAgentList() {
   const { companyId, isDemo } = useWorkspace()
   const [tick, setTick] = useState(0)
@@ -47,6 +85,7 @@ export function DashboardV2AgentsList() {
   const call = useWebCall()
   const [busy, setBusy] = useState<string | null>(null)
   const [confirmDel, setConfirmDel] = useState<Agent | null>(null)
+  const [q, setQ] = useState('')
   const [, force] = useState(0)
 
   async function copy(a: Agent) {
@@ -67,28 +106,42 @@ export function DashboardV2AgentsList() {
 
   return (
     <NightPage>
-      <PageHead title="وكلاء الصوت" sub="أنشئ وأدر وكلاء المحادثة لهذه المساحة."
-        actions={<Button onClick={() => navigate(`${base}/agents/new`)}><Plus size={14} /> وكيل جديد</Button>} />
-      {!loading && <div style={{ fontSize: 13, color: 'var(--muted)' }}><b style={{ color: 'var(--ink)', fontSize: 18 }}>{agents.length}</b> وكلاء في هذه المساحة</div>}
+      <style>{LIST_CSS}</style>
+      <div className="ag-head">
+        <div>
+          <h1>وكلاء الصوت</h1>
+          <p>أنشئ وأدر وكلاء المحادثة لهذه المساحة.</p>
+          {!loading && <span className="ag-count"><b className="nx-num">{agents.length}</b> وكلاء في هذه المساحة</span>}
+        </div>
+        <button type="button" className="ag-new" onClick={() => navigate(`${base}/agents/new`)}><Plus size={16} /> وكيل جديد</button>
+      </div>
+      {agents.length > 0 && (
+        <div className="ag-search"><label><Search size={16} /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="بحث في الوكلاء…" aria-label="بحث في الوكلاء" /></label></div>
+      )}
       {error && !isDemo && <Card style={{ padding: 16 }}><div className="np-empty">ما قدرنا نجيب الوكلاء الحين.</div></Card>}
       {!loading && !error && agents.length === 0 && <Card><EmptyState icon={<Bot size={20} />} title="ما عندك وكلاء بعد" description="أنشئ أول وكيل يرد على مكالمات عملائك." /></Card>}
-      <div className="gr-grid">
-        {agents.map((a) => {
+      <div className="ag-grid">
+        {agents.filter((a) => !q.trim() || a.name.toLowerCase().includes(q.trim().toLowerCase())).map((a) => {
           const live = call.agentId === a.agent_id && call.state !== 'idle'
           return (
-            <div key={a.agent_id} className="gr-card">
-              <h4>{a.name} <Badge tone="neutral">{String(a.version || 'v1')}</Badge></h4>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, fontSize: 12 }}>
-                <div><span style={{ color: 'var(--dim)' }}>تاريخ الإنشاء</span><div style={{ color: 'var(--ink)' }}>{fmtDate(a.created_at)}</div></div>
-                <div><span style={{ color: 'var(--dim)' }}>آخر تحديث</span><div style={{ color: 'var(--ink)' }}>{fmtDate(a.last_update)}</div></div>
+            <div key={a.agent_id} className="ag-card">
+              <div className="ag-top">
+                <div className="ag-av" style={avatarOf(a.agent_id)} aria-hidden="true" />
+                <div className="ag-info">
+                  <div className="ag-name">{a.name} <span className="ag-v">{String(a.version || 'v1')}</span></div>
+                  <div className="ag-meta">
+                    <span><CalendarDays size={13} /> تاريخ الإنشاء {fmtDate(a.created_at)}</span>
+                    <span><Clock size={13} /> آخر تحديث {fmtDate(a.last_update)}</span>
+                  </div>
+                </div>
               </div>
-              <div className="gr-acts">
+              <div className="ag-acts">
                 {live
-                  ? <button type="button" className="gr-btn primary" onClick={() => void call.hangUp()}><PhoneOff /> {call.state === 'connecting' ? 'جاري الاتصال…' : 'إنهاء'}</button>
-                  : <button type="button" className="gr-btn" disabled={call.state !== 'idle'} onClick={() => void call.start(a.agent_id)}><Mic /> اتصال</button>}
-                <button type="button" className="gr-btn" onClick={() => navigate(`${base}/agents/${encodeURIComponent(a.agent_id)}/edit`)}><Pencil /> تعديل</button>
-                <button type="button" className="gr-btn" disabled={busy === a.agent_id} onClick={() => void copy(a)}><Copy /> نسخ</button>
-                <button type="button" className="gr-btn" disabled={busy === a.agent_id} onClick={() => setConfirmDel(a)}><Trash2 /> حذف</button>
+                  ? <button type="button" className="ag-ic live" title="إنهاء المكالمة" aria-label="إنهاء المكالمة" onClick={() => void call.hangUp()}><PhoneOff size={17} /></button>
+                  : <button type="button" className="ag-ic call" title="اتصال" aria-label="اتصال بالوكيل" disabled={call.state !== 'idle'} onClick={() => void call.start(a.agent_id)}><Phone size={17} /></button>}
+                <button type="button" className="ag-ic" title="تعديل" aria-label="تعديل الوكيل" onClick={() => navigate(`${base}/agents/${encodeURIComponent(a.agent_id)}/edit`)}><Pencil size={17} /></button>
+                <button type="button" className="ag-ic" title="نسخ" aria-label="نسخ الوكيل" disabled={busy === a.agent_id} onClick={() => void copy(a)}><Copy size={17} /></button>
+                <button type="button" className="ag-ic del" title="حذف" aria-label="حذف الوكيل" disabled={busy === a.agent_id} onClick={() => setConfirmDel(a)}><Trash2 size={17} /></button>
               </div>
             </div>
           )
