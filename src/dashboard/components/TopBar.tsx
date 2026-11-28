@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import {
-  PanelRight, Search, MessageSquareText, Gift,
+  PanelRight, Search, MessageSquareText, Gift, Sun, Moon,
 } from 'lucide-react'
 import { NotificationCenter } from './NotificationCenter'
 import { AccountMenu, ACCOUNT_MENU_CSS, type ThemePref } from './AccountMenu'
@@ -106,6 +106,7 @@ export function TopBar({ base, routeKey, pageTitle, hasPageNews, themePref, onTh
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const closeFeedback = useCallback(() => setFeedbackOpen(false), [])
 
+  const isDark = themePref === 'dark' || (themePref === 'system' && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches)
   const showNews = unread || hasPageNews
 
   return (
@@ -151,7 +152,10 @@ export function TopBar({ base, routeKey, pageTitle, hasPageNews, themePref, onTh
         </span>
         <button type="button" className="dv2-icon-btn dv2-mobile-only" onClick={() => requestOpenSearch()} aria-label="بحث"><Search /></button>
         <NotificationCenter />
-        <AccountMenu base={base} themePref={themePref} onThemeChange={onThemeChange} />
+        <button type="button" className="dv2-icon-btn" onClick={() => onThemeChange(isDark ? 'light' : 'dark')} aria-label={isDark ? 'الوضع الفاتح' : 'الوضع الداكن'}>
+          {isDark ? <Sun /> : <Moon />}
+        </button>
+        <AccountMenu base={base} />
       </div>
 
       <FeedbackDialog open={feedbackOpen} onClose={closeFeedback} />

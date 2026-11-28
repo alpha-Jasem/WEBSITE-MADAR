@@ -161,6 +161,9 @@ export const SHELL_CSS = `
 /** Titles for routes that aren't in the sidebar, for the top-bar breadcrumb. */
 const EXTRA_TITLES: Record<string, string> = {
   'plan-usage': 'الباقة والاستخدام',
+  account: 'الحساب',
+  billing: 'الفوترة',
+  help: 'الدعم',
   'audit-log': 'سجل التدقيق',
   'calls-analytics': 'تحليلات المكالمات',
   'whatsapp-analytics': 'تحليلات واتساب',
