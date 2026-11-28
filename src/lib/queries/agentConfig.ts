@@ -18,6 +18,9 @@ export type ServiceStatus = 'pending' | 'active' | 'paused'
 export interface VoiceService {
   id: string; direction: 'inbound' | 'outbound'; name: string; phone: string; provider: string
   status: ServiceStatus; notes: string | null; created_at: string
+  /** Set once the service is a real SIP trunk on the voice platform. */
+  nabrah_id?: string | null; transport?: 'udp' | 'tcp' | 'tls'; address?: string | null; max_channels?: number | null
+  allowed_ips?: string[]; sip_username?: string | null; agent_ids?: string[]
 }
 
 const demoId = () => `demo-${Math.random().toString(36).slice(2, 10)}`
@@ -105,13 +108,29 @@ export async function syncAnalysisGroups(deleteId?: string): Promise<void> {
   groups.refresh()
 }
 
-const services = makeStore<VoiceService>('voice_services', 'id, direction, name, phone, provider, status, notes, created_at', [
+const services = makeStore<VoiceService>('voice_services', 'id, direction, name, phone, provider, status, notes, created_at, nabrah_id, transport, address, max_channels, allowed_ips, sip_username, agent_ids', [
   { id: 'demo-svc-in', direction: 'inbound', name: 'الرقم الموحد', phone: '920000000', provider: 'مزوّد الاتصال', status: 'active', notes: 'تحويل المكالمات إلى وكيل الصوت', created_at: now() },
   { id: 'demo-svc-out', direction: 'outbound', name: 'حملة المتابعة', phone: '0500000000', provider: 'مزوّد الاتصال', status: 'pending', notes: null, created_at: now() },
 ])
 export const useVoiceServices = services.useList
 export const saveVoiceService = services.save
 export const deleteVoiceService = services.remove
+
+/** Talks to the voice-service function: creates a SIP trunk (inbound or outbound), changes the agents answering on an
+ *  inbound trunk, or deletes a service everywhere. The SIP password is sent once and never stored. */
+export async function voiceServiceCall(payload: Record<string, unknown>): Promise<void> {
+  const { data: s } = await supabase.auth.getSession()
+  const token = s.session?.access_token
+  if (!token) throw new Error('سجّل دخولك من جديد')
+  const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/voice-service`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, apikey: import.meta.env.VITE_SUPABASE_ANON_KEY ?? '', 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  const out = await res.json().catch(() => ({}))
+  if (!res.ok || out.error) throw new Error(String(out.error || 'تعذّر تنفيذ الطلب').slice(0, 220))
+  services.refresh()
+}
 
 export const STATUS_LABELS: Record<ServiceStatus, string> = { pending: 'قيد الربط', active: 'يعمل', paused: 'موقوف' }
 

@@ -4,7 +4,7 @@ import { useWorkspace } from '@/context/WorkspaceContext'
 import { supabase } from '@/lib/supabase'
 import {
   useAgentTools, saveAgentTool, deleteAgentTool, useAnalysisGroups, saveAnalysisGroup, deleteAnalysisGroup, syncAnalysisGroups,
-  useVoiceServices, saveVoiceService, deleteVoiceService, STATUS_LABELS,
+  useVoiceServices, saveVoiceService, deleteVoiceService, voiceServiceCall, STATUS_LABELS,
   type AgentTool, type AnalysisGroup, type AnalysisField, type ToolParam, type VoiceService, type ServiceStatus,
 } from '@/lib/queries/agentConfig'
 import { useVoiceRead, type VoiceAgent } from '@/lib/queries/voicePlatform'
@@ -226,7 +226,12 @@ export function DashboardV2AnalysisGroups() {
 }
 
 // ---------------------------------------------------------------- inbound / outbound services
-type ServiceDraft = { id?: string; name: string; phone: string; provider: string; status: ServiceStatus; notes: string }
+type ServiceDraft = {
+  id?: string; name: string; phone: string; provider: string; status: ServiceStatus; notes: string
+  transport: 'udp' | 'tcp' | 'tls'; ips: string; username: string; password: string; address: string; channels: string; agent_ids: string[]
+  /** True when the service is already a trunk on the platform: only its agents change. */
+  linked?: boolean
+}
 const STATUS_TONE: Record<ServiceStatus, 'success' | 'warning' | 'neutral'> = { active: 'success', pending: 'warning', paused: 'neutral' }
 
 /** Call services: the numbers a company uses for incoming calls (forwarded to the agent) and outgoing calls (campaigns, instant calls). */
@@ -234,18 +239,39 @@ export function DashboardV2VoiceServices({ direction, headExtra }: { direction: 
   const { companyId, isDemo, can } = useWorkspace()
   const { items: all, available, loading } = useVoiceServices(companyId, isDemo)
   const items = all.filter((s) => s.direction === direction)
+  const { isOwner } = useWorkspace()
+  const agentsRead = useVoiceRead<{ agents: VoiceAgent[] }>(isDemo ? null : companyId || 'admin', 'agents')
+  const agents = agentsRead.data?.agents ?? []
+  const agentName = (id: string) => agents.find((a) => a.agent_id === id)?.name ?? 'وكيل'
   const [draft, setDraft] = useState<ServiceDraft | null>(null)
   const { busy, run, del, pushToast } = useSaver(() => setDraft(null))
   const inbound = direction === 'inbound'
-  const empty: ServiceDraft = { name: '', phone: '', provider: '', status: 'pending', notes: '' }
+  const empty: ServiceDraft = { name: '', phone: '', provider: '', status: 'pending', notes: '', transport: 'udp', ips: '', username: '', password: '', address: '', channels: '5', agent_ids: [] }
+
+  /** A real trunk needs the carrier's details; without them the service is saved as a record our team links with you. */
+  const wantsTrunk = (d: ServiceDraft) => inbound ? !!(d.ips.trim() || d.username.trim()) : !!d.address.trim()
 
   function submit() {
     if (!draft) return
+    if (draft.linked && draft.id) {
+      void run(() => voiceServiceCall({ op: 'set_agents', id: draft.id, agent_ids: draft.agent_ids }), 'انحفظت الوكلاء على الخدمة')
+      return
+    }
     if (!draft.name.trim() || !draft.phone.trim()) { pushToast({ kind: 'danger', title: 'اكتب اسم الخدمة والرقم' }); return }
+    if (!isDemo && !draft.id && wantsTrunk(draft)) {
+      void run(() => voiceServiceCall({
+        op: 'create', direction, name: draft.name.trim(), phone: draft.phone.trim(), provider: draft.provider.trim(), notes: draft.notes.trim(), transport: draft.transport,
+        allowed_ips: draft.ips.split(/[\n,]/).map((x) => x.trim()).filter(Boolean), username: draft.username.trim(), password: draft.password,
+        address: draft.address.trim(), max_channels: Number(draft.channels) || 0, agent_ids: draft.agent_ids,
+      }), 'انربطت الخدمة بالمنصة الصوتية')
+      return
+    }
     void run(() => saveVoiceService(companyId, isDemo, {
       id: draft.id, direction, name: draft.name.trim(), phone: draft.phone.trim(), provider: draft.provider.trim(), status: draft.status, notes: draft.notes.trim() || null,
     }), 'انحفظت الخدمة')
   }
+
+  const editDraft = (s: VoiceService): ServiceDraft => ({ ...empty, id: s.id, name: s.name, phone: s.phone, provider: s.provider, status: s.status, notes: s.notes || '', agent_ids: [...(s.agent_ids || [])], linked: !!s.nabrah_id })
 
   return (
     <ConfigPage
@@ -253,28 +279,69 @@ export function DashboardV2VoiceServices({ direction, headExtra }: { direction: 
       sub={inbound ? 'أرقام الاتصال التي يستقبل عليها الوكيل مكالمات عملائك، مثل رقم 9200 محوّل إلى الوكيل' : 'خطوط الاتصال التي يتصل منها الوكيل بعملائك، للحملات والاتصال الفوري'}
       createLabel="خدمة جديدة" available={available} loading={loading} items={items} canEdit={can('integrations.manage')} onNew={() => setDraft(empty)} extraActions={headExtra}
       emptyIcon={inbound ? <PhoneIncoming size={20} /> : <PhoneOutgoing size={20} />}
-      emptyTitle={inbound ? 'ما عندك خدمات وارد' : 'ما عندك خدمات صادر'} emptyText="سجّل رقمك هنا لنتابع ربطه بالوكيل معك."
+      emptyTitle={inbound ? 'ما عندك خدمات وارد' : 'ما عندك خدمات صادر'} emptyText="أنشئ خط SIP من مزوّد الاتصال عندك، أو سجّل رقمك ونتابع ربطه معك."
       renderCard={(s: VoiceService) => (
         <div key={s.id} className="gr-card">
-          <h4>{s.name} <Badge tone={STATUS_TONE[s.status]}>{STATUS_LABELS[s.status]}</Badge></h4>
+          <h4>{s.name} <Badge tone={STATUS_TONE[s.status]}>{s.nabrah_id ? 'مربوط بالمنصة' : STATUS_LABELS[s.status]}</Badge></h4>
           <p dir="ltr" style={{ textAlign: 'start' }}>{s.phone}</p>
+          {s.nabrah_id && <p style={{ fontSize: 12.5 }}>{inbound ? `SIP ${(s.transport || 'udp').toUpperCase()}${s.allowed_ips?.length ? ` · ${s.allowed_ips.length} عنوان IP مسموح` : ''}` : `${s.address || ''} · حتى ${s.max_channels || 0} قنوات`}</p>}
+          {inbound && s.nabrah_id && <p style={{ fontSize: 12.5 }}>{s.agent_ids?.length ? `يرد عليها: ${s.agent_ids.map(agentName).join('، ')}` : 'ما انربط عليها وكيل بعد'}</p>}
           {s.provider && <p>المزوّد: {s.provider}</p>}
           {s.notes && <p>{s.notes}</p>}
-          {can('integrations.manage') && <CardActions onEdit={() => setDraft({ id: s.id, name: s.name, phone: s.phone, provider: s.provider, status: s.status, notes: s.notes || '' })}
-            onDelete={() => void del(s.name, () => deleteVoiceService(companyId, isDemo, s.id))} />}
+          {can('integrations.manage') && <CardActions onEdit={() => setDraft(editDraft(s))}
+            onDelete={() => void del(s.name, () => (isDemo || !s.nabrah_id ? deleteVoiceService(companyId, isDemo, s.id) : voiceServiceCall({ op: 'delete', id: s.id })))} />}
         </div>
       )}
       dialog={
-        <DialogShell open={!!draft} title={draft?.id ? 'تعديل الخدمة' : 'خدمة جديدة'} onClose={() => setDraft(null)} busy={busy} onSave={submit}>
-          {draft && <>
+        <DialogShell open={!!draft} title={draft?.linked ? 'الوكلاء على الخط' : draft?.id ? 'تعديل الخدمة' : 'خدمة جديدة'} onClose={() => setDraft(null)} busy={busy} onSave={submit}>
+          {draft && (draft.linked ? <>
+            <p style={{ margin: 0, fontSize: 13 }}>{draft.name} <span dir="ltr">{draft.phone}</span></p>
+            {agents.length === 0 ? <p style={{ fontSize: 12.5, margin: 0, color: 'var(--text-tertiary)' }}>ما فيه وكلاء مربوطين بحسابك.</p> : <>
+              <b style={{ fontSize: 13 }}>الوكلاء اللي يردون على هذا الخط</b>
+              <div style={{ display: 'grid', gap: 6 }}>
+                {agents.map((a) => (
+                  <label key={a.agent_id} style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}>
+                    <input type="checkbox" checked={draft.agent_ids.includes(a.agent_id)} onChange={(e) => setDraft({ ...draft, agent_ids: e.target.checked ? [...draft.agent_ids, a.agent_id] : draft.agent_ids.filter((x) => x !== a.agent_id) })} />
+                    {a.name || a.agent_id}
+                  </label>
+                ))}
+              </div></>}
+          </> : <>
             <Input label="اسم الخدمة" value={draft.name} placeholder={inbound ? 'مثال: الرقم الموحد' : 'مثال: حملة المتابعة'} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
-            <Input label="الرقم" value={draft.phone} placeholder="920000000" onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
+            <Input label="الرقم (بصيغة دولية)" value={draft.phone} placeholder="+9665XXXXXXXX" onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
             <Input label="مزوّد الرقم (اختياري)" value={draft.provider} placeholder="مثال: STC" onChange={(e) => setDraft({ ...draft, provider: e.target.value })} />
-            <Select label="الحالة" options={(Object.keys(STATUS_LABELS) as ServiceStatus[]).map((v) => ({ value: v, label: STATUS_LABELS[v] }))} value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value as ServiceStatus })} />
+            {!draft.id && !isDemo && (isOwner ? <>
+              <b style={{ fontSize: 13 }}>خط SIP من مزوّد الاتصال (اختياري)</b>
+              <p style={{ fontSize: 12.5, margin: 0, color: 'var(--text-tertiary)' }}>{inbound ? 'عبّي عنوان IP المسموح أو اسم المستخدم وكلمة المرور، وننشئ الخط على المنصة الصوتية ونربطه بوكيلك. لو تركتها فاضية نسجّل الرقم ونكمل الربط معك.' : 'عبّي عنوان مزوّد SIP وعدد القنوات، وننشئ الخط على المنصة الصوتية. لو تركتها فاضية نسجّل الرقم ونكمل الربط معك.'}</p>
+              <Select label="بروتوكول النقل" options={[{ value: 'udp', label: 'UDP (الافتراضي)' }, { value: 'tcp', label: 'TCP' }, { value: 'tls', label: 'TLS (مشفّر)' }]} value={draft.transport} onChange={(e) => setDraft({ ...draft, transport: e.target.value as ServiceDraft['transport'] })} />
+              {inbound
+                ? <label style={{ display: 'grid', gap: 6, fontSize: 13 }}>عناوين IP المسموحة (سطر لكل عنوان)
+                    <textarea rows={2} dir="ltr" style={textarea} value={draft.ips} placeholder="203.0.113.10" onChange={(e) => setDraft({ ...draft, ips: e.target.value })} />
+                  </label>
+                : <div style={{ display: 'flex', gap: 8 }}>
+                    <Input label="عنوان المزوّد" style={{ flex: 2 }} value={draft.address} placeholder="sip.provider.com" onChange={(e) => setDraft({ ...draft, address: e.target.value })} />
+                    <Input label="أقصى قنوات" type="number" style={{ flex: 1 }} value={draft.channels} onChange={(e) => setDraft({ ...draft, channels: e.target.value })} />
+                  </div>}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Input label="اسم مستخدم SIP" style={{ flex: 1 }} value={draft.username} onChange={(e) => setDraft({ ...draft, username: e.target.value })} />
+                <Input label="كلمة مرور SIP" type="password" style={{ flex: 1 }} value={draft.password} onChange={(e) => setDraft({ ...draft, password: e.target.value })} />
+              </div>
+              {inbound && wantsTrunk(draft) && agents.length > 0 && <>
+                <b style={{ fontSize: 13 }}>الوكلاء اللي يردون على هذا الخط</b>
+                <div style={{ display: 'grid', gap: 6 }}>
+                {agents.map((a) => (
+                  <label key={a.agent_id} style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}>
+                    <input type="checkbox" checked={draft.agent_ids.includes(a.agent_id)} onChange={(e) => setDraft({ ...draft, agent_ids: e.target.checked ? [...draft.agent_ids, a.agent_id] : draft.agent_ids.filter((x) => x !== a.agent_id) })} />
+                    {a.name || a.agent_id}
+                  </label>
+                ))}
+              </div></>}
+            </> : <p style={{ fontSize: 12.5, margin: 0, color: 'var(--text-tertiary)' }}>ربط خط SIP لصاحب الحساب فقط. تقدر تسجّل الرقم ونكمل الربط معك.</p>)}
+            {!wantsTrunk(draft) && <Select label="الحالة" options={(Object.keys(STATUS_LABELS) as ServiceStatus[]).map((v) => ({ value: v, label: STATUS_LABELS[v] }))} value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value as ServiceStatus })} />}
             <label style={{ display: 'grid', gap: 6, fontSize: 13 }}>ملاحظات (اختياري)
               <textarea rows={2} style={textarea} value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} />
             </label>
-          </>}
+          </>)}
         </DialogShell>
       }
     />
