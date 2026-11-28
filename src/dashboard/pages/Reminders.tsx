@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import { MessageCircle, Bell, Phone, Star, CalendarX2 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useReminderRules, toggleReminderRule, setReminderTemplate } from '@/lib/dashboardQueries'
@@ -25,7 +26,7 @@ const WHEN: Record<string, string> = {
 const TOKENS = '{{customer.name}} · {{booking.date}} · {{booking.time}} · {{booking.service}}'
 const DEFAULT_PARAMS = ['{{customer.name}}', '{{booking.date}} {{booking.time}}', '{{booking.service}}']
 
-export function DashboardV2Reminders() {
+export function DashboardV2Reminders({ embedded = false }: { embedded?: boolean } = {}) {
   const { companyId, isDemo, can } = useWorkspace()
   const pushToast = useToast()
   const { data: rules, loading, refetch } = useReminderRules(companyId, isDemo)
@@ -56,9 +57,10 @@ export function DashboardV2Reminders() {
   const list = rules || []
   const on = list.filter((r) => r.enabled).length
 
+  const Shell = embedded ? Fragment : NightPage
   return (
-    <NightPage>
-      <PageHead title="التذكيرات" sub="تذكير العملاء بمواعيدهم تلقائيًا عبر واتساب. اختر القالب المعتمد لكل قاعدة وتبدأ تشتغل" />
+    <Shell>
+      {!embedded && <PageHead title="التذكيرات" sub="تذكير العملاء بمواعيدهم تلقائيًا عبر واتساب. اختر القالب المعتمد لكل قاعدة وتبدأ تشتغل" />}
       <Card>
         <CardTitle aside={loading ? null : `${fmtNum(on)} مفعّلة من ${fmtNum(list.length)}`}>قواعد التذكير</CardTitle>
         {loading && <SkeletonRows rows={5} columns={2} />}
@@ -98,6 +100,6 @@ export function DashboardV2Reminders() {
           <EmptyState icon={<Bell size={20} />} title="جارِ تجهيز القواعد" description="قواعد التذكير الآلي تُفعّل تلقائياً مع حسابك — راجع الصفحة بعد قليل." />
         )}
       </Card>
-    </NightPage>
+    </Shell>
   )
 }

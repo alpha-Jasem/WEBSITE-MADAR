@@ -1,147 +1,294 @@
-import { useMemo, useState } from 'react'
-import { BookOpen, ChevronDown, Info, Plus, Sparkles } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { ArrowRight, BookOpen, FileText, Plus, Table2, Trash2, Upload } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
-import { Button } from '@/dashboard/components/primitives'
-import { useToast, Skeleton, EmptyState } from '@/dashboard/components/uiExtras'
-import {
-  setKnowledgeActive, useKnowledgeItems, useOpsCaps, useUnansweredQuestions,
-  type OpsKnowledgeItem,
-} from '@/lib/queries/ops'
-import { useShellPrimaryAction } from '@/dashboard/components/shellActions'
-import { syncKnowledgeToAgents } from '@/lib/queries/knowledgeSync'
-import { TeachDialog, type TeachTarget } from './knowledge/TeachDialog'
-import { DEFAULT_CATEGORIES, categoryOf } from './knowledge/kbModel'
-import './tickets/ops.css'
+import { useVoiceRead, type VoiceAgent } from '@/lib/queries/voicePlatform'
+import { kbAddDocument, kbCreate, kbDelete, kbDeleteDocument, kbGet, kbList, kbSetAgents, type KbDoc, type KbKind, type KnowledgeBase } from '@/lib/queries/knowledgeBases'
+import { Button, Card, Dialog, Input } from '@/dashboard/components/primitives'
+import { EmptyState, useToast } from '@/dashboard/components/uiExtras'
+import { NightPage } from './shared/night'
 
-const DAY = 86_400_000
+// قاعدة المعرفة: what the voice agents can look up during a call. Documents (PDF) are searched by meaning,
+// a table (one CSV or Excel sheet) is looked up by column. Same flow as the voice platform's own page.
+
+const CSS = `
+.kb-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 22px 24px; }
+.kb-head h1 { margin: 0; font-size: 26px; font-weight: 700; color: var(--ink); }
+.kb-head p { margin: 4px 0 0; font-size: 13.5px; color: var(--muted); max-width: 60ch; }
+.kb-btn { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 18px; border-radius: 12px; border: 0; background: var(--ink); color: var(--panel); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.kb-btn:disabled { opacity: .5; cursor: not-allowed; }
+.kb-btn.sec { background: transparent; color: var(--ink); border: 1px solid var(--line-2, var(--line)); }
+.kb-btn:focus-visible, .kb-ic:focus-visible, .kb-type:focus-visible { outline: 3px solid var(--accent, #6c4cf1); outline-offset: 2px; }
+.kb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.kb-card { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; display: flex; flex-direction: column; min-width: 0; overflow: hidden; cursor: pointer; text-align: start; font: inherit; color: inherit; padding: 0; }
+.kb-card:hover { border-color: var(--line-2, var(--line)); }
+.kb-top { display: flex; gap: 14px; align-items: center; padding: 16px 18px; }
+.kb-tile { width: 52px; height: 52px; border-radius: 16px; flex: none; display: grid; place-items: center; background: var(--hover-bg); color: var(--ink); }
+.kb-info { min-width: 0; display: grid; gap: 4px; }
+.kb-name { font-size: 15.5px; font-weight: 700; color: var(--ink); }
+.kb-desc { font-size: 12.5px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.kb-chips { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 18px 14px; }
+.kb-chip { font-size: 11.5px; font-weight: 600; padding: 2px 10px; border-radius: 999px; background: var(--hover-bg); color: var(--muted); }
+.kb-chip.ok { background: var(--ok-bg, #e6f6ec); color: var(--ok, #16a34a); } .kb-chip.bad { background: var(--bad-bg, #fde8e8); color: var(--bad, #dc2626); } .kb-chip.warn { background: var(--warn-bg, #fdf1dc); color: var(--warn, #b7791f); }
+.kb-ic { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--bad, #dc2626); display: grid; place-items: center; cursor: pointer; flex: none; }
+.kb-types { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.kb-type { text-align: start; font: inherit; color: var(--ink); border: 1px solid var(--line); background: var(--panel); border-radius: 14px; padding: 12px 14px; cursor: pointer; display: grid; gap: 4px; }
+.kb-type[aria-pressed="true"] { border-color: var(--ink); background: var(--hover-bg); box-shadow: 0 0 0 1px var(--ink); }
+.kb-type b { display: flex; align-items: center; gap: 8px; font-size: 14px; } .kb-type span { font-size: 12px; color: var(--muted); line-height: 1.6; }
+.kb-field { display: grid; gap: 6px; font-size: 13px; color: var(--ink); }
+.kb-field textarea { width: 100%; border: 1px solid var(--line-2, var(--line)); background: transparent; color: inherit; border-radius: 12px; padding: 10px 12px; font: inherit; font-size: 14px; resize: vertical; }
+.kb-hint { font-size: 12px; color: var(--muted); line-height: 1.7; }
+.kb-drop { border: 1.5px dashed var(--line-2, var(--line)); border-radius: 16px; padding: 22px; text-align: center; display: grid; gap: 8px; justify-items: center; color: var(--muted); font-size: 13px; }
+.kb-drop[data-over="true"] { border-color: var(--ink); background: var(--hover-bg); }
+.kb-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.kb-row:last-child { border-bottom: 0; } .kb-row b { flex: 1; min-width: 0; font-size: 14px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kb-agents { display: grid; gap: 8px; }
+.kb-agents label { display: flex; gap: 8px; align-items: center; font-size: 13.5px; }
+.kb-back { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13.5px; cursor: pointer; padding: 0; }
+`
+
+const STATUS: Record<string, [string, 'ok' | 'bad' | 'warn']> = {
+  queued: ['في الانتظار', 'warn'], extracting: ['قراءة النص', 'warn'], chunking: ['تقسيم النص', 'warn'], embedding: ['فهرسة', 'warn'], indexing: ['فهرسة', 'warn'], processing: ['معالجة', 'warn'],
+  ready: ['جاهز', 'ok'], completed: ['جاهز', 'ok'], processed: ['جاهز', 'ok'], failed: ['فشل', 'bad'], error: ['فشل', 'bad'],
+}
+const FINAL = new Set(['ready', 'completed', 'processed', 'failed', 'error'])
+const statusOf = (s?: string): [string, 'ok' | 'bad' | 'warn'] => STATUS[String(s || '').toLowerCase()] ?? [s || '—', 'warn']
+const kindLabel = (k: KbKind) => (k === 'tabular' ? 'جدول' : 'مستندات')
+const KindIcon = ({ k, size = 22 }: { k: KbKind; size?: number }) => (k === 'tabular' ? <Table2 size={size} /> : <FileText size={size} />)
+
+const DEMO: KnowledgeBase[] = [
+  { id: 'demo-kb1', name: 'سياسات الشركة', desc: 'سياسات الاسترجاع والشحن والضمان.', kind: 'unstructured', document_count: 2, agent_ids: ['demo-a1'], documents: [{ id: 'd1', status: 'ready', filename: 'refund-policy.pdf' }, { id: 'd2', status: 'ready', filename: 'shipping.pdf' }] },
+  { id: 'demo-kb2', name: 'الفروع وساعات العمل', desc: 'الفروع مع الحي وساعات الدوام ورقم كل فرع.', kind: 'tabular', document_count: 1, agent_ids: [], documents: [{ id: 'd3', status: 'ready', filename: 'branches.xlsx' }] },
+]
+const DEMO_AGENTS = [{ agent_id: 'demo-a1', name: 'وكيل الاستقبال' }, { agent_id: 'demo-a2', name: 'وكيل المتابعة' }] as VoiceAgent[]
 
 export function DashboardV2KnowledgeBase() {
-  const { companyId, isDemo, companyName, accountLoading } = useWorkspace()
+  const { companyId, isDemo, can } = useWorkspace()
   const pushToast = useToast()
-  const { caps, ready } = useOpsCaps(isDemo, accountLoading)
-  const { data: items, loading, error, refetch } = useKnowledgeItems(companyId, isDemo)
-  const { data: pending, refetch: refetchPending } = useUnansweredQuestions(companyId, isDemo, caps.unanswered)
-  const [target, setTarget] = useState<TeachTarget | null>(null)
-  useShellPrimaryAction({ label: 'إضافة معلومة', icon: <Plus />, onClick: () => setTarget({ mode: 'new' }) })
-  const [syncing, setSyncing] = useState(false)
-  /** Sends the active questions to the company's voice agents. `quiet` is the automatic run after an edit. */
-  async function syncNow(quiet = false) {
-    if (isDemo) { if (!quiet) pushToast({ kind: 'info', title: 'في العرض التجريبي ما نزامن مع وكيل حقيقي' }); return }
-    setSyncing(true)
-    const r = await syncKnowledgeToAgents()
-    setSyncing(false)
-    if (r.ok) pushToast({ kind: 'success', title: 'وصلت المعرفة للوكيل الصوتي', description: `${r.count} سؤال` })
-    else if (r.reason === 'no_linked_agent') { if (!quiet) pushToast({ kind: 'info', title: 'ما فيه وكيل صوت مربوط بحسابك' }) }
-    else if (r.reason === 'empty') { if (!quiet) pushToast({ kind: 'info', title: 'أضف سؤال واحد على الأقل وفعّله' }) }
-    else pushToast({ kind: 'danger', title: 'تعذّر إرسال المعرفة للوكيل', description: r.error || (r.reason === 'too_many' || r.reason === 'too_big' ? 'قاعدة المعرفة كبيرة على الإرسال' : undefined) })
-  }
-  const agentName = isDemo ? 'مها' : 'الوكيل الذكي'
-  const biz = companyName || (isDemo ? 'شركة نموذجية' : 'منشأتك')
+  const canEdit = can('agent.settings') || isDemo
+  const agentsRead = useVoiceRead<{ agents: VoiceAgent[] }>(isDemo ? null : companyId || 'admin', 'agents')
+  const agents = isDemo ? DEMO_AGENTS : agentsRead.data?.agents ?? []
+  const agentName = (id: string) => agents.find((a) => a.agent_id === id)?.name ?? 'وكيل'
 
-  const groups = useMemo(() => {
-    const map = new Map<string, OpsKnowledgeItem[]>()
-    for (const it of items || []) {
-      const c = categoryOf(it)
-      map.set(c, [...(map.get(c) || []), it])
-    }
-    return Array.from(map.entries())
-  }, [items])
-  const categories = useMemo(() => {
-    const set = new Set(groups.map(([c]) => c))
-    DEFAULT_CATEGORIES.forEach((c) => set.add(c))
-    return Array.from(set)
-  }, [groups])
+  const [list, setList] = useState<KnowledgeBase[]>(isDemo ? DEMO : [])
+  const [loading, setLoading] = useState(!isDemo)
+  const [error, setError] = useState('')
+  const [openId, setOpenId] = useState<string | null>(null)
+  const [creating, setCreating] = useState(false)
+  const [confirmDel, setConfirmDel] = useState<KnowledgeBase | null>(null)
 
-  async function toggle(it: OpsKnowledgeItem) {
+  const load = useCallback(async () => {
+    if (isDemo) return
+    try { setList(await kbList()); setError('') } catch (e) { setError(e instanceof Error ? e.message : 'تعذّر تحميل قواعد المعرفة') }
+    setLoading(false)
+  }, [isDemo])
+  useEffect(() => { void load() }, [load])
+
+  async function remove(kb: KnowledgeBase) {
+    setConfirmDel(null)
     try {
-      await setKnowledgeActive(it.id, !it.is_active, isDemo)
-      refetch()
-      void syncNow(true)
-    } catch (e) {
-      pushToast({ kind: 'danger', title: 'تعذّر تحديث الحالة', description: e instanceof Error ? e.message : undefined })
-    }
+      if (isDemo) setList((l) => l.filter((x) => x.id !== kb.id)); else { await kbDelete(kb.id); await load() }
+      pushToast({ kind: 'success', title: 'انحذفت قاعدة المعرفة' })
+    } catch (e) { pushToast({ kind: 'danger', title: 'تعذّر الحذف', description: e instanceof Error ? e.message : undefined }) }
   }
 
-  const pend = pending || []
-  const now = Date.now()
+  const open = list.find((k) => k.id === openId)
+  if (openId && (open || !isDemo)) return (
+    <KbDetail id={openId} seed={open} agents={agents} isDemo={isDemo} canEdit={canEdit} onBack={() => { setOpenId(null); void load() }} />
+  )
 
   return (
-    <div className="ops-page">
-      <div className="ops-head">
+    <NightPage>
+      <style>{CSS}</style>
+      <div className="kb-head">
         <div>
-          <h1 className="ops-h1">قاعدة المعرفة</h1>
-          <p className="ops-sub">اللي يعرفه {agentName} عن {biz}. أضف الأسئلة اللي يسألها عملاؤك مع جوابها.</p>
+          <h1>قاعدة المعرفة</h1>
+          <p>ارفع مستنداتك أو جدولك، والوكيل يبحث فيها أثناء المكالمة. اربط كل قاعدة بالوكلاء اللي يحتاجونها.</p>
         </div>
-        <span className="shell-dup" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <Button variant="secondary" disabled={syncing} onClick={() => void syncNow()}>{syncing ? 'جارِ الإرسال…' : 'إرسال للوكيل'}</Button>
-          <Button onClick={() => setTarget({ mode: 'new' })}><Plus size={15} /> سؤال جديد</Button>
-        </span>
+        {canEdit && <button type="button" className="kb-btn" onClick={() => setCreating(true)}><Plus size={16} /> قاعدة معرفة جديدة</button>}
+      </div>
+      {error && <Card style={{ padding: 16 }}><div className="np-empty">{error}</div></Card>}
+      {!loading && !error && list.length === 0 && (
+        <Card><EmptyState icon={<BookOpen size={20} />} title="ما عندك قواعد معرفة بعد" description="أنشئ قاعدة وارفع فيها ملفات PDF أو جدول، وربطها بوكيلك." /></Card>
+      )}
+      <div className="kb-grid">
+        {list.map((k) => (
+          <div key={k.id} className="kb-card" role="button" tabIndex={0} onClick={() => setOpenId(k.id)} onKeyDown={(e) => { if (e.key === 'Enter') setOpenId(k.id) }}>
+            <div className="kb-top">
+              <span className="kb-tile"><KindIcon k={k.kind} /></span>
+              <div className="kb-info"><span className="kb-name">{k.name}</span>{k.desc && <span className="kb-desc">{k.desc}</span>}</div>
+            </div>
+            <div className="kb-chips">
+              <span className="kb-chip">{kindLabel(k.kind)}</span>
+              <span className="kb-chip">{k.document_count ?? k.documents?.length ?? 0} {k.kind === 'tabular' ? 'جدول' : 'مستند'}</span>
+              {(k.agent_ids ?? []).map((a) => <span key={a} className="kb-chip ok">{agentName(a)}</span>)}
+              {!(k.agent_ids ?? []).length && <span className="kb-chip warn">غير مربوطة بوكيل</span>}
+              <span style={{ flex: 1 }} />
+              {canEdit && <button type="button" className="kb-ic" aria-label={`حذف ${k.name}`} title="حذف" onClick={(e) => { e.stopPropagation(); setConfirmDel(k) }}><Trash2 size={15} /></button>}
+            </div>
+          </div>
+        ))}
+      </div>
+      <CreateDialog open={creating} onClose={() => setCreating(false)} isDemo={isDemo}
+        onCreated={async (id) => { setCreating(false); await load(); if (id) setOpenId(id) }}
+        onDemo={(kb) => { setList((l) => [kb, ...l]); setCreating(false); setOpenId(kb.id) }} />
+      <Dialog open={!!confirmDel} title="تحذف قاعدة المعرفة؟" onClose={() => setConfirmDel(null)}
+        footer={<><Button variant="secondary" onClick={() => setConfirmDel(null)}>إلغاء</Button><Button variant="danger" onClick={() => confirmDel && void remove(confirmDel)}>حذف نهائي</Button></>}>
+        <p style={{ margin: 0, lineHeight: 1.8 }}>«{confirmDel?.name}» بتنحذف مع كل ملفاتها، والوكلاء المربوطين فيها ما يقدرون يبحثون فيها بعد كذا.</p>
+      </Dialog>
+    </NightPage>
+  )
+}
+
+function CreateDialog({ open, onClose, isDemo, onCreated, onDemo }: {
+  open: boolean; onClose: () => void; isDemo: boolean; onCreated: (id?: string) => void | Promise<void>; onDemo: (kb: KnowledgeBase) => void
+}) {
+  const pushToast = useToast()
+  const [kind, setKind] = useState<'documents' | 'table'>('documents')
+  const [name, setName] = useState('')
+  const [desc, setDesc] = useState('')
+  const [busy, setBusy] = useState(false)
+  useEffect(() => { if (open) { setKind('documents'); setName(''); setDesc('') } }, [open])
+  const ready = name.trim().length > 0 && desc.trim().length > 0
+
+  async function create() {
+    if (!ready) return
+    if (isDemo) { onDemo({ id: `demo-${Date.now()}`, name: name.trim(), desc: desc.trim(), kind: kind === 'table' ? 'tabular' : 'unstructured', document_count: 0, agent_ids: [], documents: [] }); return }
+    setBusy(true)
+    try { const out = await kbCreate(name.trim(), desc.trim(), kind); await onCreated(out.id as string | undefined) }
+    catch (e) { pushToast({ kind: 'danger', title: 'تعذّر إنشاء القاعدة', description: e instanceof Error ? e.message : undefined }) }
+    finally { setBusy(false) }
+  }
+
+  return (
+    <Dialog open={open} title="قاعدة معرفة جديدة" onClose={onClose} width={520}
+      footer={<><Button variant="secondary" onClick={onClose}>إلغاء</Button><Button disabled={!ready || busy} onClick={() => void create()}>{busy ? 'جارِ الإنشاء…' : 'إنشاء'}</Button></>}>
+      <div style={{ display: 'grid', gap: 16 }}>
+        <p className="kb-hint" style={{ margin: 0 }}>أعطها اسمًا ووصفًا يخبر الوكيل متى يستخدمها.</p>
+        <div className="kb-field">النوع
+          <div className="kb-types">
+            <button type="button" className="kb-type" aria-pressed={kind === 'documents'} onClick={() => setKind('documents')}><b><FileText size={16} /> مستندات</b><span>ملفات PDF (نصوص) يبحث فيها الوكيل بالمعنى.</span></button>
+            <button type="button" className="kb-type" aria-pressed={kind === 'table'} onClick={() => setKind('table')}><b><Table2 size={16} /> جدول</b><span>ورقة CSV أو Excel واحدة يبحث فيها الوكيل حسب الأعمدة.</span></button>
+          </div>
+          <span className="kb-hint">لا يمكن تغيير النوع بعد إنشاء القاعدة.</span>
+        </div>
+        <Input label="الاسم" value={name} placeholder="مثال: الأسئلة الشائعة عن المنتج" onChange={(e) => setName(e.target.value)} />
+        <label className="kb-field">الوصف
+          <textarea rows={3} value={desc} placeholder="إجابات حول ميزات المنتج والأسعار والباقات والمرتجعات." onChange={(e) => setDesc(e.target.value)} />
+          <span className="kb-hint">يستخدمه الوكيل لتحديد متى يبحث في قاعدة المعرفة هذه.</span>
+        </label>
+      </div>
+    </Dialog>
+  )
+}
+
+function KbDetail({ id, seed, agents, isDemo, canEdit, onBack }: {
+  id: string; seed?: KnowledgeBase; agents: VoiceAgent[]; isDemo: boolean; canEdit: boolean; onBack: () => void
+}) {
+  const pushToast = useToast()
+  const [kb, setKb] = useState<KnowledgeBase | null>(seed ?? null)
+  const [busy, setBusy] = useState(false)
+  const [over, setOver] = useState(false)
+  const [sheetDesc, setSheetDesc] = useState('')
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const load = useCallback(async () => {
+    if (isDemo) return
+    try { setKb(await kbGet(id)) } catch { /* the list keeps working; a failed refresh just keeps the last view */ }
+  }, [id, isDemo])
+  useEffect(() => { void load() }, [load])
+  // While a file is still being processed, check again every few seconds.
+  const pending = (kb?.documents ?? []).some((d) => !FINAL.has(String(d.status || '').toLowerCase()))
+  useEffect(() => {
+    if (!pending || isDemo) return
+    const t = setInterval(() => { void load() }, 4000)
+    return () => clearInterval(t)
+  }, [pending, isDemo, load])
+
+  if (!kb) return <NightPage><style>{CSS}</style><button type="button" className="kb-back" onClick={onBack}><ArrowRight size={16} /> قواعد المعرفة</button><Card style={{ padding: 16 }}><div className="np-empty">جارِ التحميل…</div></Card></NightPage>
+  const isTable = kb.kind === 'tabular'
+  const docs = kb.documents ?? []
+
+  async function upload(file: File | undefined) {
+    if (!file || !kb) return
+    if (isDemo) {
+      const d: KbDoc = { id: `d-${Date.now()}`, status: 'ready', filename: file.name }
+      setKb({ ...kb, documents: isTable ? [d] : [...docs, d], document_count: isTable ? 1 : docs.length + 1 }); return
+    }
+    setBusy(true)
+    try { await kbAddDocument(kb.id, file, isTable ? sheetDesc.trim() : undefined); pushToast({ kind: 'success', title: 'انرفع الملف، وبيجهز للبحث بعد لحظات' }); await load() }
+    catch (e) { pushToast({ kind: 'danger', title: 'تعذّر رفع الملف', description: e instanceof Error ? e.message : undefined }) }
+    finally { setBusy(false); if (fileRef.current) fileRef.current.value = '' }
+  }
+  async function removeDoc(d: KbDoc) {
+    if (!kb) return
+    try {
+      if (isDemo) setKb({ ...kb, documents: docs.filter((x) => x.id !== d.id), document_count: docs.length - 1 }); else { await kbDeleteDocument(kb.id, d.id); await load() }
+    } catch (e) { pushToast({ kind: 'danger', title: 'تعذّر الحذف', description: e instanceof Error ? e.message : undefined }) }
+  }
+  async function toggleAgent(agentId: string, on: boolean) {
+    if (!kb) return
+    const next = on ? [...(kb.agent_ids ?? []), agentId] : (kb.agent_ids ?? []).filter((a) => a !== agentId)
+    setKb({ ...kb, agent_ids: next })
+    if (isDemo) return
+    try { await kbSetAgents(kb.id, next) } catch (e) { pushToast({ kind: 'danger', title: 'تعذّر ربط الوكيل', description: e instanceof Error ? e.message : undefined }); await load() }
+  }
+
+  return (
+    <NightPage>
+      <style>{CSS}</style>
+      <button type="button" className="kb-back" onClick={onBack}><ArrowRight size={16} /> قواعد المعرفة</button>
+      <div className="kb-head">
+        <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+          <span className="kb-tile"><KindIcon k={kb.kind} /></span>
+          <div><h1 style={{ fontSize: 22 }}>{kb.name}</h1>{kb.desc && <p>{kb.desc}</p>}</div>
+        </div>
+        <span className="kb-chip">{kindLabel(kb.kind)}</span>
       </div>
 
-      {ready && caps.unanswered && pend.length > 0 && (
-        <section className="ops-card" style={{ borderColor: 'rgba(128,83,248,.4)' }}>
-          <h3><Sparkles size={16} style={{ color: 'var(--ai)' }} /> أسئلة سألها عملاؤك وما عرف يجاوبها <span className="aside">جاوبها مرة وتنضاف لقاعدة المعرفة</span></h3>
-          {pend.map((q) => (
-            <div key={q.id} className="ops-q">
-              <p>{q.question}</p>
-              <span className="times">تكرر ×{q.count}</span>
-              <Button size="sm" onClick={() => setTarget({ mode: 'answer', question: q })}>جاوب</Button>
+      {canEdit && (
+        <Card style={{ padding: 18, display: 'grid', gap: 12 }}>
+          <b style={{ fontSize: 14, color: 'var(--ink)' }}>{isTable ? (docs.length ? 'استبدال الجدول' : 'رفع الجدول') : 'رفع مستند'}</b>
+          {isTable && <Input label="وصف الأعمدة (اختياري)" value={sheetDesc} placeholder="مثال: كل صف فرع، مع الحي وساعات العمل والهاتف" onChange={(e) => setSheetDesc(e.target.value)} />}
+          <div className="kb-drop" data-over={over}
+            onDragOver={(e) => { e.preventDefault(); setOver(true) }} onDragLeave={() => setOver(false)}
+            onDrop={(e) => { e.preventDefault(); setOver(false); void upload(e.dataTransfer.files?.[0]) }}>
+            <Upload size={22} />
+            <span>{isTable ? 'اسحب ملف CSV أو Excel هنا (حتى 2 ميجابايت)' : 'اسحب ملف PDF هنا (حتى 20 ميجابايت)'}</span>
+            <input ref={fileRef} id="kb-file" type="file" hidden accept={isTable ? '.csv,.xlsx,.xls' : '.pdf,application/pdf'} onChange={(e) => void upload(e.target.files?.[0])} />
+            <button type="button" className="kb-btn sec" disabled={busy} onClick={() => fileRef.current?.click()}>{busy ? 'جارِ الرفع…' : 'اختر ملفًا'}</button>
+          </div>
+        </Card>
+      )}
+
+      <Card style={{ padding: '6px 18px' }}>
+        {docs.length === 0 && <div className="np-empty" style={{ padding: '18px 0' }}>ما فيه ملفات بعد. ارفع أول ملف وتجهز للبحث بعد لحظات.</div>}
+        {docs.map((d) => {
+          const [label, tone] = statusOf(d.status)
+          return (
+            <div key={d.id} className="kb-row">
+              <span className="kb-tile" style={{ width: 36, height: 36, borderRadius: 10 }}><KindIcon k={kb.kind} size={16} /></span>
+              <b>{d.title || d.filename || 'ملف'}</b>
+              <span className={`kb-chip ${tone}`}>{label}</span>
+              {canEdit && <button type="button" className="kb-ic" aria-label="حذف الملف" title="حذف" onClick={() => void removeDoc(d)}><Trash2 size={15} /></button>}
             </div>
-          ))}
-        </section>
-      )}
-      {ready && caps.unanswered && pend.length === 0 && (
-        <div className="ops-note"><Sparkles size={14} /><span>ما فيه أسئلة معلّقة. لما يُسأل {agentName} سؤال ما يعرف جوابه، يطلع هنا عشان تعلّمه.</span></div>
-      )}
-      {ready && !caps.unanswered && (
-        <div className="ops-note"><Info size={14} /><span>تتبّع الأسئلة اللي ما عرف يجاوبها الوكيل يتفعّل بعد تحديث قاعدة البيانات.</span></div>
-      )}
+          )
+        })}
+      </Card>
 
-      {error && <div className="ops-note" style={{ background: 'var(--bad-bg)', color: 'var(--bad)' }}>تعذّر تحميل قاعدة المعرفة: {error}</div>}
-
-      {loading ? (
-        <div className="ops-stack">{[0, 1, 2].map((i) => <Skeleton key={i} height={50} radius="14px" />)}</div>
-      ) : groups.length === 0 ? (
-        <div className="ops-card">
-          <EmptyState
-            icon={<BookOpen size={20} />} title="ما فيه أسئلة بعد"
-            description="أضف الأسئلة اللي يتكرر سؤالها، مثل الأسعار والدوام والموقع، مع الجواب اللي تبي الوكيل يقوله."
-            action={<Button size="sm" onClick={() => setTarget({ mode: 'new' })}><Plus size={14} /> سؤال جديد</Button>}
-          />
-        </div>
-      ) : (
-        <div>
-          {groups.map(([cat, list], gi) => (
-            <details key={cat} className="ops-acc" open={gi === 0}>
-              <summary>
-                <BookOpen size={16} style={{ color: 'var(--sky)' }} />
-                {cat}
-                <span className="aside">{list.length} {list.length === 1 ? 'سؤال' : 'أسئلة'}</span>
-                <ChevronDown size={15} className="chev" />
-              </summary>
-              {list.map((it) => {
-                const fresh = now - new Date(it.created_at).getTime() < DAY
-                return (
-                  <div key={it.id} className={`ops-qa${it.is_active ? '' : ' off'}`} style={fresh ? { background: 'var(--ai-bg)' } : undefined}>
-                    <div>
-                      <p>{it.title}</p>
-                      <span className="a">{it.content}</span>
-                    </div>
-                    <div className="tools">
-                      <button type="button" className="ops-toggle" role="switch" aria-checked={it.is_active}
-                        aria-label={it.is_active ? 'إيقاف السؤال' : 'تفعيل السؤال'} title={it.is_active ? 'مفعّل' : 'موقوف'}
-                        onClick={() => toggle(it)} />
-                      <Button size="sm" variant="secondary" onClick={() => setTarget({ mode: 'edit', item: it })}>تعديل</Button>
-                    </div>
-                  </div>
-                )
-              })}
-            </details>
-          ))}
-        </div>
-      )}
-
-      <TeachDialog target={target} onClose={() => { setTarget(null); refetch(); refetchPending(); setTimeout(() => { void syncNow(true) }, 1500) }} categories={categories} companyId={companyId} isDemo={isDemo} agentName={agentName} />
-    </div>
+      <Card style={{ padding: 18, display: 'grid', gap: 10 }}>
+        <b style={{ fontSize: 14, color: 'var(--ink)' }}>الوكلاء اللي يبحثون فيها</b>
+        {agents.length === 0 ? <span className="kb-hint">ما فيه وكلاء مربوطين بحسابك.</span> : (
+          <div className="kb-agents">
+            {agents.map((a) => (
+              <label key={a.agent_id}>
+                <input type="checkbox" disabled={!canEdit} checked={(kb.agent_ids ?? []).includes(a.agent_id)} onChange={(e) => void toggleAgent(a.agent_id, e.target.checked)} />
+                {a.name || a.agent_id}
+              </label>
+            ))}
+          </div>
+        )}
+        <span className="kb-hint">الوكيل يبحث في القاعدة المربوطة فيه أثناء المكالمة، حسب وصفها.</span>
+      </Card>
+    </NightPage>
   )
 }

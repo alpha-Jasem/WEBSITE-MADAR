@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { DashboardV2Reminders } from './Reminders'
 import { ArrowRight, MessageCircle, Pencil, Plus, Trash2, BellRing } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { useVoiceRead, agentWrite, type VoiceAgent } from '@/lib/queries/voicePlatform'
@@ -24,9 +24,7 @@ const EMPTY: Draft = { agent_id: '', name: '', template_id: '', params: [], reci
 
 export function DashboardV2Followups() {
   const { companyId, isDemo, canOpen } = useWorkspace()
-  const navigate = useNavigate()
   const pushToast = useToast()
-  const base = isDemo ? '/demo-review' : '/dashboard'
   const agentsRead = useVoiceRead<{ agents: VoiceAgent[] }>(isDemo ? null : companyId || 'admin', 'agents')
   const agents = isDemo ? DEMO_AGENTS : agentsRead.data?.agents ?? []
   const { templates } = useWaTemplates(companyId, isDemo)
@@ -34,6 +32,13 @@ export function DashboardV2Followups() {
   const [agentFilter, setAgentFilter] = useState('')
   const [draft, setDraft] = useState<Draft | null>(null)
   const [confirmDel, setConfirmDel] = useState<Followup | null>(null)
+  const [tab, setTab] = useState<'call' | 'reminders'>('call')
+  const chips = canOpen('reminders') ? (
+    <div className="gr-chips" role="tablist" aria-label="نوع المتابعة">
+      <button type="button" role="tab" className="gr-chip" aria-selected={tab === 'call'} aria-pressed={tab === 'call'} onClick={() => setTab('call')}>بعد المكالمة</button>
+      <button type="button" role="tab" className="gr-chip" aria-selected={tab === 'reminders'} aria-pressed={tab === 'reminders'} onClick={() => setTab('reminders')}><BellRing size={12} /> تذكير المواعيد</button>
+    </div>
+  ) : null
 
   const agentName = (id: string) => agents.find((a) => a.agent_id === id)?.name ?? 'وكيل محذوف'
   const shown = list.filter((f) => !agentFilter || f.agent_id === agentFilter)
@@ -50,16 +55,19 @@ export function DashboardV2Followups() {
 
   if (draft) return <FollowupEditor draft={draft} agents={agents} onDone={() => setDraft(null)} />
 
+  if (tab === 'reminders') return (
+    <NightPage>
+      <PageHead title="متابعات واتساب" sub="تذكير العملاء بمواعيدهم تلقائيًا عبر واتساب. اختر القالب المعتمد لكل قاعدة وتبدأ تشتغل." />
+      {chips}
+      <DashboardV2Reminders embedded />
+    </NightPage>
+  )
+
   return (
     <NightPage>
       <PageHead title="متابعات واتساب" sub="أنشئ متابعات واتساب تلقائية بعد المكالمة، مرتبطة بالوكلاء والمتغيرات ونتائج التحليل."
         actions={<Button onClick={() => setDraft({ ...EMPTY, agent_id: agentFilter || agents[0]?.agent_id || '' })}><Plus size={14} /> قالب واتساب جديد</Button>} />
-      {canOpen('reminders') && (
-        <div className="gr-chips">
-          <button type="button" className="gr-chip" aria-pressed="true">بعد المكالمة</button>
-          <button type="button" className="gr-chip" aria-pressed="false" onClick={() => navigate(`${base}/reminders`)}><BellRing size={12} /> تذكير المواعيد</button>
-        </div>
-      )}
+      {chips}
       <div style={{ maxWidth: 260 }}>
         <Select value={agentFilter} onChange={(e) => setAgentFilter(e.target.value)}
           options={[{ value: '', label: 'كل الوكلاء' }, ...agents.map((a) => ({ value: a.agent_id, label: a.name }))]} />
