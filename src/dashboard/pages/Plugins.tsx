@@ -13,6 +13,8 @@ const CSS = `
 .pl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 18px; max-width: 920px; }
 .pl-tile { position: relative; display: block; width: 100%; text-align: start; font: inherit; color: inherit; padding: 0; border: 1px solid var(--line); border-radius: 26px; overflow: hidden; background: var(--panel); cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
 .pl-tile:hover { border-color: var(--line-2, var(--line)); }
+.pl-tile:disabled { cursor: not-allowed; }
+.pl-tile:disabled:hover { border-color: var(--line); }
 .pl-tile:focus-visible { outline: 3px solid var(--accent, #6c4cf1); outline-offset: 2px; }
 .pl-img { position: relative; height: 210px; background: linear-gradient(180deg, #0f1118 0%, #4a4d57 55%, #e9eaee 100%); overflow: hidden; }
 .pl-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -41,6 +43,8 @@ const CSS = `
 .pl-field textarea { border: 1px solid var(--line-2); background: var(--panel-2); color: var(--ink); border-radius: 8px; padding: 8px 10px; font: inherit; font-size: 13px; direction: ltr; text-align: left; }
 .pl-code { direction: ltr; text-align: left; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; line-height: 1.7; white-space: pre-wrap; word-break: break-all; color: var(--ink); }
 `
+// Both plugins are shown as «قريبًا» for now: the cards cannot be opened until the widget pages are built like the reference's.
+const SOON = true
 const COLORS = ['#4f6bff', '#8053f8', '#0ea5a4', '#16a34a', '#f59e0b', '#e11d48', '#111827']
 const DEMO_AGENTS = [{ agent_id: 'demo-a1', name: 'وكيل الاستقبال' }, { agent_id: 'demo-a2', name: 'وكيل المتابعة' }] as VoiceAgent[]
 
@@ -56,7 +60,7 @@ export function DashboardV2Plugins() {
   const voice = hasModule('voice')
 
   const tile = (img: string, kind: 'call' | 'chat', icon: ReactNode, title: string, desc: string, on: boolean, onOpen: () => void, disabled = false) => (
-    <button type="button" className="pl-tile" disabled={disabled} onClick={onOpen}>
+    <button type="button" className="pl-tile" disabled={SOON || disabled} onClick={onOpen}>
       <div className="pl-img">
         {/* The picture is dropped in as a file; until it exists the card shows a soft window sketch. */}
         <div className="pl-mock" aria-hidden="true">
@@ -65,7 +69,7 @@ export function DashboardV2Plugins() {
             : <><i style={{ insetInlineStart: '8%', width: '52%', top: 22, height: 26 }} /><i style={{ insetInlineEnd: '8%', width: '44%', top: 62, height: 22 }} /><i style={{ insetInlineStart: '8%', width: '60%', top: 98, height: 30 }} /></>}
         </div>
         <img src={img} alt="" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
-        <span className="pl-state">{on ? <Chip tone="ok">مفعّلة</Chip> : <Chip tone="muted">غير مفعّلة</Chip>}</span>
+        <span className="pl-state">{SOON ? <Chip tone="info">قريبًا</Chip> : on ? <Chip tone="ok">مفعّلة</Chip> : <Chip tone="muted">غير مفعّلة</Chip>}</span>
       </div>
       <span className="pl-badge" aria-hidden="true">{icon}</span>
       <div className="pl-body"><b>{title} <ChevronLeft size={15} /></b><span>{desc}</span></div>
