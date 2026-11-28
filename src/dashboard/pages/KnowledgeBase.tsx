@@ -8,6 +8,7 @@ import {
   type OpsKnowledgeItem,
 } from '@/lib/queries/ops'
 import { useShellPrimaryAction } from '@/dashboard/components/shellActions'
+import { syncKnowledgeToAgents } from '@/lib/queries/knowledgeSync'
 import { TeachDialog, type TeachTarget } from './knowledge/TeachDialog'
 import { DEFAULT_CATEGORIES, categoryOf } from './knowledge/kbModel'
 import './tickets/ops.css'
@@ -22,6 +23,18 @@ export function DashboardV2KnowledgeBase() {
   const { data: pending, refetch: refetchPending } = useUnansweredQuestions(companyId, isDemo, caps.unanswered)
   const [target, setTarget] = useState<TeachTarget | null>(null)
   useShellPrimaryAction({ label: 'إضافة معلومة', icon: <Plus />, onClick: () => setTarget({ mode: 'new' }) })
+  const [syncing, setSyncing] = useState(false)
+  /** Sends the active questions to the company's voice agents. `quiet` is the automatic run after an edit. */
+  async function syncNow(quiet = false) {
+    if (isDemo) { if (!quiet) pushToast({ kind: 'info', title: 'في العرض التجريبي ما نزامن مع وكيل حقيقي' }); return }
+    setSyncing(true)
+    const r = await syncKnowledgeToAgents()
+    setSyncing(false)
+    if (r.ok) pushToast({ kind: 'success', title: 'وصلت المعرفة للوكيل الصوتي', description: `${r.count} سؤال` })
+    else if (r.reason === 'no_linked_agent') { if (!quiet) pushToast({ kind: 'info', title: 'ما فيه وكيل صوت مربوط بحسابك' }) }
+    else if (r.reason === 'empty') { if (!quiet) pushToast({ kind: 'info', title: 'أضف سؤال واحد على الأقل وفعّله' }) }
+    else pushToast({ kind: 'danger', title: 'تعذّر إرسال المعرفة للوكيل', description: r.error || (r.reason === 'too_many' || r.reason === 'too_big' ? 'قاعدة المعرفة كبيرة على الإرسال' : undefined) })
+  }
   const agentName = isDemo ? 'مها' : 'الوكيل الذكي'
   const biz = companyName || (isDemo ? 'شركة نموذجية' : 'منشأتك')
 
@@ -43,6 +56,7 @@ export function DashboardV2KnowledgeBase() {
     try {
       await setKnowledgeActive(it.id, !it.is_active, isDemo)
       refetch()
+      void syncNow(true)
     } catch (e) {
       pushToast({ kind: 'danger', title: 'تعذّر تحديث الحالة', description: e instanceof Error ? e.message : undefined })
     }
@@ -58,7 +72,10 @@ export function DashboardV2KnowledgeBase() {
           <h1 className="ops-h1">قاعدة المعرفة</h1>
           <p className="ops-sub">اللي يعرفه {agentName} عن {biz}. أضف الأسئلة اللي يسألها عملاؤك مع جوابها.</p>
         </div>
-        <span className="shell-dup"><Button onClick={() => setTarget({ mode: 'new' })}><Plus size={15} /> سؤال جديد</Button></span>
+        <span className="shell-dup" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Button variant="secondary" disabled={syncing} onClick={() => void syncNow()}>{syncing ? 'جارِ الإرسال…' : 'إرسال للوكيل'}</Button>
+          <Button onClick={() => setTarget({ mode: 'new' })}><Plus size={15} /> سؤال جديد</Button>
+        </span>
       </div>
 
       {ready && caps.unanswered && pend.length > 0 && (
@@ -124,7 +141,7 @@ export function DashboardV2KnowledgeBase() {
         </div>
       )}
 
-      <TeachDialog target={target} onClose={() => { setTarget(null); refetch(); refetchPending() }} categories={categories} companyId={companyId} isDemo={isDemo} agentName={agentName} />
+      <TeachDialog target={target} onClose={() => { setTarget(null); refetch(); refetchPending(); setTimeout(() => { void syncNow(true) }, 1500) }} categories={categories} companyId={companyId} isDemo={isDemo} agentName={agentName} />
     </div>
   )
 }
