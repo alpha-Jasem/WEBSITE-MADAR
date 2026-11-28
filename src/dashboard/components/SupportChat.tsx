@@ -87,7 +87,7 @@ export function SupportChat() {
   }
 
   return (
-    <div className="dv2-floating" style={{ position: 'fixed', bottom: 20, left: 20, zIndex: 1400 }}>
+    <div className="dv2-floating" style={{ position: 'fixed', bottom: 18, left: 18, zIndex: 1400 }}>
       <style>{`
         @keyframes sc-pop { from { opacity: 0; transform: translateY(14px) scale(.94); } to { opacity: 1; transform: none; } }
         @keyframes sc-breathe { 50% { transform: scale(1.18); opacity: .85; } }
@@ -114,14 +114,11 @@ export function SupportChat() {
         .sc-in input::placeholder { color: #9aa0c4; }
         .sc-send { width: 44px; border: 0; border-radius: 14px; color: #fff; cursor: pointer; background: linear-gradient(135deg, #22d3ee, #5a7bff 55%, #9b4dff); display: grid; place-items: center; }
         .sc-launch { display: flex; align-items: center; gap: 2px; flex-direction: row-reverse; border: 0; background: none; padding: 0; cursor: pointer; color: inherit; font: inherit; }
-        .sc-orb { position: relative; width: 84px; height: 84px; transition: transform .35s cubic-bezier(.3,1.5,.5,1); }
+        .sc-orb { position: relative; width: 56px; height: 56px; transition: transform .35s cubic-bezier(.3,1.5,.5,1); }
         .sc-launch:hover .sc-orb { transform: scale(1.08); }
-        .sc-halo { position: absolute; inset: 6px; border-radius: 50%; filter: blur(18px); opacity: .6; background: radial-gradient(circle, #22d3ee, #7c5cff 70%); animation: sc-breathe 4s ease-in-out infinite; }
+        .sc-halo { position: absolute; inset: 6px; border-radius: 50%; filter: blur(12px); opacity: .6; background: radial-gradient(circle, #22d3ee, #7c5cff 70%); animation: sc-breathe 4s ease-in-out infinite; }
         .sc-orb > canvas { position: relative; z-index: 1; }
-        .sc-say { background: rgba(16,18,34,.82); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.14); border-radius: 18px; padding: 9px 15px; font-weight: 700; font-size: 14px; text-align: start; color: #f2f4ff; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
-        .sc-say small { display: block; font-weight: 400; font-size: 11.5px; color: #9aa0c4; max-width: 170px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .sc-launch:focus-visible, .sc-chip:focus-visible, .sc-x:focus-visible, .sc-send:focus-visible, .sc-in input:focus-visible { outline: 3px solid #7aa2ff; outline-offset: 3px; }
-        @media (max-width: 900px) { .sc-say { display: none; } .sc-orb { width: 64px; height: 64px; } }
         @media (prefers-reduced-motion: reduce) { .sc-panel { animation: none; } .sc-halo, .sc-dots i { animation: none; } }
       `}</style>
 
@@ -155,8 +152,7 @@ export function SupportChat() {
       {!open && (
         <button type="button" className="sc-launch dv2-chat-launcher" aria-label="اسأل مدار" onClick={() => setOpen(true)}
           onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} onFocus={() => setHover(true)} onBlur={() => setHover(false)}>
-          <span className="sc-orb"><span className="sc-halo" /><GlassOrb size={84} energy={hover ? 0.7 : 0} /></span>
-          <span className="sc-say">اسأل مدار<small>أعرف أنك في «{guide.title}»</small></span>
+          <span className="sc-orb"><span className="sc-halo" /><GlassOrb size={56} energy={hover ? 0.7 : 0} /></span>
         </button>
       )}
     </div>
