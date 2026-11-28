@@ -7,6 +7,7 @@ import { updateCompany } from '@/lib/dashboardQueries'
 import { agentWrite } from '@/lib/queries/voicePlatform'
 import { saveAnalysisGroup, syncAnalysisGroups, type AnalysisField } from '@/lib/queries/agentConfig'
 import { GlassOrb } from '@/dashboard/components/GlassOrb'
+import { useToast } from '@/dashboard/components/uiExtras'
 
 // أول دخول: تسمية مساحة العمل ثم إنشاء أول وكيل (من الموقع أو من قالب)، مراجعة خيارات يقترحها الذكاء الاصطناعي،
 // ثم مجموعة التحليل. لا يُنشأ شيء قبل الخطوة الأخيرة.
@@ -16,7 +17,7 @@ interface Plan {
   questions: { q: string; options: { label: string; recommended: boolean }[] }[]
   analysis: { name: string; fields: AnalysisField[] }
 }
-type Step = 'welcome' | 'name' | 'method' | 'industry' | 'caps' | 'details' | 'working' | 'review' | 'analysis' | 'creating' | 'failed'
+type Step = 'welcome' | 'name' | 'method' | 'industry' | 'caps' | 'details' | 'working' | 'review' | 'analysis' | 'creating' | 'failed' | 'done'
 
 const INDUSTRIES: [string, ReactNode][] = [
   ['الرعاية الصحية', <HeartPulse size={18} />], ['التجزئة والتجارة الإلكترونية', <ShoppingBag size={18} />], ['العقارات', <Home size={18} />], ['المطاعم والضيافة', <ConciergeBell size={18} />],
@@ -91,6 +92,7 @@ const errText = (e: unknown) => (e instanceof Error ? e.message : 'تعذّر إ
 export function DashboardV2Onboarding() {
   const { companyId, isDemo, companyName, companySettings, refreshAccount, logout } = useWorkspace()
   const navigate = useNavigate()
+  const pushToast = useToast()
   const base = isDemo ? '/demo-review' : '/dashboard'
   const [step, setStep] = useState<Step>('welcome')
   const [wsName, setWsName] = useState(companyName || '')
@@ -106,16 +108,17 @@ export function DashboardV2Onboarding() {
   const [useGroup, setUseGroup] = useState(true)
   const [workIdx, setWorkIdx] = useState(0)
   const [error, setError] = useState('')
+  const [agentId, setAgentId] = useState('')
   const [busy, setBusy] = useState(false)
   const nameTouched = useRef(false)
   useEffect(() => { if (!nameTouched.current && companyName) setWsName(companyName) }, [companyName])
   useEffect(() => { if (!bizName && wsName) setBizName(wsName) }, [wsName]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const dotIndex = step === 'welcome' ? 0 : step === 'name' ? 0 : ['method', 'industry', 'caps', 'details'].includes(step) ? 1 : step === 'working' ? 2 : 3
+  const dotIndex = step === 'done' ? 3 : step === 'welcome' ? 0 : step === 'name' ? 0 : ['method', 'industry', 'caps', 'details'].includes(step) ? 1 : step === 'working' ? 2 : 3
 
-  async function markDone() {
+  async function markDone(tour = false) {
     if (isDemo || !companyId) return
-    await updateCompany(companyId, { clinic_settings: { ...companySettings, onboarded: true } }).catch(() => null)
+    await updateCompany(companyId, { clinic_settings: { ...companySettings, onboarded: true, ...(tour ? { tour: 'pending' } : {}) } }).catch(() => null)
     await refreshAccount().catch(() => null)
   }
   async function skip() { await markDone(); navigate(base, { replace: true }) }
@@ -169,15 +172,17 @@ export function DashboardV2Onboarding() {
       start_first: false, allow_interruptions: true, languages: ['ar'],
     }
     try {
-      if (isDemo || !companyId) { await new Promise((r) => setTimeout(r, 1500)); navigate(`${base}/agents`, { replace: true }); return }
+      if (isDemo || !companyId) { await new Promise((r) => setTimeout(r, 1500)); setAgentId('demo'); setBusy(false); setStep('done'); pushToast({ kind: 'success', title: `الوكيل ${agentName.trim() || 'سارة'} جاهز لاستقبال المكالمات` }); return }
       const out = await agentWrite<{ agent?: { agent_id?: string } }>('create', { fields })
-      const agentId = String(out?.agent?.agent_id ?? '')
-      if (useGroup && agentId && plan.analysis.fields.length) {
-        await saveAnalysisGroup(companyId, false, { name: plan.analysis.name, description: null, fields: plan.analysis.fields, agent_ids: [agentId] })
+      const newId = String(out?.agent?.agent_id ?? '')
+      if (useGroup && newId && plan.analysis.fields.length) {
+        await saveAnalysisGroup(companyId, false, { name: plan.analysis.name, description: null, fields: plan.analysis.fields, agent_ids: [newId] })
         await syncAnalysisGroups().catch(() => null)
       }
-      await markDone()
-      navigate(`${base}/agents`, { replace: true })
+      await markDone(true)
+      setAgentId(newId)
+      setBusy(false); setStep('done')
+      pushToast({ kind: 'success', title: `الوكيل ${agentName.trim() || 'سارة'} جاهز لاستقبال المكالمات` })
     } catch (e) { setError(errText(e)); setStep('analysis'); setBusy(false) }
   }
 
@@ -257,6 +262,16 @@ export function DashboardV2Onboarding() {
       <div><h2>جارٍ تجهيز الوكيل</h2><p className="sub">تتم كتابة الشخصية وجملة البداية وخطوات المكالمة. قد يستغرق ذلك لحظات.</p></div>
       <div className="ob-work" role="status" aria-live="polite">
         {WORKING.map((t, i) => <div key={t} className={i < workIdx ? 'done' : i === workIdx ? 'on' : ''}><i>{i < workIdx ? <Check size={13} /> : i === workIdx ? <Loader2 size={13} className="spin" /> : null}</i>{t}</div>)}
+      </div>
+    </div>
+  )
+  if (step === 'done') body = (
+    <div className="ob-box" style={{ textAlign: 'center', justifyItems: 'center' }}>{dots}
+      <span style={{ width: 58, height: 58, borderRadius: '50%', background: 'var(--ink)', color: 'var(--panel)', display: 'grid', placeItems: 'center' }}><Check size={26} /></span>
+      <div><h2>الوكيل {agentName.trim() || 'سارة'} جاهز</h2><p className="sub">تم إعداد وكيلك في {wsName.trim() || 'مساحة عملك'}. افتحه لتجربة مكالمة أو لضبط ما يقوله.</p></div>
+      <div className="ob-row" style={{ gap: 10 }}>
+        <button type="button" className="ob-btn" onClick={() => navigate(agentId && agentId !== 'demo' ? `${base}/agents/${agentId}/edit` : `${base}/agents${isDemo ? '?tour=1' : ''}`, { replace: true })}>فتح الوكيل <Next size={16} /></button>
+        <button type="button" className="ob-ghost" onClick={() => navigate(`${base}${isDemo ? '?tour=1' : ''}`, { replace: true })}>الذهاب إلى لوحة التحكم</button>
       </div>
     </div>
   )

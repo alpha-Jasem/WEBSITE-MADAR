@@ -13,6 +13,7 @@ import { useSupportTickets } from '@/lib/dashboardQueries'
 import { getUsageMetrics, usagePercentage } from '@/lib/clinicOSProduct'
 import { type ThemePref } from './AccountMenu'
 import { SupportChat } from './SupportChat'
+import { ProductTour } from './ProductTour'
 import { GlobalSearch } from './GlobalSearch'
 import { TopBar, TOPBAR_CSS } from './TopBar'
 import { WhatsNew } from './WhatsNew'
@@ -511,6 +512,7 @@ export function DashboardV2Layout() {
 
       <GlobalSearch base={base} />
       <SupportChat />
+      <ProductTour />
       <WhatsNew base={base} />
       <ShortcutsOverlay />
       {showBookings && (
