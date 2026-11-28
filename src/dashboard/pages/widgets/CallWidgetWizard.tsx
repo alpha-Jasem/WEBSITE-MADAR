@@ -34,7 +34,7 @@ function ButtonPreview({ cfg }: { cfg: CallConfig }) {
           <i style={{ width: '88%', ...(dark ? { background: '#262935' } : {}) }} /><i style={{ width: '72%', ...(dark ? { background: '#262935' } : {}) }} />
           <div className="b"><i style={dark ? { background: '#262935' } : undefined} /><i style={dark ? { background: '#262935' } : undefined} /></div>
         </div>
-        <span className="wg-fab" style={{ ...v, ...h, background: cfg.color, width: cfg.label ? 'auto' : px, minWidth: px, height: px, padding: cfg.label ? '0 18px' : 0, borderRadius: 999, display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 600 }}>
+        <span className="wg-fab" style={{ ...v, ...h, background: cfg.color, width: cfg.label ? 'auto' : px, minWidth: px, height: px, padding: cfg.label ? '0 18px' : 0, borderRadius: 999, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 14, fontWeight: 600 }}>
           {cfg.iconUrl.startsWith('https://') ? <img src={cfg.iconUrl} alt="" /> : <Icon size={Math.round(px * 0.42)} />}
           {cfg.label && <span>{cfg.label}</span>}
         </span>
