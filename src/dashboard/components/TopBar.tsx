@@ -1,19 +1,17 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import {
-  PanelRight, Search, Sparkles, MessageSquareText, BookOpen, Gift, Keyboard, MessageCircle, Link2, ExternalLink,
+  PanelRight, Search, MessageSquareText, Gift,
 } from 'lucide-react'
 import { NotificationCenter } from './NotificationCenter'
 import { AccountMenu, ACCOUNT_MENU_CSS, type ThemePref } from './AccountMenu'
-import { ShellMenu, SHELL_MENU_CSS, type MenuEntry } from './ShellMenu'
+import { SHELL_MENU_CSS } from './ShellMenu'
 import { USAGE_RING_CSS } from './UsageRingAvatar'
 import { FeedbackDialog, FEEDBACK_CSS } from './FeedbackDialog'
-import { TopProgressBar, Tooltip, requestOpenSearch, useToast } from './uiExtras'
-import { requestOpenShortcuts, requestOpenSupport, useShellPrimary } from './shellActions'
+import { TopProgressBar, Tooltip, requestOpenSearch } from './uiExtras'
+import { useShellPrimary } from './shellActions'
 import { openWhatsNew, useWhatsNewUnread } from './WhatsNew'
-import { MADAR_WHATSAPP_NUMBER } from '@/lib/constants'
 
-const SUPPORT_WHATSAPP = `https://wa.me/${MADAR_WHATSAPP_NUMBER}`
 const EASE_STD = 'cubic-bezier(.4,0,.2,1)'
 
 export const TOPBAR_CSS = `
@@ -88,7 +86,7 @@ export const TOPBAR_CSS = `
 /**
  * The dashboard top bar, after a console-style workspace bar.
  * Start: sidebar toggle and the page title. End: the page's one primary action (if it
- * set one), «ما الجديد» (when there's news), «ملاحظات», «الدليل», «اسأل مدار», the bell
+ * set one), «ما الجديد» (when there's news), «ملاحظات», the bell
  * and the account button (orb inside a plan-usage ring).
  */
 export function TopBar({ base, routeKey, pageTitle, hasPageNews, themePref, onThemeChange, sidebarCollapsed, onToggleSidebar }: {
@@ -102,38 +100,11 @@ export function TopBar({ base, routeKey, pageTitle, hasPageNews, themePref, onTh
   sidebarCollapsed: boolean
   onToggleSidebar: () => void
 }) {
-  const pushToast = useToast()
   const primary = useShellPrimary()
   const unread = useWhatsNewUnread()
   const reduced = !!useReducedMotion()
   const [feedbackOpen, setFeedbackOpen] = useState(false)
-  const [guideOpen, setGuideOpen] = useState(false)
-  const [guideViaKey, setGuideViaKey] = useState(false)
-  const guideRef = useRef<HTMLButtonElement>(null)
-  const closeGuide = useCallback((returnFocus: boolean) => {
-    setGuideOpen(false)
-    if (returnFocus) guideRef.current?.focus({ preventScroll: true })
-  }, [])
   const closeFeedback = useCallback(() => setFeedbackOpen(false), [])
-
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(window.location.href)
-      pushToast({ kind: 'success', title: 'تم نسخ الرابط' })
-    } catch {
-      pushToast({ kind: 'danger', title: 'تعذّر نسخ الرابط' })
-    }
-  }
-
-  const guideItems: MenuEntry[] = [
-    { kind: 'item', id: 'news', label: 'ما الجديد في مدار', icon: <Gift />, onSelect: openWhatsNew, trailing: unread ? <i className="dv2-pill-dot" aria-label="جديد" /> : undefined },
-    { kind: 'item', id: 'keys', label: 'اختصارات لوحة المفاتيح', icon: <Keyboard />, onSelect: requestOpenShortcuts },
-    { kind: 'item', id: 'ask', label: 'اسأل مدار', icon: <Sparkles />, onSelect: requestOpenSupport },
-    { kind: 'item', id: 'wa', label: 'الدعم عبر واتساب', icon: <MessageCircle />, onSelect: () => window.open(SUPPORT_WHATSAPP, '_blank', 'noopener,noreferrer') },
-    { kind: 'sep', id: 's1' },
-    { kind: 'item', id: 'copy', label: 'نسخ رابط الصفحة', icon: <Link2 />, onSelect: () => { void copyLink() } },
-    { kind: 'item', id: 'tab', label: 'فتح في تبويب جديد', icon: <ExternalLink />, onSelect: () => window.open(window.location.href, '_blank', 'noopener') },
-  ]
 
   const showNews = unread || hasPageNews
 
@@ -177,23 +148,12 @@ export function TopBar({ base, routeKey, pageTitle, hasPageNews, themePref, onTh
           <button type="button" className="dv2-pill" onClick={() => setFeedbackOpen(true)} aria-haspopup="dialog" aria-expanded={feedbackOpen} aria-label="ملاحظات">
             <MessageSquareText className="dv2-pill-ico-narrow" /><span className="dv2-pill-label">ملاحظات</span>
           </button>
-          <button
-            ref={guideRef} type="button" className="dv2-pill" aria-haspopup="menu" aria-expanded={guideOpen} aria-label="الدليل"
-            onClick={(e) => { setGuideViaKey(e.detail === 0); setGuideOpen((v) => !v) }}
-            onKeyDown={(e) => { if (e.key === 'ArrowDown') { e.preventDefault(); setGuideViaKey(true); setGuideOpen(true) } }}
-          >
-            <BookOpen className="dv2-pill-ico-narrow" /><span className="dv2-pill-label">الدليل</span>
-          </button>
-          <button type="button" className="dv2-pill is-ai" onClick={requestOpenSupport} aria-label="اسأل مدار">
-            <Sparkles /><span className="dv2-pill-label">اسأل مدار</span>
-          </button>
         </span>
         <button type="button" className="dv2-icon-btn dv2-mobile-only" onClick={() => requestOpenSearch()} aria-label="بحث"><Search /></button>
         <NotificationCenter />
         <AccountMenu base={base} themePref={themePref} onThemeChange={onThemeChange} />
       </div>
 
-      <ShellMenu open={guideOpen} anchorRef={guideRef} onClose={closeGuide} items={guideItems} label="الدليل" width={248} focusFirst={guideViaKey} />
       <FeedbackDialog open={feedbackOpen} onClose={closeFeedback} />
     </header>
   )

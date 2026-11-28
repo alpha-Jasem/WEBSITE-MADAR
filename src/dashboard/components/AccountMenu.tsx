@@ -1,16 +1,12 @@
 import { useCallback, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Settings, CreditCard, BarChart3, Palette, Sun, Moon, Monitor, LifeBuoy, Gift, Keyboard, MessageCircle,
-  ScrollText, FileText, Shield, LogOut,
+  Settings, CreditCard, Palette, Sun, Moon, Monitor, LogOut,
 } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
-import { CLINIC_PLANS, getOverallUsage, getUsageMetrics } from '@/lib/clinicOSProduct'
-import { MADAR_WHATSAPP_NUMBER } from '@/lib/constants'
+import { getOverallUsage, getUsageMetrics } from '@/lib/clinicOSProduct'
 import { ShellMenu, type MenuEntry } from './ShellMenu'
 import { UsageRingAvatar } from './UsageRingAvatar'
-import { openWhatsNew } from './WhatsNew'
-import { requestOpenShortcuts } from './shellActions'
 
 export type ThemePref = 'light' | 'dark' | 'system'
 
@@ -63,13 +59,12 @@ export function AccountMenu({ base, themePref, onThemeChange }: {
   onThemeChange: (pref: ThemePref) => void
 }) {
   const navigate = useNavigate()
-  const { companyName, packageType, logout } = useWorkspace()
+  const { logout } = useWorkspace()
   const seed = useOrbSeed()
   const overall = usePlanUsage()
   const [open, setOpen] = useState(false)
   const [viaKey, setViaKey] = useState(false)
   const btnRef = useRef<HTMLButtonElement>(null)
-  const planName = CLINIC_PLANS[packageType]?.name
 
   const close = useCallback((returnFocus: boolean) => {
     setOpen(false)
@@ -77,7 +72,6 @@ export function AccountMenu({ base, themePref, onThemeChange }: {
   }, [])
 
   const go = (path: string) => () => navigate(path)
-  const ext = (url: string) => () => window.open(url, '_blank', 'noopener,noreferrer')
 
   const items: MenuEntry[] = [
     {
@@ -93,37 +87,13 @@ export function AccountMenu({ base, themePref, onThemeChange }: {
         </div>
       ),
     },
-    {
-      kind: 'node', id: 'workspace', node: (
-        <div className="am-card">
-          <div className="am-ws-label">المنشأة الحالية</div>
-          <div className="am-ws-name">{companyName || 'منشأتك'}</div>
-          <div className="am-ws-plan">{planName ? `باقة ${planName}` : 'بدون باقة'}</div>
-        </div>
-      ),
-    },
     { kind: 'item', id: 'settings', label: 'الإعدادات', icon: <Settings />, onSelect: go(`${base}/settings`) },
     { kind: 'item', id: 'billing', label: 'الفوترة والاشتراك', icon: <CreditCard />, onSelect: go(`${base}/plan-usage`) },
-    { kind: 'item', id: 'usage-analytics', label: 'تحليلات الاستخدام', icon: <BarChart3 />, onSelect: go(`${base}/plan-usage`) },
     {
       kind: 'sub', id: 'theme', label: 'المظهر', icon: <Palette />, items: [
         { kind: 'radio', id: 'light', label: 'فاتح', icon: <Sun />, checked: themePref === 'light', onSelect: () => onThemeChange('light') },
         { kind: 'radio', id: 'dark', label: 'داكن', icon: <Moon />, checked: themePref === 'dark', onSelect: () => onThemeChange('dark') },
         { kind: 'radio', id: 'system', label: 'تلقائي', icon: <Monitor />, checked: themePref === 'system', onSelect: () => onThemeChange('system') },
-      ],
-    },
-    { kind: 'sep', id: 's1' },
-    {
-      kind: 'sub', id: 'docs', label: 'الدليل والموارد', icon: <LifeBuoy />, items: [
-        { kind: 'item', id: 'news', label: 'ما الجديد', icon: <Gift />, onSelect: openWhatsNew },
-        { kind: 'item', id: 'keys', label: 'اختصارات لوحة المفاتيح', icon: <Keyboard />, onSelect: requestOpenShortcuts },
-        { kind: 'item', id: 'wa', label: 'الدعم عبر واتساب', icon: <MessageCircle />, onSelect: ext(`https://wa.me/${MADAR_WHATSAPP_NUMBER}`) },
-      ],
-    },
-    {
-      kind: 'sub', id: 'legal', label: 'الشروط والخصوصية', icon: <ScrollText />, items: [
-        { kind: 'item', id: 'terms', label: 'الشروط والأحكام', icon: <FileText />, onSelect: ext('/terms') },
-        { kind: 'item', id: 'privacy', label: 'سياسة الخصوصية', icon: <Shield />, onSelect: ext('/privacy') },
       ],
     },
     { kind: 'sep', id: 's2' },
