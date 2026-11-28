@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { X, Send, Sparkles } from 'lucide-react'
+import { Send } from 'lucide-react'
 import { useWorkspace } from '@/context/WorkspaceContext'
 import { supabase } from '@/lib/supabase'
 import { pageGuideFor } from '@/dashboard/pageGuide'
+import { GlassOrb } from './GlassOrb'
 import { useOnOpenSupportRequest } from './shellActions'
 
-// «اسأل مدار»: the agent in the corner. It knows which page the customer is on, greets them for it,
+// «اسأل مدار»: the glass orb in the corner. It knows which page the customer is on, greets them for it,
 // offers questions to start from, and answers with that page in mind.
 
 interface ChatMessage {
@@ -19,6 +20,7 @@ export function SupportChat() {
   const { companyId, isDemo } = useWorkspace()
   const guide = pageGuideFor(location.pathname)
   const [open, setOpen] = useState(false)
+  const [hover, setHover] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
@@ -37,6 +39,13 @@ export function SupportChat() {
     setAskedHere(false)
     setMessages((m) => (m.length ? [...m, { role: 'note', content: `انتقلت إلى «${guide.title}»` }] : m))
   }, [guide.title])
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
@@ -77,70 +86,77 @@ export function SupportChat() {
     }
   }
 
-  const bubble = (role: 'user' | 'assistant') => ({
-    maxWidth: '84%', padding: '9px 12px', borderRadius: 'var(--radius-lg)', fontSize: 13, lineHeight: 1.7, whiteSpace: 'pre-wrap' as const,
-    background: role === 'user' ? 'var(--pri-bg)' : 'var(--raise)', color: role === 'user' ? 'var(--pri-fg)' : 'var(--text-primary)',
-  })
-
   return (
-    <div className="dv2-floating" style={{ position: 'fixed', bottom: 24, left: 24, zIndex: 1400 }}>
+    <div className="dv2-floating" style={{ position: 'fixed', bottom: 20, left: 20, zIndex: 1400 }}>
       <style>{`
-        @keyframes dv2-panel-in { from { opacity: 0; transform: translateY(8px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        .dv2-chat-panel { transform-origin: bottom left; animation: dv2-panel-in 180ms var(--ease-out, ease) both; }
-        .sc-chip { border: 1px solid var(--border-strong); background: var(--panel-2); color: var(--text-primary); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 12.5px; cursor: pointer; }
-        .sc-chip:hover { background: var(--raise); }
-        .sc-chip:focus-visible, .sc-launch:focus-visible { outline: 3px solid var(--accent, #6c4cf1); outline-offset: 2px; }
-        .sc-launch { display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 18px 0 14px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--pri-bg); color: var(--pri-fg); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: var(--shadow-md); }
-        @media (max-width: 900px) { .sc-launch span { display: none; } .sc-launch { width: 46px; padding: 0; justify-content: center; } }
-        @media (prefers-reduced-motion: reduce) { .dv2-chat-panel { animation: none; } }
+        @keyframes sc-pop { from { opacity: 0; transform: translateY(14px) scale(.94); } to { opacity: 1; transform: none; } }
+        @keyframes sc-breathe { 50% { transform: scale(1.18); opacity: .85; } }
+        @keyframes sc-dot { 0%,80%,100% { transform: translateY(0); opacity: .3; } 40% { transform: translateY(-4px); opacity: 1; } }
+        .sc-panel { position: relative; width: min(390px, calc(100vw - 40px)); height: min(560px, calc(100dvh - 150px)); margin-bottom: 14px; display: flex; flex-direction: column; border-radius: 26px; overflow: hidden;
+          background: rgba(16,18,34,.84); backdrop-filter: blur(24px) saturate(1.5); -webkit-backdrop-filter: blur(24px) saturate(1.5); border: 1px solid rgba(255,255,255,.14); color: #f2f4ff;
+          box-shadow: 0 30px 80px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.1); transform-origin: bottom left; animation: sc-pop .3s cubic-bezier(.2,.9,.3,1.2) both; }
+        .sc-panel::before { content: ""; position: absolute; inset: -30% -10% auto; height: 60%; background: radial-gradient(closest-side, rgba(34,211,238,.45), transparent), radial-gradient(closest-side at 85% 50%, rgba(124,92,255,.5), transparent); filter: blur(22px); opacity: .55; pointer-events: none; }
+        .sc-head { position: relative; display: flex; align-items: center; gap: 12px; padding: 14px 16px 6px; }
+        .sc-head b { font-weight: 800; font-size: 17px; display: block; } .sc-head small { color: #c9ccdf; font-size: 12px; }
+        .sc-x { margin-inline-start: auto; width: 32px; height: 32px; border-radius: 10px; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.06); color: inherit; cursor: pointer; }
+        .sc-where { position: relative; margin: 6px 16px 0; align-self: flex-start; font-size: 12px; padding: 4px 11px; border-radius: 99px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); color: #e6e8f5; }
+        .sc-msgs { position: relative; flex: 1; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; padding: 14px; }
+        .sc-m { max-width: 86%; padding: 10px 13px; border-radius: 16px; font-size: 13.5px; line-height: 1.8; white-space: pre-wrap; }
+        .sc-m.bot { align-self: flex-start; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.08); }
+        .sc-m.me { align-self: flex-end; color: #fff; background: linear-gradient(135deg, #22d3ee, #5a7bff 55%, #9b4dff); }
+        .sc-note { text-align: center; font-size: 11.5px; color: #9aa0c4; }
+        .sc-dots { display: inline-flex; gap: 4px; padding: 6px 2px; } .sc-dots i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .4; animation: sc-dot 1s infinite; } .sc-dots i:nth-child(2) { animation-delay: .15s; } .sc-dots i:nth-child(3) { animation-delay: .3s; }
+        .sc-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+        .sc-chip { border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.06); color: inherit; border-radius: 99px; padding: 7px 13px; font: inherit; font-size: 12.5px; cursor: pointer; transition: transform .15s, background .15s; }
+        .sc-chip:hover { background: rgba(34,211,238,.28); transform: translateY(-2px); }
+        .sc-in { position: relative; display: flex; gap: 8px; padding: 12px; border-top: 1px solid rgba(255,255,255,.12); }
+        .sc-in input { flex: 1; min-width: 0; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); border-radius: 14px; padding: 10px 14px; color: #f2f4ff; font: inherit; font-size: 13.5px; }
+        .sc-in input::placeholder { color: #9aa0c4; }
+        .sc-send { width: 44px; border: 0; border-radius: 14px; color: #fff; cursor: pointer; background: linear-gradient(135deg, #22d3ee, #5a7bff 55%, #9b4dff); display: grid; place-items: center; }
+        .sc-launch { display: flex; align-items: center; gap: 2px; flex-direction: row-reverse; border: 0; background: none; padding: 0; cursor: pointer; color: inherit; font: inherit; }
+        .sc-orb { position: relative; width: 84px; height: 84px; transition: transform .35s cubic-bezier(.3,1.5,.5,1); }
+        .sc-launch:hover .sc-orb { transform: scale(1.08); }
+        .sc-halo { position: absolute; inset: 6px; border-radius: 50%; filter: blur(18px); opacity: .6; background: radial-gradient(circle, #22d3ee, #7c5cff 70%); animation: sc-breathe 4s ease-in-out infinite; }
+        .sc-orb > canvas { position: relative; z-index: 1; }
+        .sc-say { background: rgba(16,18,34,.82); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.14); border-radius: 18px; padding: 9px 15px; font-weight: 700; font-size: 14px; text-align: start; color: #f2f4ff; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
+        .sc-say small { display: block; font-weight: 400; font-size: 11.5px; color: #9aa0c4; max-width: 170px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sc-launch:focus-visible, .sc-chip:focus-visible, .sc-x:focus-visible, .sc-send:focus-visible, .sc-in input:focus-visible { outline: 3px solid #7aa2ff; outline-offset: 3px; }
+        @media (max-width: 900px) { .sc-say { display: none; } .sc-orb { width: 64px; height: 64px; } }
+        @media (prefers-reduced-motion: reduce) { .sc-panel { animation: none; } .sc-halo, .sc-dots i { animation: none; } }
       `}</style>
-      {open && (
-        <div className="dv2-chat-panel" role="dialog" aria-label="اسأل مدار" style={{
-          width: 'min(400px, calc(100vw - 48px))', height: 'min(580px, calc(100dvh - 120px))', background: 'var(--surface-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)',
-          border: '1px solid var(--border-default)', display: 'flex', flexDirection: 'column', marginBottom: 12, overflow: 'hidden',
-        }}>
-          <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-default)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Sparkles size={18} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 700, fontSize: 14 }}>اسأل مدار</div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>أنت الآن في: {guide.title}</div>
-            </div>
-            <button type="button" onClick={() => setOpen(false)} aria-label="إغلاق" style={{ border: 0, background: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', padding: 6, borderRadius: 8 }}><X size={18} /></button>
-          </div>
 
-          <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ display: 'flex' }}>
-              <div style={bubble('assistant')}>{`أهلًا! أنا مدار، أساعدك في أي صفحة.\nأنت الآن في «${guide.title}»: ${guide.about}`}</div>
-            </div>
+      {open && (
+        <div className="sc-panel" role="dialog" aria-label="اسأل مدار">
+          <div className="sc-head">
+            <GlassOrb size={40} energy={sending ? 1 : 0.6} />
+            <div><b>اسأل مدار</b><small>مرشدك في لوحة التحكم</small></div>
+            <button type="button" className="sc-x" onClick={() => setOpen(false)} aria-label="إغلاق">✕</button>
+          </div>
+          <div className="sc-where">أنت الآن في: {guide.title}</div>
+          <div ref={scrollRef} className="sc-msgs">
+            <div className="sc-m bot">{`أهلًا! أنا مدار، أساعدك في أي صفحة.\nأنت الآن في «${guide.title}»: ${guide.about}`}</div>
             {messages.map((m, i) => m.role === 'note'
-              ? <div key={i} style={{ textAlign: 'center', fontSize: 11.5, color: 'var(--text-tertiary)' }}>{m.content}</div>
-              : <div key={i} style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}><div style={bubble(m.role)}>{m.content}</div></div>)}
-            {sending && <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>جارِ الكتابة...</div>}
+              ? <div key={i} className="sc-note">{m.content}</div>
+              : <div key={i} className={`sc-m ${m.role === 'user' ? 'me' : 'bot'}`}>{m.content}</div>)}
+            {sending && <div className="sc-m bot"><span className="sc-dots"><i /><i /><i /></span></div>}
             {!askedHere && !sending && (
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {guide.ask.map((q) => <button key={q} type="button" className="sc-chip" onClick={() => void send(q)}>{q}</button>)}
-              </div>
+              <div className="sc-chips">{guide.ask.map((q) => <button key={q} type="button" className="sc-chip" onClick={() => void send(q)}>{q}</button>)}</div>
             )}
           </div>
-
-          {remaining != null && remaining < 15 && (
-            <div style={{ fontSize: 10.5, color: 'var(--warning-500)', padding: '0 14px 6px', textAlign: 'center' }}>متبقٍ {remaining} رسالة اليوم</div>
-          )}
-          <div style={{ display: 'flex', gap: 8, padding: 12, borderTop: '1px solid var(--border-default)' }}>
-            <input
-              value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void send() }}
-              placeholder="اسأل عن هذه الصفحة أو أي شيء في مدار..." aria-label="رسالتك لمدار"
-              style={{ flex: 1, padding: '9px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-strong)', fontSize: 13, outline: 'none' }}
-            />
-            <button type="button" onClick={() => void send()} disabled={sending} aria-label="إرسال"
-              style={{ width: 36, height: 36, borderRadius: 'var(--radius-md)', background: 'var(--pri-bg)', color: 'var(--pri-fg)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
-            ><Send size={15} /></button>
+          {remaining != null && remaining < 15 && <div style={{ position: 'relative', fontSize: 10.5, color: '#ffb547', padding: '0 14px 6px', textAlign: 'center' }}>متبقٍ {remaining} رسالة اليوم</div>}
+          <div className="sc-in">
+            <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void send() }}
+              placeholder="اسأل عن هذه الصفحة أو أي شيء في مدار..." aria-label="رسالتك لمدار" />
+            <button type="button" className="sc-send" onClick={() => void send()} disabled={sending} aria-label="إرسال"><Send size={16} /></button>
           </div>
         </div>
       )}
+
       {!open && (
-        <button type="button" className="sc-launch dv2-chat-launcher" aria-label="اسأل مدار" onClick={() => setOpen(true)}>
-          <Sparkles size={18} /><span>اسأل مدار</span>
+        <button type="button" className="sc-launch dv2-chat-launcher" aria-label="اسأل مدار" onClick={() => setOpen(true)}
+          onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} onFocus={() => setHover(true)} onBlur={() => setHover(false)}>
+          <span className="sc-orb"><span className="sc-halo" /><GlassOrb size={84} energy={hover ? 0.7 : 0} /></span>
+          <span className="sc-say">اسأل مدار<small>أعرف أنك في «{guide.title}»</small></span>
         </button>
       )}
     </div>
