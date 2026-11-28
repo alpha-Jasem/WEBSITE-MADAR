@@ -266,7 +266,7 @@ export function DashboardV2HelpNew() {
   const [params] = useSearchParams()
   const pk = params.get('kind') as RequestKind | null
   const [kind, setKind] = useState<RequestKind>(pk && pk in KIND_LABELS ? pk : 'unsure')
-  const [subject, setSubject] = useState(params.get('cancel') === '1' ? 'طلب إلغاء الاشتراك' : '')
+  const [subject, setSubject] = useState(params.get('cancel') === '1' ? 'طلب إلغاء الاشتراك' : (params.get('subject') ?? '').slice(0, 200))
   const [details, setDetails] = useState('')
   const [reference, setReference] = useState('')
   const [sending, setSending] = useState(false)

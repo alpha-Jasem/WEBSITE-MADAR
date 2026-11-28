@@ -94,7 +94,7 @@ export function AccountMenu({ base }: { base: string }) {
         <div className="am-plan">
           <div className="r">
             <div style={{ display: 'grid' }}><span style={{ fontSize: 12 }}>الخطة</span><b>{usage.planName || '—'}</b></div>
-            <button type="button" role="menuitem" data-mi className="am-upgrade" style={{ marginInlineStart: 0 }} onClick={() => { close(false); navigate(`${base}/billing`) }}>ترقية</button>
+            <button type="button" role="menuitem" data-mi className="am-upgrade" style={{ marginInlineStart: 0 }} onClick={() => { close(false); navigate(`${base}/pricing`) }}>ترقية</button>
           </div>
           <div className="am-bar" role="progressbar" aria-valuenow={usage.pct} aria-valuemin={0} aria-valuemax={100} aria-label="الاستهلاك"><i style={{ width: `${Math.max(1, Math.min(100, usage.pct))}%` }} /></div>
           <div className="r"><span>المستخدم</span><b dir="ltr">{usage.pct}%</b></div>

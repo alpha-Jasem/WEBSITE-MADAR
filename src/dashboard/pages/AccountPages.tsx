@@ -64,7 +64,8 @@ function PlanBlock() {
   const { subscriptionStatus, subscriptionStartDate, subscriptionEndDate, isDemo } = useWorkspace()
   const { planName } = useAccountUsage()
   const navigate = useNavigate()
-  const base = `${isDemo ? '/demo-review' : '/dashboard'}/help/new`
+  const plansBase = isDemo ? '/demo-review' : '/dashboard'
+  const base = `${plansBase}/help/new`
   const st = STATUS[subscriptionStatus || 'active'] ?? STATUS.active
   return (
     <>
@@ -72,7 +73,7 @@ function PlanBlock() {
         <div><small>الخطة الحالية</small><b>{planName || '—'}</b> <Chip tone={st[1]}>{st[0]}</Chip>
           {subscriptionEndDate && <small>ينتهي الاشتراك في {dateOf(subscriptionEndDate)}{subscriptionStartDate ? ` · بدأ في ${dateOf(subscriptionStartDate)}` : ''}</small>}
         </div>
-        <button type="button" className="ac-btn" onClick={() => navigate(`${base}?kind=billing`)}>تغيير الخطة</button>
+        <button type="button" className="ac-btn" onClick={() => navigate(`${plansBase}/pricing`)}>تغيير الخطة</button>
       </div>
       <div className="ac-box warn">
         <div><b>إلغاء الاشتراك</b><small>يسري الإلغاء في نهاية فترة الاشتراك الحالية. تحتفظ بخطتك حتى ذلك الحين.</small></div>

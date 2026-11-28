@@ -102,6 +102,7 @@ const DashboardV2ChatWidgets       = lazy(() => import('./dashboard/pages/widget
 const DashboardV2CallWidgetWizard  = lazy(() => import('./dashboard/pages/widgets/CallWidgetWizard').then(m => ({ default: m.DashboardV2CallWidgetWizard })))
 const DashboardV2ChatWidgetWizard  = lazy(() => import('./dashboard/pages/widgets/ChatWidgetWizard').then(m => ({ default: m.DashboardV2ChatWidgetWizard })))
 const DashboardV2Account           = lazy(() => import('./dashboard/pages/AccountPages').then(m => ({ default: m.DashboardV2Account })))
+const DashboardV2Pricing           = lazy(() => import('./dashboard/pages/Pricing').then(m => ({ default: m.DashboardV2Pricing })))
 const DashboardV2Billing           = lazy(() => import('./dashboard/pages/AccountPages').then(m => ({ default: m.DashboardV2Billing })))
 const DashboardV2HelpHome          = lazy(() => import('./dashboard/pages/help/HelpPages').then(m => ({ default: m.DashboardV2HelpHome })))
 const DashboardV2HelpNew           = lazy(() => import('./dashboard/pages/help/HelpPages').then(m => ({ default: m.DashboardV2HelpNew })))
@@ -143,6 +144,7 @@ const dashboardChildRoutes = (
     <Route path="plugins/chat-widgets/:id" element={<PermissionRoute permission="integrations.manage"><DashboardV2ChatWidgetWizard /></PermissionRoute>} />
     <Route path="account" element={<DashboardV2Account />} />
     <Route path="billing" element={<DashboardV2Billing />} />
+    <Route path="pricing" element={<DashboardV2Pricing />} />
     <Route path="help" element={<DashboardV2HelpHome />} />
     <Route path="help/new" element={<DashboardV2HelpNew />} />
     <Route path="help/requests" element={<DashboardV2HelpRequests />} />

@@ -163,6 +163,7 @@ const EXTRA_TITLES: Record<string, string> = {
   'plan-usage': 'الباقة والاستخدام',
   account: 'الحساب',
   billing: 'الفوترة',
+  pricing: 'الخطط',
   help: 'الدعم',
   'audit-log': 'سجل التدقيق',
   'calls-analytics': 'تحليلات المكالمات',
