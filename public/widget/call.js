@@ -106,9 +106,9 @@
       '.row{display:flex;gap:8px;width:100%}',
       '.cb{flex:1;border:0;height:42px;border-radius:' + br + 'px;font-size:13.5px;font-weight:600;cursor:pointer;background:' + btnBg + ';color:' + btnFg + '}',
       '.cb.end{background:' + endBack + ';color:' + endFg + '}.cb.on{opacity:.65}',
-      '.pw{font-size:10.5px;color:' + dim + ';opacity:.8}',
+      '.pw{font-size:10.5px;color:' + dim + ';opacity:.8;text-decoration:none;direction:ltr;font-family:system-ui,sans-serif}.pw:hover{opacity:1;text-decoration:underline}',
       '.time{direction:ltr;font-variant-numeric:tabular-nums;font-size:12px;color:' + dim + '}',
-      p.layout === 'compact' ? '.card{display:flex;align-items:center;gap:10px;padding:10px 12px}.hd{padding:0;background:none;color:' + onBg + ';display:flex;gap:10px;text-align:start;justify-items:start}.hd::after{display:none}.av{width:44px;height:44px;border-radius:' + (p.avatarShape === 'rounded' ? '12px' : '50%') + '}.bd{padding:0;flex:1;grid-auto-flow:column;gap:8px;justify-items:end}.wave{display:none}.pw,.time{display:none}.row{width:auto}.cb{flex:none;padding:0 12px;height:38px}.sub{color:' + dim + '}' : '',
+      p.layout === 'compact' ? '.card{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 12px}.pw{flex-basis:100%;text-align:center}.hd{padding:0;background:none;color:' + onBg + ';display:flex;gap:10px;text-align:start;justify-items:start}.hd::after{display:none}.av{width:44px;height:44px;border-radius:' + (p.avatarShape === 'rounded' ? '12px' : '50%') + '}.bd{padding:0;flex:1;grid-auto-flow:column;gap:8px;justify-items:end}.wave{display:none}.time{display:none}.row{width:auto}.cb{flex:none;padding:0 12px;height:38px}.sub{color:' + dim + '}' : '',
       p.layout === 'centered' ? '.hd{padding-top:26px}.av{width:76px;height:76px}.hd{color:' + onBg + '}.sub{color:' + dim + '}' : '',
       '@media (prefers-reduced-motion:reduce){.btn{transition:none!important}}'
     ].join('')
@@ -126,7 +126,7 @@
         '<div class="hd"><div class="av">' + avatar + '</div><div><div class="title"></div>' + (p.subOn ? '<div class="sub"></div>' : '') + '</div></div>' +
         '<div class="bd">' + (p.indicatorOn ? '<canvas class="wave" aria-hidden="true"></canvas>' : '') + '<span class="pill"><i></i><span class="st"></span></span><span class="time"></span>' +
           '<div class="row">' + (p.muteOn ? '<button type="button" class="cb mute">كتم</button>' : '') + '<button type="button" class="cb end">إنهاء</button></div>' +
-          '<div class="pw">بواسطة مدار</div></div>' +
+          '<a class="pw" href="https://madar.software" target="_blank" rel="noopener">Powered by madar.software</a></div>' +
       '</div>'
     btn = wrap.querySelector('.btn'); card = wrap.querySelector('.card'); wave = wrap.querySelector('.wave')
     titleEl = wrap.querySelector('.title'); subEl = wrap.querySelector('.sub'); statusEl = wrap.querySelector('.st'); timeEl = wrap.querySelector('.time')
