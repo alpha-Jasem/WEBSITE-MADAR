@@ -14,6 +14,7 @@ import { getUsageMetrics, usagePercentage } from '@/lib/clinicOSProduct'
 import { type ThemePref } from './AccountMenu'
 import { SupportChat } from './SupportChat'
 import { ProductTour } from './ProductTour'
+import { WorkspaceAvatar } from './WorkspaceAvatar'
 import { GlobalSearch } from './GlobalSearch'
 import { TopBar, TOPBAR_CSS } from './TopBar'
 import { WhatsNew } from './WhatsNew'
@@ -549,14 +550,14 @@ function WorkspaceSwitcher({ name, base }: { name: string; base: string }) {
   return (
     <div className="dv2-ws" ref={ref}>
       <button type="button" className="dv2-ws-btn" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
-        <span className="dv2-ws-av" aria-hidden="true" />
+        <WorkspaceAvatar name={label} size={30} />
         <span className="dv2-ws-txt"><small>مساحة العمل</small><b>{label}</b></span>
         <ChevronDown size={15} style={{ color: 'var(--dim)', transform: open ? 'rotate(180deg)' : undefined, transition: 'transform 160ms' }} />
       </button>
       {open && (
         <div className="dv2-ws-menu" role="menu">
           <button type="button" role="menuitemradio" aria-checked="true" className="dv2-ws-item" onClick={() => { setOpen(false); navigate(base) }}>
-            <span className="dv2-ws-av" aria-hidden="true" /><span style={{ flex: 1 }}>{label}</span><Check size={15} />
+            <WorkspaceAvatar name={label} size={24} /><span style={{ flex: 1 }}>{label}</span><Check size={15} />
           </button>
           <div className="dv2-ws-sep" />
           <button type="button" role="menuitem" className="dv2-ws-item" style={{ color: 'var(--muted)' }} onClick={() => { setOpen(false); navigate(`${base}/workspaces`) }}>كل مساحات العمل</button>

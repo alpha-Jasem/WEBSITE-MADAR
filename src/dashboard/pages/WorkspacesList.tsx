@@ -8,6 +8,7 @@ import { CLINIC_PLANS } from '@/lib/clinicOSProduct'
 import { Button, Dialog, Input } from '@/dashboard/components/primitives'
 import { useToast } from '@/dashboard/components/uiExtras'
 import { NightPage } from './shared/night'
+import { WorkspaceAvatar } from '@/dashboard/components/WorkspaceAvatar'
 
 // مساحات عملي: the workspaces the signed-in person belongs to, each with its members, invite, rename and delete actions.
 // A Madar account has one workspace today; a new one or a deletion goes to the team as a support request.
@@ -120,7 +121,7 @@ export function DashboardV2Workspaces() {
               {list.map((w) => (
                 <article key={w.id || 'ws'} className="wl-card" aria-label={`مساحة العمل ${w.name}`}>
                   <div className="wl-top">
-                    <span className="wl-av" aria-hidden="true" />
+                    <WorkspaceAvatar name={w.name} size={54} />
                     <div className="wl-info">
                       <h3>{w.name}</h3>
                       <div className="wl-meta"><b>المالك:</b> {w.owner}</div>
