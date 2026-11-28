@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
+import { supabase } from '@/lib/supabase'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DURATION_MEDIUM, EASE_OUT } from './motionTokens'
 import {
@@ -179,7 +180,7 @@ export function DashboardV2Layout() {
   useSystemChrome('#0F0F0F')
   const navigate = useNavigate()
   const location = useLocation()
-  const { companyId, isDemo, accountError, refreshAccount, businessType, hasModule, canOpen, can, packageType, usageMetrics, companyName } = useWorkspace()
+  const { companyId, isDemo, accountError, refreshAccount, businessType, hasModule, canOpen, can, packageType, usageMetrics, companyName, isOwner, accountLoading, companySettings } = useWorkspace()
   const showBookings = hasModule('bookings')
   // Theme preference: light / dark / follow the system ("تلقائي"), set from the account menu.
   const [themePref, setThemePref] = useState<ThemePref>(() => {
@@ -217,6 +218,17 @@ export function DashboardV2Layout() {
   const toggleFold = (t: string) => setOpenFolds((p) => { const n = new Set(p); if (n.has(t)) n.delete(t); else n.add(t); return n })
   const [sheetMode, setSheetMode] = useState<'more' | 'all'>('more')
   useViewportFitCover()
+
+  // First sign-in: an owner whose company has no agent yet and has not skipped setup is taken to the onboarding page.
+  const onOnboarding = /\/onboarding\/?$/.test(location.pathname)
+  useEffect(() => {
+    if (isDemo || !companyId || !isOwner || accountLoading || onOnboarding || companySettings?.onboarded) return
+    let live = true
+    void supabase.from('agent_links').select('agent_id', { count: 'exact', head: true }).eq('company_id', companyId).then(({ count, error }) => {
+      if (live && !error && count === 0) navigate('/dashboard/onboarding', { replace: true })
+    })
+    return () => { live = false }
+  }, [isDemo, companyId, isOwner, accountLoading, onOnboarding, companySettings, navigate])
 
   useEffect(() => {
     setMoreOpen(false)
@@ -350,6 +362,15 @@ export function DashboardV2Layout() {
     return collapsed
       ? <Tooltip key={item.path} label={item.label} side="bottom" style={{ display: 'flex', width: '100%' }}>{btn}</Tooltip>
       : btn
+  }
+
+  // The onboarding page owns the whole screen: no sidebar or top bar.
+  if (onOnboarding) {
+    return (
+      <div className="dv2-scope" dir="rtl" data-theme={theme} style={{ minHeight: '100dvh', background: 'var(--surface-canvas)' }}>
+        <ToastProvider><style>{SHELL_CSS}</style><Outlet /></ToastProvider>
+      </div>
+    )
   }
 
   return (
