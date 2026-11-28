@@ -58,7 +58,7 @@ export function GlassOrb({ size, energy = 0 }: { size: number; energy?: number }
       if (!reduce) raf = requestAnimationFrame(draw)
     }
     raf = requestAnimationFrame(draw)
-    return () => { cancelAnimationFrame(raf); gl.getExtension('WEBGL_lose_context')?.loseContext() }
+    return () => cancelAnimationFrame(raf)
   }, [size])
 
   return <canvas ref={ref} style={{ width: size, height: size, display: 'block' }} aria-hidden="true" />
